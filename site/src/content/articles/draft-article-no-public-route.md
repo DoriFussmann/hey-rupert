@@ -3,7 +3,7 @@ title: Draft Article Used Only To Confirm Routes Stay Unpublished
 description: This draft exists to confirm unpublished articles create no public route, no RSS item, no sitemap URL, and no llms.txt entry after a production build.
 slug: draft-article-no-public-route
 date: 2026-08-13
-author: jane-doe
+author: dori-fussmann
 category: SEO
 tags:
   - technical seo

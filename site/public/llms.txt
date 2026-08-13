@@ -1,7 +1,7 @@
-# Site Name
+# Rupert
 
-> Articles published on Site Name.
+Rupert is an expert-led investor outreach service designed for founders raising capital. Rather than relying on automated campaigns or generic investor lists, every outreach effort is researched, written, and managed with precision to reach investors who actively back companies like yours.
+
+Throughout the process, you have complete transparency into every email, every conversation, and every response. Rupert never owns your relationships or takes a percentage of your raise. You keep every investor connection, while benefiting from the discipline, experience, and craftsmanship of a professional fundraising operator.
 
 ## Articles
-
-- [How Technical SEO and E-E-A-T Shape Discoverable Content](https://example.com/articles/technical-seo-eeat-discoverable-content/): This template article demonstrates required frontmatter, author attribution, citations, and FAQ structured data for technical SEO and answer-engine visibility.

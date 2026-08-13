@@ -12,7 +12,7 @@ const services = (await getCollection("services")).sort(
 const latest = (await getPublishedArticles()).slice(0, 5);
 const title = SITE_NAME;
 const description =
-  "Articles, services, and team profiles published from this site's content collections.";
+  "Rupert helps founders connect with the investors most likely to fund their companies. Every outreach campaign is researched, personalized, and managed by experienced operators, while founders retain complete visibility, every conversation, and every investor relationship.";
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/">
@@ -20,8 +20,10 @@ const description =
     <section class="site-wrap pb-2xl pt-2xl lg:pb-3xl lg:pt-3xl">
       <h1 class="type-display hero-reveal max-w-prose">{SITE_NAME}</h1>
       <p class="type-body-lg hero-reveal mt-lg max-w-prose">
-        Welcome to this site. Articles, services, and team profiles are published
-        from the content collections.
+        Rupert helps founders connect with the investors most likely to fund
+        their companies. Every outreach campaign is researched, personalized,
+        and managed by experienced operators, while founders retain complete
+        visibility, every conversation, and every investor relationship.
       </p>
     </section>
     <section id="services" class="site-wrap py-xl lg:py-2xl">

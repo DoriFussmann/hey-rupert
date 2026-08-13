@@ -3,7 +3,7 @@ title: How Technical SEO and E-E-A-T Shape Discoverable Content
 description: This template article demonstrates required frontmatter, author attribution, citations, and FAQ structured data for technical SEO and answer-engine visibility.
 slug: technical-seo-eeat-discoverable-content
 date: 2026-08-13
-author: jane-doe
+author: dori-fussmann
 category: SEO
 tags:
   - technical seo
@@ -16,7 +16,7 @@ robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
-draft: false
+draft: true
 h1: Technical SEO and experience signals for discoverable articles
 pillarKeyword: technical seo
 supportingKeyword: e-e-a-t signals

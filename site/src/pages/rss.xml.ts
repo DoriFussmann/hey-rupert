@@ -7,7 +7,7 @@ export async function GET() {
   const articles = await getPublishedArticles();
   return rss({
     title: SITE_NAME,
-    description: `Articles published on ${SITE_NAME}.`,
+    description: `Writing from ${SITE_NAME} on founder-led fundraising and investor outreach.`,
     site: SITE_URL,
     items: articles.map((article) => ({
       title: article.data.title,
