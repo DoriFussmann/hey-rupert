@@ -1,0 +1,68 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE_NAME } from "../config/site";
+import { getPublishedArticles } from "../lib/articles";
+import { displayDate } from "../lib/dates";
+import { sitePath } from "../lib/url";
+
+const services = (await getCollection("services")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+const latest = (await getPublishedArticles()).slice(0, 5);
+const title = SITE_NAME;
+const description =
+  "Articles, services, and team profiles published from this site's content collections.";
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/">
+  <main class="flex-1">
+    <section class="site-wrap pb-2xl pt-2xl lg:pb-3xl lg:pt-3xl">
+      <h1 class="type-display hero-reveal max-w-prose">{SITE_NAME}</h1>
+      <p class="type-body-lg hero-reveal mt-lg max-w-prose">
+        Welcome to this site. Articles, services, and team profiles are published
+        from the content collections.
+      </p>
+    </section>
+    <section id="services" class="site-wrap py-xl lg:py-2xl">
+      <h2 class="type-h2">Services</h2>
+      {
+        services.map((service) => (
+          <section
+            id={service.data.slug}
+            class="rule mt-lg grid gap-md pt-lg md:grid-cols-12 md:gap-lg"
+          >
+            <h3 class="type-h3 md:col-span-4">{service.data.title}</h3>
+            <p class="type-body max-w-prose md:col-span-8">{service.data.summary}</p>
+          </section>
+        ))
+      }
+    </section>
+    <section class="site-wrap py-xl lg:py-2xl">
+      <h2 class="type-h2">Latest Articles</h2>
+      <ul class="mt-lg">
+        {
+          latest.map((article) => (
+            <li class="rule">
+              <article class="grid gap-sm py-lg md:grid-cols-12 md:gap-lg md:py-xl">
+                <p class="md:col-span-4">
+                  <time class="type-body-sm" datetime={article.data.date.toISOString()}>
+                    {displayDate(article.data.date)}
+                  </time>
+                </p>
+                <div class="md:col-span-8">
+                  <h3 class="type-h3">
+                    <a class="font-medium no-underline" href={sitePath(`/articles/${article.data.slug}/`)}>
+                      {article.data.title}
+                    </a>
+                  </h3>
+                  <p class="type-body mt-sm max-w-prose">{article.data.description}</p>
+                </div>
+              </article>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </main>
+</BaseLayout>

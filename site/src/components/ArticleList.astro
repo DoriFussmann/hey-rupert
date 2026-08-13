@@ -1,0 +1,33 @@
+---
+import type { CollectionEntry } from "astro:content";
+import { displayDate } from "../lib/dates";
+import { sitePath } from "../lib/url";
+
+interface Props {
+  articles: CollectionEntry<"articles">[];
+}
+
+const { articles } = Astro.props;
+---
+
+<ul class="mt-xl grid gap-lg md:grid-cols-2 md:gap-xl">
+  {
+    articles.map((article) => (
+      <li class="rule pt-lg">
+        <article>
+          <h2 class="type-h3">
+            <a class="font-medium no-underline" href={sitePath(`/articles/${article.data.slug}/`)}>
+              {article.data.title}
+            </a>
+          </h2>
+          <p class="type-body mt-sm">{article.data.description}</p>
+          <p class="mt-md">
+            <time class="type-body-sm" datetime={article.data.date.toISOString()}>
+              {displayDate(article.data.date)}
+            </time>
+          </p>
+        </article>
+      </li>
+    ))
+  }
+</ul>

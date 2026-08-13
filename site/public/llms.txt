@@ -1,0 +1,7 @@
+# Site Name
+
+> Articles published on Site Name.
+
+## Articles
+
+- [How Technical SEO and E-E-A-T Shape Discoverable Content](https://example.com/articles/technical-seo-eeat-discoverable-content/): This template article demonstrates required frontmatter, author attribution, citations, and FAQ structured data for technical SEO and answer-engine visibility.

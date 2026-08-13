@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CMS — Articles</title>
+    <style>
+      .count-ok { color: green; }
+      .count-bad { color: red; }
+    </style>
+  </head>
+  <body data-page="articles">
+    <header>
+      <nav>
+        <a href="/">Articles</a>
+        <a href="/team.html">Team</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </nav>
+    </header>
+    <main>
+      <h1>New/Edit Article</h1>
+      <p id="status" role="status"></p>
+
+      <section>
+        <h2>Existing articles</h2>
+        <ul id="article-list"></ul>
+      </section>
+
+      <section>
+        <h2>Markdown file</h2>
+        <p>Drop a single <code>.md</code> file to scan frontmatter.</p>
+        <p id="md-drop" tabindex="0">Drop .md file here</p>
+        <p><input id="md-file" type="file" accept=".md,text/markdown" /></p>
+      </section>
+
+      <section id="editor" hidden>
+        <p id="missing-summary"></p>
+        <p id="warnings-summary"></p>
+        <ul id="checklist"></ul>
+
+        <section>
+          <h2>H1</h2>
+          <p>
+            <label>h1 <input id="field-h1" type="text" /></label>
+          </p>
+          <p>Optional — leave as-is to match the page title, or write a distinct H1 for the reader.</p>
+        </section>
+
+        <section>
+          <h2>Author</h2>
+          <p>
+            <label>author
+              <select id="field-author">
+                <option value="">Select a team member</option>
+              </select>
+            </label>
+          </p>
+        </section>
+
+        <section>
+          <h2>Images</h2>
+          <p>Up to 3 images. First dropped = hero. Second and third are optional. Maximum 10MB per file.</p>
+          <p>Alt text must be at least 10 characters describing the image. A path already in the markdown file does not count until a real file is dropped in this session.</p>
+          <p id="image-drop" tabindex="0">Drop images here (max 10MB each)</p>
+          <p><input id="image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" multiple /></p>
+          <ul id="image-slots"></ul>
+        </section>
+
+        <section>
+          <h2>Internal links</h2>
+          <ul id="internal-links"></ul>
+          <p><button type="button" id="add-internal">Add internal link</button></p>
+        </section>
+
+        <section>
+          <h2>External links</h2>
+          <ul id="external-links"></ul>
+          <p><button type="button" id="add-external">Add external link</button></p>
+        </section>
+
+        <section>
+          <h2>FAQs</h2>
+          <p>Optional — zero rows is valid.</p>
+          <ul id="faqs"></ul>
+          <p><button type="button" id="add-faq">Add FAQ</button></p>
+        </section>
+
+        <section id="collision" hidden>
+          <h2>Slug collision</h2>
+          <p id="collision-message"></p>
+          <p>
+            <label><input id="overwrite" type="checkbox" /> Overwrite existing file</label>
+          </p>
+        </section>
+
+        <p>
+          <button type="button" id="preview-jsonld">Preview JSON-LD</button>
+        </p>
+        <pre id="jsonld-preview"></pre>
+        <p id="generate-reason"></p>
+        <p>
+          <button type="button" id="generate" disabled>Generate</button>
+        </p>
+      </section>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

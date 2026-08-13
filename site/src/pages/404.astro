@@ -1,0 +1,20 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { SITE_NAME } from "../config/site";
+import { sitePath } from "../lib/url";
+
+const title = `Page not found — ${SITE_NAME}`;
+const description =
+  "This page does not exist. Return to the home page or browse published articles.";
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/404/">
+  <main class="site-wrap flex-1 py-2xl lg:py-3xl">
+    <h1 class="type-h1">Page not found</h1>
+    <p class="type-body mt-lg max-w-prose">
+      <a href={sitePath("/")}>Home</a>
+      ·
+      <a href={sitePath("/articles/")}>Articles</a>
+    </p>
+  </main>
+</BaseLayout>

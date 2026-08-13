@@ -1,0 +1,14 @@
+---
+import { SITE_NAME } from "../config/site";
+import { sitePath } from "../lib/url";
+---
+
+<header class="sticky top-0 z-10 border-b border-border bg-background">
+  <nav class="site-wrap flex min-h-16 flex-wrap items-center justify-between gap-md">
+    <a class="wordmark" href={sitePath("/")}>{SITE_NAME}</a>
+    <span class="flex items-center">
+      <a class="nav-link" href={sitePath("/articles/")}>Articles</a>
+      <a class="nav-link" href={sitePath("/team/")}>Team</a>
+    </span>
+  </nav>
+</header>

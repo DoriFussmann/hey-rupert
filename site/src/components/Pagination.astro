@@ -1,0 +1,34 @@
+---
+import { sitePath } from "../lib/url";
+
+interface Props {
+  current: number;
+  lastPage: number;
+}
+
+const { current, lastPage } = Astro.props;
+
+function pageHref(page: number): string {
+  return page <= 1 ? sitePath("/articles/") : sitePath(`/articles/page/${page}/`);
+}
+---
+
+{
+  lastPage > 1 && (
+    <nav class="mt-2xl flex flex-wrap items-center justify-between gap-md" aria-label="Pagination">
+      <p class="type-body-sm">Page {current} of {lastPage}</p>
+      <ul class="flex items-center gap-sm">
+        {current > 1 && (
+          <li>
+            <a class="nav-link" href={pageHref(current - 1)}>Previous</a>
+          </li>
+        )}
+        {current < lastPage && (
+          <li>
+            <a class="nav-link" href={pageHref(current + 1)}>Next</a>
+          </li>
+        )}
+      </ul>
+    </nav>
+  )
+}

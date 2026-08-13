@@ -1,0 +1,26 @@
+---
+interface Props {
+  links: { label: string; url: string }[];
+}
+
+const { links } = Astro.props;
+---
+
+<section class="rule mt-2xl pt-xl">
+  <h2 class="type-h2">Sources / Further reading</h2>
+  <ul class="mt-lg">
+    {
+      links.map((link) => (
+        <li class="border-b border-border">
+          <a
+            class="flex min-h-11 items-center py-md font-medium"
+            href={link.url}
+            rel="noopener noreferrer"
+          >
+            {link.label}
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+</section>

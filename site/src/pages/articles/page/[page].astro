@@ -1,0 +1,36 @@
+---
+import ArticleList from "../../../components/ArticleList.astro";
+import Pagination from "../../../components/Pagination.astro";
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import { SITE_NAME } from "../../../config/site";
+import { getPublishedArticles, paginate } from "../../../lib/articles";
+
+export async function getStaticPaths() {
+  const all = await getPublishedArticles();
+  const { lastPage } = paginate(all, 1);
+  const paths = [];
+  for (let pageNum = 2; pageNum <= lastPage; pageNum += 1) {
+    paths.push({ params: { page: String(pageNum) } });
+  }
+  return paths;
+}
+
+const pageNum = Number(Astro.params.page);
+const all = await getPublishedArticles();
+const page = paginate(all, pageNum);
+const title = `Articles — page ${page.current} — ${SITE_NAME}`;
+const description =
+  "All published articles on this site, listed by date with titles and descriptions.";
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath={`/articles/page/${page.current}/`}
+>
+  <main class="site-wrap flex-1 py-xl lg:py-2xl">
+    <h1 class="type-h1">Articles</h1>
+    <ArticleList articles={page.items} />
+    <Pagination current={page.current} lastPage={page.lastPage} />
+  </main>
+</BaseLayout>

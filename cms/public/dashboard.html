@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CMS — Dashboard</title>
+  </head>
+  <body data-page="dashboard">
+    <header>
+      <nav>
+        <a href="/">Articles</a>
+        <a href="/team.html">Team</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </nav>
+    </header>
+    <main>
+      <h1>Dashboard</h1>
+      <p id="status" role="status"></p>
+      <table>
+        <thead>
+          <tr>
+            <th>title</th>
+            <th>slug</th>
+            <th>draft</th>
+            <th>internalLinks</th>
+            <th>externalLinks</th>
+            <th>faqs</th>
+            <th>updatedDate</th>
+          </tr>
+        </thead>
+        <tbody id="dashboard-body"></tbody>
+      </table>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>

@@ -1,0 +1,37 @@
+---
+import { sitePath } from "../lib/url";
+
+interface Item {
+  label: string;
+  href?: string;
+}
+
+interface Props {
+  items: Item[];
+}
+
+const { items } = Astro.props;
+---
+
+<nav aria-label="Breadcrumb">
+  <ol class="flex flex-wrap items-center gap-xs type-body-sm">
+    {
+      items.map((item, index) => (
+        <li class="flex items-center gap-xs">
+          {index > 0 && (
+            <span class="text-accent-text" aria-hidden="true">
+              /
+            </span>
+          )}
+          {item.href && index < items.length - 1 ? (
+            <a href={sitePath(item.href)}>{item.label}</a>
+          ) : (
+            <span class="text-foreground" aria-current="page">
+              {item.label}
+            </span>
+          )}
+        </li>
+      ))
+    }
+  </ol>
+</nav>

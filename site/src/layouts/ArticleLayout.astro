@@ -1,0 +1,186 @@
+---
+import { getImage, Image } from "astro:assets";
+import { getEntry, render } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+import AuthorBio from "../components/AuthorBio.astro";
+import Breadcrumbs from "../components/Breadcrumbs.astro";
+import FaqBlock from "../components/FaqBlock.astro";
+import RelatedLinks from "../components/RelatedLinks.astro";
+import Sources from "../components/Sources.astro";
+import { displayDate, isoDate } from "../lib/dates";
+import { absoluteFileUrl, absoluteUrl, canonicalFrom } from "../lib/url";
+import BaseLayout from "./BaseLayout.astro";
+
+interface Props {
+  article: CollectionEntry<"articles">;
+}
+
+const { article } = Astro.props;
+const { data } = article;
+
+if (article.id !== data.slug) {
+  throw new Error(
+    `Article slug "${data.slug}" does not match filename "${article.id}"`,
+  );
+}
+
+const author = await getEntry("team", data.author);
+if (!author) {
+  throw new Error(
+    `Article "${data.slug}" references missing team member "${data.author}"`,
+  );
+}
+
+const { Content } = await render(article);
+const heading = data.h1 || data.title;
+const published = data.date;
+const updated = data.updatedDate || data.date;
+const canonicalPath = `/articles/${data.slug}/`;
+const canonicalUrl = canonicalFrom(data.canonical, canonicalPath);
+const pageUrl = absoluteUrl(canonicalPath);
+const orgId = `${absoluteUrl("/")}#organization`;
+const personId = `${absoluteUrl("/team/")}#${author.data.slug}`;
+
+const ogImageSource = data.ogImage || data.image;
+const ogOptimized = await getImage({
+  src: ogImageSource,
+  width: 1200,
+  height: 630,
+});
+const ogImageAbs = absoluteFileUrl(ogOptimized.src);
+
+const ogTitle = data.ogTitle || data.title;
+const ogDescription = data.ogDescription || data.description;
+
+const breadcrumbItems = [
+  { label: "Home", href: "/" },
+  { label: "Articles", href: "/articles/" },
+  { label: data.title },
+];
+
+const jsonLd: Record<string, unknown>[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": personId,
+    name: author.data.name,
+    jobTitle: author.data.role,
+    description: author.data.bio,
+    url: absoluteUrl("/team/"),
+    sameAs: author.data.sameAs,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": data.schemaType,
+    headline: data.title,
+    description: data.description,
+    datePublished: isoDate(published),
+    dateModified: isoDate(updated),
+    inLanguage: data.locale,
+    mainEntityOfPage: canonicalUrl,
+    image: ogImageAbs,
+    author: { "@id": personId },
+    publisher: { "@id": orgId },
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: breadcrumbItems.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: item.label,
+      ...(item.href ? { item: absoluteUrl(item.href) } : { item: pageUrl }),
+    })),
+  },
+];
+
+if (data.faqs && data.faqs.length > 0) {
+  jsonLd.push({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: data.faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  });
+}
+---
+
+<BaseLayout
+  title={data.title}
+  description={data.description}
+  canonicalPath={canonicalPath}
+  canonical={data.canonical}
+  robots={data.robots}
+  locale={data.locale}
+  ogTitle={ogTitle}
+  ogDescription={ogDescription}
+  ogImage={ogOptimized.src}
+  twitterCard={data.twitterCard}
+  ogType="article"
+  jsonLd={jsonLd}
+>
+  <main class="site-wrap flex-1 py-xl lg:py-2xl">
+    <article class="mx-auto max-w-prose">
+      <Breadcrumbs items={breadcrumbItems} />
+      <header class="mt-lg mb-xl">
+        <p class="type-label text-accent-text">{data.category}</p>
+        <h1 class="type-h1 mt-sm">{heading}</h1>
+        <p class="type-body-sm mt-md">
+          Published on <time datetime={isoDate(published)}>{displayDate(published)}</time>
+          · Updated on <time datetime={isoDate(updated)}>{displayDate(updated)}</time>
+        </p>
+      </header>
+      <Image
+        class="photo mb-xl h-auto w-full"
+        src={data.image}
+        alt={data.imageAlt}
+        width={1200}
+        height={630}
+        loading="eager"
+        sizes="(max-width: 680px) 100vw, 680px"
+      />
+      <div class="article-body">
+        <Content />
+      </div>
+      {
+        data.image2 && data.image2Alt && (
+          <Image
+            class="photo my-xl h-auto w-full"
+            src={data.image2}
+            alt={data.image2Alt}
+            width={1200}
+            height={630}
+            loading="lazy"
+            sizes="(max-width: 680px) 100vw, 680px"
+          />
+        )
+      }
+      {
+        data.image3 && data.image3Alt && (
+          <Image
+            class="photo my-xl h-auto w-full"
+            src={data.image3}
+            alt={data.image3Alt}
+            width={1200}
+            height={630}
+            loading="lazy"
+            sizes="(max-width: 680px) 100vw, 680px"
+          />
+        )
+      }
+      <AuthorBio author={author} />
+      {data.internalLinks && data.internalLinks.length > 0 && (
+        <RelatedLinks links={data.internalLinks} />
+      )}
+      {data.externalLinks && data.externalLinks.length > 0 && (
+        <Sources links={data.externalLinks} />
+      )}
+      {data.faqs && data.faqs.length > 0 && <FaqBlock faqs={data.faqs} />}
+    </article>
+  </main>
+</BaseLayout>

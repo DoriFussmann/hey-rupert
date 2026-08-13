@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>CMS — Team</title>
+  </head>
+  <body data-page="team">
+    <header>
+      <nav>
+        <a href="/">Articles</a>
+        <a href="/team.html">Team</a>
+        <a href="/dashboard.html">Dashboard</a>
+      </nav>
+    </header>
+    <main>
+      <h1>New/Edit Team Member</h1>
+      <p id="status" role="status"></p>
+      <section>
+        <h2>Existing team</h2>
+        <ul id="team-list"></ul>
+      </section>
+      <form id="team-form">
+        <p>
+          <label>name <input id="team-name" name="name" required /></label>
+        </p>
+        <p>
+          <label>slug <input id="team-slug" name="slug" required /></label>
+        </p>
+        <p>
+          <label>role <input id="team-role" name="role" required /></label>
+        </p>
+        <p>
+          <label>bio <textarea id="team-bio" name="bio" required></textarea></label>
+        </p>
+        <p>
+          <label>credentials <input id="team-credentials" name="credentials" /></label>
+        </p>
+        <p>
+          <label>photo <input id="team-photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" /></label>
+        </p>
+        <p>Maximum 10MB per file.</p>
+        <p>
+          <label>sameAs (one URL per line)
+            <textarea id="team-sameas" name="sameAs"></textarea>
+          </label>
+        </p>
+        <p>
+          <button type="submit">Save team member</button>
+        </p>
+      </form>
+    </main>
+    <script src="/app.js"></script>
+  </body>
+</html>
