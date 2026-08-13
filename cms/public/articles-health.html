@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMS — Articles Health</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body data-page="articles-health">
+    <div class="cms-shell">
+      <aside class="cms-nav" aria-label="CMS">
+        <p class="cms-nav-brand">Rupert CMS</p>
+        <nav>
+          <a href="/#articles" data-nav="articles">Articles</a>
+          <a href="/#add" data-nav="add">Add Article</a>
+          <a href="/articles-health.html" data-nav="health" class="is-active">Articles Health</a>
+          <a href="/articles-update.html" data-nav="update">Articles Update</a>
+          <a href="/team.html" data-nav="team">Team</a>
+          <a href="/dashboard.html" data-nav="dashboard">Dashboard</a>
+        </nav>
+      </aside>
+      <main class="cms-main">
+        <h1>Articles Health</h1>
+        <p id="status" role="status"></p>
+        <p id="session-banner" class="health-banner" hidden></p>
+
+        <p class="health-toolbar">
+          <button type="button" id="connect-all-internal">Connect All Internal Links</button>
+          <button type="button" id="propose-all-external">Propose All External Links</button>
+          <button type="button" id="scan-all-diagnostics">Scan All Diagnostics</button>
+        </p>
+        <p id="batch-progress" role="status"></p>
+
+        <section id="propose-review" class="health-review" hidden>
+          <h2>Proposed external links</h2>
+          <p>Review before anything is written. High-confidence candidates start checked.</p>
+          <ul id="propose-list"></ul>
+          <p>
+            <button type="button" id="add-selected">Add Selected</button>
+            <button type="button" id="clear-proposed">Clear</button>
+          </p>
+        </section>
+
+        <ul id="health-list" class="health-list"></ul>
+      </main>
+    </div>
+    <script src="/articles-health.js"></script>
+  </body>
+</html>

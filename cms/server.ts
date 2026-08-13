@@ -36,6 +36,27 @@ import {
   type StagedImage,
 } from "./lib/writeArticle.ts";
 import { deleteTeamMember, writeTeamMember } from "./lib/writeTeamMember.ts";
+import {
+  addExternalLinks,
+  connectInternalLinks,
+  connectMissingInternalLinks,
+  listPublishedArticles,
+  MAX_EXTERNAL_LINKS,
+} from "./lib/articleLinks.ts";
+import {
+  linksReport,
+  loadSitemapUrls,
+  scanMeta,
+  scanSchema,
+  scanSitemap,
+  speedReport,
+} from "./lib/articleHealth.ts";
+import { confirmUpdate, parseUpdatesFile, previewUpdates } from "./lib/articleUpdate.ts";
+import { proposeExternalLinks } from "./lib/externalLinkSearch.ts";
+import { loadCmsEnv, pagespeedConfigured, searchConfigured } from "./lib/env.ts";
+import { getPagespeedCache, scanPagespeed } from "./lib/pagespeed.ts";
+
+loadCmsEnv();
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.CMS_PORT) || 3001;
@@ -449,6 +470,164 @@ app.delete(
     if (!member) throw httpError(404, `Team member "${req.params.slug}" not found`);
     await deleteTeamMember(req.params.slug);
     res.json({ ok: true });
+  }),
+);
+
+app.get(
+  "/api/health/articles",
+  wrap(async (_req, res) => {
+    const [published, speedCache] = await Promise.all([
+      listPublishedArticles(),
+      getPagespeedCache(),
+    ]);
+    const configured = pagespeedConfigured();
+    res.json({
+      pagespeedConfigured: configured,
+      searchConfigured: searchConfigured(),
+      maxExternalLinks: MAX_EXTERNAL_LINKS,
+      articles: published.map((article) => ({
+        slug: article.slug,
+        title: article.title,
+        pillarKeyword: article.pillarKeyword,
+        supportingKeyword: article.supportingKeyword,
+        articleType: article.articleType,
+        targetKeyword: article.targetKeyword,
+        publishedUrl: article.publishedUrl,
+        internalLinks: article.internalLinks,
+        externalLinks: article.externalLinks,
+        links: linksReport(article, published),
+        meta: null,
+        schema: null,
+        sitemap: null,
+        speed: speedReport(speedCache[article.slug], configured, article.publishedUrl),
+      })),
+    });
+  }),
+);
+
+app.post(
+  "/api/health/scan",
+  wrap(async (req, res) => {
+    const published = await listPublishedArticles();
+    const slug = typeof req.body.slug === "string" ? req.body.slug : "";
+    const targets = slug
+      ? published.filter((article) => article.slug === slug)
+      : published;
+    if (slug && !targets.length) throw httpError(404, `Article "${slug}" not found`);
+    const sitemapUrls = await loadSitemapUrls();
+    const articles = [];
+    for (const article of targets) {
+      articles.push({
+        slug: article.slug,
+        meta: scanMeta(article),
+        schema: await scanSchema(article),
+        sitemap: scanSitemap(article, sitemapUrls),
+      });
+    }
+    res.json({ articles });
+  }),
+);
+
+app.post(
+  "/api/health/links/connect",
+  wrap(async (req, res) => {
+    const slug = String(req.body.slug || "");
+    if (!slug) throw httpError(400, "slug is required");
+    const result = Array.isArray(req.body.targetSlugs)
+      ? await connectInternalLinks(
+          slug,
+          req.body.targetSlugs.map((item: unknown) => String(item)),
+        )
+      : await connectMissingInternalLinks(slug);
+    res.json({ ok: true, slug, ...result });
+  }),
+);
+
+app.post(
+  "/api/health/links/propose",
+  wrap(async (req, res) => {
+    const published = await listPublishedArticles();
+    const slug = String(req.body.slug || "");
+    const article = published.find((item) => item.slug === slug);
+    if (!article) throw httpError(404, `Article "${slug}" not found`);
+    const proposed = await proposeExternalLinks(article);
+    res.json({ ok: true, slug, title: article.title, ...proposed });
+  }),
+);
+
+app.post(
+  "/api/health/links/add",
+  wrap(async (req, res) => {
+    const slug = String(req.body.slug || "");
+    if (!slug) throw httpError(400, "slug is required");
+    const links = Array.isArray(req.body.links) ? req.body.links : [];
+    const result = await addExternalLinks(slug, links);
+    res.json({ ok: true, slug, ...result, maxExternalLinks: MAX_EXTERNAL_LINKS });
+  }),
+);
+
+app.post(
+  "/api/health/pagespeed",
+  (req, res, next) => {
+    req.setTimeout(180000);
+    res.setTimeout(180000);
+    next();
+  },
+  wrap(async (req, res) => {
+    const slug = String(req.body.slug || "");
+    const published = await listPublishedArticles();
+    const article = published.find((item) => item.slug === slug);
+    if (!article) throw httpError(404, `Article "${slug}" not found`);
+    if (!article.publishedUrl) {
+      throw httpError(400, "Speed scan requires a published URL");
+    }
+    const entry = await scanPagespeed(slug, article.publishedUrl);
+    res.json({
+      ok: true,
+      slug,
+      speed: speedReport(entry, true, article.publishedUrl),
+    });
+  }),
+);
+
+app.post(
+  "/api/updates/preview",
+  wrap(async (req, res) => {
+    const content = String(req.body.content || "");
+    const filename = String(req.body.filename || "");
+    if (!content.trim()) throw httpError(400, "Dropped file is empty");
+    let entries;
+    try {
+      entries = parseUpdatesFile(content, filename);
+    } catch (error) {
+      throw httpError(
+        400,
+        `Could not parse file: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+    if (!entries.length) throw httpError(400, "No article updates found in file");
+    const preview = await previewUpdates(entries);
+    res.json({ ok: true, ...preview });
+  }),
+);
+
+app.post(
+  "/api/updates/confirm",
+  wrap(async (req, res) => {
+    const slug = String(req.body.slug || "");
+    const sources = Array.isArray(req.body.sources)
+      ? req.body.sources.map((item: { label?: unknown; title?: unknown; url?: unknown }) => ({
+          label: String(item.label || item.title || item.url || "").trim(),
+          url: String(item.url || "").trim(),
+        }))
+      : [];
+    const result = await confirmUpdate({
+      slug,
+      newParagraph: String(req.body.newParagraph || ""),
+      newUpdatedDate: String(req.body.newUpdatedDate || ""),
+      sources,
+    });
+    res.json({ ok: true, ...result });
   }),
 );
 

@@ -11,10 +11,12 @@ const description =
 <BaseLayout title={title} description={description} canonicalPath="/404/">
   <main class="site-wrap flex-1 py-2xl lg:py-3xl">
     <h1 class="type-h1">Page not found</h1>
-    <p class="type-body mt-lg max-w-prose">
-      <a href={sitePath("/")}>Home</a>
-      ·
-      <a href={sitePath("/articles/")}>Articles</a>
-    </p>
+      <p class="type-body mt-lg">
+        <a href={sitePath("/")}>Home</a>
+        ·
+        <a href={sitePath("/articles/")}>Articles</a>
+        ·
+        <a href={sitePath("/how-it-works/")}>How It Works</a>
+      </p>
   </main>
 </BaseLayout>

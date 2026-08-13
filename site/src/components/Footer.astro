@@ -1,30 +1,45 @@
 ---
 import { SITE_NAME } from "../config/site";
+import { sitePath } from "../lib/url";
 ---
 
 <footer class="mt-auto border-t border-border">
-  <div class="site-wrap flex min-h-16 flex-wrap items-center justify-between gap-md py-md">
-    <p class="type-body-sm">{SITE_NAME}</p>
-    <p>
-      <a class="nav-link gap-sm" href="/rss.xml">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          width="20"
-          height="20"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="1.5"
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          aria-hidden="true"
-        >
-          <path d="M4 11a9 9 0 0 1 9 9"></path>
-          <path d="M4 4a16 16 0 0 1 16 16"></path>
-          <circle cx="5" cy="19" r="1"></circle>
-        </svg>
-        RSS
-      </a>
+  <div class="site-wrap py-xl lg:py-2xl">
+    <p class="wordmark">{SITE_NAME}</p>
+    <p class="type-body mt-md">
+      Find the investors who actually fund startups like yours.
     </p>
+    <nav class="footer-links mt-xl" aria-label="Footer">
+      <a class="nav-link" href={sitePath("/how-it-works/")}>How It Works</a>
+      <a class="nav-link" href={sitePath("/database/")}>Our Database</a>
+      <a class="nav-link" href={sitePath("/articles/")}>Articles</a>
+      <a class="nav-link" href={sitePath("/book-call/")}>Book a call</a>
+      <a class="nav-link" href={sitePath("/privacy/")}>Privacy Policy</a>
+      <a class="nav-link" href={sitePath("/terms/")}>Terms</a>
+    </nav>
+    <div class="mt-xl flex min-h-16 flex-wrap items-center justify-between gap-md">
+      <p class="type-body-sm">© {SITE_NAME} 2026</p>
+      <p>
+        <a class="nav-link gap-sm" href="/rss.xml">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="20"
+            height="20"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M4 11a9 9 0 0 1 9 9"></path>
+            <path d="M4 4a16 16 0 0 1 16 16"></path>
+            <circle cx="5" cy="19" r="1"></circle>
+          </svg>
+          RSS
+        </a>
+      </p>
+    </div>
   </div>
 </footer>

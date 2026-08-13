@@ -36,6 +36,28 @@ faqs:
     answer: "The appendix is where you park material that would bloat the main deck but that engaged investors genuinely want: detailed financial model assumptions, a full competitive matrix, technical architecture diagrams, customer case studies, and team bios. Investors who are in active diligence absolutely read it. The main deck earns the meeting; the appendix answers the questions that come after. Keep the appendix organized and labeled so investors can navigate it without guidance."
   - question: Is it okay to send the same deck cold and in a meeting?
     answer: They serve different purposes and ideally should not be identical. A cold-outreach deck must stand alone — it gets read without you in the room, so every slide must be self-explanatory. A meeting deck is meant to be talked over, which means it can be sparser and more visual, with you providing the narrative verbally. Many founders build one deck but adjust density and copy length depending on whether it will be sent asynchronously or presented live.
+internalLinks:
+  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+    url: /articles/pitch-deck/
+  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+    url: /articles/pre-seed-pitch-deck/
+  - label: The Complete Seed Pitch Deck Guide for Raising Founders
+    url: /articles/seed-pitch-deck/
+  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+    url: /articles/seed-pitch-deck-examples/
+  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    url: /articles/seed-round-pitch-deck-template/
+externalLinks:
+  - label: The Best Startup Pitch Deck Examples - Powderkeg
+    url: https://powderkeg.com/pitch-deck-examples/
+  - label: Here's how to create a pre-seed pitch deck that gets you ...
+    url: https://www.docsend.com/blog/pre-seed-pitch-deck-guide/
+  - label: A Simple Template for Your Seed Funding Pitch Deck
+    url: https://underscore.vc/resources/how-to-pitch-to-investors/
+  - label: The Ultimate Pitch Deck Guide for Startup Founders
+    url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders
+  - label: The Essential Guide to Creating a Successful B2B SaaS ...
+    url: https://www.forumvc.com/thought-pieces/the-essential-guide-to-creating-a-compelling-b2b-saas-pitch-deck-for-pre-seed-and-seed-stage-founders
 ---
 ## How Many Slides Should a Seed Pitch Deck Have?
 
@@ -151,3 +173,6 @@ Median seed rounds are now taking four to six months from first investor meeting
 , reinforcing that founders need to start their outreach process earlier and run it with more discipline than the previous cycle required. Recent commentary on the August 2026 fundraising environment consistently emphasizes evidence over ambition: investors at every stage are prioritizing decks that demonstrate demand, repeat behavior, and a clear connection between the capital ask and a specific milestone, rather than vision-heavy pitches unsupported by early market proof.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

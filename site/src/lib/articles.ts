@@ -1,5 +1,6 @@
 import { getCollection } from "astro:content";
 
+/** Kept for a future listing that paginates once the catalog exceeds ~30–40 articles. */
 export const ARTICLE_PAGE_SIZE = 9;
 
 export async function getPublishedArticles() {

@@ -1,0 +1,17 @@
+<button type="button" class="back-to-top" id="back-to-top" hidden>
+  Back to top
+</button>
+
+<script>
+  const button = document.getElementById("back-to-top");
+  if (button) {
+    const toggle = () => {
+      button.hidden = window.scrollY < 400;
+    };
+    window.addEventListener("scroll", toggle, { passive: true });
+    button.addEventListener("click", () => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+    toggle();
+  }
+</script>

@@ -35,6 +35,28 @@ faqs:
     answer: At seed stage, the team slide almost always performs better in the first half of the deck — ideally slides three through five — rather than at the back. Investors form pattern-matching judgments quickly, and burying the team until slide twelve means many investors have already made a provisional decision before they see your strongest credibility signal. If your founding team has domain expertise, relevant exits, or deep sector experience, front-loading that context colours every subsequent slide positively.
   - question: What traction does a seed investor actually want to see in 2026?
     answer: "The bar has risen. Many seed investors in 2026 expect $300K–$500K in ARR for B2B SaaS companies, alongside evidence of efficient growth and early unit economics. For consumer or marketplace businesses, strong retention and month-over-month user growth can substitute for revenue. If you are pre-revenue, the traction slide should show concrete validation signals: signed LOIs, design partner agreements, waitlist-to-customer conversion rates, or pilot data with named customers — not an unvalidated projection."
+internalLinks:
+  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+    url: /articles/pitch-deck/
+  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+    url: /articles/pre-seed-pitch-deck/
+  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    url: /articles/seed-funding-pitch-deck-faq/
+  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+    url: /articles/seed-pitch-deck-examples/
+  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    url: /articles/seed-round-pitch-deck-template/
+externalLinks:
+  - label: "The Perfect Seed Pitch Deck: 10 Slides You Need to Win ..."
+    url: https://www.reddit.com/r/startups/comments/1lcyta0/the_perfect_seed_pitch_deck_10_slides_you_need_to/
+  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
+    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+  - label: "How to Make a Pitch Deck: My Guide to Winning Investors ..."
+    url: https://medium.com/@isabellapennington/how-to-make-a-pitch-deck-my-guide-to-winning-investors-in-2025-c749a8b6e458
+  - label: A Simple Template for Your Seed Funding Pitch Deck
+    url: https://underscore.vc/resources/how-to-pitch-to-investors/
+  - label: How to craft a winning pitch deck
+    url: https://mercury.com/blog/ultimate-pitch-guide-crafting-pitch-deck
 ---
 # The Complete Seed Pitch Deck Guide for Raising Founders
 
@@ -207,3 +229,6 @@ VCs spend an average of three minutes and forty-four seconds reviewing seed pitc
 , and the volume of AI-generated submissions continues to compress that window further, reinforcing the importance of front-loading your strongest proof point rather than building to it.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

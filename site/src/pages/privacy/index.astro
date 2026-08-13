@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE_NAME } from "../../config/site";
+
+const title = `Privacy Policy — ${SITE_NAME}`;
+const description =
+  "Privacy Policy for Rupert. This page will be published with the final policy text.";
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/privacy/"
+  robots="noindex, follow"
+>
+  <main class="site-wrap flex-1 py-2xl lg:py-3xl">
+    <h1 class="type-h1">Privacy Policy</h1>
+  </main>
+</BaseLayout>

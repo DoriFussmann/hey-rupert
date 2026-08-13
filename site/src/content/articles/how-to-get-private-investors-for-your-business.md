@@ -36,6 +36,28 @@ faqs:
     answer: Private investors move faster than institutional VCs, but the process still takes time. A realistic timeline from first outreach to a signed term sheet is 8–16 weeks, depending on how prepared your materials are, how warm your relationships are, and how disciplined your follow-up process is. Founders who let conversations go cold without structured follow-up often extend that timeline significantly.
   - question: Do I need a lead investor before approaching other private investors?
     answer: Having a lead investor — someone willing to anchor the round and set terms — makes it considerably easier to close other private backers. Angels and family offices are often more comfortable committing once a credible lead has done diligence and set a price. That said, many angel rounds close without a formal lead; in those cases, a signed first commitment from any credible investor creates the social proof that moves others off the fence.
+internalLinks:
+  - label: "How to Find Investors for Your Startup: The Complete Guide"
+    url: /articles/angel-investors/
+  - label: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
+    url: /articles/angel-investors-vs-venture-capital/
+  - label: "How to Get Investors for Your Business: A Founder's Guide"
+    url: /articles/how-to-get-investors-for-your-business/
+  - label: "Get Investors for Your Business Idea: Readiness Checklist"
+    url: /articles/how-to-get-investors-for-your-business-idea/
+  - label: What Investors Looking for Projects to Fund Actually Want
+    url: /articles/investors-looking-for-projects-to-fund/
+externalLinks:
+  - label: How to Get Investors for Your Startup Business
+    url: https://www.hubspot.com/startups/fundraising/how-to-get-investors-for-startup
+  - label: "A Startup Guide to Funding: How to Find Investors"
+    url: https://vivatech.com/news/a-startup-guide-to-funding-how-to-find-investors
+  - label: "Angel investors: How to find them"
+    url: https://www.bdc.ca/en/articles-tools/start-buy-business/start-business/angel-investors-how-find-them
+  - label: "Finding Investors: What Entrepreneurs Should Know"
+    url: https://www.indeed.com/hire/c/info/finding-investors
+  - label: OpenVC | Find investors for your startup — raise for free.
+    url: https://www.openvc.app/
 ---
 ## Why Private Investors Deserve a Dedicated Strategy
 
@@ -127,3 +149,6 @@ early-stage valuations have often remained stubborn even as funding discipline h
  Founders who arrive with a disciplined process, sector-aligned targeting, and credible proof points are best positioned to capture capital from a market that is recovering in volume but tightening in selectivity.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

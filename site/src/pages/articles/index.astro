@@ -1,12 +1,17 @@
 ---
 import ArticleList from "../../components/ArticleList.astro";
-import Pagination from "../../components/Pagination.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SITE_NAME } from "../../config/site";
-import { getPublishedArticles, paginate } from "../../lib/articles";
+import { getPublishedArticles } from "../../lib/articles";
 
-const all = await getPublishedArticles();
-const page = paginate(all, 1);
+const articles = await getPublishedArticles();
+const topics = [
+  ...new Set(
+    articles
+      .map((article) => article.data.pillarKeyword?.trim())
+      .filter((value): value is string => Boolean(value)),
+  ),
+].sort((a, b) => a.localeCompare(b));
 const title = `Articles — ${SITE_NAME}`;
 const description =
   "Articles from Rupert on founder-led fundraising, investor outreach, and keeping ownership of every relationship.";
@@ -15,7 +20,114 @@ const description =
 <BaseLayout title={title} description={description} canonicalPath="/articles/">
   <main class="site-wrap flex-1 py-xl lg:py-2xl">
     <h1 class="type-h1">Articles</h1>
-    <ArticleList articles={page.items} />
-    <Pagination current={page.current} lastPage={page.lastPage} />
+    {/*
+      Pagination was removed so title + topic filters can run against the full
+      catalog. Revisit with conditional pagination before the list grows past
+      ~30–40 articles.
+    */}
+    <form class="article-filters" id="article-filters" role="search">
+      <div class="filter-field">
+        <label class="type-label" for="article-search">Search</label>
+        <div class="filter-control">
+          <input
+            id="article-search"
+            type="search"
+            name="q"
+            placeholder="Filter by title"
+            autocomplete="off"
+          />
+          <button type="button" id="article-search-clear" hidden>Clear</button>
+        </div>
+      </div>
+      <div class="filter-field">
+        <label class="type-label" for="article-topic">Topic</label>
+        <div class="filter-control">
+          <select id="article-topic" name="topic">
+            <option value="">All topics</option>
+            {topics.map((topic) => (
+              <option value={topic}>{topic}</option>
+            ))}
+          </select>
+          <button type="button" id="article-topic-clear" hidden>Clear</button>
+        </div>
+      </div>
+    </form>
+    <p class="type-body mt-xl" id="article-filter-empty" hidden>
+      No articles match these filters.
+    </p>
+    <ArticleList articles={articles} />
   </main>
 </BaseLayout>
+
+<script>
+  const form = document.getElementById("article-filters");
+  const search = document.getElementById("article-search") as HTMLInputElement | null;
+  const topic = document.getElementById("article-topic") as HTMLSelectElement | null;
+  const searchClear = document.getElementById("article-search-clear");
+  const topicClear = document.getElementById("article-topic-clear");
+  const empty = document.getElementById("article-filter-empty");
+  const items = [
+    ...document.querySelectorAll<HTMLElement>("#article-grid > li"),
+  ];
+
+  function currentParams() {
+    return new URLSearchParams(window.location.search);
+  }
+
+  function applyFilters({ push = false } = {}) {
+    const query = (search?.value || "").trim().toLowerCase();
+    const selected = topic?.value || "";
+    let visible = 0;
+
+    for (const item of items) {
+      const titleMatch =
+        !query || (item.dataset.title || "").includes(query);
+      const topicMatch = !selected || item.dataset.topic === selected;
+      const show = titleMatch && topicMatch;
+      item.hidden = !show;
+      if (show) visible += 1;
+    }
+
+    if (empty) empty.hidden = visible > 0;
+    if (searchClear) searchClear.hidden = !query;
+    if (topicClear) topicClear.hidden = !selected;
+
+    const url = new URL(window.location.href);
+    if (query) url.searchParams.set("q", (search?.value || "").trim());
+    else url.searchParams.delete("q");
+    if (selected) url.searchParams.set("topic", selected);
+    else url.searchParams.delete("topic");
+
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (next !== current) {
+      history[push ? "pushState" : "replaceState"](null, "", next);
+    }
+  }
+
+  function syncFromUrl() {
+    const params = currentParams();
+    if (search) search.value = params.get("q") || "";
+    if (topic) topic.value = params.get("topic") || "";
+    applyFilters();
+  }
+
+  form?.addEventListener("submit", (event) => {
+    event.preventDefault();
+    applyFilters({ push: true });
+  });
+  search?.addEventListener("input", () => applyFilters());
+  topic?.addEventListener("change", () => applyFilters({ push: true }));
+  searchClear?.addEventListener("click", () => {
+    if (search) search.value = "";
+    applyFilters({ push: true });
+    search?.focus();
+  });
+  topicClear?.addEventListener("click", () => {
+    if (topic) topic.value = "";
+    applyFilters({ push: true });
+    topic?.focus();
+  });
+  window.addEventListener("popstate", syncFromUrl);
+  syncFromUrl();
+</script>

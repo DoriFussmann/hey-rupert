@@ -1,0 +1,128 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
+import { SITE_NAME } from "../../config/site";
+
+const title = `Book a Call — ${SITE_NAME}`;
+const description =
+  "Book a 30-minute call to learn how Rupert finds investors, builds campaigns, and whether the service is the right fit for your raise. No deck required.";
+
+const bullets = [
+  "Learn how Rupert finds your investors",
+  "Understand how campaigns are built",
+  "Leave with a clear next step",
+];
+
+const captions = [
+  {
+    title: "Outreach performance, tracked live",
+    brief:
+      "Still of a campaign table on paper-white: sent, opened, replied, bounced. No dark-mode charts, no neon graphs. Looks like a typeset report, not a SaaS dashboard.",
+  },
+  {
+    title: "Investors, matched and scored",
+    brief:
+      "A printed shortlist: firm name, stage, sector, a handwritten score in the margin. Warm matte photograph of the page on a desk. Not a Kanban board.",
+  },
+  {
+    title: "Campaigns, sent and tracked",
+    brief:
+      "A sequence on paper — subject line, send date, follow-up marked. Editorial still life. If a screen appears, it should be secondary and unreadable as UI.",
+  },
+];
+
+const stages = ["Pre-seed", "Seed", "Series A", "Series B+", "Not sure"];
+const raising = [
+  "Yes, currently raising",
+  "Starting in the next 3 months",
+  "Just exploring",
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/book-call/">
+  <main class="flex-1">
+    <section class="site-wrap grid gap-2xl py-2xl lg:grid-cols-12 lg:gap-lg lg:py-3xl">
+      <div class="lg:col-span-6">
+        <h1 class="type-h1">Book your call.</h1>
+        <p class="type-body-lg mt-lg">
+          30 minutes to learn how Rupert works and whether it's the right fit
+          for your raise. We'll walk you through the service, answer your
+          questions, and show you how we'd find the investors that match your
+          round. No deck required.
+        </p>
+        <ul class="mt-xl">
+          {
+            bullets.map((item) => (
+              <li class="rule py-md type-body">{item}</li>
+            ))
+          }
+        </ul>
+        <div class="mt-2xl grid gap-lg">
+          {
+            captions.map((item) => (
+              <ImagePlaceholder
+                ratio="panel"
+                label={item.title}
+                brief={item.brief}
+              />
+            ))
+          }
+        </div>
+      </div>
+
+      <div class="lg:col-span-6">
+        <form class="lead-form" action="#" method="get" onsubmit="return false">
+          <p class="type-h3">Tell us about the raise</p>
+
+          <p class="mt-xl">
+            <label class="type-label" for="full-name">Full name</label>
+            <input class="field-input" id="full-name" name="name" type="text" autocomplete="name" />
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="work-email">Work email</label>
+            <input class="field-input" id="work-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" />
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="startup-name">Startup name</label>
+            <input class="field-input" id="startup-name" name="startup" type="text" />
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="website">Website or LinkedIn</label>
+            <input class="field-input" id="website" name="website" type="text" />
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="stage">Stage</label>
+            <select class="field-select" id="stage" name="stage">
+              <option value="">Select stage</option>
+              {stages.map((option) => <option value={option}>{option}</option>)}
+            </select>
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="raising">Are you actively raising right now?</label>
+            <select class="field-select" id="raising" name="raising">
+              <option value="">Select timing</option>
+              {raising.map((option) => <option value={option}>{option}</option>)}
+            </select>
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="geography">Geography (HQ)</label>
+            <input class="field-input" id="geography" name="geography" type="text" />
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="industry">Industry / sector</label>
+            <input class="field-input" id="industry" name="industry" type="text" />
+          </p>
+          <p class="mt-lg">
+            <label class="type-label" for="notes">Anything Rupert should know?</label>
+            <textarea class="field-textarea" id="notes" name="notes"></textarea>
+          </p>
+          <p class="mt-xl">
+            <button class="btn-primary btn-inert" type="button">
+              Submit & Pick a Time
+            </button>
+          </p>
+        </form>
+      </div>
+    </section>
+  </main>
+</BaseLayout>

@@ -36,6 +36,28 @@ faqs:
     answer: A cap table with stacked SAFEs, unfavorable prior note terms, conflicted co-investors, or disproportionate early dilution can quietly kill a deal that looks attractive on the surface. Institutional investors run detailed cap table analysis during diligence, and anything that creates uncertainty about their ownership stake, return potential, or governance rights after the round will slow or derail conversations. Founders should audit and simplify their cap table before entering a formal raise process.
   - question: Why do investors say they back founders for 7–10 years?
     answer: Venture-backed companies typically take seven to ten years from initial investment to a meaningful liquidity event. That means an investor writing a check at seed is committing to a decade-long working relationship. Coachability and communication style matter as much as the business fundamentals because investors need to trust that a founder will be transparent through hard periods, receptive to strategic input, and capable of growing as a leader as the company scales — qualities that compound in value over time.
+internalLinks:
+  - label: "How to Find Investors for Your Startup: The Complete Guide"
+    url: /articles/angel-investors/
+  - label: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
+    url: /articles/angel-investors-vs-venture-capital/
+  - label: "How to Get Investors for Your Business: A Founder's Guide"
+    url: /articles/how-to-get-investors-for-your-business/
+  - label: "Get Investors for Your Business Idea: Readiness Checklist"
+    url: /articles/how-to-get-investors-for-your-business-idea/
+  - label: "How to Get Private Investors for Your Business: A Guide"
+    url: /articles/how-to-get-private-investors-for-your-business/
+externalLinks:
+  - label: OpenVC | Find investors for your startup — raise for free.
+    url: https://www.openvc.app/
+  - label: What Investors Look For & Questions They Will Ask
+    url: https://www.svb.com/startup-insights/startup-strategy/what-investors-look-for-povs-from-the-other-side-of-the-table/
+  - label: Tips for Pitching to Small Business Investors
+    url: https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/
+  - label: Finding Investors in PitchBook - Business Research Basics
+    url: https://guides.lib.udel.edu/business/investors
+  - label: "Angel investors: How to find them"
+    url: https://www.bdc.ca/en/articles-tools/start-buy-business/start-business/angel-investors-how-find-them
 ---
 # What Investors Looking for Projects to Fund Actually Want
 
@@ -155,3 +177,6 @@ While overall investment dollars remained steady, the number of individual deals
 Many generalist VC funds are becoming more cautious, while highly specialised investors continue focusing on sectors where they possess deep expertise and strong networks — making founder-market fit even more important than before.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

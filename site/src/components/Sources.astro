@@ -7,7 +7,7 @@ const { links } = Astro.props;
 ---
 
 <section class="rule mt-2xl pt-xl">
-  <h2 class="type-h2">Sources / Further reading</h2>
+  <h2 class="type-h2">Sources</h2>
   <ul class="mt-lg">
     {
       links.map((link) => (
@@ -15,6 +15,7 @@ const { links } = Astro.props;
           <a
             class="flex min-h-11 items-center py-md font-medium"
             href={link.url}
+            target="_blank"
             rel="noopener noreferrer"
           >
             {link.label}

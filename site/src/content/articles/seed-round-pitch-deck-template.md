@@ -36,6 +36,28 @@ faqs:
     answer: "The ask slide should specify four things: (1) the exact amount you're raising, (2) the deal structure — typically a SAFE with a valuation cap or a priced round with an implied valuation, (3) how the capital will be deployed across the next 18–24 months of runway, and (4) the specific milestone that will trigger your next raise. A vague ask — 'we're raising $2M to grow the team' — signals that you haven't thought through your capital plan. A specific ask — 'we're raising $2M to reach $1M ARR by Q2 2027, which positions us for a Series A' — signals financial discipline."
   - question: Do seed investors care about financial projections at this stage?
     answer: Yes, but not in the way founders often think. Investors know seed-stage projections are built on assumptions, not track records. What they're actually evaluating is whether your assumptions are grounded, whether you understand the key drivers of your business, and whether the opportunity is large enough to return the fund if things go well. A clean three-year model with a simple revenue build, a path to gross margin improvement, and a burn rate tied to your raise is far more credible than a dense spreadsheet that projects precision you don't yet have.
+internalLinks:
+  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+    url: /articles/pitch-deck/
+  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+    url: /articles/pre-seed-pitch-deck/
+  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    url: /articles/seed-funding-pitch-deck-faq/
+  - label: The Complete Seed Pitch Deck Guide for Raising Founders
+    url: /articles/seed-pitch-deck/
+  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+    url: /articles/seed-pitch-deck-examples/
+externalLinks:
+  - label: Pitch Deck Statistics | 22 Must Know Stats and Facts
+    url: https://www.pitchdeckcreators.com/blog-posts/pitch-deck-statistics-22-must-know-facts
+  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
+    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+  - label: Here's how to create a pre-seed pitch deck that gets you ...
+    url: https://www.docsend.com/blog/pre-seed-pitch-deck-guide/
+  - label: The Best Startup Pitch Deck Examples - Powderkeg
+    url: https://powderkeg.com/pitch-deck-examples/
+  - label: A Simple Template for Your Seed Funding Pitch Deck
+    url: https://underscore.vc/resources/how-to-pitch-to-investors/
 ---
 A seed round pitch deck is not a company brochure. It is a sequenced argument — a series of claims, each building on the last, designed to move a skeptical investor from "I've never heard of this company" to "I want to take a meeting." The sequence is not arbitrary. Every slide has a job. And the order in which you make your case determines whether the story lands or quietly falls apart before the fifth slide.
 
@@ -187,3 +209,6 @@ investors expect another 10–25% year-over-year increase in venture funding in 
  For founders building pitch decks today, the practical implication is that conviction-level evidence — real traction, specific milestones, and a defensible market position — is no longer a differentiator; it is the minimum bar.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

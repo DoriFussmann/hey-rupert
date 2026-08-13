@@ -6,6 +6,7 @@ dist/
 !.env.example
 cms/staging/*
 !cms/staging/.gitkeep
+cms/data/pagespeed-cache.json
 *.log
 .DS_Store
 Thumbs.db

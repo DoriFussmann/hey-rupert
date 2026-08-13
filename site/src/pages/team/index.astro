@@ -2,6 +2,7 @@
 import { Image } from "astro:assets";
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
 import { SITE_NAME } from "../../config/site";
 
 const members = await getCollection("team");
@@ -28,7 +29,7 @@ const description =
             height={200}
             loading="lazy"
           />
-          <div class="max-w-prose">
+          <div>
             <p class="type-label">{member.data.role}</p>
             <p class="type-body mt-md">{member.data.bio}</p>
             {member.data.credentials && (
@@ -50,4 +51,5 @@ const description =
       ))
     }
   </main>
+  <CtaBanner />
 </BaseLayout>

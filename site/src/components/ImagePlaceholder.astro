@@ -1,0 +1,22 @@
+---
+interface Props {
+  brief: string;
+  label?: string;
+  ratio?: "hero" | "wide" | "square" | "portrait" | "panel";
+  class?: string;
+}
+
+const {
+  brief,
+  label = "Photograph to commission",
+  ratio = "wide",
+  class: className,
+} = Astro.props;
+---
+
+<figure class:list={["image-ph", `image-ph--${ratio}`, className]}>
+  <div class="image-ph__frame" role="img" aria-label={`${label}. ${brief}`}>
+    <p class="type-label text-accent-text">{label}</p>
+    <p class="type-body-sm mt-sm">{brief}</p>
+  </div>
+</figure>

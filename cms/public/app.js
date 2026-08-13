@@ -76,6 +76,7 @@ function initArticles() {
       image3: { id: null, name: "", alt: "" },
     },
     editingField: null,
+    siteUrl: "",
   };
 
   const batch = {
@@ -134,17 +135,17 @@ function initArticles() {
   const batchImageDrop = document.getElementById("batch-image-drop");
   const batchImageFile = document.getElementById("batch-image-file");
 
-  bindDrop(mdDrop, (files) => parseMarkdownFiles(files));
+  bindDrop(mdDrop, (files) => parseMarkdownFiles(files), mdFile);
   mdFile.addEventListener("change", () => {
     if (mdFile.files?.length) parseMarkdownFiles(mdFile.files);
     mdFile.value = "";
   });
-  bindDrop(imageDrop, (files) => addImages(files));
+  bindDrop(imageDrop, (files) => addImages(files), imageFile);
   imageFile.addEventListener("change", () => {
     if (imageFile.files?.length) addImages(imageFile.files);
     imageFile.value = "";
   });
-  bindDrop(batchImageDrop, (files) => applyBatchHero(files[0]));
+  bindDrop(batchImageDrop, (files) => applyBatchHero(files[0]), batchImageFile);
   batchImageFile.addEventListener("change", () => {
     if (batchImageFile.files?.[0]) applyBatchHero(batchImageFile.files[0]);
     batchImageFile.value = "";
@@ -184,31 +185,77 @@ function initArticles() {
     state.overwrite = event.target.checked;
     validate();
   });
-  document.getElementById("preview-jsonld").addEventListener("click", previewJsonLd);
   document.getElementById("generate").addEventListener("click", generate);
 
   loadLists().then(renderArticleList).catch((error) => setStatus(error.message));
+  syncView();
+  window.addEventListener("hashchange", syncView);
 
-  function bindDrop(element, onFiles) {
-    element.addEventListener("dragover", (event) => {
-      event.preventDefault();
-    });
-    element.addEventListener("drop", (event) => {
-      event.preventDefault();
-      const files = event.dataTransfer?.files;
-      if (files?.length) onFiles(files);
+  function currentView() {
+    return window.location.hash === "#add" ? "add" : "articles";
+  }
+
+  function syncView() {
+    const view = currentView();
+    const articlesView = document.getElementById("view-articles");
+    const addView = document.getElementById("view-add");
+    if (articlesView) articlesView.hidden = view !== "articles";
+    if (addView) addView.hidden = view !== "add";
+    document.querySelectorAll("[data-nav]").forEach((link) => {
+      link.classList.toggle("is-active", link.dataset.nav === view);
     });
   }
 
+  function showAddView() {
+    if (window.location.hash !== "#add") window.location.hash = "add";
+    else syncView();
+  }
+
+  function showArticlesView() {
+    if (window.location.hash !== "#articles" && window.location.hash !== "") {
+      window.location.hash = "articles";
+    } else {
+      syncView();
+    }
+  }
+
+  function bindDrop(element, onFiles, fileInput) {
+    if (!element) return;
+    element.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      element.classList.add("is-dragover");
+    });
+    element.addEventListener("dragleave", () => {
+      element.classList.remove("is-dragover");
+    });
+    element.addEventListener("drop", (event) => {
+      event.preventDefault();
+      element.classList.remove("is-dragover");
+      const files = event.dataTransfer?.files;
+      if (files?.length) onFiles(files);
+    });
+    if (fileInput) {
+      element.addEventListener("click", () => fileInput.click());
+      element.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          fileInput.click();
+        }
+      });
+    }
+  }
+
   async function loadLists() {
-    const [articles, team, routes] = await Promise.all([
+    const [articles, team, routes, config] = await Promise.all([
       readJson(await fetch("/articles")),
       readJson(await fetch("/api/team")),
       readJson(await fetch("/api/routes")),
+      readJson(await fetch("/api/config")),
     ]);
     state.articles = articles.articles || [];
     state.team = team.team || [];
     state.routes = routes.routes || [];
+    state.siteUrl = String(config.siteUrl || "").replace(/\/+$/, "");
     fillAuthorSelect(document.getElementById("field-author"));
     fillAuthorSelect(document.getElementById("batch-author"));
   }
@@ -273,6 +320,19 @@ function initArticles() {
     }
     for (const article of state.articles) {
       const item = document.createElement("li");
+      const card = document.createElement("article");
+      card.className = "cms-card";
+      const title = document.createElement("a");
+      title.className = "cms-card-title";
+      title.href = `${state.siteUrl}/articles/${article.slug}/`;
+      title.target = "_blank";
+      title.rel = "noopener noreferrer";
+      title.textContent = article.title || article.slug;
+      const meta = document.createElement("p");
+      meta.className = "cms-card-meta";
+      meta.textContent = `${article.slug}${article.draft ? " · draft" : ""}`;
+      const actions = document.createElement("div");
+      actions.className = "cms-card-actions";
       const edit = document.createElement("button");
       edit.type = "button";
       edit.textContent = "Edit";
@@ -285,19 +345,15 @@ function initArticles() {
       del.type = "button";
       del.textContent = "Delete";
       del.addEventListener("click", () => removeArticle(article.slug));
-      item.append(
-        `${article.title} (${article.slug})${article.draft ? " [draft]" : ""} `,
-        edit,
-        " ",
-        unpublish,
-        " ",
-        del,
-      );
+      actions.append(edit, unpublish, del);
+      card.append(title, meta, actions);
+      item.append(card);
       list.append(item);
     }
   }
 
   async function parseMarkdownFiles(fileList) {
+    showAddView();
     const files = Array.from(fileList || []).filter((file) => file.name.endsWith(".md"));
     if (!files.length) {
       setStatus("Please drop .md files.");
@@ -369,6 +425,7 @@ function initArticles() {
   }
 
   async function loadArticle(slug) {
+    showAddView();
     await runBusy("Loading article…", async () => {
       const payload = await readJson(await fetch(`/api/articles/${encodeURIComponent(slug)}`));
       hideBatch();
@@ -421,33 +478,18 @@ function initArticles() {
     });
   }
 
-  function nextImageSlot() {
-    if (!state.images.image.id) return "image";
-    if (!state.images.image2.id) return "image2";
-    if (!state.images.image3.id) return "image3";
-    return null;
-  }
-
   async function addImages(fileList) {
-    const files = Array.from(fileList);
+    const file = Array.from(fileList)[0];
+    if (!file) return;
     await runBusy("Uploading image…", async () => {
-      for (const file of files) {
-        const slot = nextImageSlot();
-        if (!slot) {
-          setStatus("Only 3 images can be attached.");
-          return;
-        }
-        const form = new FormData();
-        form.append("file", file);
-        const staged = await readJson(
-          await fetch("/api/stage-image", { method: "POST", body: form }),
-        );
-        state.images[slot].id = staged.id;
-        state.images[slot].name = staged.originalName;
-        if (slot === "image") state.data.imageAlt = state.images.image.alt;
-        if (slot === "image2") state.data.image2Alt = state.images.image2.alt;
-        if (slot === "image3") state.data.image3Alt = state.images.image3.alt;
-      }
+      const form = new FormData();
+      form.append("file", file);
+      const staged = await readJson(
+        await fetch("/api/stage-image", { method: "POST", body: form }),
+      );
+      state.images.image.id = staged.id;
+      state.images.image.name = staged.originalName;
+      state.data.imageAlt = state.images.image.alt;
       renderImages();
       await validate();
       setStatus("Image staged. Add alt text of at least 10 characters.");
@@ -457,27 +499,21 @@ function initArticles() {
   function renderImages() {
     const list = document.getElementById("image-slots");
     list.replaceChildren();
-    for (const slot of ["image", "image2", "image3"]) {
-      const item = document.createElement("li");
-      const label = slot === "image" ? "Hero image" : slot;
-      const current = state.images[slot];
-      const altId = `${slot}-alt`;
-      item.append(`${label}: ${current.id ? current.name : "not uploaded this session"}`);
-      const alt = document.createElement("input");
-      alt.id = altId;
-      alt.type = "text";
-      alt.value = current.alt;
-      alt.placeholder = "Alt text (min 10 characters)";
-      alt.addEventListener("input", () => {
-        current.alt = alt.value;
-        if (slot === "image") state.data.imageAlt = alt.value;
-        if (slot === "image2") state.data.image2Alt = alt.value;
-        if (slot === "image3") state.data.image3Alt = alt.value;
-        validate();
-      });
-      item.append(" ", alt);
-      list.append(item);
-    }
+    const current = state.images.image;
+    const item = document.createElement("li");
+    item.append(`Hero image: ${current.id ? current.name : "not uploaded this session"}`);
+    const alt = document.createElement("input");
+    alt.id = "image-alt";
+    alt.type = "text";
+    alt.value = current.alt;
+    alt.placeholder = "Alt text (min 10 characters)";
+    alt.addEventListener("input", () => {
+      current.alt = alt.value;
+      state.data.imageAlt = alt.value;
+      validate();
+    });
+    item.append(" ", alt);
+    list.append(item);
   }
 
   function renderRepeatables() {
@@ -557,17 +593,29 @@ function initArticles() {
     return asString(value);
   }
 
+  function hiddenFromChecklist(field) {
+    return [
+      "h1",
+      "author",
+      "image",
+      "imageAlt",
+      "image2",
+      "image2Alt",
+      "image3",
+      "image3Alt",
+    ].includes(field);
+  }
+
   function renderChecklist() {
     const list = document.getElementById("checklist");
     list.replaceChildren();
     for (const field of checklistFields) {
-      if (field === "h1") continue;
+      if (hiddenFromChecklist(field)) continue;
       const item = document.createElement("li");
       const issues = issuesFor(field);
       const optionalEmpty =
-        ["keywords", "canonical", "ogTitle", "ogDescription", "ogImage", "pillarKeyword", "supportingKeyword", "articleType", "targetKeyword", "image2", "image2Alt", "image3", "image3Alt", "internalLinks", "externalLinks", "faqs", "updatedDate"].includes(field) &&
+        ["keywords", "canonical", "ogTitle", "ogDescription", "ogImage", "pillarKeyword", "supportingKeyword", "articleType", "targetKeyword", "internalLinks", "externalLinks", "faqs", "updatedDate"].includes(field) &&
         !fieldValue(field, state) &&
-        !(field.startsWith("image") && state.images[field]?.id) &&
         issues.length === 0;
       if (issues.length) {
         item.append(`✗ ${field} — ${issues.map((issue) => issue.message).join("; ")} `);
@@ -592,6 +640,7 @@ function initArticles() {
       }
       list.append(item);
     }
+    renderPanelBadges();
   }
 
   function displayValue(field) {
@@ -725,6 +774,22 @@ function initArticles() {
     document.getElementById("collision-message").textContent = state.collision
       ? `Slug "${asString(state.data.slug)}" already exists. Overwrite or rename.`
       : "";
+    renderPanelBadges();
+  }
+
+  function renderPanelBadges() {
+    const missingFields = [...new Set(state.missing.map((issue) => issue.field))];
+    const missingBadge = document.getElementById("missing-badge");
+    if (missingBadge) {
+      missingBadge.textContent = missingFields.length ? `(${missingFields.length})` : "";
+    }
+    const incomplete = checklistFields.filter(
+      (field) => !hiddenFromChecklist(field) && issuesFor(field).length > 0,
+    ).length;
+    const checklistBadge = document.getElementById("checklist-badge");
+    if (checklistBadge) {
+      checklistBadge.textContent = incomplete ? `(${incomplete} incomplete)` : "";
+    }
   }
 
   function generateBlockReason(target = state, { requireOpen } = { requireOpen: true }) {
@@ -785,34 +850,6 @@ function initArticles() {
     }
   }
 
-  async function previewJsonLd() {
-    await runBusy("Building JSON-LD preview…", async () => {
-      const payload = await readJson(
-        await fetch("/api/preview-jsonld", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: state.data.title,
-            description: state.data.description,
-            slug: state.data.slug,
-            date: state.data.date,
-            updatedDate: state.data.updatedDate,
-            schemaType: state.data.schemaType,
-            locale: state.data.locale,
-            faqs: state.data.faqs,
-            author: state.data.author,
-          }),
-        }),
-      );
-      document.getElementById("jsonld-preview").textContent = JSON.stringify(
-        payload.jsonLd,
-        null,
-        2,
-      );
-      setStatus("JSON-LD preview updated.");
-    });
-  }
-
   async function generate() {
     const reason = generateBlockReason();
     if (reason) {
@@ -829,6 +866,7 @@ function initArticles() {
       );
       await loadLists();
       renderArticleList();
+      showArticlesView();
       setStatus(`Generated ${payload.slug}. llms.txt rebuilt.`);
     });
   }
@@ -1031,17 +1069,20 @@ function initArticles() {
 
         const imageDrop = document.createElement("p");
         imageDrop.tabIndex = 0;
+        imageDrop.className = "cms-drop";
+        imageDrop.setAttribute("role", "button");
         imageDrop.textContent = row.images.image.id
-          ? `Row hero: ${row.images.image.name} — drop another image to override`
-          : "Drop a hero image to override this row";
-        bindDrop(imageDrop, (files) => applyRowHero(row, files[0]));
+          ? `Row hero: ${row.images.image.name} — click or drop another image to override`
+          : "Click or drop a hero image to override this row";
         const imageInput = document.createElement("input");
         imageInput.type = "file";
+        imageInput.className = "cms-sr-only";
         imageInput.accept = "image/jpeg,image/png,image/webp,image/gif,image/avif";
         imageInput.addEventListener("change", () => {
           if (imageInput.files?.[0]) applyRowHero(row, imageInput.files[0]);
           imageInput.value = "";
         });
+        bindDrop(imageDrop, (files) => applyRowHero(row, files[0]), imageInput);
         details.append(imageDrop, imageInput);
 
         const missingList = document.createElement("ul");

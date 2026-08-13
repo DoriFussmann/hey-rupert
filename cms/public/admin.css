@@ -1,0 +1,411 @@
+:root {
+  --cms-bg: #f4f3f0;
+  --cms-surface: #fff;
+  --cms-ink: #1f1f1f;
+  --cms-muted: #5c5c5c;
+  --cms-line: #d8d5d0;
+  --cms-accent: #7a5c28;
+  --cms-nav: #1a1a2e;
+  --cms-ok: #3a7d5e;
+  --cms-bad: #c0392b;
+  --cms-nav-width: 13.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 13px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--cms-ink);
+  background: var(--cms-bg);
+}
+
+a {
+  color: var(--cms-accent);
+}
+
+.cms-shell {
+  display: flex;
+  min-height: 100vh;
+  align-items: stretch;
+}
+
+.cms-nav {
+  width: var(--cms-nav-width);
+  flex-shrink: 0;
+  background: var(--cms-nav);
+  color: #f5f2ec;
+  padding: 1.25rem 0.85rem;
+}
+
+.cms-nav-brand {
+  margin: 0 0.6rem 1.25rem;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #b7b4ae;
+}
+
+.cms-nav nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.cms-nav a {
+  color: #f5f2ec;
+  text-decoration: none;
+  padding: 0.5rem 0.6rem;
+  border-radius: 3px;
+}
+
+.cms-nav a:hover,
+.cms-nav a.is-active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cms-main {
+  flex: 1;
+  min-width: 0;
+  padding: 1.25rem 1.5rem 2.5rem;
+}
+
+.cms-main h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.35rem;
+  font-weight: 600;
+}
+
+.cms-main h2 {
+  margin: 1.25rem 0 0.6rem;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.cms-main h3 {
+  margin: 1rem 0 0.4rem;
+  font-size: 0.95rem;
+}
+
+.cms-main p,
+.cms-main ul,
+.cms-main ol {
+  margin: 0.4rem 0;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--cms-surface);
+  font-size: 12px;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.4rem 0.55rem;
+  border-bottom: 1px solid var(--cms-line);
+  vertical-align: top;
+}
+
+.cms-cards {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.cms-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.15rem 0.75rem;
+  padding: 0.4rem 0.65rem;
+  background: var(--cms-surface);
+  border: 1px solid var(--cms-line);
+}
+
+.cms-card-title {
+  grid-column: 1;
+  grid-row: 1;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--cms-ink);
+}
+
+.cms-card-title:hover {
+  color: var(--cms-accent);
+}
+
+.cms-card-meta {
+  grid-column: 1;
+  grid-row: 2;
+  margin: 0;
+  color: var(--cms-muted);
+  font-size: 12px;
+}
+
+.cms-card-actions {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.cms-drop {
+  margin: 0.5rem 0;
+  padding: 1.1rem;
+  border: 1px dashed var(--cms-line);
+  background: var(--cms-surface);
+  text-align: center;
+  cursor: pointer;
+  color: var(--cms-muted);
+}
+
+.cms-drop:hover,
+.cms-drop.is-dragover,
+.cms-drop:focus {
+  border-color: var(--cms-accent);
+  color: var(--cms-ink);
+  outline: none;
+}
+
+.cms-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.cms-panel {
+  margin: 0.75rem 0;
+  border: 1px solid var(--cms-line);
+  background: var(--cms-surface);
+}
+
+.cms-panel > summary {
+  cursor: pointer;
+  padding: 0.55rem 0.75rem;
+  font-weight: 600;
+}
+
+.cms-panel > :not(summary) {
+  padding: 0 0.75rem 0.75rem;
+}
+
+button,
+.cms-card-actions button {
+  min-height: 1.85rem;
+  padding: 0.2rem 0.55rem;
+  font: inherit;
+  cursor: pointer;
+  border: 1px solid var(--cms-line);
+  background: var(--cms-surface);
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  max-width: 100%;
+}
+
+label {
+  display: inline-block;
+}
+
+.count-ok {
+  color: var(--cms-ok);
+}
+
+.count-bad {
+  color: var(--cms-bad);
+}
+
+.health-banner {
+  margin: 0 0 0.85rem;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid #d8b56a;
+  background: #fff6de;
+}
+
+.health-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.health-list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0 0;
+  display: grid;
+  gap: 0.45rem;
+}
+
+.health-item {
+  background: var(--cms-surface);
+  border: 1px solid var(--cms-line);
+}
+
+.health-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.health-title {
+  font-weight: 600;
+}
+
+.health-dots {
+  display: flex;
+  gap: 0.3rem;
+  flex-shrink: 0;
+}
+
+.health-dot {
+  width: 1.45rem;
+  height: 1.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #fff;
+  background: #b3b0aa;
+}
+
+.health-dot.is-green {
+  background: var(--cms-ok);
+}
+
+.health-dot.is-orange {
+  background: #d9822b;
+}
+
+.health-dot.is-red {
+  background: var(--cms-bad);
+}
+
+.health-dot.is-gray {
+  background: #b3b0aa;
+}
+
+.health-panel {
+  padding: 0 0.75rem 0.85rem;
+  border-top: 1px solid var(--cms-line);
+}
+
+.health-section {
+  margin-top: 0.75rem;
+}
+
+.health-findings {
+  padding-left: 1.1rem;
+}
+
+.health-findings .is-ok {
+  color: var(--cms-ok);
+}
+
+.health-findings .is-bad {
+  color: var(--cms-bad);
+}
+
+.health-scores {
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+  font-size: 12px;
+}
+
+.health-review {
+  margin: 0.85rem 0;
+  padding: 0.75rem;
+  background: var(--cms-surface);
+  border: 1px solid var(--cms-line);
+}
+
+.compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.unmatched-slug {
+  color: var(--cms-bad);
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .compare {
+    grid-template-columns: 1fr;
+  }
+}
+
+#checklist,
+#internal-links,
+#external-links,
+#faqs,
+#image-slots,
+#batch-rows,
+#team-list {
+  padding-left: 1.1rem;
+}
+
+#checklist li,
+#image-slots li,
+#batch-rows li {
+  margin: 0.35rem 0;
+}
+
+@media (max-width: 720px) {
+  .cms-shell {
+    flex-direction: column;
+  }
+
+  .cms-nav {
+    width: 100%;
+  }
+
+  .cms-nav nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .cms-card {
+    grid-template-columns: 1fr;
+  }
+
+  .cms-card-actions {
+    grid-row: auto;
+  }
+}

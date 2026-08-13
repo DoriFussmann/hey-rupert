@@ -36,6 +36,28 @@ faqs:
     answer: "Founders tend to build their deck in the order they understand their business — starting with the product they built, then explaining the problem it solves. Investors evaluate in the opposite direction: they need to believe the problem is real and large before they care about the solution. Decks that open with product features before establishing a quantified problem consistently create a harder path to a yes, because the investor has no context for why the features matter. Reordering so that your strongest evidence of demand appears in the first five slides resolves most structural problems."
   - question: Does design quality matter in a seed pitch deck?
     answer: Design matters enough that a visually chaotic deck creates friction — but professional polish does not compensate for weak content. Buffer's seed deck was simple and not visually sophisticated; it raised $500K because the traction metrics were compelling. Airbnb's original 2009 deck is widely described as rough by modern standards, yet it remains the most studied seed deck in history. Investors in 2026 do spend more total time on decks with clear data visualization, but the data itself — not its presentation — is what drives conviction.
+internalLinks:
+  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+    url: /articles/pitch-deck/
+  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+    url: /articles/pre-seed-pitch-deck/
+  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    url: /articles/seed-funding-pitch-deck-faq/
+  - label: The Complete Seed Pitch Deck Guide for Raising Founders
+    url: /articles/seed-pitch-deck/
+  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    url: /articles/seed-round-pitch-deck-template/
+externalLinks:
+  - label: The Ultimate Pitch Deck Guide for Startup Founders
+    url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders
+  - label: A Simple Template for Your Seed Funding Pitch Deck
+    url: https://underscore.vc/resources/how-to-pitch-to-investors/
+  - label: 20+ Free Pitch Deck Templates [Fully-Customizable]
+    url: https://pitch.com/templates/collections/Pitch-deck
+  - label: How to build your seed round pitch deck
+    url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
+  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
+    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
 ---
 # Seed Pitch Deck Examples: 7 Real Decks — and What Worked
 
@@ -176,3 +198,6 @@ AI and SaaS decks that closed rounds in this period largely ditched traditional 
  a structural shift that echoes the market-sizing lessons visible in the historical funded decks analyzed above. The core expectation for founders raising seed capital today has not changed in kind — evidence before narrative, specificity before scale — but the threshold for what counts as sufficient evidence has moved materially upward compared to even two years ago.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

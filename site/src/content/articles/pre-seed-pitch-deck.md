@@ -36,6 +36,28 @@ faqs:
     answer: At pre-seed, the team slide carries the most evidentiary weight, because investors are betting on founders before a product fully exists. Founder-market fit — domain expertise, relevant experience, and the reason you are uniquely positioned to solve this problem — is what closes pre-seed rounds. At seed, the team slide recedes and the traction slide takes over. By seed, investors assume the team can build; what they need to see is proof that the market is responding.
   - question: How long should a pre-seed pitch deck be compared to a seed deck?
     answer: "Pre-seed decks typically run 8–12 slides and are deliberately lean — every extra slide is a liability when you have limited evidence to fill it with. Seed decks run 10–14 slides and can justify additional depth on traction, unit economics, and go-to-market because the data exists to support it. Both stages reward concision: investors at both levels spend under four minutes on an initial review, so clarity and narrative momentum matter more than comprehensiveness."
+internalLinks:
+  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+    url: /articles/pitch-deck/
+  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    url: /articles/seed-funding-pitch-deck-faq/
+  - label: The Complete Seed Pitch Deck Guide for Raising Founders
+    url: /articles/seed-pitch-deck/
+  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+    url: /articles/seed-pitch-deck-examples/
+  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    url: /articles/seed-round-pitch-deck-template/
+externalLinks:
+  - label: How to build your seed round pitch deck
+    url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
+  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
+    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+  - label: Starting pre-seed raise. How should you send out pitch deck?
+    url: https://www.reddit.com/r/ycombinator/comments/1fv2gvq/starting_preseed_raise_how_should_you_send_out/
+  - label: "Pre-Seed Pitch Deck Examples: What Actually Gets ..."
+    url: https://www.whitepage.studio/blog/pre-seed-pitch-deck-examples
+  - label: The Essential Guide to Creating a Successful B2B SaaS ...
+    url: https://www.forumvc.com/thought-pieces/the-essential-guide-to-creating-a-compelling-b2b-saas-pitch-deck-for-pre-seed-and-seed-stage-founders
 ---
 # Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds
 
@@ -154,3 +176,6 @@ almost half of founders who secured pre-seed financing had already launched prod
  Against this backdrop, the quality and stage-appropriateness of a pitch deck has become even more decisive — a deck misaligned with investor expectations at this moment does not just lose meetings, it forfeits the narrowing window.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

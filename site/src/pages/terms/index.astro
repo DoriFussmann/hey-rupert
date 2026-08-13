@@ -1,0 +1,19 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE_NAME } from "../../config/site";
+
+const title = `Terms of Service — ${SITE_NAME}`;
+const description =
+  "Terms of Service for Rupert. This page will be published with the final legal text.";
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/terms/"
+  robots="noindex, follow"
+>
+  <main class="site-wrap flex-1 py-2xl lg:py-3xl">
+    <h1 class="type-h1">Terms of Service</h1>
+  </main>
+</BaseLayout>

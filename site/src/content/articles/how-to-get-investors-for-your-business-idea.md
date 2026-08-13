@@ -36,6 +36,28 @@ faqs:
     answer: "Quality of targeting matters far more than volume. Rather than blasting hundreds of generic outreach messages, identify the 30–60 investors who are explicitly stage-appropriate: pre-seed specialists, operator-angels in your sector, and angel syndicates with a thesis that maps to your problem space. Research each one's recent portfolio activity, typical check size, and stated investment thesis before reaching out. A personalised, well-researched approach to a tight list consistently outperforms high-volume spray-and-pray campaigns."
   - question: How long does it typically take to close a pre-seed round?
     answer: "Timelines vary, but most idea-stage founders should budget 3–6 months from first outreach to a closed round. The process is rarely linear: early conversations generate feedback that may require you to sharpen your narrative, adjust your ask, or gather more customer evidence before the round gains momentum. Founders who run a structured, disciplined process — with a maintained pipeline, consistent follow-up cadence, and clear milestones — tend to close faster than those treating fundraising as an ad hoc activity alongside building."
+internalLinks:
+  - label: "How to Find Investors for Your Startup: The Complete Guide"
+    url: /articles/angel-investors/
+  - label: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
+    url: /articles/angel-investors-vs-venture-capital/
+  - label: "How to Get Investors for Your Business: A Founder's Guide"
+    url: /articles/how-to-get-investors-for-your-business/
+  - label: "How to Get Private Investors for Your Business: A Guide"
+    url: /articles/how-to-get-private-investors-for-your-business/
+  - label: What Investors Looking for Projects to Fund Actually Want
+    url: /articles/investors-looking-for-projects-to-fund/
+externalLinks:
+  - label: Guide to Finding Business Investors | CO
+    url: https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors
+  - label: OpenVC | Find investors for your startup — raise for free.
+    url: https://www.openvc.app/
+  - label: "A Startup Guide to Funding: How to Find Investors"
+    url: https://vivatech.com/news/a-startup-guide-to-funding-how-to-find-investors
+  - label: "Finding Investors: What Entrepreneurs Should Know"
+    url: https://www.indeed.com/hire/c/info/finding-investors
+  - label: How/Where do you find investors? What is the best way to ...
+    url: https://www.reddit.com/r/startups/comments/1lvhi3j/howwhere_do_you_find_investors_what_is_the_best/
 ---
 ## Why "Investor-Ready" Is Harder to Define Than It Sounds
 
@@ -145,3 +167,6 @@ Investor expectations for pre-seed startups have dramatically shifted since 2020
 , reinforcing the importance of idea-stage founders building a genuinely credible foundation before they start outreach — the standards are compressing downward from later stages, not relaxing.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

@@ -1,0 +1,83 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
+import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
+import { SITE_NAME } from "../../config/site";
+import { sitePath } from "../../lib/url";
+
+const title = `How It Works — ${SITE_NAME}`;
+const description =
+  "How Rupert runs founder-led investor outreach: an intake conversation, criteria-matched investors, campaigns built per investor type, and warm replies you own.";
+
+const steps = [
+  {
+    title: "Rupert understands your startup.",
+    body: "It starts with a conversation — not a 50-slide deck. Intake asks the right questions about your stage, sector, geography, team, traction, and what makes the company worth funding. In ten minutes, the profile is sharper than most pitch memos.",
+    brief:
+      "Photograph: a founder speaking across a small table, a notebook open, no laptop dominating the shot. Late daylight, warm matte, candid. The feeling is a serious conversation, not an interview set.",
+  },
+  {
+    title: "Rupert finds your investors.",
+    body: "Your profile is matched against a database of 10,000+ VCs, family offices, and angel investors — not by name recognition, but by their actual investment criteria: stage, sector, geography, check size, portfolio patterns. You get a curated list of investors who fund companies exactly like yours.",
+    brief:
+      "Photograph: a printed list and a pencil on a desk, a few names marked, a window in soft focus. Paper and light only. No screenshots of software, no map graphics.",
+  },
+  {
+    title: "Rupert builds campaigns per investor type.",
+    body: "A seed-stage fintech VC and a family office looking at climate tech are different conversations. Your list is segmented into personas, and outreach is written for each one — subject lines, opening hooks, proof points, and follow-ups designed for how each type thinks and decides.",
+    brief:
+      "Photograph: two or three printed email drafts or a one-pager on cream paper, slightly overlapping, a brass paperweight or pen. Editorial still life. No UI mockup, no 'compose window' screenshot.",
+  },
+  {
+    title: "You get warm leads.",
+    body: "Rupert runs the email sequences — sends, tracks, follows up. You see every open, click, reply, and bounce. When investors respond, you take the conversation from there. No guesswork, no ghosting into the void. Every reply comes to you.",
+    brief:
+      "Photograph: a quiet office corner, a phone face-down beside a marked-up document, late afternoon. Suggests a conversation that already happened. No notification pop-ups, no dashboard chrome.",
+  },
+  {
+    title: "The call is the beginning.",
+    body: "On the intro call, we walk through how Rupert works: the intake, how your investors would be matched, how campaigns are built. You leave understanding exactly how the raise would be run — and whether it's a fit. 30 minutes. No deck required.",
+    brief:
+      "Photograph: two people at a small table, one listening, papers between them. Cropped, documentary, natural light. This is a working conversation, not a sales stage.",
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/how-it-works/">
+  <main class="flex-1">
+    <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
+      <p class="type-label">How It Works</p>
+      <h1 class="type-h1 mt-md">
+        From a cold list to warm introductions.
+      </h1>
+      <p class="type-body-lg mt-lg">
+        Five steps between you and the investors who should be funding your
+        round.
+      </p>
+    </section>
+
+    <ol class="site-wrap pb-2xl">
+      {
+        steps.map((step, index) => (
+          <li class="rule grid gap-lg py-2xl md:grid-cols-12 md:items-start md:gap-lg">
+            <p class="step-num md:col-span-2">
+              {String(index + 1).padStart(2, "0")}
+            </p>
+            <div class="md:col-span-6">
+              <h2 class="type-h2">{step.title}</h2>
+              <p class="type-body mt-md">{step.body}</p>
+            </div>
+            <div class="md:col-span-4">
+              <ImagePlaceholder ratio="square" brief={step.brief} />
+            </div>
+          </li>
+        ))
+      }
+    </ol>
+
+    <p class="site-wrap pb-2xl">
+      <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
+    </p>
+  </main>
+  <CtaBanner />
+</BaseLayout>

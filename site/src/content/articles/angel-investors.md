@@ -34,6 +34,20 @@ faqs:
     answer: Yes, but only when it is genuinely personalized. A cold email that references a specific portfolio company parallel, a thesis statement from the investor's own writing, or a public comment they have made will convert at meaningfully higher rates than a generic template. Investors receive hundreds of cold pitches per week; the ones that get replies demonstrate that the founder did real homework.
   - question: When should I start building my investor list?
     answer: Start at least three to four months before you plan to close. Building a qualified list, mapping warm introduction paths, executing personalized outreach, following up through weeks of silence, and running parallel conversations takes considerably longer than most founders expect. Starting early also lets you have relationship-building conversations before you formally open the round, which is the highest-conversion sequence of all.
+internalLinks:
+  - label: "How to Get Investors for Your Business: A Founder's Guide"
+    url: /articles/how-to-get-investors-for-your-business/
+externalLinks:
+  - label: 100 Top Angel Investors List for Startups (2026)
+    url: https://eqvista.com/top-100-active-angel-investors-list-for-startups/
+  - label: "How to Find Angel Investors in Canada: The Founder's Guide"
+    url: https://www.youtube.com/watch?v=9ZTyUxW6dkE&vl=en-US
+  - label: "How to Find Angel Investors: A Complete Guide for Startups"
+    url: https://www.brex.com/spend-trends/startup/how-to-find-angel-investors
+  - label: How to Find the Right Angel Investor for Your Startup
+    url: https://www.jpmorgan.com/insights/business-planning/how-to-find-the-right-angel-investor-for-your-startup
+  - label: The first in-depth report on the demographics and investing ...
+    url: https://www.angelcapitalassociation.org/data/Documents/TAAReport11-30-17.pdf
 ---
 ## The Question Behind the Question
 
@@ -179,3 +193,6 @@ investors want evidence, not broad claims: paid pilots, repeat usage, retention,
  The practical implication for founders building investor lists right now is that qualification and specificity have never mattered more — reaching the right 50 investors with a sharp, evidence-backed story will outperform reaching 500 investors with a generic deck by a wider margin than it would have in any prior vintage of early-stage funding.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

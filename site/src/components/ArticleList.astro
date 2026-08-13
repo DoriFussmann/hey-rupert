@@ -1,4 +1,6 @@
 ---
+import { Image } from "astro:assets";
+import { getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import { displayDate } from "../lib/dates";
 import { sitePath } from "../lib/url";
@@ -8,24 +10,51 @@ interface Props {
 }
 
 const { articles } = Astro.props;
+
+const tiles = await Promise.all(
+  articles.map(async (article) => {
+    const author = await getEntry("team", article.data.author);
+    return {
+      article,
+      authorName: author?.data.name ?? article.data.author,
+      topic: article.data.pillarKeyword ?? "",
+    };
+  }),
+);
 ---
 
-<ul class="mt-xl grid gap-lg md:grid-cols-2 md:gap-xl">
+<ul class="article-grid mt-xl" id="article-grid">
   {
-    articles.map((article) => (
-      <li class="rule pt-lg">
+    tiles.map(({ article, authorName, topic }) => (
+      <li
+        data-title={article.data.title.toLowerCase()}
+        data-topic={topic}
+      >
         <article>
-          <h2 class="type-h3">
-            <a class="font-medium no-underline" href={sitePath(`/articles/${article.data.slug}/`)}>
-              {article.data.title}
-            </a>
-          </h2>
-          <p class="type-body mt-sm">{article.data.description}</p>
-          <p class="mt-md">
-            <time class="type-body-sm" datetime={article.data.date.toISOString()}>
-              {displayDate(article.data.date)}
-            </time>
-          </p>
+          <a
+            class="article-tile no-underline"
+            href={sitePath(`/articles/${article.data.slug}/`)}
+          >
+            <div class="media-frame">
+              <Image
+                class="photo"
+                src={article.data.image}
+                alt={article.data.imageAlt}
+                width={640}
+                height={360}
+                loading="lazy"
+                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 360px"
+              />
+            </div>
+            <h2 class="type-h3 mt-md">{article.data.title}</h2>
+            <p class="type-body-sm mt-sm">
+              <time datetime={article.data.date.toISOString()}>
+                {displayDate(article.data.date)}
+              </time>
+              <span aria-hidden="true"> · </span>
+              {authorName}
+            </p>
+          </a>
         </article>
       </li>
     ))

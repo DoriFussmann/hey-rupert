@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CMS — Articles Update</title>
+    <link rel="stylesheet" href="/admin.css" />
+  </head>
+  <body data-page="articles-update">
+    <div class="cms-shell">
+      <aside class="cms-nav" aria-label="CMS">
+        <p class="cms-nav-brand">Rupert CMS</p>
+        <nav>
+          <a href="/#articles" data-nav="articles">Articles</a>
+          <a href="/#add" data-nav="add">Add Article</a>
+          <a href="/articles-health.html" data-nav="health">Articles Health</a>
+          <a href="/articles-update.html" data-nav="update" class="is-active">Articles Update</a>
+          <a href="/team.html" data-nav="team">Team</a>
+          <a href="/dashboard.html" data-nav="dashboard">Dashboard</a>
+        </nav>
+      </aside>
+      <main class="cms-main">
+        <h1>Articles Update</h1>
+        <p id="status" role="status"></p>
+        <p id="session-banner" class="health-banner" hidden></p>
+
+        <section>
+          <h2>TNV export</h2>
+          <p>Drop the structured file downloaded from TNV Articles Update (JSON array or YAML-frontmatter .md).</p>
+          <p id="update-drop" class="cms-drop" tabindex="0" role="button">Drop .json or .md here or click to browse</p>
+          <input id="update-file" class="cms-sr-only" type="file" accept=".json,.md,.yml,.yaml,application/json,text/markdown" />
+        </section>
+
+        <section id="unmatched-panel" hidden>
+          <h2>Unmatched slugs</h2>
+          <p>These slugs are not in <code>site/src/content/articles/</code> and were not skipped silently.</p>
+          <ul id="unmatched-list"></ul>
+        </section>
+
+        <section id="update-results" hidden>
+          <h2>Review updates</h2>
+          <p id="batch-progress" role="status"></p>
+          <p>
+            <button type="button" id="confirm-all">Confirm All</button>
+          </p>
+          <ul id="update-list" class="health-list"></ul>
+        </section>
+      </main>
+    </div>
+    <script src="/articles-update.js"></script>
+  </body>
+</html>

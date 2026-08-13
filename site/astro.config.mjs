@@ -38,7 +38,10 @@ export default defineConfig({
   output: "static",
   integrations: [
     sitemap({
-      filter: (page) => !page.includes("/404"),
+      filter: (page) =>
+        !page.includes("/404") &&
+        !page.includes("/privacy") &&
+        !page.includes("/terms"),
       serialize(item) {
         const pathname = new URL(item.url).pathname;
         const match = pathname.match(/^\/articles\/([^/]+)\/?$/);

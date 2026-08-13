@@ -2,34 +2,42 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CMS — Dashboard</title>
+    <link rel="stylesheet" href="/admin.css" />
   </head>
   <body data-page="dashboard">
-    <header>
-      <nav>
-        <a href="/">Articles</a>
-        <a href="/team.html">Team</a>
-        <a href="/dashboard.html">Dashboard</a>
-      </nav>
-    </header>
-    <main>
-      <h1>Dashboard</h1>
-      <p id="status" role="status"></p>
-      <table>
-        <thead>
-          <tr>
-            <th>title</th>
-            <th>slug</th>
-            <th>draft</th>
-            <th>internalLinks</th>
-            <th>externalLinks</th>
-            <th>faqs</th>
-            <th>updatedDate</th>
-          </tr>
-        </thead>
-        <tbody id="dashboard-body"></tbody>
-      </table>
-    </main>
+    <div class="cms-shell">
+      <aside class="cms-nav" aria-label="CMS">
+        <p class="cms-nav-brand">Rupert CMS</p>
+        <nav>
+          <a href="/#articles" data-nav="articles">Articles</a>
+          <a href="/#add" data-nav="add">Add Article</a>
+          <a href="/articles-health.html" data-nav="health">Articles Health</a>
+          <a href="/articles-update.html" data-nav="update">Articles Update</a>
+          <a href="/team.html" data-nav="team">Team</a>
+          <a href="/dashboard.html" data-nav="dashboard" class="is-active">Dashboard</a>
+        </nav>
+      </aside>
+      <main class="cms-main">
+        <h1>Dashboard</h1>
+        <p id="status" role="status"></p>
+        <table>
+          <thead>
+            <tr>
+              <th>title</th>
+              <th>slug</th>
+              <th>draft</th>
+              <th>internalLinks</th>
+              <th>externalLinks</th>
+              <th>faqs</th>
+              <th>updatedDate</th>
+            </tr>
+          </thead>
+          <tbody id="dashboard-body"></tbody>
+        </table>
+      </main>
+    </div>
     <script src="/app.js"></script>
   </body>
 </html>
