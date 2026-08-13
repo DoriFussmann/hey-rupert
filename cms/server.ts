@@ -313,58 +313,82 @@ app.post(
   }),
 );
 
+type ArticleWriteBody = {
+  data?: Record<string, unknown>;
+  body?: unknown;
+  imageId?: unknown;
+  image2Id?: unknown;
+  image3Id?: unknown;
+  editingSlug?: string;
+  overwrite?: boolean;
+};
+
+async function writeValidatedArticle(body: ArticleWriteBody) {
+  const data = body.data ?? {};
+  const [team, routes, articles] = await Promise.all([
+    listTeam(),
+    listKnownRoutes(),
+    listArticles(),
+  ]);
+  const flags = stagedFlags({
+    imageId: typeof body.imageId === "string" ? body.imageId : undefined,
+    image2Id: typeof body.image2Id === "string" ? body.image2Id : undefined,
+    image3Id: typeof body.image3Id === "string" ? body.image3Id : undefined,
+  });
+  const result = validateArticleInput({
+    data,
+    body: typeof body.body === "string" ? body.body : undefined,
+    staged: flags,
+    knownAuthors: team.map((member) => member.slug),
+    knownRoutes: routes,
+    existingSlugs: articles.map((article) => article.slug),
+    editingSlug: body.editingSlug,
+  });
+  if (!result.ok) {
+    throw httpError(
+      400,
+      `Cannot generate: ${[...result.missing, ...result.invalid].map((issue) => issue.message).join("; ")}`,
+    );
+  }
+  if (
+    collisionBlocksGenerate(
+      String(data.slug ?? ""),
+      articles.map((article) => article.slug),
+      body.editingSlug,
+      Boolean(body.overwrite),
+    )
+  ) {
+    throw httpError(409, `Slug "${data.slug}" already exists. Overwrite or rename.`);
+  }
+  return writeArticle({
+    data,
+    body: String(body.body ?? ""),
+    overwrite: Boolean(body.overwrite),
+    originalSlug: body.editingSlug,
+    staged: {
+      image: requireStaged(body.imageId, "Hero image"),
+      image2: body.image2Id ? requireStaged(body.image2Id, "Image 2") : undefined,
+      image3: body.image3Id ? requireStaged(body.image3Id, "Image 3") : undefined,
+    },
+  });
+}
+
 app.post(
   "/api/articles",
   wrap(async (req, res) => {
-    const data = req.body.data ?? {};
-    const [team, routes, articles] = await Promise.all([
-      listTeam(),
-      listKnownRoutes(),
-      listArticles(),
-    ]);
-    const flags = stagedFlags(req.body);
-    const result = validateArticleInput({
-      data,
-      body: req.body.body,
-      staged: flags,
-      knownAuthors: team.map((member) => member.slug),
-      knownRoutes: routes,
-      existingSlugs: articles.map((article) => article.slug),
-      editingSlug: req.body.editingSlug,
-    });
-    if (!result.ok) {
-      throw httpError(
-        400,
-        `Cannot generate: ${[...result.missing, ...result.invalid].map((issue) => issue.message).join("; ")}`,
-      );
+    const written = await writeValidatedArticle(req.body);
+    if (!req.body.skipLlmsTxt) {
+      await generateLlmsTxt();
     }
-    if (
-      collisionBlocksGenerate(
-        String(data.slug ?? ""),
-        articles.map((article) => article.slug),
-        req.body.editingSlug,
-        Boolean(req.body.overwrite),
-      )
-    ) {
-      throw httpError(409, `Slug "${data.slug}" already exists. Overwrite or rename.`);
-    }
-    const written = await writeArticle({
-      data,
-      body: String(req.body.body ?? ""),
-      overwrite: Boolean(req.body.overwrite),
-      originalSlug: req.body.editingSlug,
-      staged: {
-        image: requireStaged(req.body.imageId, "Hero image"),
-        image2: req.body.image2Id
-          ? requireStaged(req.body.image2Id, "Image 2")
-          : undefined,
-        image3: req.body.image3Id
-          ? requireStaged(req.body.image3Id, "Image 3")
-          : undefined,
-      },
-    });
-    await generateLlmsTxt();
     res.json({ ok: true, slug: written.slug });
+  }),
+);
+
+app.post(
+  "/api/llms-txt",
+  wrap(async (_req, res) => {
+    await generateLlmsTxt();
+    res.json({ ok: true });
   }),
 );
 

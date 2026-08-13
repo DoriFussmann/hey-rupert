@@ -27,9 +27,37 @@
 
       <section>
         <h2>Markdown file</h2>
-        <p>Drop a single <code>.md</code> file to scan frontmatter.</p>
-        <p id="md-drop" tabindex="0">Drop .md file here</p>
-        <p><input id="md-file" type="file" accept=".md,text/markdown" /></p>
+        <p>Drop one <code>.md</code> file for the single-article editor, or several at once for batch upload.</p>
+        <p id="md-drop" tabindex="0">Drop .md file(s) here</p>
+        <p><input id="md-file" type="file" accept=".md,text/markdown" multiple /></p>
+      </section>
+
+      <section id="batch" hidden>
+        <h2>Batch upload</h2>
+        <p id="batch-progress" role="status"></p>
+
+        <section>
+          <h3>Apply to all</h3>
+          <p>These fill every row. Any row can still be changed on its own.</p>
+          <p>
+            <label>author
+              <select id="batch-author">
+                <option value="">Select a team member</option>
+              </select>
+            </label>
+          </p>
+          <p>Hero image for every row (max 10MB). Drop a different image on a row to override.</p>
+          <p id="batch-image-drop" tabindex="0">Drop hero image for all rows</p>
+          <p><input id="batch-image-file" type="file" accept="image/jpeg,image/png,image/webp,image/gif,image/avif" /></p>
+          <p id="batch-image-name"></p>
+        </section>
+
+        <ul id="batch-rows"></ul>
+
+        <p id="batch-generate-reason"></p>
+        <p>
+          <button type="button" id="generate-all" disabled>Generate All</button>
+        </p>
       </section>
 
       <section id="editor" hidden>
