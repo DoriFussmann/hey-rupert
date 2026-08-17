@@ -60,7 +60,7 @@ const features = [
       <dl class="grid gap-xl sm:grid-cols-2 lg:grid-cols-3">
         {
           stats.map((stat) => (
-            <div class="rule pt-lg">
+            <div class="surface-card">
               <dt class="type-label">{stat.label}</dt>
               <dd class="stat-value mt-sm">{stat.value}</dd>
             </div>
@@ -109,7 +109,7 @@ const features = [
       <ul class="mt-2xl grid gap-xl md:grid-cols-3">
         {
           features.map((feature) => (
-            <li class="rule-accent pt-lg">
+            <li class="surface-card">
               <h3 class="type-h3">{feature.title}</h3>
               <p class="type-body mt-md">{feature.body}</p>
             </li>

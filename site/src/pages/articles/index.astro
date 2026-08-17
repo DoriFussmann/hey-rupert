@@ -39,16 +39,36 @@ const description =
           <button type="button" id="article-search-clear" hidden>Clear</button>
         </div>
       </div>
-      <div class="filter-field">
-        <label class="type-label" for="article-topic">Topic</label>
-        <div class="filter-control">
-          <select id="article-topic" name="topic">
-            <option value="">All topics</option>
-            {topics.map((topic) => (
-              <option value={topic}>{topic}</option>
-            ))}
-          </select>
-          <button type="button" id="article-topic-clear" hidden>Clear</button>
+      <div class="filter-field filter-field--topics">
+        <p class="type-label" id="article-topic-label">Topic</p>
+        <div
+          class="topic-chips"
+          id="article-topic"
+          role="radiogroup"
+          aria-labelledby="article-topic-label"
+        >
+          <button
+            type="button"
+            class="topic-chip is-active"
+            role="radio"
+            aria-checked="true"
+            data-topic=""
+          >
+            All Topics
+          </button>
+          {
+            topics.map((topic) => (
+              <button
+                type="button"
+                class="topic-chip"
+                role="radio"
+                aria-checked="false"
+                data-topic={topic}
+              >
+                {topic}
+              </button>
+            ))
+          }
         </div>
       </div>
     </form>
@@ -62,9 +82,11 @@ const description =
 <script>
   const form = document.getElementById("article-filters");
   const search = document.getElementById("article-search") as HTMLInputElement | null;
-  const topic = document.getElementById("article-topic") as HTMLSelectElement | null;
+  const topicGroup = document.getElementById("article-topic");
+  const topicChips = [
+    ...document.querySelectorAll<HTMLButtonElement>(".topic-chip"),
+  ];
   const searchClear = document.getElementById("article-search-clear");
-  const topicClear = document.getElementById("article-topic-clear");
   const empty = document.getElementById("article-filter-empty");
   const items = [
     ...document.querySelectorAll<HTMLElement>("#article-grid > li"),
@@ -74,9 +96,25 @@ const description =
     return new URLSearchParams(window.location.search);
   }
 
+  function selectedTopic() {
+    return (
+      topicChips.find((chip) => chip.classList.contains("is-active"))
+        ?.dataset.topic || ""
+    );
+  }
+
+  function setTopic(value: string) {
+    for (const chip of topicChips) {
+      const active = (chip.dataset.topic || "") === value;
+      chip.classList.toggle("is-active", active);
+      chip.setAttribute("aria-checked", active ? "true" : "false");
+      chip.tabIndex = active ? 0 : -1;
+    }
+  }
+
   function applyFilters({ push = false } = {}) {
     const query = (search?.value || "").trim().toLowerCase();
-    const selected = topic?.value || "";
+    const selected = selectedTopic();
     let visible = 0;
 
     for (const item of items) {
@@ -90,7 +128,6 @@ const description =
 
     if (empty) empty.hidden = visible > 0;
     if (searchClear) searchClear.hidden = !query;
-    if (topicClear) topicClear.hidden = !selected;
 
     const url = new URL(window.location.href);
     if (query) url.searchParams.set("q", (search?.value || "").trim());
@@ -108,7 +145,9 @@ const description =
   function syncFromUrl() {
     const params = currentParams();
     if (search) search.value = params.get("q") || "";
-    if (topic) topic.value = params.get("topic") || "";
+    const requested = params.get("topic") || "";
+    const match = topicChips.some((chip) => (chip.dataset.topic || "") === requested);
+    setTopic(match ? requested : "");
     applyFilters();
   }
 
@@ -117,16 +156,38 @@ const description =
     applyFilters({ push: true });
   });
   search?.addEventListener("input", () => applyFilters());
-  topic?.addEventListener("change", () => applyFilters({ push: true }));
+  topicGroup?.addEventListener("click", (event) => {
+    const chip = (event.target as HTMLElement | null)?.closest<HTMLButtonElement>(
+      ".topic-chip",
+    );
+    if (!chip || !topicGroup.contains(chip)) return;
+    setTopic(chip.dataset.topic || "");
+    applyFilters({ push: true });
+  });
+  topicGroup?.addEventListener("keydown", (event) => {
+    if (!["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "Home", "End"].includes(event.key)) {
+      return;
+    }
+    event.preventDefault();
+    const current = topicChips.findIndex((chip) => chip.classList.contains("is-active"));
+    let next = current < 0 ? 0 : current;
+    if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = topicChips.length - 1;
+    else if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+      next = (current + 1) % topicChips.length;
+    } else {
+      next = (current - 1 + topicChips.length) % topicChips.length;
+    }
+    const chip = topicChips[next];
+    if (!chip) return;
+    setTopic(chip.dataset.topic || "");
+    chip.focus();
+    applyFilters({ push: true });
+  });
   searchClear?.addEventListener("click", () => {
     if (search) search.value = "";
     applyFilters({ push: true });
     search?.focus();
-  });
-  topicClear?.addEventListener("click", () => {
-    if (topic) topic.value = "";
-    applyFilters({ push: true });
-    topic?.focus();
   });
   window.addEventListener("popstate", syncFromUrl);
   syncFromUrl();

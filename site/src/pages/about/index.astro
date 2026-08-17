@@ -1,0 +1,138 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
+import ImageSlot from "../../components/ImageSlot.astro";
+import { SITE_NAME } from "../../config/site";
+import doriPortrait from "../../assets/team/dori-fussmann/photo.jpg";
+
+const title = `About Dori — ${SITE_NAME}`;
+const description =
+  "Dori Fussmann founded The Vets, raised $100M+, and now runs founder-side fundraising outreach. Cornell Tech and Yale mentor. Former investment banker.";
+
+const didNot = [
+  "He did not come out of a famous accelerator.",
+  "He did not have a family office on speed dial.",
+  "He did not publish a fundraising newsletter, a course, or a framework.",
+  "He did not build a dashboard and wait for founders to figure it out.",
+  "He did not take a percentage of anyone's round.",
+  "He did not stay in banking.",
+];
+
+const founderQuote =
+  "If something can happen at 50% probability in seven days, I'll get it to 85%, in four days, for less.";
+
+const media = [
+  {
+    outlet: "TechCrunch",
+    excerpt:
+      "The Vets, a tech-enabled pet healthcare platform that provides at-home care, has raised $40 million in seed funding led by Target Global, PICO Venture Partners and Bolt Ventures.",
+    context: "January 2022 coverage of The Vets' seed round, naming Dori as co-founder.",
+    href: "https://techcrunch.com/2022/01/27/the-vets-a-pet-healthcare-platform-that-provides-at-home-care-raises-40m-led-by-target-global/",
+  },
+  {
+    outlet: "Fortune",
+    excerpt: "Excerpt to be confirmed.",
+    context: "Press mention — final clip and link still to be supplied.",
+    href: "",
+  },
+  {
+    outlet: "PR Newswire",
+    excerpt:
+      "The Vets, founded in 2021 by Daniel Sagis, Dori Fussmann and Shmuel Chafets, has gone on to transform pet care by combining technological innovation and at-home care.",
+    context: "October 2024 announcement of the merger with BetterVet.",
+    href: "https://www.prnewswire.com/news-releases/the-vets-and-bettervet-announce-merger-ushering-in-a-new-era-of-pet-healthcare-302287277.html",
+  },
+  {
+    outlet: "Veterinary Innovation Podcast",
+    excerpt:
+      "Dori shares his journey from investment banking, through start-ups, to veterinary care — and the work of building a practice that could actually hold a team.",
+    context: "Episode: Addressing Mental Well-Being Challenges in Vet Practices.",
+    href: "https://veterinaryinnovationpodcast.com/episodes/addressing-mental-well-being-challenges-in-veterinary-practices/",
+  },
+  {
+    outlet: "Dagens Industri",
+    excerpt: "Excerpt to be confirmed.",
+    context: "Press mention — final clip and link still to be supplied.",
+    href: "",
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/about/">
+  <main class="flex-1">
+    <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
+      <p class="type-label">About me</p>
+      <h1 class="type-h1 mt-md">About Dori</h1>
+      <ul class="did-not-list">
+        {
+          didNot.map((line) => (
+            <li class="rule type-body-lg">{line}</li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="site-wrap py-xl lg:py-2xl reveal">
+      <div class="grid gap-xl md:grid-cols-12 md:gap-lg">
+        <div class="md:col-span-5">
+          <ImageSlot
+            slotId="about-hero-portrait"
+            src={doriPortrait}
+            alt="Photograph of Dori Fussmann"
+            ratio="portrait"
+          />
+        </div>
+        <div class="md:col-span-7">
+          <p class="type-body max-w-prose">
+            Dori Fussmann built The Vets to $25M+ ARR and 250+ employees, raised
+            $100M+, and exited through the BetterVet merger. He now runs
+            founder-side fundraising outreach — matching companies to investors
+            who actually fund them, then running the campaign so every reply
+            comes to the founder. He mentors at Cornell Tech's Runway Startups
+            Program and Yale's Tsai CITY. Earlier he worked in investment
+            banking at Citi, Morgan Stanley, and Ion Pacific. Along the way he
+            has helped 15+ companies raise $250M+ collectively.
+          </p>
+          <blockquote class="founder-quote">{founderQuote}</blockquote>
+          <p class="mt-lg">
+            <a
+              href="https://www.linkedin.com/in/dori-fussmann-663ba242"
+              rel="noopener noreferrer"
+            >
+              Dori on LinkedIn →
+            </a>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="media-heading">
+      <h2 id="media-heading" class="type-h2">Media Highlights</h2>
+      <ul class="mt-2xl grid gap-lg">
+        {
+          media.map((item) => (
+            <li class="media-card">
+              <p class="type-label">{item.outlet}</p>
+              <blockquote class="media-card__excerpt mt-md">
+                {item.excerpt}
+              </blockquote>
+              <p class="type-body-sm mt-md">{item.context}</p>
+              <p class="mt-md">
+                {
+                  item.href ? (
+                    <a href={item.href} rel="noopener noreferrer">
+                      Read on {item.outlet} →
+                    </a>
+                  ) : (
+                    <span class="type-body-sm">Link to be confirmed</span>
+                  )
+                }
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+  </main>
+  <CtaBanner />
+</BaseLayout>

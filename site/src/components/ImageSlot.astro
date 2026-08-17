@@ -1,0 +1,53 @@
+---
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+interface Props {
+  slotId: string;
+  /** Imported asset or public path. Omit to show the labeled placeholder. */
+  src?: ImageMetadata | string;
+  alt?: string;
+  ratio?: "hero" | "portrait";
+  class?: string;
+  /** Apply the site-wide warm-matte CSS grade. Default true. */
+  grade?: boolean;
+}
+
+const {
+  slotId,
+  src,
+  alt = "",
+  ratio = "portrait",
+  class: className,
+  grade = true,
+} = Astro.props;
+
+const resolvedAlt = alt || slotId;
+---
+
+<div
+  class:list={[
+    "image-slot",
+    `image-slot--${ratio}`,
+    !src && "image-slot--empty",
+    className,
+  ]}
+  role={src ? undefined : "img"}
+  aria-label={src ? undefined : slotId}
+>
+  {
+    typeof src === "string" ? (
+      <img class:list={[grade && "photo"]} src={src} alt={resolvedAlt} />
+    ) : src ? (
+      <Image
+        class:list={[grade && "photo"]}
+        src={src}
+        alt={resolvedAlt}
+        widths={[480, 720, 960]}
+        sizes="(min-width: 768px) 40vw, 92vw"
+      />
+    ) : (
+      <span class="image-slot__id">{slotId}</span>
+    )
+  }
+</div>

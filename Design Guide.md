@@ -6,7 +6,7 @@
 **Domain:** heyrupert.com
 **Tagline (implied):** Quiet expertise. Every investor, every conversation, yours.
 
-**Intended feel:** A senior Wall Street operator who left banking to help founders — understated, precise, and completely on your side.
+**Intended feel:** A senior Wall Street operator who left banking to help founders — understated, precise, and completely on your side. Warmer and more human than a pure finance-institution feel, without tipping into consumer-startup energy.
 
 **Mission:** To bring the discipline and craft of institutional dealmaking to founder-led fundraising, without the opacity, the cut, or the middleman dynamic.
 
@@ -24,10 +24,11 @@
 - **Peel** or **Fathom Analytics** — restrained SaaS that signals seriousness by removing noise
 - **The Economist** — confident editorial voice, no exclamation marks, earns authority through specificity
 - **A top-tier law firm's website** — white space, weight of credentials, nothing garish
+- **Brightwood Capital** — structural reference for warmth and a single confident accent color used sparingly, not for tone (Rupert stays more restrained than Brightwood's copy voice)
 
 **Anti-references (what Rupert is explicitly not):**
 - Foundersuite, ProRaise, SeriesA.ai — software-tool feel, feature grids, growth-hacker energy
-- Qubit Capital — bold gradient hero, VC-glamour aesthetics
+- Qubit Capital — bold gradient hero, VC-glamour aesthetics, AI-forward copy
 - Generic accelerator websites with rocket-ship emoji and "🚀 Let's scale your startup!" copy
 
 ---
@@ -38,23 +39,27 @@
 
 **Contrast target:** WCAG AA minimum throughout; WCAG AAA for all body text on white backgrounds, given the professional positioning.
 
+**Revision note:** This palette replaces the previous Brass/Parchment system. Sage green is now the sole accent, used exactly where Brass used to sit — CTAs, links, dividers, pull-quote marks. Ink is retained for headings and the logo (not as an accent) because a fully green-and-white system loses the "institutional" weight the brand still needs; Ink is what keeps this from reading as a wellness or consumer-lifestyle brand. The result should feel like Brightwood's warmth grafted onto Rupert's restraint, not a full pivot to a consumer palette.
+
 | Token | Name | Hex | Usage |
 |---|---|---|---|
-| `--color-primary` | Ink | `#1A1A2E` | Primary CTA buttons, key UI anchors, logo mark |
-| `--color-primary-hover` | Ink Dark | `#11111F` | Button hover states |
+| `--color-primary` | Sage | `#5C7A5E` | Primary CTA buttons, links, key UI anchors |
+| `--color-primary-hover` | Sage Dark | `#476148` | Button hover states |
+| `--color-primary-tint` | Sage Pale | `#E6EDE3` | Tinted section backgrounds, badge fills, pull-quote panels — use sparingly, as punctuation not paint |
 | `--color-secondary` | Slate | `#4A5568` | Secondary buttons, supporting UI |
-| `--color-accent` | Brass | `#B5935A` | Selective highlights, links on light backgrounds, founder-quote marks, ruled dividers |
-| `--color-background` | Parchment | `#FAF9F7` | Page background — slightly warm white, not clinical |
-| `--color-surface` | White | `#FFFFFF` | Cards, modals, inset content panels |
-| `--color-border` | Smoke | `#E4E2DE` | All ruled lines, card borders, input borders |
-| `--color-muted` | Ash | `#8A8A8A` | Meta text, captions, timestamps, labels |
-| `--color-heading` | Ink | `#1A1A2E` | All headings |
+| `--color-heading` | Ink | `#1A1A2E` | All headings, logo mark, nav text |
 | `--color-body` | Charcoal | `#2D2D2D` | All body copy |
-| `--color-success` | Sage | `#3A7D5E` | Confirmation states, campaign sent, reply received |
+| `--color-background` | Linen | `#FAF9F5` | Page background — warm off-white with a faint sage undertone, not clinical, not green-tinted enough to read as "themed" |
+| `--color-surface` | White | `#FFFFFF` | Cards, modals, inset content panels |
+| `--color-border` | Smoke | `#E4E4DE` | All ruled lines, card borders, input borders |
+| `--color-muted` | Ash | `#8A8A8A` | Meta text, captions, timestamps, labels |
+| `--color-success` | Moss | `#2F6B4F` | Confirmation states, campaign sent, reply received — a distinct, deeper green than Sage so success states don't compete visually with primary CTAs |
 | `--color-warning` | Amber | `#C07C2A` | Non-blocking alerts |
 | `--color-error` | Cinnabar | `#C0392B` | Destructive actions, validation errors |
 
-**Palette rationale:** The deep navy-black primary grounds Rupert in the world of institutional finance without using a cliché bank blue. The warm parchment background signals handcraft and editorial quality rather than software utility. Brass as the accent is deliberate — it reads as earned, analog, and premium without shouting; it nods to letterpress, finance, and trust without wandering into startup-purple territory. The overall impression is a tasteful printed document brought online.
+**Palette rationale:** Sage replaces Brass as the brand's single accent color, applied with the same discipline — selectively, never as a background wash. It reads as calm and grounded rather than "finance gold," softening Rupert toward approachable without sacrificing seriousness. Ink is retained specifically as the headline/heading color (not demoted to an accent) because a green-and-white-only palette starts to feel like a consumer wellness brand; Ink is what keeps the institutional weight. The background shifts from Parchment to Linen — barely perceptible, but warm enough to sit comfortably next to the new green rather than competing with it. Moss is introduced as a distinct, deeper green specifically for success/confirmation states, so a "reply received" indicator never gets mistaken for a CTA button.
+
+**What did not change:** Ink for headings, Charcoal for body, Slate for secondary UI, Amber and Cinnabar for warning/error. These were never part of the black-and-white read the redesign is solving for — they're neutral-to-functional, not part of the "minimalistic" problem.
 
 ---
 
@@ -141,7 +146,7 @@ xl  — 1280px  (max-width container fully visible)
 **Photography direction:**
 Photos, where used, should feel like editorial documentary photography — candid, slightly desaturated, natural light. Think: a founder at a whiteboard late in the afternoon, a quiet office with a document on the desk, a one-on-one meeting across a small table. No staged group shots. No stock-handshake imagery. No glass-and-steel office stock photos.
 
-**Color treatment:** All photography is run through a warm matte treatment — lifted blacks, slightly reduced saturation, +10–15 warmth. The result should feel consistent with the parchment background palette, not jarring against it.
+**Color treatment:** All photography is run through a warm matte treatment — lifted blacks, slightly reduced saturation, +10–15 warmth. The result should feel consistent with the new Linen background palette, not jarring against it. Do not push a green color-grade onto photography to "match the brand" — the sage accent lives in UI elements, not in photo treatment.
 
 **Subjects appropriate for Rupert:**
 - Founders working — reading documents, on calls, writing
@@ -157,11 +162,11 @@ Photos, where used, should feel like editorial documentary photography — candi
 - Any image that reads "startup pitch deck filler"
 
 **Iconography:**
-Use a single consistent line-icon set — **Lucide** is the preferred library (consistent with Inter's geometric neutrality). Stroke weight: `1.5px`. Size: `20px` inline, `24px` standalone. Never fill icons. Never mix icon families.
+Use a single consistent line-icon set — **Lucide** is the preferred library (consistent with Inter's geometric neutrality). Stroke weight: `1.5px`. Size: `20px` inline, `24px` standalone. Never fill icons. Never mix icon families. Icons may use `--color-primary` (Sage) for active/selected states; default state is Ink or Ash.
 
 **Illustration:** None. Rupert does not use illustration. If a concept needs visual support and no photograph fits, use a refined typographic treatment or ruled line instead.
 
-**Logo / brand mark:** The wordmark "Rupert" should be set in Inter 300 (Light) with slight negative tracking (`-0.02em`). No icons or marks are needed beyond the logotype. If a favicon or app icon is required, use the letterform "R" in Ink on Parchment — no rounded square, no gradient fill.
+**Logo / brand mark:** The wordmark "Rupert" should be set in Inter 300 (Light) with slight negative tracking (`-0.02em`), in Ink. No icons or marks are needed beyond the logotype. If a favicon or app icon is required, use the letterform "R" in Ink on Linen — no rounded square, no gradient fill, no green favicon (Ink stays the brand-mark color even though Sage is the UI accent).
 
 ---
 
@@ -178,6 +183,11 @@ Use a single consistent line-icon set — **Lucide** is the preferred library (c
 - Use "you" and "founders" — center the founder's agency throughout
 - Trust the reader's intelligence; never explain what a term sheet is unless asked
 - Reference real mechanics: thesis alignment, sequenced follow-up, intro ownership
+
+**Proof & stats — what's allowed:**
+- **Activity/process stats are fine:** campaigns run, funds in the database, meetings booked historically, replies received historically. These describe what Rupert *does*, not what a prospect will *get*.
+- **Outcome stats about a specific prospect's future results are never fine:** no "founders raise $X with us," no "expect N meetings in 90 days," no implied guarantee dressed up as an average. Same rule as "never promise outcomes," made explicit because competitor sites (Qubit Capital, Waveup, Fundraisly) normalize this so heavily it's easy to copy by accident.
+- Historical aggregate stats about Rupert/Dori himself (e.g. "$100M+ raised," "50+ startups backed") are activity/track-record stats, not promises — they stay.
 
 **Voice don't:**
 - Never use exclamation marks in body copy or headings
@@ -206,7 +216,7 @@ The following are explicitly prohibited for Rupert across all touchpoints — si
 
 2. **Bold type anywhere** — the typography specification is Inter 300/400/500 only. Bold weights undermine the restrained, precise register the brand requires.
 
-3. **Dark mode design** — the parchment-and-ink palette is load-bearing for the "professional document" feeling. A dark version would look like every other fintech tool.
+3. **Dark mode design** — the Linen-and-Ink palette is load-bearing for the "professional document" feeling. A dark version would look like every other fintech tool.
 
 4. **Gradient fills or glassmorphism** — no gradient backgrounds, gradient text, or frosted-glass UI panels. These read as generic 2022–2024 startup visual language.
 
@@ -225,3 +235,15 @@ The following are explicitly prohibited for Rupert across all touchpoints — si
 11. **"We" as the first word of a hero headline** — hero copy should center the founder, not the company: "Your investor relationships, managed with the discipline of an experienced operator" not "We help founders raise capital."
 
 12. **Multi-step animated onboarding tours or interactive demos that simulate software** — Rupert is a managed service. Simulating a software product experience misrepresents what is being purchased.
+
+13. **Typing/typewriter text effects and counters that count up on scroll** — already implicitly covered under Motion, called out directly here because the current live hero uses a typewriter effect and this must be corrected in the redesign, not just avoided going forward.
+
+14. **Outcome-promising stats about what a prospect will personally get** ("expect N meetings," "founders raise $X with us") — see "Proof & stats" under Voice. The single most common pattern across competitor sites (Qubit Capital, Waveup, Fundraisly) and the easiest one to absorb by accident.
+
+15. **Green as a background wash, gradient, or dominant field color** — Sage is an accent, applied the way Brass used to be: buttons, links, dividers, tinted panels used sparingly. A page that reads as "the green site" has overcorrected; the base palette is still Linen-and-Ink with sage as punctuation, not the reverse.
+
+**Design Abstract:** Rupert is a founder-facing fundraising advisory brand built around a single emotional register: quiet, institutional competence, warmed slightly by a considered accent color. The visual identity is anchored in a warm-neutral light palette — Linen (`#FAF9F5`) as the page background, White (`#FFFFFF`) for card surfaces, and Smoke (`#E4E4DE`) for all ruled lines and borders. Headings and the logo remain in Ink (`#1A1A2E`), a deep navy-black chosen to evoke institutional finance without defaulting to a clichéd bank blue, and to keep the brand from reading as a consumer-lifestyle product once green enters the palette. The sole accent is Sage (`#5C7A5E`), applied selectively to CTAs, links, dividers, and pull-quote marks — it reads as calm and grounded rather than "finance gold," softening Rupert toward approachable without sacrificing seriousness. Supporting neutrals are Slate (`#4A5568`) for secondary UI, Charcoal (`#2D2D2D`) for body text, and Ash (`#8A8A8A`) for meta and captions; Moss (`#2F6B4F`), a deeper, distinct green, is reserved for success/confirmation states so they never compete visually with a primary CTA. The overall tonal impression is a high-quality printed financial document, warmed at the edges — unhurried, credible, and slightly more human than before.
+
+Typography is Inter exclusively, loaded at weights 300, 400, and 500 only — bold weights (600 and above) are categorically forbidden. Display headings run at 56px / weight 300 / `letter-spacing: -0.02em`; H1 at 40px / 300; section headings (H2) at 28px / 400; subheadings (H3–H4) at 20–16px / 500. Body copy is 16–18px / 400 / line-height 1.7. Labels are 12px / 500 / uppercase / `letter-spacing: 0.08em`. IBM Plex Mono at 400 appears only in pipeline data, investor IDs, and email preview contexts. The restraint in weight is load-bearing: it produces the measured, precise register the brand requires and distinguishes Rupert from feature-grid SaaS competitors.
+
+Distinctive visual patterns worth reusing: editorial pull quotes styled with Sage accent marks rather than blockquote boxes; thin `1.5px`-stroke Lucide line icons at 20–24px, never filled; photography treated with a warm matte grade (lifted blacks, reduced saturation, +10–15 warmth) to harmonize with the Linen background; and generous vertical breathing room (64px minimum between major sections at desktop). The grid is 12-column with a 1160px max container and a 680px prose-width cap — text never spans full container width. All motion is minimal: 150ms hover transitions, single-direction fade-up scroll reveals at 400ms ease-out, and no parallax, gradients, or animated effects of any kind. No illustration, no dark mode, no gradients, no emoji, no bold type, no green backgrounds — these are not stylistic preferences but explicit categorical prohibitions that define the brand's boundaries as precisely as its palette does.

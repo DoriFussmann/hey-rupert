@@ -67,7 +67,7 @@ const ogImageUrl = ogImage ? absoluteFileUrl(ogImage) : undefined;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#FAF9F7" />
+    <meta name="theme-color" content="#FAF9F5" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
@@ -93,5 +93,28 @@ const ogImageUrl = ogImage ? absoluteFileUrl(ogImage) : undefined;
     <Header />
     <slot />
     <Footer />
+    <script>
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      if (!reduceMotion) {
+        const nodes = document.querySelectorAll(".reveal");
+        const observer = new IntersectionObserver(
+          (entries) => {
+            for (const entry of entries) {
+              if (!entry.isIntersecting) continue;
+              entry.target.classList.add("is-visible");
+              observer.unobserve(entry.target);
+            }
+          },
+          { threshold: 0.12, rootMargin: "0px 0px -8% 0px" },
+        );
+        nodes.forEach((node) => observer.observe(node));
+      } else {
+        document.querySelectorAll(".reveal").forEach((node) => {
+          node.classList.add("is-visible");
+        });
+      }
+    </script>
   </body>
 </html>

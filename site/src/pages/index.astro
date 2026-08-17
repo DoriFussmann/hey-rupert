@@ -1,49 +1,60 @@
 ---
-import { getCollection } from "astro:content";
+import { Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CtaBanner from "../components/CtaBanner.astro";
-import FaqBlock from "../components/FaqBlock.astro";
-import ImagePlaceholder from "../components/ImagePlaceholder.astro";
-import { getPublishedArticles } from "../lib/articles";
-import { displayDate } from "../lib/dates";
+import PhotoCarousel from "../components/PhotoCarousel.astro";
+import LogoMarquee from "../components/LogoMarquee.astro";
 import { sitePath } from "../lib/url";
+import type { ImageMetadata } from "astro";
+import heroCarousel1 from "../assets/hero/hero-carousel-1.png";
+import heroCarousel2 from "../assets/hero/hero-carousel-2.png";
+import heroCarousel3 from "../assets/hero/hero-carousel-3.png";
+import heroCarousel4 from "../assets/hero/hero-carousel-4.png";
+import doriPortrait from "../assets/team/dori-fussmann/photo.jpg";
+import cornellTechLogo from "../assets/logos/cornell-tech.avif";
 
-const services = (await getCollection("services")).sort(
-  (a, b) => a.data.order - b.data.order,
+const logoFiles = import.meta.glob<{ default: ImageMetadata }>(
+  "../assets/logos/*.png",
+  { eager: true },
 );
-const latest = (await getPublishedArticles()).slice(0, 5);
+
+const clientLogos = [
+  { file: "bluemark.png", name: "BlueMark" },
+  { file: "guardian-vets.png", name: "GuardianVets" },
+  { file: "jbecca.png", name: "jBecca" },
+  { file: "lena-health.png", name: "LenaHealth" },
+  { file: "natrion.png", name: "Natrion" },
+  { file: "pluto-vets.png", name: "PlutoVets" },
+  { file: "powder-pics.png", name: "PowderPics" },
+  { file: "sorso.png", name: "Sorso" },
+  { file: "sunday.png", name: "Sunday" },
+  { file: "swift-vets.png", name: "SwiftVets" },
+  { file: "the-vets.png", name: "The Vets" },
+  { file: "user1st.png", name: "User1st" },
+  { file: "vetnio.png", name: "Vetnio" },
+  { file: "yourpath.png", name: "YourPath" },
+  { file: "sniffi.png", name: "Sniffi" },
+  { file: "snout.png", name: "Snout" },
+  { file: "reside-health.png", name: "ResideHealth" },
+  { file: "dex-world.png", name: "Dex World" },
+  { file: "tailplans.png", name: "Tailplans" },
+].map((item) => {
+  const mod = logoFiles[`../assets/logos/${item.file}`];
+  if (!mod) {
+    throw new Error(`Missing logo asset: ${item.file}`);
+  }
+  return { name: item.name, src: mod.default };
+});
+
 const title =
   "Rupert — Investor Outreach & Fundraising Matchmaking for Founders";
 const description =
   "Rupert helps founders reach investors most likely to fund them. Outreach is researched, personalized, and managed. You keep every conversation and relationship.";
 
-const clients = [
-  "BlueMark",
-  "GuardianVets",
-  "JBecca",
-  "LenaHealth",
-  "Natrion",
-  "PlutoVets",
-  "PowderPics",
-  "Sorso",
-  "Sunday",
-  "SwiftVets",
-  "TheVets",
-  "User1st",
-  "Vetnio",
-  "YourPath",
-  "Sniffi",
-  "Snout",
-  "ResideHealth",
-];
-
 const capabilities = [
   "End-to-end Fundraising Assistance",
   "Investor Discovery & Mapping",
   "Investor Outreach",
-  "Pitch Deck & Data Room Creation",
-  "Pitch Deck Preparation",
-  "Financial Model Creation",
 ];
 
 const homeStats = [
@@ -59,38 +70,41 @@ const proofStats = [
   { value: "1,200+", label: "Meetings booked" },
 ];
 
-const steps: {
-  title: string;
-  body: string;
-  link?: { href: string; label: string };
-}[] = [
+const heroFrames = [
   {
-    title: "Rupert understands your business.",
-    body: "A short conversation captures your stage, sector, geography, traction, and story — the details an operator actually needs before anyone is emailed.",
+    id: "hero-carousel-1",
+    src: heroCarousel1,
+    alt: "A printed pitch deck and pen on a wooden desk in late-afternoon light",
   },
   {
-    title: "Rupert prepares your pitch.",
-    body: "Using the materials you upload — decks, one-pagers, abstracts — messaging is shaped for outreach. Rupert will not create your materials for you, but it puts them to work. For what those materials need to cover, see",
-    link: {
-      href: "/articles/pitch-deck/",
-      label: "the complete pitch deck guide",
-    },
+    id: "hero-carousel-2",
+    src: heroCarousel2,
+    alt: "Two people in conversation across a small table with papers between them",
   },
   {
-    title: "Rupert finds your investors.",
-    body: "Your profile is matched against 10,000+ VCs, family offices, and angels — filtered by their actual investment criteria, not by name recognition.",
+    id: "hero-carousel-3",
+    src: heroCarousel3,
+    alt: "A printed investor list on a desk, a few names circled in pencil",
   },
   {
-    title: "Rupert builds campaigns per investor type.",
-    body: "A seed-stage fintech VC and a family office are different conversations. Each gets a pitch built for how they think, with A/B testing to see what lands.",
+    id: "hero-carousel-4",
+    src: heroCarousel4,
+    alt: "A hand writing in a notebook beside a folded document",
+  },
+];
+
+const steps = [
+  {
+    title: "Discovery call with Dori",
+    body: "A direct 1:1. Capital needs, offer, story, and what you've already tried. No intake form, no junior associate.",
   },
   {
-    title: "Rupert runs the outreach.",
-    body: "Sequences go out, and every open, click, and reply is tracked as it happens. Follow-up is sequenced. Nothing is left sitting in a spreadsheet.",
+    title: "The match, within 48 hours",
+    body: "Your company against 10,000+ VCs, family offices, and angels — filtered by vertical, stage, and geography. The list comes back to you.",
   },
   {
-    title: "You see every conversation.",
-    body: "Live campaign analytics and direct investor communication sit in one private workspace. Every reply comes to you. Every relationship stays yours.",
+    title: "You approve. Campaigns run. Every reply comes to you.",
+    body: "Nothing goes out until you sign off. When a fund engages, Dori stays in it with you — not a name handed over and a disappearance.",
   },
 ];
 
@@ -105,7 +119,7 @@ const reasons = [
   },
   {
     title: "Full visibility.",
-    body: "Opens, clicks, replies, bounces — you see exactly what's working, campaign by campaign.",
+    body: "Every response lands in your client portal. You see it in real time and manage the communication from there.",
   },
 ];
 
@@ -154,259 +168,242 @@ const testimonials = [
   },
 ];
 
-const faqs = [
-  {
-    question: "How is Rupert different from an investor database?",
-    answer:
-      "Rupert is not a raw database dump. Your company is matched against 10,000+ VCs, family offices, and angels filtered by their actual investment criteria — not by name recognition. A human reviews and refines the campaigns with you.",
-  },
-  {
-    question: "Is Rupert a self-serve outreach tool?",
-    answer:
-      "No. This is a managed service. Your campaigns are researched, written, and refined with you by experienced operators — not fired blindly by a bot.",
-  },
-  {
-    question: "Does Rupert take a percentage of the raise?",
-    answer:
-      "No. Rupert never takes a percentage of your raise and never owns your investor relationships. Every reply comes to you, and every introduction is yours to keep.",
-  },
-  {
-    question: "Does Rupert create my pitch deck?",
-    answer:
-      "No. Rupert does not create your pitch deck or fundraising materials. You upload the decks, one-pagers, or abstracts you already have; Rupert shapes messaging for outreach and puts those materials to work.",
-  },
-  {
-    question: "Who owns the investor conversations?",
-    answer:
-      "You do. Every reply comes to you. Live campaign analytics and direct investor communication sit in one private workspace, and every relationship stays yours.",
-  },
+const founderQuote =
+  "If something can happen at 50% probability in seven days, I'll get it to 85%, in four days, for less.";
+
+const founderExperience = [
+  "Founded The Vets — $100M+ raised, exit via BetterVet",
+  "Investment banking at Citi, Morgan Stanley, and Ion Pacific",
+  "CFO, BlueMark",
+  "Mentor, Cornell Tech Runway and Yale Tsai CITY",
 ];
 
-const jsonLd =
-  faqs.length > 0
-    ? [
-        {
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: faqs.map((faq) => ({
-            "@type": "Question",
-            name: faq.question,
-            acceptedAnswer: {
-              "@type": "Answer",
-              text: faq.answer,
-            },
-          })),
-        },
-      ]
-    : [];
+const caseLogo = (file: string) => {
+  const mod = logoFiles[`../assets/logos/${file}`];
+  if (!mod) {
+    throw new Error(`Missing logo asset: ${file}`);
+  }
+  return mod.default;
+};
+
+const caseStudies = [
+  {
+    name: "The Vets",
+    logo: caseLogo("the-vets.png"),
+    body: "Founded and led The Vets to $25M+ ARR and 250+ employees. Raised $100M+. Exited through the BetterVet merger.",
+  },
+  {
+    name: "Natrion",
+    logo: caseLogo("natrion.png"),
+    body: "Served as Fractional CFO on Natrion's latest $5M fundraise.",
+  },
+  {
+    name: "Snout",
+    logo: caseLogo("snout.png"),
+    body: "Served as Fractional CFO on Snout's $100M financing round.",
+    href: "https://www.crowdfundinsider.com/2026/02/259184-pet-care-financing-startup-snout-lands-100m-facility-raises-10m-series-a/",
+    linkLabel: "$100M financing round",
+  },
+  {
+    name: "BlueMark",
+    logo: caseLogo("bluemark.png"),
+    body: "Serves as CFO of BlueMark, an impact-investment intelligence platform.",
+  },
+  {
+    name: "Cornell Tech",
+    logo: cornellTechLogo,
+    body: "Mentoring numerous startups through Cornell Tech's Runway program.",
+  },
+  {
+    name: "Yale",
+    logo: caseLogo("yale.png"),
+    body: "Mentoring early-stage founders through Yale's Tsai CITY.",
+  },
+];
 ---
 
-<BaseLayout
-  title={title}
-  description={description}
-  canonicalPath="/"
-  jsonLd={jsonLd}
->
+<BaseLayout title={title} description={description} canonicalPath="/">
   <main class="flex-1">
     <section class="site-wrap pb-2xl pt-2xl lg:pb-3xl lg:pt-3xl">
-      <h1 class="type-display hero-reveal">
-        Real investors. Real campaigns. Real replies.
-      </h1>
-      <p class="type-body-lg hero-reveal mt-lg">
-        Then meetings, term sheets, and funding — in that order. Rupert studies
-        your startup, finds the investors who actually fund companies like
-        yours, and reaches them with a campaign built for each one.
-      </p>
-      <p class="hero-reveal mt-xl flex flex-wrap items-center gap-md">
-        <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
-        <a class="btn-quiet" href={sitePath("/how-it-works/")}>
-          See how it works →
-        </a>
-      </p>
-      <p class="type-body-sm hero-reveal mt-lg">
-        Matched against 10,000+ real VCs, family offices, and angels — filtered
-        by their actual investment criteria.
-      </p>
-      <div class="mt-2xl">
-        <ImagePlaceholder
-          ratio="hero"
-          label="Hero still"
-          brief="A late-afternoon documentary photograph of a founder at a small desk: a printed deck, a notebook, and a quiet window. Natural light from the left, slightly desaturated, warm matte to match parchment. No handshake, no glass tower, no laptop dashboard taking over the frame. Optional lower-third captions in Inter, not overlaid as UI chrome: Outreach performance, tracked live · Investors, matched and scored · Campaigns, sent and tracked."
-        />
+      <div class="grid gap-xl md:grid-cols-12 md:items-center md:gap-lg">
+        <div class="hero-reveal md:col-span-6">
+          <h1 class="type-display">
+            Real Investors. Precise Campaigns. Direct Replies.
+          </h1>
+          <p class="type-body-lg mt-lg">
+            Rupert learns your startup, finds the investors who actually fund
+            companies like yours, and gets you into their inbox — with campaigns
+            built for each one.
+          </p>
+          <p class="mt-xl flex flex-wrap items-center gap-md">
+            <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
+            <a class="btn-quiet" href={sitePath("/how-it-works/")}>
+              See how it works →
+            </a>
+          </p>
+          <p class="type-body-sm mt-lg">
+            Matched against 10,000+ real VCs, family offices, and angels —
+            filtered by their actual investment criteria.
+          </p>
+        </div>
+        <div class="hero-reveal md:col-span-6">
+          <PhotoCarousel frames={heroFrames} />
+        </div>
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="clients-heading">
-      <h2 id="clients-heading" class="type-label">Select Clients</h2>
-      <p class="type-body-sm mt-md">
-        Image brief: replace each name with that client's wordmark. Single-color
-        ink (#1A1A2E) on parchment. Horizontal lockups, no taglines, no drop
-        shadows, no full-color versions. Optical size so they sit on one line.
-      </p>
-      <ul class="mt-lg grid grid-cols-2 gap-sm sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-        {
-          clients.map((name) => (
-            <li>
-              <div class="logo-tile">
-                <p class="type-h4">{name}</p>
-              </div>
-            </li>
-          ))
-        }
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-label="How Rupert is run">
+      <ul class="trust-strip">
+        <li class="trust-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="8" r="5"></circle>
+            <path d="M20 21a8 8 0 0 0-16 0"></path>
+          </svg>
+          <span class="type-body">Fully managed, no dashboard to learn</span>
+        </li>
+        <li class="trust-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
+            <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
+          </svg>
+          <span class="type-body">Every reply comes to you</span>
+        </li>
+        <li class="trust-item">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="19" x2="5" y1="5" y2="19"></line>
+            <circle cx="6.5" cy="6.5" r="2.5"></circle>
+            <circle cx="17.5" cy="17.5" r="2.5"></circle>
+          </svg>
+          <span class="type-body">No percentage of your raise, ever.</span>
+        </li>
       </ul>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="stop-heading">
-      <div class="grid gap-xl md:grid-cols-12 md:gap-lg">
-        <div class="md:col-span-7">
-          <h2 id="stop-heading" class="type-h2">
-            Stop pitching the wrong investors.
+    <section class="py-xl lg:py-2xl reveal" aria-labelledby="clients-heading">
+      <div class="site-wrap">
+        <h2 id="clients-heading" class="type-label">Select Clients</h2>
+      </div>
+      <div class="mt-xl">
+        <LogoMarquee logos={clientLogos} />
+      </div>
+    </section>
+
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="founder-heading">
+      <div class="founder-grid">
+        <div class="founder-copy">
+          <p class="type-label">About</p>
+          <h2 id="founder-heading" class="type-h2 mt-md">
+            Founded by a founder, <em class="founder-heading-accent">for founders.</em>
           </h2>
-          <p class="type-body-lg mt-md">
-            Careful matchmaking finds the right ones — and the team at Rupert
-            runs the raise with you.
+          <p class="type-body mt-lg max-w-prose">
+            Great founders should not have to become full-time fundraisers.
+            Dori built Rupert so the operator stays on the company — while the
+            list, the sequencing, and the follow-up are handled with the
+            discipline of someone who has sat on both sides of the table.
           </p>
-          <dl class="mt-xl grid grid-cols-2 gap-lg">
+          <p class="type-body mt-md max-w-prose">
+            Every reply comes to you. No percentage of the raise. No dashboard
+            to learn.
+          </p>
+          <ul class="case-stack mt-xl">
             {
-              homeStats.map((stat) => (
-                <div>
-                  <dt class="type-label">{stat.label}</dt>
-                  <dd class="stat-value mt-sm">{stat.value}</dd>
-                </div>
-              ))
-            }
-          </dl>
-          <ul class="mt-xl">
-            {
-              capabilities.map((item) => (
-                <li class="rule py-md type-body">{item}</li>
+              caseStudies.map((item) => (
+                <li class="case-card">
+                  <div class="case-card__logo">
+                    <Image
+                      src={item.logo}
+                      alt={item.name}
+                      widths={[160, 240, 320]}
+                      sizes="120px"
+                      inferSize
+                    />
+                  </div>
+                  <p class="case-card__text type-body-sm">
+                    {
+                      item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
+                        <>
+                          {item.body.slice(0, item.body.indexOf(item.linkLabel))}
+                          <a href={item.href} rel="noopener noreferrer">
+                            {item.linkLabel}
+                          </a>
+                          {item.body.slice(
+                            item.body.indexOf(item.linkLabel) + item.linkLabel.length,
+                          )}
+                        </>
+                      ) : (
+                        item.body
+                      )
+                    }
+                  </p>
+                </li>
               ))
             }
           </ul>
         </div>
-        <aside class="md:col-span-5">
-          <div class="intake-panel">
-            <h3 class="type-h3">Let's get started</h3>
-            <p class="type-body mt-md">
-              Answer a couple of quick questions so we can personalize your
-              call.
-            </p>
-            <p class="type-label mt-xl">Are you a founder or an investor?</p>
-            <p class="mt-md flex flex-wrap gap-sm">
-              <span class="choice">Founder</span>
-              <span class="choice">Investor</span>
-            </p>
-            <p class="mt-lg">
-              <button class="btn-primary btn-inert" type="button">
-                Continue
-              </button>
-            </p>
-          </div>
-          <div class="mt-lg">
-            <ImagePlaceholder
-              ratio="panel"
-              label="Intake photograph"
-              brief="A one-to-one conversation across a small table. Two people, papers between them, late daylight. Candid, slightly desaturated, no staged 'brainstorm' energy. Crop tight enough that it feels private, not corporate."
+
+        <aside class="founder-panel">
+          <div class="founder-panel__top">
+            <Image
+              class="founder-panel__photo photo"
+              src={doriPortrait}
+              alt="Photograph of Dori Fussmann"
+              width={192}
+              height={192}
             />
+            <div>
+              <p class="type-h3 founder-panel__name">Dori Fussmann</p>
+              <p class="type-label mt-xs">Founder</p>
+            </div>
           </div>
+          <ul class="founder-panel__points">
+            {
+              founderExperience.map((line) => (
+                <li>{line}</li>
+              ))
+            }
+          </ul>
+          <blockquote class="founder-panel__quote">{founderQuote}</blockquote>
+          <p class="founder-panel__links">
+            <a href={sitePath("/about/")}>Read Dori's full story →</a>
+            <a
+              href="https://www.linkedin.com/in/dori-fussmann-663ba242"
+              rel="noopener noreferrer"
+            >
+              LinkedIn →
+            </a>
+          </p>
         </aside>
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="problem-heading">
-      <div class="grid gap-xl md:grid-cols-12 md:items-end md:gap-lg">
-        <div class="md:col-span-7">
-          <p class="type-label">The Problem</p>
-          <h2 id="problem-heading" class="type-h2 mt-md">
-            Fundraising isn't a pitch problem. It's a targeting problem.
-          </h2>
-          <p class="type-body-lg mt-lg">
-            Most founders email the wrong investors with the same generic pitch
-            — and hear nothing back. The investors who would actually fund you
-            exist. You just don't know who they are, or what they respond to.{" "}
-            <a href={sitePath("/articles/angel-investors/")}>
-              Learn more about finding the right investors
-            </a>.
-          </p>
-        </div>
-        <div class="md:col-span-5">
-          <ImagePlaceholder
-            ratio="portrait"
-            label="Problem photograph"
-            brief="A printed investor list on a desk, a few names circled in pencil, the rest untouched. Architectural detail around it — a window edge, a lamp, warm paper. No person required. Analog, quiet, specific."
-          />
-        </div>
-      </div>
-    </section>
-
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="database-heading">
-      <p class="type-label">The Database</p>
-      <h2 id="database-heading" class="type-h2 mt-md">
-        Whatever you're building, there's an investor in it for you.
-      </h2>
-      <p class="type-body-lg mt-lg">
-        Rupert is built on one of the industry's most complete venture capital
-        and private equity databases — covering every stage, sector, and
-        geography, so the right investor for your startup is always in reach.
-      </p>
-      <dl class="mt-2xl grid gap-xl sm:grid-cols-3">
-        <div class="rule pt-lg">
-          <dt class="type-label">Active investors tracked</dt>
-          <dd class="stat-value mt-sm">10,000+</dd>
-        </div>
-        <div class="rule pt-lg">
-          <dt class="type-label">Direct executive emails</dt>
-          <dd class="stat-value mt-sm">55,650+</dd>
-        </div>
-        <div class="rule pt-lg">
-          <dt class="type-label">Updated every year</dt>
-          <dd class="stat-value mt-sm">2x</dd>
-        </div>
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-label="Track record">
+      <dl class="grid grid-cols-2 gap-lg md:grid-cols-4">
+        {
+          homeStats.map((stat) => (
+            <div class="surface-card">
+              <dt class="type-label">{stat.label}</dt>
+              <dd class="stat-value mt-sm">{stat.value}</dd>
+            </div>
+          ))
+        }
       </dl>
-      <ul class="mt-2xl grid gap-md md:grid-cols-3">
-        <li class="rule pt-lg type-body">
-          Geography and industry preference
-        </li>
-        <li class="rule pt-lg type-body">
-          Investment stage and financing type
-        </li>
-        <li class="rule pt-lg type-body">
-          Verified executive contact details
-        </li>
-      </ul>
-      <p class="mt-xl">
-        <a class="btn-quiet" href={sitePath("/database/")}>
-          See the dataset →
-        </a>
-      </p>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="does-heading">
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="does-heading">
       <p class="type-label">What Rupert Does</p>
       <h2 id="does-heading" class="type-h2 mt-md">
         From "who do I even email?" to warm investor replies.
       </h2>
-      <ol class="mt-2xl">
+      <ol class="mt-2xl grid gap-md">
         {
           steps.map((step, index) => (
-            <li class="rule grid gap-md py-xl md:grid-cols-12 md:gap-lg">
+            <li class="surface-card grid gap-md md:grid-cols-12 md:gap-lg">
               <p class="step-num md:col-span-2">
                 {String(index + 1).padStart(2, "0")}
               </p>
               <div class="md:col-span-10">
                 <h3 class="type-h3">{step.title}</h3>
-                <p class="type-body mt-sm">
-                  {step.body}
-                  {
-                    step.link && (
-                      <>
-                        {" "}
-                        <a href={sitePath(step.link.href)}>{step.link.label}</a>
-                        .
-                      </>
-                    )
-                  }
-                </p>
+                <p class="type-body mt-sm">{step.body}</p>
               </div>
             </li>
           ))
@@ -417,12 +414,12 @@ const jsonLd =
       </p>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="why-heading">
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="why-heading">
       <h2 id="why-heading" class="type-h2">Why it works</h2>
       <ul class="mt-2xl grid gap-xl md:grid-cols-3">
         {
           reasons.map((reason) => (
-            <li class="rule-accent pt-lg">
+            <li class="surface-card">
               <h3 class="type-h3">{reason.title}</h3>
               <p class="type-body mt-md">{reason.body}</p>
             </li>
@@ -431,12 +428,12 @@ const jsonLd =
       </ul>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="proof-heading">
+    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="proof-heading">
       <h2 id="proof-heading" class="type-h2">Results, in the open</h2>
       <dl class="mt-xl grid gap-xl sm:grid-cols-3">
         {
           proofStats.map((stat) => (
-            <div>
+            <div class="surface-card">
               <dt class="type-label">{stat.label}</dt>
               <dd class="stat-value mt-sm">{stat.value}</dd>
             </div>
@@ -446,7 +443,7 @@ const jsonLd =
       <ul class="mt-2xl grid gap-xl md:grid-cols-2">
         {
           testimonials.map((item) => (
-            <li class="rule pt-xl">
+            <li class="surface-card">
               <blockquote class="pull-quote">{item.quote}</blockquote>
               <p class="type-body-sm mt-md">
                 {item.name}, {item.firm} · {item.meta}
@@ -457,47 +454,12 @@ const jsonLd =
       </ul>
     </section>
 
-    <section id="services" class="site-wrap py-xl lg:py-2xl">
+    <section id="services" class="site-wrap py-xl lg:py-2xl reveal">
       <h2 class="type-h2">Services</h2>
-      {
-        services.map((service) => (
-          <section
-            id={service.data.slug}
-            class="rule mt-lg grid gap-md pt-lg md:grid-cols-12 md:gap-lg"
-          >
-            <h3 class="type-h3 md:col-span-4">{service.data.title}</h3>
-            <p class="type-body md:col-span-8">{service.data.summary}</p>
-          </section>
-        ))
-      }
-    </section>
-
-    <div class="site-wrap py-xl lg:py-2xl">
-      <FaqBlock faqs={faqs} />
-    </div>
-
-    <section class="site-wrap py-xl lg:py-2xl">
-      <h2 class="type-h2">Latest Articles</h2>
-      <ul class="mt-lg">
+      <ul class="mt-xl grid gap-md">
         {
-          latest.map((article) => (
-            <li class="rule">
-              <article class="grid gap-sm py-lg md:grid-cols-12 md:gap-lg md:py-xl">
-                <p class="md:col-span-4">
-                  <time class="type-body-sm" datetime={article.data.date.toISOString()}>
-                    {displayDate(article.data.date)}
-                  </time>
-                </p>
-                <div class="md:col-span-8">
-                  <h3 class="type-h3">
-                    <a class="font-medium no-underline" href={sitePath(`/articles/${article.data.slug}/`)}>
-                      {article.data.title}
-                    </a>
-                  </h3>
-                  <p class="type-body mt-sm">{article.data.description}</p>
-                </div>
-              </article>
-            </li>
+          capabilities.map((item) => (
+            <li class="surface-card type-body">{item}</li>
           ))
         }
       </ul>

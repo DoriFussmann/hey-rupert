@@ -1,12 +1,12 @@
 :root {
-  --cms-bg: #f4f3f0;
+  --cms-bg: #faf9f5;
   --cms-surface: #fff;
   --cms-ink: #1f1f1f;
   --cms-muted: #5c5c5c;
-  --cms-line: #d8d5d0;
-  --cms-accent: #7a5c28;
+  --cms-line: #e4e4de;
+  --cms-accent: #5c7a5e;
   --cms-nav: #1a1a2e;
-  --cms-ok: #3a7d5e;
+  --cms-ok: #2f6b4f;
   --cms-bad: #c0392b;
   --cms-nav-width: 13.5rem;
 }

@@ -1,16 +1,26 @@
 ---
+import { Image } from "astro:assets";
 import { SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
+import rupertLogo from "../assets/brand/rupert-logo.png";
 ---
 
 <header class="sticky top-0 z-10 border-b border-border bg-background">
-  <nav class="site-wrap flex min-h-16 flex-wrap items-center justify-between gap-md py-sm">
-    <a class="wordmark" href={sitePath("/")}>{SITE_NAME}</a>
+  <nav class="site-wrap flex min-h-16 flex-wrap items-center justify-between gap-md py-sm lg:h-16 lg:flex-nowrap lg:py-0">
+    <a class="site-logo" href={sitePath("/")} aria-label={SITE_NAME}>
+      <Image
+        src={rupertLogo}
+        alt={SITE_NAME}
+        widths={[160, 240, 320]}
+        sizes="140px"
+        inferSize
+      />
+    </a>
     <span class="flex flex-wrap items-center justify-end">
       <a class="nav-link" href={sitePath("/how-it-works/")}>How It Works</a>
       <a class="nav-link" href={sitePath("/database/")}>Our Database</a>
       <a class="nav-link" href={sitePath("/articles/")}>Articles</a>
-      <a class="nav-link" href={sitePath("/team/")}>Team</a>
+      <a class="nav-link" href={sitePath("/about/")}>About</a>
       <a class="btn-primary btn-primary--nav ml-sm" href={sitePath("/book-call/")}>
         Book a Call
       </a>

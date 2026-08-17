@@ -11,24 +11,25 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#1A1A2E",
-          hover: "#11111F",
+          DEFAULT: "#5C7A5E",
+          hover: "#476148",
+          tint: "#E6EDE3",
         },
         secondary: "#4A5568",
         accent: {
-          DEFAULT: "#B5935A",
-          text: "#7A5C28",
+          DEFAULT: "#5C7A5E",
+          text: "#5C7A5E",
         },
-        background: "#FAF9F7",
+        background: "#FAF9F5",
         surface: "#FFFFFF",
-        border: "#E4E2DE",
+        border: "#E4E4DE",
         muted: {
           DEFAULT: "#8A8A8A",
-          text: "#6B6B6B",
+          text: "#8A8A8A",
         },
         heading: "#1A1A2E",
         foreground: "#2D2D2D",
-        success: "#3A7D5E",
+        success: "#2F6B4F",
         warning: "#C07C2A",
         error: "#C0392B",
       },
@@ -78,6 +79,9 @@ export default {
         xl: "40px",
         "2xl": "64px",
         "3xl": "96px",
+      },
+      borderRadius: {
+        card: "8px",
       },
       maxWidth: {
         container: "1160px",

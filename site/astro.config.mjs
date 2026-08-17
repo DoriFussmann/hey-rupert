@@ -55,5 +55,13 @@ export default defineConfig({
   ],
   vite: {
     plugins: [tailwindcss()],
+    server: {
+      watch: {
+        // Astro writes data-store.json via a .tmp rename. On Windows, chokidar
+        // treats that as an atomic save and can delete the temp file first,
+        // which crashes `astro dev` with UnknownFilesystemError (ENOENT).
+        ignored: ["**/.astro/**/*.tmp"],
+      },
+    },
   },
 });

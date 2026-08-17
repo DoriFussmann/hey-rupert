@@ -1,44 +1,67 @@
 ---
+import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
-import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
 import { SITE_NAME } from "../../config/site";
 import { sitePath } from "../../lib/url";
+import howItWorks1 from "../../assets/how-it-works/how-it-works-01.png";
+import howItWorks2 from "../../assets/how-it-works/how-it-works-02.png";
+import howItWorks3 from "../../assets/how-it-works/how-it-works-03.png";
+import howItWorks4 from "../../assets/how-it-works/how-it-works-04.png";
+import howItWorks5 from "../../assets/how-it-works/how-it-works-05.png";
 
 const title = `How It Works — ${SITE_NAME}`;
 const description =
-  "How Rupert runs founder-led investor outreach: an intake conversation, criteria-matched investors, campaigns built per investor type, and warm replies you own.";
+  "How Rupert runs founder-led investor outreach: a discovery call with Dori, a match list within 48 hours, copy you approve, and every reply in your portal.";
 
 const steps = [
   {
-    title: "Rupert understands your startup.",
-    body: "It starts with a conversation — not a 50-slide deck. Intake asks the right questions about your stage, sector, geography, team, traction, and what makes the company worth funding. In ten minutes, the profile is sharper than most pitch memos.",
-    brief:
-      "Photograph: a founder speaking across a small table, a notebook open, no laptop dominating the shot. Late daylight, warm matte, candid. The feeling is a serious conversation, not an interview set.",
+    title: "Discovery Call",
+    body: "A direct 1:1 with Dori. You talk through your capital needs, your offer, your story, and what you've already tried. No intake form, no junior associate — you're talking to the person who's actually raised the money.",
+    src: howItWorks1,
+    alt: "Two people in conversation across a table, a notebook open between them",
   },
   {
-    title: "Rupert finds your investors.",
-    body: "Your profile is matched against a database of 10,000+ VCs, family offices, and angel investors — not by name recognition, but by their actual investment criteria: stage, sector, geography, check size, portfolio patterns. You get a curated list of investors who fund companies exactly like yours.",
-    brief:
-      "Photograph: a printed list and a pencil on a desk, a few names marked, a window in soft focus. Paper and light only. No screenshots of software, no map graphics.",
+    title: "Materials Exchange (NDA-covered)",
+    body: "You share whatever's relevant: deck, financials, data room. Covered under NDA from the start.",
+    src: howItWorks4,
+    alt: "A marked-up fundraising document on a desk beside a face-down phone",
   },
   {
-    title: "Rupert builds campaigns per investor type.",
-    body: "A seed-stage fintech VC and a family office looking at climate tech are different conversations. Your list is segmented into personas, and outreach is written for each one — subject lines, opening hooks, proof points, and follow-ups designed for how each type thinks and decides.",
-    brief:
-      "Photograph: two or three printed email drafts or a one-pager on cream paper, slightly overlapping, a brass paperweight or pen. Editorial still life. No UI mockup, no 'compose window' screenshot.",
+    title: "The Match (48 hours)",
+    body: "Dori runs your company against a proprietary database of 10,000+ funds — VCs, family offices, angels — filtered by vertical, stage, and geography. You get your match list back within 48 hours.",
+    src: howItWorks2,
+    alt: "A printed investor outreach list on a desk, a few names already marked",
   },
   {
-    title: "You get warm leads.",
-    body: "Rupert runs the email sequences — sends, tracks, follows up. You see every open, click, reply, and bounce. When investors respond, you take the conversation from there. No guesswork, no ghosting into the void. Every reply comes to you.",
-    brief:
-      "Photograph: a quiet office corner, a phone face-down beside a marked-up document, late afternoon. Suggests a conversation that already happened. No notification pop-ups, no dashboard chrome.",
+    title: "Custom Outreach Copy",
+    body: "Campaigns written for your specific matches — a fund pitch and a family office pitch aren't the same email, and neither reads like a template. Multiple versions built to fit each audience.",
+    src: howItWorks3,
+    alt: "Printed email drafts overlapping on a desk, a pen beside them",
   },
   {
-    title: "The call is the beginning.",
-    body: "On the intro call, we walk through how Rupert works: the intake, how your investors would be matched, how campaigns are built. You leave understanding exactly how the raise would be run — and whether it's a fit. 30 minutes. No deck required.",
-    brief:
-      "Photograph: two people at a small table, one listening, papers between them. Cropped, documentary, natural light. This is a working conversation, not a sales stage.",
+    title: "Your Review, Your Approval",
+    body: "Nothing goes out until you sign off on it.",
+    src: howItWorks3,
+    alt: "Printed email drafts overlapping on a desk, a pen beside them",
+  },
+  {
+    title: "Campaigns Run",
+    body: "Approved campaigns go out to your matched list.",
+    src: howItWorks2,
+    alt: "A printed investor outreach list on a desk",
+  },
+  {
+    title: "Full Visibility",
+    body: "Every response lands in your client portal. You see it in real time and manage the communication from there.",
+    src: howItWorks4,
+    alt: "A marked-up document on a desk beside a face-down phone",
+  },
+  {
+    title: "Engagement Support",
+    body: "The moment a fund engages, Dori is in it with you — helping you handle the conversation, not handing you a name and disappearing.",
+    src: howItWorks5,
+    alt: "Two people at a small table with papers, in a working conversation",
   },
 ];
 ---
@@ -51,15 +74,14 @@ const steps = [
         From a cold list to warm introductions.
       </h1>
       <p class="type-body-lg mt-lg">
-        Five steps between you and the investors who should be funding your
-        round.
+        From the first call to a fund that engages.
       </p>
     </section>
 
-    <ol class="site-wrap pb-2xl">
+    <ol class="site-wrap grid gap-lg pb-2xl">
       {
         steps.map((step, index) => (
-          <li class="rule grid gap-lg py-2xl md:grid-cols-12 md:items-start md:gap-lg">
+          <li class="surface-card grid gap-lg md:grid-cols-12 md:items-start md:gap-lg">
             <p class="step-num md:col-span-2">
               {String(index + 1).padStart(2, "0")}
             </p>
@@ -68,7 +90,14 @@ const steps = [
               <p class="type-body mt-md">{step.body}</p>
             </div>
             <div class="md:col-span-4">
-              <ImagePlaceholder ratio="square" brief={step.brief} />
+              <div class="media-frame media-frame--square">
+                <Image
+                  src={step.src}
+                  alt={step.alt}
+                  widths={[480, 720, 960]}
+                  sizes="(min-width: 768px) 30vw, 92vw"
+                />
+              </div>
             </div>
           </li>
         ))
