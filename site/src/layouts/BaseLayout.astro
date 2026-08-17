@@ -2,6 +2,7 @@
 import "@fontsource/inter/latin-300.css";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-500.css";
+import "@fontsource/great-vibes";
 import "../styles/global.css";
 import {
   DEFAULT_OG_IMAGE,
@@ -159,6 +160,43 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
           node.classList.add("is-visible");
         });
       }
+
+      document.querySelectorAll(".pillar-item, .faq-item").forEach((item) => {
+        if (!(item instanceof HTMLDetailsElement)) return;
+        const summary = item.querySelector("summary");
+        const panel = item.querySelector(".pillar-item__panel, .faq-item__panel");
+        if (!(summary instanceof HTMLElement)) return;
+
+        summary.addEventListener("click", (event) => {
+          event.preventDefault();
+          const isOpen = item.classList.contains("is-open");
+
+          if (reduceMotion) {
+            item.open = !isOpen;
+            item.classList.toggle("is-open", !isOpen);
+            return;
+          }
+
+          if (isOpen) {
+            item.classList.remove("is-open");
+            let closed = false;
+            const close = (closeEvent?: Event) => {
+              if (closed) return;
+              if (closeEvent && closeEvent.target !== panel) return;
+              closed = true;
+              item.open = false;
+              panel?.removeEventListener("transitionend", close);
+            };
+            panel?.addEventListener("transitionend", close);
+            window.setTimeout(close, 360);
+          } else {
+            item.open = true;
+            requestAnimationFrame(() => {
+              item.classList.add("is-open");
+            });
+          }
+        });
+      });
     </script>
   </body>
 </html>

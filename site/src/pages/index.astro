@@ -4,11 +4,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import CtaBanner from "../components/CtaBanner.astro";
 import FaqBlock from "../components/FaqBlock.astro";
 import LogoMarquee from "../components/LogoMarquee.astro";
+import { DORI_LINKEDIN } from "../config/site";
+import { caseStudies } from "../lib/caseStudies";
 import { absoluteUrl, sitePath } from "../lib/url";
 import type { ImageMetadata } from "astro";
 import heroPhoto from "../assets/hero/hero-carousel-1.png";
 import doriPortrait from "../assets/team/dori-fussmann/photo.jpg";
-import cornellTechLogo from "../assets/logos/cornell-tech.avif";
+import linkedinLogo from "../assets/brand/linkedin.png";
 
 const logoFiles = import.meta.glob<{ default: ImageMetadata }>(
   "../assets/logos/*.png",
@@ -47,76 +49,70 @@ const title = "Expert-Managed Investor Outreach for Startups | Rupert";
 const description =
   "Rupert runs investor research, targeting, personalized outreach and follow-up for founders raising capital. Every reply and investor relationship stays yours.";
 
-const principles = [
-  {
-    title: "Managed for you",
-    body: "Research, targeting, copy and follow-up are handled by Rupert.",
-  },
-  {
-    title: "Every reply is yours",
-    body: "Investor conversations go directly to you.",
-  },
-  {
-    title: "No percentage of your raise",
-    body: "Rupert is paid for the work, not for ownership of your relationships.",
-  },
+const experience = [
+  { value: "Over $250m", label: "Raised" },
+  { value: "Over 50", label: "Clients Engaged" },
+  { value: "Over 10,000", label: "Funds To Match With" },
 ];
 
-const capabilities = [
+const pillars = [
   {
-    title: "Investor research & targeting",
-    body: "Rupert builds a target universe around stage, sector, geography, investment thesis, check size and actual fit.",
+    title: "Discovery & Strategy",
+    summary:
+      "Map the raise and build a precise investor universe before a single message is written.",
+    items: [
+      {
+        title: "Understand the Raise",
+        body: "Your company, story, round, traction, and what makes you fundable.",
+      },
+      {
+        title: "Build the Investor Universe",
+        body: "A tailor-made list based on stage, sector, geography, check size, and genuine fit.",
+      },
+      {
+        title: "Develop the Strategy",
+        body: "Define the positioning, investor segments, messaging, and campaign approach.",
+      },
+    ],
   },
   {
-    title: "Outreach strategy & writing",
-    body: "Messages are written for your company and the investors receiving them — not copied from a generic sequence.",
+    title: "Campaign Launch",
+    summary:
+      "Write the outreach, get your approval, then run the campaign with disciplined follow-up.",
+    items: [
+      {
+        title: "Craft the Outreach",
+        body: "Custom messaging written for your company and tailored to each investor audience.",
+      },
+      {
+        title: "Review & Approve",
+        body: "You review the strategy, targets, and messaging. Nothing goes out without your approval.",
+      },
+      {
+        title: "Launch & Follow Up",
+        body: "Rupert runs the campaign and manages the follow-up with consistency and discipline.",
+      },
+    ],
   },
   {
-    title: "Campaign execution & follow-up",
-    body: "Rupert runs the outreach and follow-up process with consistency and discipline.",
+    title: "Meetings & Momentum",
+    summary:
+      "Turn replies into the right conversations and keep the process moving through the raise.",
+    items: [
+      {
+        title: "Qualify the Interest",
+        body: "Identify the investors showing real interest and prioritize the conversations that matter.",
+      },
+      {
+        title: "Prepare for Meetings",
+        body: "Sharpen the story, anticipate questions, and prepare for each investor conversation.",
+      },
+      {
+        title: "Manage the Process",
+        body: "Keep conversations moving, manage follow-ups, and maintain momentum through the raise.",
+      },
+    ],
   },
-  {
-    title: "Pipeline support",
-    body: "You retain visibility into the process and every investor relationship as conversations develop.",
-  },
-];
-
-const differentiators = [
-  {
-    title: "Precision over volume",
-    body: "The goal is not to contact the most investors. It is to identify and reach investors whose mandate actually fits the company and round.",
-  },
-  {
-    title: "Human judgment",
-    body: "Investor selection, messaging and campaign decisions are reviewed by an experienced operator rather than delegated entirely to automation.",
-  },
-  {
-    title: "Founder ownership",
-    body: "Every reply and every relationship remains with the founder. Rupert does not sit between you and the investor and does not take a percentage of the raise.",
-  },
-];
-
-const steps = [
-  {
-    title: "Understand the raise",
-    body: "A direct conversation with Dori about the company, round, story, target investor profile and what has already been tried.",
-  },
-  {
-    title: "Build the campaign",
-    body: "Rupert researches the investor universe, creates the target list and writes the outreach. You review the approach before anything goes out.",
-  },
-  {
-    title: "Run the process",
-    body: "Campaigns launch, follow-ups are managed, and investor replies come back to you. When conversations develop, Rupert stays involved where useful.",
-  },
-];
-
-const founderCredentials = [
-  "Founder & former CEO, The Vets",
-  "CFO, BlueMark",
-  "Former investment banking, Citi / Morgan Stanley / Ion Pacific",
-  "Mentor, Cornell Tech Runway",
-  "Mentor, Yale Tsai CITY",
 ];
 
 const faqs = [
@@ -147,49 +143,6 @@ const faqs = [
   {
     question: "Who receives investor replies?",
     answer: "You do. Investor relationships remain yours.",
-  },
-];
-
-const caseLogo = (file: string) => {
-  const mod = logoFiles[`../assets/logos/${file}`];
-  if (!mod) {
-    throw new Error(`Missing logo asset: ${file}`);
-  }
-  return mod.default;
-};
-
-const caseStudies = [
-  {
-    name: "The Vets",
-    logo: caseLogo("the-vets.png"),
-    body: "Founded and led The Vets, a tech-enabled pet healthcare company that later merged with BetterVet.",
-  },
-  {
-    name: "Natrion",
-    logo: caseLogo("natrion.png"),
-    body: "Served as Fractional CFO during Natrion's latest fundraise.",
-  },
-  {
-    name: "Snout",
-    logo: caseLogo("snout.png"),
-    body: "Served as Fractional CFO on Snout's $100M financing round.",
-    href: "https://www.crowdfundinsider.com/2026/02/259184-pet-care-financing-startup-snout-lands-100m-facility-raises-10m-series-a/",
-    linkLabel: "$100M financing round",
-  },
-  {
-    name: "BlueMark",
-    logo: caseLogo("bluemark.png"),
-    body: "Serves as CFO of BlueMark, an impact-investment intelligence platform.",
-  },
-  {
-    name: "Cornell Tech",
-    logo: cornellTechLogo,
-    body: "Mentors early-stage founders through Cornell Tech's Runway Startups Program.",
-  },
-  {
-    name: "Yale",
-    logo: caseLogo("yale.png"),
-    body: "Mentors early-stage founders through Yale's Tsai CITY.",
   },
 ];
 
@@ -233,23 +186,33 @@ const jsonLd: Record<string, unknown>[] = [
   preloadImage={heroOptimized.src}
 >
   <main id="main-content" class="flex-1">
-    <section class="site-wrap pb-2xl pt-2xl lg:pb-3xl lg:pt-3xl">
+    <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
       <div class="grid gap-xl md:grid-cols-12 md:items-center md:gap-lg">
         <div class="hero-reveal md:col-span-6">
-          <h1 class="type-display">
-            Investor outreach, run by someone who has done the work.
+          <h1 class="hero-headline">
+            <span aria-hidden="true">
+              Investor Matchmaking.<br />
+              Without the
+              <span class="hero-typewriter" data-typewriter>
+                <span class="hero-typewriter__sizer">AI Hallucinations.</span>
+                <span class="hero-typewriter__live">
+                  <span data-typewriter-text>AI Slop</span>.<span
+                    class="hero-typewriter__cursor"></span>
+                </span>
+              </span>
+            </span>
+            <span class="visually-hidden">
+              Investor Matchmaking. Without the AI Slop.
+            </span>
           </h1>
-          <p class="type-body-lg mt-lg max-w-prose">
-            Rupert finds the investors most likely to fund companies like yours,
-            builds the outreach, runs the follow-up, and keeps you in control of
-            every conversation.
+          <p class="type-body mt-lg max-w-prose">
+            Rupert builds a tailor-made investor universe around your company
+            and your raise — researched and selected with human judgment to find
+            the investors who actually make sense.
           </p>
           <p class="mt-xl flex flex-wrap items-center gap-md">
-            <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
+            <a class="btn-primary" href={sitePath("/book-call/")}>Request a Discovery Call</a>
             <a class="btn-quiet" href="#how-it-works">See how it works</a>
-          </p>
-          <p class="type-body-sm mt-lg">
-            Expert-managed. Every reply comes to you. No percentage of your raise.
           </p>
         </div>
         <div class="hero-reveal md:col-span-6">
@@ -268,116 +231,18 @@ const jsonLd: Record<string, unknown>[] = [
       </div>
     </section>
 
-    <section class="site-wrap section-block rule reveal" aria-label="How Rupert is run">
-      <ul class="principles">
-        {
-          principles.map((item) => (
-            <li class="principle">
-              <p class="type-h3">{item.title}</p>
-              <p class="type-body mt-sm">{item.body}</p>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-
-    <section class="section-block rule reveal" aria-labelledby="clients-heading">
-      <div class="site-wrap">
-        <p class="type-label" id="clients-heading">
-          Selected companies Dori has worked with
-        </p>
-      </div>
+    <section class="site-wrap pt-lg pb-2xl lg:pt-xl lg:pb-3xl reveal" aria-labelledby="clients-heading">
+      <p class="type-label" id="clients-heading">Select Clients</p>
       <div class="mt-xl">
         <LogoMarquee logos={clientLogos} />
       </div>
     </section>
 
-    <section
-      id="expert-managed-investor-outreach"
-      class="site-wrap section-block rule reveal"
-      aria-labelledby="does-heading"
-    >
-      <p class="type-label">What Rupert does</p>
-      <h2 id="does-heading" class="type-h2 mt-md">
-        The operational work behind a serious fundraise.
-      </h2>
-      <p class="type-body-lg mt-lg max-w-prose">
-        Most founders know they should be speaking with more relevant investors.
-        The hard part is doing the research, building the list, writing the
-        outreach, following up consistently, and keeping the process organized
-        while still running the company. Rupert handles that work.
-      </p>
-      <ul class="editorial-grid editorial-grid--2 mt-2xl">
-        {
-          capabilities.map((item) => (
-            <li class="editorial-cell">
-              <h3 class="type-h3">{item.title}</h3>
-              <p class="type-body mt-sm">{item.body}</p>
-            </li>
-          ))
-        }
-      </ul>
-      <p class="type-body-sm mt-xl">
-        <a href={sitePath("/database/")}>See how Rupert researches investors</a>
-      </p>
-    </section>
-
-    <section class="site-wrap section-block rule reveal" aria-labelledby="why-heading">
-      <p class="type-label">Why Rupert</p>
-      <h2 id="why-heading" class="type-h2 mt-md">
-        Not another fundraising tool.
-      </h2>
-      <p class="type-body-lg mt-lg max-w-prose">
-        Databases give you names. CRMs give you a place to organize them.
-        Automated agents give you more activity. Rupert gives you an experienced
-        operator running the outreach with you.
-      </p>
-      <ul class="editorial-grid editorial-grid--3 mt-2xl">
-        {
-          differentiators.map((item) => (
-            <li class="editorial-cell">
-              <h3 class="type-h3">{item.title}</h3>
-              <p class="type-body mt-sm">{item.body}</p>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-
-    <section
-      id="how-it-works"
-      class="site-wrap section-block rule reveal"
-      aria-labelledby="process-heading"
-    >
-      <p class="type-label">How it works</p>
-      <h2 id="process-heading" class="type-h2 mt-md">
-        Three stages. You stay in control.
-      </h2>
-      <ol class="process-list mt-2xl">
-        {
-          steps.map((step, index) => (
-            <li class="process-item">
-              <p class="step-num">{String(index + 1).padStart(2, "0")}</p>
-              <div>
-                <h3 class="type-h3">{step.title}</h3>
-                <p class="type-body mt-sm">{step.body}</p>
-              </div>
-            </li>
-          ))
-        }
-      </ol>
-      <p class="mt-xl">
-        <a class="btn-quiet" href={sitePath("/how-it-works/")}>
-          See the full process
-        </a>
-      </p>
-    </section>
-
-    <section class="site-wrap section-block rule reveal" aria-labelledby="founder-heading">
+    <section class="site-wrap section-block rule reveal" aria-labelledby="about-heading">
       <div class="founder-grid">
         <div class="founder-copy">
-          <p class="type-label">Founder</p>
-          <h2 id="founder-heading" class="type-h2 mt-md">
+          <p class="type-label">About</p>
+          <h2 id="about-heading" class="type-h2 mt-md">
             Built by someone who has raised, advised and operated.
           </h2>
           <p class="type-body mt-lg max-w-prose">
@@ -394,7 +259,7 @@ const jsonLd: Record<string, unknown>[] = [
             without the opacity, commissions or middleman dynamic.
           </p>
           <p class="mt-xl">
-            <a class="btn-quiet" href={sitePath("/about/")}>About Dori</a>
+            <a class="btn-quiet" href={sitePath("/about/")}>Learn More</a>
           </p>
         </div>
         <aside class="founder-panel">
@@ -409,71 +274,211 @@ const jsonLd: Record<string, unknown>[] = [
             <div>
               <h3 class="type-h3 founder-panel__name">Dori Fussmann</h3>
               <p class="type-label mt-xs">Founder</p>
+              <p class="founder-panel__links">
+                <a
+                  class="founder-panel__linkedin"
+                  href={DORI_LINKEDIN}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Dori Fussmann on LinkedIn"
+                >
+                  <Image
+                    src={linkedinLogo}
+                    alt=""
+                    width={20}
+                    height={20}
+                  />
+                </a>
+              </p>
             </div>
           </div>
-          <ul class="founder-panel__points">
-            {founderCredentials.map((line) => <li>{line}</li>)}
+          <ul class="case-stack case-stack--aside">
+            {
+              caseStudies.map((item) => (
+                <li class="case-card">
+                  <div
+                    class:list={[
+                      "case-card__logo",
+                      item.name === "Yale" && "case-card__logo--yale",
+                    ]}
+                  >
+                    <Image
+                      src={item.logo}
+                      alt={item.name}
+                      widths={[160, 240, 320]}
+                      sizes="96px"
+                      inferSize
+                    />
+                  </div>
+                  <p class="case-card__text type-body-sm">
+                    {
+                      item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
+                        <>
+                          {item.body.slice(0, item.body.indexOf(item.linkLabel))}
+                          <a href={item.href} rel="noopener noreferrer">
+                            {item.linkLabel}
+                          </a>
+                          {item.body.slice(
+                            item.body.indexOf(item.linkLabel) + item.linkLabel.length,
+                          )}
+                        </>
+                      ) : (
+                        item.body
+                      )
+                    }
+                  </p>
+                </li>
+              ))
+            }
           </ul>
-          <p class="founder-panel__links">
-            <a href={sitePath("/about/")}>About Dori</a>
-            <a
-              href="https://www.linkedin.com/in/dori-fussmann-663ba242"
-              rel="noopener noreferrer"
-            >
-              LinkedIn
-            </a>
-          </p>
         </aside>
       </div>
     </section>
 
-    <section class="site-wrap section-block rule reveal" aria-labelledby="proof-heading">
-      <p class="type-label">Selected work</p>
-      <h2 id="proof-heading" class="type-h2 mt-md">
-        Companies Dori has built, advised and operated.
+    <section
+      id="how-it-works"
+      class="site-wrap section-block rule reveal"
+      aria-labelledby="process-heading"
+    >
+      <p class="type-label">How it works</p>
+      <h2 id="process-heading" class="type-h2 mt-md">
+        You stay in control.
       </h2>
-      <ul class="case-stack mt-2xl">
+      <ol class="step-stack mt-xl">
         {
-          caseStudies.map((item) => (
-            <li class="case-card">
-              <div class="case-card__logo">
-                <Image
-                  src={item.logo}
-                  alt={item.name}
-                  widths={[160, 240, 320]}
-                  sizes="120px"
-                  inferSize
-                />
+          pillars.map((pillar, index) => (
+            <li class="step-band">
+              <p class="step-script">Step {index + 1}</p>
+              <h3 class="type-h2 mt-sm">{pillar.title}</h3>
+              <p class="type-body mt-sm max-w-prose">{pillar.summary}</p>
+              <div class="step-band__stages">
+                {pillar.items.map((item) => (
+                  <details class="pillar-item">
+                    <summary class="type-h4">{item.title}</summary>
+                    <div class="pillar-item__panel">
+                      <div class="pillar-item__body">
+                        <p class="type-body-sm">{item.body}</p>
+                      </div>
+                    </div>
+                  </details>
+                ))}
               </div>
-              <p class="case-card__text type-body-sm">
-                {
-                  item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
-                    <>
-                      {item.body.slice(0, item.body.indexOf(item.linkLabel))}
-                      <a href={item.href} rel="noopener noreferrer">
-                        {item.linkLabel}
-                      </a>
-                      {item.body.slice(
-                        item.body.indexOf(item.linkLabel) + item.linkLabel.length,
-                      )}
-                    </>
-                  ) : (
-                    item.body
-                  )
-                }
-              </p>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-xl">
+        <a class="btn-quiet" href={sitePath("/how-it-works/")}>Learn More</a>
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule reveal" aria-labelledby="experience-heading">
+      <p class="type-label">Our Database & Experience</p>
+      <h2 id="experience-heading" class="type-h2 mt-md">
+        The research and track record behind every campaign.
+      </h2>
+      <ul class="experience-grid mt-xl">
+        {
+          experience.map((item) => (
+            <li class="experience-card">
+              <p class="experience-card__value">{item.value}</p>
+              <p class="type-h4 mt-sm">{item.label}</p>
             </li>
           ))
         }
       </ul>
-      <p class="type-body-sm mt-xl">
-        Further reading on <a href={sitePath("/articles/")}>investor outreach and fundraising</a>.
+      <p class="mt-xl">
+        <a class="btn-quiet" href={sitePath("/database/")}>Learn More</a>
       </p>
     </section>
 
     <section class="site-wrap section-block rule reveal" aria-labelledby="faq-heading">
-      <FaqBlock faqs={faqs} />
+      <FaqBlock faqs={faqs} bordered={false} />
     </section>
   </main>
   <CtaBanner />
 </BaseLayout>
+
+<script>
+  const phrases = [
+    { text: "AI Slop", color: "#C0392B" },
+    { text: "AI Bullshit", color: "#B85C38" },
+    { text: "AI Laziness", color: "#C07C2A" },
+    { text: "AI Hallucinations", color: "#4A5568" },
+    { text: "AI Noise", color: "#B5935A" },
+    { text: "AI Spam", color: "#8B3A2F" },
+    { text: "AI Fluff", color: "#7A5C28" },
+    { text: "AI Hype", color: "#2F6B4F" },
+    { text: "AI Garbage", color: "#1A1A2E" },
+  ];
+
+  const root = document.querySelector("[data-typewriter]");
+  const textEl = root?.querySelector("[data-typewriter-text]");
+  if (root instanceof HTMLElement && textEl instanceof HTMLElement) {
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    const paint = (phrase: { text: string; color: string }, chars?: number) => {
+      root.style.setProperty("--typewriter-color", phrase.color);
+      textEl.textContent =
+        chars === undefined ? phrase.text : phrase.text.slice(0, chars);
+    };
+
+    paint(phrases[0]);
+
+    if (!reduceMotion) {
+      const typeMs = 70;
+      const deleteMs = 40;
+      const holdMs = 2000;
+      const gapMs = 260;
+
+      let index = 0;
+      let chars = phrases[0].text.length;
+      let deleting = true;
+      let timer: number | undefined;
+
+      const queue = (fn: () => void, delay: number) => {
+        if (timer !== undefined) window.clearTimeout(timer);
+        timer = window.setTimeout(fn, delay);
+      };
+
+      const tick = () => {
+        if (document.hidden) {
+          queue(tick, holdMs);
+          return;
+        }
+
+        const phrase = phrases[index];
+
+        if (!deleting) {
+          chars += 1;
+          paint(phrase, chars);
+          if (chars >= phrase.text.length) {
+            deleting = true;
+            queue(tick, holdMs);
+            return;
+          }
+          queue(tick, typeMs);
+          return;
+        }
+
+        chars -= 1;
+        paint(phrase, chars);
+        if (chars <= 0) {
+          deleting = false;
+          index = (index + 1) % phrases.length;
+          queue(tick, gapMs);
+          return;
+        }
+        queue(tick, deleteMs);
+      };
+
+      document.addEventListener("visibilitychange", () => {
+        if (!document.hidden) queue(tick, 80);
+      });
+
+      queue(tick, holdMs);
+    }
+  }
+</script>

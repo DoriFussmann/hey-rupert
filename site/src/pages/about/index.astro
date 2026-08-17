@@ -3,20 +3,14 @@ import { getImage, Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
 import { DORI_LINKEDIN, SITE_NAME } from "../../config/site";
-import { absoluteFileUrl, absoluteUrl } from "../../lib/url";
+import { caseStudies } from "../../lib/caseStudies";
+import { absoluteFileUrl, absoluteUrl, sitePath } from "../../lib/url";
 import doriPortrait from "../../assets/team/dori-fussmann/photo.jpg";
+import linkedinLogo from "../../assets/brand/linkedin.png";
 
 const title = "Dori Fussmann | Founder of Rupert";
 const description =
   "Dori Fussmann is an entrepreneur, finance executive and former investment banker who founded Rupert to bring disciplined investor outreach to startup fundraising.";
-
-const credentials = [
-  "Founder & former CEO, The Vets",
-  "CFO, BlueMark",
-  "Former investment banking, Citi / Morgan Stanley / Ion Pacific",
-  "Mentor, Cornell Tech Runway",
-  "Mentor, Yale Tsai CITY",
-];
 
 const media = [
   {
@@ -71,64 +65,122 @@ const jsonLd: Record<string, unknown>[] = [
   jsonLd={jsonLd}
 >
   <main id="main-content" class="flex-1">
-    <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
-      <p class="type-label">About</p>
-      <h1 id="dori-fussmann" class="type-h1 mt-md">Dori Fussmann</h1>
-      <p class="type-body-lg mt-lg max-w-prose">
-        Dori Fussmann is an entrepreneur, finance executive and former
-        investment banker with experience spanning company building, capital
-        markets and strategic finance.
-      </p>
-    </section>
-
-    <section class="site-wrap py-xl lg:py-2xl rule reveal">
-      <div class="grid gap-xl md:grid-cols-12 md:gap-lg">
-        <div class="md:col-span-5">
-          <Image
-            class="photo"
-            src={doriPortrait}
-            alt="Photograph of Dori Fussmann, founder of Rupert"
-            widths={[480, 720, 960]}
-            sizes="(min-width: 768px) 40vw, 92vw"
-          />
-        </div>
-        <div class="md:col-span-7">
-          <p class="type-body max-w-prose">
-            He was the Founder and CEO of The Vets, a U.S. home pet care
-            company, and previously worked in investment banking at Citi, Ion
-            Pacific, and Morgan Stanley, advising companies on M&A, IPOs, and
-            strategic financing transactions across the technology and consumer
-            sectors.
+    <section class="site-wrap section-block pt-2xl lg:pt-3xl" aria-labelledby="dori-fussmann">
+      <div class="founder-grid">
+        <div class="founder-copy">
+          <p class="type-label">About</p>
+          <h1 id="dori-fussmann" class="type-h1 mt-md">
+            Built by someone who has raised, advised and operated.
+          </h1>
+          <p class="type-body mt-lg max-w-prose">
+            Dori Fussmann is an entrepreneur, finance executive and former
+            investment banker who has spent his career on both sides of the
+            fundraising table. He founded and led The Vets, previously worked in
+            investment banking at Citi, Morgan Stanley and Ion Pacific, and
+            today serves as CFO of BlueMark.
           </p>
           <p class="type-body mt-md max-w-prose">
-            Dori currently serves as CFO of BlueMark and mentors early-stage
-            founders through Cornell Tech’s Runway Startups Program and Yale’s
-            Tsai Center for Innovative Thinking (Tsai CITY), advising on
-            fundraising, business models, go-to-market strategy, positioning,
-            and commercialization.
+            At Citi, Morgan Stanley and Ion Pacific he advised companies on
+            M&A, IPOs and strategic financing across technology and consumer.
+            That work taught him how institutional investors actually evaluate a
+            raise — thesis fit, timing, and whether the story holds up in a
+            real conversation.
           </p>
           <p class="type-body mt-md max-w-prose">
-            Having worked on both sides of the table — as an investment banker
-            advising companies and as a founder building and financing one —
-            Dori brings a practical understanding of how founders should
-            approach capital raising, investor positioning, and the fundraising
-            process. He founded Rupert to bring that discipline to founder-led
+            He later founded and led The Vets, a U.S. home pet-care company
+            that raised institutional capital and later merged with BetterVet.
+            He has also served as fractional CFO on later-stage financings,
+            including Snout's $100M facility, and today runs finance at
+            BlueMark, an impact-investment intelligence platform.
+          </p>
+          <p class="type-body mt-md max-w-prose">
+            He mentors early-stage founders through Cornell Tech's Runway
+            Startups Program and Yale's Tsai CITY — advising on fundraising,
+            business models, go-to-market and positioning. Rupert was built to
+            bring the discipline of institutional dealmaking to founder-led
             fundraising without the opacity, commissions or middleman dynamic.
           </p>
-          <ul class="founder-panel__points mt-xl max-w-prose">
-            {credentials.map((line) => <li>{line}</li>)}
-          </ul>
-          <p class="mt-lg">
-            <a href={DORI_LINKEDIN} rel="noopener noreferrer">
-              Dori on LinkedIn
-            </a>
+          <p class="type-body mt-md max-w-prose">
+            Dori holds degrees in Accounting and Business Management (B.A.) and
+            Law (LL.B.) from IDC Herzliya.
+          </p>
+          <p class="mt-xl">
+            <a class="btn-primary" href={sitePath("/book-call/")}>Request a Discovery Call</a>
           </p>
         </div>
+        <aside class="founder-panel">
+          <div class="founder-panel__top">
+            <Image
+              class="founder-panel__photo photo"
+              src={doriPortrait}
+              alt="Photograph of Dori Fussmann, founder of Rupert"
+              width={192}
+              height={192}
+            />
+            <div>
+              <h2 class="type-h3 founder-panel__name">Dori Fussmann</h2>
+              <p class="type-label mt-xs">Founder</p>
+              <p class="founder-panel__links">
+                <a
+                  class="founder-panel__linkedin"
+                  href={DORI_LINKEDIN}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Dori Fussmann on LinkedIn"
+                >
+                  <Image src={linkedinLogo} alt="" width={20} height={20} />
+                </a>
+              </p>
+            </div>
+          </div>
+          <ul class="case-stack case-stack--aside">
+            {
+              caseStudies.map((item) => (
+                <li class="case-card">
+                  <div
+                    class:list={[
+                      "case-card__logo",
+                      item.name === "Yale" && "case-card__logo--yale",
+                    ]}
+                  >
+                    <Image
+                      src={item.logo}
+                      alt={item.name}
+                      widths={[160, 240, 320]}
+                      sizes="96px"
+                      inferSize
+                    />
+                  </div>
+                  <p class="case-card__text type-body-sm">
+                    {
+                      item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
+                        <>
+                          {item.body.slice(0, item.body.indexOf(item.linkLabel))}
+                          <a href={item.href} rel="noopener noreferrer">
+                            {item.linkLabel}
+                          </a>
+                          {item.body.slice(
+                            item.body.indexOf(item.linkLabel) + item.linkLabel.length,
+                          )}
+                        </>
+                      ) : (
+                        item.body
+                      )
+                    }
+                  </p>
+                </li>
+              ))
+            }
+          </ul>
+        </aside>
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl rule reveal" aria-labelledby="media-heading">
-      <h2 id="media-heading" class="type-h2">Selected media</h2>
+    <section class="site-wrap section-block rule reveal" aria-labelledby="media-heading">
+      <p class="type-label">Selected media</p>
+      <h2 id="media-heading" class="type-h2 mt-md">
+        Coverage from building and operating.
+      </h2>
       <ul class="mt-2xl">
         {
           media.map((item) => (
@@ -139,7 +191,7 @@ const jsonLd: Record<string, unknown>[] = [
               </blockquote>
               <p class="type-body-sm mt-md">{item.context}</p>
               <p class="mt-md">
-                <a href={item.href} rel="noopener noreferrer">
+                <a href={item.href} rel="noopener noreferrer" target="_blank">
                   Read on {item.outlet}
                 </a>
               </p>

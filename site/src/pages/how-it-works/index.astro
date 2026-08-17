@@ -5,44 +5,75 @@ import CtaBanner from "../../components/CtaBanner.astro";
 import { sitePath } from "../../lib/url";
 import howItWorks1 from "../../assets/how-it-works/how-it-works-01.png";
 import howItWorks2 from "../../assets/how-it-works/how-it-works-02.png";
-import howItWorks3 from "../../assets/how-it-works/how-it-works-03.png";
-import howItWorks4 from "../../assets/how-it-works/how-it-works-04.png";
 import howItWorks5 from "../../assets/how-it-works/how-it-works-05.png";
 
 const title = "How Rupert Runs Investor Outreach | Rupert";
 const description =
-  "See how Rupert researches investors, builds personalized outreach, manages follow-up and keeps founders in control of every investor relationship.";
+  "See how Rupert works in three stages: discovery and strategy, campaign launch, and meetings and momentum — with the founder in control of every conversation.";
 
-const steps = [
+const pillars = [
   {
-    title: "Understand the raise",
-    body: "Company, capital needs, story, current materials and target profile. A direct conversation with Dori about where you are and what has already been tried.",
+    title: "Discovery & Strategy",
+    summary:
+      "Map the raise and build a precise investor universe before a single message is written.",
     src: howItWorks1,
     alt: "Two people in conversation across a table, a notebook open between them",
+    stages: [
+      {
+        title: "Understand the Raise",
+        body: "It starts with a direct conversation with Dori — the company, the story, the round, traction, and what has already been tried. The goal is to understand what makes the company fundable and where the outreach should concentrate, not to run a generic intake form.",
+      },
+      {
+        title: "Build the Investor Universe",
+        body: "Rupert researches a tailor-made target list from a proprietary investor database — filtered by stage, sector, geography, check size, and genuine fit. Names are selected with human judgment, not sprayed across a directory and called a match.",
+      },
+      {
+        title: "Develop the Strategy",
+        body: "Positioning, investor segments, messaging, and campaign approach are defined around the company and the raise. A seed-stage specialist and a family office are different conversations. The strategy treats them that way before any outreach is written.",
+      },
+    ],
   },
   {
-    title: "Research and match",
-    body: "Build the target investor universe using stage, vertical, geography, check size and investment criteria.",
+    title: "Campaign Launch",
+    summary:
+      "Write the outreach, get your approval, then run the campaign with disciplined follow-up.",
     src: howItWorks2,
     alt: "A printed investor outreach list on a desk, a few names already marked",
+    stages: [
+      {
+        title: "Craft the Outreach",
+        body: "Messaging is written for your company and tailored to each investor audience — subject lines, proof points, and follow-ups designed for how that type of investor actually decides. This is not a generic sequence with the company name dropped in.",
+      },
+      {
+        title: "Review & Approve",
+        body: "You review the strategy, the target list, and the messaging before anything is sent. Nothing goes out without founder approval. Rupert does the work; you keep control of how the company is presented.",
+      },
+      {
+        title: "Launch & Follow Up",
+        body: "Once approved, Rupert runs the campaign and manages follow-up with consistency and discipline. The operational load — sequencing, timing, and keeping the process moving — sits with Rupert so you can stay on the company.",
+      },
+    ],
   },
   {
-    title: "Build the outreach",
-    body: "Develop campaign positioning, message variants and sequence. Messages are written for the company and the investors receiving them.",
-    src: howItWorks3,
-    alt: "Printed email drafts overlapping on a desk, a pen beside them",
-  },
-  {
-    title: "Approve and launch",
-    body: "You review and approve messaging before launch. Rupert then manages execution and follow-up.",
-    src: howItWorks4,
-    alt: "A marked-up fundraising document on a desk beside a face-down phone",
-  },
-  {
-    title: "Manage engagement",
-    body: "Every reply goes to you. Rupert remains available to support prioritization and investor conversations as they develop.",
+    title: "Meetings & Momentum",
+    summary:
+      "Turn replies into the right conversations and keep the process moving through the raise.",
     src: howItWorks5,
     alt: "Two people at a small table with papers, in a working conversation",
+    stages: [
+      {
+        title: "Qualify the Interest",
+        body: "Every response is visible to you. Rupert helps identify which investors are showing real interest and which conversations should be prioritized, so time goes to the meetings that actually matter.",
+      },
+      {
+        title: "Prepare for Meetings",
+        body: "When a conversation is worth taking, the story is sharpened for that investor — likely questions, relevant proof points, and what they will care about given their mandate. You walk in prepared, not improvising from a generic deck.",
+      },
+      {
+        title: "Manage the Process",
+        body: "Rupert stays involved as conversations develop: follow-ups, next steps, and keeping momentum through the raise. Investor relationships remain yours. Dori is available to help manage the process without sitting between you and the investor.",
+      },
+    ],
   },
 ];
 ---
@@ -53,38 +84,50 @@ const steps = [
       <p class="type-label">How it works</p>
       <h1 class="type-h1 mt-md">How Rupert runs investor outreach.</h1>
       <p class="type-body-lg mt-lg max-w-prose">
-        Research, targeting, writing, follow-up and pipeline support — handled
-        by an operator, with you remaining in control of every conversation.
+        Three stages. Research, targeting, writing, follow-up and pipeline
+        support — handled by an operator, with you remaining in control of every
+        conversation.
       </p>
     </section>
 
-    <ol class="site-wrap process-list pb-2xl">
-      {
-        steps.map((step, index) => (
-          <li class="process-item process-item--media">
-            <p class="step-num">
-              {String(index + 1).padStart(2, "0")}
-            </p>
+    {
+      pillars.map((pillar, index) => (
+        <section
+          class="site-wrap work-pillar section-block rule"
+          aria-labelledby={`pillar-${index + 1}`}
+        >
+          <div class="work-pillar__intro">
             <div>
-              <h2 class="type-h2">{step.title}</h2>
-              <p class="type-body mt-md">{step.body}</p>
+              <p class="step-script">Step {index + 1}</p>
+              <h2 id={`pillar-${index + 1}`} class="type-h2 mt-md">
+                {pillar.title}
+              </h2>
+              <p class="type-body-lg mt-md max-w-prose">{pillar.summary}</p>
             </div>
-            <div class="media-frame media-frame--square">
+            <div class="media-frame">
               <Image
                 class="photo"
-                src={step.src}
-                alt={step.alt}
-                widths={[480, 720, 960]}
-                sizes="(min-width: 768px) 30vw, 92vw"
+                src={pillar.src}
+                alt={pillar.alt}
+                widths={[640, 960, 1280]}
+                sizes="(min-width: 768px) 40vw, 92vw"
               />
             </div>
-          </li>
-        ))
-      }
-    </ol>
+          </div>
+          <ol class="work-stages">
+            {pillar.stages.map((stage) => (
+              <li class="work-stage">
+                <h3 class="type-h3">{stage.title}</h3>
+                <p class="type-body mt-sm">{stage.body}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
 
     <p class="site-wrap pb-2xl">
-      <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
+      <a class="btn-primary" href={sitePath("/book-call/")}>Request a Discovery Call</a>
     </p>
   </main>
   <CtaBanner />

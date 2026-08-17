@@ -17,6 +17,8 @@ const { links } = Astro.props;
           <a
             class="flex min-h-11 items-center justify-between gap-md py-md font-medium no-underline"
             href={link.url.startsWith("http") ? link.url : sitePath(link.url)}
+            target="_blank"
+            rel="noopener noreferrer"
           >
             {link.label}
             <svg

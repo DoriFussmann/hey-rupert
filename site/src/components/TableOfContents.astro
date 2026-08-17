@@ -11,19 +11,32 @@ interface Props {
 
 const { headings } = Astro.props;
 const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
+
+let section = 0;
+const items = toc.map((heading) => {
+  if (heading.depth === 2) section += 1;
+  return {
+    ...heading,
+    num: heading.depth === 2 ? String(section).padStart(2, "0") : null,
+  };
+});
 ---
 
 {
-  toc.length > 0 && (
+  items.length > 0 && (
     <nav class="toc" aria-label="Table of contents">
-      <p class="type-label">Table of contents</p>
-      <ul class="toc-list">
-        {toc.map((heading) => (
+      <p class="type-label">On this page</p>
+      <p class="type-body-sm mt-sm">Jump to a section</p>
+      <ol class="toc-list">
+        {items.map((heading) => (
           <li class:list={[{ "toc-h3": heading.depth === 3 }]}>
-            <a href={`#${heading.slug}`}>{heading.text}</a>
+            <a href={`#${heading.slug}`}>
+              {heading.num && <span class="toc-num">{heading.num}</span>}
+              <span class="toc-text">{heading.text}</span>
+            </a>
           </li>
         ))}
-      </ul>
+      </ol>
     </nav>
   )
 }
