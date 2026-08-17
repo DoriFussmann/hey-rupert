@@ -26,29 +26,35 @@ export function previewArticleJsonLd(input: {
   const canonicalPath = `/articles/${input.slug}/`;
   const pageUrl = absoluteUrl(canonicalPath);
   const orgId = `${absoluteUrl("/")}#organization`;
-  const personId = `${absoluteUrl("/team/")}#${input.author.slug}`;
+  const personId = `${absoluteUrl("/about/")}#${input.author.slug}`;
   const published = new Date(input.date).toISOString();
   const modified = new Date(input.updatedDate || input.date).toISOString();
 
+  const organization: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": orgId,
+    name: SITE_NAME,
+    url: absoluteUrl("/"),
+  };
+  if (SAME_AS.length > 0) organization.sameAs = SAME_AS;
+
+  const person: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": personId,
+    name: input.author.name,
+    jobTitle: input.author.role,
+    description: input.author.bio,
+    url: absoluteUrl("/about/"),
+  };
+  if (input.author.sameAs && input.author.sameAs.length > 0) {
+    person.sameAs = input.author.sameAs;
+  }
+
   const blocks: Record<string, unknown>[] = [
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "@id": orgId,
-      name: SITE_NAME,
-      url: absoluteUrl("/"),
-      sameAs: SAME_AS,
-    },
-    {
-      "@context": "https://schema.org",
-      "@type": "Person",
-      "@id": personId,
-      name: input.author.name,
-      jobTitle: input.author.role,
-      description: input.author.bio,
-      url: absoluteUrl("/team/"),
-      sameAs: input.author.sameAs ?? [],
-    },
+    organization,
+    person,
     {
       "@context": "https://schema.org",
       "@type": input.schemaType || "BlogPosting",

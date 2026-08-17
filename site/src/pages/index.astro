@@ -1,15 +1,12 @@
 ---
-import { Image } from "astro:assets";
+import { getImage, Image } from "astro:assets";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CtaBanner from "../components/CtaBanner.astro";
-import PhotoCarousel from "../components/PhotoCarousel.astro";
+import FaqBlock from "../components/FaqBlock.astro";
 import LogoMarquee from "../components/LogoMarquee.astro";
-import { sitePath } from "../lib/url";
+import { absoluteUrl, sitePath } from "../lib/url";
 import type { ImageMetadata } from "astro";
-import heroCarousel1 from "../assets/hero/hero-carousel-1.png";
-import heroCarousel2 from "../assets/hero/hero-carousel-2.png";
-import heroCarousel3 from "../assets/hero/hero-carousel-3.png";
-import heroCarousel4 from "../assets/hero/hero-carousel-4.png";
+import heroPhoto from "../assets/hero/hero-carousel-1.png";
 import doriPortrait from "../assets/team/dori-fussmann/photo.jpg";
 import cornellTechLogo from "../assets/logos/cornell-tech.avif";
 
@@ -46,136 +43,111 @@ const clientLogos = [
   return { name: item.name, src: mod.default };
 });
 
-const title =
-  "Rupert — Investor Outreach & Fundraising Matchmaking for Founders";
+const title = "Expert-Managed Investor Outreach for Startups | Rupert";
 const description =
-  "Rupert helps founders reach investors most likely to fund them. Outreach is researched, personalized, and managed. You keep every conversation and relationship.";
+  "Rupert runs investor research, targeting, personalized outreach and follow-up for founders raising capital. Every reply and investor relationship stays yours.";
+
+const principles = [
+  {
+    title: "Managed for you",
+    body: "Research, targeting, copy and follow-up are handled by Rupert.",
+  },
+  {
+    title: "Every reply is yours",
+    body: "Investor conversations go directly to you.",
+  },
+  {
+    title: "No percentage of your raise",
+    body: "Rupert is paid for the work, not for ownership of your relationships.",
+  },
+];
 
 const capabilities = [
-  "End-to-end Fundraising Assistance",
-  "Investor Discovery & Mapping",
-  "Investor Outreach",
-];
-
-const homeStats = [
-  { value: "$100M+", label: "Raised" },
-  { value: "50+", label: "Startups backed" },
-  { value: "10,000+", label: "Investors" },
-  { value: "5x", label: "Replies" },
-];
-
-const proofStats = [
-  { value: "2,400+", label: "Campaigns run" },
-  { value: "8,700+", label: "Investor replies" },
-  { value: "1,200+", label: "Meetings booked" },
-];
-
-const heroFrames = [
   {
-    id: "hero-carousel-1",
-    src: heroCarousel1,
-    alt: "A printed pitch deck and pen on a wooden desk in late-afternoon light",
+    title: "Investor research & targeting",
+    body: "Rupert builds a target universe around stage, sector, geography, investment thesis, check size and actual fit.",
   },
   {
-    id: "hero-carousel-2",
-    src: heroCarousel2,
-    alt: "Two people in conversation across a small table with papers between them",
+    title: "Outreach strategy & writing",
+    body: "Messages are written for your company and the investors receiving them — not copied from a generic sequence.",
   },
   {
-    id: "hero-carousel-3",
-    src: heroCarousel3,
-    alt: "A printed investor list on a desk, a few names circled in pencil",
+    title: "Campaign execution & follow-up",
+    body: "Rupert runs the outreach and follow-up process with consistency and discipline.",
   },
   {
-    id: "hero-carousel-4",
-    src: heroCarousel4,
-    alt: "A hand writing in a notebook beside a folded document",
+    title: "Pipeline support",
+    body: "You retain visibility into the process and every investor relationship as conversations develop.",
+  },
+];
+
+const differentiators = [
+  {
+    title: "Precision over volume",
+    body: "The goal is not to contact the most investors. It is to identify and reach investors whose mandate actually fits the company and round.",
+  },
+  {
+    title: "Human judgment",
+    body: "Investor selection, messaging and campaign decisions are reviewed by an experienced operator rather than delegated entirely to automation.",
+  },
+  {
+    title: "Founder ownership",
+    body: "Every reply and every relationship remains with the founder. Rupert does not sit between you and the investor and does not take a percentage of the raise.",
   },
 ];
 
 const steps = [
   {
-    title: "Discovery call with Dori",
-    body: "A direct 1:1. Capital needs, offer, story, and what you've already tried. No intake form, no junior associate.",
+    title: "Understand the raise",
+    body: "A direct conversation with Dori about the company, round, story, target investor profile and what has already been tried.",
   },
   {
-    title: "The match, within 48 hours",
-    body: "Your company against 10,000+ VCs, family offices, and angels — filtered by vertical, stage, and geography. The list comes back to you.",
+    title: "Build the campaign",
+    body: "Rupert researches the investor universe, creates the target list and writes the outreach. You review the approach before anything goes out.",
   },
   {
-    title: "You approve. Campaigns run. Every reply comes to you.",
-    body: "Nothing goes out until you sign off. When a fund engages, Dori stays in it with you — not a name handed over and a disappearance.",
+    title: "Run the process",
+    body: "Campaigns launch, follow-ups are managed, and investor replies come back to you. When conversations develop, Rupert stays involved where useful.",
   },
 ];
 
-const reasons = [
-  {
-    title: "Precision over spray.",
-    body: "Hundreds of matched investors beat thousands of random ones. Every recipient passes a real criteria filter.",
-  },
-  {
-    title: "A human in the loop.",
-    body: "This is a managed service. Your campaigns are reviewed and refined with you — not fired blindly by a bot.",
-  },
-  {
-    title: "Full visibility.",
-    body: "Every response lands in your client portal. You see it in real time and manage the communication from there.",
-  },
-];
-
-const testimonials = [
-  {
-    quote:
-      "Rupert found 40 investors we'd never heard of — three of them led our round.",
-    name: "Sarah M.",
-    firm: "Finova",
-    meta: "Seed, London",
-  },
-  {
-    quote:
-      "We went from zero investor replies to 12 warm conversations in two weeks.",
-    name: "James K.",
-    firm: "DataPipe",
-    meta: "Pre-seed, NYC",
-  },
-  {
-    quote:
-      "The targeting was surgical. Every email felt like it was written for that specific fund.",
-    name: "Ana R.",
-    firm: "GreenStack",
-    meta: "Series A, Berlin",
-  },
-  {
-    quote:
-      "Rupert did in three weeks what our last agency didn't manage in three months.",
-    name: "Michael T.",
-    firm: "Ledgerly",
-    meta: "Seed, Austin",
-  },
-  {
-    quote:
-      "Having live analytics on every campaign changed how we prioritized follow-ups.",
-    name: "Priya D.",
-    firm: "Cortex Health",
-    meta: "Series A, Toronto",
-  },
-  {
-    quote:
-      "The A/B tested pitches actually sounded like they were written by someone who knew the fund.",
-    name: "Elena V.",
-    firm: "Northloop",
-    meta: "Pre-seed, Lisbon",
-  },
-];
-
-const founderQuote =
-  "If something can happen at 50% probability in seven days, I'll get it to 85%, in four days, for less.";
-
-const founderExperience = [
-  "Founded The Vets — $100M+ raised, exit via BetterVet",
-  "Investment banking at Citi, Morgan Stanley, and Ion Pacific",
+const founderCredentials = [
+  "Founder & former CEO, The Vets",
   "CFO, BlueMark",
-  "Mentor, Cornell Tech Runway and Yale Tsai CITY",
+  "Former investment banking, Citi / Morgan Stanley / Ion Pacific",
+  "Mentor, Cornell Tech Runway",
+  "Mentor, Yale Tsai CITY",
+];
+
+const faqs = [
+  {
+    question: "Is Rupert a fundraising agency?",
+    answer:
+      "Rupert is an expert-managed investor outreach service. Rupert researches investors, develops outreach and manages the campaign process, while the founder retains direct ownership of every investor relationship.",
+  },
+  {
+    question: "Does Rupert take a percentage of the raise?",
+    answer: "No. Rupert does not take a percentage of capital raised.",
+  },
+  {
+    question: "Does Rupert guarantee funding or investor meetings?",
+    answer:
+      "No. No credible fundraising service can guarantee that an investor will engage or invest. Rupert's job is to improve the quality and execution of the outreach process.",
+  },
+  {
+    question: "Who is Rupert best suited for?",
+    answer:
+      "Primarily founders of venture-scale companies preparing for or actively raising Pre-Seed through Series A rounds.",
+  },
+  {
+    question: "Do I approve outreach before it is sent?",
+    answer:
+      "Yes. Messaging and campaign direction are reviewed with you before outreach begins.",
+  },
+  {
+    question: "Who receives investor replies?",
+    answer: "You do. Investor relationships remain yours.",
+  },
 ];
 
 const caseLogo = (file: string) => {
@@ -190,12 +162,12 @@ const caseStudies = [
   {
     name: "The Vets",
     logo: caseLogo("the-vets.png"),
-    body: "Founded and led The Vets to $25M+ ARR and 250+ employees. Raised $100M+. Exited through the BetterVet merger.",
+    body: "Founded and led The Vets, a tech-enabled pet healthcare company that later merged with BetterVet.",
   },
   {
     name: "Natrion",
     logo: caseLogo("natrion.png"),
-    body: "Served as Fractional CFO on Natrion's latest $5M fundraise.",
+    body: "Served as Fractional CFO during Natrion's latest fundraise.",
   },
   {
     name: "Snout",
@@ -212,135 +184,219 @@ const caseStudies = [
   {
     name: "Cornell Tech",
     logo: cornellTechLogo,
-    body: "Mentoring numerous startups through Cornell Tech's Runway program.",
+    body: "Mentors early-stage founders through Cornell Tech's Runway Startups Program.",
   },
   {
     name: "Yale",
     logo: caseLogo("yale.png"),
-    body: "Mentoring early-stage founders through Yale's Tsai CITY.",
+    body: "Mentors early-stage founders through Yale's Tsai CITY.",
+  },
+];
+
+const heroOptimized = await getImage({
+  src: heroPhoto,
+  width: 1280,
+});
+
+const orgId = `${absoluteUrl("/")}#organization`;
+const jsonLd: Record<string, unknown>[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Expert-Managed Investor Outreach",
+    provider: { "@id": orgId },
+    serviceType: "Investor outreach",
+    description,
+    url: absoluteUrl("/"),
+    areaServed: "Worldwide",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
   },
 ];
 ---
 
-<BaseLayout title={title} description={description} canonicalPath="/">
-  <main class="flex-1">
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/"
+  jsonLd={jsonLd}
+  preloadImage={heroOptimized.src}
+>
+  <main id="main-content" class="flex-1">
     <section class="site-wrap pb-2xl pt-2xl lg:pb-3xl lg:pt-3xl">
       <div class="grid gap-xl md:grid-cols-12 md:items-center md:gap-lg">
         <div class="hero-reveal md:col-span-6">
           <h1 class="type-display">
-            Real Investors. Precise Campaigns. Direct Replies.
+            Investor outreach, run by someone who has done the work.
           </h1>
-          <p class="type-body-lg mt-lg">
-            Rupert learns your startup, finds the investors who actually fund
-            companies like yours, and gets you into their inbox — with campaigns
-            built for each one.
+          <p class="type-body-lg mt-lg max-w-prose">
+            Rupert finds the investors most likely to fund companies like yours,
+            builds the outreach, runs the follow-up, and keeps you in control of
+            every conversation.
           </p>
           <p class="mt-xl flex flex-wrap items-center gap-md">
             <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
-            <a class="btn-quiet" href={sitePath("/how-it-works/")}>
-              See how it works →
-            </a>
+            <a class="btn-quiet" href="#how-it-works">See how it works</a>
           </p>
           <p class="type-body-sm mt-lg">
-            Matched against 10,000+ real VCs, family offices, and angels —
-            filtered by their actual investment criteria.
+            Expert-managed. Every reply comes to you. No percentage of your raise.
           </p>
         </div>
         <div class="hero-reveal md:col-span-6">
-          <PhotoCarousel frames={heroFrames} />
+          <div class="hero-photo">
+            <Image
+              class="photo"
+              src={heroPhoto}
+              alt="A printed pitch deck and pen on a wooden desk in late-afternoon light"
+              widths={[640, 960, 1280]}
+              sizes="(min-width: 768px) 40vw, 92vw"
+              loading="eager"
+              fetchpriority="high"
+            />
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-label="How Rupert is run">
-      <ul class="trust-strip">
-        <li class="trust-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <circle cx="12" cy="8" r="5"></circle>
-            <path d="M20 21a8 8 0 0 0-16 0"></path>
-          </svg>
-          <span class="type-body">Fully managed, no dashboard to learn</span>
-        </li>
-        <li class="trust-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>
-            <path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"></path>
-          </svg>
-          <span class="type-body">Every reply comes to you</span>
-        </li>
-        <li class="trust-item">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <line x1="19" x2="5" y1="5" y2="19"></line>
-            <circle cx="6.5" cy="6.5" r="2.5"></circle>
-            <circle cx="17.5" cy="17.5" r="2.5"></circle>
-          </svg>
-          <span class="type-body">No percentage of your raise, ever.</span>
-        </li>
+    <section class="site-wrap section-block rule reveal" aria-label="How Rupert is run">
+      <ul class="principles">
+        {
+          principles.map((item) => (
+            <li class="principle">
+              <p class="type-h3">{item.title}</p>
+              <p class="type-body mt-sm">{item.body}</p>
+            </li>
+          ))
+        }
       </ul>
     </section>
 
-    <section class="py-xl lg:py-2xl reveal" aria-labelledby="clients-heading">
+    <section class="section-block rule reveal" aria-labelledby="clients-heading">
       <div class="site-wrap">
-        <h2 id="clients-heading" class="type-label">Select Clients</h2>
+        <p class="type-label" id="clients-heading">
+          Selected companies Dori has worked with
+        </p>
       </div>
       <div class="mt-xl">
         <LogoMarquee logos={clientLogos} />
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="founder-heading">
+    <section
+      id="expert-managed-investor-outreach"
+      class="site-wrap section-block rule reveal"
+      aria-labelledby="does-heading"
+    >
+      <p class="type-label">What Rupert does</p>
+      <h2 id="does-heading" class="type-h2 mt-md">
+        The operational work behind a serious fundraise.
+      </h2>
+      <p class="type-body-lg mt-lg max-w-prose">
+        Most founders know they should be speaking with more relevant investors.
+        The hard part is doing the research, building the list, writing the
+        outreach, following up consistently, and keeping the process organized
+        while still running the company. Rupert handles that work.
+      </p>
+      <ul class="editorial-grid editorial-grid--2 mt-2xl">
+        {
+          capabilities.map((item) => (
+            <li class="editorial-cell">
+              <h3 class="type-h3">{item.title}</h3>
+              <p class="type-body mt-sm">{item.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="type-body-sm mt-xl">
+        <a href={sitePath("/database/")}>See how Rupert researches investors</a>
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule reveal" aria-labelledby="why-heading">
+      <p class="type-label">Why Rupert</p>
+      <h2 id="why-heading" class="type-h2 mt-md">
+        Not another fundraising tool.
+      </h2>
+      <p class="type-body-lg mt-lg max-w-prose">
+        Databases give you names. CRMs give you a place to organize them.
+        Automated agents give you more activity. Rupert gives you an experienced
+        operator running the outreach with you.
+      </p>
+      <ul class="editorial-grid editorial-grid--3 mt-2xl">
+        {
+          differentiators.map((item) => (
+            <li class="editorial-cell">
+              <h3 class="type-h3">{item.title}</h3>
+              <p class="type-body mt-sm">{item.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section
+      id="how-it-works"
+      class="site-wrap section-block rule reveal"
+      aria-labelledby="process-heading"
+    >
+      <p class="type-label">How it works</p>
+      <h2 id="process-heading" class="type-h2 mt-md">
+        Three stages. You stay in control.
+      </h2>
+      <ol class="process-list mt-2xl">
+        {
+          steps.map((step, index) => (
+            <li class="process-item">
+              <p class="step-num">{String(index + 1).padStart(2, "0")}</p>
+              <div>
+                <h3 class="type-h3">{step.title}</h3>
+                <p class="type-body mt-sm">{step.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-xl">
+        <a class="btn-quiet" href={sitePath("/how-it-works/")}>
+          See the full process
+        </a>
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule reveal" aria-labelledby="founder-heading">
       <div class="founder-grid">
         <div class="founder-copy">
-          <p class="type-label">About</p>
+          <p class="type-label">Founder</p>
           <h2 id="founder-heading" class="type-h2 mt-md">
-            Founded by a founder, <em class="founder-heading-accent">for founders.</em>
+            Built by someone who has raised, advised and operated.
           </h2>
           <p class="type-body mt-lg max-w-prose">
-            Great founders should not have to become full-time fundraisers.
-            Dori built Rupert so the operator stays on the company — while the
-            list, the sequencing, and the follow-up are handled with the
-            discipline of someone who has sat on both sides of the table.
+            Dori Fussmann is an entrepreneur, finance executive and former
+            investment banker who has spent his career on both sides of the
+            fundraising table. He founded and led The Vets, previously worked in
+            investment banking at Citi, Morgan Stanley and Ion Pacific, and
+            today serves as CFO of BlueMark.
           </p>
           <p class="type-body mt-md max-w-prose">
-            Every reply comes to you. No percentage of the raise. No dashboard
-            to learn.
+            He also mentors early-stage founders through Cornell Tech's Runway
+            Startups Program and Yale's Tsai CITY. Rupert was built to bring the
+            discipline of institutional dealmaking to founder-led fundraising
+            without the opacity, commissions or middleman dynamic.
           </p>
-          <ul class="case-stack mt-xl">
-            {
-              caseStudies.map((item) => (
-                <li class="case-card">
-                  <div class="case-card__logo">
-                    <Image
-                      src={item.logo}
-                      alt={item.name}
-                      widths={[160, 240, 320]}
-                      sizes="120px"
-                      inferSize
-                    />
-                  </div>
-                  <p class="case-card__text type-body-sm">
-                    {
-                      item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
-                        <>
-                          {item.body.slice(0, item.body.indexOf(item.linkLabel))}
-                          <a href={item.href} rel="noopener noreferrer">
-                            {item.linkLabel}
-                          </a>
-                          {item.body.slice(
-                            item.body.indexOf(item.linkLabel) + item.linkLabel.length,
-                          )}
-                        </>
-                      ) : (
-                        item.body
-                      )
-                    }
-                  </p>
-                </li>
-              ))
-            }
-          </ul>
+          <p class="mt-xl">
+            <a class="btn-quiet" href={sitePath("/about/")}>About Dori</a>
+          </p>
         </div>
-
         <aside class="founder-panel">
           <div class="founder-panel__top">
             <Image
@@ -351,118 +407,72 @@ const caseStudies = [
               height={192}
             />
             <div>
-              <p class="type-h3 founder-panel__name">Dori Fussmann</p>
+              <h3 class="type-h3 founder-panel__name">Dori Fussmann</h3>
               <p class="type-label mt-xs">Founder</p>
             </div>
           </div>
           <ul class="founder-panel__points">
-            {
-              founderExperience.map((line) => (
-                <li>{line}</li>
-              ))
-            }
+            {founderCredentials.map((line) => <li>{line}</li>)}
           </ul>
-          <blockquote class="founder-panel__quote">{founderQuote}</blockquote>
           <p class="founder-panel__links">
-            <a href={sitePath("/about/")}>Read Dori's full story →</a>
+            <a href={sitePath("/about/")}>About Dori</a>
             <a
               href="https://www.linkedin.com/in/dori-fussmann-663ba242"
               rel="noopener noreferrer"
             >
-              LinkedIn →
+              LinkedIn
             </a>
           </p>
         </aside>
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-label="Track record">
-      <dl class="grid grid-cols-2 gap-lg md:grid-cols-4">
-        {
-          homeStats.map((stat) => (
-            <div class="surface-card">
-              <dt class="type-label">{stat.label}</dt>
-              <dd class="stat-value mt-sm">{stat.value}</dd>
-            </div>
-          ))
-        }
-      </dl>
-    </section>
-
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="does-heading">
-      <p class="type-label">What Rupert Does</p>
-      <h2 id="does-heading" class="type-h2 mt-md">
-        From "who do I even email?" to warm investor replies.
+    <section class="site-wrap section-block rule reveal" aria-labelledby="proof-heading">
+      <p class="type-label">Selected work</p>
+      <h2 id="proof-heading" class="type-h2 mt-md">
+        Companies Dori has built, advised and operated.
       </h2>
-      <ol class="mt-2xl grid gap-md">
+      <ul class="case-stack mt-2xl">
         {
-          steps.map((step, index) => (
-            <li class="surface-card grid gap-md md:grid-cols-12 md:gap-lg">
-              <p class="step-num md:col-span-2">
-                {String(index + 1).padStart(2, "0")}
-              </p>
-              <div class="md:col-span-10">
-                <h3 class="type-h3">{step.title}</h3>
-                <p class="type-body mt-sm">{step.body}</p>
+          caseStudies.map((item) => (
+            <li class="case-card">
+              <div class="case-card__logo">
+                <Image
+                  src={item.logo}
+                  alt={item.name}
+                  widths={[160, 240, 320]}
+                  sizes="120px"
+                  inferSize
+                />
               </div>
+              <p class="case-card__text type-body-sm">
+                {
+                  item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
+                    <>
+                      {item.body.slice(0, item.body.indexOf(item.linkLabel))}
+                      <a href={item.href} rel="noopener noreferrer">
+                        {item.linkLabel}
+                      </a>
+                      {item.body.slice(
+                        item.body.indexOf(item.linkLabel) + item.linkLabel.length,
+                      )}
+                    </>
+                  ) : (
+                    item.body
+                  )
+                }
+              </p>
             </li>
           ))
         }
-      </ol>
-      <p class="mt-xl">
-        <a class="btn-primary" href={sitePath("/book-call/")}>Book a call</a>
+      </ul>
+      <p class="type-body-sm mt-xl">
+        Further reading on <a href={sitePath("/articles/")}>investor outreach and fundraising</a>.
       </p>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="why-heading">
-      <h2 id="why-heading" class="type-h2">Why it works</h2>
-      <ul class="mt-2xl grid gap-xl md:grid-cols-3">
-        {
-          reasons.map((reason) => (
-            <li class="surface-card">
-              <h3 class="type-h3">{reason.title}</h3>
-              <p class="type-body mt-md">{reason.body}</p>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="proof-heading">
-      <h2 id="proof-heading" class="type-h2">Results, in the open</h2>
-      <dl class="mt-xl grid gap-xl sm:grid-cols-3">
-        {
-          proofStats.map((stat) => (
-            <div class="surface-card">
-              <dt class="type-label">{stat.label}</dt>
-              <dd class="stat-value mt-sm">{stat.value}</dd>
-            </div>
-          ))
-        }
-      </dl>
-      <ul class="mt-2xl grid gap-xl md:grid-cols-2">
-        {
-          testimonials.map((item) => (
-            <li class="surface-card">
-              <blockquote class="pull-quote">{item.quote}</blockquote>
-              <p class="type-body-sm mt-md">
-                {item.name}, {item.firm} · {item.meta}
-              </p>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-
-    <section id="services" class="site-wrap py-xl lg:py-2xl reveal">
-      <h2 class="type-h2">Services</h2>
-      <ul class="mt-xl grid gap-md">
-        {
-          capabilities.map((item) => (
-            <li class="surface-card type-body">{item}</li>
-          ))
-        }
-      </ul>
+    <section class="site-wrap section-block rule reveal" aria-labelledby="faq-heading">
+      <FaqBlock faqs={faqs} />
     </section>
   </main>
   <CtaBanner />

@@ -1,30 +1,35 @@
 ---
+import { Image } from "astro:assets";
 import { SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
+import rupertLogo from "../assets/brand/rupert-logo.svg";
 ---
 
 <footer class="mt-auto border-t border-border">
   <div class="site-wrap py-xl lg:py-2xl">
-    <p class="wordmark">{SITE_NAME}</p>
-    <p class="type-body mt-md">
-      Find the investors who actually fund startups like yours.
+    <a class="footer-logo" href={sitePath("/")} aria-label={SITE_NAME}>
+      <Image src={rupertLogo} alt="" inferSize />
+    </a>
+    <p class="type-body mt-md max-w-prose">
+      Expert-managed investor outreach for founders raising capital.
     </p>
     <nav class="footer-links mt-xl" aria-label="Footer">
       <a class="nav-link" href={sitePath("/how-it-works/")}>How It Works</a>
       <a class="nav-link" href={sitePath("/database/")}>Our Database</a>
       <a class="nav-link" href={sitePath("/articles/")}>Articles</a>
-      <a class="nav-link" href={sitePath("/book-call/")}>Book a call</a>
-      <a class="nav-link" href={sitePath("/privacy/")}>Privacy Policy</a>
+      <a class="nav-link" href={sitePath("/about/")}>About</a>
+      <a class="nav-link" href={sitePath("/book-call/")}>Book a Call</a>
+      <a class="nav-link" href={sitePath("/privacy/")}>Privacy</a>
       <a class="nav-link" href={sitePath("/terms/")}>Terms</a>
     </nav>
-    <div class="mt-xl flex min-h-16 flex-wrap items-center justify-between gap-md">
+    <div class="mt-xl flex min-h-11 flex-wrap items-center justify-between gap-md">
       <p class="type-body-sm">© {SITE_NAME} 2026</p>
-      <p>
-        <a class="nav-link gap-sm" href="/rss.xml">
+      <p class="footer-rss">
+        <a class="nav-link gap-sm type-body-sm" href="/rss.xml">
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            width="20"
-            height="20"
+            width="16"
+            height="16"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"

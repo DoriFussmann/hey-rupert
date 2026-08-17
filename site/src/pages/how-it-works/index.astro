@@ -2,7 +2,6 @@
 import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
-import { SITE_NAME } from "../../config/site";
 import { sitePath } from "../../lib/url";
 import howItWorks1 from "../../assets/how-it-works/how-it-works-01.png";
 import howItWorks2 from "../../assets/how-it-works/how-it-works-02.png";
@@ -10,56 +9,38 @@ import howItWorks3 from "../../assets/how-it-works/how-it-works-03.png";
 import howItWorks4 from "../../assets/how-it-works/how-it-works-04.png";
 import howItWorks5 from "../../assets/how-it-works/how-it-works-05.png";
 
-const title = `How It Works — ${SITE_NAME}`;
+const title = "How Rupert Runs Investor Outreach | Rupert";
 const description =
-  "How Rupert runs founder-led investor outreach: a discovery call with Dori, a match list within 48 hours, copy you approve, and every reply in your portal.";
+  "See how Rupert researches investors, builds personalized outreach, manages follow-up and keeps founders in control of every investor relationship.";
 
 const steps = [
   {
-    title: "Discovery Call",
-    body: "A direct 1:1 with Dori. You talk through your capital needs, your offer, your story, and what you've already tried. No intake form, no junior associate — you're talking to the person who's actually raised the money.",
+    title: "Understand the raise",
+    body: "Company, capital needs, story, current materials and target profile. A direct conversation with Dori about where you are and what has already been tried.",
     src: howItWorks1,
     alt: "Two people in conversation across a table, a notebook open between them",
   },
   {
-    title: "Materials Exchange (NDA-covered)",
-    body: "You share whatever's relevant: deck, financials, data room. Covered under NDA from the start.",
-    src: howItWorks4,
-    alt: "A marked-up fundraising document on a desk beside a face-down phone",
-  },
-  {
-    title: "The Match (48 hours)",
-    body: "Dori runs your company against a proprietary database of 10,000+ funds — VCs, family offices, angels — filtered by vertical, stage, and geography. You get your match list back within 48 hours.",
+    title: "Research and match",
+    body: "Build the target investor universe using stage, vertical, geography, check size and investment criteria.",
     src: howItWorks2,
     alt: "A printed investor outreach list on a desk, a few names already marked",
   },
   {
-    title: "Custom Outreach Copy",
-    body: "Campaigns written for your specific matches — a fund pitch and a family office pitch aren't the same email, and neither reads like a template. Multiple versions built to fit each audience.",
+    title: "Build the outreach",
+    body: "Develop campaign positioning, message variants and sequence. Messages are written for the company and the investors receiving them.",
     src: howItWorks3,
     alt: "Printed email drafts overlapping on a desk, a pen beside them",
   },
   {
-    title: "Your Review, Your Approval",
-    body: "Nothing goes out until you sign off on it.",
-    src: howItWorks3,
-    alt: "Printed email drafts overlapping on a desk, a pen beside them",
-  },
-  {
-    title: "Campaigns Run",
-    body: "Approved campaigns go out to your matched list.",
-    src: howItWorks2,
-    alt: "A printed investor outreach list on a desk",
-  },
-  {
-    title: "Full Visibility",
-    body: "Every response lands in your client portal. You see it in real time and manage the communication from there.",
+    title: "Approve and launch",
+    body: "You review and approve messaging before launch. Rupert then manages execution and follow-up.",
     src: howItWorks4,
-    alt: "A marked-up document on a desk beside a face-down phone",
+    alt: "A marked-up fundraising document on a desk beside a face-down phone",
   },
   {
-    title: "Engagement Support",
-    body: "The moment a fund engages, Dori is in it with you — helping you handle the conversation, not handing you a name and disappearing.",
+    title: "Manage engagement",
+    body: "Every reply goes to you. Rupert remains available to support prioritization and investor conversations as they develop.",
     src: howItWorks5,
     alt: "Two people at a small table with papers, in a working conversation",
   },
@@ -67,37 +48,35 @@ const steps = [
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/how-it-works/">
-  <main class="flex-1">
+  <main id="main-content" class="flex-1">
     <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
-      <p class="type-label">How It Works</p>
-      <h1 class="type-h1 mt-md">
-        From a cold list to warm introductions.
-      </h1>
-      <p class="type-body-lg mt-lg">
-        From the first call to a fund that engages.
+      <p class="type-label">How it works</p>
+      <h1 class="type-h1 mt-md">How Rupert runs investor outreach.</h1>
+      <p class="type-body-lg mt-lg max-w-prose">
+        Research, targeting, writing, follow-up and pipeline support — handled
+        by an operator, with you remaining in control of every conversation.
       </p>
     </section>
 
-    <ol class="site-wrap grid gap-lg pb-2xl">
+    <ol class="site-wrap process-list pb-2xl">
       {
         steps.map((step, index) => (
-          <li class="surface-card grid gap-lg md:grid-cols-12 md:items-start md:gap-lg">
-            <p class="step-num md:col-span-2">
+          <li class="process-item process-item--media">
+            <p class="step-num">
               {String(index + 1).padStart(2, "0")}
             </p>
-            <div class="md:col-span-6">
+            <div>
               <h2 class="type-h2">{step.title}</h2>
               <p class="type-body mt-md">{step.body}</p>
             </div>
-            <div class="md:col-span-4">
-              <div class="media-frame media-frame--square">
-                <Image
-                  src={step.src}
-                  alt={step.alt}
-                  widths={[480, 720, 960]}
-                  sizes="(min-width: 768px) 30vw, 92vw"
-                />
-              </div>
+            <div class="media-frame media-frame--square">
+              <Image
+                class="photo"
+                src={step.src}
+                alt={step.alt}
+                widths={[480, 720, 960]}
+                sizes="(min-width: 768px) 30vw, 92vw"
+              />
             </div>
           </li>
         ))

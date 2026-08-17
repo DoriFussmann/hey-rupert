@@ -132,7 +132,14 @@ export function existingTeamPhotoPath(slug: string, data: Record<string, unknown
   return path.join(dir, "photo.png");
 }
 
-const PAGE_ROUTES = ["/", "/articles/", "/team/"];
+const PAGE_ROUTES = [
+  "/",
+  "/articles/",
+  "/about/",
+  "/how-it-works/",
+  "/database/",
+  "/book-call/",
+];
 
 export async function listKnownRoutes(): Promise<string[]> {
   const [articles, team, services] = await Promise.all([
@@ -145,7 +152,7 @@ export async function listKnownRoutes(): Promise<string[]> {
     routes.push(`/articles/${article.slug}/`);
   }
   for (const member of team) {
-    routes.push(`/team/#${member.slug}`);
+    routes.push(`/about/#${member.slug}`);
   }
   for (const service of services) {
     routes.push(`/#${service.slug}`);

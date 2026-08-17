@@ -1,128 +1,62 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
-import ImagePlaceholder from "../../components/ImagePlaceholder.astro";
-import { SITE_NAME } from "../../config/site";
+import { sitePath } from "../../lib/url";
 
-const title = `Our Database — ${SITE_NAME}`;
+const title = "Investor Research & Targeting Database | Rupert";
 const description =
-  "Rupert draws on 10,000+ investors, 55,650+ executive emails, and twice-yearly refreshes so every outreach campaign is built from current, criteria-matched data.";
+  "See how Rupert uses structured investor research to identify VCs, family offices and other capital sources that fit a startup's stage, sector and raise.";
 
-const stats = [
-  { value: "10,000+", label: "Investors tracked" },
-  { value: "56,020+", label: "Key executive names" },
-  { value: "55,650+", label: "Executive email addresses" },
-  { value: "10,440+", label: "Office addresses" },
-  { value: "290+", label: "New firms added this update" },
-  { value: "2x", label: "Refreshed every year" },
-];
-
-const regions = [
-  { name: "United States", count: "4,227" },
-  { name: "Europe", count: "2,012" },
-  { name: "Asia", count: "867" },
-  { name: "Canada", count: "298" },
-  { name: "Middle East / Africa", count: "196" },
-  { name: "Latin America", count: "73" },
-];
-
-const features = [
+const capabilities = [
   {
-    title: "Precise search",
-    body: "Filter by company or executive name, investment stage, geographic focus, industry, and financing type.",
+    title: "Fit, not volume",
+    body: "The dataset is used to narrow a large market into investors whose stage, sector, geography and mandate fit the company being raised for.",
   },
   {
-    title: "Lists you can work from",
-    body: "Target lists can be exported to Excel or CSV when you want them in your own workflow.",
+    title: "Structured criteria",
+    body: "Research considers investment thesis, check size, financing type and actual activity — not a generic list of names.",
   },
   {
-    title: "Notes as campaigns evolve",
-    body: "Research stays organized alongside outreach — not in a separate pile of spreadsheets.",
+    title: "Used inside the work",
+    body: "Founders buy the outcome of that research: a relevant target list and outreach built from it. The database is not a self-serve export product.",
   },
 ];
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/database/">
-  <main class="flex-1">
+  <main id="main-content" class="flex-1">
     <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
       <p class="type-label">Our Database</p>
       <h1 class="type-h1 mt-md">
-        The most complete investor dataset behind every campaign
+        The research behind every Rupert campaign.
       </h1>
-      <p class="type-body-lg mt-lg">
-        Rupert draws on a continuously refreshed database of 10,000+ investors —
-        VCs, private equity firms, and family offices worldwide — giving
-        outreach a level of accuracy and reach that manual research can't match.
+      <p class="type-body-lg mt-lg max-w-prose">
+        Rupert works from a structured investor dataset covering venture funds,
+        family offices and other relevant capital sources. The database helps
+        narrow a large market into investors whose stage, sector, geography and
+        mandate fit the company being raised for.
       </p>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl" aria-label="Database statistics">
-      <dl class="grid gap-xl sm:grid-cols-2 lg:grid-cols-3">
-        {
-          stats.map((stat) => (
-            <div class="surface-card">
-              <dt class="type-label">{stat.label}</dt>
-              <dd class="stat-value mt-sm">{stat.value}</dd>
-            </div>
-          ))
-        }
-      </dl>
-    </section>
-
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="coverage-heading">
-      <div class="grid gap-xl md:grid-cols-12 md:gap-lg">
-        <div class="md:col-span-6">
-          <h2 id="coverage-heading" class="type-h2">Global coverage</h2>
-          <p class="type-body mt-md">
-            Firms mapped across every major fundraising region.
-          </p>
-          <dl class="mt-xl">
-            {
-              regions.map((region) => (
-                <div class="rule flex items-baseline justify-between gap-md py-md">
-                  <dt class="type-body">{region.name}</dt>
-                  <dd class="stat-mono">{region.count}</dd>
-                </div>
-              ))
-            }
-          </dl>
-        </div>
-        <div class="md:col-span-6">
-          <ImagePlaceholder
-            ratio="wide"
-            label="Coverage photograph"
-            brief="Not a map graphic. A quiet still of correspondence: envelopes, a fountain pen, a printed firm list with geographic headings. Warm paper, window light, no globes, no pins-in-a-map stock. If a wall map appears at all, it should be analog, out of focus, and secondary to the documents."
-          />
-        </div>
-      </div>
-    </section>
-
-    <section class="site-wrap py-xl lg:py-2xl" aria-labelledby="research-heading">
+    <section class="site-wrap section-block rule" aria-labelledby="research-heading">
       <h2 id="research-heading" class="type-h2">
-        Built for research, not guesswork
+        Built for targeting, not browsing.
       </h2>
-      <p class="type-body-lg mt-md">
-        Every firm profile includes contact information, investment criteria,
-        and industry preferences — searchable, current, and used to build the
-        list behind your campaigns.
+      <p class="type-body mt-md max-w-prose">
+        The founder is buying the quality of the match and the outreach, not an
+        Excel file. Research stays inside the campaign process —
+        <a href={sitePath("/how-it-works/")}>see how that process runs</a>.
       </p>
-      <ul class="mt-2xl grid gap-xl md:grid-cols-3">
+      <ul class="editorial-grid editorial-grid--3 mt-2xl">
         {
-          features.map((feature) => (
-            <li class="surface-card">
-              <h3 class="type-h3">{feature.title}</h3>
-              <p class="type-body mt-md">{feature.body}</p>
+          capabilities.map((item) => (
+            <li class="editorial-cell">
+              <h3 class="type-h3">{item.title}</h3>
+              <p class="type-body mt-sm">{item.body}</p>
             </li>
           ))
         }
       </ul>
-      <p class="type-body mt-2xl">
-        Backed by decades of dedicated venture capital and private equity
-        research, this data source has earned the trust of founders, investment
-        professionals, and market researchers — refreshed twice a year so
-        Rupert's outreach is always working off the freshest information
-        available.
-      </p>
     </section>
   </main>
   <CtaBanner />

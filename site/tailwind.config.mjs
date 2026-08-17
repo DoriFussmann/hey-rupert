@@ -11,21 +11,21 @@ export default {
     extend: {
       colors: {
         primary: {
-          DEFAULT: "#5C7A5E",
-          hover: "#476148",
-          tint: "#E6EDE3",
+          DEFAULT: "#1A1A2E",
+          hover: "#11111F",
+          tint: "#F3F1EC",
         },
         secondary: "#4A5568",
         accent: {
-          DEFAULT: "#5C7A5E",
-          text: "#5C7A5E",
+          DEFAULT: "#B5935A",
+          text: "#7A5C28",
         },
-        background: "#FAF9F5",
+        background: "#FAF9F7",
         surface: "#FFFFFF",
-        border: "#E4E4DE",
+        border: "#E4E2DE",
         muted: {
-          DEFAULT: "#8A8A8A",
-          text: "#8A8A8A",
+          DEFAULT: "#5C5C5C",
+          text: "#5C5C5C",
         },
         heading: "#1A1A2E",
         foreground: "#2D2D2D",
@@ -93,7 +93,7 @@ export default {
       },
       transitionDuration: {
         hover: "150ms",
-        reveal: "400ms",
+        reveal: "250ms",
       },
       transitionTimingFunction: {
         hover: "ease",

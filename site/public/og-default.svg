@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="og-title og-desc">
+  <title id="og-title">Rupert</title>
+  <desc id="og-desc">Expert-managed investor outreach for founders</desc>
+  <rect width="1200" height="630" fill="#FAF9F7"/>
+  <rect x="80" y="80" width="64" height="2" fill="#B5935A"/>
+  <g fill="#1A1A2E">
+    <rect x="80" y="268" width="56" height="5"/>
+    <rect x="80" y="282" width="56" height="5"/>
+    <rect x="80" y="296" width="56" height="5"/>
+    <rect x="80" y="310" width="28" height="5"/>
+  </g>
+  <text x="156" y="310" fill="#1A1A2E" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="72" font-weight="300" letter-spacing="-0.04em">rupert</text>
+  <text x="80" y="380" fill="#2D2D2D" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="28" font-weight="400">Expert-managed investor outreach for founders</text>
+</svg>

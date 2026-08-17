@@ -112,22 +112,26 @@ const firstCaption = frames[0]?.caption ?? "";
       timer = window.setInterval(() => show(index + 1), interval);
     };
 
+    let interacted = false;
+
+    const haltAutoplay = () => {
+      interacted = true;
+      stop();
+    };
+
     root.querySelectorAll<HTMLButtonElement>("[data-dir]").forEach((button) => {
       button.addEventListener("click", () => {
         const dir = button.getAttribute("data-dir") === "prev" ? -1 : 1;
         show(index + dir);
-        start();
+        haltAutoplay();
       });
     });
 
-    root.addEventListener("mouseenter", stop);
-    root.addEventListener("mouseleave", start);
-    root.addEventListener("focusin", stop);
-    root.addEventListener("focusout", start);
+    root.addEventListener("pointerdown", haltAutoplay, { once: true });
+    root.addEventListener("focusin", haltAutoplay, { once: true });
 
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) stop();
-      else start();
+      if (document.hidden || interacted) stop();
     });
 
     start();

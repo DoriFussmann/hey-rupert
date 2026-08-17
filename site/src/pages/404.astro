@@ -8,15 +8,24 @@ const description =
   "This page does not exist. Return to Rupert or browse published articles.";
 ---
 
-<BaseLayout title={title} description={description} canonicalPath="/404/">
-  <main class="site-wrap flex-1 py-2xl lg:py-3xl">
+<BaseLayout
+  title={title}
+  description={description}
+  robots="noindex, follow"
+  omitCanonical={true}
+>
+  <main id="main-content" class="site-wrap flex-1 py-2xl lg:py-3xl">
     <h1 class="type-h1">Page not found</h1>
-      <p class="type-body mt-lg">
-        <a href={sitePath("/")}>Home</a>
-        ·
-        <a href={sitePath("/articles/")}>Articles</a>
-        ·
-        <a href={sitePath("/how-it-works/")}>How It Works</a>
-      </p>
+    <p class="type-body mt-lg max-w-prose">
+      That page is not available. You can return home or continue from a main
+      section of the site.
+    </p>
+    <p class="type-body mt-lg">
+      <a href={sitePath("/")}>Home</a>
+      ·
+      <a href={sitePath("/articles/")}>Articles</a>
+      ·
+      <a href={sitePath("/how-it-works/")}>How It Works</a>
+    </p>
   </main>
 </BaseLayout>

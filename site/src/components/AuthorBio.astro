@@ -8,13 +8,10 @@ interface Props {
 }
 
 const { author } = Astro.props;
-const href =
-  author.data.slug === "dori-fussmann"
-    ? sitePath("/about/")
-    : sitePath(`/team/#${author.data.slug}`);
+const href = sitePath("/about/");
 ---
 
-<aside class="surface-card mt-2xl grid gap-lg md:grid-cols-[8rem_1fr] md:gap-xl">
+<aside class="author-card mt-2xl grid gap-lg md:grid-cols-[8rem_1fr] md:gap-xl">
   <h2 class="type-h2 md:col-span-2">About the author</h2>
   <Image
     class="photo h-auto w-32"
@@ -25,9 +22,9 @@ const href =
     loading="lazy"
   />
   <div>
-    <p class="type-h4">
+    <h3 class="type-h3">
       <a href={href}>{author.data.name}</a>
-    </p>
+    </h3>
     <p class="type-label mt-xs">{author.data.role}</p>
     <p class="type-body mt-md">{author.data.bio}</p>
     {author.data.credentials && (

@@ -1,25 +1,22 @@
 ---
+import { getImage, Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
-import ImageSlot from "../../components/ImageSlot.astro";
-import { SITE_NAME } from "../../config/site";
+import { DORI_LINKEDIN, SITE_NAME } from "../../config/site";
+import { absoluteFileUrl, absoluteUrl } from "../../lib/url";
 import doriPortrait from "../../assets/team/dori-fussmann/photo.jpg";
 
-const title = `About Dori — ${SITE_NAME}`;
+const title = "Dori Fussmann | Founder of Rupert";
 const description =
-  "Dori Fussmann founded The Vets, raised $100M+, and now runs founder-side fundraising outreach. Cornell Tech and Yale mentor. Former investment banker.";
+  "Dori Fussmann is an entrepreneur, finance executive and former investment banker who founded Rupert to bring disciplined investor outreach to startup fundraising.";
 
-const didNot = [
-  "He did not come out of a famous accelerator.",
-  "He did not have a family office on speed dial.",
-  "He did not publish a fundraising newsletter, a course, or a framework.",
-  "He did not build a dashboard and wait for founders to figure it out.",
-  "He did not take a percentage of anyone's round.",
-  "He did not stay in banking.",
+const credentials = [
+  "Founder & former CEO, The Vets",
+  "CFO, BlueMark",
+  "Former investment banking, Citi / Morgan Stanley / Ion Pacific",
+  "Mentor, Cornell Tech Runway",
+  "Mentor, Yale Tsai CITY",
 ];
-
-const founderQuote =
-  "If something can happen at 50% probability in seven days, I'll get it to 85%, in four days, for less.";
 
 const media = [
   {
@@ -28,12 +25,6 @@ const media = [
       "The Vets, a tech-enabled pet healthcare platform that provides at-home care, has raised $40 million in seed funding led by Target Global, PICO Venture Partners and Bolt Ventures.",
     context: "January 2022 coverage of The Vets' seed round, naming Dori as co-founder.",
     href: "https://techcrunch.com/2022/01/27/the-vets-a-pet-healthcare-platform-that-provides-at-home-care-raises-40m-led-by-target-global/",
-  },
-  {
-    outlet: "Fortune",
-    excerpt: "Excerpt to be confirmed.",
-    context: "Press mention — final clip and link still to be supplied.",
-    href: "",
   },
   {
     outlet: "PR Newswire",
@@ -49,66 +40,96 @@ const media = [
     context: "Episode: Addressing Mental Well-Being Challenges in Vet Practices.",
     href: "https://veterinaryinnovationpodcast.com/episodes/addressing-mental-well-being-challenges-in-veterinary-practices/",
   },
+];
+
+const portrait = await getImage({ src: doriPortrait, width: 800 });
+const orgId = `${absoluteUrl("/")}#organization`;
+const personId = `${absoluteUrl("/about/")}#dori-fussmann`;
+const jsonLd: Record<string, unknown>[] = [
   {
-    outlet: "Dagens Industri",
-    excerpt: "Excerpt to be confirmed.",
-    context: "Press mention — final clip and link still to be supplied.",
-    href: "",
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "@id": personId,
+    name: "Dori Fussmann",
+    jobTitle: "Founder",
+    description,
+    url: absoluteUrl("/about/"),
+    image: absoluteFileUrl(portrait.src),
+    worksFor: {
+      "@id": orgId,
+      name: SITE_NAME,
+    },
+    sameAs: [DORI_LINKEDIN],
   },
 ];
 ---
 
-<BaseLayout title={title} description={description} canonicalPath="/about/">
-  <main class="flex-1">
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/about/"
+  jsonLd={jsonLd}
+>
+  <main id="main-content" class="flex-1">
     <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
-      <p class="type-label">About me</p>
-      <h1 class="type-h1 mt-md">About Dori</h1>
-      <ul class="did-not-list">
-        {
-          didNot.map((line) => (
-            <li class="rule type-body-lg">{line}</li>
-          ))
-        }
-      </ul>
+      <p class="type-label">About</p>
+      <h1 id="dori-fussmann" class="type-h1 mt-md">Dori Fussmann</h1>
+      <p class="type-body-lg mt-lg max-w-prose">
+        Dori Fussmann is an entrepreneur, finance executive and former
+        investment banker with experience spanning company building, capital
+        markets and strategic finance.
+      </p>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl reveal">
+    <section class="site-wrap py-xl lg:py-2xl rule reveal">
       <div class="grid gap-xl md:grid-cols-12 md:gap-lg">
         <div class="md:col-span-5">
-          <ImageSlot
-            slotId="about-hero-portrait"
+          <Image
+            class="photo"
             src={doriPortrait}
-            alt="Photograph of Dori Fussmann"
-            ratio="portrait"
+            alt="Photograph of Dori Fussmann, founder of Rupert"
+            widths={[480, 720, 960]}
+            sizes="(min-width: 768px) 40vw, 92vw"
           />
         </div>
         <div class="md:col-span-7">
           <p class="type-body max-w-prose">
-            Dori Fussmann built The Vets to $25M+ ARR and 250+ employees, raised
-            $100M+, and exited through the BetterVet merger. He now runs
-            founder-side fundraising outreach — matching companies to investors
-            who actually fund them, then running the campaign so every reply
-            comes to the founder. He mentors at Cornell Tech's Runway Startups
-            Program and Yale's Tsai CITY. Earlier he worked in investment
-            banking at Citi, Morgan Stanley, and Ion Pacific. Along the way he
-            has helped 15+ companies raise $250M+ collectively.
+            He was the Founder and CEO of The Vets, a U.S. home pet care
+            company, and previously worked in investment banking at Citi, Ion
+            Pacific, and Morgan Stanley, advising companies on M&A, IPOs, and
+            strategic financing transactions across the technology and consumer
+            sectors.
           </p>
-          <blockquote class="founder-quote">{founderQuote}</blockquote>
+          <p class="type-body mt-md max-w-prose">
+            Dori currently serves as CFO of BlueMark and mentors early-stage
+            founders through Cornell Tech’s Runway Startups Program and Yale’s
+            Tsai Center for Innovative Thinking (Tsai CITY), advising on
+            fundraising, business models, go-to-market strategy, positioning,
+            and commercialization.
+          </p>
+          <p class="type-body mt-md max-w-prose">
+            Having worked on both sides of the table — as an investment banker
+            advising companies and as a founder building and financing one —
+            Dori brings a practical understanding of how founders should
+            approach capital raising, investor positioning, and the fundraising
+            process. He founded Rupert to bring that discipline to founder-led
+            fundraising without the opacity, commissions or middleman dynamic.
+          </p>
+          <ul class="founder-panel__points mt-xl max-w-prose">
+            {credentials.map((line) => <li>{line}</li>)}
+          </ul>
           <p class="mt-lg">
-            <a
-              href="https://www.linkedin.com/in/dori-fussmann-663ba242"
-              rel="noopener noreferrer"
-            >
-              Dori on LinkedIn →
+            <a href={DORI_LINKEDIN} rel="noopener noreferrer">
+              Dori on LinkedIn
             </a>
           </p>
         </div>
       </div>
     </section>
 
-    <section class="site-wrap py-xl lg:py-2xl reveal" aria-labelledby="media-heading">
-      <h2 id="media-heading" class="type-h2">Media Highlights</h2>
-      <ul class="mt-2xl grid gap-lg">
+    <section class="site-wrap py-xl lg:py-2xl rule reveal" aria-labelledby="media-heading">
+      <h2 id="media-heading" class="type-h2">Selected media</h2>
+      <ul class="mt-2xl">
         {
           media.map((item) => (
             <li class="media-card">
@@ -118,15 +139,9 @@ const media = [
               </blockquote>
               <p class="type-body-sm mt-md">{item.context}</p>
               <p class="mt-md">
-                {
-                  item.href ? (
-                    <a href={item.href} rel="noopener noreferrer">
-                      Read on {item.outlet} →
-                    </a>
-                  ) : (
-                    <span class="type-body-sm">Link to be confirmed</span>
-                  )
-                }
+                <a href={item.href} rel="noopener noreferrer">
+                  Read on {item.outlet}
+                </a>
               </p>
             </li>
           ))

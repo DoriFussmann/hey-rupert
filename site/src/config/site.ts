@@ -1,7 +1,18 @@
 export const SITE_URL = "https://www.heyrupert.com";
 export const SITE_NAME = "Rupert";
+
+/** Public LinkedIn profile for Dori. Used on Person schema, not as a company profile. */
+export const DORI_LINKEDIN =
+  "https://www.linkedin.com/in/dori-fussmann-663ba242";
+
+/**
+ * Organization `sameAs` profiles. Only include verified company URLs.
+ * Dori's personal LinkedIn belongs on Person schema, not here.
+ */
 export const SAME_AS: string[] = [];
 
-export const SITE_DESCRIPTION = `Rupert is an expert-led investor outreach service designed for founders raising capital. Rather than relying on automated campaigns or generic investor lists, every outreach effort is researched, written, and managed with precision to reach investors who actively back companies like yours.
+export const SITE_DESCRIPTION =
+  "Rupert runs investor research, targeting, personalized outreach and follow-up for founders raising capital. Every reply and investor relationship stays yours.";
 
-Throughout the process, you have complete transparency into every email, every conversation, and every response. Rupert never owns your relationships or takes a percentage of your raise. You keep every investor connection, while benefiting from the discipline, experience, and craftsmanship of a professional fundraising operator.`;
+/** Default marketing Open Graph image (1200×630). */
+export const DEFAULT_OG_IMAGE = "/og-default.png";

@@ -2,9 +2,16 @@
 import "@fontsource/inter/latin-300.css";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-500.css";
-import "@fontsource/ibm-plex-mono/latin-400.css";
 import "../styles/global.css";
-import { SAME_AS, SITE_NAME } from "../config/site";
+import {
+  DEFAULT_OG_IMAGE,
+  SAME_AS,
+  SITE_NAME,
+} from "../config/site";
+import {
+  ANALYTICS_ID,
+  SEARCH_CONSOLE_VERIFICATION,
+} from "../config/publicEnv";
 import { absoluteFileUrl, absoluteUrl, canonicalFrom } from "../lib/url";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
@@ -12,7 +19,7 @@ import Header from "../components/Header.astro";
 interface Props {
   title: string;
   description: string;
-  canonicalPath: string;
+  canonicalPath?: string;
   canonical?: string;
   robots?: string;
   locale?: string;
@@ -22,12 +29,14 @@ interface Props {
   twitterCard?: string;
   ogType?: "website" | "article";
   jsonLd?: Record<string, unknown>[];
+  omitCanonical?: boolean;
+  preloadImage?: string;
 }
 
 const {
   title,
   description,
-  canonicalPath,
+  canonicalPath = "/",
   canonical,
   robots = "index, follow",
   locale = "en-US",
@@ -37,6 +46,8 @@ const {
   twitterCard = "summary_large_image",
   ogType = "website",
   jsonLd = [],
+  omitCanonical = false,
+  preloadImage,
 } = Astro.props;
 
 if (!title?.trim() || !description?.trim()) {
@@ -47,18 +58,23 @@ if (!title?.trim() || !description?.trim()) {
 
 const resolvedOgTitle = ogTitle || title;
 const resolvedOgDescription = ogDescription || description;
-const canonicalUrl = canonicalFrom(canonical, canonicalPath);
+const canonicalUrl = omitCanonical
+  ? undefined
+  : canonicalFrom(canonical, canonicalPath);
 const orgId = `${absoluteUrl("/")}#organization`;
-const organization = {
+const organization: Record<string, unknown> = {
   "@context": "https://schema.org",
   "@type": "Organization",
   "@id": orgId,
   name: SITE_NAME,
   url: absoluteUrl("/"),
-  sameAs: SAME_AS,
+  logo: absoluteFileUrl("/favicon.svg"),
 };
+if (SAME_AS.length > 0) {
+  organization.sameAs = SAME_AS;
+}
 const allJsonLd = [organization, ...jsonLd];
-const ogImageUrl = ogImage ? absoluteFileUrl(ogImage) : undefined;
+const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
 ---
 
 <!doctype html>
@@ -67,29 +83,57 @@ const ogImageUrl = ogImage ? absoluteFileUrl(ogImage) : undefined;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <meta name="theme-color" content="#FAF9F5" />
+    <meta name="theme-color" content="#FAF9F7" />
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
-    <link rel="canonical" href={canonicalUrl} />
+    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    {
+      SEARCH_CONSOLE_VERIFICATION && (
+        <meta
+          name="google-site-verification"
+          content={SEARCH_CONSOLE_VERIFICATION}
+        />
+      )
+    }
+    {preloadImage && (
+      <link rel="preload" as="image" href={preloadImage} fetchpriority="high" />
+    )}
     <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:type" content={ogType} />
     <meta property="og:title" content={resolvedOgTitle} />
     <meta property="og:description" content={resolvedOgDescription} />
-    <meta property="og:url" content={canonicalUrl} />
+    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
     <meta property="og:locale" content={locale.replace("-", "_")} />
-    {ogImageUrl && <meta property="og:image" content={ogImageUrl} />}
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content={twitterCard} />
     <meta name="twitter:title" content={resolvedOgTitle} />
     <meta name="twitter:description" content={resolvedOgDescription} />
-    {ogImageUrl && <meta name="twitter:image" content={ogImageUrl} />}
+    <meta name="twitter:image" content={ogImageUrl} />
     {
       allJsonLd.map((node) => (
         <script type="application/ld+json" set:html={JSON.stringify(node)} />
       ))
     }
+    {
+      ANALYTICS_ID && (
+        <>
+          <script
+            async
+            src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_ID}`}
+          />
+          <script
+            is:inline
+            set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ANALYTICS_ID.replace(/[^a-zA-Z0-9-]/g, "")}');`}
+          />
+        </>
+      )
+    }
   </head>
   <body class="bg-background font-sans text-foreground">
+    <a class="skip-link" href="#main-content">Skip to content</a>
     <Header />
     <slot />
     <Footer />

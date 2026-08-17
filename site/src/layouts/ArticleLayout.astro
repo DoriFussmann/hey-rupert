@@ -47,7 +47,12 @@ const canonicalPath = `/articles/${data.slug}/`;
 const canonicalUrl = canonicalFrom(data.canonical, canonicalPath);
 const pageUrl = absoluteUrl(canonicalPath);
 const orgId = `${absoluteUrl("/")}#organization`;
-const personId = `${absoluteUrl("/team/")}#${author.data.slug}`;
+const personPath =
+  author.data.slug === "dori-fussmann"
+    ? "/about/#dori-fussmann"
+    : `/about/#${author.data.slug}`;
+const personId = `${absoluteUrl("/about/")}#${author.data.slug}`;
+const personUrl = absoluteUrl(personPath);
 
 const ogImageSource = data.ogImage || data.image;
 const ogOptimized = await getImage({
@@ -66,17 +71,21 @@ const breadcrumbItems = [
   { label: data.title },
 ];
 
+const personNode: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": personId,
+  name: author.data.name,
+  jobTitle: author.data.role,
+  description: author.data.bio,
+  url: personUrl,
+};
+if (author.data.sameAs?.length) {
+  personNode.sameAs = author.data.sameAs;
+}
+
 const jsonLd: Record<string, unknown>[] = [
-  {
-    "@context": "https://schema.org",
-    "@type": "Person",
-    "@id": personId,
-    name: author.data.name,
-    jobTitle: author.data.role,
-    description: author.data.bio,
-    url: absoluteUrl("/team/"),
-    sameAs: author.data.sameAs,
-  },
+  personNode,
   {
     "@context": "https://schema.org",
     "@type": data.schemaType,
@@ -132,11 +141,11 @@ if (data.faqs && data.faqs.length > 0) {
   ogType="article"
   jsonLd={jsonLd}
 >
-  <main class="site-wrap flex-1 py-xl lg:py-2xl">
-    <article>
+  <main id="main-content" class="site-wrap flex-1 py-xl lg:py-2xl">
+    <article class="article-column">
       <Breadcrumbs items={breadcrumbItems} />
       <header class="mt-lg mb-xl">
-        <p class="type-label text-accent-text">{data.category}</p>
+        <p class="type-label">{data.category}</p>
         <h1 class="type-h1 mt-sm">{heading}</h1>
         <p class="type-body-sm mt-md">
           Published on <time datetime={isoDate(published)}>{displayDate(published)}</time>
@@ -159,7 +168,7 @@ if (data.faqs && data.faqs.length > 0) {
           width={1200}
           height={675}
           loading="eager"
-          sizes="(max-width: 1160px) 100vw, 1160px"
+          sizes="(max-width: 680px) 100vw, 680px"
         />
       </div>
       <TableOfContents headings={headings} />
@@ -176,7 +185,7 @@ if (data.faqs && data.faqs.length > 0) {
               width={1200}
               height={675}
               loading="lazy"
-              sizes="(max-width: 1160px) 100vw, 1160px"
+              sizes="(max-width: 680px) 100vw, 680px"
             />
           </div>
         )
@@ -191,7 +200,7 @@ if (data.faqs && data.faqs.length > 0) {
               width={1200}
               height={675}
               loading="lazy"
-              sizes="(max-width: 1160px) 100vw, 1160px"
+              sizes="(max-width: 680px) 100vw, 680px"
             />
           </div>
         )

@@ -2,7 +2,7 @@ import type { APIRoute } from "astro";
 import { SITE_URL } from "../config/site";
 
 export const GET: APIRoute = () => {
-  const sitemap = `${SITE_URL.replace(/\/+$/, "")}/sitemap-index.xml`;
+  const sitemap = `${SITE_URL.replace(/\/+$/, "")}/sitemap.xml`;
   const body = ["User-agent: *", "Allow: /", "", `Sitemap: ${sitemap}`, ""].join(
     "\n",
   );
