@@ -2,8 +2,8 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CtaBanner from "../components/CtaBanner.astro";
+import FaqBlock from "../components/FaqBlock.astro";
 import ImagePlaceholder from "../components/ImagePlaceholder.astro";
-import { SITE_NAME } from "../config/site";
 import { getPublishedArticles } from "../lib/articles";
 import { displayDate } from "../lib/dates";
 import { sitePath } from "../lib/url";
@@ -12,9 +12,10 @@ const services = (await getCollection("services")).sort(
   (a, b) => a.data.order - b.data.order,
 );
 const latest = (await getPublishedArticles()).slice(0, 5);
-const title = SITE_NAME;
+const title =
+  "Rupert — Investor Outreach & Fundraising Matchmaking for Founders";
 const description =
-  "Rupert helps founders connect with the investors most likely to fund their companies. Every outreach campaign is researched, personalized, and managed by experienced operators, while founders retain complete visibility, every conversation, and every investor relationship.";
+  "Rupert helps founders reach investors most likely to fund them. Outreach is researched, personalized, and managed. You keep every conversation and relationship.";
 
 const clients = [
   "BlueMark",
@@ -58,14 +59,22 @@ const proofStats = [
   { value: "1,200+", label: "Meetings booked" },
 ];
 
-const steps = [
+const steps: {
+  title: string;
+  body: string;
+  link?: { href: string; label: string };
+}[] = [
   {
     title: "Rupert understands your business.",
     body: "A short conversation captures your stage, sector, geography, traction, and story — the details an operator actually needs before anyone is emailed.",
   },
   {
     title: "Rupert prepares your pitch.",
-    body: "Using the materials you upload — decks, one-pagers, abstracts — messaging is shaped for outreach. Rupert will not create your materials for you, but it puts them to work.",
+    body: "Using the materials you upload — decks, one-pagers, abstracts — messaging is shaped for outreach. Rupert will not create your materials for you, but it puts them to work. For what those materials need to cover, see",
+    link: {
+      href: "/articles/pitch-deck/",
+      label: "the complete pitch deck guide",
+    },
   },
   {
     title: "Rupert finds your investors.",
@@ -144,9 +153,60 @@ const testimonials = [
     meta: "Pre-seed, Lisbon",
   },
 ];
+
+const faqs = [
+  {
+    question: "How is Rupert different from an investor database?",
+    answer:
+      "Rupert is not a raw database dump. Your company is matched against 10,000+ VCs, family offices, and angels filtered by their actual investment criteria — not by name recognition. A human reviews and refines the campaigns with you.",
+  },
+  {
+    question: "Is Rupert a self-serve outreach tool?",
+    answer:
+      "No. This is a managed service. Your campaigns are researched, written, and refined with you by experienced operators — not fired blindly by a bot.",
+  },
+  {
+    question: "Does Rupert take a percentage of the raise?",
+    answer:
+      "No. Rupert never takes a percentage of your raise and never owns your investor relationships. Every reply comes to you, and every introduction is yours to keep.",
+  },
+  {
+    question: "Does Rupert create my pitch deck?",
+    answer:
+      "No. Rupert does not create your pitch deck or fundraising materials. You upload the decks, one-pagers, or abstracts you already have; Rupert shapes messaging for outreach and puts those materials to work.",
+  },
+  {
+    question: "Who owns the investor conversations?",
+    answer:
+      "You do. Every reply comes to you. Live campaign analytics and direct investor communication sit in one private workspace, and every relationship stays yours.",
+  },
+];
+
+const jsonLd =
+  faqs.length > 0
+    ? [
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.question,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.answer,
+            },
+          })),
+        },
+      ]
+    : [];
 ---
 
-<BaseLayout title={title} description={description} canonicalPath="/">
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/"
+  jsonLd={jsonLd}
+>
   <main class="flex-1">
     <section class="site-wrap pb-2xl pt-2xl lg:pb-3xl lg:pt-3xl">
       <h1 class="type-display hero-reveal">
@@ -263,7 +323,10 @@ const testimonials = [
           <p class="type-body-lg mt-lg">
             Most founders email the wrong investors with the same generic pitch
             — and hear nothing back. The investors who would actually fund you
-            exist. You just don't know who they are, or what they respond to.
+            exist. You just don't know who they are, or what they respond to.{" "}
+            <a href={sitePath("/articles/angel-investors/")}>
+              Learn more about finding the right investors
+            </a>.
           </p>
         </div>
         <div class="md:col-span-5">
@@ -332,7 +395,18 @@ const testimonials = [
               </p>
               <div class="md:col-span-10">
                 <h3 class="type-h3">{step.title}</h3>
-                <p class="type-body mt-sm">{step.body}</p>
+                <p class="type-body mt-sm">
+                  {step.body}
+                  {
+                    step.link && (
+                      <>
+                        {" "}
+                        <a href={sitePath(step.link.href)}>{step.link.label}</a>
+                        .
+                      </>
+                    )
+                  }
+                </p>
               </div>
             </li>
           ))
@@ -397,6 +471,10 @@ const testimonials = [
         ))
       }
     </section>
+
+    <div class="site-wrap py-xl lg:py-2xl">
+      <FaqBlock faqs={faqs} />
+    </div>
 
     <section class="site-wrap py-xl lg:py-2xl">
       <h2 class="type-h2">Latest Articles</h2>
