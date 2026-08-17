@@ -347,11 +347,90 @@ label {
   font-size: 12px;
 }
 
-.health-review {
-  margin: 0.85rem 0;
-  padding: 0.75rem;
+.cms-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.cms-modal[hidden] {
+  display: none;
+}
+
+.cms-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(26, 26, 46, 0.55);
+}
+
+.cms-modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(40rem, 100%);
+  max-height: min(36rem, calc(100vh - 2.5rem));
+  overflow: auto;
+  padding: 1.15rem 1.25rem 1.25rem;
   background: var(--cms-surface);
   border: 1px solid var(--cms-line);
+  box-shadow: 0 18px 48px rgba(26, 26, 46, 0.22);
+}
+
+.cms-modal__kicker {
+  margin: 0 0 0.35rem;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cms-muted);
+}
+
+.cms-modal__list {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+}
+
+.cms-modal__list li {
+  margin: 0 0 0.55rem;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid var(--cms-line);
+  background: var(--cms-bg);
+}
+
+.cms-modal__list label {
+  display: block;
+}
+
+.cms-modal__meta {
+  margin: 0.25rem 0 0;
+  color: var(--cms-muted);
+  font-size: 12px;
+}
+
+.cms-modal__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.85rem;
+}
+
+.cms-spinner {
+  width: 1.6rem;
+  height: 1.6rem;
+  margin: 0.85rem 0;
+  border: 2px solid var(--cms-line);
+  border-top-color: var(--cms-accent);
+  border-radius: 50%;
+  animation: cms-spin 0.7s linear infinite;
+}
+
+@keyframes cms-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .compare {

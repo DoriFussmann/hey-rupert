@@ -33,6 +33,20 @@ faqs:
     answer: "VC funds are structured to return capital to their limited partners at a multiple of what was invested. A fund's general partners earn carried interest — typically 20% of profits — only on gains above a hurdle rate, which means they are incentivized to find companies capable of returning the fund many times over, not just modestly profitable businesses. A $100M fund needs at least one or two portfolio companies to achieve $300M–$500M+ outcomes just to return the fund. This math is why VCs consistently ask about 'market size': they need to believe your business can realistically reach a scale that moves the needle on their fund. It also explains why VC is structurally misaligned with businesses that are excellent but capped in size."
   - question: Is it possible to raise VC without a warm introduction?
     answer: Cold outreach to VCs does occasionally result in investment, but the conversion rates are dramatically lower than warm introductions. Data consistently shows warm introductions convert to a first meeting at 20–30% rates, while cold emails convert at 1–2%. That gap exists because investors receive hundreds of inbound pitches and use trust signals — an introduction from a portfolio founder, a co-investor, or a respected operator — as a filter before evaluating business quality. Cold outreach is not futile, especially if well-researched and highly personalized, but for high-priority target firms, sourcing a credible warm introduction path is almost always worth the investment of time and network capital.
+internalLinks:
+  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+    url: /articles/biggest-venture-capital-firms/
+externalLinks:
+  - label: Data & Statistics - Venture Capital & Private Equity
+    url: https://guides.lib.uchicago.edu/venture/data
+  - label: What Is Venture Capital? Definition, Pros, Cons, and How It ...
+    url: https://www.investopedia.com/terms/v/venturecapital.asp
+  - label: "Venture Capital and Private Equity: Resources"
+    url: https://libguides.stanford.edu/library/venture-capital-and-private-equity
+  - label: "VC 101: The Angel Investor's Guide to Startup Investing"
+    url: https://fundersclub.com/learn/guides/vc-101/understanding-venture-capital/
+  - label: VC Resources
+    url: https://govclab.com/resources/
 ---
 ## What Venture Capital Actually Is — and What It Isn't
 
@@ -169,3 +183,6 @@ the number of individual deals fell to its lowest point in ten years, a decline 
 Early-stage investing remains active but disciplined — Series A deal value totaled approximately $26.7 billion in the first half of 2026, up from $19.3 billion in the same period of 2025 — but underwriting standards remain focused on monetization, capital efficiency, and execution certainty. Over the last couple of years, focus has concentrated on late-stage deals, making it difficult for many early-stage startups not in the AI space — but as capital returns to the market, the early-stage environment may start to improve, which is critical for reinvigorating the broader ecosystem.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

@@ -37,6 +37,28 @@ faqs:
     answer: A disciplined target list typically runs 20 to 40 firms, with every firm having at least one concrete reason it could lead your round — matching stage, sector thesis, check size, and recent deployment in your category. Lists longer than 100 are almost always spray-and-pray, and the signal-to-noise ratio drops sharply. Quality of fit predicts meeting conversion rates far better than raw volume.
   - question: What does 'recent deployment' mean and why does it matter more than sector focus?
     answer: A firm's stated sector focus (on its website or in its LP pitch) describes where it wants to invest. Recent deployment — meaning deals closed in the last 12 to 18 months — describes where it is actually writing checks right now. Funds move through conviction cycles, and a firm that was active in fintech two years ago may have shifted focus toward AI infrastructure. Filtering for 2 to 3 investments in your sector in the past 18 months is a much stronger signal of fit than a sector label on a website.
+internalLinks:
+  - label: "Venture Capital: How VC Works and What Founders Must Know"
+    url: /articles/venture-capital/
+  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+    url: /articles/biggest-venture-capital-firms/
+  - label: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
+    url: /articles/biggest-venture-capital-firms-in-silicon-valley/
+  - label: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
+    url: /articles/famous-venture-capital-firms/
+  - label: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+    url: /articles/top-vc-firms/
+externalLinks:
+  - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
+    url: https://www.forbes.com/lists/midas/
+  - label: "Top VC Firms 2026: 18 Largest Venture Capital Firms by AUM"
+    url: https://dealroom.net/blog/top-venture-capital-firms
+  - label: Top 100 Venture Capital Firm Managers by Managed AUM
+    url: https://www.swfinstitute.org/fund-manager-rankings/venture-capital-firm
+  - label: Top Venture Capital Firms in the World (Updated List 2026)
+    url: https://privateequitylist.com/resources/top-venture-capital-firms
+  - label: The complete list of tier-1 and notable VCs and angel ...
+    url: https://republic.com/help/the-complete-list-of-tier-1-and-notable-vcs-and-angel-investors
 ---
 ## Why AUM Is a Starting Point, Not a Finish Line
 
@@ -151,3 +173,6 @@ Capital concentrating at the top of the market in mega-rounds for infrastructure
  For founders building outreach lists today, this structural concentration makes the filtering steps described above more consequential than they were two years ago: a firm that appears on every AUM ranking may be effectively closed to your sector right now, making recency-of-deployment data an essential filter rather than a nice-to-have.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

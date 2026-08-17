@@ -36,6 +36,28 @@ faqs:
     answer: As of mid-2026, AI infrastructure and applications, enterprise software, defense tech, and fintech are absorbing the bulk of capital from the largest firms. Consumer, hardware, and biotech remain active but are more selective. If your company sits in one of the high-priority sectors, your chances of getting a first meeting at a major firm are meaningfully higher — though the bar for a direct partner-led seed check is still steep regardless of sector.
   - question: What is the difference between a VC's AUM and the size of the check they'll write?
     answer: AUM (assets under management) reflects the total capital a firm manages across all funds and vintages — it includes called capital, uncalled commitments, and sometimes growth vehicles. The check size a firm writes is determined by the specific fund's strategy, not its total AUM. A firm with $50B AUM may only write $500K–$2M Seed checks through a dedicated early-stage fund, while writing $50M+ growth checks through a separate vehicle. Always research the specific fund — its vintage, focus, and typical check size — not just the firm's headline AUM number.
+internalLinks:
+  - label: "Venture Capital: How VC Works and What Founders Must Know"
+    url: /articles/venture-capital/
+  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+    url: /articles/biggest-venture-capital-firms/
+  - label: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
+    url: /articles/biggest-venture-capital-firms-in-silicon-valley/
+  - label: How to Use Largest VC Firms by AUM to Build Your Target List
+    url: /articles/largest-venture-capital-firms-by-aum/
+  - label: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+    url: /articles/top-vc-firms/
+externalLinks:
+  - label: "Top VC Firms 2026: 18 Largest Venture Capital Firms by AUM"
+    url: https://dealroom.net/blog/top-venture-capital-firms
+  - label: "Venture Capital Statistics: Trends, Metrics, and Benchmarks"
+    url: https://growthequityinterviewguide.com/venture-capital/venture-capital-resources/venture-capital-statistics
+  - label: Top Venture Capital Firms & Investors in the United States
+    url: https://www.openvc.app/country/USA
+  - label: Top Venture Capital Firms | VCJ 50
+    url: https://www.venturecapitaljournal.com/top-venture-capital-firms/
+  - label: The complete list of tier-1 and notable VCs and angel ...
+    url: https://republic.com/help/the-complete-list-of-tier-1-and-notable-vcs-and-angel-investors
 ---
 ## What Makes a VC Firm "Famous" — and Why It Matters for Your Raise
 
@@ -121,3 +143,6 @@ median revenues at raise are higher than 2021 across every stage, and seed compa
  The structural takeaway remains consistent: tier-1 access rewards preparation, sector alignment, and relationship capital — none of which can be manufactured in the final weeks of a raise.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

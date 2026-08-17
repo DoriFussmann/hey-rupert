@@ -6,7 +6,7 @@ import {
   type LinkItem,
 } from "./patchArticle.ts";
 
-export const MAX_EXTERNAL_LINKS = 5;
+export const MAX_EXTERNAL_LINKS = 3;
 export const INTERNAL_SIGNPOST = "See Related below for more on this topic.";
 export const EXTERNAL_SIGNPOST =
   "See Sources below for the references behind this article.";

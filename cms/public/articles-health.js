@@ -14,7 +14,8 @@ const state = {
   searchConfigured: false,
   updatedSlugs: new Set(),
   busy: false,
-  proposals: [],
+  maxExternalLinks: 3,
+  scanChoice: null,
 };
 
 async function readJson(response) {
@@ -131,17 +132,15 @@ function renderLinksSection(article) {
   }
 
   const ext = document.createElement("p");
-  ext.textContent = `External links: ${article.externalLinks?.length || 0} / 5`;
+  ext.textContent = `External links: ${article.externalLinks?.length || 0} / ${state.maxExternalLinks}`;
   section.append(ext);
   const add = document.createElement("button");
   add.type = "button";
-  add.textContent = "Add External Links";
-  add.addEventListener("click", () => proposeOne(article.slug));
-  const propose = document.createElement("button");
-  propose.type = "button";
-  propose.textContent = "Propose All External Links";
-  propose.addEventListener("click", () => proposeOne(article.slug));
-  section.append(add, " ", propose);
+  add.textContent = "Scan & Add External Links";
+  add.addEventListener("click", () =>
+    scanAndAddExternal([article.slug]).catch((error) => setStatus(error.message)),
+  );
+  section.append(add);
   return section;
 }
 
@@ -248,6 +247,7 @@ async function loadArticles() {
   const payload = await readJson(await fetch("/api/health/articles"));
   state.pagespeedConfigured = Boolean(payload.pagespeedConfigured);
   state.searchConfigured = Boolean(payload.searchConfigured);
+  state.maxExternalLinks = Number(payload.maxExternalLinks) || 3;
   const previous = new Map(state.articles.map((article) => [article.slug, article]));
   state.articles = (payload.articles || []).map((article) => {
     const prior = previous.get(article.slug);
@@ -340,97 +340,92 @@ async function connectAllInternal() {
   setStatus("Internal link batch finished.");
 }
 
-function renderProposals() {
-  const section = document.getElementById("propose-review");
-  const list = document.getElementById("propose-list");
-  list.replaceChildren();
-  if (!state.proposals.length) {
-    section.hidden = true;
-    return;
-  }
-  section.hidden = false;
-  for (const row of state.proposals) {
+function modalEls() {
+  return {
+    modal: document.getElementById("external-scan-modal"),
+    progress: document.getElementById("external-scan-progress"),
+    title: document.getElementById("external-scan-title"),
+    status: document.getElementById("external-scan-status"),
+    spinner: document.getElementById("external-scan-spinner"),
+    list: document.getElementById("external-scan-suggestions"),
+    confirm: document.getElementById("external-scan-confirm"),
+    skip: document.getElementById("external-scan-skip"),
+    stop: document.getElementById("external-scan-stop"),
+  };
+}
+
+function openScanModal() {
+  const ui = modalEls();
+  ui.modal.hidden = false;
+  document.body.style.overflow = "hidden";
+}
+
+function closeScanModal() {
+  const ui = modalEls();
+  ui.modal.hidden = true;
+  ui.list.replaceChildren();
+  ui.confirm.disabled = true;
+  ui.skip.disabled = true;
+  ui.spinner.hidden = true;
+  document.body.style.overflow = "";
+  if (state.scanChoice) state.scanChoice("stop");
+  state.scanChoice = null;
+}
+
+function waitForScanChoice() {
+  return new Promise((resolve) => {
+    state.scanChoice = resolve;
+  });
+}
+
+function setScanMode(mode) {
+  const ui = modalEls();
+  const reviewing = mode === "review";
+  ui.spinner.hidden = mode !== "loading";
+  ui.confirm.disabled = !reviewing;
+  ui.skip.disabled = !reviewing;
+}
+
+function renderScanSuggestions(candidates, slotsRemaining) {
+  const ui = modalEls();
+  ui.list.replaceChildren();
+  let checked = 0;
+  for (const row of candidates) {
     const item = document.createElement("li");
     const label = document.createElement("label");
     const box = document.createElement("input");
     box.type = "checkbox";
-    box.checked = row.confidence === "high";
-    box.dataset.slug = row.slug;
     box.dataset.url = row.url;
     box.dataset.label = row.label;
-    label.append(
-      box,
-      ` ${row.articleTitle} — ${row.label} — ${row.url} (${row.source}, ${row.confidence})`,
-    );
-    const addOne = document.createElement("button");
-    addOne.type = "button";
-    addOne.textContent = "Add";
-    addOne.addEventListener("click", () => {
-      addLinks(row.slug, [{ label: row.label, url: row.url }]).catch((error) =>
-        setStatus(error.message),
-      );
-    });
-    item.append(label, " ", addOne);
-    list.append(item);
+    const take = checked < slotsRemaining && (row.confidence === "high" || checked === 0);
+    box.checked = take;
+    if (take) checked += 1;
+    const title = document.createElement("strong");
+    title.textContent = row.label;
+    const link = document.createElement("a");
+    link.href = row.url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.textContent = row.url;
+    const meta = document.createElement("p");
+    meta.className = "cms-modal__meta";
+    meta.textContent = [
+      row.confidence === "high" ? "High confidence" : "Low confidence",
+      row.source,
+      row.reason,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+    label.append(box, " ", title);
+    item.append(label, link, meta);
+    ui.list.append(item);
   }
 }
 
-async function proposeOne(slug) {
-  setStatus(`Searching external link candidates for ${slug}…`);
-  const payload = await readJson(
-    await fetch("/api/health/links/propose", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ slug }),
-    }),
-  );
-  const article = state.articles.find((item) => item.slug === slug);
-  const incoming = (payload.candidates || []).map((candidate) => ({
-    ...candidate,
-    slug,
-    articleTitle: article?.title || slug,
-  }));
-  state.proposals = [
-    ...state.proposals.filter((row) => row.slug !== slug),
-    ...incoming,
-  ];
-  renderProposals();
-  if (!incoming.length) {
-    setStatus(
-      payload.searchConfigured
-        ? `No on-topic external candidates for ${slug}.`
-        : `No local candidates for ${slug}. Live search is not configured.`,
-    );
-    return;
-  }
-  setStatus(`Proposed ${incoming.length} candidate(s) for ${slug}. Review before adding.`);
-}
-
-async function proposeAllExternal() {
-  state.proposals = [];
-  const slugs = state.articles.map((article) => article.slug);
-  for (let i = 0; i < slugs.length; i += 1) {
-    const slug = slugs[i];
-    setProgress(`Proposing ${i + 1} of ${slugs.length}: ${slug}`);
-    const payload = await readJson(
-      await fetch("/api/health/links/propose", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slug }),
-      }),
-    );
-    const article = state.articles.find((item) => item.slug === slug);
-    for (const candidate of payload.candidates || []) {
-      state.proposals.push({
-        ...candidate,
-        slug,
-        articleTitle: article?.title || slug,
-      });
-    }
-  }
-  renderProposals();
-  setProgress(`Proposed ${state.proposals.length} candidate(s) across ${slugs.length} articles. Nothing written yet.`);
-  setStatus("Review proposed external links, then Add Selected.");
+function selectedScanLinks() {
+  return [...document.querySelectorAll("#external-scan-suggestions input[type=checkbox]:checked")]
+    .map((box) => ({ label: box.dataset.label, url: box.dataset.url }))
+    .filter((link) => link.label && link.url);
 }
 
 async function addLinks(slug, links) {
@@ -442,48 +437,136 @@ async function addLinks(slug, links) {
     }),
   );
   markUpdated(slug);
-  state.proposals = state.proposals.filter(
-    (row) => !(row.slug === slug && links.some((link) => link.url === row.url)),
-  );
-  renderProposals();
-  await loadArticles();
-  setStatus(`Added ${links.length} external link(s) to ${slug}.`);
 }
 
-async function addSelected() {
-  const boxes = [...document.querySelectorAll("#propose-list input[type=checkbox]:checked")];
-  const bySlug = new Map();
-  for (const box of boxes) {
-    const slug = box.dataset.slug;
-    const list = bySlug.get(slug) || [];
-    list.push({ label: box.dataset.label, url: box.dataset.url });
-    bySlug.set(slug, list);
+async function scanAndAddExternal(onlySlugs) {
+  if (state.busy) return;
+  const queue = (onlySlugs || state.articles.map((article) => article.slug))
+    .map((slug) => state.articles.find((article) => article.slug === slug))
+    .filter(Boolean)
+    .filter((article) => (article.externalLinks?.length || 0) < state.maxExternalLinks);
+  if (!queue.length) {
+    setStatus("Every selected article already has 3 external links.");
+    return;
   }
-  const slugs = [...bySlug.keys()];
-  for (let i = 0; i < slugs.length; i += 1) {
-    const slug = slugs[i];
-    setProgress(`Adding selected links ${i + 1} of ${slugs.length}: ${slug}`);
-    await addLinks(slug, bySlug.get(slug));
+
+  state.busy = true;
+  openScanModal();
+  const ui = modalEls();
+  let confirmed = 0;
+  let skipped = 0;
+  let stopped = false;
+
+  try {
+    for (let i = 0; i < queue.length; i += 1) {
+      const article = queue[i];
+      const slotsRemaining = Math.max(
+        0,
+        state.maxExternalLinks - (article.externalLinks?.length || 0),
+      );
+      ui.progress.textContent = `Article ${i + 1} of ${queue.length}`;
+      ui.title.textContent = article.title;
+      ui.status.textContent = "Searching external sources…";
+      ui.list.replaceChildren();
+      setScanMode("loading");
+      setProgress(`Scanning ${i + 1} of ${queue.length}: ${article.slug}`);
+
+      let payload;
+      try {
+        payload = await readJson(
+          await fetch("/api/health/links/propose", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ slug: article.slug }),
+          }),
+        );
+      } catch (error) {
+        ui.status.textContent = error.message;
+        setScanMode("review");
+        ui.confirm.disabled = true;
+        const choice = await waitForScanChoice();
+        if (choice === "stop") {
+          stopped = true;
+          break;
+        }
+        skipped += 1;
+        continue;
+      }
+
+      const candidates = (payload.candidates || []).slice(0, state.maxExternalLinks);
+      if (!candidates.length) {
+        ui.status.textContent = payload.searchConfigured
+          ? "No on-topic external candidates. Skip to continue."
+          : "No local candidates. Live search is not configured. Skip to continue.";
+        setScanMode("review");
+        ui.confirm.disabled = true;
+        const choice = await waitForScanChoice();
+        if (choice === "stop") {
+          stopped = true;
+          break;
+        }
+        skipped += 1;
+        continue;
+      }
+
+      ui.status.textContent = `Suggested ${candidates.length} source(s). Confirm to add the checked links (${slotsRemaining} slot${slotsRemaining === 1 ? "" : "s"} left).`;
+      renderScanSuggestions(candidates, slotsRemaining);
+      setScanMode("review");
+      const choice = await waitForScanChoice();
+      if (choice === "stop") {
+        stopped = true;
+        break;
+      }
+      if (choice === "skip") {
+        skipped += 1;
+        continue;
+      }
+
+      const links = selectedScanLinks().slice(0, slotsRemaining);
+      if (!links.length) {
+        skipped += 1;
+        continue;
+      }
+      ui.status.textContent = "Saving confirmed links…";
+      setScanMode("loading");
+      await addLinks(article.slug, links);
+      article.externalLinks = [...(article.externalLinks || []), ...links];
+      confirmed += links.length;
+    }
+  } finally {
+    state.busy = false;
+    state.scanChoice = null;
+    closeScanModal();
+    await loadArticles();
   }
-  setProgress("");
-  setStatus(slugs.length ? "Selected external links added." : "No candidates selected.");
+
+  const summary = stopped
+    ? `Stopped after confirming ${confirmed} external link(s). ${skipped} skipped.`
+    : `Confirmed ${confirmed} external link(s). ${skipped} article(s) skipped.`;
+  setProgress(summary);
+  setStatus("External link scan finished.");
 }
 
 document.getElementById("connect-all-internal").addEventListener("click", () => {
   connectAllInternal().catch((error) => setStatus(error.message));
 });
-document.getElementById("propose-all-external").addEventListener("click", () => {
-  proposeAllExternal().catch((error) => setStatus(error.message));
+document.getElementById("scan-add-external").addEventListener("click", () => {
+  scanAndAddExternal().catch((error) => setStatus(error.message));
 });
 document.getElementById("scan-all-diagnostics").addEventListener("click", () => {
   scanDiagnostics().catch((error) => setStatus(error.message));
 });
-document.getElementById("add-selected").addEventListener("click", () => {
-  addSelected().catch((error) => setStatus(error.message));
+document.getElementById("external-scan-confirm").addEventListener("click", () => {
+  if (state.scanChoice) state.scanChoice("confirm");
+  state.scanChoice = null;
 });
-document.getElementById("clear-proposed").addEventListener("click", () => {
-  state.proposals = [];
-  renderProposals();
+document.getElementById("external-scan-skip").addEventListener("click", () => {
+  if (state.scanChoice) state.scanChoice("skip");
+  state.scanChoice = null;
+});
+document.getElementById("external-scan-stop").addEventListener("click", () => {
+  if (state.scanChoice) state.scanChoice("stop");
+  state.scanChoice = null;
 });
 
 setStatus("Loading…");
