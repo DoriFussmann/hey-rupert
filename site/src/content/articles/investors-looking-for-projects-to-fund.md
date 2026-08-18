@@ -59,8 +59,6 @@ externalLinks:
   - label: "Angel investors: How to find them"
     url: https://www.bdc.ca/en/articles-tools/start-buy-business/start-business/angel-investors-how-find-them
 ---
-# What Investors Looking for Projects to Fund Actually Want
-
 There is no shortage of advice telling founders to "know your market" or "show traction." But the investors actively writing checks in 2026 are applying a more layered, more sequential set of filters than any single slide or metric can satisfy. Understanding those filters — in the order investors actually apply them — is the difference between a process that generates real momentum and one that produces polite rejections with no useful feedback.
 
 This article answers the questions founders most commonly ask about what investors want to see, structured around the five dimensions that consistently determine whether a meeting turns into a term sheet.

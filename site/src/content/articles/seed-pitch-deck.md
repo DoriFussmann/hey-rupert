@@ -58,8 +58,6 @@ externalLinks:
   - label: How to craft a winning pitch deck
     url: https://mercury.com/blog/ultimate-pitch-guide-crafting-pitch-deck
 ---
-# The Complete Seed Pitch Deck Guide for Raising Founders
-
 Your seed pitch deck is not a company overview. It is not a business plan in slide form. It is a structured argument designed to do exactly one thing: get a meeting with the right investor. Every word, every metric, every slide order should be optimized for that outcome — and nothing else.
 
 That might sound reductive, but it is actually liberating. Once you accept that the deck's only job is to generate a conversation rather than close a check, you stop trying to explain everything and start asking a harder question: what is the minimum information an investor needs to feel enough conviction to say yes to thirty more minutes? The founders who answer that question well raise seed rounds. The ones who don't send increasingly comprehensive decks into an increasingly quiet inbox.

@@ -428,6 +428,7 @@
   }
 
   .media-frame {
+    position: relative;
     aspect-ratio: 16 / 9;
     overflow: hidden;
     width: 100%;
@@ -439,8 +440,11 @@
   }
 
   .media-frame img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    max-width: none;
     object-fit: cover;
     display: block;
   }
@@ -1574,6 +1578,10 @@
     min-width: 0;
     text-align: right;
     color: theme("colors.heading");
+    font-size: theme("fontSize.body-sm[0]");
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: 0.04em;
   }
 
   .case-card__chevron {

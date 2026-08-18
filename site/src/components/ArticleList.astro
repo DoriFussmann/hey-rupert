@@ -1,7 +1,7 @@
 ---
-import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import type { CollectionEntry } from "astro:content";
+import ArticleImage from "./ArticleImage.astro";
 import { displayDate } from "../lib/dates";
 import { sitePath } from "../lib/url";
 
@@ -36,14 +36,10 @@ const tiles = await Promise.all(
             href={sitePath(`/articles/${article.data.slug}/`)}
           >
             <div class="media-frame">
-              <Image
-                class="photo"
+              <ArticleImage
                 src={article.data.image}
                 alt={article.data.imageAlt}
-                width={640}
-                height={360}
-                loading="lazy"
-                sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 360px"
+                variant="card"
               />
             </div>
             <h2 class="type-h3 mt-md">{article.data.title}</h2>

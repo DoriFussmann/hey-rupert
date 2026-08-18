@@ -17,8 +17,11 @@ const href = sitePath("/about/");
     class="photo h-auto w-32"
     src={author.data.photo}
     alt={`Photo of ${author.data.name}`}
-    width={200}
-    height={200}
+    width={128}
+    height={128}
+    widths={[128, 256]}
+    sizes="128px"
+    fit="cover"
     loading="lazy"
   />
   <div>

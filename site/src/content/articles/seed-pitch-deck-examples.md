@@ -59,8 +59,6 @@ externalLinks:
   - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
     url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
 ---
-# Seed Pitch Deck Examples: 7 Real Decks — and What Worked
-
 Most pitch deck advice starts from a template. This article starts from evidence. The decks below are real — they raised real money from real investors — and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
 
 The patterns that emerge from studying funded seed decks are not particularly mysterious once you see them. They are, however, consistently violated by founders who build decks the way they understand their business rather than the way investors evaluate one.

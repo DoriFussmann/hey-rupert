@@ -1,7 +1,8 @@
 ---
-import { getImage, Image } from "astro:assets";
+import { getImage } from "astro:assets";
 import { getEntry, render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
+import ArticleImage from "../components/ArticleImage.astro";
 import AuthorBio from "../components/AuthorBio.astro";
 import BackToTop from "../components/BackToTop.astro";
 import Breadcrumbs from "../components/Breadcrumbs.astro";
@@ -161,14 +162,10 @@ if (data.faqs && data.faqs.length > 0) {
         </p>
       </header>
       <div class="media-frame mb-xl">
-        <Image
-          class="photo"
+        <ArticleImage
           src={data.image}
           alt={data.imageAlt}
-          width={1200}
-          height={675}
           loading="eager"
-          sizes="(max-width: 1160px) 100vw, 1160px"
         />
       </div>
       <TableOfContents headings={headings} />
@@ -178,30 +175,14 @@ if (data.faqs && data.faqs.length > 0) {
       {
         data.image2 && data.image2Alt && (
           <div class="media-frame my-xl">
-            <Image
-              class="photo"
-              src={data.image2}
-              alt={data.image2Alt}
-              width={1200}
-              height={675}
-              loading="lazy"
-              sizes="(max-width: 1160px) 100vw, 1160px"
-            />
+            <ArticleImage src={data.image2} alt={data.image2Alt} />
           </div>
         )
       }
       {
         data.image3 && data.image3Alt && (
           <div class="media-frame my-xl">
-            <Image
-              class="photo"
-              src={data.image3}
-              alt={data.image3Alt}
-              width={1200}
-              height={675}
-              loading="lazy"
-              sizes="(max-width: 1160px) 100vw, 1160px"
-            />
+            <ArticleImage src={data.image3} alt={data.image3Alt} />
           </div>
         )
       }
