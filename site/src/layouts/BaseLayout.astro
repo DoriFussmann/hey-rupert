@@ -161,10 +161,20 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
         });
       }
 
-      document.querySelectorAll(".pillar-item, .faq-item").forEach((item) => {
+      document.querySelectorAll(".pillar-item, .faq-item, .case-card").forEach((item) => {
         if (!(item instanceof HTMLDetailsElement)) return;
+
+        if (item.classList.contains("case-card")) {
+          item.addEventListener("toggle", () => {
+            item.classList.toggle("is-open", item.open);
+          });
+          return;
+        }
+
         const summary = item.querySelector("summary");
-        const panel = item.querySelector(".pillar-item__panel, .faq-item__panel");
+        const panel = item.querySelector(
+          ".pillar-item__panel, .faq-item__panel, .case-card__panel",
+        );
         if (!(summary instanceof HTMLElement)) return;
 
         summary.addEventListener("click", (event) => {

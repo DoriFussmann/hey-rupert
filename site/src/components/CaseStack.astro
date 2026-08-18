@@ -1,0 +1,95 @@
+---
+import { Image } from "astro:assets";
+import { caseStudies } from "../lib/caseStudies";
+---
+
+<ul class="case-stack case-stack--aside">
+  {
+    caseStudies.map((item) => (
+      <li>
+        <details class="case-card">
+          <summary>
+            <span class="case-card__row">
+              <span
+                class:list={[
+                  "case-card__logo",
+                  item.name === "Yale" && "case-card__logo--yale",
+                ]}
+              >
+                <Image
+                  src={item.logo}
+                  alt={item.name}
+                  widths={[160, 240, 320]}
+                  sizes="96px"
+                  inferSize
+                />
+              </span>
+              <span class="case-card__role type-h4">{item.role}</span>
+              <span class="case-card__chevron" aria-hidden="true"></span>
+            </span>
+          </summary>
+          <div class="case-card__panel">
+            <div class="case-card__body">
+              <p class="type-body-sm">
+                {item.href &&
+                item.linkLabel &&
+                item.body.includes(item.linkLabel) ? (
+                  <>
+                    {item.body.slice(0, item.body.indexOf(item.linkLabel))}
+                    <a href={item.href} rel="noopener noreferrer">
+                      {item.linkLabel}
+                    </a>
+                    {item.body.slice(
+                      item.body.indexOf(item.linkLabel) + item.linkLabel.length,
+                    )}
+                  </>
+                ) : (
+                  item.body
+                )}
+              </p>
+            </div>
+          </div>
+        </details>
+      </li>
+    ))
+  }
+</ul>
+
+<script>
+  const STAGGER_MS = 70;
+
+  document.querySelectorAll("[data-case-expand]").forEach((button) => {
+    if (!(button instanceof HTMLButtonElement)) return;
+    const panel = button.closest(".founder-panel");
+    if (!panel) return;
+
+    const cards = () =>
+      Array.from(panel.querySelectorAll("details.case-card")).filter(
+        (card): card is HTMLDetailsElement => card instanceof HTMLDetailsElement,
+      );
+
+    button.addEventListener("click", () => {
+      const items = cards();
+      if (!items.length) return;
+
+      const expand = !items.every((card) => card.open);
+      button.classList.toggle("is-open", expand);
+      button.setAttribute("aria-expanded", String(expand));
+      button.setAttribute(
+        "aria-label",
+        expand ? "Collapse all roles" : "Expand all roles",
+      );
+
+      const reduceMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)",
+      ).matches;
+      const delay = reduceMotion ? 0 : STAGGER_MS;
+
+      items.forEach((card, index) => {
+        window.setTimeout(() => {
+          card.open = expand;
+        }, index * delay);
+      });
+    });
+  });
+</script>

@@ -1407,14 +1407,17 @@
     padding: 0;
     background: transparent;
     color: inherit;
-    border-top: 1px solid theme("colors.accent");
-    padding-top: theme("spacing.lg");
   }
 
   .founder-panel__top {
     display: flex;
     align-items: center;
     gap: theme("spacing.md");
+  }
+
+  .founder-panel__identity {
+    flex: 1;
+    min-width: 0;
   }
 
   .founder-panel__photo {
@@ -1471,9 +1474,42 @@
     opacity: 0.8;
   }
 
+  .founder-panel__expand {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border: 1px solid theme("colors.border");
+    background: theme("colors.surface");
+    border-radius: theme("borderRadius.card");
+    cursor: pointer;
+  }
+
+  .founder-panel__expand:hover {
+    border-color: theme("colors.accent");
+  }
+
+  .founder-panel__expand-chevron {
+    width: 8px;
+    height: 8px;
+    margin-top: -3px;
+    border-right: 1.5px solid theme("colors.accent");
+    border-bottom: 1.5px solid theme("colors.accent");
+    transform: rotate(45deg);
+    transition: transform 280ms ease;
+  }
+
+  .founder-panel__expand.is-open .founder-panel__expand-chevron {
+    margin-top: 3px;
+    transform: rotate(-135deg);
+  }
+
   .case-stack {
     display: grid;
-    gap: theme("spacing.md");
+    gap: theme("spacing.sm");
   }
 
   .case-stack--aside {
@@ -1481,45 +1517,112 @@
   }
 
   .case-card {
-    display: flex;
-    align-items: stretch;
-    gap: theme("spacing.sm");
-    min-height: 5.5rem;
-    padding: theme("spacing.sm") theme("spacing.md");
     background: #e6ede3;
     border-radius: 12px;
   }
 
+  .case-card summary {
+    display: block;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .case-card summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .case-card__row {
+    display: flex;
+    align-items: center;
+    gap: theme("spacing.sm");
+    min-height: 3.96rem;
+    padding: theme("spacing.sm") theme("spacing.md");
+  }
+
+  .case-card summary:hover .case-card__chevron {
+    border-color: theme("colors.heading");
+  }
+
+  .case-card summary:focus-visible {
+    outline: 2px solid theme("colors.accent");
+    outline-offset: -4px;
+    border-radius: 12px;
+  }
+
   .case-card__logo {
-    flex: 0 0 5.5rem;
+    flex: 0 0 3.96rem;
     display: flex;
     align-items: center;
     justify-content: center;
   }
 
   .case-card__logo img {
-    max-height: 32px;
-    max-width: 88px;
+    max-height: 23px;
+    max-width: 63px;
     width: auto;
     height: auto;
     object-fit: contain;
   }
 
   .case-card__logo--yale img {
-    max-height: 22px;
-    max-width: 56px;
+    max-height: 16px;
+    max-width: 41px;
   }
 
-  .case-card__text {
-    flex: 1;
-    display: flex;
-    align-items: center;
+  .case-card__role {
+    margin: 0 0 0 auto;
     min-width: 0;
+    text-align: right;
+    color: theme("colors.heading");
+  }
+
+  .case-card__chevron {
+    flex-shrink: 0;
+    width: 8px;
+    height: 8px;
+    margin-right: theme("spacing.xs");
+    border-right: 1.5px solid theme("colors.accent");
+    border-bottom: 1.5px solid theme("colors.accent");
+    transform: rotate(-45deg);
+    transition: transform 280ms ease;
+  }
+
+  .case-card.is-open .case-card__chevron,
+  .case-card[open] .case-card__chevron {
+    transform: rotate(45deg);
+  }
+
+  .case-card__panel {
+    display: grid;
+    grid-template-rows: 0fr;
+    transition: grid-template-rows 320ms ease;
+  }
+
+  .case-card.is-open .case-card__panel,
+  .case-card[open] .case-card__panel {
+    grid-template-rows: 1fr;
+  }
+
+  .case-card__body {
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  .case-card__body p {
     margin: 0;
-    padding: theme("spacing.xs") theme("spacing.sm");
-    background: color-mix(in srgb, white 55%, #e6ede3);
-    border: 1px solid #ccd5cc;
-    border-radius: 8px;
+    padding: 0 theme("spacing.md") theme("spacing.md");
+    padding-left: calc(3.96rem + theme("spacing.md") + theme("spacing.sm"));
+    opacity: 0;
+    transform: translateY(-4px);
+    transition:
+      opacity 280ms ease,
+      transform 280ms ease;
+  }
+
+  .case-card.is-open .case-card__body p,
+  .case-card[open] .case-card__body p {
+    opacity: 1;
+    transform: none;
   }
 
   .media-card {

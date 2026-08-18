@@ -1,9 +1,9 @@
 ---
 import { getImage, Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import CaseStack from "../../components/CaseStack.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
 import { DORI_LINKEDIN, SITE_NAME } from "../../config/site";
-import { caseStudies } from "../../lib/caseStudies";
 import { absoluteFileUrl, absoluteUrl, sitePath } from "../../lib/url";
 import doriPortrait from "../../assets/team/dori-fussmann/photo.jpg";
 import linkedinLogo from "../../assets/brand/linkedin.png";
@@ -117,7 +117,7 @@ const jsonLd: Record<string, unknown>[] = [
               width={192}
               height={192}
             />
-            <div>
+            <div class="founder-panel__identity">
               <h2 class="type-h3 founder-panel__name">Dori Fussmann</h2>
               <p class="type-label mt-xs">Founder</p>
               <p class="founder-panel__links">
@@ -132,46 +132,17 @@ const jsonLd: Record<string, unknown>[] = [
                 </a>
               </p>
             </div>
+            <button
+              type="button"
+              class="founder-panel__expand"
+              data-case-expand
+              aria-expanded="false"
+              aria-label="Expand all roles"
+            >
+              <span class="founder-panel__expand-chevron" aria-hidden="true"></span>
+            </button>
           </div>
-          <ul class="case-stack case-stack--aside">
-            {
-              caseStudies.map((item) => (
-                <li class="case-card">
-                  <div
-                    class:list={[
-                      "case-card__logo",
-                      item.name === "Yale" && "case-card__logo--yale",
-                    ]}
-                  >
-                    <Image
-                      src={item.logo}
-                      alt={item.name}
-                      widths={[160, 240, 320]}
-                      sizes="96px"
-                      inferSize
-                    />
-                  </div>
-                  <p class="case-card__text type-body-sm">
-                    {
-                      item.href && item.linkLabel && item.body.includes(item.linkLabel) ? (
-                        <>
-                          {item.body.slice(0, item.body.indexOf(item.linkLabel))}
-                          <a href={item.href} rel="noopener noreferrer">
-                            {item.linkLabel}
-                          </a>
-                          {item.body.slice(
-                            item.body.indexOf(item.linkLabel) + item.linkLabel.length,
-                          )}
-                        </>
-                      ) : (
-                        item.body
-                      )
-                    }
-                  </p>
-                </li>
-              ))
-            }
-          </ul>
+          <CaseStack />
         </aside>
       </div>
     </section>
