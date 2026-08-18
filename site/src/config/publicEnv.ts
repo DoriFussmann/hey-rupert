@@ -14,8 +14,10 @@ export const CAL_COM_URL = (
   "https://cal.com/dori-fussmann-lqbqlb/30min"
 ).trim();
 
-/** Optional analytics measurement ID (e.g. G-XXXXXXXX). */
-export const ANALYTICS_ID = (import.meta.env.PUBLIC_ANALYTICS_ID ?? "").trim();
+/** Google Analytics measurement ID. */
+export const ANALYTICS_ID = (
+  import.meta.env.PUBLIC_ANALYTICS_ID ?? "G-T6DS7K3L1E"
+).trim();
 
 /** Optional Google Search Console verification token. */
 export const SEARCH_CONSOLE_VERIFICATION = (

@@ -81,6 +81,20 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
 <!doctype html>
 <html lang={locale}>
   <head>
+    {
+      ANALYTICS_ID && (
+        <>
+          <script
+            async
+            src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_ID}`}
+          />
+          <script
+            is:inline
+            set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ANALYTICS_ID.replace(/[^a-zA-Z0-9-]/g, "")}');`}
+          />
+        </>
+      )
+    }
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -117,20 +131,6 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
       allJsonLd.map((node) => (
         <script type="application/ld+json" set:html={JSON.stringify(node)} />
       ))
-    }
-    {
-      ANALYTICS_ID && (
-        <>
-          <script
-            async
-            src={`https://www.googletagmanager.com/gtag/js?id=${ANALYTICS_ID}`}
-          />
-          <script
-            is:inline
-            set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ANALYTICS_ID.replace(/[^a-zA-Z0-9-]/g, "")}');`}
-          />
-        </>
-      )
     }
   </head>
   <body class="bg-background font-sans text-foreground">
