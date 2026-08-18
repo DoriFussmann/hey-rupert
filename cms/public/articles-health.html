@@ -29,29 +29,23 @@
           <button type="button" id="scan-add-external">Find, Approve and Connect All External Links</button>
           <button type="button" id="scan-all-diagnostics">Scan All Diagnostics</button>
         </p>
-        <p id="batch-progress" role="status"></p>
-
-        <div id="external-scan-modal" class="cms-modal" hidden>
-          <div class="cms-modal__backdrop"></div>
-          <div
-            class="cms-modal__dialog cms-modal__dialog--wide"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="external-scan-title"
-          >
-            <p id="external-scan-progress" class="cms-modal__kicker"></p>
-            <h2 id="external-scan-title">External links</h2>
-            <p id="external-scan-status"></p>
-            <div id="external-scan-spinner" class="cms-spinner" hidden></div>
-            <div id="external-scan-summary" class="external-summary"></div>
-            <p class="cms-modal__actions">
-              <button type="button" id="external-scan-approve" disabled>
-                Approve &amp; Connect All External Links
-              </button>
-              <button type="button" id="external-scan-cancel">Cancel</button>
-            </p>
-          </div>
+        <div class="health-progress-row">
+          <div id="external-scan-spinner" class="cms-spinner" hidden></div>
+          <p id="batch-progress" role="status"></p>
+          <button type="button" id="external-scan-cancel" hidden>Cancel</button>
         </div>
+
+        <section id="external-review" class="external-review" hidden>
+          <h2 id="external-scan-title">Review external link candidates</h2>
+          <p id="external-scan-status"></p>
+          <div id="external-scan-summary" class="external-summary"></div>
+          <p class="external-review__actions">
+            <button type="button" id="external-scan-approve" disabled>
+              Approve &amp; Connect All External Links
+            </button>
+            <button type="button" id="external-review-cancel">Cancel</button>
+          </p>
+        </section>
 
         <ul id="health-list" class="health-list"></ul>
       </main>

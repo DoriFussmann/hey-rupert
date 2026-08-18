@@ -256,6 +256,45 @@ label {
   gap: 0.4rem;
 }
 
+.health-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-height: 1.6rem;
+  margin: 0.65rem 0 0;
+}
+
+.health-progress-row .cms-spinner {
+  margin: 0;
+  flex-shrink: 0;
+}
+
+.health-progress-row #batch-progress {
+  margin: 0;
+}
+
+.external-review {
+  margin: 0.85rem 0 0;
+  padding: 0.85rem 1rem 1rem;
+  border: 1px solid var(--cms-line);
+  background: var(--cms-surface);
+}
+
+.external-review h2 {
+  margin: 0 0 0.35rem;
+}
+
+.external-review__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.85rem 0 0;
+}
+
+.external-summary__article.is-skipped {
+  opacity: 0.55;
+}
+
 .health-list {
   list-style: none;
   padding: 0;

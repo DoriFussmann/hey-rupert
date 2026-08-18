@@ -16,6 +16,7 @@ const state = {
   busy: false,
   maxExternalLinks: 5,
   scanAbort: false,
+  externalPhase: "idle",
 };
 
 async function readJson(response) {
@@ -333,40 +334,41 @@ async function connectAllInternal() {
   setStatus("Internal link batch finished.");
 }
 
-function modalEls() {
+function reviewEls() {
   return {
-    modal: document.getElementById("external-scan-modal"),
-    progress: document.getElementById("external-scan-progress"),
+    panel: document.getElementById("external-review"),
     title: document.getElementById("external-scan-title"),
     status: document.getElementById("external-scan-status"),
     spinner: document.getElementById("external-scan-spinner"),
     summary: document.getElementById("external-scan-summary"),
     approve: document.getElementById("external-scan-approve"),
     cancel: document.getElementById("external-scan-cancel"),
+    list: document.getElementById("health-list"),
+    findBtn: document.getElementById("scan-add-external"),
   };
 }
 
-function openScanModal() {
-  const ui = modalEls();
-  ui.modal.hidden = false;
-  document.body.style.overflow = "hidden";
+function setExternalPhase(phase) {
+  state.externalPhase = phase;
+  const ui = reviewEls();
+  const searching = phase === "searching";
+  const review = phase === "review";
+  const writing = phase === "writing";
+  ui.findBtn.disabled = phase !== "idle";
+  ui.approve.disabled = phase !== "review";
+  ui.cancel.hidden = phase === "idle" || phase === "writing";
+  ui.cancel.disabled = phase === "writing" || phase === "idle";
+  ui.spinner.hidden = !searching && !writing;
+  ui.panel.hidden = !review && !writing;
+  ui.list.hidden = review || writing;
 }
 
-function closeScanModal() {
-  const ui = modalEls();
-  state.scanAbort = true;
-  ui.modal.hidden = true;
+function closeExternalReview() {
+  const ui = reviewEls();
   ui.summary.replaceChildren();
-  ui.approve.disabled = true;
-  ui.spinner.hidden = true;
-  document.body.style.overflow = "";
-}
-
-function setScanMode(mode) {
-  const ui = modalEls();
-  ui.spinner.hidden = mode !== "searching" && mode !== "writing";
-  ui.approve.disabled = mode !== "review";
-  ui.cancel.disabled = mode === "writing";
+  ui.status.textContent = "";
+  ui.title.textContent = "Review external link candidates";
+  setExternalPhase("idle");
 }
 
 function unavailableReason(article, payload) {
@@ -417,8 +419,16 @@ async function proposeForArticle(article) {
   }
 }
 
+function syncSkippedState(articleEl) {
+  const boxes = [...articleEl.querySelectorAll("input[type=checkbox]")];
+  articleEl.classList.toggle(
+    "is-skipped",
+    boxes.length > 0 && boxes.every((box) => !box.checked),
+  );
+}
+
 function renderExternalSummary(results) {
-  const ui = modalEls();
+  const ui = reviewEls();
   ui.summary.replaceChildren();
   for (const row of results) {
     const articleEl = document.createElement("article");
@@ -445,6 +455,7 @@ function renderExternalSummary(results) {
         articleEl.querySelectorAll("input[type=checkbox]").forEach((box) => {
           box.checked = false;
         });
+        syncSkippedState(articleEl);
       });
       head.append(skip);
       articleEl.append(head);
@@ -460,6 +471,7 @@ function renderExternalSummary(results) {
         box.dataset.slug = row.slug;
         box.dataset.url = candidate.url;
         box.dataset.label = candidate.label;
+        box.addEventListener("change", () => syncSkippedState(articleEl));
         const name = document.createElement("strong");
         name.textContent = candidate.label;
         label.append(box, " ", name);
@@ -512,9 +524,7 @@ async function addLinks(slug, links) {
 }
 
 async function findApproveConnectExternal() {
-  if (state.busy) return;
-  const existing = modalEls();
-  if (existing.modal && !existing.modal.hidden) return;
+  if (state.busy || state.externalPhase !== "idle") return;
   const queue = state.articles;
   if (!queue.length) {
     setStatus("No published articles to search.");
@@ -523,41 +533,36 @@ async function findApproveConnectExternal() {
 
   state.busy = true;
   state.scanAbort = false;
-  openScanModal();
-  const ui = modalEls();
+  const ui = reviewEls();
   ui.summary.replaceChildren();
-  ui.title.textContent = "Find external links";
-  setScanMode("searching");
+  setExternalPhase("searching");
 
   const results = [];
   try {
     for (let i = 0; i < queue.length; i += 1) {
       if (state.scanAbort) break;
       const article = queue[i];
-      const message = `Searching ${i + 1} of ${queue.length}: ${article.slug}`;
-      ui.progress.textContent = message;
-      ui.status.textContent = article.title;
-      setProgress(message);
+      setProgress(`Searching ${i + 1} of ${queue.length}: ${article.slug}`);
       results.push(await proposeForArticle(article));
     }
 
     if (state.scanAbort) {
+      closeExternalReview();
       setProgress("External link search cancelled.");
       setStatus("");
       return;
     }
 
-    ui.progress.textContent = `Searched ${results.length} of ${queue.length} articles`;
-    ui.title.textContent = "Review external link candidates";
     const ready = results.filter((row) => row.available).length;
+    ui.title.textContent = "Review external link candidates";
     ui.status.textContent = ready
       ? `${ready} article${ready === 1 ? "" : "s"} with candidates. Uncheck any you do not want, or skip an article, then approve.`
       : "No articles returned external candidates. You can cancel.";
     renderExternalSummary(results);
-    setScanMode("review");
+    setExternalPhase("review");
     setProgress("Review external link candidates, then approve to write.");
   } catch (error) {
-    closeScanModal();
+    closeExternalReview();
     setStatus(error.message);
   } finally {
     state.busy = false;
@@ -565,13 +570,13 @@ async function findApproveConnectExternal() {
 }
 
 async function approveExternalLinks() {
-  if (state.busy) return;
+  if (state.busy || state.externalPhase !== "review") return;
   const selected = selectedExternalLinks();
   const queue = [...selected.entries()].filter(([, links]) => links.length);
-  const ui = modalEls();
+  const ui = reviewEls();
 
   if (!queue.length) {
-    closeScanModal();
+    closeExternalReview();
     setProgress("No external links selected.");
     setStatus("External link review finished — nothing written.");
     return;
@@ -579,8 +584,9 @@ async function approveExternalLinks() {
 
   state.busy = true;
   state.scanAbort = false;
-  setScanMode("writing");
+  setExternalPhase("writing");
   ui.title.textContent = "Connecting external links";
+  ui.status.textContent = "Writing checked links…";
   let written = 0;
   let articles = 0;
 
@@ -588,17 +594,14 @@ async function approveExternalLinks() {
     for (let i = 0; i < queue.length; i += 1) {
       if (state.scanAbort) break;
       const [slug, links] = queue[i];
-      const message = `Connecting ${i + 1} of ${queue.length}: ${slug}`;
-      ui.progress.textContent = message;
-      ui.status.textContent = "Writing checked links…";
-      setProgress(message);
+      setProgress(`Connecting ${i + 1} of ${queue.length}: ${slug}`);
       await addLinks(slug, links);
       written += links.length;
       articles += 1;
     }
   } finally {
     state.busy = false;
-    closeScanModal();
+    closeExternalReview();
     await loadArticles();
   }
 
@@ -606,6 +609,19 @@ async function approveExternalLinks() {
     `Connected ${written} external link(s) across ${articles} article${articles === 1 ? "" : "s"}.`,
   );
   setStatus("External link review finished.");
+}
+
+function cancelExternalFlow() {
+  if (state.externalPhase === "writing" || state.externalPhase === "idle") return;
+  if (state.externalPhase === "searching") {
+    state.scanAbort = true;
+    reviewEls().cancel.disabled = true;
+    setProgress("Cancelling…");
+    return;
+  }
+  closeExternalReview();
+  setProgress("External link review cancelled.");
+  setStatus("");
 }
 
 document.getElementById("connect-all-internal").addEventListener("click", () => {
@@ -621,12 +637,10 @@ document.getElementById("external-scan-approve").addEventListener("click", () =>
   approveExternalLinks().catch((error) => setStatus(error.message));
 });
 document.getElementById("external-scan-cancel").addEventListener("click", () => {
-  const wasBusy = state.busy;
-  closeScanModal();
-  if (wasBusy) {
-    setProgress("External link search cancelled.");
-    setStatus("");
-  }
+  cancelExternalFlow();
+});
+document.getElementById("external-review-cancel").addEventListener("click", () => {
+  cancelExternalFlow();
 });
 
 setStatus("Loading…");
