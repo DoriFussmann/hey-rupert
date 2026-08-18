@@ -33,6 +33,16 @@ faqs:
     answer: "SAFEs are the standard instrument for pre-seed and early seed raises — Carta data shows they comprised 93% of pre-seed deals in Q1 2026. They close faster, carry no interest or maturity date, and avoid the legal complexity of a full priced round. Priced equity rounds become the norm once you are raising $4M or more, when institutional investors want a formal valuation, a lead investor, and board governance. The critical thing founders often underestimate is how multiple SAFEs stack: each has its own valuation cap, and they all convert at the priced round, meaning cumulative dilution can be significantly higher than any single SAFE suggests."
   - question: What is the most common reason seed-funded startups fail to raise a Series A?
     answer: "The most common failure is structural, not product-related: founders reach Series A conversations without enough ARR, without sufficient revenue growth rate, or having spent too long at seed without building relationships with Series A investors who will eventually lead their round. The seed-to-Series A graduation rate has fallen sharply — from around 50% in the 2018–2021 era to roughly 35–38% today on an extended timeline. Most founders who do not make it had a fundable product; they ran an undisciplined process, targeted the wrong investors, or failed to build investor relationships before they needed a term sheet."
+internalLinks:
+  - label: "Startup Funding Stages: The Definitive Guide for Founders"
+    url: /articles/startup-funding-stages/
+externalLinks:
+  - label: "Startup Funding: A Founder's Guide to Raising ..."
+    url: https://carta.com/learn/startups/fundraising/
+  - label: A Guide to Different Stages of Funding for Startups
+    url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+  - label: "A Guide to Early-Stage Startup Funding: Your Options"
+    url: https://www.capboard.io/en/captable/startup-funding-sources
 ---
 ## What Startup Funding Actually Is — and What It Isn't
 
@@ -227,3 +237,6 @@ global VC funding in 2026 is concentrated rather than distributed, with fewer de
 capital is clustering around companies linked to high-cost infrastructure, regulated industries, or proprietary technical work; investors remain willing to finance earlier companies but expect a sharper proof story; and the gap between a fundable company and a merely interesting idea has widened.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

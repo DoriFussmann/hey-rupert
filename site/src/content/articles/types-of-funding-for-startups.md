@@ -36,6 +36,24 @@ faqs:
     answer: "Typical dilution benchmarks run 10–15% at pre-seed, 15–20% at seed, and 20–25% at Series A (including an option pool refresh). Stacking multiple SAFEs before a priced round compounds dilution: each new post-money SAFE dilutes the founder pool rather than earlier SAFE holders, so founders who raise multiple unpriced rounds before pricing risk arriving at their seed round already meaningfully diluted. Running a cap table model before issuing each new SAFE is essential."
   - question: Is bootstrapping still a realistic path in 2026?
     answer: "Yes, particularly for B2B SaaS, niche software, and service-backed tech companies with clear customer demand and early revenue potential. Cheaper tooling, AI-assisted development, and remote teams have meaningfully reduced the capital required to reach an initial product and first customers. Bootstrapping also has a strategic fundraising benefit: investors view a founder who built real traction without external capital as lower-risk, which can translate into better terms if and when you do choose to raise. The trade-off is speed — in winner-take-all markets requiring rapid scaling, bootstrapping is rarely viable."
+internalLinks:
+  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
+    url: /articles/startup-funding/
+  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
+    url: /articles/early-stage-venture-capital/
+  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+    url: /articles/startup-funding-rounds-faq/
+  - label: "Startup Funding Stages: The Definitive Guide for Founders"
+    url: /articles/startup-funding-stages/
+  - label: How to Diagnose Your Startup Funding Stage and Raise Right
+    url: /articles/startup-funding-stages-explained/
+externalLinks:
+  - label: "6 Types of Funding for Startups: Definitive Guide"
+    url: https://foundersnetwork.com/types-of-funding-for-startups/
+  - label: A Guide to Different Stages of Funding for Startups
+    url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+  - label: 10 Types of Startup Capital
+    url: https://www.hubspot.com/startups/types-of-startup-capital
 ---
 ## The Real Cost of Each Funding Type Is Not What You Think
 
@@ -167,3 +185,6 @@ Eight of the ten largest transactions in Q2 2026 were debt instruments, and ever
  For seed-stage founders outside the AI infrastructure wave, the core instrument dynamics remain stable: SAFEs dominate early-stage fundraising, priced seed rounds are setting valuation records, and venture debt remains a post-institutional-backing tool rather than an early-stage alternative.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

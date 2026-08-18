@@ -36,6 +36,24 @@ faqs:
     answer: "You should begin building investor relationships 6–12 months before you formally open a round. The fundraising process itself — from first meeting to wired funds — takes 3–6 months for seed and Series A, and due diligence alone can run 6–10 weeks for institutional rounds. That means if you start outreach when you have two months of runway left, you have already lost. The practical rule: start the formal process when you have at least 9 months of runway remaining, and begin informal relationship-building well before that."
   - question: What is the biggest mistake founders make when diagnosing their funding stage?
     answer: The most common mistake is anchoring to what the stage was called, not what the stage actually requires today. Benchmarks have moved significantly since 2021. A company that would have raised a Series A at $500K ARR four years ago needs $1.5M–$2M ARR minimum in 2026. Founders who use outdated benchmarks to time their raise end up launching too early, collecting rejections that damage momentum, and often accepting worse terms on a bridge than they would have gotten on a full round if they had waited another two or three quarters.
+internalLinks:
+  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
+    url: /articles/startup-funding/
+  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
+    url: /articles/early-stage-venture-capital/
+  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+    url: /articles/startup-funding-rounds-faq/
+  - label: "Startup Funding Stages: The Definitive Guide for Founders"
+    url: /articles/startup-funding-stages/
+  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+    url: /articles/types-of-funding-for-startups/
+externalLinks:
+  - label: A Guide to Different Stages of Funding for Startups
+    url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+  - label: Startup Funding Stages Explained (Bootstrapping to Series C)
+    url: https://www.usehaven.com/blog-posts/startup-funding-stages
+  - label: "From Pre-Seed to IPO: Startup Funding Explained"
+    url: https://www.antler.co/blog/startup-funding-stages
 ---
 ## The Question Before the Pitch
 
@@ -156,3 +174,6 @@ Meanwhile, the conversion rate from seed to Series A has dropped from roughly 50
  For founders not in the AI concentration zone, the practical picture is one of available capital paired with meaningfully higher bars: stage benchmarks are real, investor diligence is longer, and the window between deciding to raise and actually closing continues to run longer than most first-time founders anticipate.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

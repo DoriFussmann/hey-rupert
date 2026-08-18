@@ -36,6 +36,24 @@ faqs:
     answer: "Warm introductions significantly improve response rates, but they are not the only path. Many micro-VCs and solo GPs actively source from cold inbound, especially if the founder's background and the fund's thesis align clearly. What matters more is relevance: a well-researched cold email that references a fund's specific thesis, sector focus, and recent investments will outperform a lazy warm intro every time. The introduction gives you access; the quality of your framing determines whether that access converts."
   - question: How important is fund cycle timing when approaching early-stage VCs?
     answer: It matters more than most founders realise. A fund that closed its latest vehicle two years ago is in active deployment mode and motivated to write new checks. A fund that raised three or four years ago may be almost fully deployed and prioritising follow-on reserves for its existing portfolio. You can often gauge this by checking when a fund announced its latest close and how many new portfolio companies they've added in the past twelve months. Approaching a fund at the right moment in its cycle meaningfully improves your odds.
+internalLinks:
+  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
+    url: /articles/startup-funding/
+  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+    url: /articles/startup-funding-rounds-faq/
+  - label: "Startup Funding Stages: The Definitive Guide for Founders"
+    url: /articles/startup-funding-stages/
+  - label: How to Diagnose Your Startup Funding Stage and Raise Right
+    url: /articles/startup-funding-stages-explained/
+  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+    url: /articles/types-of-funding-for-startups/
+externalLinks:
+  - label: "Early Stage Venture Capital: A Comprehensive Guide"
+    url: https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/early-stage-venture-capital
+  - label: Stages of venture capital
+    url: https://www.svb.com/startup-insights/vc-relations/stages-of-venture-capital/
+  - label: "A Guide to Early-Stage Startup Funding: Your Options"
+    url: https://www.capboard.io/en/captable/startup-funding-sources
 ---
 Early-stage venture capital is one of the most written-about topics in the startup ecosystem — and one of the most misunderstood. Founders approach it as though it were a single market with a uniform set of rules, when in practice it is three distinct sub-markets layered on top of each other, each with different investors, different check sizes, different evidence requirements, and different relationship dynamics. Getting your mental model right before you start outreach is not an academic exercise. It directly determines whether you spend the next three months in productive conversations or chasing the wrong funds.
 
@@ -165,3 +183,6 @@ The early-stage surge anticipated at the start of the year has arrived ahead of 
  For founders navigating this environment, the practical implication is that the early-stage market remains genuinely open and active, but the bifurcation between well-targeted founders with stage-matched investor lists and those pursuing undifferentiated outreach is widening rather than narrowing.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.

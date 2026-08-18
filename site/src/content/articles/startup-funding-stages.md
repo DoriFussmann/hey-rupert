@@ -35,6 +35,17 @@ faqs:
     answer: "The Series A crunch refers to the structural gap between the large number of seed-funded startups and the much smaller number of Series A slots available. Historically around 20–30% of seed companies graduate to Series A; recent data shows that figure has dropped closer to 15–24% for recent cohorts. The practical implication: seed investors are now asking 'could this become a Series A company?' from day one, and founders must plan their runway and milestones with the Series A bar in mind — not just survival."
   - question: How long does it realistically take to move from seed to Series A?
     answer: The median time from seed close to Series A has stretched to over 24 months in recent cycles, up from around 18 months in 2020. Some founders take 30 months or more. This means planning a seed round runway of 24–30 months — not 18 — and ensuring your milestone targets (typically $1M–$3M ARR for B2B SaaS) are achievable within that window. Running out of cash six months short of the number that would have unlocked Series A is one of the most common and avoidable fundraising failures.
+internalLinks:
+  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
+    url: /articles/startup-funding/
+  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
+    url: /articles/early-stage-venture-capital/
+  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+    url: /articles/startup-funding-rounds-faq/
+  - label: How to Diagnose Your Startup Funding Stage and Raise Right
+    url: /articles/startup-funding-stages-explained/
+  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+    url: /articles/types-of-funding-for-startups/
 ---
 ## What Startup Funding Stages Actually Are — and Why They Matter
 
@@ -248,3 +259,4 @@ the Q1 2026 PitchBook-NVCA Venture Monitor recorded a 37% year-over-year jump in
 , reflecting continued concentration of capital in fewer, higher-quality companies. For the majority of founders raising outside of AI infrastructure or deep tech, the structural dynamics remain constant: fewer deals, higher bars, and longer timelines between rounds than the market data headlines suggest.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.

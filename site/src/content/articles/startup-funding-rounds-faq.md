@@ -37,6 +37,24 @@ faqs:
     answer: A competitive, time-bounded process nearly always produces better terms. When investors know others are evaluating the same deal, they move faster and anchor less aggressively on valuation. The practical approach is to batch your outreach, create a soft deadline around a first close, and avoid letting any single investor conversation drag on for months without a clear next step — that dynamic rarely ends with a term sheet.
   - question: What is a 'down round' and how do I avoid one?
     answer: A down round is when you raise at a lower valuation than your previous round. It signals distress, triggers anti-dilution provisions that punish existing shareholders, and complicates future fundraising. The best prevention is setting a realistic valuation in your current round — one that your next-round milestones can credibly exceed — and maintaining enough runway to avoid raising under pressure.
+internalLinks:
+  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
+    url: /articles/startup-funding/
+  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
+    url: /articles/early-stage-venture-capital/
+  - label: "Startup Funding Stages: The Definitive Guide for Founders"
+    url: /articles/startup-funding-stages/
+  - label: How to Diagnose Your Startup Funding Stage and Raise Right
+    url: /articles/startup-funding-stages-explained/
+  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+    url: /articles/types-of-funding-for-startups/
+externalLinks:
+  - label: "Startup Funding Rounds: A Complete Guide"
+    url: https://www.thatround.com/startup-funding-rounds-a-complete-guide
+  - label: The Ultimate Guide to Startup Funding Stages
+    url: https://visible.vc/blog/startup-funding-stages/
+  - label: How to Raise the First Round of Funding for Your Startup
+    url: https://fi.co/first-startup-funding
 ---
 # Startup Funding Rounds: FAQ for Founders Who Are Raising
 
@@ -166,3 +184,6 @@ the median time between funding rounds remained significantly longer than in the
 , reinforcing the case for starting investor relationship-building well ahead of any formal process.
 <!-- WHERE-THINGS-STAND:END -->
 
+See Related below for more on this topic.
+
+See Sources below for the references behind this article.
