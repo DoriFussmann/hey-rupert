@@ -197,8 +197,14 @@ async function extractLocalSources(article: HealthArticle): Promise<LinkCandidat
   return found;
 }
 
-async function liveSearch(article: HealthArticle): Promise<LinkCandidate[]> {
-  if (!searchConfigured()) return [];
+async function liveSearch(article: HealthArticle): Promise<{
+  available: boolean;
+  items: LinkCandidate[];
+  reason?: string;
+}> {
+  if (!searchConfigured()) {
+    return { available: false, items: [], reason: "Live search is not configured." };
+  }
   const login = process.env.DATAFORSEO_LOGIN || "";
   const password = process.env.DATAFORSEO_PASSWORD || "";
   const query = `${article.targetKeyword} ${article.pillarKeyword} guide OR resource OR statistics`
@@ -231,9 +237,13 @@ async function liveSearch(article: HealthArticle): Promise<LinkCandidate[]> {
         result?: Array<{ items?: Array<Record<string, unknown>> }>;
       }>;
     } | null;
-    if (!res.ok || !data || data.status_code !== 20000) return [];
+    if (!res.ok || !data || data.status_code !== 20000) {
+      return { available: false, items: [], reason: "DataForSEO search was unavailable." };
+    }
     const task = data.tasks?.[0];
-    if (!task || task.status_code !== 20000) return [];
+    if (!task || task.status_code !== 20000) {
+      return { available: false, items: [], reason: "DataForSEO search was unavailable." };
+    }
     const items = task.result?.[0]?.items ?? [];
     const found: LinkCandidate[] = [];
     for (const item of items) {
@@ -249,9 +259,16 @@ async function liveSearch(article: HealthArticle): Promise<LinkCandidate[]> {
       );
       if (candidate) found.push(candidate);
     }
-    return found;
-  } catch {
-    return [];
+    return { available: true, items: found };
+  } catch (error) {
+    const aborted = error instanceof Error && error.name === "AbortError";
+    return {
+      available: false,
+      items: [],
+      reason: aborted
+        ? "Search timed out after 30 seconds."
+        : "DataForSEO search was unavailable.",
+    };
   } finally {
     clearTimeout(timer);
   }
@@ -275,6 +292,8 @@ export async function proposeExternalLinks(article: HealthArticle): Promise<{
   searchUsed: boolean;
   searchConfigured: boolean;
   sourceUsed: LinkCandidate["source"] | null;
+  available: boolean;
+  reason: string | null;
 }> {
   const slotsRemaining = Math.max(0, MAX_EXTERNAL_LINKS - article.externalLinks.length);
   if (slotsRemaining === 0) {
@@ -284,6 +303,8 @@ export async function proposeExternalLinks(article: HealthArticle): Promise<{
       searchUsed: false,
       searchConfigured: searchConfigured(),
       sourceUsed: null,
+      available: false,
+      reason: `Already has ${MAX_EXTERNAL_LINKS} external links.`,
     };
   }
 
@@ -302,16 +323,41 @@ export async function proposeExternalLinks(article: HealthArticle): Promise<{
         searchUsed: false,
         searchConfigured: searchConfigured(),
         sourceUsed: stage.source,
+        available: true,
+        reason: null,
       };
     }
   }
 
-  const live = searchConfigured() ? await liveSearch(article) : [];
+  const live = searchConfigured()
+    ? await liveSearch(article)
+    : { available: false, items: [], reason: "Live search is not configured." };
+  const liveCandidates = live.available
+    ? dedupe(live.items, article.externalLinks).slice(0, slotsRemaining + 3)
+    : [];
+  if (liveCandidates.length) {
+    return {
+      candidates: liveCandidates,
+      slotsRemaining,
+      searchUsed: true,
+      searchConfigured: searchConfigured(),
+      sourceUsed: "live",
+      available: true,
+      reason: null,
+    };
+  }
+
   return {
-    candidates: dedupe(live, article.externalLinks).slice(0, slotsRemaining + 3),
+    candidates: [],
     slotsRemaining,
-    searchUsed: live.length > 0 || searchConfigured(),
+    searchUsed: searchConfigured(),
     searchConfigured: searchConfigured(),
-    sourceUsed: live.length ? "live" : null,
+    sourceUsed: null,
+    available: false,
+    reason: live.reason
+      ? live.reason
+      : searchConfigured()
+        ? "No on-topic external candidates."
+        : "No local candidates. Live search is not configured.",
   };
 }

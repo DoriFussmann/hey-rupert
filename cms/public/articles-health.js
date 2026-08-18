@@ -14,8 +14,8 @@ const state = {
   searchConfigured: false,
   updatedSlugs: new Set(),
   busy: false,
-  maxExternalLinks: 3,
-  scanChoice: null,
+  maxExternalLinks: 5,
+  scanAbort: false,
 };
 
 async function readJson(response) {
@@ -134,13 +134,6 @@ function renderLinksSection(article) {
   const ext = document.createElement("p");
   ext.textContent = `External links: ${article.externalLinks?.length || 0} / ${state.maxExternalLinks}`;
   section.append(ext);
-  const add = document.createElement("button");
-  add.type = "button";
-  add.textContent = "Scan & Add External Links";
-  add.addEventListener("click", () =>
-    scanAndAddExternal([article.slug]).catch((error) => setStatus(error.message)),
-  );
-  section.append(add);
   return section;
 }
 
@@ -247,7 +240,7 @@ async function loadArticles() {
   const payload = await readJson(await fetch("/api/health/articles"));
   state.pagespeedConfigured = Boolean(payload.pagespeedConfigured);
   state.searchConfigured = Boolean(payload.searchConfigured);
-  state.maxExternalLinks = Number(payload.maxExternalLinks) || 3;
+  state.maxExternalLinks = Number(payload.maxExternalLinks) || 5;
   const previous = new Map(state.articles.map((article) => [article.slug, article]));
   state.articles = (payload.articles || []).map((article) => {
     const prior = previous.get(article.slug);
@@ -347,10 +340,9 @@ function modalEls() {
     title: document.getElementById("external-scan-title"),
     status: document.getElementById("external-scan-status"),
     spinner: document.getElementById("external-scan-spinner"),
-    list: document.getElementById("external-scan-suggestions"),
-    confirm: document.getElementById("external-scan-confirm"),
-    skip: document.getElementById("external-scan-skip"),
-    stop: document.getElementById("external-scan-stop"),
+    summary: document.getElementById("external-scan-summary"),
+    approve: document.getElementById("external-scan-approve"),
+    cancel: document.getElementById("external-scan-cancel"),
   };
 }
 
@@ -362,70 +354,150 @@ function openScanModal() {
 
 function closeScanModal() {
   const ui = modalEls();
+  state.scanAbort = true;
   ui.modal.hidden = true;
-  ui.list.replaceChildren();
-  ui.confirm.disabled = true;
-  ui.skip.disabled = true;
+  ui.summary.replaceChildren();
+  ui.approve.disabled = true;
   ui.spinner.hidden = true;
   document.body.style.overflow = "";
-  if (state.scanChoice) state.scanChoice("stop");
-  state.scanChoice = null;
-}
-
-function waitForScanChoice() {
-  return new Promise((resolve) => {
-    state.scanChoice = resolve;
-  });
 }
 
 function setScanMode(mode) {
   const ui = modalEls();
-  const reviewing = mode === "review";
-  ui.spinner.hidden = mode !== "loading";
-  ui.confirm.disabled = !reviewing;
-  ui.skip.disabled = !reviewing;
+  ui.spinner.hidden = mode !== "searching" && mode !== "writing";
+  ui.approve.disabled = mode !== "review";
+  ui.cancel.disabled = mode === "writing";
 }
 
-function renderScanSuggestions(candidates, slotsRemaining) {
-  const ui = modalEls();
-  ui.list.replaceChildren();
-  let checked = 0;
-  for (const row of candidates) {
-    const item = document.createElement("li");
-    const label = document.createElement("label");
-    const box = document.createElement("input");
-    box.type = "checkbox";
-    box.dataset.url = row.url;
-    box.dataset.label = row.label;
-    const take = checked < slotsRemaining && (row.confidence === "high" || checked === 0);
-    box.checked = take;
-    if (take) checked += 1;
-    const title = document.createElement("strong");
-    title.textContent = row.label;
-    const link = document.createElement("a");
-    link.href = row.url;
-    link.target = "_blank";
-    link.rel = "noopener noreferrer";
-    link.textContent = row.url;
-    const meta = document.createElement("p");
-    meta.className = "cms-modal__meta";
-    meta.textContent = [
-      row.confidence === "high" ? "High confidence" : "Low confidence",
-      row.source,
-      row.reason,
-    ]
-      .filter(Boolean)
-      .join(" · ");
-    label.append(box, " ", title);
-    item.append(label, link, meta);
-    ui.list.append(item);
+function unavailableReason(article, payload) {
+  if (payload?.reason) return payload.reason;
+  if ((article.externalLinks?.length || 0) >= state.maxExternalLinks) {
+    return `Already has ${state.maxExternalLinks} external links.`;
+  }
+  if (payload && payload.searchConfigured === false) {
+    return "No local candidates. Live search is not configured.";
+  }
+  return "No on-topic external candidates.";
+}
+
+async function proposeForArticle(article) {
+  try {
+    const payload = await readJson(
+      await fetch("/api/health/links/propose", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug: article.slug }),
+      }),
+    );
+    const candidates = (payload.candidates || []).slice(0, 3);
+    if (payload.available === false || !candidates.length) {
+      return {
+        slug: article.slug,
+        title: article.title,
+        available: false,
+        reason: unavailableReason(article, payload),
+        candidates: [],
+      };
+    }
+    return {
+      slug: article.slug,
+      title: article.title,
+      available: true,
+      reason: null,
+      candidates,
+    };
+  } catch (error) {
+    return {
+      slug: article.slug,
+      title: article.title,
+      available: false,
+      reason: error.message,
+      candidates: [],
+    };
   }
 }
 
-function selectedScanLinks() {
-  return [...document.querySelectorAll("#external-scan-suggestions input[type=checkbox]:checked")]
-    .map((box) => ({ label: box.dataset.label, url: box.dataset.url }))
-    .filter((link) => link.label && link.url);
+function renderExternalSummary(results) {
+  const ui = modalEls();
+  ui.summary.replaceChildren();
+  for (const row of results) {
+    const articleEl = document.createElement("article");
+    articleEl.className = "external-summary__article";
+    articleEl.dataset.slug = row.slug;
+
+    const head = document.createElement("div");
+    head.className = "external-summary__head";
+    const identity = document.createElement("div");
+    const title = document.createElement("h3");
+    title.className = "external-summary__title";
+    title.textContent = row.title;
+    const slug = document.createElement("p");
+    slug.className = "external-summary__slug";
+    slug.textContent = row.slug;
+    identity.append(title, slug);
+    head.append(identity);
+
+    if (row.available && row.candidates.length) {
+      const skip = document.createElement("button");
+      skip.type = "button";
+      skip.textContent = "Skip";
+      skip.addEventListener("click", () => {
+        articleEl.querySelectorAll("input[type=checkbox]").forEach((box) => {
+          box.checked = false;
+        });
+      });
+      head.append(skip);
+      articleEl.append(head);
+
+      const list = document.createElement("ul");
+      list.className = "external-summary__list";
+      for (const candidate of row.candidates) {
+        const item = document.createElement("li");
+        const label = document.createElement("label");
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = true;
+        box.dataset.slug = row.slug;
+        box.dataset.url = candidate.url;
+        box.dataset.label = candidate.label;
+        const name = document.createElement("strong");
+        name.textContent = candidate.label;
+        label.append(box, " ", name);
+        const link = document.createElement("a");
+        link.href = candidate.url;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = candidate.url;
+        item.append(label, link);
+        list.append(item);
+      }
+      articleEl.append(list);
+    } else {
+      articleEl.append(head);
+      const reason = document.createElement("p");
+      reason.className = "external-summary__reason";
+      reason.textContent = row.reason || "No candidates available.";
+      articleEl.append(reason);
+    }
+
+    ui.summary.append(articleEl);
+  }
+}
+
+function selectedExternalLinks() {
+  const bySlug = new Map();
+  for (const box of document.querySelectorAll(
+    "#external-scan-summary input[type=checkbox]:checked",
+  )) {
+    const slug = box.dataset.slug;
+    const label = box.dataset.label;
+    const url = box.dataset.url;
+    if (!slug || !label || !url) continue;
+    const list = bySlug.get(slug) || [];
+    list.push({ label, url });
+    bySlug.set(slug, list);
+  }
+  return bySlug;
 }
 
 async function addLinks(slug, links) {
@@ -439,134 +511,122 @@ async function addLinks(slug, links) {
   markUpdated(slug);
 }
 
-async function scanAndAddExternal(onlySlugs) {
+async function findApproveConnectExternal() {
   if (state.busy) return;
-  const queue = (onlySlugs || state.articles.map((article) => article.slug))
-    .map((slug) => state.articles.find((article) => article.slug === slug))
-    .filter(Boolean)
-    .filter((article) => (article.externalLinks?.length || 0) < state.maxExternalLinks);
+  const existing = modalEls();
+  if (existing.modal && !existing.modal.hidden) return;
+  const queue = state.articles;
   if (!queue.length) {
-    setStatus("Every selected article already has 3 external links.");
+    setStatus("No published articles to search.");
     return;
   }
 
   state.busy = true;
+  state.scanAbort = false;
   openScanModal();
   const ui = modalEls();
-  let confirmed = 0;
-  let skipped = 0;
-  let stopped = false;
+  ui.summary.replaceChildren();
+  ui.title.textContent = "Find external links";
+  setScanMode("searching");
+
+  const results = [];
+  try {
+    for (let i = 0; i < queue.length; i += 1) {
+      if (state.scanAbort) break;
+      const article = queue[i];
+      const message = `Searching ${i + 1} of ${queue.length}: ${article.slug}`;
+      ui.progress.textContent = message;
+      ui.status.textContent = article.title;
+      setProgress(message);
+      results.push(await proposeForArticle(article));
+    }
+
+    if (state.scanAbort) {
+      setProgress("External link search cancelled.");
+      setStatus("");
+      return;
+    }
+
+    ui.progress.textContent = `Searched ${results.length} of ${queue.length} articles`;
+    ui.title.textContent = "Review external link candidates";
+    const ready = results.filter((row) => row.available).length;
+    ui.status.textContent = ready
+      ? `${ready} article${ready === 1 ? "" : "s"} with candidates. Uncheck any you do not want, or skip an article, then approve.`
+      : "No articles returned external candidates. You can cancel.";
+    renderExternalSummary(results);
+    setScanMode("review");
+    setProgress("Review external link candidates, then approve to write.");
+  } catch (error) {
+    closeScanModal();
+    setStatus(error.message);
+  } finally {
+    state.busy = false;
+  }
+}
+
+async function approveExternalLinks() {
+  if (state.busy) return;
+  const selected = selectedExternalLinks();
+  const queue = [...selected.entries()].filter(([, links]) => links.length);
+  const ui = modalEls();
+
+  if (!queue.length) {
+    closeScanModal();
+    setProgress("No external links selected.");
+    setStatus("External link review finished — nothing written.");
+    return;
+  }
+
+  state.busy = true;
+  state.scanAbort = false;
+  setScanMode("writing");
+  ui.title.textContent = "Connecting external links";
+  let written = 0;
+  let articles = 0;
 
   try {
     for (let i = 0; i < queue.length; i += 1) {
-      const article = queue[i];
-      const slotsRemaining = Math.max(
-        0,
-        state.maxExternalLinks - (article.externalLinks?.length || 0),
-      );
-      ui.progress.textContent = `Article ${i + 1} of ${queue.length}`;
-      ui.title.textContent = article.title;
-      ui.status.textContent = "Searching external sources…";
-      ui.list.replaceChildren();
-      setScanMode("loading");
-      setProgress(`Scanning ${i + 1} of ${queue.length}: ${article.slug}`);
-
-      let payload;
-      try {
-        payload = await readJson(
-          await fetch("/api/health/links/propose", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ slug: article.slug }),
-          }),
-        );
-      } catch (error) {
-        ui.status.textContent = error.message;
-        setScanMode("review");
-        ui.confirm.disabled = true;
-        const choice = await waitForScanChoice();
-        if (choice === "stop") {
-          stopped = true;
-          break;
-        }
-        skipped += 1;
-        continue;
-      }
-
-      const candidates = (payload.candidates || []).slice(0, state.maxExternalLinks);
-      if (!candidates.length) {
-        ui.status.textContent = payload.searchConfigured
-          ? "No on-topic external candidates. Skip to continue."
-          : "No local candidates. Live search is not configured. Skip to continue.";
-        setScanMode("review");
-        ui.confirm.disabled = true;
-        const choice = await waitForScanChoice();
-        if (choice === "stop") {
-          stopped = true;
-          break;
-        }
-        skipped += 1;
-        continue;
-      }
-
-      ui.status.textContent = `Suggested ${candidates.length} source(s). Confirm to add the checked links (${slotsRemaining} slot${slotsRemaining === 1 ? "" : "s"} left).`;
-      renderScanSuggestions(candidates, slotsRemaining);
-      setScanMode("review");
-      const choice = await waitForScanChoice();
-      if (choice === "stop") {
-        stopped = true;
-        break;
-      }
-      if (choice === "skip") {
-        skipped += 1;
-        continue;
-      }
-
-      const links = selectedScanLinks().slice(0, slotsRemaining);
-      if (!links.length) {
-        skipped += 1;
-        continue;
-      }
-      ui.status.textContent = "Saving confirmed links…";
-      setScanMode("loading");
-      await addLinks(article.slug, links);
-      article.externalLinks = [...(article.externalLinks || []), ...links];
-      confirmed += links.length;
+      if (state.scanAbort) break;
+      const [slug, links] = queue[i];
+      const message = `Connecting ${i + 1} of ${queue.length}: ${slug}`;
+      ui.progress.textContent = message;
+      ui.status.textContent = "Writing checked links…";
+      setProgress(message);
+      await addLinks(slug, links);
+      written += links.length;
+      articles += 1;
     }
   } finally {
     state.busy = false;
-    state.scanChoice = null;
     closeScanModal();
     await loadArticles();
   }
 
-  const summary = stopped
-    ? `Stopped after confirming ${confirmed} external link(s). ${skipped} skipped.`
-    : `Confirmed ${confirmed} external link(s). ${skipped} article(s) skipped.`;
-  setProgress(summary);
-  setStatus("External link scan finished.");
+  setProgress(
+    `Connected ${written} external link(s) across ${articles} article${articles === 1 ? "" : "s"}.`,
+  );
+  setStatus("External link review finished.");
 }
 
 document.getElementById("connect-all-internal").addEventListener("click", () => {
   connectAllInternal().catch((error) => setStatus(error.message));
 });
 document.getElementById("scan-add-external").addEventListener("click", () => {
-  scanAndAddExternal().catch((error) => setStatus(error.message));
+  findApproveConnectExternal().catch((error) => setStatus(error.message));
 });
 document.getElementById("scan-all-diagnostics").addEventListener("click", () => {
   scanDiagnostics().catch((error) => setStatus(error.message));
 });
-document.getElementById("external-scan-confirm").addEventListener("click", () => {
-  if (state.scanChoice) state.scanChoice("confirm");
-  state.scanChoice = null;
+document.getElementById("external-scan-approve").addEventListener("click", () => {
+  approveExternalLinks().catch((error) => setStatus(error.message));
 });
-document.getElementById("external-scan-skip").addEventListener("click", () => {
-  if (state.scanChoice) state.scanChoice("skip");
-  state.scanChoice = null;
-});
-document.getElementById("external-scan-stop").addEventListener("click", () => {
-  if (state.scanChoice) state.scanChoice("stop");
-  state.scanChoice = null;
+document.getElementById("external-scan-cancel").addEventListener("click", () => {
+  const wasBusy = state.busy;
+  closeScanModal();
+  if (wasBusy) {
+    setProgress("External link search cancelled.");
+    setStatus("");
+  }
 });
 
 setStatus("Loading…");
