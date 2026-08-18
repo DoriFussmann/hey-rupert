@@ -1831,6 +1831,13 @@
     line-height: 1.6;
   }
 
+  .cal-embed {
+    width: 100%;
+    min-height: 44rem;
+    margin-top: theme("spacing.xl");
+    overflow: auto;
+  }
+
   .form-status--error {
     color: theme("colors.error");
   }
