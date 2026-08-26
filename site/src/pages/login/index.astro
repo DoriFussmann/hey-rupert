@@ -346,6 +346,10 @@ const description = "Log in to your Rupert account.";
   if (form instanceof HTMLFormElement) {
     form.addEventListener("submit", (event) => {
       event.preventDefault();
+      if (email instanceof HTMLInputElement) {
+        const emailVal = email.value.trim();
+        window.location.href = `https://app.heyrupert.com/login?email=${encodeURIComponent(emailVal)}`;
+      }
     });
   }
 

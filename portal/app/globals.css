@@ -1,0 +1,107 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+  }
+
+  b,
+  strong {
+    font-weight: 500;
+  }
+
+  body {
+    @apply min-h-screen bg-background font-sans text-body antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply text-heading text-balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid #5c7a5e;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  .sow-editor .w-md-editor {
+    width: 100%;
+    box-shadow: none;
+    border: 1px solid #e4e4de;
+    border-radius: 6px;
+    min-height: 300px;
+  }
+
+  .sow-editor .w-md-editor-text-pre,
+  .sow-editor .w-md-editor-text-input,
+  .sow-editor .w-md-editor-preview {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .sow-markdown {
+    @apply text-body-sm leading-relaxed text-body;
+  }
+
+  .sow-markdown h1,
+  .sow-markdown h2,
+  .sow-markdown h3,
+  .sow-markdown h4 {
+    @apply text-heading;
+  }
+
+  .sow-markdown h1 {
+    @apply text-h3;
+  }
+
+  .sow-markdown h2 {
+    @apply mt-lg text-h4;
+  }
+
+  .sow-markdown h3,
+  .sow-markdown h4 {
+    @apply mt-md text-h4;
+  }
+
+  .sow-markdown p + p,
+  .sow-markdown ul + p,
+  .sow-markdown ol + p,
+  .sow-markdown p + ul,
+  .sow-markdown p + ol {
+    @apply mt-md;
+  }
+
+  .sow-markdown ul {
+    @apply list-disc space-y-sm pl-md;
+  }
+
+  .sow-markdown ol {
+    @apply list-decimal space-y-sm pl-md;
+  }
+
+  .sow-markdown a {
+    @apply text-primary no-underline hover:text-primary-hover;
+  }
+
+  .sow-markdown strong {
+    font-weight: 500;
+  }
+
+  .sow-markdown blockquote {
+    @apply mt-md border-l border-border pl-md text-muted;
+  }
+
+  .sow-markdown code {
+    @apply font-mono text-mono;
+  }
+
+  .sow-markdown hr {
+    @apply my-lg border-border;
+  }
+}

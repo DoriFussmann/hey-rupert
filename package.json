@@ -1,10 +1,11 @@
 {
   "name": "hey-rupert",
   "private": true,
-  "workspaces": ["site", "cms"],
+  "workspaces": ["site", "cms", "portal"],
   "scripts": {
     "dev": "npm run dev -w site",
     "build": "npm run build -w site",
-    "cms": "npm run start -w cms"
+    "cms": "npm run start -w cms",
+    "portal": "npm run dev -w portal"
   }
 }
