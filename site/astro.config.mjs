@@ -6,6 +6,14 @@ export default defineConfig({
   site: SITE_URL,
   trailingSlash: "always",
   output: "static",
+  // Local only: the marketing site has no login page. Production routes
+  // /login, /admin, and /portal to the Next.js portal via site/vercel.json.
+  redirects: process.env.VERCEL
+    ? {}
+    : {
+        "/login": "http://localhost:3000/login",
+        "/login/": "http://localhost:3000/login",
+      },
   vite: {
     plugins: [tailwindcss()],
     server: {

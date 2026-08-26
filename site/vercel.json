@@ -1,0 +1,36 @@
+{
+  "rewrites": [
+    {
+      "source": "/login",
+      "destination": "https://hey-rupert-portal.vercel.app/login"
+    },
+    {
+      "source": "/login/",
+      "destination": "https://hey-rupert-portal.vercel.app/login"
+    },
+    {
+      "source": "/admin",
+      "destination": "https://hey-rupert-portal.vercel.app/admin"
+    },
+    {
+      "source": "/admin/:path*",
+      "destination": "https://hey-rupert-portal.vercel.app/admin/:path*"
+    },
+    {
+      "source": "/portal",
+      "destination": "https://hey-rupert-portal.vercel.app/portal"
+    },
+    {
+      "source": "/portal/:path*",
+      "destination": "https://hey-rupert-portal.vercel.app/portal/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://hey-rupert-portal.vercel.app/auth/:path*"
+    },
+    {
+      "source": "/_next/:path*",
+      "destination": "https://hey-rupert-portal.vercel.app/_next/:path*"
+    }
+  ]
+}

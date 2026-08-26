@@ -89,8 +89,6 @@ export default function LoginPage() {
 
       <div className="bp-form-side">
         <div className="bp-card">
-          <div className="bp-card__title">Sign in</div>
-
           <form className="bp-fields" onSubmit={onSubmit} noValidate>
             <input
               className="bp-input"
@@ -166,8 +164,6 @@ export default function LoginPage() {
             </button>
 
             {error ? <p className="bp-error">{error}</p> : null}
-
-            <p className="bp-helper">Access is managed by your administrator.</p>
           </form>
         </div>
       </div>
