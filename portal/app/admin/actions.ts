@@ -132,6 +132,7 @@ export async function createClientRecord(
     return { ok: false, error: insertError.message };
   }
 
+  revalidatePath("/admin");
   return { ok: true };
 }
 

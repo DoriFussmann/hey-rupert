@@ -12,7 +12,7 @@ export function AppShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen lg:flex">
+    <div className="mx-auto min-h-screen w-full max-w-container lg:flex">
       <aside className="flex w-full flex-col border-b border-border bg-surface px-md py-lg lg:w-60 lg:border-b-0 lg:border-r lg:px-md">
         <p className="px-sm text-label uppercase tracking-label text-muted">
           {eyebrow}

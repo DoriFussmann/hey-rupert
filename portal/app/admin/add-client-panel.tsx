@@ -70,19 +70,24 @@ export function AddClientButton() {
     setPending(true);
     setError(null);
 
-    const result = await createClientRecord(form);
+    try {
+      const result = await createClientRecord(form);
 
-    if (!result.ok) {
-      setError(result.error);
+      if (!result.ok) {
+        setError(result.error);
+        setPending(false);
+        return;
+      }
+
+      setForm(emptyForm);
+      setOpen(false);
       setPending(false);
-      return;
+      setSuccess("Client added.");
+      router.refresh();
+    } catch {
+      setError("Unable to add the client. Please try again.");
+      setPending(false);
     }
-
-    setForm(emptyForm);
-    setOpen(false);
-    setPending(false);
-    setSuccess("Client added.");
-    router.refresh();
   }
 
   return (
@@ -247,12 +252,12 @@ export function AddClientButton() {
                     onChange={update("admin_notes")}
                   />
                 </label>
-                {error ? (
-                  <p className="text-body-sm text-error">{error}</p>
-                ) : null}
               </div>
 
-              <div className="flex justify-end gap-sm border-t border-border px-lg py-lg">
+              <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
+                {error ? (
+                  <p className="mr-auto text-body-sm text-error">{error}</p>
+                ) : null}
                 <button
                   type="button"
                   onClick={close}

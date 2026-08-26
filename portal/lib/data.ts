@@ -126,16 +126,31 @@ function asClient(row: Record<string, unknown>): Client {
 export async function listClients() {
   if (!isSupabaseConfigured()) return placeholderClients;
 
+  if (isServiceRoleConfigured()) {
+    try {
+      const supabase = createServiceClient();
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .order("created_at", { ascending: false });
+      if (!error && data) {
+        return data.map((row) => asClient(row as Record<string, unknown>));
+      }
+    } catch {
+      // Fall through to the cookie-scoped lookup.
+    }
+  }
+
   try {
     const supabase = createClient();
     const { data, error } = await supabase
       .from("clients")
       .select("*")
       .order("created_at", { ascending: false });
-    if (error || !data) return placeholderClients;
+    if (error || !data) return [];
     return data.map((row) => asClient(row as Record<string, unknown>));
   } catch {
-    return placeholderClients;
+    return [];
   }
 }
 
