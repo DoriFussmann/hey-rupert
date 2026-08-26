@@ -32,6 +32,8 @@ interface Props {
   jsonLd?: Record<string, unknown>[];
   omitCanonical?: boolean;
   preloadImage?: string;
+  hideHeader?: boolean;
+  hideFooter?: boolean;
 }
 
 const {
@@ -49,6 +51,8 @@ const {
   jsonLd = [],
   omitCanonical = false,
   preloadImage,
+  hideHeader = false,
+  hideFooter = false,
 } = Astro.props;
 
 if (!title?.trim() || !description?.trim()) {
@@ -135,9 +139,9 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
   </head>
   <body class="bg-background font-sans text-foreground">
     <a class="skip-link" href="#main-content">Skip to content</a>
-    <Header />
+    {!hideHeader && <Header />}
     <slot />
-    <Footer />
+    {!hideFooter && <Footer />}
     <script>
       const reduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",

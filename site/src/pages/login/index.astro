@@ -1,0 +1,373 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+
+const title = "Login | Rupert";
+const description = "Log in to your Rupert account.";
+---
+
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/login/"
+  robots="noindex, follow"
+  hideHeader
+  hideFooter
+>
+  <main id="main-content" class="bp-login">
+    <div class="bp-panel" aria-hidden="true">
+      <div class="bp-panel__lighting"></div>
+      <div class="bp-panel__grid"></div>
+
+      <p class="bp-panel__eyebrow">Investor outreach</p>
+
+      <div class="bp-panel__middle">
+        <h1 class="bp-panel__title">Rupert</h1>
+        <p class="bp-panel__subcopy">
+          Your outreach, tracked in one place.<br />
+          Sign in to continue your raise.
+        </p>
+      </div>
+
+      <p class="bp-panel__footer">A product for founders raising capital.</p>
+    </div>
+
+    <div class="bp-form-side">
+      <div class="bp-card">
+        <div class="bp-card__title">Sign in</div>
+
+        <form class="bp-fields" id="login-form" novalidate>
+          <input
+            class="bp-input"
+            id="login-email"
+            name="email"
+            type="email"
+            placeholder="Email"
+            autocomplete="email"
+            autofocus
+            required
+          />
+
+          <span class="bp-password">
+            <input
+              class="bp-input bp-password__input"
+              id="login-password"
+              name="password"
+              type="password"
+              placeholder="Password"
+              autocomplete="current-password"
+              required
+            />
+            <button
+              type="button"
+              class="bp-password__toggle"
+              id="password-toggle"
+              tabindex="-1"
+              aria-label="Show password"
+              aria-pressed="false"
+            >
+              <svg
+                class="bp-eye bp-eye--show"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+              >
+                <path
+                  d="M1.5 12s4-7.5 10.5-7.5S22.5 12 22.5 12s-4 7.5-10.5 7.5S1.5 12 1.5 12Z"
+                ></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg
+                class="bp-eye bp-eye--hide"
+                xmlns="http://www.w3.org/2000/svg"
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                aria-hidden="true"
+                hidden
+              >
+                <path
+                  d="M3 3l18 18M10.6 10.7a3 3 0 0 0 4.2 4.2M6.6 6.7C4 8.4 2.3 11 1.5 12c0 0 4 7.5 10.5 7.5 2 0 3.7-.5 5.1-1.3M17.5 17.4c2.4-1.7 4-4.4 5-5.4 0 0-1.6-3-4.9-5.3M12 4.5c.6 0 1.2.05 1.8.15"
+                ></path>
+              </svg>
+            </button>
+          </span>
+
+          <button class="bp-btn" type="submit" id="login-submit" disabled>
+            Continue
+          </button>
+
+          <p class="bp-helper">Access is managed by your administrator.</p>
+        </form>
+      </div>
+    </div>
+  </main>
+</BaseLayout>
+
+<style>
+  .bp-login {
+    display: flex;
+    height: 100vh;
+    background: #ffffff;
+    color: #1a1a1a;
+    font-size: 13px;
+    letter-spacing: -0.01em;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .bp-login * {
+    box-sizing: border-box;
+    font-weight: 400;
+    letter-spacing: -0.01em;
+  }
+
+  .bp-panel {
+    position: relative;
+    width: 50%;
+    height: 100%;
+    overflow: hidden;
+    background: #2c4a6e;
+    padding: 3rem 3.5rem;
+    color: #ffffff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  @media (max-width: 767px) {
+    .bp-panel {
+      display: none;
+    }
+  }
+
+  .bp-panel__lighting,
+  .bp-panel__grid {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+  }
+
+  .bp-panel__lighting {
+    background:
+      radial-gradient(
+        ellipse 80% 60% at 20% 30%,
+        rgba(120, 160, 200, 0.35),
+        transparent 55%
+      ),
+      radial-gradient(
+        ellipse 70% 50% at 85% 80%,
+        rgba(40, 70, 110, 0.55),
+        transparent 50%
+      );
+  }
+
+  .bp-panel__grid {
+    opacity: 0.07;
+    background-image: linear-gradient(
+        rgba(255, 255, 255, 0.9) 1px,
+        transparent 1px
+      ),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.9) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .bp-panel__eyebrow {
+    position: relative;
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .bp-panel__middle {
+    position: relative;
+    max-width: 28rem;
+  }
+
+  .bp-panel__title {
+    margin: 0;
+    font-size: 48px;
+    line-height: 1.25;
+    letter-spacing: -0.025em;
+    color: #ffffff;
+  }
+
+  .bp-panel__subcopy {
+    margin: 1.25rem 0 0;
+    font-size: 15px;
+    line-height: 1.625;
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .bp-panel__footer {
+    position: relative;
+    margin: 0;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.4);
+  }
+
+  .bp-form-side {
+    width: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 0 1.5rem;
+  }
+
+  @media (max-width: 767px) {
+    .bp-form-side {
+      width: 100%;
+    }
+  }
+
+  .bp-card {
+    width: 100%;
+    max-width: 420px;
+    border: 1px solid #e6e6e6;
+    border-radius: 8px;
+    padding: 1.5rem;
+  }
+
+  .bp-card__title {
+    padding-bottom: 1rem;
+    font-size: 13px;
+    color: #1a1a1a;
+  }
+
+  .bp-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .bp-input {
+    width: 100%;
+    border: 1px solid #e6e6e6;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    color: #1a1a1a;
+    background: #ffffff;
+    outline: none;
+    font-family: inherit;
+    font-size: inherit;
+  }
+
+  .bp-input::placeholder {
+    color: #b5b5b5;
+  }
+
+  .bp-password {
+    position: relative;
+    display: block;
+  }
+
+  .bp-password__input {
+    padding-right: 2.5rem;
+  }
+
+  .bp-password__toggle {
+    position: absolute;
+    top: 50%;
+    right: 0.5rem;
+    transform: translateY(-50%);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: #8a8a8a;
+    cursor: pointer;
+  }
+
+  .bp-btn {
+    align-self: flex-start;
+    border: 1px solid #e6e6e6;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+    color: #8a8a8a;
+    background: #ffffff;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    transition: color 120ms ease;
+  }
+
+  .bp-btn:hover:not(:disabled) {
+    color: #1a1a1a;
+  }
+
+  .bp-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+
+  .bp-helper {
+    padding-top: 0.25rem;
+    margin: 0;
+    text-align: center;
+    font-size: 13px;
+    color: #8a8a8a;
+  }
+</style>
+
+<script>
+  const form = document.getElementById("login-form");
+  const email = document.getElementById("login-email");
+  const password = document.getElementById("login-password");
+  const submit = document.getElementById("login-submit");
+
+  function syncSubmit() {
+    if (
+      submit instanceof HTMLButtonElement &&
+      email instanceof HTMLInputElement &&
+      password instanceof HTMLInputElement
+    ) {
+      submit.disabled = !(email.value.trim() && password.value.trim());
+    }
+  }
+
+  email?.addEventListener("input", syncSubmit);
+  password?.addEventListener("input", syncSubmit);
+
+  if (form instanceof HTMLFormElement) {
+    form.addEventListener("submit", (event) => {
+      event.preventDefault();
+    });
+  }
+
+  const passwordToggle = document.getElementById("password-toggle");
+
+  if (
+    passwordToggle instanceof HTMLButtonElement &&
+    password instanceof HTMLInputElement
+  ) {
+    const showIcon = passwordToggle.querySelector(".bp-eye--show");
+    const hideIcon = passwordToggle.querySelector(".bp-eye--hide");
+
+    passwordToggle.addEventListener("click", () => {
+      const reveal = password.type === "password";
+      password.type = reveal ? "text" : "password";
+      passwordToggle.setAttribute("aria-pressed", String(reveal));
+      passwordToggle.setAttribute(
+        "aria-label",
+        reveal ? "Hide password" : "Show password",
+      );
+      if (showIcon instanceof HTMLElement) showIcon.hidden = reveal;
+      if (hideIcon instanceof HTMLElement) hideIcon.hidden = !reveal;
+    });
+  }
+</script>
