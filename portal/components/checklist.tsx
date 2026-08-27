@@ -13,6 +13,7 @@ export type ChecklistRowItem = {
   detail?: string;
   href?: string;
   status: ChecklistDisplayStatus;
+  statusLabel?: string;
   clickable?: boolean;
   dimmed?: boolean;
 };
@@ -95,7 +96,13 @@ function StatusIcon({ status }: { status: ChecklistDisplayStatus }) {
   );
 }
 
-function StatusPill({ status }: { status: ChecklistDisplayStatus }) {
+function StatusPill({
+  status,
+  label,
+}: {
+  status: ChecklistDisplayStatus;
+  label?: string;
+}) {
   const styles: Record<ChecklistDisplayStatus, string> = {
     done: "border-border text-success",
     wip: "border-border text-warning",
@@ -108,7 +115,7 @@ function StatusPill({ status }: { status: ChecklistDisplayStatus }) {
     <span
       className={`inline-flex shrink-0 rounded-full border px-sm py-xs text-label uppercase tracking-label ${styles[status]}`}
     >
-      {statusCopy[status]}
+      {label ?? statusCopy[status]}
     </span>
   );
 }
@@ -127,7 +134,7 @@ function ItemRow({ item }: { item: ChecklistRowItem }) {
           <p className="text-body-sm text-muted">{item.detail}</p>
         ) : null}
       </div>
-      <StatusPill status={item.status} />
+      <StatusPill status={item.status} label={item.statusLabel} />
     </div>
   );
 
@@ -142,9 +149,21 @@ function ItemRow({ item }: { item: ChecklistRowItem }) {
   return content;
 }
 
-export function Checklist({ items }: { items: ChecklistRowItem[] }) {
+export function Checklist({
+  items,
+  framed = true,
+}: {
+  items: ChecklistRowItem[];
+  framed?: boolean;
+}) {
   return (
-    <section className="overflow-hidden rounded-card border border-border bg-surface">
+    <div
+      className={
+        framed
+          ? "overflow-hidden rounded-card border border-border bg-surface"
+          : undefined
+      }
+    >
       {items.map((item, index) => (
         <div
           key={item.id}
@@ -153,6 +172,6 @@ export function Checklist({ items }: { items: ChecklistRowItem[] }) {
           <ItemRow item={item} />
         </div>
       ))}
-    </section>
+    </div>
   );
 }

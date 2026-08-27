@@ -11,7 +11,7 @@ export default async function AdminClientsPage() {
     <>
       <PageHeader
         title="Clients"
-        description="Every engagement currently on the books."
+        description="Pipeline of every engagement currently on the books."
         actions={<AddClientButton />}
       />
       {clients.length === 0 ? (
