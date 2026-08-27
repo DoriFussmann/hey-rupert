@@ -22,7 +22,7 @@ export function ClientStageSelect({
   const current = stage ?? "";
   const initial: EngagementStage = isEngagementStage(current)
     ? current
-    : "scope_of_work";
+    : "sow";
   const [value, setValue] = useState<EngagementStage>(initial);
   const [pending, setPending] = useState(false);
   const flash = useAdminFlash("stage");

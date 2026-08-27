@@ -19,5 +19,5 @@ export default async function PortalIndexPage() {
     }
   }
 
-  redirect("/portal/scope-of-work");
+  redirect("/portal/statement-of-work");
 }

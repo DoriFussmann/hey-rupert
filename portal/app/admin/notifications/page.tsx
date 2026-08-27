@@ -9,7 +9,7 @@ export default async function NotificationsPage() {
     <>
       <PageHeader
         title="Notifications"
-        description="Client activity on scope of work and service orders."
+        description="Client activity on statement of work and service orders."
       />
       <NotificationInbox notifications={notifications} />
     </>

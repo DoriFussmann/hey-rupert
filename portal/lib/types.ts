@@ -7,22 +7,29 @@ export type ClientStatus =
 
 export type RaiseStage = "Pre-seed" | "Seed" | "Series A";
 
-export type EngagementStage = "scope_of_work" | "service_order" | "live";
+export type EngagementStage =
+  | "sow"
+  | "service_order"
+  | "nda"
+  | "intake"
+  | "payment"
+  | "setup"
+  | "live";
 
 export const ENGAGEMENT_STAGES: { value: EngagementStage; label: string }[] = [
-  { value: "scope_of_work", label: "Scope of Work" },
+  { value: "sow", label: "Statement of Work" },
   { value: "service_order", label: "Service Order" },
+  { value: "nda", label: "NDA" },
+  { value: "intake", label: "Client Intake" },
+  { value: "payment", label: "Invoice & Payment" },
+  { value: "setup", label: "Setup" },
   { value: "live", label: "Live" },
 ];
 
 export function isEngagementStage(
   value: string | null | undefined,
 ): value is EngagementStage {
-  return (
-    value === "scope_of_work" ||
-    value === "service_order" ||
-    value === "live"
-  );
+  return ENGAGEMENT_STAGES.some((stage) => stage.value === value);
 }
 
 export type Client = {
@@ -42,8 +49,19 @@ export type Client = {
   admin_notes?: string | null;
   notes: string | null;
   stage?: string;
-  scope_of_work_content?: string | null;
-  scope_acknowledged_at?: string | null;
+  statement_of_work_content?: string | null;
+  sow_confirmed_at?: string | null;
+  nda_signed_at?: string | null;
+  intake_completed_at?: string | null;
+  payment_received_at?: string | null;
+  pitch_deck_status?: string | null;
+  business_brief_status?: string | null;
+  outreach_messaging_status?: string | null;
+  investor_match_status?: string | null;
+  target_list_status?: string | null;
+  campaign_analytics_status?: string | null;
+  investor_inbox_status?: string | null;
+  engagement_tracker_status?: string | null;
   service_order_content?: string | null;
   service_order_agreed_at?: string | null;
   linkedin_url?: string | null;
@@ -51,6 +69,7 @@ export type Client = {
   company_website?: string | null;
   company_description?: string | null;
   status: ClientStatus;
+  archived_at?: string | null;
   last_activity_at: string;
   created_at: string;
 };
@@ -121,7 +140,11 @@ export type Campaign = {
   stats: CampaignStats;
 };
 
-export type NotificationType = "scope_acknowledged" | "service_order_agreed" | string;
+export type NotificationType =
+  | "sow_confirmed"
+  | "service_order_agreed"
+  | "nda_signed"
+  | string;
 
 export type AdminNotification = {
   id: string;
@@ -131,4 +154,11 @@ export type AdminNotification = {
   created_at: string;
   client_name: string;
   company_name: string;
+};
+
+export type FormTemplate = {
+  slug: string;
+  title: string;
+  content: string;
+  updated_at: string | null;
 };

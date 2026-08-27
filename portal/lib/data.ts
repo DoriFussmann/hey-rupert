@@ -91,13 +91,51 @@ function asClient(row: Record<string, unknown>): Client {
     admin_notes: notes,
     notes,
     stage: row.stage != null ? String(row.stage) : undefined,
-    scope_of_work_content:
-      row.scope_of_work_content != null
-        ? String(row.scope_of_work_content)
+    statement_of_work_content:
+      row.statement_of_work_content != null
+        ? String(row.statement_of_work_content)
         : null,
-    scope_acknowledged_at:
-      row.scope_acknowledged_at != null
-        ? String(row.scope_acknowledged_at)
+    sow_confirmed_at:
+      row.sow_confirmed_at != null ? String(row.sow_confirmed_at) : null,
+    nda_signed_at:
+      row.nda_signed_at != null ? String(row.nda_signed_at) : null,
+    intake_completed_at:
+      row.intake_completed_at != null
+        ? String(row.intake_completed_at)
+        : null,
+    payment_received_at:
+      row.payment_received_at != null
+        ? String(row.payment_received_at)
+        : null,
+    pitch_deck_status:
+      row.pitch_deck_status != null ? String(row.pitch_deck_status) : null,
+    business_brief_status:
+      row.business_brief_status != null
+        ? String(row.business_brief_status)
+        : null,
+    outreach_messaging_status:
+      row.outreach_messaging_status != null
+        ? String(row.outreach_messaging_status)
+        : null,
+    investor_match_status:
+      row.investor_match_status != null
+        ? String(row.investor_match_status)
+        : null,
+    target_list_status:
+      row.target_list_status != null
+        ? String(row.target_list_status)
+        : null,
+    campaign_analytics_status:
+      row.campaign_analytics_status != null
+        ? String(row.campaign_analytics_status)
+        : null,
+    investor_inbox_status:
+      row.investor_inbox_status != null
+        ? String(row.investor_inbox_status)
+        : null,
+    engagement_tracker_status:
+      row.engagement_tracker_status != null
+        ? String(row.engagement_tracker_status)
         : null,
     service_order_content:
       row.service_order_content != null
@@ -118,6 +156,8 @@ function asClient(row: Record<string, unknown>): Client {
         ? String(row.company_description)
         : null,
     status,
+    archived_at:
+      row.archived_at != null ? String(row.archived_at) : null,
     last_activity_at: String(row.last_activity_at ?? createdAt),
     created_at: createdAt,
   };
@@ -184,9 +224,9 @@ export const getPortalClient = cache(async (): Promise<Client | null> => {
     const preview = placeholderClients[2] ?? placeholderClients[0];
     return {
       ...preview,
-      stage: "scope_of_work",
-      scope_of_work_content: placeholderScopeOfWork,
-      scope_acknowledged_at: null,
+      stage: "sow",
+      statement_of_work_content: placeholderScopeOfWork,
+      sow_confirmed_at: null,
       service_order_content: placeholderServiceOrder,
       service_order_agreed_at: null,
     };

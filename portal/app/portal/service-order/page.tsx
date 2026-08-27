@@ -9,15 +9,19 @@ export default async function ServiceOrderPage() {
   const client = await getPortalClient();
 
   if (isSupabaseConfigured()) {
-    if (client?.stage !== "service_order" && client?.stage !== "live") {
-      redirect("/portal/scope-of-work");
+    if (
+      client?.stage !== "service_order" &&
+      client?.stage !== "live" &&
+      !client?.sow_confirmed_at
+    ) {
+      redirect("/portal/statement-of-work");
     }
   }
 
   return (
     <>
       <PageHeader
-        title="Service order"
+        title="Service Order"
         description="Commercial terms for this engagement. Agree once you have reviewed them."
       />
       <section className="rounded-card border border-border bg-surface p-lg">

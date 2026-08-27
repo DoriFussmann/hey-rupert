@@ -82,7 +82,11 @@ export function AddClientButton() {
       setForm(emptyForm);
       setOpen(false);
       setPending(false);
-      setSuccess("Client added.");
+      setSuccess(
+        result.linked
+          ? "Client added and linked to their existing login."
+          : "Client added.",
+      );
       router.refresh();
     } catch {
       setError("Unable to add the client. Please try again.");

@@ -1,9 +1,8 @@
 import { countUnreadNotifications } from "@/app/admin/actions";
 import { AppShell } from "@/components/app-shell";
-import { NavLinks } from "@/components/nav-links";
+import { AdminNav } from "@/components/admin-nav";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
-import { adminNav } from "@/lib/nav";
 
 export const metadata = {
   title: "Admin",
@@ -25,7 +24,7 @@ export default async function AdminLayout({
     <AppShell
       brand="Rupert"
       eyebrow="Admin"
-      navigation={<NavLinks items={adminNav} unreadCount={unreadCount} />}
+      navigation={<AdminNav unreadCount={unreadCount} />}
     >
       {children}
     </AppShell>

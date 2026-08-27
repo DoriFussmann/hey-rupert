@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useSyncExternalStore } from "react";
-import { acknowledgeScopeOfWork } from "@/app/portal/actions";
+import { confirmStatementOfWork } from "@/app/portal/actions";
 import { formatDate } from "@/lib/format";
 
 const THANKS =
-  "Thanks — we'll be in touch shortly with next steps.";
+  "Thanks — we'll follow up shortly with the Service Order.";
 
 type ThanksStore = {
   value: boolean;
@@ -54,7 +54,7 @@ export function AcknowledgeButton({
   if (acknowledgedAt) {
     return (
       <p className="text-body-sm text-muted">
-        Reviewed on {formatDate(acknowledgedAt)}.
+        Confirmed on {formatDate(acknowledgedAt)}.
       </p>
     );
   }
@@ -64,7 +64,7 @@ export function AcknowledgeButton({
     setError(null);
 
     try {
-      const result = await acknowledgeScopeOfWork();
+      const result = await confirmStatementOfWork();
       if (!result?.ok) {
         setError(result?.error ?? "Unable to submit.");
         return;
@@ -80,13 +80,19 @@ export function AcknowledgeButton({
 
   return (
     <div>
+      <p className="mb-sm text-body-sm text-error">
+        Review of the Statement of Work is not a commitment.
+      </p>
+      <p className="mb-md text-body-sm text-body">
+        Next Step: You will receive a Service Order to confirm.
+      </p>
       <button
         type="button"
         onClick={onClick}
         disabled={pending}
         className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
       >
-        {pending ? "Submitting…" : "I've Reviewed the Scope of Work"}
+        {pending ? "Submitting…" : "I Confirm the Statement of Work"}
       </button>
       {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
     </div>

@@ -52,7 +52,7 @@ export function ScopeOfWorkEditor({
 
   return (
     <section className="mt-lg rounded-card border border-border bg-surface p-lg">
-      <h2 className="text-h4">Scope of Work</h2>
+      <h2 className="text-h4">Statement of Work</h2>
       <div className="sow-editor mt-md" data-color-mode="light">
         <MDEditor
           value={value}
@@ -69,7 +69,7 @@ export function ScopeOfWorkEditor({
           disabled={pending}
           className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
         >
-          {pending ? "Saving…" : "Save Scope of Work"}
+          {pending ? "Saving…" : "Save Statement of Work"}
         </button>
         {flash?.kind === "ok" ? (
           <p className="text-body-sm text-success">{flash.text}</p>

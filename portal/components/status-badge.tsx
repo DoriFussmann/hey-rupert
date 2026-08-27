@@ -7,7 +7,11 @@ const styles: Record<string, string> = {
   live: "bg-primary-tint text-success",
   paused: "text-warning",
   completed: "text-muted",
-  scope_of_work: "bg-primary-tint text-primary",
+  sow: "bg-primary-tint text-primary",
+  nda: "bg-primary-tint text-primary",
+  intake: "bg-primary-tint text-primary",
+  payment: "bg-primary-tint text-primary",
+  setup: "bg-primary-tint text-primary",
   service_order: "bg-primary-tint text-primary",
   pending: "text-warning",
   acknowledged: "text-success",
@@ -20,6 +24,7 @@ const styles: Record<string, string> = {
   passed: "text-muted",
   draft: "text-muted",
   active: "text-success",
+  archived: "text-muted",
 };
 
 export function StatusBadge({

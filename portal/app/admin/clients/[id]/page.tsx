@@ -2,8 +2,10 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { ClientForm } from "@/app/admin/clients/[id]/client-form";
+import { ClientActions } from "@/app/admin/clients/[id]/client-actions";
 import { ClientStageSelect } from "@/app/admin/clients/[id]/stage-select";
-import { ScopeOfWorkEditor } from "@/app/admin/clients/[id]/scope-of-work-editor";
+import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
+import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { getAdminClient } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 
@@ -30,15 +32,38 @@ export default async function ClientDetailPage({
       </p>
       <PageHeader
         title={client.company_name}
-        description={`Opened ${formatDate(client.created_at)}. Last activity ${formatDate(client.last_activity_at)}.`}
+        description={`${client.archived_at ? "Archived. " : ""}Opened ${formatDate(client.created_at)}. Last activity ${formatDate(client.last_activity_at)}.`}
         actions={
           <ClientStageSelect clientId={client.id} stage={client.stage} />
         }
       />
       <ClientForm client={client} />
-      <ScopeOfWorkEditor
+      <EngagementProgress
         clientId={client.id}
-        content={client.scope_of_work_content ?? ""}
+        timestamps={{
+          nda_signed_at: client.nda_signed_at,
+          intake_completed_at: client.intake_completed_at,
+          payment_received_at: client.payment_received_at,
+        }}
+        statuses={{
+          pitch_deck_status: client.pitch_deck_status,
+          business_brief_status: client.business_brief_status,
+          outreach_messaging_status: client.outreach_messaging_status,
+          investor_match_status: client.investor_match_status,
+          target_list_status: client.target_list_status,
+          campaign_analytics_status: client.campaign_analytics_status,
+          investor_inbox_status: client.investor_inbox_status,
+          engagement_tracker_status: client.engagement_tracker_status,
+        }}
+      />
+      <ClientActions
+        clientId={client.id}
+        companyName={client.company_name}
+        archived={Boolean(client.archived_at)}
+      />
+      <GenerateStatementOfWork
+        clientId={client.id}
+        sentContent={client.statement_of_work_content ?? ""}
       />
     </>
   );

@@ -12,7 +12,7 @@ The work covers building the investor universe, drafting outreach for your appro
 
 Rupert does not take a percentage of the raise. Outcomes are not guaranteed. The engagement continues through the live outreach period described in the service order.`;
 
-export const placeholderServiceOrder = `This service order sits under the scope of work. It covers the current raise only and can be replaced if the round changes.
+export const placeholderServiceOrder = `This service order sits under the statement of work. It covers the current raise only and can be replaced if the round changes.
 
 - Engagement length: 90 days from kickoff
 - Fee: as agreed on the discovery call
@@ -57,7 +57,7 @@ export const placeholderClients: Client[] = [
     raise_amount: "$2.5m",
     sector: "Consumer",
     status: "onboarding",
-    notes: "Scope of work sent. Waiting on acknowledgement.",
+    notes: "Statement of Work sent. Waiting on confirmation.",
     last_activity_at: "2026-08-21T16:40:00.000Z",
     created_at: "2026-08-18T00:00:00.000Z",
   },
@@ -89,8 +89,8 @@ export const placeholderAcknowledgements: Acknowledgement[] = [
     client_id: "sorso",
     company_name: "Sorso",
     type: "scope_of_work",
-    title: "Scope of work signed",
-    body: "Elena Varga acknowledged the scope of work. Service order is next.",
+    title: "Statement of Work confirmed",
+    body: "Elena Varga confirmed the statement of work. Service order is next.",
     read_at: "2026-08-22T11:00:00.000Z",
     created_at: "2026-08-21T17:02:00.000Z",
   },

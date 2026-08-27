@@ -46,27 +46,33 @@
   }
 
   .sow-markdown {
-    @apply text-body-sm leading-relaxed text-body;
-  }
-
-  .sow-markdown h1,
-  .sow-markdown h2,
-  .sow-markdown h3,
-  .sow-markdown h4 {
-    @apply text-heading;
+    @apply text-body leading-relaxed text-body;
   }
 
   .sow-markdown h1 {
-    @apply text-h3;
+    @apply mt-xl text-h2;
   }
 
   .sow-markdown h2 {
-    @apply mt-lg text-h4;
+    @apply mt-lg text-h3;
   }
 
   .sow-markdown h3,
   .sow-markdown h4 {
     @apply mt-md text-h4;
+  }
+
+  .sow-markdown > *:first-child {
+    @apply mt-0;
+  }
+
+  .sow-markdown h1 + p,
+  .sow-markdown h2 + p,
+  .sow-markdown h3 + p,
+  .sow-markdown h4 + p,
+  .sow-markdown h1 + ul,
+  .sow-markdown h2 + ul {
+    @apply mt-md;
   }
 
   .sow-markdown p + p,
@@ -78,11 +84,11 @@
   }
 
   .sow-markdown ul {
-    @apply list-disc space-y-sm pl-md;
+    @apply mt-md list-disc space-y-sm pl-md;
   }
 
   .sow-markdown ol {
-    @apply list-decimal space-y-sm pl-md;
+    @apply mt-md list-decimal space-y-sm pl-md;
   }
 
   .sow-markdown a {
@@ -102,6 +108,35 @@
   }
 
   .sow-markdown hr {
-    @apply my-lg border-border;
+    @apply my-xl border-border;
+  }
+
+  .sow-compact .sow-markdown {
+    @apply text-body-sm;
+  }
+
+  .sow-compact .sow-markdown h1 {
+    @apply mt-lg text-h3;
+  }
+
+  .sow-compact .sow-markdown h2 {
+    @apply mt-md text-h4;
+  }
+
+  .sow-compact .sow-markdown h3,
+  .sow-compact .sow-markdown h4 {
+    @apply mt-sm text-body-sm;
+  }
+
+  .sow-compact .sow-markdown p + p,
+  .sow-compact .sow-markdown ul + p,
+  .sow-compact .sow-markdown ol + p,
+  .sow-compact .sow-markdown p + ul,
+  .sow-compact .sow-markdown p + ol {
+    @apply mt-sm;
+  }
+
+  details > summary::-webkit-details-marker {
+    display: none;
   }
 }
