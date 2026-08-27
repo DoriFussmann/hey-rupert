@@ -23,8 +23,27 @@ keywords:
   - investors for small business
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-investors-for-small-business
+    anchor: angel investors for small business
+  - slug: angel-investors-for-startups
+    anchor: angel investors for startups
+  - slug: investors-for-small-business
+    anchor: investors for small business
+  - slug: types-of-investors-for-small-business
+    anchor: types of investors for small business
+externalLinks:
+  - label: How to find investors for your small business
+    url: "https://mercury.com/blog/how-to-find-investors-for-small-business"
+    addedAt: 2026-08-27
+  - label: "Guide to Finding Business Investors | CO"
+    url: "https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors"
+    addedAt: 2026-08-27
+  - label: Tips for Pitching to Small Business Investors
+    url: "https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/"
+    addedAt: 2026-08-27
 faqs:
   - question: "How many investors should I contact during a seed raise?"
     answer: "Quality beats volume, but you still need enough names to absorb inevitable passes. A well-researched, tiered list of 40–60 genuinely matched investors is a strong operating target. That gives you enough concurrent conversations to build momentum and create urgency, without spreading your messaging so thin that it becomes generic."
@@ -108,3 +127,11 @@ The broader funding environment reflects a more mature and disciplined investmen
 in 2026, a spray-and-pray approach to investor targeting is not only inefficient — it is likely to fail, and targeting investors whose focus and thesis align with your startup has become crucial.
  Recent data also confirms that warm introductions remain the fastest path into an investor's serious consideration, with cold outreach continuing to function primarily as a fallback rather than a primary channel. There are no significant structural shifts in the mechanics of investor outreach from the past 45 days — the fundamentals of readiness, targeting, and process discipline remain the defining variables between rounds that close and rounds that stall.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [How to find investors for your small business](https://mercury.com/blog/how-to-find-investors-for-small-business) · [Guide to Finding Business Investors | CO](https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors) · [Tips for Pitching to Small Business Investors](https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/).
+<!-- CMS-EXTERNAL:END -->

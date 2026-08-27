@@ -36,6 +36,24 @@ faqs:
 internalLinks:
   - slug: startup-funding-stages
     anchor: "Startup Funding Stages: The Definitive Guide for Founders"
+  - slug: early-stage-venture-capital
+    anchor: early-stage venture capital
+  - slug: startup-funding-rounds-faq
+    anchor: startup funding rounds
+  - slug: startup-funding-stages-explained
+    anchor: startup funding stages explained
+  - slug: types-of-funding-for-startups
+    anchor: types of funding for startups
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: investor-database
+    anchor: investor database
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: series-a
+    anchor: series a
+  - slug: venture-capital
+    anchor: venture capital
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
     url: https://carta.com/learn/startups/fundraising/
@@ -240,3 +258,7 @@ capital is clustering around companies linked to high-cost infrastructure, regul
 See Related below for more on this topic.
 
 See Sources below for the references behind this article.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/).
+<!-- CMS-INTERNAL:END -->
