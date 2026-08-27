@@ -22,8 +22,27 @@ keywords:
   - investors for small business
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-investors-for-small-business
+    anchor: angel investors for small business
+  - slug: angel-investors-for-startups
+    anchor: angel investors for startups
+  - slug: how-to-get-investors-for-small-business
+    anchor: how to get investors for small business
+  - slug: types-of-investors-for-small-business
+    anchor: types of investors for small business
+externalLinks:
+  - label: How to find investors for your small business
+    url: "https://mercury.com/blog/how-to-find-investors-for-small-business"
+    addedAt: 2026-08-27
+  - label: "Guide to Finding Business Investors | CO"
+    url: "https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors"
+    addedAt: 2026-08-27
+  - label: Tips for Pitching to Small Business Investors
+    url: "https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/"
+    addedAt: 2026-08-27
 faqs:
   - question: "What is the difference between an angel investor and a micro-VC for small business funding?"
     answer: "Angel investors are high-net-worth individuals who invest their own capital — typically $25,000 to $150,000 per deal — and often lead pre-seed or seed rounds where the primary signal is founder conviction and market potential. Micro-VCs are small institutional funds, usually managing $10M–$75M, that invest with more process, expect more traction, and often reserve capital for follow-on rounds. Angels move faster and tolerate more ambiguity; micro-VCs bring institutional discipline and sometimes board involvement."
@@ -164,3 +183,11 @@ For founders who have already confirmed their investor fit — who know which in
 That execution layer is where most rounds are won or lost. Not at the pitch meeting, but in the research that preceded it, the follow-up that kept it alive, and the pipeline discipline that created momentum rather than waiting for it to appear.
 
 For founders who have the conviction and the story but lack the bandwidth to build that infrastructure themselves, working with experienced operators who specialize in investor outreach — who handle the research, personalization, and pipeline management while the founder retains complete ownership of every conversation and every relationship — is not a shortcut. It's a recognition that fundraising is a full-time job, and building the company is another one. Rupert is built for exactly that moment: when the fit is confirmed, the story is ready, and what's needed is a disciplined, transparent process run by people who have done this before.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [How to find investors for your small business](https://mercury.com/blog/how-to-find-investors-for-small-business) · [Guide to Finding Business Investors | CO](https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors) · [Tips for Pitching to Small Business Investors](https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/).
+<!-- CMS-EXTERNAL:END -->

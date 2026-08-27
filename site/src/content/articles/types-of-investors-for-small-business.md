@@ -23,8 +23,27 @@ keywords:
   - investors for small business
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-investors-for-small-business
+    anchor: angel investors for small business
+  - slug: angel-investors-for-startups
+    anchor: angel investors for startups
+  - slug: how-to-get-investors-for-small-business
+    anchor: how to get investors for small business
+  - slug: investors-for-small-business
+    anchor: investors for small business
+externalLinks:
+  - label: How to find investors for your small business
+    url: "https://mercury.com/blog/how-to-find-investors-for-small-business"
+    addedAt: 2026-08-27
+  - label: "Guide to Finding Business Investors | CO"
+    url: "https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors"
+    addedAt: 2026-08-27
+  - label: "Types of Investors: A Guide for Early-Stage Startup Founders"
+    url: "https://www.qapita.com/blog/types-of-investors-a-guide-for-early-stage-startup-founders"
+    addedAt: 2026-08-27
 faqs:
   - question: "Can a small business that isn't trying to become a billion-dollar company still raise investor capital?"
     answer: "Yes — but the investor type matters enormously. Venture capital almost always requires a credible path to a very large exit because VCs need outsized returns to satisfy their fund's limited partners. If your business is optimized for stable, profitable growth rather than hypergrowth, you're better served by angels who invest their own money and set their own return expectations, by SBICs that provide SBA-backed loans or equity to qualifying businesses, or by revenue-based financing that repays investors from a share of monthly revenue without requiring an exit at all."
@@ -164,3 +183,11 @@ An estimated 300,000+ active angel investors now operate in the US
 the accredited investor filter has been cracking open since 2020, and reforms are actively being drafted — potential SEC moves on inflation-adjusted thresholds could push out millions of current qualifiers, while credentialing expansions could bring millions of new participants into private markets.
  Founders navigating outreach in this environment are best served by targeting investor types that structurally match their business model, rather than defaulting to the most visible category.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [How to find investors for your small business](https://mercury.com/blog/how-to-find-investors-for-small-business) · [Guide to Finding Business Investors | CO](https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors) · [Types of Investors: A Guide for Early-Stage Startup Founders](https://www.qapita.com/blog/types-of-investors-a-guide-for-early-stage-startup-founders).
+<!-- CMS-EXTERNAL:END -->

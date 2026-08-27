@@ -37,6 +37,24 @@ faqs:
 internalLinks:
   - slug: seed-pitch-deck
     anchor: The Complete Seed Pitch Deck Guide for Raising Founders
+  - slug: pre-seed-pitch-deck
+    anchor: pre seed pitch deck
+  - slug: seed-funding-pitch-deck-faq
+    anchor: seed funding pitch deck
+  - slug: seed-pitch-deck-examples
+    anchor: seed pitch deck examples
+  - slug: seed-round-pitch-deck-template
+    anchor: seed round pitch deck
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: investor-database
+    anchor: investor database
+  - slug: series-a
+    anchor: series a
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: venture-capital
+    anchor: venture capital
 externalLinks:
   - label: The Quick and Dirty Guide to Creating a Winning Pitch Deck
     url: https://www.startupgrind.com/blog/the-quick-and-dirty-guide-to-creating-a-winning-pitch-deck/
@@ -181,3 +199,7 @@ Rupert was built specifically for founders at this stage: the deck is ready, the
 See Related below for more on this topic.
 
 See Sources below for the references behind this article.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [The Complete Seed Pitch Deck Guide for Raising Founders](/articles/seed-pitch-deck/) · [pre seed pitch deck](/articles/pre-seed-pitch-deck/) · [seed funding pitch deck](/articles/seed-funding-pitch-deck-faq/) · [seed pitch deck examples](/articles/seed-pitch-deck-examples/) · [seed round pitch deck](/articles/seed-round-pitch-deck-template/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/).
+<!-- CMS-INTERNAL:END -->

@@ -37,6 +37,34 @@ faqs:
 internalLinks:
   - slug: how-to-get-investors-for-your-business
     anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: angel-investors-for-small-business
+    anchor: angel investors for small business
+  - slug: angel-investors-for-startups
+    anchor: angel investors for startups
+  - slug: angel-investors-vs-venture-capital
+    anchor: angel investors vs venture capital
+  - slug: how-to-get-investors-for-small-business
+    anchor: how to get investors for small business
+  - slug: how-to-get-investors-for-your-business-idea
+    anchor: how to get investors for your business idea
+  - slug: how-to-get-private-investors-for-your-business
+    anchor: how to get private investors for your business
+  - slug: investors-for-small-business
+    anchor: investors for small business
+  - slug: investors-looking-for-projects-to-fund
+    anchor: investors looking for projects to fund
+  - slug: types-of-investors-for-small-business
+    anchor: types of investors for small business
+  - slug: investor-database
+    anchor: investor database
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: series-a
+    anchor: series a
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: venture-capital
+    anchor: venture capital
 externalLinks:
   - label: 100 Top Angel Investors List for Startups (2026)
     url: https://eqvista.com/top-100-active-angel-investors-list-for-startups/
@@ -196,3 +224,7 @@ investors want evidence, not broad claims: paid pilots, repeat usage, retention,
 See Related below for more on this topic.
 
 See Sources below for the references behind this article.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [How to Get Investors for Your Business: A Founder's Guide](/articles/how-to-get-investors-for-your-business/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [angel investors vs venture capital](/articles/angel-investors-vs-venture-capital/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [how to get investors for your business idea](/articles/how-to-get-investors-for-your-business-idea/) · [how to get private investors for your business](/articles/how-to-get-private-investors-for-your-business/) · [investors for small business](/articles/investors-for-small-business/) · [investors looking for projects to fund](/articles/investors-looking-for-projects-to-fund/) · [types of investors for small business](/articles/types-of-investors-for-small-business/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/).
+<!-- CMS-INTERNAL:END -->
