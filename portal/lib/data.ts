@@ -19,6 +19,7 @@ import type {
   ClientStatus,
   Investor,
   InvestorReply,
+  SowSend,
 } from "@/lib/types";
 
 async function fromTable<T>(
@@ -217,6 +218,33 @@ export async function getAdminClient(id: string) {
   }
 
   return getClient(id);
+}
+
+function asSowSend(row: Record<string, unknown>): SowSend {
+  return {
+    id: String(row.id),
+    client_id: String(row.client_id ?? ""),
+    sent_at: String(row.sent_at ?? new Date().toISOString()),
+    archived_at: row.archived_at != null ? String(row.archived_at) : null,
+  };
+}
+
+export async function listSowSends(clientId: string): Promise<SowSend[]> {
+  if (!isServiceRoleConfigured()) return [];
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("statement_of_work_sends")
+      .select("id, client_id, sent_at, archived_at")
+      .eq("client_id", clientId)
+      .order("sent_at", { ascending: false });
+
+    if (error || !data) return [];
+    return data.map((row) => asSowSend(row as Record<string, unknown>));
+  } catch {
+    return [];
+  }
 }
 
 export const getPortalClient = cache(async (): Promise<Client | null> => {

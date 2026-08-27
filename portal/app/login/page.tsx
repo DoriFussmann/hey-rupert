@@ -54,7 +54,7 @@ export default function LoginPage() {
       }
 
       if (role === "client") {
-        router.replace("/portal");
+        router.replace("/portal/onboarding");
         router.refresh();
         return;
       }
@@ -73,18 +73,16 @@ export default function LoginPage() {
         <div className="bp-panel__lighting"></div>
         <div className="bp-panel__grid"></div>
 
-        <p className="bp-panel__eyebrow">Investor outreach</p>
-
         <div className="bp-panel__middle">
           <h1 className="bp-panel__title">Rupert</h1>
           <p className="bp-panel__subcopy">
-            Your outreach, tracked in one place.
-            <br />
-            Sign in to continue your raise.
+            Investor outreach, managed for you.
           </p>
         </div>
 
-        <p className="bp-panel__footer">A product for founders raising capital.</p>
+        <p className="bp-panel__footer">
+          Human-led. Tailor-made. Fully transparent.
+        </p>
       </div>
 
       <div className="bp-form-side">

@@ -6,7 +6,7 @@ import { ClientActions } from "@/app/admin/clients/[id]/client-actions";
 import { ClientStageSelect } from "@/app/admin/clients/[id]/stage-select";
 import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
-import { getAdminClient } from "@/lib/data";
+import { getAdminClient, listSowSends } from "@/lib/data";
 import { formatDate } from "@/lib/format";
 
 export default async function ClientDetailPage({
@@ -19,6 +19,8 @@ export default async function ClientDetailPage({
   if (!client) {
     notFound();
   }
+
+  const sends = await listSowSends(client.id);
 
   return (
     <>
@@ -64,6 +66,7 @@ export default async function ClientDetailPage({
       <GenerateStatementOfWork
         clientId={client.id}
         sentContent={client.statement_of_work_content ?? ""}
+        sends={sends}
       />
     </>
   );

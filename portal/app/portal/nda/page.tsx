@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { ConfirmNdaButton } from "@/app/portal/nda/confirm-button";
 import { getPortalClient } from "@/lib/data";
 
@@ -7,6 +8,7 @@ export default async function NdaPage() {
 
   return (
     <>
+      <BackLink href="/portal/onboarding" label="Onboarding" />
       <PageHeader
         title="NDA"
         description="A mutual non-disclosure covering materials exchanged during this engagement."

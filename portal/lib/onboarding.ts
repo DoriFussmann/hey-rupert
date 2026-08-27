@@ -38,7 +38,7 @@ export function getOnboardingItems(
     {
       id: "sow",
       title: "Statement of Work",
-      detail: "Confirmed",
+      detail: sowDone ? "Confirmed" : "Confirm",
       href: "/portal/statement-of-work",
       status: sowDone ? "done" : "your_turn",
       completedAt: sowAt,
@@ -46,7 +46,7 @@ export function getOnboardingItems(
     {
       id: "service_order",
       title: "Service Order",
-      detail: "Signed",
+      detail: orderDone ? "Signed" : "Sign",
       href: "/portal/service-order",
       status: orderDone
         ? "done"
@@ -58,7 +58,7 @@ export function getOnboardingItems(
     {
       id: "nda",
       title: "NDA",
-      detail: "Mutually Signed",
+      detail: ndaDone ? "Signed" : "Sign",
       href: "/portal/nda",
       status: ndaDone
         ? "done"
@@ -70,7 +70,7 @@ export function getOnboardingItems(
     {
       id: "intake",
       title: "Client Intake Form",
-      detail: "Completed",
+      detail: intakeDone ? "Completed" : "Complete",
       status: intakeDone
         ? "done"
         : sowDone && orderDone && ndaDone
@@ -81,7 +81,7 @@ export function getOnboardingItems(
     {
       id: "payment",
       title: "Invoice & Setup Payment",
-      detail: "Received",
+      detail: paymentDone ? "Reviewed and paid" : "Review and pay",
       status: paymentDone
         ? "done"
         : sowDone && orderDone && ndaDone && intakeDone

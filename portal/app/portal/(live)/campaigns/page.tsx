@@ -1,5 +1,6 @@
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { listCampaigns } from "@/lib/data";
 
@@ -28,6 +29,7 @@ export default async function CampaignsPage() {
 
   return (
     <>
+      <BackLink href="/portal/live-campaign" label="Live Campaign" />
       <PageHeader
         title="Campaign Analytics"
         description="Performance across outreach sequences. Instantly analytics will land here once connected."

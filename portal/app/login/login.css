@@ -1,8 +1,7 @@
 .bp-login {
   display: flex;
   width: 100%;
-  max-width: 1160px;
-  margin-inline: auto;
+  max-width: none;
   height: 100vh;
   background: #ffffff;
   color: #1a1a1a;
@@ -28,6 +27,10 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
+}
+
+.bp-panel::before {
+  content: "";
 }
 
 @media (max-width: 767px) {
@@ -67,16 +70,10 @@
   background-size: 48px 48px;
 }
 
-.bp-panel__eyebrow {
-  position: relative;
-  margin: 0;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-}
-
 .bp-panel__middle {
   position: relative;
   max-width: 28rem;
+  transform: translateY(-2.5rem);
 }
 
 .bp-panel__title {
@@ -103,11 +100,13 @@
 
 .bp-form-side {
   width: 50%;
+  height: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 0 1.5rem;
+  background: #ffffff;
 }
 
 @media (max-width: 767px) {

@@ -1,54 +1,18 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { confirmNda } from "@/app/portal/actions";
 import { formatDate } from "@/lib/format";
-
-const THANKS = "Confirmed — waiting on Rupert to countersign.";
-
-type ThanksStore = {
-  value: boolean;
-  listeners: Set<() => void>;
-};
-
-function getThanksStore(): ThanksStore {
-  const globalRef = globalThis as typeof globalThis & {
-    __ndaThanksStore?: ThanksStore;
-  };
-  if (!globalRef.__ndaThanksStore) {
-    globalRef.__ndaThanksStore = { value: false, listeners: new Set() };
-  }
-  return globalRef.__ndaThanksStore;
-}
-
-function markThanks() {
-  const store = getThanksStore();
-  store.value = true;
-  store.listeners.forEach((listener) => listener());
-}
-
-function subscribeThanks(listener: () => void) {
-  const { listeners } = getThanksStore();
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
 
 export function ConfirmNdaButton({
   signedAt,
 }: {
   signedAt: string | null;
 }) {
-  const thanks = useSyncExternalStore(
-    subscribeThanks,
-    () => getThanksStore().value,
-    () => false,
-  );
+  const router = useRouter();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  if (thanks) {
-    return <p className="text-body-sm text-muted">{THANKS}</p>;
-  }
 
   if (signedAt) {
     return (
@@ -66,13 +30,14 @@ export function ConfirmNdaButton({
       const result = await confirmNda();
       if (!result?.ok) {
         setError(result?.error ?? "Unable to confirm.");
+        setPending(false);
         return;
       }
 
-      markThanks();
+      router.push("/portal/onboarding");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to confirm.");
-    } finally {
       setPending(false);
     }
   }

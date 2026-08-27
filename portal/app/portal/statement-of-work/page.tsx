@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { BackLink } from "@/components/back-link";
 import { AcknowledgeButton } from "@/app/portal/statement-of-work/acknowledge-button";
 import { FullFormButton } from "@/app/portal/statement-of-work/full-form-button";
 import { StatementOfWorkDocument } from "@/app/portal/statement-of-work/statement-of-work-document";
@@ -14,11 +15,12 @@ export default async function StatementOfWorkPage() {
     client?.stage &&
     !isEngagementStage(client.stage)
   ) {
-    redirect("/portal");
+    redirect("/portal/onboarding");
   }
 
   return (
     <>
+      <BackLink href="/portal/onboarding" label="Onboarding" />
       <h1 className="sr-only">Statement of Work</h1>
       <StatementOfWorkDocument
         content={client?.statement_of_work_content ?? ""}

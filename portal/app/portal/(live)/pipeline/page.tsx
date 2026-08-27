@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
 import { listInvestors } from "@/lib/data";
 import type { InvestorStatus } from "@/lib/types";
@@ -17,6 +18,7 @@ export default async function PipelinePage() {
 
   return (
     <>
+      <BackLink href="/portal/live-campaign" label="Live Campaign" />
       <PageHeader
         title="Engagement Tracker"
         description="Where each investor stands. Names move as outreach and replies come in."

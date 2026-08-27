@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { BackLink } from "@/components/back-link";
 import { MarkdownBody } from "@/components/markdown-body";
 import { ServiceOrderForm } from "@/app/portal/service-order/service-order-form";
 import { getPortalClient } from "@/lib/data";
@@ -20,6 +21,7 @@ export default async function ServiceOrderPage() {
 
   return (
     <>
+      <BackLink href="/portal/onboarding" label="Onboarding" />
       <PageHeader
         title="Service Order"
         description="Commercial terms for this engagement. Agree once you have reviewed them."

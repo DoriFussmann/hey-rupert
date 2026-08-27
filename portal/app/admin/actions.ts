@@ -498,53 +498,28 @@ export async function updateScopeOfWork(
 }
 
 function clientDisplayName(row: Record<string, unknown>) {
-  const firstName = row.first_name != null ? String(row.first_name) : "";
-  const lastName = row.last_name != null ? String(row.last_name) : "";
-  return (
-    [firstName, lastName].filter(Boolean).join(" ") ||
-    (row.founder_name != null ? String(row.founder_name) : "") ||
-    "Unknown"
-  );
-}
+  const firstName = row.first_name != null ? String(row.first_name).trim() : "";
+  const lastName = row.last_name != null ? String(row.last_name).trim() : "";
+  const fullName = [firstName, lastName].filter(Boolean).join(" ");
+  if (fullName) return fullName;
 
-function asClientRow(value: unknown): Record<string, unknown> | null {
-  if (!value) return null;
-  if (Array.isArray(value)) {
-    const first = value[0];
-    return first && typeof first === "object"
-      ? (first as Record<string, unknown>)
-      : null;
-  }
-  if (typeof value === "object") return value as Record<string, unknown>;
-  return null;
+  const founder =
+    row.founder_name != null ? String(row.founder_name).trim() : "";
+  if (founder) return founder;
+
+  const company =
+    row.company_name != null ? String(row.company_name).trim() : "";
+  if (company) return company;
+
+  const email = row.email != null ? String(row.email).trim() : "";
+  if (email) return email;
+
+  return "Unknown";
 }
 
 export async function listAdminNotifications(): Promise<AdminNotification[]> {
   const access = await requireAdminService();
   if (!access.ok) return [];
-
-  const { data: nestedRows, error: nestedError } = await access.supabase
-    .from("notifications")
-    .select(
-      "id, client_id, type, read, created_at, clients(first_name, last_name, founder_name, company_name)",
-    )
-    .order("created_at", { ascending: false });
-
-  if (!nestedError && nestedRows) {
-    return nestedRows.map((row) => {
-      const client = asClientRow((row as { clients?: unknown }).clients);
-      return {
-        id: String(row.id),
-        client_id: String(row.client_id ?? ""),
-        type: String(row.type ?? ""),
-        read: row.read === true,
-        created_at: String(row.created_at ?? new Date().toISOString()),
-        client_name: client ? clientDisplayName(client) : "Unknown",
-        company_name:
-          client?.company_name != null ? String(client.company_name) : "",
-      };
-    });
-  }
 
   const { data: rows, error } = await access.supabase
     .from("notifications")
@@ -565,7 +540,7 @@ export async function listAdminNotifications(): Promise<AdminNotification[]> {
   if (clientIds.length > 0) {
     const { data: clients } = await access.supabase
       .from("clients")
-      .select("id, first_name, last_name, founder_name, company_name")
+      .select("id, first_name, last_name, founder_name, company_name, email")
       .in("id", clientIds);
 
     for (const client of clients ?? []) {
@@ -711,6 +686,62 @@ export async function sendStatementOfWork(
     return { ok: false, error: "Generate the Statement of Work before sending." };
   }
 
+  const { data: activeSends, error: activeError } = await access.supabase
+    .from("statement_of_work_sends")
+    .select("id")
+    .eq("client_id", clientId)
+    .is("archived_at", null)
+    .limit(1);
+
+  if (activeError) {
+    if (sowSendsTableError(activeError.message, activeError.code)) {
+      return {
+        ok: false,
+        error:
+          "The statement_of_work_sends table is missing. Run portal/supabase/sow_sends.sql in the Supabase SQL editor, then try again.",
+      };
+    }
+    return { ok: false, error: activeError.message };
+  }
+
+  if (activeSends && activeSends.length > 0) {
+    return {
+      ok: false,
+      error:
+        "A Statement of Work has already been sent. Archive that record to send again.",
+    };
+  }
+
+  const sentAt = new Date().toISOString();
+  const { error: insertError } = await access.supabase
+    .from("statement_of_work_sends")
+    .insert({
+      client_id: clientId,
+      content,
+      sent_at: sentAt,
+    });
+
+  if (insertError) {
+    if (sowSendsTableError(insertError.message, insertError.code)) {
+      return {
+        ok: false,
+        error:
+          "The statement_of_work_sends table is missing. Run portal/supabase/sow_sends.sql in the Supabase SQL editor, then try again.",
+      };
+    }
+    if (
+      insertError.code === "23505" ||
+      insertError.message.toLowerCase().includes("duplicate")
+    ) {
+      return {
+        ok: false,
+        error:
+          "A Statement of Work has already been sent. Archive that record to send again.",
+      };
+    }
+    return { ok: false, error: insertError.message };
+  }
+
   const { error } = await access.supabase
     .from("clients")
     .update({
@@ -726,5 +757,95 @@ export async function sendStatementOfWork(
   revalidatePath("/admin");
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/portal/statement-of-work");
+  return { ok: true };
+}
+
+function sowSendsTableError(message: string, code?: string) {
+  return (
+    code === "42P01" ||
+    message.includes("statement_of_work_sends") ||
+    message.toLowerCase().includes("schema cache")
+  );
+}
+
+export async function archiveSowSend(
+  clientId: string,
+  sendId: string,
+): Promise<ActionResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { error } = await access.supabase
+    .from("statement_of_work_sends")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", sendId)
+    .eq("client_id", clientId);
+
+  if (error) {
+    if (sowSendsTableError(error.message, error.code)) {
+      return {
+        ok: false,
+        error:
+          "The statement_of_work_sends table is missing. Run portal/supabase/sow_sends.sql in the Supabase SQL editor, then try again.",
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true };
+}
+
+export async function unarchiveSowSend(
+  clientId: string,
+  sendId: string,
+): Promise<ActionResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { data: activeSends, error: activeError } = await access.supabase
+    .from("statement_of_work_sends")
+    .select("id")
+    .eq("client_id", clientId)
+    .is("archived_at", null)
+    .neq("id", sendId)
+    .limit(1);
+
+  if (activeError) {
+    if (sowSendsTableError(activeError.message, activeError.code)) {
+      return {
+        ok: false,
+        error:
+          "The statement_of_work_sends table is missing. Run portal/supabase/sow_sends.sql in the Supabase SQL editor, then try again.",
+      };
+    }
+    return { ok: false, error: activeError.message };
+  }
+
+  if (activeSends && activeSends.length > 0) {
+    return {
+      ok: false,
+      error: "Archive the current send before restoring another record.",
+    };
+  }
+
+  const { error } = await access.supabase
+    .from("statement_of_work_sends")
+    .update({ archived_at: null })
+    .eq("id", sendId)
+    .eq("client_id", clientId);
+
+  if (error) {
+    if (sowSendsTableError(error.message, error.code)) {
+      return {
+        ok: false,
+        error:
+          "The statement_of_work_sends table is missing. Run portal/supabase/sow_sends.sql in the Supabase SQL editor, then try again.",
+      };
+    }
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/admin/clients/${clientId}`);
   return { ok: true };
 }

@@ -19,5 +19,5 @@ export default async function PortalIndexPage() {
     }
   }
 
-  redirect("/portal/statement-of-work");
+  redirect("/portal/onboarding");
 }

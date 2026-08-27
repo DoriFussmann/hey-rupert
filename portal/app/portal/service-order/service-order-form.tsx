@@ -1,42 +1,13 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { agreeToServiceOrder } from "@/app/portal/actions";
 import { formatDate } from "@/lib/format";
-
-const THANKS =
-  "Agreed — Dori will be in touch within 1 business day to get started.";
 
 const fieldClass =
   "mt-sm w-full rounded-[6px] border border-border bg-surface px-sm py-sm text-body-sm text-body outline-none read-only:bg-background";
 const labelClass = "block text-label uppercase tracking-label text-muted";
-
-type ThanksStore = {
-  value: boolean;
-  listeners: Set<() => void>;
-};
-
-function getThanksStore(): ThanksStore {
-  const globalRef = globalThis as typeof globalThis & {
-    __soThanksStore?: ThanksStore;
-  };
-  if (!globalRef.__soThanksStore) {
-    globalRef.__soThanksStore = { value: false, listeners: new Set() };
-  }
-  return globalRef.__soThanksStore;
-}
-
-function markThanks() {
-  const store = getThanksStore();
-  store.value = true;
-  store.listeners.forEach((listener) => listener());
-}
-
-function subscribeThanks(listener: () => void) {
-  const { listeners } = getThanksStore();
-  listeners.add(listener);
-  return () => listeners.delete(listener);
-}
 
 type Fields = {
   linkedin_url: string;
@@ -61,11 +32,7 @@ export function ServiceOrderForm({
   agreedAt: string | null;
   initial: Fields;
 }) {
-  const thanks = useSyncExternalStore(
-    subscribeThanks,
-    () => getThanksStore().value,
-    () => false,
-  );
+  const router = useRouter();
   const [values, setValues] = useState(initial);
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>(
     {},
@@ -73,7 +40,7 @@ export function ServiceOrderForm({
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const locked = Boolean(agreedAt) || thanks;
+  const locked = Boolean(agreedAt);
 
   function update(key: FieldKey) {
     return (
@@ -107,13 +74,14 @@ export function ServiceOrderForm({
       const result = await agreeToServiceOrder(values);
       if (!result?.ok) {
         setError(result?.error ?? "Unable to submit.");
+        setPending(false);
         return;
       }
 
-      markThanks();
+      router.push("/portal/onboarding");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to submit.");
-    } finally {
       setPending(false);
     }
   }
@@ -192,9 +160,7 @@ export function ServiceOrderForm({
       </div>
 
       <div className="mt-lg">
-        {thanks ? (
-          <p className="text-body-sm text-muted">{THANKS}</p>
-        ) : agreedAt ? (
+        {agreedAt ? (
           <p className="text-body-sm text-muted">
             Agreed on {formatDate(agreedAt)}.
           </p>

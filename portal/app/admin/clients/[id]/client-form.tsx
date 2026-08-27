@@ -2,14 +2,15 @@
 
 import { useState } from "react";
 import { StatusBadge } from "@/components/status-badge";
+import { Select } from "@/components/select";
 import type { Client, ClientStatus } from "@/lib/types";
 
-const statuses: ClientStatus[] = [
-  "onboarding",
-  "preparation",
-  "live",
-  "paused",
-  "completed",
+const statuses: { value: ClientStatus; label: string }[] = [
+  { value: "onboarding", label: "Onboarding" },
+  { value: "preparation", label: "Preparation" },
+  { value: "live", label: "Live" },
+  { value: "paused", label: "Paused" },
+  { value: "completed", label: "Completed" },
 ];
 
 export function ClientForm({ client }: { client: Client }) {
@@ -35,17 +36,13 @@ export function ClientForm({ client }: { client: Client }) {
       </label>
       <label className="block text-label uppercase tracking-label text-muted">
         Status
-        <select
-          name="status"
-          defaultValue={client.status}
-          className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none"
-        >
+        <Select name="status" defaultValue={client.status}>
           {statuses.map((status) => (
-            <option key={status} value={status}>
-              {status}
+            <option key={status.value} value={status.value}>
+              {status.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="block text-label uppercase tracking-label text-muted">
         Founder

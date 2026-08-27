@@ -46,6 +46,15 @@ export function notificationLabel(type: string) {
   return statusLabel(type);
 }
 
+export function notificationAction(type: string) {
+  if (type === "sow_confirmed" || type === "scope_acknowledged") {
+    return "confirmed the Statement of Work";
+  }
+  if (type === "service_order_agreed") return "agreed to the Service Order";
+  if (type === "nda_signed") return "signed the NDA";
+  return notificationLabel(type).toLowerCase();
+}
+
 export function acknowledgementLabel(type: AcknowledgementType) {
   const labels: Record<AcknowledgementType, string> = {
     scope_of_work: "Statement of Work",

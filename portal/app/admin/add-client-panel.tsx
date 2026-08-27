@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientRecord } from "@/app/admin/actions";
+import { Select } from "@/components/select";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
@@ -203,8 +204,7 @@ export function AddClientButton() {
                 </label>
                 <label className={labelClass}>
                   Raise stage
-                  <select
-                    className={fieldClass}
+                  <Select
                     name="raise_stage"
                     value={form.raise_stage}
                     onChange={update("raise_stage")}
@@ -213,7 +213,7 @@ export function AddClientButton() {
                     <option value="Pre-seed">Pre-seed</option>
                     <option value="Seed">Seed</option>
                     <option value="Series A">Series A</option>
-                  </select>
+                  </Select>
                 </label>
                 <label className={labelClass}>
                   Vertical

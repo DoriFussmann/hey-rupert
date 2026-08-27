@@ -3,7 +3,7 @@
   "private": true,
   "workspaces": ["site", "cms", "portal"],
   "scripts": {
-    "dev": "npm run dev -w site",
+    "dev": "npm run dev -w site & npm run portal & wait",
     "build": "npm run build -w site",
     "cms": "npm run start -w cms",
     "portal": "npm run dev -w portal"

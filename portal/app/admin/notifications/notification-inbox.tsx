@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { markNotificationRead } from "@/app/admin/actions";
-import { formatDateAtTime, notificationLabel } from "@/lib/format";
+import { formatDateAtTime, notificationAction } from "@/lib/format";
 import type { AdminNotification } from "@/lib/types";
 
 export function NotificationInbox({
@@ -38,33 +38,36 @@ export function NotificationInbox({
       <ul>
         {notifications.map((item) => {
           const unread = !item.read;
+          const company =
+            item.company_name &&
+            item.company_name !== item.client_name
+              ? item.company_name
+              : "";
+
           return (
             <li key={item.id} className="border-b border-border last:border-b-0">
               <button
                 type="button"
                 onClick={() => openNotification(item)}
                 disabled={pendingId === item.id}
-                className={`flex w-full items-start gap-md px-lg py-md text-left transition-colors duration-hover hover:bg-background ${
+                className={`flex w-full items-center gap-md px-lg py-sm text-left transition-colors duration-hover hover:bg-background ${
                   unread ? "bg-primary-tint" : "bg-surface"
                 }`}
               >
                 <span
-                  className={`mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full ${
+                  className={`h-1.5 w-1.5 shrink-0 rounded-full ${
                     unread ? "bg-primary" : "invisible"
                   }`}
                   aria-hidden
                 />
-                <span className="min-w-0 flex-1">
-                  <span className="block text-body-sm text-heading">
-                    {item.client_name}
-                    {item.company_name ? ` · ${item.company_name}` : ""}
-                  </span>
-                  <span className="mt-xs block text-body-sm text-muted">
-                    {notificationLabel(item.type)}
-                  </span>
-                  <span className="mt-xs block text-body-sm text-muted">
-                    {formatDateAtTime(item.created_at)}
-                  </span>
+                <span className="min-w-0 flex-1 truncate text-body-sm text-heading">
+                  {item.client_name} {notificationAction(item.type)}
+                  {company ? (
+                    <span className="text-muted"> · {company}</span>
+                  ) : null}
+                </span>
+                <span className="shrink-0 text-body-sm text-muted">
+                  {formatDateAtTime(item.created_at)}
                 </span>
               </button>
             </li>

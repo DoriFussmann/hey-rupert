@@ -162,3 +162,10 @@ export type FormTemplate = {
   content: string;
   updated_at: string | null;
 };
+
+export type SowSend = {
+  id: string;
+  client_id: string;
+  sent_at: string;
+  archived_at: string | null;
+};
