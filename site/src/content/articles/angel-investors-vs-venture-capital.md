@@ -11,7 +11,7 @@ tags:
   - angel investors vs venture capital
   - investor outreach
   - seed funding
-image: ../../assets/articles/angel-investors-vs-venture-capital/hero.png
+image: ../../assets/articles/angel-investors-vs-venture-capital.png
 imageAlt: Two founders at a whiteboard comparing angel investor and venture capital funding options side by side
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: How long does it take to close a round with angels vs. VCs?
     answer: "Angels can move significantly faster — an interested angel might go from first meeting to term sheet within days or a couple of weeks, since they're deploying personal capital with no investment committee approval required. VC processes are considerably longer: finding a lead investor alone typically takes around two months, formal due diligence adds another two to six weeks, and full close from first pitch to wire often takes three to six months or more. Founders consistently underestimate VC timelines, which is one of the most common causes of runway pressure during a raise."
 internalLinks:
-  - label: "How to Find Investors for Your Startup: The Complete Guide"
-    url: /articles/angel-investors/
-  - label: "How to Get Investors for Your Business: A Founder's Guide"
-    url: /articles/how-to-get-investors-for-your-business/
-  - label: "Get Investors for Your Business Idea: Readiness Checklist"
-    url: /articles/how-to-get-investors-for-your-business-idea/
-  - label: "How to Get Private Investors for Your Business: A Guide"
-    url: /articles/how-to-get-private-investors-for-your-business/
-  - label: What Investors Looking for Projects to Fund Actually Want
-    url: /articles/investors-looking-for-projects-to-fund/
+  - slug: angel-investors
+    anchor: "How to Find Investors for Your Startup: The Complete Guide"
+  - slug: how-to-get-investors-for-your-business
+    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-get-investors-for-your-business-idea
+    anchor: "Get Investors for Your Business Idea: Readiness Checklist"
+  - slug: how-to-get-private-investors-for-your-business
+    anchor: "How to Get Private Investors for Your Business: A Guide"
+  - slug: investors-looking-for-projects-to-fund
+    anchor: What Investors Looking for Projects to Fund Actually Want
 externalLinks:
   - label: What's the Difference? Venture Capitalist vs. Angel Investor
     url: https://www.rivier.edu/academics/blog-posts/whats-the-difference-venture-capitalist-vs-angel-investor/

@@ -11,7 +11,7 @@ tags:
   - seed pitch deck examples
   - fundraising
   - investor outreach
-image: ../../assets/articles/seed-pitch-deck-examples/hero.png
+image: ../../assets/articles/seed-pitch-deck-examples.png
 imageAlt: A founder reviewing multiple printed pitch deck slides spread across a desk, comparing structure and layout side by side
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: Does design quality matter in a seed pitch deck?
     answer: Design matters enough that a visually chaotic deck creates friction — but professional polish does not compensate for weak content. Buffer's seed deck was simple and not visually sophisticated; it raised $500K because the traction metrics were compelling. Airbnb's original 2009 deck is widely described as rough by modern standards, yet it remains the most studied seed deck in history. Investors in 2026 do spend more total time on decks with clear data visualization, but the data itself — not its presentation — is what drives conviction.
 internalLinks:
-  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-    url: /articles/pitch-deck/
-  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-    url: /articles/pre-seed-pitch-deck/
-  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
-    url: /articles/seed-funding-pitch-deck-faq/
-  - label: The Complete Seed Pitch Deck Guide for Raising Founders
-    url: /articles/seed-pitch-deck/
-  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
-    url: /articles/seed-round-pitch-deck-template/
+  - slug: pitch-deck
+    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+  - slug: pre-seed-pitch-deck
+    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+  - slug: seed-funding-pitch-deck-faq
+    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+  - slug: seed-pitch-deck
+    anchor: The Complete Seed Pitch Deck Guide for Raising Founders
+  - slug: seed-round-pitch-deck-template
+    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
 externalLinks:
   - label: The Ultimate Pitch Deck Guide for Startup Founders
     url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders

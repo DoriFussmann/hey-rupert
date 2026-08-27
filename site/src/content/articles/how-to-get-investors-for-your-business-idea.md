@@ -11,7 +11,7 @@ tags:
   - investor readiness
   - how to get investors for your business idea
   - startup pitch preparation
-image: ../../assets/articles/how-to-get-investors-for-your-business-idea/hero.png
+image: ../../assets/articles/how-to-get-investors-for-your-business-idea.png
 imageAlt: An early-stage founder sitting at a desk reviewing a pitch deck and investor checklist on a laptop, with notes and financial model printouts spread around them
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: How long does it typically take to close a pre-seed round?
     answer: "Timelines vary, but most idea-stage founders should budget 3–6 months from first outreach to a closed round. The process is rarely linear: early conversations generate feedback that may require you to sharpen your narrative, adjust your ask, or gather more customer evidence before the round gains momentum. Founders who run a structured, disciplined process — with a maintained pipeline, consistent follow-up cadence, and clear milestones — tend to close faster than those treating fundraising as an ad hoc activity alongside building."
 internalLinks:
-  - label: "How to Find Investors for Your Startup: The Complete Guide"
-    url: /articles/angel-investors/
-  - label: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
-    url: /articles/angel-investors-vs-venture-capital/
-  - label: "How to Get Investors for Your Business: A Founder's Guide"
-    url: /articles/how-to-get-investors-for-your-business/
-  - label: "How to Get Private Investors for Your Business: A Guide"
-    url: /articles/how-to-get-private-investors-for-your-business/
-  - label: What Investors Looking for Projects to Fund Actually Want
-    url: /articles/investors-looking-for-projects-to-fund/
+  - slug: angel-investors
+    anchor: "How to Find Investors for Your Startup: The Complete Guide"
+  - slug: angel-investors-vs-venture-capital
+    anchor: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
+  - slug: how-to-get-investors-for-your-business
+    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-get-private-investors-for-your-business
+    anchor: "How to Get Private Investors for Your Business: A Guide"
+  - slug: investors-looking-for-projects-to-fund
+    anchor: What Investors Looking for Projects to Fund Actually Want
 externalLinks:
   - label: Guide to Finding Business Investors | CO
     url: https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors

@@ -12,7 +12,7 @@ tags:
   - largest venture capital firms by aum
   - biggest venture capital firms
   - seed funding
-image: ../../assets/articles/largest-venture-capital-firms-by-aum/hero.webp
+image: ../../assets/articles/largest-venture-capital-firms-by-aum.webp
 imageAlt: Founder reviewing a ranked spreadsheet of venture capital firms filtered by AUM, fund size, and sector on a laptop
 robots: index, follow
 schemaType: BlogPosting
@@ -38,16 +38,16 @@ faqs:
   - question: What does 'recent deployment' mean and why does it matter more than sector focus?
     answer: A firm's stated sector focus (on its website or in its LP pitch) describes where it wants to invest. Recent deployment — meaning deals closed in the last 12 to 18 months — describes where it is actually writing checks right now. Funds move through conviction cycles, and a firm that was active in fintech two years ago may have shifted focus toward AI infrastructure. Filtering for 2 to 3 investments in your sector in the past 18 months is a much stronger signal of fit than a sector label on a website.
 internalLinks:
-  - label: "Venture Capital: How VC Works and What Founders Must Know"
-    url: /articles/venture-capital/
-  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
-    url: /articles/biggest-venture-capital-firms/
-  - label: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
-    url: /articles/biggest-venture-capital-firms-in-silicon-valley/
-  - label: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
-    url: /articles/famous-venture-capital-firms/
-  - label: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
-    url: /articles/top-vc-firms/
+  - slug: venture-capital
+    anchor: "Venture Capital: How VC Works and What Founders Must Know"
+  - slug: biggest-venture-capital-firms
+    anchor: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+  - slug: biggest-venture-capital-firms-in-silicon-valley
+    anchor: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
+  - slug: famous-venture-capital-firms
+    anchor: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
+  - slug: top-vc-firms
+    anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
 externalLinks:
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/

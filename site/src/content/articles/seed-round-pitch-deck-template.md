@@ -11,7 +11,7 @@ tags:
   - seed pitch deck
   - fundraising
   - investor outreach
-image: ../../assets/articles/seed-round-pitch-deck-template/hero.png
+image: ../../assets/articles/seed-round-pitch-deck-template.png
 imageAlt: Twelve pitch deck slides laid out in sequence on a wooden desk, showing a structured seed round fundraising presentation
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: Do seed investors care about financial projections at this stage?
     answer: Yes, but not in the way founders often think. Investors know seed-stage projections are built on assumptions, not track records. What they're actually evaluating is whether your assumptions are grounded, whether you understand the key drivers of your business, and whether the opportunity is large enough to return the fund if things go well. A clean three-year model with a simple revenue build, a path to gross margin improvement, and a burn rate tied to your raise is far more credible than a dense spreadsheet that projects precision you don't yet have.
 internalLinks:
-  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-    url: /articles/pitch-deck/
-  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-    url: /articles/pre-seed-pitch-deck/
-  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
-    url: /articles/seed-funding-pitch-deck-faq/
-  - label: The Complete Seed Pitch Deck Guide for Raising Founders
-    url: /articles/seed-pitch-deck/
-  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
-    url: /articles/seed-pitch-deck-examples/
+  - slug: pitch-deck
+    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+  - slug: pre-seed-pitch-deck
+    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+  - slug: seed-funding-pitch-deck-faq
+    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+  - slug: seed-pitch-deck
+    anchor: The Complete Seed Pitch Deck Guide for Raising Founders
+  - slug: seed-pitch-deck-examples
+    anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
 externalLinks:
   - label: Pitch Deck Statistics | 22 Must Know Stats and Facts
     url: https://www.pitchdeckcreators.com/blog-posts/pitch-deck-statistics-22-must-know-facts

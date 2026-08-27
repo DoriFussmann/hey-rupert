@@ -11,7 +11,7 @@ tags:
   - venture capital
   - startup funding
   - investor outreach
-image: ../../assets/articles/angel-investors/hero.png
+image: ../../assets/articles/angel-investors.png
 imageAlt: Founder reviewing a structured investor pipeline on a laptop at a clean desk, with handwritten notes on investor names and stages
 robots: index, follow
 schemaType: BlogPosting
@@ -35,8 +35,8 @@ faqs:
   - question: When should I start building my investor list?
     answer: Start at least three to four months before you plan to close. Building a qualified list, mapping warm introduction paths, executing personalized outreach, following up through weeks of silence, and running parallel conversations takes considerably longer than most founders expect. Starting early also lets you have relationship-building conversations before you formally open the round, which is the highest-conversion sequence of all.
 internalLinks:
-  - label: "How to Get Investors for Your Business: A Founder's Guide"
-    url: /articles/how-to-get-investors-for-your-business/
+  - slug: how-to-get-investors-for-your-business
+    anchor: "How to Get Investors for Your Business: A Founder's Guide"
 externalLinks:
   - label: 100 Top Angel Investors List for Startups (2026)
     url: https://eqvista.com/top-100-active-angel-investors-list-for-startups/

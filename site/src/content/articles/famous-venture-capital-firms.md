@@ -11,7 +11,7 @@ tags:
   - fundraising
   - investor outreach
   - seed funding
-image: ../../assets/articles/famous-venture-capital-firms/hero.webp
+image: ../../assets/articles/famous-venture-capital-firms.webp
 imageAlt: Founder reviewing a list of top venture capital firms on a laptop in a modern co-working space
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: What is the difference between a VC's AUM and the size of the check they'll write?
     answer: AUM (assets under management) reflects the total capital a firm manages across all funds and vintages — it includes called capital, uncalled commitments, and sometimes growth vehicles. The check size a firm writes is determined by the specific fund's strategy, not its total AUM. A firm with $50B AUM may only write $500K–$2M Seed checks through a dedicated early-stage fund, while writing $50M+ growth checks through a separate vehicle. Always research the specific fund — its vintage, focus, and typical check size — not just the firm's headline AUM number.
 internalLinks:
-  - label: "Venture Capital: How VC Works and What Founders Must Know"
-    url: /articles/venture-capital/
-  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
-    url: /articles/biggest-venture-capital-firms/
-  - label: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
-    url: /articles/biggest-venture-capital-firms-in-silicon-valley/
-  - label: How to Use Largest VC Firms by AUM to Build Your Target List
-    url: /articles/largest-venture-capital-firms-by-aum/
-  - label: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
-    url: /articles/top-vc-firms/
+  - slug: venture-capital
+    anchor: "Venture Capital: How VC Works and What Founders Must Know"
+  - slug: biggest-venture-capital-firms
+    anchor: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+  - slug: biggest-venture-capital-firms-in-silicon-valley
+    anchor: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
+  - slug: largest-venture-capital-firms-by-aum
+    anchor: How to Use Largest VC Firms by AUM to Build Your Target List
+  - slug: top-vc-firms
+    anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
 externalLinks:
   - label: "Top VC Firms 2026: 18 Largest Venture Capital Firms by AUM"
     url: https://dealroom.net/blog/top-venture-capital-firms

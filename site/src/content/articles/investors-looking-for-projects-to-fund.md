@@ -11,7 +11,7 @@ tags:
   - investor criteria
   - investors looking for projects to fund
   - startup funding
-image: ../../assets/articles/investors-looking-for-projects-to-fund/hero.png
+image: ../../assets/articles/investors-looking-for-projects-to-fund.png
 imageAlt: A founder presenting a pitch deck to a panel of investors in a modern meeting room, with charts and market data visible on the screen
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: Why do investors say they back founders for 7–10 years?
     answer: Venture-backed companies typically take seven to ten years from initial investment to a meaningful liquidity event. That means an investor writing a check at seed is committing to a decade-long working relationship. Coachability and communication style matter as much as the business fundamentals because investors need to trust that a founder will be transparent through hard periods, receptive to strategic input, and capable of growing as a leader as the company scales — qualities that compound in value over time.
 internalLinks:
-  - label: "How to Find Investors for Your Startup: The Complete Guide"
-    url: /articles/angel-investors/
-  - label: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
-    url: /articles/angel-investors-vs-venture-capital/
-  - label: "How to Get Investors for Your Business: A Founder's Guide"
-    url: /articles/how-to-get-investors-for-your-business/
-  - label: "Get Investors for Your Business Idea: Readiness Checklist"
-    url: /articles/how-to-get-investors-for-your-business-idea/
-  - label: "How to Get Private Investors for Your Business: A Guide"
-    url: /articles/how-to-get-private-investors-for-your-business/
+  - slug: angel-investors
+    anchor: "How to Find Investors for Your Startup: The Complete Guide"
+  - slug: angel-investors-vs-venture-capital
+    anchor: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
+  - slug: how-to-get-investors-for-your-business
+    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-get-investors-for-your-business-idea
+    anchor: "Get Investors for Your Business Idea: Readiness Checklist"
+  - slug: how-to-get-private-investors-for-your-business
+    anchor: "How to Get Private Investors for Your Business: A Guide"
 externalLinks:
   - label: OpenVC | Find investors for your startup — raise for free.
     url: https://www.openvc.app/

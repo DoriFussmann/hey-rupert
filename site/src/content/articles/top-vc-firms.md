@@ -11,7 +11,7 @@ tags:
   - top vc firms
   - investor outreach
   - seed funding
-image: ../../assets/articles/top-vc-firms/hero.webp
+image: ../../assets/articles/top-vc-firms.webp
 imageAlt: A founder standing at a fork in the road, one path leading to a towering glass skyscraper representing a mega-fund, the other to a smaller specialist office building
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: What if I'm raising outside of Silicon Valley — does the Tier 1 vs. specialist framework still apply?
     answer: Yes, but the weighting shifts. Many US mega-funds either require or strongly prefer a US operational presence, and their partner networks are concentrated around the Bay Area and New York. For founders based in Europe, Southeast Asia, or India, regional specialists — with local networks, currency familiarity, and existing portfolio companies in your ecosystem — often move faster and add more operational value than a US mega-fund with no local presence.
 internalLinks:
-  - label: "Venture Capital: How VC Works and What Founders Must Know"
-    url: /articles/venture-capital/
-  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
-    url: /articles/biggest-venture-capital-firms/
-  - label: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
-    url: /articles/biggest-venture-capital-firms-in-silicon-valley/
-  - label: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
-    url: /articles/famous-venture-capital-firms/
-  - label: How to Use Largest VC Firms by AUM to Build Your Target List
-    url: /articles/largest-venture-capital-firms-by-aum/
+  - slug: venture-capital
+    anchor: "Venture Capital: How VC Works and What Founders Must Know"
+  - slug: biggest-venture-capital-firms
+    anchor: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+  - slug: biggest-venture-capital-firms-in-silicon-valley
+    anchor: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
+  - slug: famous-venture-capital-firms
+    anchor: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
+  - slug: largest-venture-capital-firms-by-aum
+    anchor: How to Use Largest VC Firms by AUM to Build Your Target List
 externalLinks:
   - label: NVCA Yearbook - National Venture Capital Association
     url: https://nvca.org/nvca-yearbook/

@@ -11,7 +11,7 @@ tags:
   - investor outreach
   - fundraising
   - startup funding
-image: ../../assets/articles/seed-funding-pitch-deck-faq/hero.png
+image: ../../assets/articles/seed-funding-pitch-deck-faq.png
 imageAlt: Founder reviewing a printed seed pitch deck spread across a desk, annotating slides with sticky notes before sending to investors
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: Is it okay to send the same deck cold and in a meeting?
     answer: They serve different purposes and ideally should not be identical. A cold-outreach deck must stand alone — it gets read without you in the room, so every slide must be self-explanatory. A meeting deck is meant to be talked over, which means it can be sparser and more visual, with you providing the narrative verbally. Many founders build one deck but adjust density and copy length depending on whether it will be sent asynchronously or presented live.
 internalLinks:
-  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-    url: /articles/pitch-deck/
-  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-    url: /articles/pre-seed-pitch-deck/
-  - label: The Complete Seed Pitch Deck Guide for Raising Founders
-    url: /articles/seed-pitch-deck/
-  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
-    url: /articles/seed-pitch-deck-examples/
-  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
-    url: /articles/seed-round-pitch-deck-template/
+  - slug: pitch-deck
+    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+  - slug: pre-seed-pitch-deck
+    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+  - slug: seed-pitch-deck
+    anchor: The Complete Seed Pitch Deck Guide for Raising Founders
+  - slug: seed-pitch-deck-examples
+    anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+  - slug: seed-round-pitch-deck-template
+    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
 externalLinks:
   - label: The Best Startup Pitch Deck Examples - Powderkeg
     url: https://powderkeg.com/pitch-deck-examples/

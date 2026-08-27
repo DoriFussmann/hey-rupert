@@ -11,7 +11,7 @@ tags:
   - VC funding
   - founder guide
   - funding stages
-image: ../../assets/articles/venture-capital/hero.webp
+image: ../../assets/articles/venture-capital.webp
 imageAlt: Founder reviewing a venture capital term sheet at a desk with charts and investor pitch materials spread across the table
 robots: index, follow
 schemaType: BlogPosting
@@ -34,8 +34,8 @@ faqs:
   - question: Is it possible to raise VC without a warm introduction?
     answer: Cold outreach to VCs does occasionally result in investment, but the conversion rates are dramatically lower than warm introductions. Data consistently shows warm introductions convert to a first meeting at 20–30% rates, while cold emails convert at 1–2%. That gap exists because investors receive hundreds of inbound pitches and use trust signals — an introduction from a portfolio founder, a co-investor, or a respected operator — as a filter before evaluating business quality. Cold outreach is not futile, especially if well-researched and highly personalized, but for high-priority target firms, sourcing a credible warm introduction path is almost always worth the investment of time and network capital.
 internalLinks:
-  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
-    url: /articles/biggest-venture-capital-firms/
+  - slug: biggest-venture-capital-firms
+    anchor: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
 externalLinks:
   - label: Data & Statistics - Venture Capital & Private Equity
     url: https://guides.lib.uchicago.edu/venture/data

@@ -11,7 +11,7 @@ tags:
   - silicon valley
   - seed funding
   - series a
-image: ../../assets/articles/biggest-venture-capital-firms-in-silicon-valley/hero.webp
+image: ../../assets/articles/biggest-venture-capital-firms-in-silicon-valley.webp
 imageAlt: Sand Hill Road in Menlo Park at dusk with venture capital firm office buildings lining the road
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: How long does it typically take to close a Seed or Series A round with a major Silicon Valley VC?
     answer: From first meeting to term sheet typically runs four to ten weeks at a top Bay Area firm when a founder has a warm introduction and a competitive process underway. Total close time — including legal and due diligence — adds another three to six weeks. Founders who run a compressed, time-boxed process (six to eight weeks of simultaneous first meetings) tend to close faster and on better terms than those who pitch sequentially.
 internalLinks:
-  - label: "Venture Capital: How VC Works and What Founders Must Know"
-    url: /articles/venture-capital/
-  - label: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
-    url: /articles/biggest-venture-capital-firms/
-  - label: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
-    url: /articles/famous-venture-capital-firms/
-  - label: How to Use Largest VC Firms by AUM to Build Your Target List
-    url: /articles/largest-venture-capital-firms-by-aum/
-  - label: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
-    url: /articles/top-vc-firms/
+  - slug: venture-capital
+    anchor: "Venture Capital: How VC Works and What Founders Must Know"
+  - slug: biggest-venture-capital-firms
+    anchor: "The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector"
+  - slug: famous-venture-capital-firms
+    anchor: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
+  - slug: largest-venture-capital-firms-by-aum
+    anchor: How to Use Largest VC Firms by AUM to Build Your Target List
+  - slug: top-vc-firms
+    anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
 externalLinks:
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/

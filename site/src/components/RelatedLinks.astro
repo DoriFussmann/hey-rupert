@@ -2,7 +2,7 @@
 import { sitePath } from "../lib/url";
 
 interface Props {
-  links: { label: string; url: string }[];
+  links: { slug: string; anchor: string }[];
 }
 
 const { links } = Astro.props;
@@ -16,11 +16,11 @@ const { links } = Astro.props;
         <li class="border-b border-border">
           <a
             class="flex min-h-11 items-center justify-between gap-md py-md font-medium no-underline"
-            href={link.url.startsWith("http") ? link.url : sitePath(link.url)}
+            href={sitePath(`/articles/${link.slug}/`)}
             target="_blank"
             rel="noopener noreferrer"
           >
-            {link.label}
+            {link.anchor}
             <svg
               xmlns="http://www.w3.org/2000/svg"
               width="20"

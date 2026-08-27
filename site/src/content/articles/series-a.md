@@ -11,7 +11,7 @@ tags:
   - venture capital
   - fundraising
   - investor outreach
-image: ../../assets/articles/series-a/hero.png
+image: ../../assets/articles/series-a.png
 imageAlt: Founder reviewing Series A term sheet documents and a fundraising pipeline dashboard at a startup office desk
 robots: index, follow
 schemaType: BlogPosting

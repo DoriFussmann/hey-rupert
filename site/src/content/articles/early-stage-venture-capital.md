@@ -11,7 +11,7 @@ tags:
   - early-stage venture capital
   - startup funding stages
   - investor outreach
-image: ../../assets/articles/early-stage-venture-capital/hero.png
+image: ../../assets/articles/early-stage-venture-capital.png
 imageAlt: Founder at a whiteboard mapping out a tiered early-stage venture capital investor list with sticky notes showing fund sizes and stages
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: How important is fund cycle timing when approaching early-stage VCs?
     answer: It matters more than most founders realise. A fund that closed its latest vehicle two years ago is in active deployment mode and motivated to write new checks. A fund that raised three or four years ago may be almost fully deployed and prioritising follow-on reserves for its existing portfolio. You can often gauge this by checking when a fund announced its latest close and how many new portfolio companies they've added in the past twelve months. Approaching a fund at the right moment in its cycle meaningfully improves your odds.
 internalLinks:
-  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
-    url: /articles/startup-funding/
-  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
-    url: /articles/startup-funding-rounds-faq/
-  - label: "Startup Funding Stages: The Definitive Guide for Founders"
-    url: /articles/startup-funding-stages/
-  - label: How to Diagnose Your Startup Funding Stage and Raise Right
-    url: /articles/startup-funding-stages-explained/
-  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
-    url: /articles/types-of-funding-for-startups/
+  - slug: startup-funding
+    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
+  - slug: startup-funding-rounds-faq
+    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+  - slug: startup-funding-stages
+    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
+  - slug: startup-funding-stages-explained
+    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+  - slug: types-of-funding-for-startups
+    anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
 externalLinks:
   - label: "Early Stage Venture Capital: A Comprehensive Guide"
     url: https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/early-stage-venture-capital

@@ -11,7 +11,7 @@ tags:
   - fundraising
   - venture capital
   - seed funding
-image: ../../assets/articles/startup-funding-stages/hero.png
+image: ../../assets/articles/startup-funding-stages.png
 imageAlt: A founder standing at a whiteboard mapping out the progression from pre-seed through Series C funding rounds with investor icons and milestone markers
 robots: index, follow
 schemaType: BlogPosting
@@ -36,16 +36,16 @@ faqs:
   - question: How long does it realistically take to move from seed to Series A?
     answer: The median time from seed close to Series A has stretched to over 24 months in recent cycles, up from around 18 months in 2020. Some founders take 30 months or more. This means planning a seed round runway of 24–30 months — not 18 — and ensuring your milestone targets (typically $1M–$3M ARR for B2B SaaS) are achievable within that window. Running out of cash six months short of the number that would have unlocked Series A is one of the most common and avoidable fundraising failures.
 internalLinks:
-  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
-    url: /articles/startup-funding/
-  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
-    url: /articles/early-stage-venture-capital/
-  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
-    url: /articles/startup-funding-rounds-faq/
-  - label: How to Diagnose Your Startup Funding Stage and Raise Right
-    url: /articles/startup-funding-stages-explained/
-  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
-    url: /articles/types-of-funding-for-startups/
+  - slug: startup-funding
+    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
+  - slug: early-stage-venture-capital
+    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
+  - slug: startup-funding-rounds-faq
+    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+  - slug: startup-funding-stages-explained
+    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+  - slug: types-of-funding-for-startups
+    anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
 ---
 ## What Startup Funding Stages Actually Are — and Why They Matter
 

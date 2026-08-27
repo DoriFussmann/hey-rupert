@@ -11,7 +11,7 @@ tags:
   - SAFE notes
   - venture debt
   - startup funding stages
-image: ../../assets/articles/types-of-funding-for-startups/hero.png
+image: ../../assets/articles/types-of-funding-for-startups.png
 imageAlt: A founder studying a side-by-side comparison chart of startup funding instruments including equity, SAFEs, convertible notes, and venture debt on a whiteboard
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: Is bootstrapping still a realistic path in 2026?
     answer: "Yes, particularly for B2B SaaS, niche software, and service-backed tech companies with clear customer demand and early revenue potential. Cheaper tooling, AI-assisted development, and remote teams have meaningfully reduced the capital required to reach an initial product and first customers. Bootstrapping also has a strategic fundraising benefit: investors view a founder who built real traction without external capital as lower-risk, which can translate into better terms if and when you do choose to raise. The trade-off is speed — in winner-take-all markets requiring rapid scaling, bootstrapping is rarely viable."
 internalLinks:
-  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
-    url: /articles/startup-funding/
-  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
-    url: /articles/early-stage-venture-capital/
-  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
-    url: /articles/startup-funding-rounds-faq/
-  - label: "Startup Funding Stages: The Definitive Guide for Founders"
-    url: /articles/startup-funding-stages/
-  - label: How to Diagnose Your Startup Funding Stage and Raise Right
-    url: /articles/startup-funding-stages-explained/
+  - slug: startup-funding
+    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
+  - slug: early-stage-venture-capital
+    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
+  - slug: startup-funding-rounds-faq
+    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+  - slug: startup-funding-stages
+    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
+  - slug: startup-funding-stages-explained
+    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
 externalLinks:
   - label: "6 Types of Funding for Startups: Definitive Guide"
     url: https://foundersnetwork.com/types-of-funding-for-startups/

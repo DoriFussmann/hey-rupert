@@ -11,7 +11,7 @@ tags:
   - VC firms
   - startup fundraising
   - investor research
-image: ../../assets/articles/biggest-venture-capital-firms/hero.webp
+image: ../../assets/articles/biggest-venture-capital-firms.webp
 imageAlt: Large modern office tower at dusk with the logos of major VC firms displayed on illuminated signage, representing the scale and concentration of the biggest venture capital firms in 2026
 robots: index, follow
 schemaType: BlogPosting
@@ -36,16 +36,16 @@ faqs:
   - question: Why do European and Indian VC firms often not appear in AUM rankings?
     answer: Most global AUM rankings are derived from SEC Form ADV filings, which only US-registered investment advisers are required to submit. European firms like Index Ventures, Atomico, and Balderton Capital, and Asian firms like Peak XV Partners, typically don't file Form ADV, so their capital is systematically excluded from rankings that rely on US regulatory data. Founders should treat those rankings as US-biased and consult supplementary sources when evaluating international investors.
 internalLinks:
-  - label: "Venture Capital: How VC Works and What Founders Must Know"
-    url: /articles/venture-capital/
-  - label: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
-    url: /articles/biggest-venture-capital-firms-in-silicon-valley/
-  - label: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
-    url: /articles/famous-venture-capital-firms/
-  - label: How to Use Largest VC Firms by AUM to Build Your Target List
-    url: /articles/largest-venture-capital-firms-by-aum/
-  - label: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
-    url: /articles/top-vc-firms/
+  - slug: venture-capital
+    anchor: "Venture Capital: How VC Works and What Founders Must Know"
+  - slug: biggest-venture-capital-firms-in-silicon-valley
+    anchor: "Biggest Silicon Valley VC Firms: Active at Seed and Series A"
+  - slug: famous-venture-capital-firms
+    anchor: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
+  - slug: largest-venture-capital-firms-by-aum
+    anchor: How to Use Largest VC Firms by AUM to Build Your Target List
+  - slug: top-vc-firms
+    anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
 externalLinks:
   - label: Global venture capital
     url: https://dealroom.co/guides/global

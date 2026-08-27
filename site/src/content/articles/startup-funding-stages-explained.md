@@ -11,7 +11,7 @@ tags:
   - fundraising
   - venture capital
   - Series A
-image: ../../assets/articles/startup-funding-stages-explained/hero.png
+image: ../../assets/articles/startup-funding-stages-explained.png
 imageAlt: Founder reviewing a whiteboard mapping startup funding stages from pre-seed through Series A with traction benchmarks and investor types
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: What is the biggest mistake founders make when diagnosing their funding stage?
     answer: The most common mistake is anchoring to what the stage was called, not what the stage actually requires today. Benchmarks have moved significantly since 2021. A company that would have raised a Series A at $500K ARR four years ago needs $1.5M–$2M ARR minimum in 2026. Founders who use outdated benchmarks to time their raise end up launching too early, collecting rejections that damage momentum, and often accepting worse terms on a bridge than they would have gotten on a full round if they had waited another two or three quarters.
 internalLinks:
-  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
-    url: /articles/startup-funding/
-  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
-    url: /articles/early-stage-venture-capital/
-  - label: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
-    url: /articles/startup-funding-rounds-faq/
-  - label: "Startup Funding Stages: The Definitive Guide for Founders"
-    url: /articles/startup-funding-stages/
-  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
-    url: /articles/types-of-funding-for-startups/
+  - slug: startup-funding
+    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
+  - slug: early-stage-venture-capital
+    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
+  - slug: startup-funding-rounds-faq
+    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
+  - slug: startup-funding-stages
+    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
+  - slug: types-of-funding-for-startups
+    anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
 externalLinks:
   - label: A Guide to Different Stages of Funding for Startups
     url: https://www.startups.com/articles/different-stages-of-funding-for-startups

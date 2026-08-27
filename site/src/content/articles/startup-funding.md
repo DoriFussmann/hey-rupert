@@ -11,7 +11,7 @@ tags:
   - venture capital
   - seed funding
   - Series A
-image: ../../assets/articles/startup-funding/hero.png
+image: ../../assets/articles/startup-funding.png
 imageAlt: Founder reviewing a structured fundraising pipeline on a laptop, surrounded by investor notes and a cap table spreadsheet on a desk
 robots: index, follow
 schemaType: BlogPosting
@@ -34,8 +34,8 @@ faqs:
   - question: What is the most common reason seed-funded startups fail to raise a Series A?
     answer: "The most common failure is structural, not product-related: founders reach Series A conversations without enough ARR, without sufficient revenue growth rate, or having spent too long at seed without building relationships with Series A investors who will eventually lead their round. The seed-to-Series A graduation rate has fallen sharply — from around 50% in the 2018–2021 era to roughly 35–38% today on an extended timeline. Most founders who do not make it had a fundable product; they ran an undisciplined process, targeted the wrong investors, or failed to build investor relationships before they needed a term sheet."
 internalLinks:
-  - label: "Startup Funding Stages: The Definitive Guide for Founders"
-    url: /articles/startup-funding-stages/
+  - slug: startup-funding-stages
+    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
     url: https://carta.com/learn/startups/fundraising/

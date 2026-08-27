@@ -11,7 +11,7 @@ tags:
   - investor outreach
   - how to get private investors for your business
   - startup funding
-image: ../../assets/articles/how-to-get-private-investors-for-your-business/hero.png
+image: ../../assets/articles/how-to-get-private-investors-for-your-business.png
 imageAlt: Founder reviewing a tiered investor target list on a laptop at a desk, preparing a personalised outreach campaign for private investors
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: Do I need a lead investor before approaching other private investors?
     answer: Having a lead investor — someone willing to anchor the round and set terms — makes it considerably easier to close other private backers. Angels and family offices are often more comfortable committing once a credible lead has done diligence and set a price. That said, many angel rounds close without a formal lead; in those cases, a signed first commitment from any credible investor creates the social proof that moves others off the fence.
 internalLinks:
-  - label: "How to Find Investors for Your Startup: The Complete Guide"
-    url: /articles/angel-investors/
-  - label: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
-    url: /articles/angel-investors-vs-venture-capital/
-  - label: "How to Get Investors for Your Business: A Founder's Guide"
-    url: /articles/how-to-get-investors-for-your-business/
-  - label: "Get Investors for Your Business Idea: Readiness Checklist"
-    url: /articles/how-to-get-investors-for-your-business-idea/
-  - label: What Investors Looking for Projects to Fund Actually Want
-    url: /articles/investors-looking-for-projects-to-fund/
+  - slug: angel-investors
+    anchor: "How to Find Investors for Your Startup: The Complete Guide"
+  - slug: angel-investors-vs-venture-capital
+    anchor: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
+  - slug: how-to-get-investors-for-your-business
+    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-get-investors-for-your-business-idea
+    anchor: "Get Investors for Your Business Idea: Readiness Checklist"
+  - slug: investors-looking-for-projects-to-fund
+    anchor: What Investors Looking for Projects to Fund Actually Want
 externalLinks:
   - label: How to Get Investors for Your Startup Business
     url: https://www.hubspot.com/startups/fundraising/how-to-get-investors-for-startup

@@ -11,7 +11,7 @@ tags:
   - fundraising
   - seed pitch deck
   - investor outreach
-image: ../../assets/articles/seed-pitch-deck/hero.png
+image: ../../assets/articles/seed-pitch-deck.png
 imageAlt: Founder reviewing a seed pitch deck on a laptop at a desk, with investor feedback notes beside it
 robots: index, follow
 schemaType: BlogPosting
@@ -36,16 +36,16 @@ faqs:
   - question: What traction does a seed investor actually want to see in 2026?
     answer: "The bar has risen. Many seed investors in 2026 expect $300K–$500K in ARR for B2B SaaS companies, alongside evidence of efficient growth and early unit economics. For consumer or marketplace businesses, strong retention and month-over-month user growth can substitute for revenue. If you are pre-revenue, the traction slide should show concrete validation signals: signed LOIs, design partner agreements, waitlist-to-customer conversion rates, or pilot data with named customers — not an unvalidated projection."
 internalLinks:
-  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-    url: /articles/pitch-deck/
-  - label: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-    url: /articles/pre-seed-pitch-deck/
-  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
-    url: /articles/seed-funding-pitch-deck-faq/
-  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
-    url: /articles/seed-pitch-deck-examples/
-  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
-    url: /articles/seed-round-pitch-deck-template/
+  - slug: pitch-deck
+    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+  - slug: pre-seed-pitch-deck
+    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
+  - slug: seed-funding-pitch-deck-faq
+    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+  - slug: seed-pitch-deck-examples
+    anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+  - slug: seed-round-pitch-deck-template
+    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
 externalLinks:
   - label: "The Perfect Seed Pitch Deck: 10 Slides You Need to Win ..."
     url: https://www.reddit.com/r/startups/comments/1lcyta0/the_perfect_seed_pitch_deck_10_slides_you_need_to/

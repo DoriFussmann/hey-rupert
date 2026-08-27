@@ -12,7 +12,7 @@ tags:
   - fundraising
   - venture capital
   - founder equity
-image: ../../assets/articles/startup-funding-rounds-faq/hero.png
+image: ../../assets/articles/startup-funding-rounds-faq.png
 imageAlt: Founder sitting at a desk reviewing a fundraising roadmap with funding stage milestones and investor pipeline notes laid out across multiple screens
 robots: index, follow
 schemaType: BlogPosting
@@ -38,16 +38,16 @@ faqs:
   - question: What is a 'down round' and how do I avoid one?
     answer: A down round is when you raise at a lower valuation than your previous round. It signals distress, triggers anti-dilution provisions that punish existing shareholders, and complicates future fundraising. The best prevention is setting a realistic valuation in your current round — one that your next-round milestones can credibly exceed — and maintaining enough runway to avoid raising under pressure.
 internalLinks:
-  - label: "Startup Funding: A Founder's Full Guide to Raising Capital"
-    url: /articles/startup-funding/
-  - label: "Early-Stage Venture Capital: What It Is and How to Access It"
-    url: /articles/early-stage-venture-capital/
-  - label: "Startup Funding Stages: The Definitive Guide for Founders"
-    url: /articles/startup-funding-stages/
-  - label: How to Diagnose Your Startup Funding Stage and Raise Right
-    url: /articles/startup-funding-stages-explained/
-  - label: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
-    url: /articles/types-of-funding-for-startups/
+  - slug: startup-funding
+    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
+  - slug: early-stage-venture-capital
+    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
+  - slug: startup-funding-stages
+    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
+  - slug: startup-funding-stages-explained
+    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+  - slug: types-of-funding-for-startups
+    anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
 externalLinks:
   - label: "Startup Funding Rounds: A Complete Guide"
     url: https://www.thatround.com/startup-funding-rounds-a-complete-guide

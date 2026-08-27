@@ -11,7 +11,7 @@ tags:
   - pre-seed pitch deck
   - seed funding
   - investor outreach
-image: ../../assets/articles/pre-seed-pitch-deck/hero.png
+image: ../../assets/articles/pre-seed-pitch-deck.png
 imageAlt: Side-by-side comparison of a pre-seed and seed pitch deck open on a desk, showing different slide structures and evidence levels
 robots: index, follow
 schemaType: BlogPosting
@@ -37,16 +37,16 @@ faqs:
   - question: How long should a pre-seed pitch deck be compared to a seed deck?
     answer: "Pre-seed decks typically run 8–12 slides and are deliberately lean — every extra slide is a liability when you have limited evidence to fill it with. Seed decks run 10–14 slides and can justify additional depth on traction, unit economics, and go-to-market because the data exists to support it. Both stages reward concision: investors at both levels spend under four minutes on an initial review, so clarity and narrative momentum matter more than comprehensiveness."
 internalLinks:
-  - label: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-    url: /articles/pitch-deck/
-  - label: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
-    url: /articles/seed-funding-pitch-deck-faq/
-  - label: The Complete Seed Pitch Deck Guide for Raising Founders
-    url: /articles/seed-pitch-deck/
-  - label: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
-    url: /articles/seed-pitch-deck-examples/
-  - label: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
-    url: /articles/seed-round-pitch-deck-template/
+  - slug: pitch-deck
+    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+  - slug: seed-funding-pitch-deck-faq
+    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+  - slug: seed-pitch-deck
+    anchor: The Complete Seed Pitch Deck Guide for Raising Founders
+  - slug: seed-pitch-deck-examples
+    anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+  - slug: seed-round-pitch-deck-template
+    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
 externalLinks:
   - label: How to build your seed round pitch deck
     url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
