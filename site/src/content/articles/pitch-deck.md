@@ -22,7 +22,7 @@ draft: false
 pillarKeyword: pitch deck
 articleType: comprehensive
 targetKeyword: pitch deck
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - pitch deck
 faqs:
@@ -178,14 +178,7 @@ The personalization dimension is particularly undervalued. An investor who funds
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Through the first half of 2026, venture capital reached record investment levels, with US startups raising more than $400 billion — surpassing every previous full-year total on record — though the overwhelming majority of that capital flowed to AI companies and financings of $100 million or more.
- For early-stage founders, that concentration makes the deck's job harder, not easier: 
-AI-generated pitches now flood investor inboxes, and while $91 billion was raised in Q2 2025 alone, a third of all funding went to the largest companies, leaving early-stage founders competing for a thinning slice of attention.
-
-Investors expect further increases in venture funding concentrated in AI, robotics, and defense tech
-, while 
-funded AI/SaaS decks in this cycle have largely abandoned top-down TAM framing in favor of bottom-up monetization wedges, with AI startups expected to prove a proprietary technical moat rather than a general AI application.
- The practical implication for most founders is that the bar for what constitutes a "credible" deck is rising at exactly the same time that the volume of competing decks is growing — making narrative precision, thesis-matched outreach, and disciplined pipeline management more important than ever.
+Through the first half of 2026, global venture funding hit a record $510 billion — already surpassing the entire $440 billion invested in all of 2025 — but the headline obscures a historic concentration: OpenAI and Anthropic alone absorbed $217 billion, or 43% of every dollar deployed worldwide, while AI-focused companies captured more than 70% of Q2 global capital, up from roughly 50% a year earlier. For early-stage founders, the squeeze is now quantified: seed deal volume fell 27% in North America's first half even as total dollars broke records, and KPMG's Q2 2026 Venture Pulse notes that early-stage activity remains a key watch area — with potential Anthropic and OpenAI IPOs in H2 potentially recycling capital back into the ecosystem. Funded AI decks continue to require a demonstrable proprietary moat over generic AI application, and investors are explicitly asking not "could this work?" but "does this already work — can you prove it?" — raising the traction bar for every slide in the deck.
 <!-- WHERE-THINGS-STAND:END -->
 
 ---

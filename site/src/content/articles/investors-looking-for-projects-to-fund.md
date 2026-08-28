@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: faq
 targetKeyword: investors looking for projects to fund
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - investors looking for projects to fund
   - how to get investors for your business
@@ -167,12 +167,7 @@ This is where Rupert's approach is designed to make a material difference. Ruper
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The most recent data on global venture activity paints a picture that is directly relevant to founders assessing their fundability right now. 
-In Q2 2026 alone, investors deployed $205 billion into more than 5,000 startups globally — the second-largest quarter on record, following the historic $305 billion peak in Q1.
-
-While overall investment dollars remained steady, the number of individual deals fell to its lowest point in ten years, signalling a clear move away from volume-driven activity. Investors appear increasingly focused on quality and proven potential rather than spreading capital across many early-stage opportunities. More than 70% of all global startup capital in Q2 was invested into AI-focused enterprises, a steep climb from just under 50% a year ago
- — a concentration that is reshaping the traction and defensibility expectations investors apply even to non-AI companies, as those without an AI angle face a structurally tighter market. 
-Many generalist VC funds are becoming more cautious, while highly specialised investors continue focusing on sectors where they possess deep expertise and strong networks — making founder-market fit even more important than before.
+The most recent data on global venture activity paints a picture that is directly relevant to founders assessing their fundability right now. In Q2 2026, KPMG's Venture Pulse recorded $227.4 billion deployed globally — the second-strongest quarter ever — while deal volume fell to 8,467, a level not seen since Q3 2017. Combined with Q1's $305 billion peak, H1 2026 already totals $560 billion, higher than every full year on record except 2021. The concentration beneath those headlines is stark: mega-rounds claimed 81% of all capital, and new unicorn formation hit a six-quarter low. AI's share of global venture dollars exceeded 70% in Q2 — and reached 86% in the US alone, per PitchBook — up from roughly 50% a year ago. First-time fund formation is meanwhile on pace for its lowest year since 2016, narrowing the pool of investors actively backing early-stage, non-consensus companies. For founders without an AI angle, the fundraising environment remains structurally tighter despite the record headline numbers.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

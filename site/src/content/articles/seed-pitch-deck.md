@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: comprehensive
 targetKeyword: seed pitch deck
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - seed pitch deck
   - pitch deck
@@ -216,15 +216,7 @@ A seed pitch deck earns you the right to a meeting. A disciplined outreach proce
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The seed funding environment as of mid-2026 has largely stabilised around a higher evidence bar, with expectations now closer to what Series A demanded just a few years ago. 
-The venture market in 2025 was the third-largest year in history by invested capital, and that strength has carried into 2026 — though a large share of all invested capital went to a relatively small group of mega-rounds. In 2026, there are fewer net-new seed deals, but the teams that clear the bar often raise bigger rounds with more substantial lead investors.
-
-The median seed round per Carta data reached a record $24M post-money valuation in Q4 2025
-, with round sizes of $2.5M–$3.5M now typical for well-positioned founders. 
-In 2025, founders often heard conflicting guidance on what metrics they needed; in 2026, there is tighter consensus around ARR ranges, gross margin expectations, and efficiency benchmarks at seed
- — making it easier for prepared founders to calibrate their deck's traction claims to investor expectations. Deck review times have not recovered: 
-VCs spend an average of three minutes and forty-four seconds reviewing seed pitch decks
-, and the volume of AI-generated submissions continues to compress that window further, reinforcing the importance of front-loading your strongest proof point rather than building to it.
+The seed funding environment as of mid-2026 has stabilised around a higher evidence bar, with expectations now closer to what Series A demanded just a few years ago. Global venture funding hit a record $510 billion in H1 2026 — already exceeding all of 2025 — but the headline obscures a stark divide: megadeals of $100M or more captured 87.5% of H1 capital, and AI accounted for 86% of all venture dollars per the Q2 2026 PitchBook-NVCA Venture Monitor. Seed's share of global venture dollars fell from 11.3% to 5.9% year-over-year even as seed dollars themselves rose, and first-time fund formation is on pace for its lowest year since 2016 — thinning the pool of investors most likely to write early checks. The median seed post-money valuation holds at a record $24M (Carta), with round sizes of $3–3.2M now typical, but an AI premium of roughly 42% means non-AI B2B teams are clearing lower bars. Deck review times remain under 3.5 minutes, reinforcing the need to front-load your strongest proof point.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

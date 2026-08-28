@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: comparison
 targetKeyword: pre seed pitch deck
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - pre seed pitch deck
   - seed pitch deck
@@ -161,17 +161,7 @@ If your deck is ready but your pipeline isn't, the problem isn't the slides — 
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The early-stage funding environment entering the second half of 2026 reflects a market that has bifurcated sharply between founders with evidence and those without. 
-The median seed post-money valuation hit a record $24M in Q4 2025, up from $18M a year earlier
- — driven largely by AI-related premiums — while 
-seed deals average $3.2M per the latest Carta data, roughly flat versus the last two years.
- At the pre-seed level, 
-the market tightened considerably coming into 2026, with pre-seed investment falling 25% in Q2 2025 in terms of cash raised, dropping from $1.1 billion in Q1 to $822 million in Q2.
-
-Fewer total instruments were issued in 2025, but the dollars invested barely moved — investors are writing larger checks into fewer, higher-conviction companies.
- The practical implication for founders is that the bar for what constitutes a credible pre-seed deck is quietly rising: 
-almost half of founders who secured pre-seed financing had already launched products, with another 38% in alpha or beta, meaning pure idea-stage raises are increasingly rare outside repeat founders.
- Against this backdrop, the quality and stage-appropriateness of a pitch deck has become even more decisive — a deck misaligned with investor expectations at this moment does not just lose meetings, it forfeits the narrowing window.
+The early-stage funding environment in H1 2026 reflects a market that has bifurcated sharply between founders with evidence and those without. Carta's Q2 2026 State of Pre-Seed report confirms 2026 is already slightly ahead of 2025 in total pre-seed cash invested during the first half of the year, with roughly 3,000 U.S. startups raising over $2.3 billion in Q1 alone. But the headline recovery masks a structural barbell: average instrument size hit a record $276,000 in Q2 as more dollars flowed into fewer companies, while the typical pre-seed round is simultaneously getting smaller. AI is the primary driver — capturing 49% of all pre-seed dollars in H1 2026 — and at the 90th percentile, SAFE valuation caps on rounds above $2.5M are reaching $100 million. The conversion rate from seed to Series A has meanwhile dropped from roughly 50% to 38%. For founders, the practical implication is unchanged but more acute: a pre-seed pitch deck must now navigate a market where capital concentration is accelerating, AI commands a valuation premium that non-AI decks cannot assume, and geographic competition is shifting — Texas overtook New York for pre-seed investment in Q2 2026.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

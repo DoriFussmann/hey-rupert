@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: howto
 targetKeyword: how to get private investors for your business
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - how to get private investors for your business
   - how to get investors for your business
@@ -140,13 +140,7 @@ Rupert is built for precisely this moment. Every outreach campaign is researched
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The private investor market entered the second half of 2026 in noticeably stronger shape than the prior two years. 
-New data published in July 2026 reveals a resurgent angel market, with the 2025 angel market showing the first signs of a disciplined recovery following several years of post-pandemic correction — ACA-reported angel investment increased 12% year over year, rising from $437 million in 2024 to $491.3 million in 2025.
-
-Angel groups deployed more capital per investment and per company, signalling increased selectivity and conviction, with nearly two-thirds of reporting angel groups completing at least one AI-related investment during the year — and angel groups are now writing larger checks while funding fewer companies overall. The global angel investment market is expected to grow from approximately $31 billion in 2025 to around $34.5 billion in 2026, underscoring the continued strength of early-stage private finance.
- For founders, the practical implication is that the bar for any individual deal is rising even as the total capital pool grows: 
-early-stage valuations have often remained stubborn even as funding discipline has tightened, creating real tension — founders still want premium pricing, but investors are underwriting with more caution.
- Founders who arrive with a disciplined process, sector-aligned targeting, and credible proof points are best positioned to capture capital from a market that is recovering in volume but tightening in selectivity.
+The private investor market has grown more bifurcated heading into Q3 2026. ACA-reported angel investment rose 12% year over year to $491.3 million in 2025, with groups writing larger checks into fewer companies — a pattern that has carried forward as the broader VC landscape concentrates capital at the top. August 2026 funding data confirms investors are backing companies with technical depth, clear commercial proof, and a believable route to market, while early-stage activity outside AI remains subdued. A structural shift in deal instruments is also now firmly established: according to Carta's Q1 2026 data, 92% of pre-seed deals now close on SAFE notes, with convertible notes at a record-low 7%. Meanwhile, AI-related valuations are commanding premiums far above non-AI peers — a widening gap that is reshaping how founders outside the AI mainstream should price and position their raises. Founders with proof-driven narratives and sector-aligned investor targeting remain best placed to compete in a market where the total capital pool keeps growing but selective conviction is increasingly the deciding factor.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

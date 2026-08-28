@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: comprehensive
 targetKeyword: how to get investors for your business
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - how to get investors for your business
   - how to find investors
@@ -179,13 +179,7 @@ If you have the story, the product, and the traction — but not the bandwidth t
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The fundraising environment for Seed and Series A founders remains active but increasingly selective as of mid-2026. 
-Global venture funding hit a record in H1 2026, but the capital is heavily concentrated — with roughly 80% going to AI-focused startups spanning infrastructure, chips, and vertical SaaS.
- For founders outside that narrow band, the conditions are more demanding: 
-the path forward has become tougher, with startups taking longer to reach Series A, and a shrinking share making it there at all — while median U.S. seed rounds now stand at around $3M, three times larger than in 2018.
-
-Investors remain willing to finance earlier companies, but they expect a sharper proof story, and the gap between a fundable company and a merely interesting idea has widened.
- The practical implication for founders raising right now is that process discipline and investor fit have never mattered more: a well-targeted, well-prepared campaign is no longer a competitive advantage — it is the baseline requirement for getting serious conversations started.
+The fundraising environment for Seed and Series A founders has intensified further as of late summer 2026. Global venture capital hit a record $510 billion in H1 2026 alone — already approaching the entire 2021 peak — but the concentration has deepened sharply: AI now captures roughly 86% of U.S. VC dollars, with OpenAI and Anthropic alone accounting for 43% of all H1 funding. Over 40% of seed and Series A investment has gone to rounds of $100 million or more, compressing the available pool for everyone else. For founders outside AI, the Series A bottleneck has worsened: only about 15% of seed-funded startups from 2022–2023 cohorts converted to a Series A within two years, down from 30%+ for 2018–2020 cohorts, and the median time from seed to Series A now stands at 616 days. Median seed rounds have risen to the $4.5–5.5M range. Investors remain active at early stages, but the bar is unambiguous: proven unit economics, clear defensibility, and demonstrated customer demand are now the minimum — not differentiators — for getting a serious conversation started.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
