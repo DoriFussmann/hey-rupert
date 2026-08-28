@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: flex
 targetKeyword: seed pitch deck examples
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - seed pitch deck examples
   - seed pitch deck
@@ -185,15 +185,7 @@ Rupert was built specifically for this gap. Every campaign is researched by expe
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in mid-2026 remains active but increasingly concentrated. 
-The venture market in 2025 was the third-largest year in history by invested capital, and that strength has carried into 2026 — but a large share of all invested capital went to a relatively small group of mega-rounds.
-
-Early-stage funding grew meaningfully in 2025, with seed deal sizes hitting record highs even as deal counts compressed,
- meaning founders are competing for fewer available checks even as average round sizes increase. Against this backdrop, the standards applied to seed pitch decks have continued to tighten: 
-investors expect further increases in venture funding in 2026, with capital concentrated in AI, robotics, and defense tech,
- making sector framing within a deck more consequential than in prior years. 
-AI and SaaS decks that closed rounds in this period largely ditched traditional TAM-SAM-SOM market sizing in favor of bottoms-up monetization wedges,
- a structural shift that echoes the market-sizing lessons visible in the historical funded decks analyzed above. The core expectation for founders raising seed capital today has not changed in kind — evidence before narrative, specificity before scale — but the threshold for what counts as sufficient evidence has moved materially upward compared to even two years ago.
+The seed funding environment in mid-2026 is defined by a sharpening split between headline totals and on-the-ground access. Global venture funding reached a record $510 billion in the first half of 2026, yet seed took only 5.9% of global venture dollars in Q2 — down from 11.3% a year earlier — as late-stage and technology-growth rounds absorbed $134 billion in Q2 alone. The capital-stage gradient doubled in twelve months. Carta's Q2 2026 State of Pre-Seed report confirms the concentration dynamic at the entry level: roughly the same dollars as Q2 2025 went into 22% fewer instruments, pushing average pre-seed instrument size to a record $276,000. At seed, Carta's six-month benchmark (July 2026) puts the median round at $4.1 million on a $24.3 million post-money valuation — a record high dragged upward by AI deals, which captured more than 60% of Q1 2026 venture dollars. For deck construction, the implication is unchanged in kind but sharper in degree: sector framing, bottoms-up monetization evidence, and a defensible moat slide are now table-stakes, not differentiators, and the AI-wrapper discount among top-tier funds means founders must demonstrate workflow-level embedding rather than model adjacency.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

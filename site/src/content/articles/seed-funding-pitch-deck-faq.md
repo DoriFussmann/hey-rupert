@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: faq
 targetKeyword: seed funding pitch deck
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - seed funding pitch deck
   - seed pitch deck
@@ -164,13 +164,7 @@ A great seed pitch deck is a necessary condition for a successful raise, not a s
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The early-stage funding environment heading into the second half of 2026 reflects a market where investor selectivity has increased even as total capital deployed remains historically elevated. 
-The venture market in 2025 was the third-largest year in history by invested capital, but that headline number masks a significant concentration — a large share of all capital went to a relatively small group of mega-rounds.
-
-For early-stage founders, the relevant signal is more stage-specific: early-stage funding grew meaningfully in 2025, with seed deal sizes hitting record highs even as deal counts compressed.
- That compression means fewer seed deals are closing, but the ones that do are larger on average — which raises the bar for what a pitch deck needs to demonstrate. 
-Median seed rounds are now taking four to six months from first investor meeting to wired funds in 2026, roughly twice as long as the 2021 peak
-, reinforcing that founders need to start their outreach process earlier and run it with more discipline than the previous cycle required. Recent commentary on the August 2026 fundraising environment consistently emphasizes evidence over ambition: investors at every stage are prioritizing decks that demonstrate demand, repeat behavior, and a clear connection between the capital ask and a specific milestone, rather than vision-heavy pitches unsupported by early market proof.
+The early-stage funding environment as of August 2026 reflects a market where headline totals obscure a widening gap between where capital actually lands and where most founders are competing. Global venture and growth funding reached a record $510 billion in the first half of 2026, but seed and angel rounds captured just 5.9% of global venture dollars in Q2 — with late stage taking 65.4%, producing roughly $11 of late-stage capital for every $1 of seed capital. The concentration dynamic has sharpened further: NVCA and PitchBook data shows $267.2 billion in U.S. VC deal value in Q1 2026, but remove the five largest deals and that figure falls by 73.2%. AI has emerged as the defining variable at the early stage — AI now accounts for 52% of pre-seed deals and 59% of Series A deals in Q2 2026, making it effectively the default early-stage category. For non-AI seed founders, selectivity is steeper: investors expect a pitch deck paired almost immediately with a well-organized data room, with August 2026 commentary consistently noting that proof of real demand, clear unit economics, and clean governance are now table stakes, not differentiators.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

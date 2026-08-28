@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: howto
 targetKeyword: seed round pitch deck
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - seed round pitch deck
   - seed pitch deck
@@ -196,17 +196,7 @@ That's exactly where Rupert comes in. Once your deck is built, the work shifts t
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The seed funding environment heading into the second half of 2026 is one of concentrated capital rather than broad availability. 
-The venture market in 2025 was the third-largest year in history by invested capital, and that strength has carried into 2026 — though a large share of all invested capital went to a relatively small group of mega-rounds.
- For seed-stage founders, that macro picture translates into a more selective investor landscape: 
-seed deal sizes hit record highs even as deal counts compressed
-, meaning the average check is larger but fewer companies are receiving one. 
-Deal count data showed a 28% year-over-year drop in new seed rounds in early 2025, reflecting a market that became more selective, not less active.
- In terms of what's being funded, 
-the decks that closed rounds in 2025–2026 are almost all consumer and AI hybrids or category-defining brands with profitability already in view
-, while 
-investors expect another 10–25% year-over-year increase in venture funding in 2026, concentrated in AI, robotics, and defense tech.
- For founders building pitch decks today, the practical implication is that conviction-level evidence — real traction, specific milestones, and a defensible market position — is no longer a differentiator; it is the minimum bar.
+The seed funding environment in the second half of 2026 is one of record headline numbers and severe concentration underneath them. US startups raised more than $400 billion in the first half of 2026, surpassing every previous full-year total on record — yet megadeals of $100 million or more accounted for the overwhelming majority of invested capital, and just twelve firms captured three-quarters of every dollar raised into venture funds. Q2 2026 set new highs for both venture dealmaking and exits, but the PitchBook-NVCA Venture Monitor is explicit that the recovery remains uneven. For seed-stage founders, the two-speed market is the operative reality: seed deal sizes hit record highs even as deal counts compressed, and large platforms are now writing seed checks alongside their growth funds, squeezing standalone seed vehicles. KPMG's Q2 Venture Pulse flags early-stage deal activity as a critical watch area for H2 2026, with meaningful improvement contingent on IPO liquidity returning. The practical implication for any pitch deck going out right now is unchanged: proprietary traction, capital efficiency, and a defensible path to Series A are not differentiators — they are the entry ticket.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
