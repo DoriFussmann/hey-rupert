@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: flex
 targetKeyword: how to get investors for your business idea
-updatedDate: 2026-08-13
+updatedDate: 2026-08-28
 keywords:
   - how to get investors for your business idea
   - how to get investors for your business
@@ -160,11 +160,7 @@ If you're approaching your first raise and want to know whether your materials a
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The pre-seed funding environment has shown notable stability heading into mid-2026, though with a meaningfully higher bar for idea-stage founders. 
-Some 3,000 U.S.-based startups on Carta raised pre-seed funding in Q1 2026, adding up to over $2.3 billion in total cash raised, with expectations that the total will reach around $2.9 billion once all data is entered. AI funding continues to surge at this stage: just a few years ago, AI startups received around 30% of all pre-seed dollars, but by Q1 2026 they hit the 50% mark.
-
-Investor expectations for pre-seed startups have dramatically shifted since 2020, now demanding built prototypes, product usage, and initial revenue before institutional funding — a change largely driven by the rise of AI and automation tools that have made it significantly cheaper and faster for founders to validate ideas with minimal capital, leading investors to expect more concrete evidence of market fit. The conversion rate from seed to Series A has dropped from roughly 50% to approximately 38%
-, reinforcing the importance of idea-stage founders building a genuinely credible foundation before they start outreach — the standards are compressing downward from later stages, not relaxing.
+Carta's freshly released Q2 2026 State of Pre-Seed report adds an important new wrinkle to what looked like a stable market: capital is concentrating into fewer deals. U.S. startups on Carta raised $3.19 billion in pre-seed instruments in Q2 2026 — roughly flat with Q2 2025's $3.22 billion — but did so across noticeably fewer instruments (11,500 vs. 14,825 a year earlier), pushing the average instrument size to a record $276,000, a 27% year-over-year jump. AI's grip on pre-seed dollars held firm: AI startups captured 49% of all pre-seed dollars in H1 2026, essentially matching the 50% mark reached in Q1. Meanwhile, the seed-to-Series A funnel has tightened further than previously reported — multiple cohort analyses now put the 24-month conversion rate at just 15–20%, down from roughly 30% a decade ago, as Series A investors demand $1–2M ARR with 2–3x growth before writing a check. For idea-stage founders, the message is the same but sharper: fewer pre-seed deals are getting done, the ones that do close are larger and more contested, and the downstream bar has risen to match.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
