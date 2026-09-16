@@ -54,7 +54,8 @@ export type CreateClientResult =
 
 // Readable, strong temporary password. Avoids ambiguous characters (0/O, 1/l/I)
 // so it survives being copied into an email and typed back in by the client.
-export function generateTempPassword(): string {
+// Not exported: files with "use server" may only export async actions.
+function generateTempPassword(): string {
   const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
   const bytes = randomBytes(12);
   let out = "";
