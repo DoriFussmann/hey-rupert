@@ -182,7 +182,7 @@ export function GenerateStatementOfWork({
                   }
                   className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
                 >
-                  {pending === "send" ? "Sending…" : "Send to Client"}
+                  {pending === "send" ? "Pushing…" : "Push to Client Portal"}
                 </button>
               </td>
             </tr>
