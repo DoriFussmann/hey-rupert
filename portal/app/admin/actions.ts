@@ -347,7 +347,8 @@ export async function createClientRecord(
 }
 
 // Regenerate (or set) the login password for a client that already exists.
-// Returns the email + new password so the admin can send the login email.
+// No delete/re-add needed. Returns the email + new password so the admin can
+// send the login email straight away.
 export async function resetClientPassword(
   clientId: string,
   password?: string,
@@ -363,6 +364,8 @@ export async function resetClientPassword(
 
   const { supabase } = access;
 
+  // The client id is the auth user id. Read the login to get the authoritative
+  // email address for the outgoing message.
   const { data: userData, error: getError } =
     await supabase.auth.admin.getUserById(clientId);
 
@@ -375,9 +378,21 @@ export async function resetClientPassword(
 
   const email = userData.user.email ?? "";
 
+  // If the login is missing the client role (e.g. it was created directly in
+  // the Supabase dashboard), it can't reach the portal even with a correct
+  // password. Set it here so this button fully repairs the account. Never
+  // downgrade an admin.
+  if (roleFromUser(userData.user) === "admin") {
+    return {
+      ok: false,
+      error: "This login is an admin account and can't be reset here.",
+    };
+  }
+
   const { error } = await supabase.auth.admin.updateUserById(clientId, {
     password: newPassword,
     email_confirm: true,
+    app_metadata: { ...userData.user.app_metadata, role: "client" },
   });
 
   if (error) {

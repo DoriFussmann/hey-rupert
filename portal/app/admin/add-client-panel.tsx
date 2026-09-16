@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createClientRecord } from "@/app/admin/actions";
 import { Select } from "@/components/select";
 import {
+  CopyButton,
   CredentialsResult,
   buildEmail,
   generatePassword,
@@ -270,6 +271,7 @@ export function AddClientButton() {
                       >
                         New
                       </button>
+                      <CopyButton value={form.password} />
                     </span>
                     <span className="mt-sm block text-body-sm normal-case tracking-normal text-muted">
                       Set as their login password and included in the email. If

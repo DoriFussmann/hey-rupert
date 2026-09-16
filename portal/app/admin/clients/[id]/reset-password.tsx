@@ -3,6 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import { resetClientPassword } from "@/app/admin/actions";
 import {
+  CopyButton,
   CredentialsResult,
   buildResetEmail,
   generatePassword,
@@ -201,6 +202,7 @@ export function ResetPasswordSection({
                       >
                         New
                       </button>
+                      <CopyButton value={password} />
                     </span>
                   </label>
                 </div>

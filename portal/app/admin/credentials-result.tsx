@@ -104,6 +104,48 @@ Thanks,
 Dori`;
 }
 
+// Small reusable copy-to-clipboard button with "Copied" feedback. Styled to
+// match the secondary buttons (Show/Hide/New) used beside password fields.
+export function CopyButton({
+  value,
+  label = "Copy",
+  className,
+}: {
+  value: string;
+  label?: string;
+  className?: string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={onCopy}
+      className={
+        className ??
+        "rounded-md border border-border bg-surface px-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
+      }
+    >
+      {copied ? "Copied" : label}
+    </button>
+  );
+}
+
 // Shared result block: Email / Password / Site / Subject copy chips plus the
 // editable email body. Manages its own copy-feedback state.
 export function CredentialsResult({
