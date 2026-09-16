@@ -37,11 +37,33 @@ export type CreateClientInput = {
   geography: string;
   fund_match_count: string;
   admin_notes: string;
+  // Optional. If blank, a strong temporary password is generated automatically.
+  password?: string;
 };
 
 export type ActionResult =
   | { ok: true; linked?: boolean }
   | { ok: false; error: string };
+
+// Result specific to client creation: on success we hand back the login
+// credentials so the admin can drop them straight into an email. `linked` is
+// true when we attached the client to a login that already existed.
+export type CreateClientResult =
+  | { ok: true; linked: boolean; email: string; password: string }
+  | { ok: false; error: string };
+
+// Readable, strong temporary password. Avoids ambiguous characters (0/O, 1/l/I)
+// so it survives being copied into an email and typed back in by the client.
+export function generateTempPassword(): string {
+  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = randomBytes(12);
+  let out = "";
+  for (let i = 0; i < 12; i += 1) {
+    out += alphabet[bytes[i] % alphabet.length];
+    if (i === 3 || i === 7) out += "-";
+  }
+  return out; // e.g. "Rk7m-Qp9x-2Ftz"
+}
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -144,7 +166,7 @@ async function ensureClientRole(
 
 export async function createClientRecord(
   input: CreateClientInput,
-): Promise<ActionResult> {
+): Promise<CreateClientResult> {
   const access = await requireAdminService();
   if (!access.ok) return access;
 
@@ -152,6 +174,15 @@ export async function createClientRecord(
   const lastName = input.last_name.trim();
   const email = input.email.trim().toLowerCase();
   const companyName = input.company_name.trim();
+
+  // Use the admin-supplied password, or generate a strong one. This is the
+  // password that gets set on the auth user AND handed back for the email, so
+  // the client can always log in with what the admin sends them.
+  const providedPassword = (input.password ?? "").trim();
+  if (providedPassword && providedPassword.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const clientPassword = providedPassword || generateTempPassword();
 
   if (!firstName || !lastName || !email || !companyName) {
     return { ok: false, error: "First name, last name, email, and company name are required." };
@@ -217,12 +248,22 @@ export async function createClientRecord(
     if (!roleResult.ok) return roleResult;
 
     userId = existingAuth.user.id;
+
+    // The login already exists — set the password to the one we're about to
+    // send so the client can sign in immediately. This is what fixes accounts
+    // that were created in Supabase without a usable password.
+    const { error: pwError } = await supabase.auth.admin.updateUserById(userId, {
+      password: clientPassword,
+      email_confirm: true,
+    });
+    if (pwError) {
+      return { ok: false, error: pwError.message };
+    }
   } else {
-    const password = randomBytes(32).toString("base64url");
     const { data: created, error: createError } =
       await supabase.auth.admin.createUser({
         email,
-        password,
+        password: clientPassword,
         email_confirm: true,
       });
 
@@ -249,6 +290,14 @@ export async function createClientRecord(
       const roleResult = await ensureClientRole(supabase, retry.user);
       if (!roleResult.ok) return roleResult;
       userId = retry.user.id;
+
+      const { error: pwError } = await supabase.auth.admin.updateUserById(
+        userId,
+        { password: clientPassword, email_confirm: true },
+      );
+      if (pwError) {
+        return { ok: false, error: pwError.message };
+      }
     } else {
       userId = created.user.id;
       createdNewUser = true;
@@ -288,7 +337,12 @@ export async function createClientRecord(
   }
 
   revalidatePath("/admin");
-  return { ok: true, linked: !createdNewUser };
+  return {
+    ok: true,
+    linked: !createdNewUser,
+    email,
+    password: clientPassword,
+  };
 }
 
 const STAGE_VALUES = new Set<string>(
