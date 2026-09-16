@@ -3,6 +3,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { ClientForm } from "@/app/admin/clients/[id]/client-form";
 import { ClientActions } from "@/app/admin/clients/[id]/client-actions";
+import { ResetPasswordSection } from "@/app/admin/clients/[id]/reset-password";
 import { ClientStageSelect } from "@/app/admin/clients/[id]/stage-select";
 import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
@@ -83,6 +84,12 @@ export default async function ClientDetailPage({
         clientId={client.id}
         companyName={client.company_name}
         archived={Boolean(client.archived_at)}
+      />
+      <ResetPasswordSection
+        clientId={client.id}
+        companyName={client.company_name}
+        firstName={client.first_name ?? ""}
+        email={client.email ?? ""}
       />
       <GenerateStatementOfWork
         clientId={client.id}

@@ -4,19 +4,16 @@ import { useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClientRecord } from "@/app/admin/actions";
 import { Select } from "@/components/select";
+import {
+  CredentialsResult,
+  buildEmail,
+  generatePassword,
+  type Credentials,
+} from "@/app/admin/credentials-result";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
 const labelClass = "block text-label uppercase tracking-label text-muted";
-
-// Base URL clients are told to visit. Set NEXT_PUBLIC_PORTAL_URL in the
-// environment; falls back to the marketing site where the Login button lives.
-const SITE_URL = (
-  process.env.NEXT_PUBLIC_PORTAL_URL || "https://heyrupert.com"
-).replace(/\/+$/, "");
-const SITE_HOST = SITE_URL.replace(/^https?:\/\//, "");
-
-const EMAIL_SUBJECT = "Your Rupert Portal & Statement of Work";
 
 const emptyForm = {
   first_name: "",
@@ -32,72 +29,7 @@ const emptyForm = {
   password: "",
 };
 
-// Readable, strong temporary password. Mirrors the server generator: no
-// ambiguous characters, grouped for easy copy/paste and typing.
-function generatePassword() {
-  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  const values = new Uint32Array(12);
-  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
-    crypto.getRandomValues(values);
-  } else {
-    for (let i = 0; i < values.length; i += 1) {
-      values[i] = Math.floor(Math.random() * 0xffffffff);
-    }
-  }
-  let out = "";
-  for (let i = 0; i < 12; i += 1) {
-    out += alphabet[values[i] % alphabet.length];
-    if (i === 3 || i === 7) out += "-";
-  }
-  return out;
-}
-
-type Created = {
-  firstName: string;
-  email: string;
-  password: string;
-  linked: boolean;
-};
-
-function buildEmail(created: Created) {
-  const greetingName = created.firstName || "there";
-  return `Hi ${greetingName},
-
-Thank you for the call today. I enjoyed the conversation and appreciate you taking the time.
-
-A small heads-up that this email is slightly longer than usual, but I wanted to put everything you need in one place.
-
-Statement of Work
-
-I've created your Rupert Client Portal, where you'll find the Statement of Work we discussed today.
-
-Please take a look when you have a chance. If everything looks good, click to confirm. If you have any questions or would like to discuss anything in the SOW, just let me know.
-
-Once you confirm, I'll issue the Service Order and send you the next step.
-
-You can also see the overall onboarding process in the portal, so you'll have visibility into what comes next. The other sections of the portal will become active as we move through setup and launch the campaign.
-
-Login details are below.
-
-Curious about how you got to me - pls let me know!
-
-///
-Your Rupert Portal
-
-Go to ${SITE_HOST} and click Login in the top-right corner.
-
-Email: ${created.email}
-Password: ${created.password}
-
-Once logged in, you'll see your Statement of Work and onboarding steps.
-///
-
-Thanks again, ${greetingName}.
-
-I'm looking forward to hopefully working together, and please reach out with any questions as you review everything.
-
-Dori`;
-}
+type Created = Credentials & { linked: boolean };
 
 export function AddClientButton() {
   const router = useRouter();
@@ -109,7 +41,6 @@ export function AddClientButton() {
   const [showPassword, setShowPassword] = useState(true);
   const [created, setCreated] = useState<Created | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
-  const [copied, setCopied] = useState<string | null>(null);
 
   // Auto-generate a password whenever the panel is opened fresh.
   useEffect(() => {
@@ -132,12 +63,6 @@ export function AddClientButton() {
     return () => window.removeEventListener("keydown", onKey);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pending]);
-
-  useEffect(() => {
-    if (!copied) return;
-    const timer = window.setTimeout(() => setCopied(null), 2000);
-    return () => window.clearTimeout(timer);
-  }, [copied]);
 
   function update(field: keyof typeof emptyForm) {
     return (
@@ -163,15 +88,6 @@ export function AddClientButton() {
     // Refresh the client list if we actually created someone this session.
     if (created) router.refresh();
     resetAll();
-  }
-
-  async function copy(text: string, label: string) {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopied(label);
-    } catch {
-      setCopied(null);
-    }
   }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -251,18 +167,40 @@ export function AddClientButton() {
             </div>
 
             {created ? (
-              <SuccessView
-                created={created}
-                emailDraft={emailDraft}
-                setEmailDraft={setEmailDraft}
-                copied={copied}
-                copy={copy}
-                onAddAnother={() => {
-                  resetAll();
-                  setForm({ ...emptyForm, password: generatePassword() });
-                }}
-                onDone={close}
-              />
+              <div className="flex flex-1 flex-col overflow-hidden">
+                <div className="flex-1 overflow-y-auto px-lg py-lg">
+                  <p className="mb-lg text-body-sm text-success">
+                    {created.linked
+                      ? "Linked to the existing login and set a new password."
+                      : "Client created."}{" "}
+                    Send them these details to log in.
+                  </p>
+                  <CredentialsResult
+                    credentials={created}
+                    emailDraft={emailDraft}
+                    setEmailDraft={setEmailDraft}
+                  />
+                </div>
+                <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      resetAll();
+                      setForm({ ...emptyForm, password: generatePassword() });
+                    }}
+                    className="mr-auto rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
+                  >
+                    Add another
+                  </button>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover"
+                  >
+                    Done
+                  </button>
+                </div>
+              </div>
             ) : (
               <form
                 onSubmit={onSubmit}
@@ -441,133 +379,5 @@ export function AddClientButton() {
         </div>
       ) : null}
     </>
-  );
-}
-
-function SuccessView({
-  created,
-  emailDraft,
-  setEmailDraft,
-  copied,
-  copy,
-  onAddAnother,
-  onDone,
-}: {
-  created: Created;
-  emailDraft: string;
-  setEmailDraft: (value: string) => void;
-  copied: string | null;
-  copy: (text: string, label: string) => void;
-  onAddAnother: () => void;
-  onDone: () => void;
-}) {
-  const rowClass =
-    "flex items-center justify-between gap-sm rounded-md border border-border bg-background px-sm py-sm";
-  const copyBtn =
-    "shrink-0 rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading";
-
-  return (
-    <div className="flex flex-1 flex-col overflow-hidden">
-      <div className="grid flex-1 gap-lg overflow-y-auto px-lg py-lg">
-        <p className="text-body-sm text-success">
-          {created.linked
-            ? "Linked to the existing login and set a new password."
-            : "Client created."}{" "}
-          Send them these details to log in.
-        </p>
-
-        <div className="grid gap-sm">
-          <div className={rowClass}>
-            <span className="min-w-0 break-all text-body-sm text-body">
-              <span className="text-muted">Email: </span>
-              {created.email}
-            </span>
-            <button
-              type="button"
-              className={copyBtn}
-              onClick={() => copy(created.email, "email-addr")}
-            >
-              {copied === "email-addr" ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <div className={rowClass}>
-            <span className="min-w-0 break-all font-mono text-body-sm text-body">
-              <span className="font-sans text-muted">Password: </span>
-              {created.password}
-            </span>
-            <button
-              type="button"
-              className={copyBtn}
-              onClick={() => copy(created.password, "pw")}
-            >
-              {copied === "pw" ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <div className={rowClass}>
-            <span className="min-w-0 break-all text-body-sm text-body">
-              <span className="text-muted">Site: </span>
-              {SITE_URL}
-            </span>
-            <button
-              type="button"
-              className={copyBtn}
-              onClick={() => copy(SITE_URL, "url")}
-            >
-              {copied === "url" ? "Copied" : "Copy"}
-            </button>
-          </div>
-          <div className={rowClass}>
-            <span className="min-w-0 break-all text-body-sm text-body">
-              <span className="text-muted">Subject: </span>
-              {EMAIL_SUBJECT}
-            </span>
-            <button
-              type="button"
-              className={copyBtn}
-              onClick={() => copy(EMAIL_SUBJECT, "subject")}
-            >
-              {copied === "subject" ? "Copied" : "Copy"}
-            </button>
-          </div>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between">
-            <span className={labelClass}>Onboarding email (editable)</span>
-            <button
-              type="button"
-              className={copyBtn}
-              onClick={() => copy(emailDraft, "email-body")}
-            >
-              {copied === "email-body" ? "Copied" : "Copy email"}
-            </button>
-          </div>
-          <textarea
-            className={fieldClass + " font-mono"}
-            rows={20}
-            value={emailDraft}
-            onChange={(event) => setEmailDraft(event.target.value)}
-            spellCheck={false}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
-        <button
-          type="button"
-          onClick={onAddAnother}
-          className="mr-auto rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
-        >
-          Add another
-        </button>
-        <button
-          type="button"
-          onClick={onDone}
-          className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover"
-        >
-          Done
-        </button>
-      </div>
-    </div>
   );
 }

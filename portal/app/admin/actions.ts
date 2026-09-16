@@ -346,6 +346,48 @@ export async function createClientRecord(
   };
 }
 
+// Regenerate (or set) the login password for a client that already exists.
+// Returns the email + new password so the admin can send the login email.
+export async function resetClientPassword(
+  clientId: string,
+  password?: string,
+): Promise<CreateClientResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const provided = (password ?? "").trim();
+  if (provided && provided.length < 8) {
+    return { ok: false, error: "Password must be at least 8 characters." };
+  }
+  const newPassword = provided || generateTempPassword();
+
+  const { supabase } = access;
+
+  const { data: userData, error: getError } =
+    await supabase.auth.admin.getUserById(clientId);
+
+  if (getError || !userData?.user) {
+    return {
+      ok: false,
+      error: getError?.message ?? "Could not find this client's login.",
+    };
+  }
+
+  const email = userData.user.email ?? "";
+
+  const { error } = await supabase.auth.admin.updateUserById(clientId, {
+    password: newPassword,
+    email_confirm: true,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true, linked: true, email, password: newPassword };
+}
+
 const STAGE_VALUES = new Set<string>(
   ENGAGEMENT_STAGES.map((stage) => stage.value),
 );
