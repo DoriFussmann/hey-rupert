@@ -11,21 +11,23 @@ interface Props {
 
 const { articles } = Astro.props;
 
-const tiles = await Promise.all(
-  articles.map(async (article) => {
-    const author = await getEntry("team", article.data.author);
-    const published = article.data.date;
-    const updated = article.data.updatedDate;
-    const showUpdated = !!updated && isLaterCalendarDay(updated, published);
-    return {
-      article,
-      authorName: author?.data.name ?? article.data.author,
-      topic: article.data.pillarKeyword ?? "",
-      showUpdated,
-      listDate: showUpdated && updated ? updated : published,
-    };
-  }),
-);
+const tiles = (
+  await Promise.all(
+    articles.map(async (article) => {
+      const author = await getEntry("team", article.data.author);
+      const published = article.data.date;
+      const updated = article.data.updatedDate;
+      const showUpdated = !!updated && isLaterCalendarDay(updated, published);
+      return {
+        article,
+        authorName: author?.data.name ?? article.data.author,
+        topic: article.data.pillarKeyword ?? "",
+        showUpdated,
+        listDate: showUpdated && updated ? updated : published,
+      };
+    }),
+  )
+).sort((a, b) => b.listDate.valueOf() - a.listDate.valueOf());
 ---
 
 <ul class="article-grid mt-xl" id="article-grid">
