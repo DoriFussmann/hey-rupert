@@ -23,7 +23,7 @@ pillarKeyword: venture capital
 supportingKeyword: biggest venture capital firms
 articleType: howto
 targetKeyword: largest venture capital firms by aum
-updatedDate: 2026-08-17
+updatedDate: 2026-09-17
 keywords:
   - largest venture capital firms by aum
   - biggest venture capital firms
@@ -164,13 +164,7 @@ That distinction — between owning the research and owning the relationships �
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The mid-2026 venture environment is defined by a striking divergence between headline abundance and ground-level conditions for early-stage founders. 
-Global venture capital funding reached a record $510 billion in the first half of 2026, per Crunchbase data, already surpassing the $440 billion deployed across all of 2025.
- However, 
-AI startups alone absorbed approximately $242 billion in Q1 2026 — roughly 80% of all global venture capital that quarter
- — meaning non-AI founders are effectively competing for a materially thinner share of the available pool. 
-Capital concentrating at the top of the market in mega-rounds for infrastructure companies creates an impression of a wide-open funding environment that does not match the experience of companies outside the categories receiving the largest checks; the market is not uniformly hot, but extremely hot in a small number of specific categories.
- For founders building outreach lists today, this structural concentration makes the filtering steps described above more consequential than they were two years ago: a firm that appears on every AUM ranking may be effectively closed to your sector right now, making recency-of-deployment data an essential filter rather than a nice-to-have.
+The mid-2026 venture environment is defined by a striking divergence between headline abundance and ground-level conditions for early-stage founders. Global venture capital funding reached a record $510 billion in the first half of 2026 per Crunchbase, already surpassing the $440 billion deployed across all of 2025 — but the Q2 2026 PitchBook-NVCA Venture Monitor reveals how narrow that boom actually is: AI accounted for 86% of all US venture dollars, megadeals of $100 million or more captured 87.5% of the $412.7 billion deployed, and deals under $100 million now represent just 12.5% of total value, down from 33.1% in 2025 and 43.8% in 2024. Fundraising concentration is equally acute: three firms — Andreessen Horowitz, Thrive Capital, and Founders Fund — absorbed 48.1% of all LP capital raised, while first-time fund formation is on pace for its lowest year since 2016. For founders building outreach lists today, this compression makes filtering by recency-of-deployment and stage-fit more consequential than ever: a firm at the top of every AUM ranking may be structurally closed to your sector or check size right now.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

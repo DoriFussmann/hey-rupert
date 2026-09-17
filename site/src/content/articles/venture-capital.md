@@ -21,7 +21,7 @@ draft: false
 pillarKeyword: venture capital
 articleType: comprehensive
 targetKeyword: venture capital
-updatedDate: 2026-08-17
+updatedDate: 2026-09-17
 keywords:
   - venture capital
 faqs:
@@ -193,12 +193,7 @@ Investors are concentrating resources on fewer, more promising opportunities rat
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The venture capital market in mid-2026 presents a striking paradox for early-stage founders. 
-The global VC market saw $227.4 billion in investment across 8,440 deals in Q2 2026, making it the second-best quarter on record
- — yet 
-the number of individual deals fell to its lowest point in ten years, a decline that signals a clear move away from volume-driven activity; investors appear increasingly focused on quality and proven potential rather than spreading capital across many early-stage opportunities, meaning fewer companies secure funding but those that do often receive substantial commitments. Deal count is at the lowest it has been in over a decade, and for founders outside the circle of AI mega-rounds, record funding totals should not be mistaken for an easier fundraising environment.
-
-Early-stage investing remains active but disciplined — Series A deal value totaled approximately $26.7 billion in the first half of 2026, up from $19.3 billion in the same period of 2025 — but underwriting standards remain focused on monetization, capital efficiency, and execution certainty. Over the last couple of years, focus has concentrated on late-stage deals, making it difficult for many early-stage startups not in the AI space — but as capital returns to the market, the early-stage environment may start to improve, which is critical for reinvigorating the broader ecosystem.
+The venture capital market heading into Q4 2026 continues to present a stark paradox for early-stage founders. Global venture funding hit $42 billion across just over 1,500 deals in August alone — up 122% year-over-year — yet deal count fell 32% from July, underscoring a pattern that has defined the entire summer: fewer transactions, higher average sizes, and the bulk of capital concentrated in a small number of companies in categories where competitive landscapes are still being decided. Corporate investors now account for a record 87.9% of US AI VC deal value in 2026, even as they participate in a smaller share of deals overall. Defense tech has emerged as a new top-three venture category by capital, joining AI infrastructure as a primary destination for conviction-level deployment. For founders outside those categories, the bifurcation sharpens: foundational infrastructure companies are raising at historic scales, while application-layer startups raise at Series A and B sizes that look conservative by comparison. Post-Labor Day deal activity is expected to accelerate, but the central question for Q4 is less whether the market stays active and more whether megadeal concentration begins to broaden.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
