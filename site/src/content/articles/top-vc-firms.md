@@ -22,7 +22,7 @@ pillarKeyword: venture capital
 supportingKeyword: biggest venture capital firms
 articleType: comparison
 targetKeyword: top vc firms
-updatedDate: 2026-08-17
+updatedDate: 2026-09-17
 keywords:
   - top vc firms
   - biggest venture capital firms
@@ -134,13 +134,7 @@ That is exactly the kind of disciplined, parallel-track process that Rupert mana
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The US venture market's bifurcation between mega-deals and early-stage rounds has sharpened considerably in recent weeks. 
-US startups raised $19.44 billion across 492 companies in July 2026, with just 65 deals at $50M or more capturing 81.6% of all capital raised.
-
-The median deal size of $6.0 million tells a different story than the average of $39.5 million — the majority of funded companies are early and mid-stage, operating at conventional venture scales, while a small number of platforms are capturing an outsized share of available capital. Nineteen startups crossed the $10 billion valuation mark in the same period, as AI mega-deals continue to concentrate capital at the top.
- For Seed and Series A founders, this environment reinforces the core argument of this article: the mega-fund headline numbers are real, but the median early-stage deal still closes at conventional check sizes where sector specialists are active and competitive. 
-Among lead investors in July, Khosla Ventures topped the ranks by deals led, while Y Combinator was by far the busiest backer by deal count
- — a reminder that conviction-led specialist and accelerator-affiliated investors remain the most active first movers at the earliest stages, even as overall capital concentrates higher.
+The US venture market's bifurcation deepened further into August 2026. US startups raised $18.1B across 333 deals — deal count fell 32% from July's 492 transactions as a seasonal summer slowdown compressed activity, yet year-over-year capital remained dramatically elevated. Concentration intensified: 83.7% of August capital flowed to just 100 rounds, with nine rounds of $1B or more accounting for 36.5% of all capital raised. Defense technology emerged as a top-three venture category by capital for the first time, with Castelion, Etched, and Muon Space raising a combined $1.75B in August alone. At the firm level, Y Combinator held its position as the busiest overall backer, while Nvidia accelerated its dealmaking pace — surpassing its full-year 2025 investment count by mid-August with 59 known rounds. The headline fund move of the period: a16z launched its $1.1B Machine Age Fund on August 28, a dedicated vehicle for AI hardware, chips, robotics, and data center infrastructure — a structural signal that physical-layer AI is becoming a standalone venture category, not just a software adjacency.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

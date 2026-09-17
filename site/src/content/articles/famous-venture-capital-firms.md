@@ -22,7 +22,7 @@ pillarKeyword: venture capital
 supportingKeyword: biggest venture capital firms
 articleType: faq
 targetKeyword: famous venture capital firms
-updatedDate: 2026-08-17
+updatedDate: 2026-09-17
 keywords:
   - famous venture capital firms
   - biggest venture capital firms
@@ -132,15 +132,7 @@ Rupert's outreach process is built precisely for this constraint. Rather than fl
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The VC landscape in mid-2026 continues to bifurcate sharply between the very largest firms and everyone else. 
-Andreessen Horowitz recently expanded its AUM past the $90 billion mark following a record-breaking $15 billion fundraise in early 2026.
-
-In 2025, 33% of all US VC dollars went to the top 1% of companies by valuation, up from 12% in 2022, and AI valuation premiums versus non-AI business models reached 222% at Series D+ — with triple-digit premiums even at earlier stages.
- Recent funding activity in August 2026 reflects this concentration, 
-with investors pouring money into industry-specific AI and hardware-infused sectors and a notable surge of capital into defense and aerospace startups.
- For founders outside the highest-conviction sectors, 
-median revenues at raise are higher than 2021 across every stage, and seed companies raising in 2025 showed 322% year-over-year growth — but off a much larger revenue base than the frothy days of 2021, reflecting healthier fundamentals alongside higher expectations.
- The structural takeaway remains consistent: tier-1 access rewards preparation, sector alignment, and relationship capital — none of which can be manufactured in the final weeks of a raise.
+The VC landscape in mid-2026 continues to bifurcate sharply between the very largest firms and everyone else. Andreessen Horowitz expanded its AUM past the $90 billion mark following a record-breaking $15 billion fundraise in early 2026, and global VC funding through the first half of 2026 is now tracking toward a potential $1 trillion full-year total — a figure that would dwarf any prior year on record. That headline, however, masks extreme concentration: in August alone, US startups raised $18.1 billion across just 333 deals, with the average check size more than doubling year-over-year to $54.4 million, as a handful of megadeals drove the bulk of volume. The defense and AI hardware themes dominating August persisted into September, headlined by The Boring Company's $3 billion Series D at a $23 billion valuation — backed by Andreessen Horowitz and Sequoia — and Positron AI's $875 million Series C at a $5 billion valuation, a fivefold jump in just seven months. For founders outside the highest-conviction sectors, the proof bar remains unforgiving: investors want customer evidence, tight burn, and category clarity before they write a check.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

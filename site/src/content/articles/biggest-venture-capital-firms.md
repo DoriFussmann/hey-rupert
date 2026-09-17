@@ -22,7 +22,7 @@ pillarKeyword: venture capital
 supportingKeyword: biggest venture capital firms
 articleType: comprehensive
 targetKeyword: biggest venture capital firms
-updatedDate: 2026-08-17
+updatedDate: 2026-09-17
 keywords:
   - biggest venture capital firms
   - venture capital
@@ -214,17 +214,7 @@ That's the difference between knowing who the biggest venture capital firms are 
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Recent data from Q2 2026 confirms that the VC market is delivering headline numbers that mask a widening structural divide. 
-Global VC investment reached $227.4 billion across 8,440 deals in Q2 2026
-, and 
-global venture capital hit a record $510 billion in H1 2026, but OpenAI and Anthropic alone absorbed $217 billion of it — 43% of everything raised worldwide.
-
-CB Insights data shows two consecutive quarters above $200 billion, indicating one of the "strongest stretches on record," yet deal count is at the lowest it has been in over a decade, meaning a smaller number of mega-rounds are propping up the rest.
- On the fundraising side, 
-US venture funds raised $74.8 billion in the first half of 2026, nearly matching all of 2025, but funds of $1 billion or more took 68.3% of it — up from 36.1% the prior year — and just twelve firms accounted for three quarters of every dollar raised.
- The structural implication for most founders is clear: capital is abundant in aggregate but intensely concentrated at the top, and 
-record funding totals should not be mistaken for an easier fundraising environment
- for companies outside the handful of dominant AI narratives.
+The H1 2026 concentration story has only deepened into Q3. Global VC investment totaled $560.4 billion through mid-year — higher than every full year on record except 2021 — and August alone added $42 billion across roughly 1,500 startups, up 122% year-over-year, with seven billion-dollar rounds driving the bulk of it, led by Databricks at $5 billion and a $190 billion valuation. Corporate investors now account for a record 87.9% of US AI VC deal value in 2026, even as they participate in a smaller share of deals overall. A new structural theme has also crystallized: defense technology, long a venture afterthought, saw $14.6 billion invested in just the first five months of 2026 — roughly nine times 2020 levels — with Anduril's $5 billion Series H at a $61 billion valuation its single largest raise. Meanwhile, a16z launched a dedicated $1.1 billion Machine Age Fund for physical AI infrastructure in late August, signaling the industry's center of gravity is shifting beyond software. The concentration dynamic for founders has not eased: fewer deals, larger rounds, and capital still flowing overwhelmingly to a small number of category leaders.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

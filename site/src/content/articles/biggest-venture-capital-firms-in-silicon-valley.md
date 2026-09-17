@@ -22,7 +22,7 @@ pillarKeyword: venture capital
 supportingKeyword: biggest venture capital firms
 articleType: flex
 targetKeyword: biggest venture capital firms in silicon valley
-updatedDate: 2026-08-17
+updatedDate: 2026-09-17
 keywords:
   - biggest venture capital firms in silicon valley
   - biggest venture capital firms
@@ -200,14 +200,7 @@ That is where Rupert's model is built for the specific reality of Bay Area fundr
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Among lead investors in July 2026, Khosla Ventures topped the rankings as the most active lead investor in rounds of $5 million or more, with eight deals in the month
- — a signal that Silicon Valley firms are maintaining a strong pace heading into the second half of the year despite macro uncertainty. 
-California maintained its dominance in July 2026 with $10.49 billion across 161 deals, more than half the national total, driven by its concentration of AI infrastructure, robotics, and climate technology.
-
-Andreessen Horowitz ranked third among lead investors for July with five lead deals
-, and 
-the AI infrastructure wave shows no sign of decelerating, with multiple AI infrastructure companies closing significant rounds in the same month. The median deal at $6.0 million tells a different story than the average at $39.5 million: the majority of funded companies are early and mid-stage, operating at conventional venture scales, while a small number of platforms are capturing an outsized share of available capital.
- For Seed and Series A founders specifically, this two-tier structure is the defining context of mid-2026: the market is genuinely active at the early stage, but the headline numbers are distorted by a small number of very large rounds, and the competition for Tier 1 attention at the bottom of the stack remains intense.
+California's venture dominance has reached historic proportions entering Q4 2026: companies based in the state attracted approximately $366 billion in venture funding through August 20 — nearly twice the state's previous annual record and more than three times the amount raised across the other 49 states combined, driven overwhelmingly by AI megadeals. Andreessen Horowitz sharpened its infrastructure thesis on August 28 by closing a $1.1 billion 'Machine Age Fund,' its first standalone vehicle dedicated entirely to AI hardware — chips, memory, networking, data centers, and robotics — a signal that Silicon Valley's most prominent software-first firm now views physical capacity as the binding constraint on AI progress. August's broader deal picture reinforced the two-tier structure: global venture funding hit $42 billion across roughly 1,500 startups, with seven companies raising billion-dollar rounds — led by Databricks at $5 billion — while defense tech emerged as a new top-tier category, with Castelion ($800M Series C, backed by a16z and Carlyle) and Etched ($700M) among the month's largest rounds. For early-stage founders, the structural dynamic is unchanged: the market is active, but megadeal concentration continues to distort headline figures heading into Q4.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
