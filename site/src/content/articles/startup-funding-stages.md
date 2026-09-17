@@ -64,7 +64,7 @@ Startup funding stages are discrete rounds of investment that correspond to spec
 
 At the earliest stage, there is almost nothing to evaluate except the founder and the idea. By Series C, investors are underwriting a proven business with millions in revenue and a clear path to dominance.
 
-Understanding which stage you are actually in — not where you wish you were — is the most important strategic decision you will make before opening a raise. 
+Understanding which stage you are actually in (not where you wish you were) is the most important strategic decision you will make before opening a raise. 
 The stage names matter because investors are stage-specialised. Pitching a Series B fund with a pre-seed deck wastes everyone's time. Match the stage first, then the sector.
  Misreading your own stage leads to targeting the wrong investors, telling the wrong story, and spending months building a pipeline that was never going to convert.
 
@@ -91,7 +91,7 @@ Typical pre-seed in 2026 is $250K–$1.5M at a $3M–$8M post-money valuation, w
  Geography matters: 
 top-tier markets like NYC and San Francisco skew higher, with some pre-seeds closing at $2–3M on $8–10M caps for strong repeat founders.
 
-Most pre-seed and many seed rounds in 2026 close on SAFEs — simple agreements for future equity — not priced equity. Series A is usually the first priced round.
+Most pre-seed and many seed rounds in 2026 close on SAFEs (simple agreements for future equity) not priced equity. Series A is usually the first priced round.
 
 ### What You Must Prove
 
@@ -110,7 +110,7 @@ Pre-seed typically results in 10–15% dilution. With SAFE caps at $10–15M and
 
 ### What It Is
 
-The seed round is where the hypothesis becomes evidence. You have an MVP in users' hands, early revenue or strong engagement data, and enough signal to argue — credibly — that a real market exists for what you're building. The seed round funds the work of confirming and expanding that signal.
+The seed round is where the hypothesis becomes evidence. You have an MVP in users' hands, early revenue or strong engagement data, and enough signal to argue (credibly) that a real market exists for what you're building. The seed round funds the work of confirming and expanding that signal.
 
 ### Who Invests
 

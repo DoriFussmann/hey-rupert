@@ -67,7 +67,7 @@ What unites all three sub-stages is what investors are not betting on. At pre-se
 Unlike traditional lenders, VC firms are not looking for predictable returns or low-risk businesses.
  They are making probabilistic bets on teams, markets, and ideas — which is precisely why the rules of engagement are so different from later-stage institutional capital, and why founders need to understand what evidence is appropriate to present at each step.
 
-This is a fundamentally different game from Series B and beyond, where due diligence is anchored in financial models, cohort analyses, and proven GTM engines. At pre-seed, an investor is backing a person and a hypothesis. At seed, they are testing whether the hypothesis is becoming a business. At Series A, they want to see that the business has a repeatable model worth scaling. Treating these three moments as interchangeable — or pitching them with the same narrative — is one of the most reliable ways to generate soft passes from investors who would otherwise have been genuinely interested.
+This is a fundamentally different game from Series B and beyond, where due diligence is anchored in financial models, cohort analyses, and proven GTM engines. At pre-seed, an investor is backing a person and a hypothesis. At seed, they are testing whether the hypothesis is becoming a business. At Series A, they want to see that the business has a repeatable model worth scaling. Treating these three moments as interchangeable (or pitching them with the same narrative) is one of the most reliable ways to generate soft passes from investors who would otherwise have been genuinely interested.
 
 ## The Three Tiers of the Early-Stage VC Landscape
 
@@ -88,13 +88,13 @@ The growth of pre-seed reflects a fundamental market dynamic: as seed rounds hav
 
 The middle tier consists of funds with $50M–$200M in AUM that write lead checks of $500K–$3M into seed rounds. These funds need to own meaningful stakes to make their model work, which means they generally want to lead or co-lead a round rather than fill out a syndicate. 
 The median seed round size is $3–$3.2M, but the median seed post-money valuation hit a record $24M in Q4 2025, up from $18M a year earlier.
- At this tier, investors expect more than a strong team and a large market. They want a working product, early customer conversations, and some signal — however thin — that people will pay for what you're building.
+ At this tier, investors expect more than a strong team and a large market. They want a working product, early customer conversations, and some signal (however thin) that people will pay for what you're building.
 
-The seed market has bifurcated. If you have early product-market fit signals — $50K–$200K ARR, strong week-one retention, or a credible enterprise pilot — you can raise a $3–4M seed at a $15M post-money without much trouble. If you have a prototype and a vision, you are competing in a much harder pool.
+The seed market has bifurcated. If you have early product-market fit signals ($50K–$200K ARR, strong week-one retention, or a credible enterprise pilot) you can raise a $3–4M seed at a $15M post-money without much trouble. If you have a prototype and a vision, you are competing in a much harder pool.
 
 ### Tier Three: Multi-Stage Firms with Dedicated Seed Programs
 
-The largest firms — those with hundreds of millions to billions in AUM — have increasingly moved downmarket to participate at seed and Series A. 
+The largest firms (those with hundreds of millions to billions in AUM) have increasingly moved downmarket to participate at seed and Series A. 
 Multistage investors with unlimited follow-on capital have increasingly invested in seed and Series A rounds, and several of the top twenty most active seed and early-stage investors are large multistage firms, who have been consistent in their increased appetite for investments in pre-Series B financings over the last two years.
 
 This matters to founders because it changes the competitive dynamics of seed rounds. 
@@ -108,13 +108,13 @@ One of the costliest mistakes early-stage founders make is building a target lis
 The bar has risen since 2023: most early-stage VCs now require a working product, $10K+ MRR, or named operator credentials before writing the first institutional check.
  But the bar varies significantly by tier. What a micro-VC means by "working product" and what a multi-stage firm means by "traction" can be separated by twelve months of company-building. Stage mismatches happen because founders conflate these standards.
 
-Most founders treat "early-stage VC" as one bucket. It's actually three — pre-seed, seed, and Series A — typically $250K–$15M total at $5M–$80M valuations.
+Most founders treat "early-stage VC" as one bucket. It's actually three (pre-seed, seed, and Series A) typically $250K–$15M total at $5M–$80M valuations.
  The practical implication is that your target list needs to be filtered by fund size, recent check size, and actual stage of the last ten investments — not by what a fund's website says. 
 Founders close seventy percent faster when they target early-stage VCs whose check size, stage, and sector actually match — not by mass-DMing two hundred partners.
 
 ## What Early-Stage VCs Actually Evaluate
 
-Because early-stage investors are not anchored to financial performance, they evaluate founders on a different set of dimensions. Getting these right — and understanding how they shift across the three tiers — is what separates founders who consistently generate term sheets from those who get polite rejections.
+Because early-stage investors are not anchored to financial performance, they evaluate founders on a different set of dimensions. Getting these right (and understanding how they shift across the three tiers) is what separates founders who consistently generate term sheets from those who get polite rejections.
 
 ### Domain Credibility and Team Completeness
 
@@ -156,13 +156,13 @@ Series A capital in 2026 is going not to broad horizontal AI tools, but to deep 
 
 ## Access Is a Function of Timing, Targeting, and Follow-Through
 
-The common advice to founders — "get a warm introduction" — is correct but incomplete. Warm introductions improve conversion rates, but the quality of the introduction matters more than its existence. A lukewarm intro from a tangential connection buys you exactly one more email before the same silence. A targeted, well-researched cold email to a fund whose thesis aligns precisely with your company can outperform it.
+The common advice to founders ("get a warm introduction") is correct but incomplete. Warm introductions improve conversion rates, but the quality of the introduction matters more than its existence. A lukewarm intro from a tangential connection buys you exactly one more email before the same silence. A targeted, well-researched cold email to a fund whose thesis aligns precisely with your company can outperform it.
 
 Access to early-stage VC also depends on where a fund sits in its cycle. A fund that closed its latest vehicle six months ago is in active deployment mode. A fund approaching the end of its deployment window is increasingly reserving capital for follow-ons into its existing portfolio. This information is not always public, but it can often be inferred by checking when the fund's last close was announced and how many new portfolio companies they have added in the past year.
 
 Finally, follow-through through a structured pipeline is what separates founders who raise from those who generate a handful of promising meetings that slowly go cold. 
 The fastest fundraises usually come from a tighter target list, stronger investor-fit research, and better execution after first contact.
- Building and maintaining a tracking process — who has been contacted, what stage each conversation is at, when to follow up — is unglamorous but essential.
+ Building and maintaining a tracking process (who has been contacted, what stage each conversation is at, when to follow up) is unglamorous but essential.
 
 ## How to Build a Stage-Matched Early-Stage VC Target List
 
@@ -172,7 +172,7 @@ The payoff is material.
 Your first institutional investor will shape your company for years, from how you price your product to what happens in the boardroom when growth stalls.
  A strong stage-matched lead compresses fundraising timelines and sends a signal to every downstream investor. The wrong lead — or worse, a round assembled from mismatched followers because the right leads were never targeted — creates friction that compounds over time.
 
-This is exactly the kind of research-heavy, detail-intensive work that founders consistently say they don't have the bandwidth to do properly while also running their companies. Building a prioritised, stage-matched early-stage VC target list — cross-referenced by check size, fund cycle, sector thesis, and relevant partner — is precisely the work Rupert handles on a founder's behalf. Rather than spending weeks on investor databases only to approach mismatched funds, founders working with Rupert get a curated, verified target list built by experienced operators who understand the landscape, alongside managed outreach that keeps every conversation and every relationship firmly in the founder's hands.
+This is exactly the kind of research-heavy, detail-intensive work that founders consistently say they don't have the bandwidth to do properly while also running their companies. Building a prioritised, stage-matched early-stage VC target list (cross-referenced by check size, fund cycle, sector thesis, and relevant partner) is precisely the work Rupert handles on a founder's behalf. Rather than spending weeks on investor databases only to approach mismatched funds, founders working with Rupert get a curated, verified target list built by experienced operators who understand the landscape, alongside managed outreach that keeps every conversation and every relationship firmly in the founder's hands.
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->

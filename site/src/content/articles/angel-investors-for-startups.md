@@ -85,7 +85,7 @@ AngelList's distributed-syndicate model is not a fit.
 ### Gust
 
 Gust connects over 80 angel networks and 80,000-plus accredited investors globally, offering CRM tools, pitch deck templates, and investor relations management — making it best for founders who want to apply to multiple angel groups through a single profile.
- It functions less as a place where individual investors write checks and more as the administrative backbone for structured angel groups. Many formal groups — including regional networks affiliated with the Angel Capital Association — accept applications exclusively through Gust, which means creating a complete, polished profile there is a prerequisite before you approach those networks rather than an afterthought.
+ It functions less as a place where individual investors write checks and more as the administrative backbone for structured angel groups. Many formal groups (including regional networks affiliated with the Angel Capital Association) accept applications exclusively through Gust, which means creating a complete, polished profile there is a prerequisite before you approach those networks rather than an afterthought.
 
 ### Republic and Wefunder
 
@@ -151,7 +151,7 @@ VentureSouth is one of the largest and most established angel networks in the So
 
 ## The Overlooked Tier: Regional and University-Affiliated Groups
 
-The data reveals a significant shift: traditional hub cities — San Francisco, New York, Boston — still lead in absolute numbers, but mid-market groups in Austin, Denver, Miami, and Nashville are moving faster and deploying capital more aggressively on a per-firm basis.
+The data reveals a significant shift: traditional hub cities (San Francisco, New York, Boston) still lead in absolute numbers, but mid-market groups in Austin, Denver, Miami, and Nashville are moving faster and deploying capital more aggressively on a per-firm basis.
  For early-stage founders outside major hubs, regional groups — often affiliated with university ecosystems, economic development bodies, or SBDC networks — are among the most accessible entry points available.
 
 Regional angel groups typically invest $100K–$250K per company in seed or early-stage rounds and will often co-invest with other local groups or venture firms for raises up to $2 million — and that core ticket size maps perfectly to companies raising Seed or pre-Series A rounds.
@@ -180,7 +180,7 @@ Investors are looking for evidence early: clear customer demand, believable unit
 
 ## Running Outreach Across Multiple Groups Without Losing Momentum
 
-Building a shortlist of the right angel groups — national platforms, organized networks, and overlooked regional groups — is the foundation. The operational layer that follows is where most founders stall. Running parallel conversations across 30 to 50 investor relationships simultaneously requires consistent follow-up cadences, personalized messaging for each group's specific sector focus, and disciplined tracking of where each relationship sits in the pipeline. Most founders managing this process alone discover that the fundraise starts to consume the entire company: every meeting, follow-up, and data room request is time not spent building the product or serving customers.
+Building a shortlist of the right angel groups (national platforms, organized networks, and overlooked regional groups) is the foundation. The operational layer that follows is where most founders stall. Running parallel conversations across 30 to 50 investor relationships simultaneously requires consistent follow-up cadences, personalized messaging for each group's specific sector focus, and disciplined tracking of where each relationship sits in the pipeline. Most founders managing this process alone discover that the fundraise starts to consume the entire company: every meeting, follow-up, and data room request is time not spent building the product or serving customers.
 
 This is the execution problem Rupert is designed to solve. Every outreach campaign is researched and personalized by experienced operators who understand what angel groups and syndicate leads respond to — and founders retain complete visibility into every conversation and every investor relationship. That combination of expert execution and full transparency means founders can engage the angel capital market at the level of quality and volume it requires, without disappearing from their own company for six months.
 

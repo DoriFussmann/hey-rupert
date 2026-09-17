@@ -61,13 +61,13 @@ externalLinks:
 ---
 ## What Makes a VC Firm "Famous" — and Why It Matters for Your Raise
 
-When founders talk about famous venture capital firms, they usually mean the same short list: Sequoia Capital, Andreessen Horowitz, Benchmark, Kleiner Perkins, Accel. These names dominate startup lore, appear in every pitch deck postmortem, and anchor the mental model most first-time founders carry into their first raise. But "famous" is doing a lot of work in that sentence — and unpacking it carefully can save you months of misdirected effort.
+When founders talk about famous venture capital firms, they usually mean the same short list: Sequoia Capital, Andreessen Horowitz, Benchmark, Kleiner Perkins, Accel. These names dominate startup lore, appear in every pitch deck postmortem, and anchor the mental model most first-time founders carry into their first raise. But "famous" is doing a lot of work in that sentence, and unpacking it carefully can save you months of misdirected effort.
 
-Reputation in venture capital is built on one thing above all else: landmark exits and the LP returns that follow. The firms founders think of as famous earned that status through transformational investments — the kinds of bets that defined entire technology categories. 
+Reputation in venture capital is built on one thing above all else: landmark exits and the LP returns that follow. The firms founders think of as famous earned that status through transformational investments, the kinds of bets that defined entire technology categories. 
 By AUM, the five largest venture capital firms in 2026 are SoftBank Vision Fund ($100B+), Andreessen Horowitz ($90B), Insight Partners ($90B), Tiger Global ($58.5B), and Sequoia Capital ($56B).
  But AUM alone does not explain why certain names carry more gravitational pull in founder circles than others. A firm can be enormous by assets under management and still be largely invisible to early-stage founders if it operates quietly at growth stage, writes minimum $50M checks, or focuses on a sector miles away from yours.
 
-The more useful mental model is this: "famous" and "right for your raise" are two completely separate questions. The firms that top AUM rankings are not automatically your best targets — and chasing them reflexively, without understanding their current fund strategy and check size, is one of the most common and expensive mistakes first-time founders make. Fame is a function of track record. Fit is a function of stage, sector, thesis, and timing.
+The more useful mental model is this: "famous" and "right for your raise" are two completely separate questions. The firms that top AUM rankings are not automatically your best targets, and chasing them reflexively, without understanding their current fund strategy and check size, is one of the most common and expensive mistakes first-time founders make. Fame is a function of track record. Fit is a function of stage, sector, thesis, and timing.
 
 ## Can a First-Time Founder Actually Get a Meeting at a Top VC Firm?
 

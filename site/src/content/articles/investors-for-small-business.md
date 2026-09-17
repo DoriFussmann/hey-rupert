@@ -56,7 +56,7 @@ faqs:
 
 ## The Investor Landscape Is Wider Than Most Founders Think
 
-When founders talk about "finding investors," they usually mean one thing: venture capital. It's the category that dominates the press, the podcasts, and the pitch competition circuit. But venture capital represents a narrow slice of the capital actually available to small businesses and emerging companies, and it comes with structural requirements — on growth trajectory, market size, and exit timelines — that most companies genuinely don't fit. The result is a predictable waste: founders spend months chasing investors whose mandates were never aligned with their company, collect polite rejections, and conclude that capital is unavailable. Often it isn't. It's just in the wrong drawer.
+When founders talk about "finding investors," they usually mean one thing: venture capital. It's the category that dominates the press, the podcasts, and the pitch competition circuit. But venture capital represents a narrow slice of the capital actually available to small businesses and emerging companies, and it comes with structural requirements (on growth trajectory, market size, and exit timelines) that most companies genuinely don't fit. The result is a predictable waste: founders spend months chasing investors whose mandates were never aligned with their company, collect polite rejections, and conclude that capital is unavailable. Often it isn't. It's just in the wrong drawer.
 
 Understanding the full investor landscape — who the different types are, what they actually look for, and why those differences matter for your specific company — is the first act of a serious fundraise. Everything that comes after, the list, the messaging, the outreach, only converts when the underlying fit is real.
 
@@ -83,7 +83,7 @@ For B2B companies, this usually means a handful of paying customers or active pi
 
 ### Traditional Venture Capital Firms
 
-Larger VC firms — those managing $100M or more — have structural requirements that most small businesses simply don't satisfy. 
+Larger VC firms (those managing $100M or more) have structural requirements that most small businesses simply don't satisfy. 
 Typical check sizes range from $500K at seed to $100M or more at later stages, and VC firms raise a fund with a defined size and a mandate to invest in a specific stage and sector.
  Because a fund of $200 million needs to return multiples of that figure to its LPs, partners can only write checks into companies that have a realistic path to a large outcome. That structural reality isn't a bias against small businesses — it's math. A $3 million revenue company with 20% annual growth is a wonderful business; it is not a venture-scale investment. The founders who benefit from understanding this aren't necessarily the ones targeting large VCs — they're the ones who stop targeting them once they understand why the fit isn't there.
 
@@ -120,13 +120,13 @@ The most common fundraising mistake isn't a bad pitch deck or weak financials �
 
 Stage is the most legible of the three. 
 One of the most significant funding trends in 2026 is the emphasis on profitability — in previous years many startups raised capital based primarily on growth metrics, but now investors want evidence that customers value the solution, and revenue remains one of the strongest indicators of business viability.
- A company with no revenue talking to seed-stage VCs who expect paying customers isn't going to close that gap with a better narrative. They need to either build to the stage threshold or redirect to investors — angels, pre-seed funds — whose mandate includes the earlier stage.
+ A company with no revenue talking to seed-stage VCs who expect paying customers isn't going to close that gap with a better narrative. They need to either build to the stage threshold or redirect to investors (angels, pre-seed funds) whose mandate includes the earlier stage.
 
 Growth trajectory is more nuanced and more dangerous to misread. Founders often use "we could be big" as a substitute for a coherent growth model. A venture fund needs to believe your company can return the fund — which, for a $100 million fund with 20 portfolio companies, means each company needs a plausible path to $300 million or more in value. If your business is strong but structurally capped at a smaller outcome, you're not a fit for that fund. Saying so clearly, and redirecting toward family offices or SBICs where that profile is a genuine fit rather than a consolation prize, is a better use of everyone's time.
 
 Sector is the third filter, and the one most easily overlooked in the abstract. 
 Check size and activity levels depend on startup stage, sector, geography, valuation, investor experience, and whether the deal is done solo or through a syndicate.
- Many funds have sector exclusions — they won't touch regulated industries, hardware, or certain geographies — that aren't listed anywhere but are real constraints. Part of building an investor list is understanding each investor's actual thesis, not just their stated focus.
+ Many funds have sector exclusions (they won't touch regulated industries, hardware, or certain geographies) that aren't listed anywhere but are real constraints. Part of building an investor list is understanding each investor's actual thesis, not just their stated focus.
 
 ## Getting to Investors: Warm Paths Beat Cold Channels
 
@@ -155,11 +155,11 @@ The market narrative is equally critical. "Big market" is not a market narrative
 Most founders treat fundraising as a series of isolated conversations. They send a pitch, have a call, wait for an answer, and move on if it's no. That approach fails because it ignores the dynamics of how investor decisions actually get made. Investors rarely say yes after one meeting. They need to see the company over time, watch the founder respond to questions and challenges, and often need social proof from other investors in the process.
 
 Fundraising often begins long before capital is needed.
- The founders who close rounds do so because they've been systematically building relationships with the investors they want to reach, tracking every conversation in a structured pipeline, and following up with updates — traction milestones, new customer wins, relevant market developments — that keep the relationship warm without asking for a decision before the investor is ready to make one.
+ The founders who close rounds do so because they've been systematically building relationships with the investors they want to reach, tracking every conversation in a structured pipeline, and following up with updates (traction milestones, new customer wins, relevant market developments) that keep the relationship warm without asking for a decision before the investor is ready to make one.
 
 This is where structure becomes a competitive advantage. A founder who tracks every investor conversation, knows exactly where each relationship stands, and follows up consistently is running a materially different process than a founder who operates from memory and intuition. The difference shows up at the close — in who converted and who drifted away during the weeks of silence that every fundraise produces.
 
-Momentum also feeds on itself during a raise. When investors know others are looking at the company, the cognitive calculus shifts. Timing outreach so that multiple conversations are progressing simultaneously — rather than sequentially — is one of the most practical things a founder can do to accelerate a round.
+Momentum also feeds on itself during a raise. When investors know others are looking at the company, the cognitive calculus shifts. Timing outreach so that multiple conversations are progressing simultaneously (rather than sequentially) is one of the most practical things a founder can do to accelerate a round.
 
 ## Where Things Stand
 

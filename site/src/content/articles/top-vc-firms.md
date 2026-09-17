@@ -59,12 +59,12 @@ externalLinks:
   - label: "Anatomy of a top VC: 397% IRRs and 17-IPO funds"
     url: https://www.baybridgebio.com/blog/anatomy_of_a_top_vc
 ---
-Every founder raising a Seed or Series A round eventually faces the same question: should you lead with the most recognizable names in venture — the firms whose logos alone open doors — or start with the smaller, more sector-focused funds that already speak your language? The honest answer is that the question itself contains a false trade-off. But to understand why, you need a clear view of what each type of firm actually offers, what it costs you, and how your own situation changes the calculus.
+Every founder raising a Seed or Series A round eventually faces the same question: should you lead with the most recognizable names in venture (the firms whose logos alone open doors) or start with the smaller, more sector-focused funds that already speak your language? The honest answer is that the question itself contains a false trade-off. But to understand why, you need a clear view of what each type of firm actually offers, what it costs you, and how your own situation changes the calculus.
 
 ## What Tier 1 Mega-Funds Actually Give You (And What They Don't)
 
 The largest venture capital firms in 2026 are led by Andreessen Horowitz and Sequoia Capital, each managing roughly $90 billion in assets, followed by Insight Partners, General Catalyst, and Thrive Capital.
- These firms are not just the biggest — they are the most recognized brand names in startup finance, and that recognition carries genuine, compounding value for early-stage founders.
+ These firms are not just the biggest, they are the most recognized brand names in startup finance, and that recognition carries genuine, compounding value for early-stage founders.
 
 A blue-chip name on your cap table affects every downstream conversation: Tier 1 brand investors cause Series A investors to take your call faster, top engineering candidates respond to recruiting outreach, and enterprise customers move faster on pilots.
  This is not marketing mythology — it is a structural reality of how institutional trust flows through the startup ecosystem. A term sheet from any of these firms functions as a market signal, not just a financing event.
@@ -76,13 +76,13 @@ Global venture investment hit $300 billion across 6,000 startups in Q1 2026 alon
 Mega-funds write minimum check sizes that exclude most Seed and early Series A rounds: Andreessen Horowitz averages $17.6 million at Seed and $24.1 million at Series A, meaning founders raising under $10M often capture better ownership economics, partner attention, and downstream signaling from Tier 2 generalists or sector specialists.
  This is a mechanical constraint, not a judgment — a mega-fund simply cannot profitably lead a $3M Seed round when its fund economics require deploying billions per vintage.
 
-The trade-off is decision speed — often six to twelve weeks of process — and partner attention, since you are one of many on the partner's plate.
+The trade-off is decision speed (often six to twelve weeks of process) and partner attention, since you are one of many on the partner's plate.
  For a first-time founder without a prior exit or warm network connection, that process can stall silently, consuming your fundraising runway without feedback.
 
 ## Why Sector Specialists Often Win at Seed and Early Series A
 
 Sector expertise allows firms to evaluate deals faster, provide more relevant operational support, and build reputations that attract the best founders in a given category.
- This speed matters enormously at Seed — where the competitive dynamic of a round can shift in weeks — and the domain-specific network value often far exceeds what a generalist platform can provide.
+ This speed matters enormously at Seed (where the competitive dynamic of a round can shift in weeks) and the domain-specific network value often far exceeds what a generalist platform can provide.
 
 Tier 2 firms also tend to have sharper sector theses than the generalist mega-funds. Firms like Greylock and Khosla are classified as Tier 2 by AUM but function as Tier 1 within their core sectors.
  A founder building an enterprise security product who takes a meeting with a cybersecurity-specialist fund is not settling for less — they are getting access to a partner who has read every comparable deck, knows the customer acquisition benchmarks, and can call the three CISOs who most need to see a demo.
@@ -110,7 +110,7 @@ At early stage, you're investing in a person, not a fund. The partner who leads 
 The Tier 1 versus specialist question has a different answer depending on where you're building. 
 Silicon Valley still dominates, but Austin (defense tech) and New York (fintech) are closing the gap, and your firm choice should reflect where your sector is being funded.
 
-For founders based outside the United States, the picture shifts more substantially. Many of the largest US mega-funds either expect a US operational base or will delay commitment until one is established. Regional specialist firms — operating across Europe, South and Southeast Asia, and Latin America — often move faster, understand local regulatory environments, and can provide introductions that a US-headquartered firm cannot. 
+For founders based outside the United States, the picture shifts more substantially. Many of the largest US mega-funds either expect a US operational base or will delay commitment until one is established. Regional specialist firms (operating across Europe, South and Southeast Asia, and Latin America) often move faster, understand local regulatory environments, and can provide introductions that a US-headquartered firm cannot. 
 While fundraising may be concentrated in the US, startups around the world are gaining more opportunities for funding and growth, regardless of their location,
  and the ecosystem of regional-specialist funds has expanded meaningfully to serve those opportunities.
 
@@ -128,7 +128,7 @@ Running both tracks requires a specific kind of discipline. You need to know whi
 Founders must align their capital needs with the fund's mechanical constraints, ensuring the venture capital firm can realistically lead the current round and follow-on in the future.
  That alignment takes research — not just into AUM rankings, but into fund vintage, recent deployment pace, check size history, and the individual partner's current portfolio load.
 
-Most founders underestimate how long the research and outreach phase takes when done properly. Building a targeted list across both Tier 1 and sector-specialist funds, personalizing the narrative for each partner's known thesis, managing the sequence of first contacts, and keeping every conversation active and warm is a full-time job layered on top of running the company. It is not unusual for the process — done rigorously — to consume sixty or more hours before the first meaningful meeting lands.
+Most founders underestimate how long the research and outreach phase takes when done properly. Building a targeted list across both Tier 1 and sector-specialist funds, personalizing the narrative for each partner's known thesis, managing the sequence of first contacts, and keeping every conversation active and warm is a full-time job layered on top of running the company. It is not unusual for the process (done rigorously) to consume sixty or more hours before the first meaningful meeting lands.
 
 That is exactly the kind of disciplined, parallel-track process that Rupert manages on your behalf. Rather than choosing between Tier 1 brand signal and sector-specialist fit, Rupert researches and personalizes outreach for both simultaneously — keeping all investor relationships in your name, giving you full visibility into every conversation, and running the process with the experience and structure that most founders can't afford to build alone. The result is not just more meetings. It is the right meetings, in the right order, with the right investors across both tracks — so that when a term sheet arrives, you have the leverage to make it the best one possible.
 

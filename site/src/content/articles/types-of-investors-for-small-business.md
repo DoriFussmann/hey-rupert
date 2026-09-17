@@ -69,7 +69,7 @@ This FAQ is designed to give you a clear, jargon-free map of the investor landsc
 
 The first round most founders ever raise isn't from a professional investor at all — it's from people who already believe in them personally. Friends and family capital is informal, fast, and usually the lowest-friction way to get initial runway. The check sizes are small (often $5,000–$50,000), documentation varies wildly, and the relationship risk is real if things go wrong.
 
-One underrated risk with friends and family rounds is not treating them professionally. Using a simple convertible note or SAFE agreement — rather than a handshake understanding — protects both parties and avoids messy cap table confusion later when institutional investors conduct diligence.
+One underrated risk with friends and family rounds is not treating them professionally. Using a simple convertible note or SAFE agreement (rather than a handshake understanding) protects both parties and avoids messy cap table confusion later when institutional investors conduct diligence.
 
 ### Angel Investors
 
@@ -87,11 +87,11 @@ An angel syndicate is a group of individual angels who pool their capital for a 
 
 ### Micro-VCs
 
-Micro-VCs are formal venture funds — typically managing anywhere from $10 million to $100 million in assets — that focus on pre-seed and seed-stage companies. Unlike solo angels, micro-VCs have limited partners they report to and an investment committee that signs off on decisions. This adds process and timeline, but it also means micro-VCs bring structured support: they may offer follow-on reserves, LP introductions, and a formal portfolio network. For a founder raising a seed round of $500,000 or more, micro-VCs are often the most appropriate institutional target.
+Micro-VCs are formal venture funds (typically managing anywhere from $10 million to $100 million in assets) that focus on pre-seed and seed-stage companies. Unlike solo angels, micro-VCs have limited partners they report to and an investment committee that signs off on decisions. This adds process and timeline, but it also means micro-VCs bring structured support: they may offer follow-on reserves, LP introductions, and a formal portfolio network. For a founder raising a seed round of $500,000 or more, micro-VCs are often the most appropriate institutional target.
 
 ### Larger Venture Capital Firms
 
-Traditional venture capital is institutional capital deployed from large funds — often $200 million to several billion dollars — with return expectations that require portfolio companies to pursue very large exits. 
+Traditional venture capital is institutional capital deployed from large funds (often $200 million to several billion dollars) with return expectations that require portfolio companies to pursue very large exits. 
 Venture capital fundraising trends show that while the total cost of VC investments is rising, the money is being distributed across a fewer number of startups.
  This concentration has real implications for founders: if your business is optimized for profitable, sustainable growth rather than a path to a $500 million or billion-dollar exit, most VC funds are structurally unable to invest, regardless of how good the business is. Their LP obligations require outlier returns that a stable, profitable small business simply cannot deliver.
 
@@ -101,13 +101,13 @@ SBICs are privately operated investment funds that are licensed and regulated by
 
 ### Revenue-Based Financing
 
-Revenue-based financing (RBF) is not equity at all — it's a capital advance repaid through a percentage of monthly revenue until a multiple of the original investment is returned. There is no dilution, no ownership transfer, and typically no board seat. RBF works best for businesses with predictable, recurring revenue. The cost of capital is higher than a traditional bank loan, but the flexibility — repayments flex with revenue rather than being fixed — makes it attractive for businesses with seasonal or variable cash flows.
+Revenue-based financing (RBF) is not equity at all — it's a capital advance repaid through a percentage of monthly revenue until a multiple of the original investment is returned. There is no dilution, no ownership transfer, and typically no board seat. RBF works best for businesses with predictable, recurring revenue. The cost of capital is higher than a traditional bank loan, but the flexibility (repayments flex with revenue rather than being fixed) makes it attractive for businesses with seasonal or variable cash flows.
 
 ---
 
 ## Angels vs. VCs: Why the Difference Actually Matters to Your Raise
 
-One of the most common early mistakes founders make is conflating angels and venture capitalists as the same category. The surface behavior looks similar — both write equity checks, take ownership, and expect a return — but the underlying mechanics are completely different, and those mechanics shape everything about how you should approach them.
+One of the most common early mistakes founders make is conflating angels and venture capitalists as the same category. The surface behavior looks similar (both write equity checks, take ownership, and expect a return) but the underlying mechanics are completely different, and those mechanics shape everything about how you should approach them.
 
 Angels invest their own money. When an angel says yes, the decision is made. There is no investment committee, no LP approval, no portfolio construction constraint to navigate. This is why angel processes are faster and more personal. It also means angels can invest based on conviction that doesn't fit a formal thesis — a founder they know personally, an industry they care about, a problem they experienced themselves. The flexibility cuts both ways: they can also say no just as quickly, and there's no formal appeal process.
 
@@ -134,7 +134,7 @@ SBICs and revenue-based financers occupy the space where equity investors often 
 
 ## Equity vs. Non-Dilutive: Understanding the Capital Structure Question
 
-Every time you take outside capital, you're making a structural choice, not just a financial one. Equity investors — angels, syndicates, micro-VCs, VCs — receive ownership in your company in exchange for their check. That ownership stakes a claim on future decisions, future proceeds, and in many cases, future rounds. Every dilutive round reduces your percentage ownership and potentially changes the governance dynamic of your company.
+Every time you take outside capital, you're making a structural choice, not just a financial one. Equity investors (angels, syndicates, micro-VCs, VCs) receive ownership in your company in exchange for their check. That ownership stakes a claim on future decisions, future proceeds, and in many cases, future rounds. Every dilutive round reduces your percentage ownership and potentially changes the governance dynamic of your company.
 
 Revenue-based financing and SBA-backed SBIC debt are lower-dilution alternatives. They have real costs — interest, repayment multiples, covenants — but they don't permanently alter your cap table. For founders who are highly sensitive to ownership dilution, or who are raising at a stage where equity valuation is hard to defend, non-dilutive and lower-dilution structures deserve serious consideration alongside pure equity options.
 

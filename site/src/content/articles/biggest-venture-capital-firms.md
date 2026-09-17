@@ -62,7 +62,7 @@ externalLinks:
 
 Every year, a fresh wave of rankings declares the "top" venture capital firms. Most of those lists sort by assets under management, put Andreessen Horowitz or Sequoia at the top, and stop there. For a journalist or an LP sizing up the industry, that's fine. For a founder deciding where to spend the next twelve weeks of their life, it's an incomplete picture that can send you in entirely the wrong direction.
 
-This guide is built for that second reader. It covers the firms at the top of every credible 2026 AUM ranking, explains what each metric actually signals, maps the sector and stage concentrations that determine fit, and addresses the structural gaps — particularly around European and Asian firms — that US-origin rankings routinely miss. The goal is not to impress you with large numbers, but to help you use those numbers intelligently.
+This guide is built for that second reader. It covers the firms at the top of every credible 2026 AUM ranking, explains what each metric actually signals, maps the sector and stage concentrations that determine fit, and addresses the structural gaps (particularly around European and Asian firms) that US-origin rankings routinely miss. The goal is not to impress you with large numbers, but to help you use those numbers intelligently.
 
 ---
 
@@ -70,7 +70,7 @@ This guide is built for that second reader. It covers the firms at the top of ev
 
 AUM reflects the capital a firm has raised from limited partners and is the most visible measure of scale.
  It is not, however, a measure of returns, consistency, founder experience, or fit. 
-AUM includes committed but undeployed capital — "dry powder" — so a firm's "size" reflects fundraising success more than actual deployed capital.
+AUM includes committed but undeployed capital ("dry powder") so a firm's "size" reflects fundraising success more than actual deployed capital.
 
 That distinction matters enormously. A firm that raised a $10 billion fund last year may have deployed only a fraction of it. Its AUM is high; its actual activity at your stage may be lower than a smaller, more active firm deploying steadily from a $500 million vehicle.
 

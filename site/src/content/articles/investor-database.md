@@ -69,7 +69,7 @@ The challenge is not a lack of data — it's the quality, freshness, and relevan
 At the core, every investor database is doing the same thing: aggregating information about who has invested in what, at what stage, in which sectors, and for how much. But the depth and reliability of that information varies by an order of magnitude depending on the platform.
 
 The free end of the market is anchored by community-driven platforms that trade depth for accessibility. The best of these give founders access to tens of thousands of startup investors filterable by stage, sector, and geography at no cost. 
-The most transparent free platforms are ones where investors share exactly what they invest in — stage, sector, and location — so founders can see upfront if their startup matches an investor's focus, and if it does, request a warm intro rather than sending blind emails.
+The most transparent free platforms are ones where investors share exactly what they invest in (stage, sector, and location) so founders can see upfront if their startup matches an investor's focus, and if it does, request a warm intro rather than sending blind emails.
  That opt-in model is genuinely useful for filtering signal from noise at the earliest stages of list-building, even if coverage of smaller or newer funds is inconsistent.
 
 Mid-tier, founder-focused platforms go further on both coverage and functionality. 
@@ -77,7 +77,7 @@ The strongest paid options in this tier offer databases of more than 125,000 ang
 
 Platforms like Foundersuite combine a CRM with a database of 230,000+ investors to help founders build their funnel — an all-in-one approach that streamlines fundraising and investor relations for startups.
  These platforms are priced for founders rather than institutions, 
-with founder-focused paid databases sitting in the affordable middle — some starting around $29–$59/month with verified contact details included — while institutional tools run upwards of $20,000/year and are built for VC firms and analysts, not bootstrapped founders.
+with founder-focused paid databases sitting in the affordable middle (some starting around $29–$59/month with verified contact details included) while institutional tools run upwards of $20,000/year and are built for VC firms and analysts, not bootstrapped founders.
 
 At the institutional end of the market sit enterprise-grade private capital intelligence platforms. 
 The institutional standard is a platform used by investment banks, private equity firms, and venture capital investors who need timely and comprehensive deal data, fund performance benchmarks, and dedicated analyst access.
@@ -96,7 +96,7 @@ Over half of private capital firms now use four or more data sources simultaneou
  Fund thesis documents change. Partners move between firms. A VC that was actively writing $500K seed checks eighteen months ago may have closed a new, larger fund and shifted focus to Series A. 
 Across major platforms, one pattern defines 2026: investor data now moves faster than most founder outreach can follow.
 
-This matters practically because a well-filtered list built on stale thesis data is still a bad list. A founder who emails a VC partner based on their 2023 portfolio activity — without checking that the fund has since shifted stage or sector focus — is not running a targeted campaign. They are running a spray-and-pray campaign with extra steps. The research phase of a fundraise requires active, ongoing judgment about what each fund is doing right now, not just what they've done in the past. Database access is the starting point for that judgment, not a substitute for it.
+This matters practically because a well-filtered list built on stale thesis data is still a bad list. A founder who emails a VC partner based on their 2023 portfolio activity (without checking that the fund has since shifted stage or sector focus) is not running a targeted campaign. They are running a spray-and-pray campaign with extra steps. The research phase of a fundraise requires active, ongoing judgment about what each fund is doing right now, not just what they've done in the past. Database access is the starting point for that judgment, not a substitute for it.
 
 ## Choosing the Right Database for Your Stage
 
