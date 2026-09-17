@@ -72,7 +72,7 @@ This checklist works through each of those signals in the order they matter. It 
 Investors' bar for what constitutes a fundable startup has risen sharply. No longer can a pitch deck full of buzzwords secure an easy check. If you're an early-stage founder in 2026, you must demonstrate why your business is a must-have solution.
  At idea stage, the most direct way to do this is through customer discovery — and the minimum viable standard is ten to fifteen structured conversations with people who actually experience the problem you're solving.
 
-These conversations should not be product demos or pitches. Their purpose is to gather evidence that the problem is severe, frequent, and currently addressed inadequately. The findings — even summarised as three to five sharp insights — become the factual foundation of your investor narrative. Surveys, industry reports, and domain research can supplement direct interviews, but they rarely replace them. Investors who have seen thousands of decks can immediately tell the difference between a founder who has spent hours talking to potential customers and one who has spent those hours building slides.
+These conversations should not be product demos or pitches. Their purpose is to gather evidence that the problem is severe, frequent, and currently addressed inadequately. The findings (even summarised as three to five sharp insights) become the factual foundation of your investor narrative. Surveys, industry reports, and domain research can supplement direct interviews, but they rarely replace them. Investors who have seen thousands of decks can immediately tell the difference between a founder who has spent hours talking to potential customers and one who has spent those hours building slides.
 
 In a slower funding climate, investors are obsessed with proof. But traction includes more than just revenue — it includes retention, engagement, and conversion. Early-stage founders can show traction by quantifying anything that proves demand: pilot sign-ups, waitlist growth, partnership letters, or even repeat usage.
  At idea stage, a meaningful waitlist with qualitative evidence of why people signed up is a legitimate traction proxy. The bar is not zero, but it is achievable before a single line of code is written.
@@ -89,7 +89,7 @@ Your pitch deck should cover, in roughly this order: the problem and why it matt
 Many founders focus on their product or idea, but investors look for a combination of market validation, business model clarity, team capability, and financial preparedness.
  A common mistake is spending eight slides on the product and two on everything else — the ratio should be closer to the inverse, because investors at this stage are underwriting the opportunity and the team, not the exact feature set.
 
-The financial model matters even when the numbers are entirely projected. What it demonstrates is not predictive accuracy — no one expects that at idea stage — but logical thinking. A model that traces from customer acquisition assumptions through to revenue and burn rate tells an investor you understand the levers of your business. Keep it simple: a three-year model with clearly labelled assumptions is more credible than a complex spreadsheet that obscures its own logic.
+The financial model matters even when the numbers are entirely projected. What it demonstrates is not predictive accuracy (no one expects that at idea stage) but logical thinking. A model that traces from customer acquisition assumptions through to revenue and burn rate tells an investor you understand the levers of your business. Keep it simple: a three-year model with clearly labelled assumptions is more credible than a complex spreadsheet that obscures its own logic.
 
 ---
 
@@ -130,7 +130,7 @@ Pre-seed rounds in 2026 look different than they did 18 months ago. The "spray a
 At idea stage, the investor types most likely to fund on conviction rather than traction are pre-seed-focused micro-VCs, operator-angels in your sector, and angel syndicates. 
 Five investor types dominate pre-seed in 2026: pre-seed-focused micro-VCs, angel investors writing $10K–$250K checks, accelerators with standard $125K–$500K offers, family offices deploying via scout programs, and syndicate leads. Each has different check sizes, decision speed, and post-investment value — pick for fit, not just capital.
 
-Generalist seed VCs — the firms writing $3M+ checks and expecting early revenue metrics — are largely the wrong audience for idea-stage founders unless you have exceptional domain credibility or prior exits. 
+Generalist seed VCs (the firms writing $3M+ checks and expecting early revenue metrics) are largely the wrong audience for idea-stage founders unless you have exceptional domain credibility or prior exits. 
 Experienced founders adjust which numbers they lead with based on investor stage. A seed fund wants early traction and founder conviction. A Series A fund wants unit economics, net revenue retention, and payback on customer acquisition cost.
  Understanding what each investor type is actually evaluating at the point of first contact allows you to sequence your outreach intelligently — starting with the most stage-appropriate investors, building momentum, and using that momentum to open harder doors.
 

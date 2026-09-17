@@ -63,7 +63,7 @@ Every founder learns the funding menu quickly — equity, SAFEs, convertible not
 
 ## Priced Equity Rounds: Permanent Dilution With Full Structure
 
-A priced equity round — whether it is labeled a Seed, Series A, or Series B — is the clearest transaction in venture capital. Investors receive preferred shares at a negotiated price per share, which implies a specific pre-money valuation. Everyone on the cap table knows exactly what they own from the moment the round closes.
+A priced equity round (whether it is labeled a Seed, Series A, or Series B) is the clearest transaction in venture capital. Investors receive preferred shares at a negotiated price per share, which implies a specific pre-money valuation. Everyone on the cap table knows exactly what they own from the moment the round closes.
 
 Founders typically give up 15–25% per round at pre-seed through Series A, narrowing to 5–12% at later stages as the cap table thickens.
  The cost is permanent: unlike debt, there is no repayment event, and unlike convertible instruments, there is no ambiguity about what the investor owns. That clarity cuts both ways. Investors who lead priced rounds almost always receive preferred stock with protective provisions, board representation at Series A and beyond, and information rights. The governance overhead that comes with a priced round is real.
@@ -80,7 +80,7 @@ Priced equity rounds require more legal work and typically cost $15,000–$25,00
 
 ## SAFEs and Convertible Notes: Deferred Dilution With Hidden Compounding Risk
 
-The Simple Agreement for Future Equity — SAFE — was introduced by Y Combinator in 2013 precisely to solve the problem priced rounds create at the earliest stages: there is simply not enough data to justify setting a formal valuation, yet the company needs capital now. 
+The Simple Agreement for Future Equity (SAFE) was introduced by Y Combinator in 2013 precisely to solve the problem priced rounds create at the earliest stages: there is simply not enough data to justify setting a formal valuation, yet the company needs capital now. 
 With a SAFE, investors provide funds upfront in exchange for the right to convert their investment into shares when the company raises its next priced round. Three features separate SAFEs from debt instruments: no interest, no maturity date, and no repayment obligation.
 
 The market has voted decisively for the SAFE structure at early stages. 
@@ -99,7 +99,7 @@ Total dilution through Series A typically reaches 40–50% of founder equity
 ### How Convertible Notes Differ
 
 Convertible notes occupy a middle ground between SAFEs and priced equity. Like SAFEs, they convert to equity at the next priced round. Unlike SAFEs, 
-convertible notes accrue interest — typically 4–8% annually — and carry a maturity date, usually 12–24 months.
+convertible notes accrue interest (typically 4–8% annually) and carry a maturity date, usually 12–24 months.
  That maturity date matters: if the company has not raised a priced round by the time the note matures, the noteholder has a legal claim that a SAFE holder does not. 
 The discount rate on convertible notes typically runs 10–25%, rewarding early investors when the note converts to equity.
  Convertible notes remain useful for bridge financing between priced rounds, where the debt-like structure is actually desirable — it signals urgency to close the next round rather than letting the bridge linger indefinitely.
@@ -117,7 +117,7 @@ Venture debt is best used to extend runway 6–12 months between equity rounds w
 
 For those who do qualify, the economics are meaningful. 
 Total interest rates for venture debt generally range from 8–15% annually in 2024–2025, and can climb above 20% for higher-risk startups.
- Lenders also typically receive warrant coverage — a small equity stake — in exchange for taking on startup risk, so the instrument is not entirely non-dilutive, but the dilution is minimal compared to issuing a new equity round. 
+ Lenders also typically receive warrant coverage (a small equity stake) in exchange for taking on startup risk, so the instrument is not entirely non-dilutive, but the dilution is minimal compared to issuing a new equity round. 
 In most cases, lenders size loans based on a combination of revenue scale, growth trajectory, and the startup's most recent equity financing round — for example, a SaaS company with $8 million ARR and strong growth may be able to raise $4 million in venture debt, depending on investor backing and burn profile.
 
 The risk is structural, not just financial. 

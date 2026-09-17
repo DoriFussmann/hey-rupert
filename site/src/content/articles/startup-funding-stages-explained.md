@@ -57,7 +57,7 @@ externalLinks:
 ---
 ## The Question Before the Pitch
 
-Most founders approach fundraising as a sales problem: build a compelling deck, get into meetings, and close investors. But the more consequential question comes before any of that — and it is a diagnostic one. Which stage are you actually at? Which round should you be raising? And are you genuinely ready for it, or are you optimistically early?
+Most founders approach fundraising as a sales problem: build a compelling deck, get into meetings, and close investors. But the more consequential question comes before any of that, and it is a diagnostic one. Which stage are you actually at? Which round should you be raising? And are you genuinely ready for it, or are you optimistically early?
 
 Getting this wrong is expensive in ways that compound. Raising too early dilutes your cap table before you have leverage, attracts the wrong investor profile, and strains relationships when milestones get missed. Raising too late bleeds runway and forces you into a desperate process where investors sense the pressure before you say a word. The four-step framework below will help you answer these questions with honesty, structure, and the kind of precision that actually moves investors.
 
@@ -65,7 +65,7 @@ Getting this wrong is expensive in ways that compound. Raising too early dilutes
 
 ## Step One: Map Your Traction to Stage Benchmarks
 
-The first thing to understand is what each stage is *for*. Pre-seed funds a thesis. Seed funds the search for product-market fit. Series A funds the scaling of a proven model. Those are not marketing definitions — they are investor risk frameworks, and the capital that flows at each stage is calibrated accordingly.
+The first thing to understand is what each stage is *for*. Pre-seed funds a thesis. Seed funds the search for product-market fit. Series A funds the scaling of a proven model. Those are not marketing definitions, they are investor risk frameworks, and the capital that flows at each stage is calibrated accordingly.
 
 The audit starts with a single, uncomfortable question: what is still unproven about your business? If the answer is "whether customers will pay for this at all," you are pre-seed. If the answer is "whether we can acquire customers repeatedly and efficiently," you are seed. If the answer is "whether we can turn a working GTM motion into a scalable one," you are approaching Series A territory. What you have already proven tells investors where to price your risk. What remains unproven tells them which investor type should be sitting across the table.
 
@@ -97,7 +97,7 @@ Name your gap precisely. "We need to get from $800K ARR to $1.5M ARR" is a funda
 A milestone gap requires a plan to close it, and that plan needs to be tied to a fundraising calendar, not just a product roadmap. The reason is simple: fundraising has its own timeline that runs in parallel with, and completely separately from, your operating timeline.
 
 Startup fundraising rounds typically take 3–6 months from first outreach to close for seed and Series A rounds, with due diligence periods having extended to 6–10 weeks for institutional rounds in the current environment.
- That means if you want to close a round in Q1, the process needs to begin in the prior summer. It also means the preparation — the investor list, the materials, the warm relationship-building — needs to begin before that.
+ That means if you want to close a round in Q1, the process needs to begin in the prior summer. It also means the preparation (the investor list, the materials, the warm relationship-building) needs to begin before that.
 
 Start your next fundraise when you have 6–9 months of runway remaining.
  That is not conservative advice; it is arithmetic. If your runway is shorter than the time it takes to close a round, you are already negotiating from weakness. Investors can smell desperation in the calendar math even before they see it in your tone.
@@ -159,7 +159,7 @@ Once a founder has completed the four-step process — mapped traction, named th
 Running a full seed process while managing operations is one reason early-stage companies often underperform operationally during fundraising windows — the process is more time-consuming than most founders expect before they have done it.
  The investor research alone — identifying who actually invests at your stage and sector, finding warm paths in, personalizing outreach at a level that generates a genuine response — is a part-time job measured in weeks, not days.
 
-This is the gap that Rupert is built to close. Once you know exactly which stage you are raising and exactly which investor profile that stage requires, the next constraint is outreach quality and pipeline discipline. Every campaign Rupert runs is researched and personalized by experienced operators who understand what moves investors at each stage of the funnel. Founders retain complete visibility into every conversation and every relationship — there is no black box, no loss of ownership — but they do not have to choose between executing on their product and executing on their raise. The two processes run in parallel, the way they should, without one cannibalizing the other.
+This is the gap that Rupert is built to close. Once you know exactly which stage you are raising and exactly which investor profile that stage requires, the next constraint is outreach quality and pipeline discipline. Every campaign Rupert runs is researched and personalized by experienced operators who understand what moves investors at each stage of the funnel. Founders retain complete visibility into every conversation and every relationship (there is no black box, no loss of ownership) but they do not have to choose between executing on their product and executing on their raise. The two processes run in parallel, the way they should, without one cannibalizing the other.
 
 Fundraising is ultimately a sequenced, disciplined process that rewards founders who treat it like one. Know your stage. Know your gap. Know your timeline. And when the time comes to put your investor list to work, make sure the outreach is worthy of the business you have built.
 

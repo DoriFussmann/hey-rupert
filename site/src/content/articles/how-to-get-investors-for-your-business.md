@@ -58,18 +58,18 @@ externalLinks:
   - label: "Finding Investors: What Entrepreneurs Should Know"
     url: https://www.indeed.com/hire/c/info/finding-investors
 ---
-Getting investors for your business is not a single conversation — it is a structured campaign with a defined beginning, a disciplined middle, and a clear close. Founders who raise successfully do not stumble into capital through one well-timed email or a lucky coffee meeting. They treat fundraising the way a great sales leader treats a pipeline: qualified targets, consistent follow-up, and a process that creates its own momentum. This guide covers every stage of that process, from understanding which investors are right for your company to closing the round without losing months to "we're still interested" conversations that never convert.
+Getting investors for your business is not a single conversation, it is a structured campaign with a defined beginning, a disciplined middle, and a clear close. Founders who raise successfully do not stumble into capital through one well-timed email or a lucky coffee meeting. They treat fundraising the way a great sales leader treats a pipeline: qualified targets, consistent follow-up, and a process that creates its own momentum. This guide covers every stage of that process, from understanding which investors are right for your company to closing the round without losing months to "we're still interested" conversations that never convert.
 
 ## Know What You're Raising — And From Whom
 
-Before you approach a single investor, you need to understand the landscape well enough to know exactly where your company fits. Investor type is not a minor detail. It determines check size, involvement level, decision speed, and the stage of company each type is actually built to back — and pitching the wrong type wastes time you cannot recover.
+Before you approach a single investor, you need to understand the landscape well enough to know exactly where your company fits. Investor type is not a minor detail. It determines check size, involvement level, decision speed, and the stage of company each type is actually built to back, and pitching the wrong type wastes time you cannot recover.
 
 ### Angels
 
 Angels are individuals investing their own money at pre-seed and seed, typically writing checks in the $25K–$100K range.
  Because they deploy their own capital rather than a fund's, their decision-making is faster and more personal. 
 Paperwork is lighter and the relationship is more personal; some angels are operators who want to stay close to the ecosystem, others are financial investors looking for asymmetric returns, and a growing number are former founders who want to pay it forward.
- Angels are also more comfortable with thin or zero traction — they back teams and theses more than revenue lines. 
+ Angels are also more comfortable with thin or zero traction, they back teams and theses more than revenue lines. 
 Angels rarely ask for a board seat at pre-seed, usually settling for an update email or an observer role,
  which matters enormously for founders who want to preserve governance flexibility early on.
 
@@ -80,22 +80,22 @@ Seed stage investors, on average, deploy $500,000 to $5 million, drawing from li
 at seed, founders have typically settled the validation question, and investors need proof that customers use the product, pay for it, and retain it.
 
 A VC leading a priced round typically expects a formal board seat, protective provisions, and standing information rights.
- For founders, that trade-off — structured capital in exchange for governance — is one of the most consequential decisions of the early company. Choose your seed investors as carefully as you would a co-founder.
+ For founders, that trade-off (structured capital in exchange for governance) is one of the most consequential decisions of the early company. Choose your seed investors as carefully as you would a co-founder.
 
 ### Family Offices and Corporate VCs
 
-Family offices manage private wealth and can write checks at any stage, often with longer time horizons and less pressure to mark to market than institutional funds. They are particularly valuable for founders in sectors where patient capital matters — deep tech, healthcare, climate. Corporate VCs are strategic arms of larger companies; they bring distribution, partnerships, and sector expertise, but their investment thesis is anchored to their parent company's roadmap, which creates alignment risks worth understanding before you take their term sheet.
+Family offices manage private wealth and can write checks at any stage, often with longer time horizons and less pressure to mark to market than institutional funds. They are particularly valuable for founders in sectors where patient capital matters, deep tech, healthcare, climate. Corporate VCs are strategic arms of larger companies; they bring distribution, partnerships, and sector expertise, but their investment thesis is anchored to their parent company's roadmap, which creates alignment risks worth understanding before you take their term sheet.
 
 Knowing this landscape shapes everything: which investors belong on your list, how you approach them, what you lead with, and how long you should expect each decision to take. 
 Pitching a $2M lead check to an angel who typically writes $10K, or an idea-stage story to a fund that only leads $3M-plus rounds, burns time and relationships you may want again later.
 
 ## Get Investor-Ready Before You Start
 
-The single most common mistake in fundraising is starting outreach before the foundation is solid. A bad first impression with a target investor is rarely recoverable — investors have long memories and short inboxes, and a "no" from a misaligned or premature pitch can close a door you needed open six months later.
+The single most common mistake in fundraising is starting outreach before the foundation is solid. A bad first impression with a target investor is rarely recoverable, investors have long memories and short inboxes, and a "no" from a misaligned or premature pitch can close a door you needed open six months later.
 
 ### Materials That Need to Be Right
 
-Your pitch deck needs to tell a coherent story about the problem, your solution, why now, why you, and what you'll do with the money. Keep it to 12–14 slides — investors form their first impression in under a minute. Your financial model needs to be buildable: it does not need to be a precise forecast, but it does need to demonstrate that you understand unit economics, burn, and the path to the milestone this round is funding. Your data room — cap table, incorporation documents, contracts, key metrics — should be organised before you start, because the moment a serious investor asks for diligence materials, speed of response becomes its own signal.
+Your pitch deck needs to tell a coherent story about the problem, your solution, why now, why you, and what you'll do with the money. Keep it to 12–14 slides, investors form their first impression in under a minute. Your financial model needs to be buildable: it does not need to be a precise forecast, but it does need to demonstrate that you understand unit economics, burn, and the path to the milestone this round is funding. Your data room (cap table, incorporation documents, contracts, key metrics) should be organised before you start, because the moment a serious investor asks for diligence materials, speed of response becomes its own signal.
 
 ### Knowing When You're Ready
 
@@ -141,7 +141,7 @@ Getting investor meetings is a campaign, not a series of one-off events. The fou
 
 ### Launch in Parallel
 
-The most important tactical choice in fundraising is to schedule first meetings in a compressed window — ideally within two to three weeks — rather than sequentially. 
+The most important tactical choice in fundraising is to schedule first meetings in a compressed window (ideally within two to three weeks) rather than sequentially. 
 Running parallel conversations within one to two weeks creates competitive tension and prevents information asymmetry where later investors know earlier ones passed.
  When investors believe they are competing for a spot in your round, the dynamic changes: responses come faster, diligence moves faster, and the conversations you do have carry more weight.
 
@@ -151,7 +151,7 @@ Most deals are not closed in the first email — or the first meeting.
 Send two to three follow-ups spaced five to seven days apart; most responses come from follow-ups, not initial emails.
 
 This structure turns silence into meetings, and it is why most founders miss capital by not following up.
- Silence is not a no. A well-timed, relevant follow-up that adds new information — a new customer win, a retention milestone, a press mention — reactivates stalled conversations and demonstrates the forward momentum investors are betting on.
+ Silence is not a no. A well-timed, relevant follow-up that adds new information (a new customer win, a retention milestone, a press mention) reactivates stalled conversations and demonstrates the forward momentum investors are betting on.
 
 ### Track Everything
 

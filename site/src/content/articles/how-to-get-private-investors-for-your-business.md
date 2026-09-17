@@ -61,15 +61,15 @@ externalLinks:
 ---
 ## Why Private Investors Deserve a Dedicated Strategy
 
-Raising from private investors — angels, family offices, and individual high-net-worth backers — is a fundamentally different game from institutional fundraising, and most founders treat it like it isn't. They recycle the same pitch deck, send the same LinkedIn messages, and wonder why a cohort of smart, experienced individuals who move faster than any VC firm still won't commit. The answer is almost never the business. It's the process.
+Raising from private investors (angels, family offices, and individual high-net-worth backers) is a fundamentally different game from institutional fundraising, and most founders treat it like it isn't. They recycle the same pitch deck, send the same LinkedIn messages, and wonder why a cohort of smart, experienced individuals who move faster than any VC firm still won't commit. The answer is almost never the business. It's the process.
 
-Private investors operate on instinct sharpened by relationship context. They back founders they understand, in sectors they follow closely, at moments when the terms feel right relative to the risk. That means the founders who close these rounds aren't necessarily the ones with the strongest metrics — they're the ones who show up prepared, personalised, and sequenced. This guide walks you through that sequence, step by step.
+Private investors operate on instinct sharpened by relationship context. They back founders they understand, in sectors they follow closely, at moments when the terms feel right relative to the risk. That means the founders who close these rounds aren't necessarily the ones with the strongest metrics, they're the ones who show up prepared, personalised, and sequenced. This guide walks you through that sequence, step by step.
 
 ---
 
 ## Step 1: Define Your Raise Parameters Before You Talk to Anyone
 
-The single most common mistake founders make when approaching private investors is starting outreach before they've resolved the fundamentals: how much they're raising, what they're raising it for, and what dilution they can live with. Private investors move faster than institutional VCs — that speed is one of their defining advantages — but they also walk away faster when a founder seems unresolved on terms.
+The single most common mistake founders make when approaching private investors is starting outreach before they've resolved the fundamentals: how much they're raising, what they're raising it for, and what dilution they can live with. Private investors move faster than institutional VCs (that speed is one of their defining advantages) but they also walk away faster when a founder seems unresolved on terms.
 
 Before your first conversation, you should be able to answer three questions without hesitation: What is your target round size? What will the capital specifically enable — hiring, product development, market entry, a specific revenue milestone? And what is your acceptable dilution range, expressed both as a percentage and as an implied valuation? Founders who hedge on these questions in early meetings signal to private investors that they're either inexperienced or haven't thought hard enough about the business. Neither impression is recoverable.
 
@@ -105,7 +105,7 @@ If a warm introduction is available, use it. Research consistently shows that fo
 
 ## Step 4: Run First Meetings as Discovery Conversations, Not Pitches
 
-Most founders walk into a first meeting with a private investor and pitch. The investors who fund them are the ones they treated as collaborators rather than audiences. The distinction is critical, because private investors are making a personal bet — with their own money — and they need to understand not just the business but the person running it.
+Most founders walk into a first meeting with a private investor and pitch. The investors who fund them are the ones they treated as collaborators rather than audiences. The distinction is critical, because private investors are making a personal bet (with their own money) and they need to understand not just the business but the person running it.
 
 Arrive at a first meeting with a clear agenda, but spend the first ten minutes asking questions before you present anything. What does this investor look for at this stage? What has surprised them about their best investments? What sectors are they most active in right now? Where are they in their current deployment cycle? These aren't small-talk questions — they're strategic intelligence. The answers tell you exactly how to frame your opportunity against their specific criteria rather than delivering a generic pitch that may be irrelevant to their current thesis.
 
@@ -124,7 +124,7 @@ Within 24 hours of every first meeting, send a tailored follow-up: thank the inv
 
 Within five to seven days, schedule a second call and come to it prepared. By the second conversation, you should be presenting a specific version of your opportunity framed against what you learned in the first meeting. If they flagged a concern about market size, come back with data. If they asked about a specific customer segment, bring evidence. Private investors reward founders who listen and respond — it's a signal of how the working relationship will feel after they write the cheque.
 
-The data room access trigger is the final step in the sequence. When an investor is ready to move toward a decision, send a clean data room link — financials, cap table, key contracts, team bios — rather than waiting for them to ask. Proactively providing what a serious investor needs to close diligence removes friction and signals operational competence. Founders who wait to be asked often lose the deal to a competing opportunity that came with a data room ready to go.
+The data room access trigger is the final step in the sequence. When an investor is ready to move toward a decision, send a clean data room link (financials, cap table, key contracts, team bios) rather than waiting for them to ask. Proactively providing what a serious investor needs to close diligence removes friction and signals operational competence. Founders who wait to be asked often lose the deal to a competing opportunity that came with a data room ready to go.
 
 ---
 

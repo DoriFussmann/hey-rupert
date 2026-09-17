@@ -66,7 +66,7 @@ Every founder building an investor outreach list eventually finds some version o
 
 AUM figures for VC firms are typically drawn from SEC Form ADV filings, specifically the regulatory AUM reported under Item 5.F. Crucially, regulatory AUM includes uncalled capital commitments and is reported gross of leverage, which means it runs meaningfully higher than the actual committed or deployed capital a firm is actively managing.
  Treating AUM as a proxy for "how much money this firm has to give me" is one of the most common mistakes founders make at the start of a fundraise. 
-AUM includes committed but undeployed capital — dry powder — so a firm's apparent "size" reflects fundraising success more than actual deployed capital.
+AUM includes committed but undeployed capital (dry powder) so a firm's apparent "size" reflects fundraising success more than actual deployed capital.
 
 The right way to use an AUM ranking is as a scale signal and a research starting point. It tells you which firms have the gravitational pull, LP relationships, and follow-on capacity to matter to your company at growth stage. 
 For founders, the firm with the largest AUM is rarely the right answer to "who should I pitch?" — what matters more is which firm's stage focus, sector expertise, and operational style match your specific company.
@@ -132,7 +132,7 @@ AI startups took $242 billion in the first quarter of 2026, about 80% of all glo
 
 The pattern is that concentration at the top has accelerated, and the investors funding these mega-rounds have effectively left the rest of the market to specialists, sector funds, and early-stage generalists looking for the next breakout layer.
 
-For founders not building in AI infrastructure or related categories, this means the filtering step around recent deployment is especially critical. A firm that shows $3B in AUM and lists "enterprise software" as a focus area may not have led a non-AI enterprise round in 18 months. Cross-referencing actual deal announcements — using Crunchbase, PitchBook, or the firm's own press page — will reveal that pattern quickly. Prioritize firms that have made two or three investments in your specific sector category in the last 18 months; that recency signals active conviction, not inherited reputation.
+For founders not building in AI infrastructure or related categories, this means the filtering step around recent deployment is especially critical. A firm that shows $3B in AUM and lists "enterprise software" as a focus area may not have led a non-AI enterprise round in 18 months. Cross-referencing actual deal announcements (using Crunchbase, PitchBook, or the firm's own press page) will reveal that pattern quickly. Prioritize firms that have made two or three investments in your specific sector category in the last 18 months; that recency signals active conviction, not inherited reputation.
 
 ---
 

@@ -87,7 +87,7 @@ Dilution compounds across rounds. With seed dilution around 19–20% and Series 
 
 Median dilution per round, according to Carta data from 2025, runs approximately 19.5% at seed, 18% at Series A, and 14% at Series B.
  Those figures look manageable in isolation. Stack them, add an option pool refresh at each stage, and the picture changes quickly. 
-In a priced seed round, founder dilution including the option pool refresh — which typically expands to 12–15% post-money — can reach 18–25%, and sometimes 25–30% when stacked SAFEs convert simultaneously. Founder dilution math must include both the new investor's stake and the pool top-up.
+In a priced seed round, founder dilution including the option pool refresh (which typically expands to 12–15% post-money) can reach 18–25%, and sometimes 25–30% when stacked SAFEs convert simultaneously. Founder dilution math must include both the new investor's stake and the pool top-up.
 
 A new lead investor at seed or Series A generally targets owning around a fifth of your company, which is why 
 founders who keep dilution under 18% at seed are significantly better positioned for future rounds. The most common outcome is selling 20–24% at seed, but the best-performing founders negotiate harder and stay below that threshold.

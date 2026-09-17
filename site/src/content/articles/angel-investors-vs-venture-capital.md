@@ -64,11 +64,11 @@ Both investor types write equity checks into early-stage startups. Both want out
 ## The Fundamental Difference: Whose Money Is It?
 
 An angel investor is a high-net-worth individual who invests their own money into early-stage companies.
- That single fact — *their own money* — shapes everything about how angels behave. They don't answer to a board of investors. They don't need to justify a check to a committee. They can make a decision on personal conviction, gut feel, or a relationship built over a single coffee. 
+ That single fact (*their own money*) shapes everything about how angels behave. They don't answer to a board of investors. They don't need to justify a check to a committee. They can make a decision on personal conviction, gut feel, or a relationship built over a single coffee. 
 An angel investor might meet you at a pitch event on Tuesday, review your deck on Wednesday, conduct reference calls on Thursday, and wire funds on Friday. Personal capital means personal autonomy — no investment committee, no LP approval matrix.
 
 Venture capitalists operate in a fundamentally different structure. 
-A venture capitalist manages other people's money through a formal fund structure. They raise capital from limited partners — institutions, endowments, family offices, high-net-worth individuals — then deploy that capital into high-growth companies in exchange for equity.
+A venture capitalist manages other people's money through a formal fund structure. They raise capital from limited partners (institutions, endowments, family offices, high-net-worth individuals) then deploy that capital into high-growth companies in exchange for equity.
  That LP relationship is the engine of everything that follows. Every check a VC writes has to make sense not just to the partner who championed it, but to the fund's overall portfolio construction, return targets, and the eventual report they'll give their LPs. 
 VC firms at the pre-seed and seed stage tend to be more selective but offer larger individual investments compared to angel investors — and that selectivity is driven by the institutional nature of VC decision-making and the need to justify investments to limited partners.
 

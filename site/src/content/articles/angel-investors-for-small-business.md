@@ -55,7 +55,7 @@ faqs:
     answer: "For most pre-seed and seed-stage founders, individual angels or angel syndicates are the more accessible starting point. Family offices can write larger checks, but they typically move on longer timelines, rarely attend demo days or respond to cold outreach, and prefer relationship-based introductions developed over time. Unless you have a warm path in, angels and syndicates are usually the faster, more predictable route at the early stage."
 ---
 
-When a founder says they're looking for "angel investors for small business," they often mean something more general: any individual willing to write a check in exchange for equity. The trouble is that collapsing every type of private backer into one category leads to misaligned outreach, wasted conversations, and rounds that stall before they close. Angel investors and private investors are related but meaningfully different, and building a raise around that distinction — rather than around a vague list of names — is what separates founders who close efficiently from those who spend six months in purgatory.
+When a founder says they're looking for "angel investors for small business," they often mean something more general: any individual willing to write a check in exchange for equity. The trouble is that collapsing every type of private backer into one category leads to misaligned outreach, wasted conversations, and rounds that stall before they close. Angel investors and private investors are related but meaningfully different, and building a raise around that distinction (rather than around a vague list of names) is what separates founders who close efficiently from those who spend six months in purgatory.
 
 ## What Angel Investors Actually Are
 

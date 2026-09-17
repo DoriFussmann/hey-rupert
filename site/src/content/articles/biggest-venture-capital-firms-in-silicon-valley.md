@@ -72,7 +72,7 @@ Stanford's labs, Sand Hill Road, and the first wave of semiconductor startups bu
 Silicon Valley remains the epicenter of large-check venture capital, and San Francisco Bay Area rounds run 20–40% larger than comparable deals in Austin, Denver, or Miami.
  That premium exists not because Bay Area investors overpay, but because they bring a density of post-investment value — reference customer introductions, senior executive recruiting networks, and the signal that attracts A-tier talent — that justifies higher valuations for the companies best positioned to use it. Founders choosing between a Bay Area Tier 2 and a non-Bay Area Tier 1 should weigh that premium carefully before deciding the brand name alone is the differentiator.
 
-California captured approximately $191 billion — roughly 60% of all US venture capital — driven almost entirely by AI activity in 2025.
+California captured approximately $191 billion (roughly 60% of all US venture capital) driven almost entirely by AI activity in 2025.
  That concentration is both an opportunity and a filter. The largest Bay Area firms are allocating more capital into a narrower set of sectors than at any point in the past decade, which means category fit has never mattered more. A founder outside the current thesis of a top-five Bay Area firm will struggle to get traction regardless of their traction numbers.
 
 ## The 12 Firms: Profiles, Check Sizes, and Best-Fit Assessment
@@ -114,7 +114,7 @@ Khosla ranked as the most active lead investor in rounds of $5 million or more i
 
 ### 6. Greylock Partners
 
-**AUM tier:** Multi-billion | **Stage:** Pre-seed through Series A | **Seed check:** $500K–$5M | **Series A check:** $10M–$20M Over 80% of Greylock's investments are first checks — pre-seed, seed, or Series A — and the firm explicitly positions itself as "Your First Partner," specializing in finding and backing founders at the earliest stages of company formation.
+**AUM tier:** Multi-billion | **Stage:** Pre-seed through Series A | **Seed check:** $500K–$5M | **Series A check:** $10M–$20M Over 80% of Greylock's investments are first checks (pre-seed, seed, or Series A) and the firm explicitly positions itself as "Your First Partner," specializing in finding and backing founders at the earliest stages of company formation.
 
 Greylock has deliberately repositioned around AI-first pre-seed and seed over the past three years, with a company-building program for pre-idea founders. Partner introductions still matter more here than cold inbound, so a warm path through the Greylock network is nearly mandatory.
 
@@ -126,7 +126,7 @@ By focusing on Seed and Series A rounds, Greylock can offer hands-on guidance to
 **AUM tier:** Multi-billion | **Stage:** Seed through growth | **Seed check:** $1M–$5M | **Series A check:** $10M–$25M Behind some of the most notable companies built in the past three decades is Kleiner Perkins, whose portfolio features Amazon, Spotify, and DocuSign, with a focus on backing early-stage and growth companies building category-defining technologies.
 
 Kleiner Perkins invests $1M–$75M in technology companies across its stage range.
- The firm has sharpened its focus over the past several years toward AI applications, enterprise software, and healthcare technology, stepping back from broader consumer bets. **Best-fit founder:** Founders building enterprise or AI-adjacent companies where Kleiner's deep operational network — particularly in sales, business development, and healthcare — provides structural advantages.
+ The firm has sharpened its focus over the past several years toward AI applications, enterprise software, and healthcare technology, stepping back from broader consumer bets. **Best-fit founder:** Founders building enterprise or AI-adjacent companies where Kleiner's deep operational network (particularly in sales, business development, and healthcare) provides structural advantages.
 
 ### 8. Benchmark
 
@@ -138,7 +138,7 @@ By focusing on Seed and Series A rounds, Benchmark can offer hands-on guidance t
 ### 9. First Round Capital
 
 **AUM tier:** ~$1B+ | **Stage:** Pre-seed and Seed | **Check:** $250K–$3M First Round Capital, in the heart of Silicon Valley, thrives on helping startups grow from the ground up.
- The firm built its reputation on Seed-stage conviction before institutional Seed was a category, and its platform services — structured peer networks, recruiting tools, and operating resources — are among the most developed in the market. First Round does not typically lead Series A rounds but uses its network to facilitate warm introductions to follow-on investors when founders hit the relevant milestones. **Best-fit founder:** Technical founding teams at the earliest formation stage across enterprise software, AI, fintech, and consumer — particularly founders who will benefit from First Round's founder community and peer network as much as from the capital.
+ The firm built its reputation on Seed-stage conviction before institutional Seed was a category, and its platform services (structured peer networks, recruiting tools, and operating resources) are among the most developed in the market. First Round does not typically lead Series A rounds but uses its network to facilitate warm introductions to follow-on investors when founders hit the relevant milestones. **Best-fit founder:** Technical founding teams at the earliest formation stage across enterprise software, AI, fintech, and consumer — particularly founders who will benefit from First Round's founder community and peer network as much as from the capital.
 
 ### 10. Bessemer Venture Partners
 
@@ -152,12 +152,12 @@ Bessemer is a consistent, cross-stage investor with serious depth in AI, cloud, 
 **AUM tier:** ~$11B+ | **Stage:** Seed through growth | **Seed check:** $500K–$5M | **Series A check:** $5M–$20M Founders Fund takes contrarian, concentrated positions in defense, space, biotech, and infrastructure.
 
 Founders Fund is among the firms deploying heavily into AI infrastructure and enterprise applications
- alongside its established deep-tech positions. The firm is known for backing ideas that are genuinely contrarian — not merely differentiated — and for patience with long development timescales. Its portfolio includes SpaceX, Palantir, Stripe, and Airbnb, a mix that reflects a willingness to back companies that were controversial at the time of investment. **Best-fit founder:** Founders building in defense technology, biotech, advanced energy, or AI infrastructure who are comfortable with a high-conviction, low-meeting-frequency style of partnership and are genuinely solving hard technical problems others have avoided.
+ alongside its established deep-tech positions. The firm is known for backing ideas that are genuinely contrarian (not merely differentiated) and for patience with long development timescales. Its portfolio includes SpaceX, Palantir, Stripe, and Airbnb, a mix that reflects a willingness to back companies that were controversial at the time of investment. **Best-fit founder:** Founders building in defense technology, biotech, advanced energy, or AI infrastructure who are comfortable with a high-conviction, low-meeting-frequency style of partnership and are genuinely solving hard technical problems others have avoided.
 
 ### 12. General Catalyst
 
 **AUM tier:** ~$20B+ | **Stage:** Seed through growth | **Seed check:** $1M–$5M | **Series A check:** $10M–$30M General Catalyst spans seed to growth with a large healthcare-transformation practice.
- The firm has aggressively expanded its Bay Area presence alongside its Boston roots, and its healthcare vertical — focused on systems transformation rather than point solutions — has become one of the most sophisticated in venture. 
+ The firm has aggressively expanded its Bay Area presence alongside its Boston roots, and its healthcare vertical (focused on systems transformation rather than point solutions) has become one of the most sophisticated in venture. 
 General Catalyst believes 2026 will be a strong year for infrastructure supporting foundational model development and frontier research categories, and healthcare remains a major focus given clear buyer demand — with the firm concentrating on systems of record and platforms rather than point solutions.
  **Best-fit founder:** Healthcare technology, AI infrastructure, and enterprise software founders who are building platform-level products and want a partner with both deep healthcare industry relationships and substantial growth-stage capital to deploy in follow-on rounds.
 
@@ -168,7 +168,7 @@ Seed and Series A funding have become more competitive in the Bay Area specifica
  This is a meaningful shift from even two or three years ago, when strong teams could close Seed rounds on a narrative alone. Today, the firms above want to see the narrative validated by early numbers.
 
 If 2021 was about velocity and 2022–2023 was about triage, the end of 2025 into 2026 feels surgical: fewer deals, bigger checks, and conviction concentrated at the very top.
- That means the gap between founders who self-select correctly — who approach the right firm at the right stage with the right traction — and those who mass-target the Bay Area's top ten firms simultaneously is wider than it has ever been. 
+ That means the gap between founders who self-select correctly (who approach the right firm at the right stage with the right traction) and those who mass-target the Bay Area's top ten firms simultaneously is wider than it has ever been. 
 The bar in 2026 at Series A is $1M+ ARR with 100%+ net retention, three or more named enterprise pilots, or a credible AI-native technical wedge.
  Founders without these signals are better served by regional specialist funds or a second seed round first.
 
