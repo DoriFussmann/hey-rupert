@@ -90,7 +90,7 @@ The cover slide is not decoration. It is the first five seconds of the investor'
 
 The problem slide is where the deck either pulls investors in or loses them. Its job is to make investors *feel* the pain — not acknowledge it abstractly, but viscerally understand why a particular group of people is suffering right now without your solution.
 
-The most common failure here is describing a problem that is technically real but emotionally inert: "The market for X is inefficient." That is not a problem; that is an observation. A strong problem slide names a specific person, describes what their day looks like today without your solution, and quantifies the cost — in time, money, or lost opportunity — of that pain. If investors have worked in or around your industry, this slide should make them nod. If they haven't, it should give them enough context to imagine the pain clearly.
+The most common failure here is describing a problem that is technically real but emotionally inert: "The market for X is inefficient." That is not a problem; that is an observation. A strong problem slide names a specific person, describes what their day looks like today without your solution, and quantifies the cost (in time, money, or lost opportunity) of that pain. If investors have worked in or around your industry, this slide should make them nod. If they haven't, it should give them enough context to imagine the pain clearly.
 
 ### Slide 3: Market Size
 
@@ -105,7 +105,7 @@ Make your market sizing rigorous and bottoms-up rather than top-down.
 
 The solution slide comes *after* the problem and market for a reason. By the time investors reach it, they should already be convinced that the problem is real and the market is worth pursuing. Now they want to know: how does your product actually fix this?
 
-Keep this slide tight. Show the product — a screenshot, a workflow diagram, or a before-and-after view — rather than describing it in prose. Your solution description should make two things clear: what specifically your product does, and why that approach is meaningfully different from what exists today. The differentiation doesn't have to be technology; it can be distribution, pricing, or focus on a customer segment competitors have ignored. But it has to be real.
+Keep this slide tight. Show the product (a screenshot, a workflow diagram, or a before-and-after view) rather than describing it in prose. Your solution description should make two things clear: what specifically your product does, and why that approach is meaningfully different from what exists today. The differentiation doesn't have to be technology; it can be distribution, pricing, or focus on a customer segment competitors have ignored. But it has to be real.
 
 ### Slide 5: Traction
 
@@ -143,7 +143,7 @@ Your seed stage pitch deck should show your conviction as a founder. You need to
 
 The team slide answers one underlying question: why are these specific people the ones most likely to win in this market? The most compelling team slides do this by naming unfair advantages — domain expertise accumulated over a decade, a prior exit in the same vertical, or deep relationships with the customer base you're targeting. Titles and university names are not advantages; they're context. Specific, relevant achievements are what move the needle.
 
-If your team has gaps — and at seed stage, most do — name them and explain how the capital will address them. Investors who find gaps on their own will worry; investors who see you've already identified the gaps will trust your self-awareness.
+If your team has gaps (and at seed stage, most do) name them and explain how the capital will address them. Investors who find gaps on their own will worry; investors who see you've already identified the gaps will trust your self-awareness.
 
 ### Slide 10: Financials
 

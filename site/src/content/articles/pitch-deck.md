@@ -67,38 +67,38 @@ externalLinks:
   - label: "Pitch Deck Guide: 12 Essential Slides for VCs"
     url: https://deckary.com/blog/pillar-pitch-deck-guide
 ---
-A pitch deck is, at its core, a set of slides — typically between 10 and 15 — designed to communicate your startup's problem, solution, market opportunity, traction, team, and funding ask to a potential investor. But that definition, stripped of context, flatters the document. The real job of a pitch deck is narrower and more demanding: it is not to close a deal, not to answer every conceivable diligence question, and not to demonstrate the full depth of your thinking. Its job is to earn the next meeting. Everything else is noise that works against you.
+A pitch deck is, at its core, a set of slides (typically between 10 and 15) designed to communicate your startup's problem, solution, market opportunity, traction, team, and funding ask to a potential investor. But that definition, stripped of context, flatters the document. The real job of a pitch deck is narrower and more demanding: it is not to close a deal, not to answer every conceivable diligence question, and not to demonstrate the full depth of your thinking. Its job is to earn the next meeting. Everything else is noise that works against you.
 
-Understanding that constraint — the deck as door-opener, not deal-closer — is the first mental shift founders need to make. The second is understanding how much is working against any given deck from the moment it lands in an inbox.
+Understanding that constraint (the deck as door-opener, not deal-closer) is the first mental shift founders need to make. The second is understanding how much is working against any given deck from the moment it lands in an inbox.
 
 ## What Investors Actually Do With Your Deck
 
 Investors spend under four minutes per deck on average.
  That figure should reframe every decision you make about what to include. 
 Analytics tracking first-pass reviews show investors spending an average of around two minutes on an initial look, and decks longer than 15 slides see roughly 40% lower engagement
- — meaning that every slide you add past the essential set is statistically more likely to hurt you than help you. 
-One of the biggest changes in the current fundraising environment is how quickly investors now screen pitch decks — the first interaction is rarely a deep, time-intensive review, but often a short, high-level scan used to decide whether the startup is worth returning to later.
+, meaning that every slide you add past the essential set is statistically more likely to hurt you than help you. 
+One of the biggest changes in the current fundraising environment is how quickly investors now screen pitch decks, the first interaction is rarely a deep, time-intensive review, but often a short, high-level scan used to decide whether the startup is worth returning to later.
 
-This pattern has a direct implication that founders consistently underestimate: weak or filler slides do not simply get ignored. They create doubt that contaminates the slides around them. If your market-sizing methodology is thin, investors do not mentally bracket that slide and move on with an open mind — they carry the skepticism forward into the traction slide, the team slide, and the ask. Every slide that fails to carry weight independently becomes a tax on the slides that follow it.
+This pattern has a direct implication that founders consistently underestimate: weak or filler slides do not simply get ignored. They create doubt that contaminates the slides around them. If your market-sizing methodology is thin, investors do not mentally bracket that slide and move on with an open mind, they carry the skepticism forward into the traction slide, the team slide, and the ask. Every slide that fails to carry weight independently becomes a tax on the slides that follow it.
 
 Around 89% of venture capitalists expect a pitch deck during fundraising.
- The deck is not optional infrastructure — it is the price of entry. But being present in the inbox is far from sufficient. The volume problem is real: 
+ The deck is not optional infrastructure, it is the price of entry. But being present in the inbox is far from sufficient. The volume problem is real: 
 AI-generated pitches now flood investor inboxes, making it harder than ever to stand out or be taken seriously.
  In that environment, a deck that is merely competent is effectively invisible.
 
 ## The Essential Slides — And Why the Order Matters
 
 Most effective pitch decks contain between 10 and 15 slides, typically covering the problem, solution, market opportunity, product, business model, traction, competition, and team.
- These are the categories investors expect to see addressed. But the order and relative emphasis are not fixed — they are decisions that communicate your confidence about where your story is strongest.
+ These are the categories investors expect to see addressed. But the order and relative emphasis are not fixed, they are decisions that communicate your confidence about where your story is strongest.
 
-The conventional sequence — cover, problem, solution, market, business model, traction, team, competition, financials, ask — is conventional for a reason. 
+The conventional sequence, cover, problem, solution, market, business model, traction, team, competition, financials, ask, is conventional for a reason. 
 The best-performing decks tend to follow the same underlying logic: start with the problem, explain the solution, show the market, prove traction, and end with a credible raise.
  What that sequence is doing is building a logical case: here is why this matters, here is what we built, here is how big the opportunity is, here is evidence that it is working, and here is what we need to go further. Each slide creates the context that makes the next one land.
 
 The **problem slide** is where this case either ignites or fails. If investors cannot immediately feel the problem — not merely understand it intellectually but recognize it as genuinely painful, genuinely widespread, and genuinely unresolved — the solution slide will not matter. The most frequently cited canonical decks succeeded not through visual sophistication but because they presented a problem that investors could feel in their bones. 
 Across the strongest deck examples, the pattern is not visual style or slide count — it is narrative control, making one risk feel smaller on every slide, reducing market risk with a simple problem and TAM story.
 
-The **market size slide** is where founders most commonly damage their credibility. Top-down TAM numbers — "$500 billion global market" — are the single easiest signal to an investor that a founder has not done the work. 
+The **market size slide** is where founders most commonly damage their credibility. Top-down TAM numbers ("$500 billion global market") are the single easiest signal to an investor that a founder has not done the work. 
 Investors in 2026 prioritize sourced, bottom-up market sizing with named comparables; the biggest red flags include TAM with no sourcing and hockey-stick projections without stated assumptions.
  A smaller, credible number with a clear methodology is worth far more than a large number that cannot survive a single follow-up question.
 
@@ -118,7 +118,7 @@ At pre-seed, even 500 engaged waitlist users or two signed pilot agreements can 
  The goal is not to prove a business — it is to demonstrate that this founder, this idea, and this moment add up to a bet worth making.
 
 At Series A, investors are underwriting execution. They are asking: *does this work, and what happens when we add capital?* The deck needs to answer those questions with evidence, not assertion. 
-Investors at this stage prioritize real traction metrics — MRR or ARR with growth rate and retention, not signup counts — actual unit economics including LTV:CAC and payback period from real cohort data, and a single proven go-to-market wedge with CAC evidence and scaling signal.
+Investors at this stage prioritize real traction metrics (MRR or ARR with growth rate and retention, not signup counts) actual unit economics including LTV:CAC and payback period from real cohort data, and a single proven go-to-market wedge with CAC evidence and scaling signal.
 
 For SaaS companies raising a Series A, the bar in 2026 is roughly $1M–$2M ARR with strong month-over-month growth.
  Execution-focused team bios matter differently here too — investors want to see exits, products shipped, and customers closed, not just employer logos.
@@ -163,7 +163,7 @@ Good pitch deck design in 2026 focuses on clarity and structure rather than visu
 A founder will usually present the deck live, but the deck still needs to work when forwarded, reviewed later, or skimmed without context — investors often revisit materials internally or share them with partners, and if the slide only makes sense when narrated, it becomes less useful in the actual funding process.
  AI tools that optimize for visual presentation often produce slides that are dependent on the presenter to be understood. Strong decks are self-explaining.
 
-The strategic thinking that makes a deck compelling — the insight, the narrative arc, the investor-specific positioning — all require founder judgment. AI tools can accelerate the last 20% of the work. They cannot replace the first 80%.
+The strategic thinking that makes a deck compelling (the insight, the narrative arc, the investor-specific positioning) all require founder judgment. AI tools can accelerate the last 20% of the work. They cannot replace the first 80%.
 
 ## The Deck Is Not the Fundraise
 
@@ -187,7 +187,7 @@ For most founders, building the deck is the part of the fundraise that feels mos
 
 That is the work that determines outcomes. A mediocre deck with outstanding process will often outperform a great deck sent without strategy. And a great deck paired with a disciplined, personalized outreach process — where every investor receives a message that reflects genuine understanding of what they care about — is where rounds actually close.
 
-Rupert was built specifically for founders at this stage: the deck is ready, the story is strong, and what's needed now is the research, the personalization, and the pipeline management to get it in front of investors who are actually likely to say yes. Rupert's experienced operators handle the outreach process end-to-end — every investor researched, every message tailored, every conversation tracked — while founders retain complete visibility into what's happening and ownership of every relationship. The goal is not to take over the fundraise; it is to run the process with the rigor it requires, so founders can stay focused on building the company that makes the pitch worth funding.
+Rupert was built specifically for founders at this stage: the deck is ready, the story is strong, and what's needed now is the research, the personalization, and the pipeline management to get it in front of investors who are actually likely to say yes. Rupert's experienced operators handle the outreach process end-to-end (every investor researched, every message tailored, every conversation tracked) while founders retain complete visibility into what's happening and ownership of every relationship. The goal is not to take over the fundraise; it is to run the process with the rigor it requires, so founders can stay focused on building the company that makes the pitch worth funding.
 
 See Related below for more on this topic.
 

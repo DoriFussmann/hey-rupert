@@ -66,28 +66,28 @@ The ideal pitch deck runs 10–16 slides, with 13 being a widely cited sweet spo
  The reason brevity matters so much at seed stage is less about aesthetics and more about what slide count signals before an investor reads a single word.
 
 Investors judge your focus by your slide count before they even open slide one, and a long deck is one of the most common reasons for an instant pass.
- A 20-slide deck doesn't communicate thoroughness — it communicates an inability to prioritize. 
-Data shows investors spend roughly the same total time on a pitch deck regardless of how many slides it contains, meaning a 25-slide deck gets the same attention as a 12-slide one — you put more in, but the investor got less out.
+ A 20-slide deck doesn't communicate thoroughness, it communicates an inability to prioritize. 
+Data shows investors spend roughly the same total time on a pitch deck regardless of how many slides it contains, meaning a 25-slide deck gets the same attention as a 12-slide one, you put more in, but the investor got less out.
 
 The discipline of reducing your deck to 10–14 focused slides has a second function that's easy to miss: it forces you to make structural decisions about your story. If you can't compress your market opportunity into one slide, you probably don't understand it precisely enough to pitch it. If your solution requires three slides to explain, that's a signal to revisit the framing, not to add slides. 
-Aiming for 13 slides forces you to be ruthless and proves you can distill a complex vision into a compelling, digestible narrative — every slide must answer a specific question and propel the story forward.
+Aiming for 13 slides forces you to be ruthless and proves you can distill a complex vision into a compelling, digestible narrative, every slide must answer a specific question and propel the story forward.
 
 ---
 
 ## Should You Send the Full Deck Before or After Requesting a Meeting?
 
 This is the tactical question founders get wrong most often, and the answer turns on a simple distinction: is the deck being read with you in the room, or without you? In most situations, especially cold outreach, you should not attach or link your full deck in the first message. 
-Best practice is to prepare your pitch in two versions — a full narrative version for partner meetings and a shorter teaser for cold outreach — alongside a one-to-two-page executive summary that travels well in email bodies.
+Best practice is to prepare your pitch in two versions, a full narrative version for partner meetings and a shorter teaser for cold outreach, alongside a one-to-two-page executive summary that travels well in email bodies.
  The teaser earns the reply. The full deck earns the meeting. The financial detail earns the term sheet.
 
-Your outreach email isn't a cover letter — it's a three-sentence teaser designed to earn a click.
+Your outreach email isn't a cover letter, it's a three-sentence teaser designed to earn a click.
  When a cold email opens with a wall of context and a 15MB PDF attached, the cognitive load alone pushes investors toward the delete key. 
-When one founder sends an email with a large file attached and another sends a link to a clean, hosted deck, the investor often archives the attachment immediately — it's bulky, presumes too much, and the hosted link loads instantly in a mobile-friendly viewer.
+When one founder sends an email with a large file attached and another sends a link to a clean, hosted deck, the investor often archives the attachment immediately, it's bulky, presumes too much, and the hosted link loads instantly in a mobile-friendly viewer.
 
-That said, there's a real tension here worth acknowledging. Some investors — particularly angels who review on mobile, or GPs at smaller funds who manage their own inboxes — genuinely prefer to receive a PDF directly rather than clicking a tracking link. 
+That said, there's a real tension here worth acknowledging. Some investors, particularly angels who review on mobile, or GPs at smaller funds who manage their own inboxes, genuinely prefer to receive a PDF directly rather than clicking a tracking link. 
 A debate on LinkedIn illustrated this clearly: one camp of founders urged sharing decks only via tracked links, while many investors replied that anything other than a PDF went straight to the trash.
  The practical resolution: lead with a short, personalized email. If you're going to include a deck at all in the first touch, a cleanly formatted PDF is less risky than a gated link that requires an email login to open. 
-Many investors will simply not open a DocSend link from cold outreach — if a deck requires entering an email address to view, they'll ignore it entirely.
+Many investors will simply not open a DocSend link from cold outreach, if a deck requires entering an email address to view, they'll ignore it entirely.
 
 ---
 
@@ -97,7 +97,7 @@ Once you're at the stage of sharing a full deck — whether as a follow-up to a 
 
 Switching from raw PDF attachments to trackable links using a document-sharing platform lets you create a unique link for every investor to track engagement and prevent unauthorized distribution.
  Tools of this kind let you see which slides received the most time, whether a second person at the same firm opened the deck, and when to follow up based on genuine engagement signals rather than guesswork. 
-Engagement data — like time per slide and whether the deck was shared — can be used to tailor your follow-up strategy precisely.
+Engagement data (like time per slide and whether the deck was shared) can be used to tailor your follow-up strategy precisely.
 
 The practical answer for most seed-stage founders is to export your deck from whatever presentation tool you used into a PDF, then share it via a tracked link rather than as a raw email attachment. 
 For pre-seed and seed, a single tracked link to the deck is usually enough — the send-side workflow is simple, and the key analytics question is straightforward: did the investor read the team and traction slides.
@@ -134,7 +134,7 @@ The deck has one job: get the meeting. It's a teaser, not a data dump.
  The fix is usually reorganizing existing content into the correct causal order and removing anything that doesn't advance the argument. An appendix is the right place for everything that enriches but doesn't accelerate: detailed financial assumptions, competitive matrices, full team bios, technical architecture. 
 Structure your narrative around problem, solution, traction, team, and ask — and move supporting detail to an appendix.
 
-The story test most experienced operators use is simple: read just the headline of each slide in sequence and ask whether the headlines alone form a coherent argument. If they do, your structure is sound. If reading only the headlines leaves gaps — if you can't tell why slide five follows slide four — the deck has a narrative problem that no amount of design polish will solve.
+The story test most experienced operators use is simple: read just the headline of each slide in sequence and ask whether the headlines alone form a coherent argument. If they do, your structure is sound. If reading only the headlines leaves gaps (if you can't tell why slide five follows slide four) the deck has a narrative problem that no amount of design polish will solve.
 
 ---
 
@@ -143,7 +143,7 @@ The story test most experienced operators use is simple: read just the headline 
 Founders often think of the pitch deck as the endpoint of preparation. Experienced ones know it's the beginning of a process.
 
 After a deck goes out, what happens next depends almost entirely on the quality of investor targeting that preceded the send. 
-Saving time by only reaching out to investors who match crucial factors — industry focus, funding amount, stage, and geography — is the foundational discipline of a productive outreach process.
+Saving time by only reaching out to investors who match crucial factors (industry focus, funding amount, stage, and geography) is the foundational discipline of a productive outreach process.
  A perfectly crafted deck sent to the wrong investor produces the same outcome as a weak deck: no response. The deck is the argument; the targeting is the distribution.
 
 Once an investor has opened the deck, engagement data becomes your signal layer. 

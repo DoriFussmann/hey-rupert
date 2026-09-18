@@ -59,7 +59,7 @@ externalLinks:
   - label: The Essential Guide to Creating a Successful B2B SaaS ...
     url: https://www.forumvc.com/thought-pieces/the-essential-guide-to-creating-a-compelling-b2b-saas-pitch-deck-for-pre-seed-and-seed-stage-founders
 ---
-Most founders discover the mismatch the hard way: they send a deck they spent weeks refining, the investor replies with a polite pass, and the feedback — if it comes at all — is vague enough to be useless. The deck wasn't bad. It was just built for the wrong stage. Pre-seed and seed pitch decks share most of the same slide titles — problem, solution, market, team, ask — but what sits behind those titles is entirely different. The evidence standard changes. The narrative logic changes. The slide that carries the most weight changes. Understanding exactly how is the difference between a deck that earns meetings and one that quietly filters you out.
+Most founders discover the mismatch the hard way: they send a deck they spent weeks refining, the investor replies with a polite pass, and the feedback (if it comes at all) is vague enough to be useless. The deck wasn't bad. It was just built for the wrong stage. Pre-seed and seed pitch decks share most of the same slide titles (problem, solution, market, team, ask) but what sits behind those titles is entirely different. The evidence standard changes. The narrative logic changes. The slide that carries the most weight changes. Understanding exactly how is the difference between a deck that earns meetings and one that quietly filters you out.
 
 ## The Core Distinction: Thesis vs. Proof
 
@@ -92,11 +92,11 @@ Pre-seed relies almost entirely on how well you communicate the opportunity. Mos
 
 ### Seed: Lead With Your Strongest Metric
 
-A seed deck covers more ground, and its logic runs in the opposite direction. Where a pre-seed deck builds from problem to solution to plausibility, a seed deck often leads with traction — the strongest metric the company has — and then works backward to explain why that number makes sense. 
+A seed deck covers more ground, and its logic runs in the opposite direction. Where a pre-seed deck builds from problem to solution to plausibility, a seed deck often leads with traction (the strongest metric the company has) and then works backward to explain why that number makes sense. 
 According to DocSend's 2025 Pitch Deck Report, investors spend 3x longer on the traction slide than any other page in a seed deck — and 76% of 'no' decisions cite weak traction as the reason.
  That asymmetry should shape every structural decision you make when building a seed deck.
 
-The seed market has bifurcated. If you have early product-market fit signals — $50K–$200K ARR, strong week-1 retention, or a credible enterprise pilot — you can raise a $3–4M seed at a $15M post-money without much trouble. If you have a prototype and a vision, you are competing in a much harder pool.
+The seed market has bifurcated. If you have early product-market fit signals ($50K–$200K ARR, strong week-1 retention, or a credible enterprise pilot) you can raise a $3–4M seed at a $15M post-money without much trouble. If you have a prototype and a vision, you are competing in a much harder pool.
  This bifurcation is why sending a pre-seed narrative to a seed investor is so costly: it signals immediately that you may not have crossed the threshold they're looking for.
 
 Seed decks typically run 10–14 slides, and the additional slides compared to a pre-seed deck are almost always justified by deeper traction, unit economics, and go-to-market specificity. 
