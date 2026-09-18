@@ -21,7 +21,7 @@ draft: false
 pillarKeyword: startup funding
 articleType: comprehensive
 targetKeyword: startup funding
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - startup funding
 faqs:
@@ -243,16 +243,7 @@ Rupert is built specifically for this problem. Founders who work with Rupert ret
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The startup funding market in mid-to-late 2026 continues to reflect deep concentration rather than broad recovery. 
-U.S.-based startups on Carta raised $3.19 billion across more than 11,500 pre-seed instruments in Q2 2026, compared to $3.22 billion across 14,825 instruments in Q2 2025
- — similar total dollars but materially fewer deals, as 
-the average instrument size in Q2 2026 reached $276,000, a 27% year-over-year increase and a record high over the past four-plus years.
- At the growth end of the market, 
-in the week of August 3–10, 2026 alone, global startups raised over $6.9 billion across 53+ tracked rounds, with the U.S. accounting for approximately $4.58 billion
- — but 
-global VC funding in 2026 is concentrated rather than distributed, with fewer deals but larger individual checks, and the mega-round trend has accelerated while seed and early-stage deal volume has moderated.
- For early-stage founders outside the AI infrastructure cohort, the practical message is consistent: 
-capital is clustering around companies linked to high-cost infrastructure, regulated industries, or proprietary technical work; investors remain willing to finance earlier companies but expect a sharper proof story; and the gap between a fundable company and a merely interesting idea has widened.
+The startup funding market in late 2026 has moved from concentrated recovery to a full capital boom — but the gains remain strikingly narrow. Global VC hit a record $510 billion in H1 2026, already surpassing all of 2025, yet OpenAI and Anthropic alone accounted for roughly 43% of that total. August reinforced the structural pattern: U.S. startups raised $18.1 billion across just 333 deals — a 123% year-over-year capital surge but a 32% drop in deal count from July — with megadeals in AI infrastructure, clean energy, and defense (including River AI's $1.1B Series A, Base Power's $1.0B Series D, and Castelion's $800M Series C) driving the totals. KPMG's Venture Pulse confirmed that Q2 2026 deal volume fell to 8,467 globally, the lowest since Q3 2017, even as dollar volume hit its second-highest quarter ever. For early-stage founders outside the AI infrastructure cohort, the message sharpens further: AI now captures roughly 86% of U.S. VC dollars by volume, defense technology has emerged as a top-three venture category by capital deployed, and the Series A crunch for non-AI startups shows no sign of easing.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

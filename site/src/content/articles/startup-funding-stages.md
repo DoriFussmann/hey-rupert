@@ -22,7 +22,7 @@ pillarKeyword: startup funding
 supportingKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: startup funding stages
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - startup funding stages
   - startup funding
@@ -258,15 +258,7 @@ For a company navigating the narrow passage from seed to Series A, or preparing 
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The global venture market entered 2026 in an unusual position: headline numbers are at record highs, but the underlying picture for most founders is more nuanced. 
-Global seed funding totalled $12 billion in Q2 2026, with $5 billion going to seed rounds of $10 million and under, according to Crunchbase data.
-
-The US picture from PitchBook-NVCA shows $412.7 billion deployed in H1 2026, a figure that already exceeded the full-year 2025 total — but 87.5% of that H1 2026 capital went to megadeals of at least $100 million, meaning the headline total says almost nothing about a $3 million seed round.
- At the early-stage level, the pre-seed market shows signs of stabilising: 
-about 3,000 US-based startups had raised more than $2.3 billion at pre-seed in Q1 2026, a total Carta expected to reach roughly $2.9 billion as more data was entered, and Carta characterised the pre-seed market as stabilising.
- Meanwhile, 
-the Q1 2026 PitchBook-NVCA Venture Monitor recorded a 37% year-over-year jump in the median Series A deal size to $19.6M
-, reflecting continued concentration of capital in fewer, higher-quality companies. For the majority of founders raising outside of AI infrastructure or deep tech, the structural dynamics remain constant: fewer deals, higher bars, and longer timelines between rounds than the market data headlines suggest.
+The global venture market's split-screen dynamic sharpened further through Q2 and into August 2026. The Q2 2026 PitchBook-NVCA Venture Monitor confirmed H1 investment exceeded every previous full-year record at $412.7 billion — but 87.5% went to $100M+ megadeals and 86% flowed to AI companies, leaving seed and early-stage founders competing for roughly 12.5% of the total. The structural squeeze at the bottom of the funnel is now measurable: global pre-seed-through-Series-A funding has fallen from roughly $19 billion per quarter in early 2023 to approximately $10 billion by Q2 2026, per Dealroom data. On the positive side, the Q2 Monitor noted improving exit conditions — SpaceX completed its IPO and both OpenAI and Anthropic filed confidentially — and Carta recorded down rounds at just 11.4% of new fundings in Q1 2026, a multi-year low. For founders outside AI infrastructure, the math is unchanged: fewer rounds, higher bars, and a longer runway to each next stage.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

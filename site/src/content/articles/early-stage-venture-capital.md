@@ -22,7 +22,7 @@ pillarKeyword: startup funding
 supportingKeyword: startup funding stages
 articleType: flex
 targetKeyword: early-stage venture capital
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - early-stage venture capital
   - startup funding stages
@@ -176,11 +176,7 @@ This is exactly the kind of research-heavy, detail-intensive work that founders 
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The early-stage VC market is in an active phase heading into the second half of 2026. 
-The early-stage surge anticipated at the start of the year has arrived ahead of schedule, driven by AI's compression of company-building costs and the continued deepening of megafund participation at seed and Series A — with first financings on track to exceed 7,000 by year-end, a new record by more than 1,300 deals.
- At the same time, capital concentration remains a structural feature of the market: 
-401 Series A and early-stage deals collectively raised $4.45B in July 2026, but the median deal size of $6.0M tells a very different story than the average of $39.5M — the majority of funded companies are early and mid-stage, operating at conventional venture scales, while a small number of platforms are capturing an outsized share of available capital.
- For founders navigating this environment, the practical implication is that the early-stage market remains genuinely open and active, but the bifurcation between well-targeted founders with stage-matched investor lists and those pursuing undifferentiated outreach is widening rather than narrowing.
+The early-stage VC market remains active heading into Q4 2026, but the structural picture has sharpened considerably since midyear. The Q2 2026 PitchBook-NVCA Venture Monitor confirmed that US startups raised more than $400 billion in H1 2026 — already surpassing every previous full-year record — yet megadeals of $100M or more captured 87.5% of that capital, and three firms (Andreessen Horowitz, Thrive Capital, and Founders Fund) accounted for 48.1% of all venture fundraising. First-time fund formation is on pace for its lowest year since 2016, a direct constraint on the supply of early-stage buyers. August reinforced the bifurcation: early-stage produced the most transactions nationally (135 deals) but only 5% of total capital ($870M), with a median deal size of $5M — consistent with a seed market that remains open and priced conventionally, even as single megadeals routinely exceed the entire month's early-stage capital pool. Post-Labor Day pipeline acceleration is expected, but the decisive variable for founders remains investor targeting precision, not market timing.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

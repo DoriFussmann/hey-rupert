@@ -22,7 +22,7 @@ pillarKeyword: startup funding
 supportingKeyword: startup funding stages
 articleType: howto
 targetKeyword: startup funding stages explained
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - startup funding stages explained
   - startup funding stages
@@ -167,11 +167,7 @@ Fundraising is ultimately a sequenced, disciplined process that rewards founders
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-As of mid-August 2026, the fundraising environment for seed and Series A founders remains sharply bifurcated. 
-Valuations have moved up meaningfully at the top end of the market: Carta's Q4 2025 data put the median seed post-money at a record $24M, and the Q1 2026 PitchBook-NVCA Venture Monitor placed the median Series A deal at $19.6M with a $78.7M post-money — a 37% year-over-year jump — though much of that increase is concentrated in AI deals, with non-AI Series A rounds still pricing closer to a $40–42M pre-money.
-
-Meanwhile, the conversion rate from seed to Series A has dropped from roughly 50% historically to around 38%, and investors are underwriting to profitability paths they were largely ignoring a few years ago. Down rounds have pulled back from their 2023 peak — Carta recorded 11.4% of new funding rounds as down rounds in Q1 2026, compared with a 22% peak in 2023 — but bridge rounds accounted for 16.6% of all cash raised on Carta in Q2 2025, reflecting the persistent gap between seed metrics and Series A requirements.
- For founders not in the AI concentration zone, the practical picture is one of available capital paired with meaningfully higher bars: stage benchmarks are real, investor diligence is longer, and the window between deciding to raise and actually closing continues to run longer than most first-time founders anticipate.
+As of mid-September 2026, the fundraising environment for seed and Series A founders remains sharply bifurcated — and the structural gap widened further in Q2. The Q2 2026 PitchBook-NVCA Venture Monitor confirmed that H1 2026 venture investment hit $412.7B, already exceeding all of 2025, but PitchBook estimates 87.5% of that capital flowed into $100M-plus financings, with AI accounting for the majority. Carta's Q2 2026 data tells the same story at the early stage: seed capital raised was up 37% while round count fell 20%, and Series A capital rose 16% as deal count dropped 12% — fewer, larger bets on a narrower set of companies. The median seed post-money now sits at $24.3M and Series A at roughly $80M, but Carta's head of insights has put the practical ARR bar for Series A at approximately $3.5M — triple what it was a few years ago — with the median seed-to-A timeline now stretching past 26 months. Exit conditions improved modestly, with IPO and M&A activity picking up in Q2 and OpenAI and Anthropic filing confidentially; Carta also reported tender offer volume up 200% in H1 2026 as a secondary liquidity workaround. For founders outside the AI concentration zone, the message from the data is consistent: capital exists, but it is concentrating faster than at any prior point in the cycle.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

@@ -23,7 +23,7 @@ pillarKeyword: startup funding
 supportingKeyword: startup funding stages
 articleType: faq
 targetKeyword: startup funding rounds
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - startup funding rounds
   - startup funding stages
@@ -171,17 +171,7 @@ This is precisely where expert-run outreach becomes the missing operational laye
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The macro funding environment heading into the second half of 2026 is one of volume and concentration simultaneously. 
-Global seed funding totaled $12 billion in Q2 2026, with $5 billion going to seed rounds of $10 million and under
- — meaningful capital at the early stage, but distributed unevenly. 
-August 2026 funding news shows that money is still flowing, but investors are favouring startups with deep technical work, clear buyer demand, and a believable path to market.
-
-The median Series A deal in Q1 2026 reached $19.6 million at a $78.7 million post-money valuation for the broader market, though non-AI Series A rounds are still pricing closer to $40–42 million pre-money.
- For founders raising outside the AI mega-round environment, the practical message from the data is consistent: 
-investors are more selective and the bar for traction has risen significantly, but strong opportunities remain for founders who can demonstrate real customer demand and efficient growth.
- Timelines have also not shortened — 
-the median time between funding rounds remained significantly longer than in the 2021 era
-, reinforcing the case for starting investor relationship-building well ahead of any formal process.
+The macro funding environment entering Q4 2026 is one of historic volume and extreme concentration. Global venture investment hit a record $510 billion in H1 2026, surpassing all of 2025 in just six months, with more than 70% of Q2 capital flowing to AI-focused companies. August continued that pattern: investors poured $42 billion into roughly 1,500 startups worldwide — up 122% year-over-year — with seven companies raising billion-dollar rounds and five of those having last raised capital less than twelve months earlier. The market is visibly bifurcating: foundational infrastructure companies are raising at historic scales, while application-layer startups are closing Series A and B rounds that look conservative by comparison. For non-AI founders, the benchmarks remain grounded — a $12 million median Series A on a $40–55 million pre-money valuation — while defence tech has emerged as a surprise top-three venture category by capital deployed over the summer. Post-Labour Day pipelines are expected to accelerate into Q4, but the bar for traction has not dropped: investors continue to favour startups with deep technical work, proven customer demand, and efficient growth.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
