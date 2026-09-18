@@ -21,7 +21,7 @@ draft: false
 pillarKeyword: series a
 articleType: comprehensive
 targetKeyword: series a
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - series a
 faqs:
@@ -230,17 +230,7 @@ Getting the investor targeting, outreach sequencing, and pipeline management rig
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The Series A market heading into the second half of 2026 is defined by a stark divergence: headline venture numbers look strong, but access remains structurally concentrated. 
-As of July 2026, global venture capital hit a record $510 billion in H1 alone, already closing in on the entire 2021 peak of $643 billion.
- Yet that headline obscures who is capturing the capital. 
-AI now captures roughly 86% of US VC dollars, with OpenAI and Anthropic alone accounting for 43% of all H1 funding.
- For non-AI founders, the Series A crunch is still very much in force: 
-seed rounds remain robust, but the Series A crunch persists for non-AI startups.
-
-The Q1 2026 PitchBook-NVCA Venture Monitor put the median Series A deal at $19.6M with a $78.7M post-money for the broader market — a 37% year-over-year jump
- — though that median is heavily skewed by AI deals, and non-AI founders should benchmark against the more modest $40–42M pre-money range. 
-Capital is flowing into fewer companies. While overall funding volumes have improved, investors are concentrating larger checks into startups that already demonstrate category leadership.
- The structural message for founders preparing a Series A in the current environment is unchanged: the process rewards disciplined preparation, precise investor targeting, and metrics that clear the bar before the process begins — not approaches to it.
+The Series A market in mid-2026 is defined by a stark divergence: headline venture numbers are historic, but access remains structurally concentrated. US venture capital hit $412.7 billion in H1 2026 — nearly 30% more than all of 2025 — while global startup funding reached a record $510 billion, per PitchBook-NVCA and Crunchbase. Yet that headline obscures who is capturing the capital. AI absorbed 86% of US VC dollars, with OpenAI and Anthropic alone accounting for 43% of all H1 funding; the Q2 2026 Venture Monitor explicitly flagged the "collapse of corporate VC and nontraditional participation outside of AI." For non-AI founders, conditions remain structurally difficult. The Cooley Q2 2026 Venture Financing Report found that while Series A deal volume ticked up quarter-over-quarter, median Series A pre-money valuations actually declined in Q2, down rounds rose to 12.1%, and pay-to-play provisions increased to 8.4% — signals of ongoing stress below the headline. The exit environment improved modestly, anchored by SpaceX's landmark $1.75 trillion IPO, but PitchBook notes the broader IPO pipeline beyond OpenAI and Anthropic has yet to be built. The structural message for founders is unchanged: disciplined preparation, precise investor targeting, and metrics that clear the bar before the process begins.
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->

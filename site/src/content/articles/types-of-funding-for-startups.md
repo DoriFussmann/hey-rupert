@@ -22,7 +22,7 @@ pillarKeyword: startup funding
 supportingKeyword: startup funding stages
 articleType: comparison
 targetKeyword: types of funding for startups
-updatedDate: 2026-08-18
+updatedDate: 2026-09-18
 keywords:
   - types of funding for startups
   - startup funding stages
@@ -174,15 +174,7 @@ That is the problem Rupert is built to solve. Rather than leaving founders to re
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The funding instrument landscape is actively shifting heading into the second half of 2026. 
-SAFEs reached a record high of 93% of all pre-seed deals on Carta in Q1 2026, while convertible notes fell to a record low of just 7%
- — a consolidation that shows no sign of reversing. 
-Global seed funding totaled $12 billion in Q2 2026 alone
-, but capital concentration remains stark: a large share of that total flowed to AI companies and mega-rounds, while non-AI founders face a more selective environment. On the debt side, 
-late-stage venture debt deals hit a decade high in Q1 2026, with the median deal reaching $10.8 million and the average climbing to $68.2 million
-, driven largely by AI infrastructure needs. 
-Eight of the ten largest transactions in Q2 2026 were debt instruments, and every one funded physical infrastructure — chips, data centers, or energy — suggesting the AI buildout has migrated from the venture equity market to the credit market.
- For seed-stage founders outside the AI infrastructure wave, the core instrument dynamics remain stable: SAFEs dominate early-stage fundraising, priced seed rounds are setting valuation records, and venture debt remains a post-institutional-backing tool rather than an early-stage alternative.
+The funding instrument landscape has continued to consolidate through mid-2026. Carta's Q2 2026 State of Pre-Seed report confirms SAFEs held at 93% of pre-seed rounds and captured 95% of all pre-seed capital raised — but the more telling shift is concentration: startups on Carta raised roughly the same dollars in Q2 2026 as Q2 2025 ($3.19B vs. $3.22B) across 22% fewer instruments, pushing the average instrument size to a record $276,000, up 27% year-over-year. Convertible notes have nearly disappeared outside capital-intensive sectors like biotech and energy. Median post-money SAFE caps now range from $10M to $35M depending on round size. One notable new signal: AI's share of pre-seed dollars appears to be plateauing — at roughly 49% of H1 2026 pre-seed capital, it is essentially flat versus 2025's full-year figure, suggesting the AI premium at the earliest stage may be stabilizing. Globally, venture funding hit a record $510 billion in H1 2026 alone per Crunchbase, but that headline is dominated by a handful of US AI megadeals. For seed-stage founders outside that cohort, the dynamics are unchanged: SAFEs dominate, check sizes are larger but scarcer, and venture debt remains a post-institutional tool.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
