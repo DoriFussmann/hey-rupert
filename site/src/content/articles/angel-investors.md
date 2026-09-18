@@ -21,7 +21,7 @@ draft: false
 pillarKeyword: how to find investors
 articleType: comprehensive
 targetKeyword: angel investors
-updatedDate: 2026-08-13
+updatedDate: 2026-09-18
 keywords:
   - angel investors
   - how to find investors
@@ -109,6 +109,7 @@ Series A and beyond involves institutional VCs managing hundreds of millions to 
 
 Family offices manage wealth for high-net-worth families, have flexible mandates, longer time horizons than traditional VCs, and occasionally deep domain interest in specific sectors. They are harder to find through standard databases and almost always require a warm introduction to reach productively. For founders in sectors where patient capital matters (deep tech, biotech, climate) family offices are worth mapping deliberately rather than leaving to chance.
 
+Family offices manage wealth for high-net-worth families, have flexible mandates, longer time horizons than traditional VCs, and occasionally deep domain interest in specific sectors. They are harder to find through standard databases and almost always require a warm introduction to reach productively. For founders in sectors where patient capital matters (deep tech, biotech, climate) family offices are worth mapping deliberately rather than leaving to chance. For example, a climate tech founder might identify a family office tied to a legacy energy dynasty that has publicly signaled its transition-focused investment thesis, then work backward through shared angel investors or advisors to secure a warm introduction.
 ### The Startup vs. Small Business Distinction
 
 One clarification that saves founders real pain: startup investors and small business investors are different populations with different expectations. Startup investors expect equity, exponential growth, and an exit, they are buying a small piece of a potentially enormous outcome. Small business investors may prefer debt instruments, revenue share agreements, or slower, more predictable return profiles. Conflating the two audiences in your outreach, or pitching a lifestyle-oriented business to a VC expecting a billion-dollar exit — wastes everyone's time and signals that you do not understand the investment landscape you are operating in.
