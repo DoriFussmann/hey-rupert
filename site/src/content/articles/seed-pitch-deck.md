@@ -80,7 +80,7 @@ This distinction matters enormously when founders recycle their pre-seed narrati
 a ten to fifteen slide deck works consistently for seed-stage companies, with ten to twelve slides being optimal for initial investor meetings.
 
 Past fifteen slides, engagement drops roughly forty percent.
- Keep the core deck tight and move supporting detail — financial models, technical architecture, full reference lists — into an appendix.
+ Keep the core deck tight and move supporting detail (financial models, technical architecture, full reference lists) into an appendix.
 
 ---
 
@@ -112,7 +112,7 @@ The problem slide answers one question: why does this matter urgently, and to wh
 It should capture the specific pain you're solving and who experiences it.
  The failure mode here is framing the problem too broadly — claiming that "small businesses struggle with operations" signals nothing and bets against nothing. Investors want a problem so specific that a skeptic could argue with the framing. That sharpness is itself a signal of founder insight.
 
-Quantify the pain where possible. A problem slide with a single data point — a number of hours lost, a dollar amount wasted, a rate of failure — is more credible than three paragraphs of narrative. One clearly defined problem is far more powerful than three loosely defined ones.
+Quantify the pain where possible. A problem slide with a single data point (a number of hours lost, a dollar amount wasted, a rate of failure) is more credible than three paragraphs of narrative. One clearly defined problem is far more powerful than three loosely defined ones.
 
 ### 2. The Traction Slide
 
@@ -130,14 +130,14 @@ Market size slides fail in one of two predictable ways: the top-down fantasy, an
 AI and SaaS decks that have succeeded recently ditched TAM-SAM-SOM for bottoms-up monetization wedges
  — building the market from the number of addressable customers, multiplied by realistic contract value, to arrive at a number the investor can actually stress-test.
 
-The overcrowded bucket problem is subtler: defining the market so broadly that the company's actual wedge — the specific beachhead where it can win — disappears inside a much larger category. Investors fund specific opportunities. Show them the slice you can own, then describe the natural expansion path.
+The overcrowded bucket problem is subtler: defining the market so broadly that the company's actual wedge (the specific beachhead where it can win) disappears inside a much larger category. Investors fund specific opportunities. Show them the slice you can own, then describe the natural expansion path.
 
 ### 4. The Team Slide
 
 The team slide is one of the most chronically mispositioned elements in seed decks. Most founders put it at slide eleven or twelve, after the investor has already made a provisional judgment. At seed stage, 
 your deck should show your conviction as a founder. You need to tell the investor why you're the right person to build this, what makes this approach work, and what you see that others don't.
 
-That conviction is communicated far more effectively early in the deck than after the product and financials. Move the team slide to the first third of the presentation. Highlight domain experience, relevant prior exits, unfair access to customers, or technical depth that is directly relevant to this specific problem. Generic credentials — degrees, well-known employers — are less valuable than evidence that this team has earned insight into this particular problem through direct experience.
+That conviction is communicated far more effectively early in the deck than after the product and financials. Move the team slide to the first third of the presentation. Highlight domain experience, relevant prior exits, unfair access to customers, or technical depth that is directly relevant to this specific problem. Generic credentials (degrees, well-known employers) are less valuable than evidence that this team has earned insight into this particular problem through direct experience.
 
 ### 5. The Business Model Slide
 
