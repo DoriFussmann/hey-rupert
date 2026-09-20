@@ -49,14 +49,19 @@ internalLinks:
 externalLinks:
   - label: Global venture capital
     url: https://dealroom.co/guides/global
+    addedAt: 2026-08-17
   - label: Venture Capital Investment Market Size, Share, Trends, 2034
     url: https://www.imarcgroup.com/venture-capital-investment-market
+    addedAt: 2026-08-17
   - label: NVCA Yearbook - National Venture Capital Association
     url: https://nvca.org/nvca-yearbook/
+    addedAt: 2026-08-17
   - label: List of venture capital firms
     url: https://en.wikipedia.org/wiki/List_of_venture_capital_firms
+    addedAt: 2026-08-17
   - label: "Largest Venture Capital Firms: Global Leaders in Investment"
     url: https://growthequityinterviewguide.com/venture-capital/venture-capital-industry/largest-venture-capital-firms
+    addedAt: 2026-08-17
 ---
 ## The Biggest Venture Capital Firms in 2026: Ranked by AUM, Stage, and Sector
 

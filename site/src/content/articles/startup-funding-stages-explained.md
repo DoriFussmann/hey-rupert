@@ -50,10 +50,13 @@ internalLinks:
 externalLinks:
   - label: A Guide to Different Stages of Funding for Startups
     url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+    addedAt: 2026-08-18
   - label: Startup Funding Stages Explained (Bootstrapping to Series C)
     url: https://www.usehaven.com/blog-posts/startup-funding-stages
+    addedAt: 2026-08-18
   - label: "From Pre-Seed to IPO: Startup Funding Explained"
     url: https://www.antler.co/blog/startup-funding-stages
+    addedAt: 2026-08-18
 ---
 ## The Question Before the Pitch
 

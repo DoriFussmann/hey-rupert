@@ -49,14 +49,19 @@ internalLinks:
 externalLinks:
   - label: How to Get Investors for Your Startup Business
     url: https://www.hubspot.com/startups/fundraising/how-to-get-investors-for-startup
+    addedAt: 2026-08-13
   - label: Tips for Pitching to Small Business Investors
     url: https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/
+    addedAt: 2026-08-13
   - label: How to Get Investors for Small Business | Methods and Steps
     url: https://wise.com/us/blog/how-to-get-investors-for-a-small-business
+    addedAt: 2026-08-13
   - label: OpenVC | Find investors for your startup — raise for free.
     url: https://www.openvc.app/
+    addedAt: 2026-08-13
   - label: "Finding Investors: What Entrepreneurs Should Know"
     url: https://www.indeed.com/hire/c/info/finding-investors
+    addedAt: 2026-08-13
 ---
 Getting investors for your business is not a single conversation, it is a structured campaign with a defined beginning, a disciplined middle, and a clear close. Founders who raise successfully do not stumble into capital through one well-timed email or a lucky coffee meeting. They treat fundraising the way a great sales leader treats a pipeline: qualified targets, consistent follow-up, and a process that creates its own momentum. This guide covers every stage of that process, from understanding which investors are right for your company to closing the round without losing months to "we're still interested" conversations that never convert.
 

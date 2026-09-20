@@ -57,14 +57,19 @@ internalLinks:
 externalLinks:
   - label: Data & Statistics - Venture Capital & Private Equity
     url: https://guides.lib.uchicago.edu/venture/data
+    addedAt: 2026-08-17
   - label: What Is Venture Capital? Definition, Pros, Cons, and How It ...
     url: https://www.investopedia.com/terms/v/venturecapital.asp
+    addedAt: 2026-08-17
   - label: "Venture Capital and Private Equity: Resources"
     url: https://libguides.stanford.edu/library/venture-capital-and-private-equity
+    addedAt: 2026-08-17
   - label: "VC 101: The Angel Investor's Guide to Startup Investing"
     url: https://fundersclub.com/learn/guides/vc-101/understanding-venture-capital/
+    addedAt: 2026-08-17
   - label: VC Resources
     url: https://govclab.com/resources/
+    addedAt: 2026-08-17
 ---
 ## What Venture Capital Actually Is — and What It Isn't
 

@@ -51,10 +51,13 @@ internalLinks:
 externalLinks:
   - label: "Startup Funding Rounds: A Complete Guide"
     url: https://www.thatround.com/startup-funding-rounds-a-complete-guide
+    addedAt: 2026-08-18
   - label: The Ultimate Guide to Startup Funding Stages
     url: https://visible.vc/blog/startup-funding-stages/
+    addedAt: 2026-08-18
   - label: How to Raise the First Round of Funding for Your Startup
     url: https://fi.co/first-startup-funding
+    addedAt: 2026-08-18
 ---
 # Startup Funding Rounds: FAQ for Founders Who Are Raising
 

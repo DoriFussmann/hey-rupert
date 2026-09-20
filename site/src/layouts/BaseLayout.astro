@@ -64,9 +64,10 @@ if (!title?.trim() || !description?.trim()) {
 const resolvedOgTitle = ogTitle || title;
 const resolvedOgDescription = ogDescription || description;
 const canonicalUrl = omitCanonical
-  ? undefined
+  ? canonicalFrom(undefined, "/404/")
   : canonicalFrom(canonical, canonicalPath);
 const orgId = `${absoluteUrl("/")}#organization`;
+const websiteId = `${absoluteUrl("/")}#website`;
 const organization: Record<string, unknown> = {
   "@context": "https://schema.org",
   "@type": "Organization",
@@ -78,7 +79,15 @@ const organization: Record<string, unknown> = {
 if (SAME_AS.length > 0) {
   organization.sameAs = SAME_AS;
 }
-const allJsonLd = [organization, ...jsonLd];
+const website: Record<string, unknown> = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "@id": websiteId,
+  name: SITE_NAME,
+  url: absoluteUrl("/"),
+  publisher: { "@id": orgId },
+};
+const allJsonLd = [organization, website, ...jsonLd];
 const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
 ---
 

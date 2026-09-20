@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: How to build your seed round pitch deck
     url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
+    addedAt: 2026-08-13
   - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
     url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+    addedAt: 2026-08-13
   - label: Starting pre-seed raise. How should you send out pitch deck?
     url: https://www.reddit.com/r/ycombinator/comments/1fv2gvq/starting_preseed_raise_how_should_you_send_out/
+    addedAt: 2026-08-13
   - label: "Pre-Seed Pitch Deck Examples: What Actually Gets ..."
     url: https://www.whitepage.studio/blog/pre-seed-pitch-deck-examples
+    addedAt: 2026-08-13
   - label: The Essential Guide to Creating a Successful B2B SaaS ...
     url: https://www.forumvc.com/thought-pieces/the-essential-guide-to-creating-a-compelling-b2b-saas-pitch-deck-for-pre-seed-and-seed-stage-founders
+    addedAt: 2026-08-13
 ---
 Most founders discover the mismatch the hard way: they send a deck they spent weeks refining, the investor replies with a polite pass, and the feedback (if it comes at all) is vague enough to be useless. The deck wasn't bad. It was just built for the wrong stage. Pre-seed and seed pitch decks share most of the same slide titles (problem, solution, market, team, ask) but what sits behind those titles is entirely different. The evidence standard changes. The narrative logic changes. The slide that carries the most weight changes. Understanding exactly how is the difference between a deck that earns meetings and one that quietly filters you out.
 

@@ -57,10 +57,13 @@ internalLinks:
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
     url: https://carta.com/learn/startups/fundraising/
+    addedAt: 2026-08-18
   - label: A Guide to Different Stages of Funding for Startups
     url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+    addedAt: 2026-08-18
   - label: "A Guide to Early-Stage Startup Funding: Your Options"
     url: https://www.capboard.io/en/captable/startup-funding-sources
+    addedAt: 2026-08-18
 ---
 ## What Startup Funding Actually Is — and What It Isn't
 

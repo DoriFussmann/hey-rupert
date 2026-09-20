@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/
+    addedAt: 2026-08-17
   - label: NVCA Yearbook - National Venture Capital Association
     url: https://nvca.org/nvca-yearbook/
+    addedAt: 2026-08-17
   - label: Venture Capital Investment
     url: https://siliconvalleyindicators.org/data/economy/innovation-entrepreneurship/private-equity/venture-capital-investment/
+    addedAt: 2026-08-17
   - label: "Menlo Park's Top 12 VC Firms: A Founder's Guide"
     url: https://www.rho.co/blog/vc-firms-in-menlo-park-ca
+    addedAt: 2026-08-17
   - label: The complete list of tier-1 and notable VCs and angel ...
     url: https://republic.com/help/the-complete-list-of-tier-1-and-notable-vcs-and-angel-investors
+    addedAt: 2026-08-17
 ---
 Silicon Valley is not simply the largest venture capital ecosystem in the United States — it is the ecosystem that sets the standard for every other one. 
 Silicon Valley remains the world's most powerful startup ecosystem, responsible for over 30% of US venture funding, with more than $65 billion in VC investment across the Bay Area annually.

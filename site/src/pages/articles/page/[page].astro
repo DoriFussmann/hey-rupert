@@ -1,15 +1,5 @@
 ---
-import { getPublishedArticles, paginate } from "../../../lib/articles";
-
-export async function getStaticPaths() {
-  const all = await getPublishedArticles();
-  const { lastPage } = paginate(all, 1);
-  const paths = [];
-  for (let pageNum = 2; pageNum <= lastPage; pageNum += 1) {
-    paths.push({ params: { page: String(pageNum) } });
-  }
-  return paths;
+export function getStaticPaths() {
+  return [];
 }
-
-return Astro.redirect("/articles/");
 ---

@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: The Best Startup Pitch Deck Examples - Powderkeg
     url: https://powderkeg.com/pitch-deck-examples/
+    addedAt: 2026-08-13
   - label: Here's how to create a pre-seed pitch deck that gets you ...
     url: https://www.docsend.com/blog/pre-seed-pitch-deck-guide/
+    addedAt: 2026-08-13
   - label: A Simple Template for Your Seed Funding Pitch Deck
     url: https://underscore.vc/resources/how-to-pitch-to-investors/
+    addedAt: 2026-08-13
   - label: The Ultimate Pitch Deck Guide for Startup Founders
     url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders
+    addedAt: 2026-08-13
   - label: The Essential Guide to Creating a Successful B2B SaaS ...
     url: https://www.forumvc.com/thought-pieces/the-essential-guide-to-creating-a-compelling-b2b-saas-pitch-deck-for-pre-seed-and-seed-stage-founders
+    addedAt: 2026-08-13
 ---
 ## How Many Slides Should a Seed Pitch Deck Have?
 

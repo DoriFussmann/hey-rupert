@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: Pitch Deck Statistics | 22 Must Know Stats and Facts
     url: https://www.pitchdeckcreators.com/blog-posts/pitch-deck-statistics-22-must-know-facts
+    addedAt: 2026-08-13
   - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
     url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+    addedAt: 2026-08-13
   - label: Here's how to create a pre-seed pitch deck that gets you ...
     url: https://www.docsend.com/blog/pre-seed-pitch-deck-guide/
+    addedAt: 2026-08-13
   - label: The Best Startup Pitch Deck Examples - Powderkeg
     url: https://powderkeg.com/pitch-deck-examples/
+    addedAt: 2026-08-13
   - label: A Simple Template for Your Seed Funding Pitch Deck
     url: https://underscore.vc/resources/how-to-pitch-to-investors/
+    addedAt: 2026-08-13
 ---
 A seed round pitch deck is not a company brochure. It is a sequenced argument — a series of claims, each building on the last, designed to move a skeptical investor from "I've never heard of this company" to "I want to take a meeting." The sequence is not arbitrary. Every slide has a job. And the order in which you make your case determines whether the story lands or quietly falls apart before the fifth slide.
 

@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: What's the Difference? Venture Capitalist vs. Angel Investor
     url: https://www.rivier.edu/academics/blog-posts/whats-the-difference-venture-capitalist-vs-angel-investor/
+    addedAt: 2026-08-13
   - label: "Angel Investors vs Venture Capitalists: Key Differences"
     url: https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/angel-investors-vs-venture-capitalists
+    addedAt: 2026-08-13
   - label: A guide to angel investors vs. venture capitalists
     url: https://stripe.com/resources/more/angel-investors-vs-venture-capitalists-what-founders-need-to-know
+    addedAt: 2026-08-13
   - label: "Angel Investors vs. Venture Capitalists: Key Differences"
     url: https://www.crv.com/content/angel-investors-vs-venture-capitalists
+    addedAt: 2026-08-13
   - label: Learn how to find and work with angel investors
     url: https://www.svb.com/startup-insights/raising-capital/how-to-find-the-right-angel-investors/
+    addedAt: 2026-08-13
 ---
 Both investor types write equity checks into early-stage startups. Both want outsized returns. From the outside, that can make angels and venture capitalists look like variations of the same thing — one with smaller checks, one with bigger. That framing is wrong, and it costs founders months. The decision between angel capital and venture capital is really a decision about whose money you're taking, how that person makes decisions, what they'll expect from you in return, and whether your company is at the right stage to receive either. Getting this right before you start outreach is one of the most important calls you'll make in a raise.
 

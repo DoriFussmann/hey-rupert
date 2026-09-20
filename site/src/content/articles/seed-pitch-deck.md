@@ -49,14 +49,19 @@ internalLinks:
 externalLinks:
   - label: "The Perfect Seed Pitch Deck: 10 Slides You Need to Win ..."
     url: https://www.reddit.com/r/startups/comments/1lcyta0/the_perfect_seed_pitch_deck_10_slides_you_need_to/
+    addedAt: 2026-08-13
   - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
     url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+    addedAt: 2026-08-13
   - label: "How to Make a Pitch Deck: My Guide to Winning Investors ..."
     url: https://medium.com/@isabellapennington/how-to-make-a-pitch-deck-my-guide-to-winning-investors-in-2025-c749a8b6e458
+    addedAt: 2026-08-13
   - label: A Simple Template for Your Seed Funding Pitch Deck
     url: https://underscore.vc/resources/how-to-pitch-to-investors/
+    addedAt: 2026-08-13
   - label: How to craft a winning pitch deck
     url: https://mercury.com/blog/ultimate-pitch-guide-crafting-pitch-deck
+    addedAt: 2026-08-13
 ---
 Your seed pitch deck is not a company overview. It is not a business plan in slide form. It is a structured argument designed to do exactly one thing: get a meeting with the right investor. Every word, every metric, every slide order should be optimized for that outcome — and nothing else.
 

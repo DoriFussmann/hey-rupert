@@ -1,21 +1,34 @@
+import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
+import { rehypeEmitWtsComments, rehypeKeyTakeaways, remarkPreserveWts } from "seo-core";
 import { SITE_URL } from "./src/config/site.ts";
+
+/** Demote markdown `#` headings so ArticleLayout's h1 stays the only h1. */
+function rehypeDemoteMarkdownH1() {
+  return (tree) => {
+    const walk = (node) => {
+      if (!node || typeof node !== "object") return;
+      if (node.type === "element" && node.tagName === "h1") node.tagName = "h2";
+      if (Array.isArray(node.children)) node.children.forEach(walk);
+    };
+    walk(tree);
+  };
+}
 
 export default defineConfig({
   site: SITE_URL,
   trailingSlash: "always",
   output: "static",
-  // Local only: the marketing site has no login page. Production routes
-  // /login, /admin, and /portal to the Next.js portal via site/vercel.json.
-  redirects: process.env.VERCEL
-    ? {}
-    : {
-        "/login": "http://localhost:3000/login",
-        "/login/": "http://localhost:3000/login",
-      },
+  markdown: {
+    remarkPlugins: [remarkPreserveWts],
+    rehypePlugins: [rehypeDemoteMarkdownH1, rehypeEmitWtsComments, rehypeKeyTakeaways],
+  },
   vite: {
     plugins: [tailwindcss()],
+    ssr: {
+      noExternal: ["seo-core"],
+    },
     server: {
       watch: {
         // Astro writes data-store.json via a .tmp rename. On Windows, chokidar
@@ -25,4 +38,10 @@ export default defineConfig({
       },
     },
   },
+  integrations: [
+    sitemap({
+      filter: (page) => !page.includes("/404"),
+    }),
+  ],
 });
+

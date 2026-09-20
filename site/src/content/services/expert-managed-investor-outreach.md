@@ -1,6 +1,7 @@
 ---
 title: Expert-Managed Investor Outreach
 slug: expert-managed-investor-outreach
+description: "Rupert runs researched investor outreach for founders raising capital: targeting, personalized messaging, and follow-up, with every relationship staying yours."
 summary: >-
   Rupert runs researched, personalized investor outreach campaigns on behalf of
   founders raising capital. Every target list is built around genuine fit —

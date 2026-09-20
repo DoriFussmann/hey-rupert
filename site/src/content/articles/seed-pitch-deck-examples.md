@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: The Ultimate Pitch Deck Guide for Startup Founders
     url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders
+    addedAt: 2026-08-13
   - label: A Simple Template for Your Seed Funding Pitch Deck
     url: https://underscore.vc/resources/how-to-pitch-to-investors/
+    addedAt: 2026-08-13
   - label: 20+ Free Pitch Deck Templates [Fully-Customizable]
     url: https://pitch.com/templates/collections/Pitch-deck
+    addedAt: 2026-08-13
   - label: How to build your seed round pitch deck
     url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
+    addedAt: 2026-08-13
   - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
     url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+    addedAt: 2026-08-13
 ---
 Most pitch deck advice starts from a template. This article starts from evidence. The decks below are real (they raised real money from real investors) and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
 

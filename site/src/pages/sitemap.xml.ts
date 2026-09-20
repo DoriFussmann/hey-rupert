@@ -36,8 +36,11 @@ export const GET: APIRoute = async () => {
 
   for (const article of articles) {
     const lastmodDate = article.data.updatedDate || article.data.date;
-    const lastmod = lastmodDate.toISOString();
-    urls.push(urlEntry(absoluteUrl(`/articles/${article.data.slug}/`), lastmod));
+    const lastmod =
+      lastmodDate instanceof Date ? lastmodDate.toISOString() : lastmodDate;
+    urls.push(
+      urlEntry(absoluteUrl(`/articles/${article.data.slug || article.id}/`), lastmod),
+    );
   }
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>

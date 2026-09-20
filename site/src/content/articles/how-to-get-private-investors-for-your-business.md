@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: How to Get Investors for Your Startup Business
     url: https://www.hubspot.com/startups/fundraising/how-to-get-investors-for-startup
+    addedAt: 2026-08-13
   - label: "A Startup Guide to Funding: How to Find Investors"
     url: https://vivatech.com/news/a-startup-guide-to-funding-how-to-find-investors
+    addedAt: 2026-08-13
   - label: "Angel investors: How to find them"
     url: https://www.bdc.ca/en/articles-tools/start-buy-business/start-business/angel-investors-how-find-them
+    addedAt: 2026-08-13
   - label: "Finding Investors: What Entrepreneurs Should Know"
     url: https://www.indeed.com/hire/c/info/finding-investors
+    addedAt: 2026-08-13
   - label: OpenVC | Find investors for your startup — raise for free.
     url: https://www.openvc.app/
+    addedAt: 2026-08-13
 ---
 ## Why Private Investors Deserve a Dedicated Strategy
 

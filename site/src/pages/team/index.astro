@@ -1,3 +1,19 @@
 ---
-return Astro.redirect("/about/", 301);
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { SITE_NAME } from "../../config/site";
+import { sitePath } from "../../lib/url";
+
+const title = `Team — ${SITE_NAME}`;
+const description =
+  "Meet the Rupert team. Dori Fussmann founded Rupert to run researched, personalized investor outreach for founders raising capital.";
 ---
+
+<BaseLayout title={title} description={description} canonicalPath="/team/">
+  <main id="main-content" class="site-wrap flex-1 py-2xl lg:py-3xl">
+    <h1 class="type-h1">Team</h1>
+    <p class="type-body mt-lg max-w-prose">
+      Rupert is founded by Dori Fussmann. Read more on the
+      <a href={sitePath("/about/")}>About</a> page.
+    </p>
+  </main>
+</BaseLayout>

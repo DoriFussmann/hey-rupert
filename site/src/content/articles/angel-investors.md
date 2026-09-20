@@ -68,14 +68,19 @@ internalLinks:
 externalLinks:
   - label: 100 Top Angel Investors List for Startups (2026)
     url: https://eqvista.com/top-100-active-angel-investors-list-for-startups/
+    addedAt: 2026-08-13
   - label: "How to Find Angel Investors in Canada: The Founder's Guide"
     url: https://www.youtube.com/watch?v=9ZTyUxW6dkE&vl=en-US
+    addedAt: 2026-08-13
   - label: "How to Find Angel Investors: A Complete Guide for Startups"
     url: https://www.brex.com/spend-trends/startup/how-to-find-angel-investors
+    addedAt: 2026-08-13
   - label: How to Find the Right Angel Investor for Your Startup
     url: https://www.jpmorgan.com/insights/business-planning/how-to-find-the-right-angel-investor-for-your-startup
+    addedAt: 2026-08-13
   - label: The first in-depth report on the demographics and investing ...
     url: https://www.angelcapitalassociation.org/data/Documents/TAAReport11-30-17.pdf
+    addedAt: 2026-08-13
 ---
 ## The Question Behind the Question
 

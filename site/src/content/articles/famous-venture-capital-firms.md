@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: "Top VC Firms 2026: 18 Largest Venture Capital Firms by AUM"
     url: https://dealroom.net/blog/top-venture-capital-firms
+    addedAt: 2026-08-17
   - label: "Venture Capital Statistics: Trends, Metrics, and Benchmarks"
     url: https://growthequityinterviewguide.com/venture-capital/venture-capital-resources/venture-capital-statistics
+    addedAt: 2026-08-17
   - label: Top Venture Capital Firms & Investors in the United States
     url: https://www.openvc.app/country/USA
+    addedAt: 2026-08-17
   - label: Top Venture Capital Firms | VCJ 50
     url: https://www.venturecapitaljournal.com/top-venture-capital-firms/
+    addedAt: 2026-08-17
   - label: The complete list of tier-1 and notable VCs and angel ...
     url: https://republic.com/help/the-complete-list-of-tier-1-and-notable-vcs-and-angel-investors
+    addedAt: 2026-08-17
 ---
 ## What Makes a VC Firm "Famous" — and Why It Matters for Your Raise
 

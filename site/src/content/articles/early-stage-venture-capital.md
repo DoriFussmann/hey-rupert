@@ -50,10 +50,13 @@ internalLinks:
 externalLinks:
   - label: "Early Stage Venture Capital: A Comprehensive Guide"
     url: https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/early-stage-venture-capital
+    addedAt: 2026-08-18
   - label: Stages of venture capital
     url: https://www.svb.com/startup-insights/vc-relations/stages-of-venture-capital/
+    addedAt: 2026-08-18
   - label: "A Guide to Early-Stage Startup Funding: Your Options"
     url: https://www.capboard.io/en/captable/startup-funding-sources
+    addedAt: 2026-08-18
 ---
 Early-stage venture capital is one of the most written-about topics in the startup ecosystem — and one of the most misunderstood. Founders approach it as though it were a single market with a uniform set of rules, when in practice it is three distinct sub-markets layered on top of each other, each with different investors, different check sizes, different evidence requirements, and different relationship dynamics. Getting your mental model right before you start outreach is not an academic exercise. It directly determines whether you spend the next three months in productive conversations or chasing the wrong funds.
 

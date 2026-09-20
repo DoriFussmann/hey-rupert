@@ -51,14 +51,19 @@ internalLinks:
 externalLinks:
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/
+    addedAt: 2026-08-17
   - label: "Top VC Firms 2026: 18 Largest Venture Capital Firms by AUM"
     url: https://dealroom.net/blog/top-venture-capital-firms
+    addedAt: 2026-08-17
   - label: Top 100 Venture Capital Firm Managers by Managed AUM
     url: https://www.swfinstitute.org/fund-manager-rankings/venture-capital-firm
+    addedAt: 2026-08-17
   - label: Top Venture Capital Firms in the World (Updated List 2026)
     url: https://privateequitylist.com/resources/top-venture-capital-firms
+    addedAt: 2026-08-17
   - label: The complete list of tier-1 and notable VCs and angel ...
     url: https://republic.com/help/the-complete-list-of-tier-1-and-notable-vcs-and-angel-investors
+    addedAt: 2026-08-17
 ---
 ## Why AUM Is a Starting Point, Not a Finish Line
 

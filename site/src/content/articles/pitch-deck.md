@@ -58,14 +58,19 @@ internalLinks:
 externalLinks:
   - label: The Quick and Dirty Guide to Creating a Winning Pitch Deck
     url: https://www.startupgrind.com/blog/the-quick-and-dirty-guide-to-creating-a-winning-pitch-deck/
+    addedAt: 2026-08-13
   - label: "Ask a VC: what is a good pitch deck? - Medium"
     url: https://rodrigo.medium.com/ask-a-vc-what-is-a-good-pitch-deck-790f7077fb95
+    addedAt: 2026-08-13
   - label: 34 Inspiring Pitch Deck Examples + Templates
     url: https://www.figma.com/resource-library/pitch-deck-examples/
+    addedAt: 2026-08-13
   - label: Creating an Investor Pitch Deck for Your Startup
     url: https://www.jpmorgan.com/insights/business-planning/creating-an-investor-pitch-deck-for-your-startup
+    addedAt: 2026-08-13
   - label: "Pitch Deck Guide: 12 Essential Slides for VCs"
     url: https://deckary.com/blog/pillar-pitch-deck-guide
+    addedAt: 2026-08-13
 ---
 A pitch deck is, at its core, a set of slides (typically between 10 and 15) designed to communicate your startup's problem, solution, market opportunity, traction, team, and funding ask to a potential investor. But that definition, stripped of context, flatters the document. The real job of a pitch deck is narrower and more demanding: it is not to close a deal, not to answer every conceivable diligence question, and not to demonstrate the full depth of your thinking. Its job is to earn the next meeting. Everything else is noise that works against you.
 

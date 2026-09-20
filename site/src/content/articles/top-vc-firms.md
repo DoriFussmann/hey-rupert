@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: NVCA Yearbook - National Venture Capital Association
     url: https://nvca.org/nvca-yearbook/
+    addedAt: 2026-08-17
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/
+    addedAt: 2026-08-17
   - label: List of venture capital firms
     url: https://en.wikipedia.org/wiki/List_of_venture_capital_firms
+    addedAt: 2026-08-17
   - label: The complete list of tier-1 and notable VCs and angel ...
     url: https://republic.com/help/the-complete-list-of-tier-1-and-notable-vcs-and-angel-investors
+    addedAt: 2026-08-17
   - label: "Anatomy of a top VC: 397% IRRs and 17-IPO funds"
     url: https://www.baybridgebio.com/blog/anatomy_of_a_top_vc
+    addedAt: 2026-08-17
 ---
 Every founder raising a Seed or Series A round eventually faces the same question: should you lead with the most recognizable names in venture (the firms whose logos alone open doors) or start with the smaller, more sector-focused funds that already speak your language? The honest answer is that the question itself contains a false trade-off. But to understand why, you need a clear view of what each type of firm actually offers, what it costs you, and how your own situation changes the calculus.
 

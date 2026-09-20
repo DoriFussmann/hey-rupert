@@ -50,14 +50,19 @@ internalLinks:
 externalLinks:
   - label: OpenVC | Find investors for your startup — raise for free.
     url: https://www.openvc.app/
+    addedAt: 2026-08-13
   - label: What Investors Look For & Questions They Will Ask
     url: https://www.svb.com/startup-insights/startup-strategy/what-investors-look-for-povs-from-the-other-side-of-the-table/
+    addedAt: 2026-08-13
   - label: Tips for Pitching to Small Business Investors
     url: https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/
+    addedAt: 2026-08-13
   - label: Finding Investors in PitchBook - Business Research Basics
     url: https://guides.lib.udel.edu/business/investors
+    addedAt: 2026-08-13
   - label: "Angel investors: How to find them"
     url: https://www.bdc.ca/en/articles-tools/start-buy-business/start-business/angel-investors-how-find-them
+    addedAt: 2026-08-13
 ---
 There is no shortage of advice telling founders to "know your market" or "show traction." But the investors actively writing checks in 2026 are applying a more layered, more sequential set of filters than any single slide or metric can satisfy. Understanding those filters (in the order investors actually apply them) is the difference between a process that generates real momentum and one that produces polite rejections with no useful feedback.
 

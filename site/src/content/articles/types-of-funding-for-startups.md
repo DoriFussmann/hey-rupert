@@ -50,10 +50,13 @@ internalLinks:
 externalLinks:
   - label: "6 Types of Funding for Startups: Definitive Guide"
     url: https://foundersnetwork.com/types-of-funding-for-startups/
+    addedAt: 2026-08-18
   - label: A Guide to Different Stages of Funding for Startups
     url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+    addedAt: 2026-08-18
   - label: 10 Types of Startup Capital
     url: https://www.hubspot.com/startups/types-of-startup-capital
+    addedAt: 2026-08-18
 ---
 ## The Real Cost of Each Funding Type Is Not What You Think
 
