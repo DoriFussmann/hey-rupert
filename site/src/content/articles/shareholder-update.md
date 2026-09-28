@@ -23,7 +23,15 @@ keywords:
   - investor update template
   - investor crm
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-crm
+    anchor: investor crm
+  - slug: investor-update-template
+    anchor: investor update template
+  - slug: quarterly-update-email-template
+    anchor: quarterly update email template
+  - slug: startup-investor-update-presentation
+    anchor: startup investor update presentation
 externalLinks: []
 faqs:
   - question: "Do I legally have to send a shareholder update?"
@@ -152,3 +160,7 @@ investors and analysts increasingly research companies through AI assistants bef
 - The two formats diverge in tone: investor updates should be candid, conversational, and scannable; formal shareholder updates require board-approved language, structured financials, and completeness above all.
 - Including five to ten warm prospective investors on a lightly adapted version of your investor update is one of the highest-leverage fundraising habits available to seed-stage founders — just strip out sensitive details before sending.
 - Upgrade to a tiered reporting system only when your shareholder count, institutional lead requirements, or board structure genuinely demand it; don't over-engineer communication before the cap table complexity makes it necessary.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
+<!-- CMS-INTERNAL:END -->

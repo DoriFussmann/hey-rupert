@@ -44,6 +44,8 @@ internalLinks:
     anchor: startup funding
   - slug: venture-capital
     anchor: venture capital
+  - slug: investor-crm
+    anchor: investor crm
 externalLinks:
   - label: Institutional Investor Database - Dakota
     url: "https://www.dakota.com/institutional-investor-database"
@@ -172,7 +174,7 @@ The venture capital environment heading into Q4 2026 makes disciplined investor 
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/).
+Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/).
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

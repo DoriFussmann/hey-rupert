@@ -22,7 +22,15 @@ keywords:
   - investor update template
   - investor crm
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-crm
+    anchor: investor crm
+  - slug: quarterly-update-email-template
+    anchor: quarterly update email template
+  - slug: shareholder-update
+    anchor: shareholder update
+  - slug: startup-investor-update-presentation
+    anchor: startup investor update presentation
 externalLinks: []
 faqs:
   - question: "Should I send investor updates to prospective investors who haven't funded me yet?"
@@ -186,3 +194,7 @@ the median time between funding rounds has stretched to 744 days as of Q4 2024, 
 - Cadence consistency matters more than polish: send on the same date every month, keep the format under 500 words in plain text, and never skip an update because the month was hard — silence trains investors to assume the worst.
 - Investor updates serve two distinct functions simultaneously: maintaining trust and accountability with existing backers, and systematically warming prospective investors for your next raise when they are added to your update list months before you formally go out.
 - The investor update template is not a standalone tool — it works best as part of a structured investor CRM that tracks communication history, engagement signals, and pipeline stage for every current and prospective investor on your list.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor crm](/articles/investor-crm/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
+<!-- CMS-INTERNAL:END -->
