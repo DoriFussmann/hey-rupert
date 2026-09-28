@@ -23,7 +23,15 @@ keywords:
   - seed vs series a
   - series a
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: series-a
+    anchor: series a
+  - slug: how-long-between-seed-and-series-a
+    anchor: how long between seed and series a
+  - slug: seed-funding-vs-series-a
+    anchor: seed funding vs series a
+  - slug: seed-vs-series-a
+    anchor: seed vs series a
 externalLinks: []
 faqs:
   - question: "Can a company skip the seed stage and go straight from pre-seed to Series A?"
@@ -217,3 +225,7 @@ While capital is available, founders need to be acutely aware of changing valuat
 - The deal instrument — SAFE, convertible note, or priced equity round — is both a practical structure and a signal of which stage you actually occupy; using the wrong one sends the wrong message.
 - Approaching Series A investors 12 months too early doesn't just produce rejections — it spends relational capital that would be more valuable when your metrics are ready.
 - In 2026, the ARR bar for a competitive Series A has risen materially; founders should calibrate their expectations against current benchmarks, not the numbers from two fundraising cycles ago.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
+<!-- CMS-INTERNAL:END -->

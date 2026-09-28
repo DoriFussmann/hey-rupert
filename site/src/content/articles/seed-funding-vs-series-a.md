@@ -23,7 +23,15 @@ keywords:
   - seed vs series a
   - series a
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: series-a
+    anchor: series a
+  - slug: how-long-between-seed-and-series-a
+    anchor: how long between seed and series a
+  - slug: pre-seed-vs-seed-vs-series-a
+    anchor: pre seed vs seed vs series a
+  - slug: seed-vs-series-a
+    anchor: seed vs series a
 externalLinks: []
 faqs:
   - question: "Do I need a lead investor to close my seed round?"
@@ -179,3 +187,7 @@ The seed and Series A markets entering late 2026 reflect a widening bifurcation 
 - Seed rounds (usually SAFEs) are structurally lightweight — no board seat, no liquidation preferences, fast to close; Series A priced rounds introduce preferred stock, governance rights, anti-dilution protections, and a lead investor board seat that shapes company governance for years.
 - The "am I ready?" question has a practical answer: raise seed if you are still finding product-market fit, raise Series A if you have measurable proof that your business model works and need capital to scale what is already producing results.
 - Only 15–20% of seed-funded companies reach a Series A within 24 months, which means timing, investor selection, and process discipline matter as much as the quality of your underlying metrics.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
+<!-- CMS-INTERNAL:END -->
