@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: flex
 targetKeyword: how to get investors for your business idea
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - how to get investors for your business idea
   - how to get investors for your business
@@ -165,7 +165,7 @@ If you're approaching your first raise and want to know whether your materials a
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Carta's freshly released Q2 2026 State of Pre-Seed report adds an important new wrinkle to what looked like a stable market: capital is concentrating into fewer deals. U.S. startups on Carta raised $3.19 billion in pre-seed instruments in Q2 2026 — roughly flat with Q2 2025's $3.22 billion — but did so across noticeably fewer instruments (11,500 vs. 14,825 a year earlier), pushing the average instrument size to a record $276,000, a 27% year-over-year jump. AI's grip on pre-seed dollars held firm: AI startups captured 49% of all pre-seed dollars in H1 2026, essentially matching the 50% mark reached in Q1. Meanwhile, the seed-to-Series A funnel has tightened further than previously reported — multiple cohort analyses now put the 24-month conversion rate at just 15–20%, down from roughly 30% a decade ago, as Series A investors demand $1–2M ARR with 2–3x growth before writing a check. For idea-stage founders, the message is the same but sharper: fewer pre-seed deals are getting done, the ones that do close are larger and more contested, and the downstream bar has risen to match.
+Carta's Q2 2026 State of Pre-Seed report confirms capital is concentrating into fewer deals — and a companion geographic analysis published in September adds a new wrinkle. U.S. startups on Carta raised $3.19 billion across just 11,500 pre-seed instruments in Q2 2026, versus $3.22 billion across 14,825 a year earlier, pushing the average instrument size to a record $276,000, up 27% year-over-year. The map is shifting too: Texas overtook New York as the #2 state for pre-seed investment, capturing a 9% share, while the Northeast's slice fell from 27.4% to 18% — and Austin cracked the top-three metro list for the first time. AI's share of pre-seed dollars held near 50% in H1 2026, showing signs of plateauing rather than climbing further. Zooming out, the Q2 2026 PitchBook-NVCA Venture Monitor found H1 2026 VC investment already exceeded all of 2025, but 87.5% of deployed capital went into $100M+ financings. For idea-stage founders, the takeaway sharpens: fewer pre-seed deals are getting done, the ones that close are larger and more contested, geography matters more than ever, and the downstream bar has risen to match.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

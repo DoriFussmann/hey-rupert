@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: comparison
 targetKeyword: pre seed pitch deck
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - pre seed pitch deck
   - seed pitch deck
@@ -166,7 +166,7 @@ If your deck is ready but your pipeline isn't, the problem isn't the slides — 
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The early-stage funding environment in H1 2026 reflects a market that has bifurcated sharply between founders with evidence and those without. Carta's Q2 2026 State of Pre-Seed report confirms 2026 is already slightly ahead of 2025 in total pre-seed cash invested during the first half of the year, with roughly 3,000 U.S. startups raising over $2.3 billion in Q1 alone. But the headline recovery masks a structural barbell: average instrument size hit a record $276,000 in Q2 as more dollars flowed into fewer companies, while the typical pre-seed round is simultaneously getting smaller. AI is the primary driver — capturing 49% of all pre-seed dollars in H1 2026 — and at the 90th percentile, SAFE valuation caps on rounds above $2.5M are reaching $100 million. The conversion rate from seed to Series A has meanwhile dropped from roughly 50% to 38%. For founders, the practical implication is unchanged but more acute: a pre-seed pitch deck must now navigate a market where capital concentration is accelerating, AI commands a valuation premium that non-AI decks cannot assume, and geographic competition is shifting — Texas overtook New York for pre-seed investment in Q2 2026.
+The early-stage funding environment in H1 2026 reflects a market bifurcated sharply between founders with evidence and those without. Carta's Q2 2026 State of Pre-Seed report shows $3.19 billion raised across just 11,546 instruments in Q2 — nearly identical dollars to Q2 2025's $3.22 billion, but spread across 3,279 fewer deals, pushing the average instrument size to a record $276,000, a 27% year-over-year jump. The structural barbell has hardened: SAFEs now account for 93% of pre-seed rounds at a record high while convertible notes hit an all-time low of 7%. AI captured 49% of pre-seed dollars in H1 2026, but Carta now explicitly flags this as a plateau — the share held flat rather than continuing its climb from ~30% in 2021. The conversion rate from seed to Series A has deteriorated further, with updated September 2026 data from Carta and PitchBook putting the 24-month graduation rate at just 15–20%, well below earlier estimates. Geographic concentration is also accelerating: the Northeast's share of pre-seed dollars collapsed from 27.4% to 18% in a single year, with New York alone falling from $417 million (14.8% of national total) to $242.9 million (8.6%) — ceding second place to Texas. For founders, the pitch deck imperative is unchanged but sharper: fewer deals get funded, the AI plateau means the label alone no longer guarantees a valuation premium, and coastal geography is no longer a proxy for access.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

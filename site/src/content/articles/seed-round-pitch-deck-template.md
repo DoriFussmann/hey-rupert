@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: howto
 targetKeyword: seed round pitch deck
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - seed round pitch deck
   - seed pitch deck
@@ -201,7 +201,7 @@ That's exactly where Rupert comes in. Once your deck is built, the work shifts t
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in the second half of 2026 is one of record headline numbers and severe concentration underneath them. US startups raised more than $400 billion in the first half of 2026, surpassing every previous full-year total on record — yet megadeals of $100 million or more accounted for the overwhelming majority of invested capital, and just twelve firms captured three-quarters of every dollar raised into venture funds. Q2 2026 set new highs for both venture dealmaking and exits, but the PitchBook-NVCA Venture Monitor is explicit that the recovery remains uneven. For seed-stage founders, the two-speed market is the operative reality: seed deal sizes hit record highs even as deal counts compressed, and large platforms are now writing seed checks alongside their growth funds, squeezing standalone seed vehicles. KPMG's Q2 Venture Pulse flags early-stage deal activity as a critical watch area for H2 2026, with meaningful improvement contingent on IPO liquidity returning. The practical implication for any pitch deck going out right now is unchanged: proprietary traction, capital efficiency, and a defensible path to Series A are not differentiators — they are the entry ticket.
+The seed funding environment heading into Q4 2026 is sharper and more bifurcated than the headline numbers suggest. US startups raised more than $400 billion in the first half of 2026, yet Carta's State of Pre-Seed Q2 2026 — published August 2026 — shows the concentration playing out in real time at the earliest stages: roughly the same pre-seed dollars are flowing into 22% fewer deals year-over-year, with average instrument size hitting a record $276,000, up 27% from Q2 2025. The barbell is equally visible at seed proper: Carta's mid-2026 benchmark puts the median seed round at $4.1 million on a record $24 million post-money valuation — a sharp jump from $3.2M/$18M at year-end 2025 — but that premium accrues almost entirely to AI companies, which price roughly 42% higher than non-AI peers. Meanwhile, seed and angel investment volume fell approximately 27% year-over-year in Q2, as megafund attention shifted upmarket. PitchBook's 2026 Midyear Update notes first financings are on track to exceed 7,000 by year-end — a record — driven by AI's compression of company-building costs and deepening multistage participation at seed. For any pitch deck going out now, the implication is concrete: AI framing, demonstrated traction, and a credible 18-to-24-month runway to Series A metrics are no longer differentiators — they are the minimum bar for a competitive process.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
