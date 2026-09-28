@@ -31,7 +31,10 @@ internalLinks:
     anchor: shareholder update
   - slug: startup-investor-update-presentation
     anchor: startup investor update presentation
-externalLinks: []
+externalLinks:
+  - label: The ICSID Caseload - Statistics
+    url: "https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics"
+    addedAt: 2026-09-28
 faqs:
   - question: "Should I send investor updates to prospective investors who haven't funded me yet?"
     answer: "Yes — with their permission. Adding a short list of 5–10 target investors to a slightly adapted version of your update is one of the highest-leverage pre-raise tactics available. Prospective investors who receive several months of updates before you formally launch a round already understand your trajectory, your decision-making, and your metrics. When you ask for a meeting, you're not a cold pitch — you're a founder they've been watching. The key is to get their opt-in first, keep the content essentially identical to your backer update, and make sure the ask section is relevant to them (e.g., 'Happy to share our Series A materials when we go out in Q1')."
@@ -198,3 +201,7 @@ the median time between funding rounds has stretched to 744 days as of Q4 2024, 
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor crm](/articles/investor-crm/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [The ICSID Caseload - Statistics](https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics).
+<!-- CMS-EXTERNAL:END -->

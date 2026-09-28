@@ -31,7 +31,16 @@ internalLinks:
     anchor: pre seed vs seed vs series a
   - slug: seed-funding-vs-series-a
     anchor: seed funding vs series a
-externalLinks: []
+externalLinks:
+  - label: Series — pandas 3.0.6 documentation
+    url: "https://pandas.pydata.org/docs/reference/series.html"
+    addedAt: 2026-09-28
+  - label: "Journal of Physics: Conference Series - IOPscience"
+    url: "https://iopscience.iop.org/journal/1742-6596"
+    addedAt: 2026-09-28
+  - label: Series Report - BLS Data - Bureau of Labor Statistics
+    url: "https://data.bls.gov/series-report"
+    addedAt: 2026-09-28
 faqs:
   - question: "What ARR do I need to raise a Series A in 2026?"
     answer: "For B2B SaaS companies, most institutional Series A investors in 2026 expect $1M–$3M in ARR, with 100%+ year-over-year growth and a demonstrably repeatable go-to-market motion. Top-quartile companies show $7M+ ARR. AI-native companies with 20%+ month-over-month growth may qualify at $500K–$800K ARR. Consumer businesses are typically assessed on MAU and engagement cohorts rather than revenue thresholds."
@@ -224,3 +233,7 @@ Year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, a
 <!-- CMS-INTERNAL:START -->
 Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Series — pandas 3.0.6 documentation](https://pandas.pydata.org/docs/reference/series.html) · [Journal of Physics: Conference Series - IOPscience](https://iopscience.iop.org/journal/1742-6596) · [Series Report - BLS Data - Bureau of Labor Statistics](https://data.bls.gov/series-report).
+<!-- CMS-EXTERNAL:END -->

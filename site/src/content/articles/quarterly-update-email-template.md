@@ -33,7 +33,16 @@ internalLinks:
     anchor: shareholder update
   - slug: startup-investor-update-presentation
     anchor: startup investor update presentation
-externalLinks: []
+externalLinks:
+  - label: Quarterly Report on Bank Trading and Derivatives Activities
+    url: "https://www.occ.gov/publications-and-resources/publications/quarterly-report-on-bank-trading-and-derivatives-activities/index-quarterly-report-on-bank-trading-and-derivatives-activities.html"
+    addedAt: 2026-09-28
+  - label: "ICMA Quarterly Report | Market Practice & Regulatory Policy"
+    url: "https://www.icmagroup.org/market-practice-and-regulatory-policy/Regulatory-Policy-Newsletter/"
+    addedAt: 2026-09-28
+  - label: Mills Quarterly – The alumnae magazine of Mills College
+    url: "https://quarterly.mills.edu/"
+    addedAt: 2026-09-28
 faqs:
   - question: "Can I send investor updates before I've closed a round?"
     answer: "Yes, and it can be strategically valuable. If you're mid-raise, sending structured updates to warm prospects who have opted in keeps you top of mind without requiring a formal follow-up. Frame them as progress snapshots rather than asks, and use each one to demonstrate operating discipline. Investors who watch your numbers improve across two or three updates before writing a check tend to move faster and with higher conviction when you're ready to close."
@@ -134,3 +143,7 @@ The fundamentals of investor update best practices have remained stable heading 
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Quarterly Report on Bank Trading and Derivatives Activities](https://www.occ.gov/publications-and-resources/publications/quarterly-report-on-bank-trading-and-derivatives-activities/index-quarterly-report-on-bank-trading-and-derivatives-activities.html) · [ICMA Quarterly Report | Market Practice & Regulatory Policy](https://www.icmagroup.org/market-practice-and-regulatory-policy/Regulatory-Policy-Newsletter/) · [Mills Quarterly – The alumnae magazine of Mills College](https://quarterly.mills.edu/).
+<!-- CMS-EXTERNAL:END -->

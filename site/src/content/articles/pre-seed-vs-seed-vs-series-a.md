@@ -32,7 +32,10 @@ internalLinks:
     anchor: seed funding vs series a
   - slug: seed-vs-series-a
     anchor: seed vs series a
-externalLinks: []
+externalLinks:
+  - label: Department of Statistics
+    url: "https://statistics.stanford.edu/"
+    addedAt: 2026-09-28
 faqs:
   - question: "Can a company skip the seed stage and go straight from pre-seed to Series A?"
     answer: "It is rare but possible — typically only when a founding team has exceptional prior exits and can demonstrate unusually fast traction. In practice, most institutional Series A investors expect to see at least 12–18 months of post-product operating data, a repeatable customer acquisition motion, and $1M–$2M+ in ARR or equivalent. Skipping seed means skipping the period where those metrics are built, so it almost always shortens the runway for demonstrating them, not eliminates the need."
@@ -229,3 +232,7 @@ While capital is available, founders need to be acutely aware of changing valuat
 <!-- CMS-INTERNAL:START -->
 Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Department of Statistics](https://statistics.stanford.edu/).
+<!-- CMS-EXTERNAL:END -->

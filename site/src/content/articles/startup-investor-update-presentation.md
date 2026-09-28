@@ -32,7 +32,16 @@ internalLinks:
     anchor: quarterly update email template
   - slug: shareholder-update
     anchor: shareholder update
-externalLinks: []
+externalLinks:
+  - label: Drink Update
+    url: "https://drinkupdate.com/?srsltid=AU7gw4Wk-36CV2y3I8AH47m1GlI7qkqQC49lsI66BWpk0QflaneEodRO"
+    addedAt: 2026-09-28
+  - label: "Documentation: 18: UPDATE"
+    url: "https://www.postgresql.org/docs/current/sql-update.html"
+    addedAt: 2026-09-28
+  - label: Update your iPhone or iPad
+    url: "https://support.apple.com/en-us/118575"
+    addedAt: 2026-09-28
 faqs:
   - question: "How long should a monthly investor update be?"
     answer: "For seed-stage founders, keep monthly updates under 500 words. Investors read your update on their phones between meetings, and anything longer risks being skimmed or ignored. Save the deeper analysis — extended financials, competitive landscape shifts, strategic pivots — for quarterly board-level decks where that depth is expected and welcomed."
@@ -152,3 +161,7 @@ Recent data indicates the market has stabilized and even begun a modest recovery
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Drink Update](https://drinkupdate.com/?srsltid=AU7gw4Wk-36CV2y3I8AH47m1GlI7qkqQC49lsI66BWpk0QflaneEodRO) · [Documentation: 18: UPDATE](https://www.postgresql.org/docs/current/sql-update.html) · [Update your iPhone or iPad](https://support.apple.com/en-us/118575).
+<!-- CMS-EXTERNAL:END -->
