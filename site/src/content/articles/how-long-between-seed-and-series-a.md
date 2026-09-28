@@ -23,7 +23,15 @@ keywords:
   - seed vs series a
   - series a
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: series-a
+    anchor: series a
+  - slug: pre-seed-vs-seed-vs-series-a
+    anchor: pre seed vs seed vs series a
+  - slug: seed-funding-vs-series-a
+    anchor: seed funding vs series a
+  - slug: seed-vs-series-a
+    anchor: seed vs series a
 externalLinks: []
 faqs:
   - question: "How long does it typically take to go from seed to Series A in 2026?"
@@ -149,3 +157,7 @@ Carta data shows that 16.6% of all startup cash raised on Carta in Q2 2025 came 
 - The Series A bar in 2026 requires $2M–$5M ARR, consistent 15–20% month-over-month growth, NRR above 110%, and a demonstrably repeatable GTM motion — evidence of a business, not just a promising team.
 - Founders who deliberately extend runway to hit stronger metrics close faster and raise more: companies that raised $30M+ Series A rounds closed in roughly 14–15 months post-seed, while those raising under $10M took closer to 22 months.
 - Start building investor relationships and Series A preparation materials — data room, financial model, cohort analysis — at least 6 months before you intend to formally launch the process, not the month before your first pitch.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [series a](/articles/series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
+<!-- CMS-INTERNAL:END -->

@@ -22,7 +22,15 @@ keywords:
   - seed vs series a
   - series a
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: series-a
+    anchor: series a
+  - slug: how-long-between-seed-and-series-a
+    anchor: how long between seed and series a
+  - slug: pre-seed-vs-seed-vs-series-a
+    anchor: pre seed vs seed vs series a
+  - slug: seed-funding-vs-series-a
+    anchor: seed funding vs series a
 externalLinks: []
 faqs:
   - question: "What ARR do I need to raise a Series A in 2026?"
@@ -212,3 +220,7 @@ Year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, a
 - Deal structure shifts completely between stages: seed rounds use SAFEs or convertible notes to defer valuation, while Series A is a priced preferred equity round with board seats, liquidation preferences, anti-dilution provisions, and full legal documentation.
 - Only 16–24% of recent seed-funded companies have progressed to a Series A, and the median gap between closing a seed and closing a Series A now runs 616–774 days — making runway planning and milestone sequencing the most underrated parts of the journey.
 - Institutional Series A investors run formal IC processes with reference checks, financial model reviews, and 8–12 week timelines; targeting the wrong investors or running an undisciplined process doesn't just fail — it actively narrows your options for future attempts.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/).
+<!-- CMS-INTERNAL:END -->

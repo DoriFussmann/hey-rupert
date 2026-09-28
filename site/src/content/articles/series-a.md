@@ -46,6 +46,14 @@ internalLinks:
     anchor: venture capital
   - slug: investor-crm
     anchor: investor crm
+  - slug: how-long-between-seed-and-series-a
+    anchor: how long between seed and series a
+  - slug: pre-seed-vs-seed-vs-series-a
+    anchor: pre seed vs seed vs series a
+  - slug: seed-funding-vs-series-a
+    anchor: seed funding vs series a
+  - slug: seed-vs-series-a
+    anchor: seed vs series a
 externalLinks:
   - label: Series A Funding Guide — How to Prepare and Close ...
     url: "https://www.awake-partners.com/post/series-a-funding-guide"
@@ -236,7 +244,7 @@ The Series A market in mid-2026 is defined by a stark divergence: headline ventu
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/).
+Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
