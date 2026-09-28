@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: faq
 targetKeyword: seed funding pitch deck
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - seed funding pitch deck
   - seed pitch deck
@@ -169,7 +169,7 @@ A great seed pitch deck is a necessary condition for a successful raise, not a s
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The early-stage funding environment as of August 2026 reflects a market where headline totals obscure a widening gap between where capital actually lands and where most founders are competing. Global venture and growth funding reached a record $510 billion in the first half of 2026, but seed and angel rounds captured just 5.9% of global venture dollars in Q2 — with late stage taking 65.4%, producing roughly $11 of late-stage capital for every $1 of seed capital. The concentration dynamic has sharpened further: NVCA and PitchBook data shows $267.2 billion in U.S. VC deal value in Q1 2026, but remove the five largest deals and that figure falls by 73.2%. AI has emerged as the defining variable at the early stage — AI now accounts for 52% of pre-seed deals and 59% of Series A deals in Q2 2026, making it effectively the default early-stage category. For non-AI seed founders, selectivity is steeper: investors expect a pitch deck paired almost immediately with a well-organized data room, with August 2026 commentary consistently noting that proof of real demand, clear unit economics, and clean governance are now table stakes, not differentiators.
+The early-stage funding environment as of late September 2026 is one of record headline numbers and deepening structural bifurcation. Carta's Q2 2026 benchmark puts the median U.S. seed round at $4.5 million raised at a $23.9 million post-money valuation — an all-time high — yet over 40% of all seed and Series A investment in 2026 has flowed to rounds of $100 million or more, per Crunchbase, compressing the capital actually available to typical founders. The AI share of pre-seed dollars has plateaued near 48–49% for two consecutive periods, suggesting the AI label has reached saturation as a differentiator at the earliest stage. The more urgent signal for seed-stage pitch decks is the collapsing graduation rate: only 15–20% of seed-funded companies now raise a Series A within 24 months, down from over 50% for cohorts through 2020. Investors are pricing that risk into diligence — non-AI B2B SaaS seeds are clearing at $14–16 million pre-money versus the $24 million AI-weighted median, and the moat slide is now doing significant underwriting work, with major funds publicly de-rating generic "proprietary AI" claims as non-answers.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

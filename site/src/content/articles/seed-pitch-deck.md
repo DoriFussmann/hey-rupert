@@ -22,7 +22,7 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: comprehensive
 targetKeyword: seed pitch deck
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - seed pitch deck
   - pitch deck
@@ -221,7 +221,7 @@ A seed pitch deck earns you the right to a meeting. A disciplined outreach proce
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The seed funding environment as of mid-2026 has stabilised around a higher evidence bar, with expectations now closer to what Series A demanded just a few years ago. Global venture funding hit a record $510 billion in H1 2026 — already exceeding all of 2025 — but the headline obscures a stark divide: megadeals of $100M or more captured 87.5% of H1 capital, and AI accounted for 86% of all venture dollars per the Q2 2026 PitchBook-NVCA Venture Monitor. Seed's share of global venture dollars fell from 11.3% to 5.9% year-over-year even as seed dollars themselves rose, and first-time fund formation is on pace for its lowest year since 2016 — thinning the pool of investors most likely to write early checks. The median seed post-money valuation holds at a record $24M (Carta), with round sizes of $3–3.2M now typical, but an AI premium of roughly 42% means non-AI B2B teams are clearing lower bars. Deck review times remain under 3.5 minutes, reinforcing the need to front-load your strongest proof point.
+The seed funding environment in late 2026 has hardened further around traction evidence, with the evidence bar now materially higher than mid-year. Carta's Q2 2026 benchmark puts the median seed round at $4.5M raised at a $23.9M post-money valuation — round sizes up roughly 40% from the $3–3.2M typical just months ago — though priced-round volume on Carta hit a six-year low, meaning fewer companies are closing at all. The seed-to-Series A graduation rate has collapsed to 15–20% within 24 months (down from ~30% for 2018–2020 cohorts), and the median gap between seed and Series A has stretched to approximately 616 days, meaning decks must credibly fund a longer runway than most founders model. Multistage funds are now moving aggressively into seed — PitchBook recorded a16z and YC each making 46 seed investments in a single quarter — compressing the advantage once held by dedicated seed specialists. The AI premium of ~42% persists at seed, with non-AI B2B software clearing $14–16M pre-money versus the headline $24M median; Uncork Capital has raised the informal Series A ARR floor to $2–4M, making your traction slide the single most consequential page in the deck.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

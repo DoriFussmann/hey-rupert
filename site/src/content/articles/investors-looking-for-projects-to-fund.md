@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: faq
 targetKeyword: investors looking for projects to fund
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - investors looking for projects to fund
   - how to get investors for your business
@@ -172,7 +172,7 @@ This is where Rupert's approach is designed to make a material difference. Ruper
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The most recent data on global venture activity paints a picture that is directly relevant to founders assessing their fundability right now. In Q2 2026, KPMG's Venture Pulse recorded $227.4 billion deployed globally — the second-strongest quarter ever — while deal volume fell to 8,467, a level not seen since Q3 2017. Combined with Q1's $305 billion peak, H1 2026 already totals $560 billion, higher than every full year on record except 2021. The concentration beneath those headlines is stark: mega-rounds claimed 81% of all capital, and new unicorn formation hit a six-quarter low. AI's share of global venture dollars exceeded 70% in Q2 — and reached 86% in the US alone, per PitchBook — up from roughly 50% a year ago. First-time fund formation is meanwhile on pace for its lowest year since 2016, narrowing the pool of investors actively backing early-stage, non-consensus companies. For founders without an AI angle, the fundraising environment remains structurally tighter despite the record headline numbers.
+The most recent data on global venture activity paints a picture that is directly relevant to founders assessing their fundability right now. H1 2026 produced record investment — Crunchbase puts it at $510 billion globally, already above every prior full-year total except 2021 — yet PitchBook's Q3 2026 Quantitative Perspectives report frames the moment as a liquidity paradox: record paper exit value coexisting with historically low fund distributions and a 110-company IPO backlog of startups that were ready to go public in 2023 and still haven't. AI now commands roughly 80% of trailing 12-month deal value globally, and corporate investors account for a record 87.9% of US AI VC deal value in 2026 year-to-date. Fundraising is consolidating further around established managers — Bessemer's $5.75 billion single-close raise in late September is the clearest signal yet — while the NVCA/PitchBook Q2 Venture Monitor confirms commitments remain concentrated among a small group of firms. For founders without an AI angle, the structural squeeze has not eased; the headline records obscure a market where fewer investors are writing first checks into non-consensus, early-stage companies.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

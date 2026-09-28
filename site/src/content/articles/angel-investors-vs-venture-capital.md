@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: comparison
 targetKeyword: angel investors vs venture capital
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - angel investors vs venture capital
   - how to get investors for your business
@@ -139,7 +139,7 @@ A useful rule of thumb: if you'd be embarrassed to show a sophisticated institut
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The angel and venture capital markets are both active heading into the second half of 2026, but they're diverging more sharply than at any point in recent memory. The Angel Capital Association's 2026 Angel Funders Report shows ACA-reported angel investment rose 12% year over year to $491.3 million in 2025, with angel groups writing larger checks while backing fewer companies — a signal of increased selectivity, not retreat. On the venture side, the Q2 2026 PitchBook-NVCA Venture Monitor tells a starker story: megadeals of $100 million or more captured 87.5% of the $412.7 billion deployed in H1 2026, AI accounted for 86% of all venture dollars, and just three firms — Andreessen Horowitz, Thrive Capital, and Founders Fund — took in 48.1% of all capital raised. First-time fund formation is now on pace for its lowest year since 2016. The market is setting records at the very top while contracting in nearly every segment beneath it, which makes angel capital not just the more accessible first check for most founders, but increasingly the only realistic one.
+The angel and venture capital markets are both active heading into the second half of 2026, but the structural divergence between them has deepened further. The ACA's 2026 Angel Funders Report confirms angel investment rose 12% to $491.3 million in 2025, with groups writing larger checks into fewer companies — a disciplined recovery, not a broad one. Two new details sharpen the picture: life sciences (medical devices, pharma, digital health, diagnostics) now accounts for nearly 47% of reported angel dollars, up from 37% in 2024, and nearly two-thirds of angel groups completed at least one AI investment during the year. On the venture side, the Q2 2026 PitchBook-NVCA Venture Monitor confirms H1 totals exceeded every prior full-year record, but concentration has only tightened — mid-Q3 data shows first-time managers have fallen to just 4% of US fundraising, with new fund formation down sharply from its 2022 peak. The VC market is setting records at the top while closing off at every level below it, making angel capital not just the more accessible first check for most founders, but structurally the only realistic one.
 <!-- WHERE-THINGS-STAND:END -->
 
 ---

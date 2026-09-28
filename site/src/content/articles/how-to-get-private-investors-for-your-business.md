@@ -22,7 +22,7 @@ pillarKeyword: how to find investors
 supportingKeyword: how to get investors for your business
 articleType: howto
 targetKeyword: how to get private investors for your business
-updatedDate: 2026-08-28
+updatedDate: 2026-09-28
 keywords:
   - how to get private investors for your business
   - how to get investors for your business
@@ -145,7 +145,7 @@ Rupert is built for precisely this moment. Every outreach campaign is researched
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The private investor market has grown more bifurcated heading into Q3 2026. ACA-reported angel investment rose 12% year over year to $491.3 million in 2025, with groups writing larger checks into fewer companies — a pattern that has carried forward as the broader VC landscape concentrates capital at the top. August 2026 funding data confirms investors are backing companies with technical depth, clear commercial proof, and a believable route to market, while early-stage activity outside AI remains subdued. A structural shift in deal instruments is also now firmly established: according to Carta's Q1 2026 data, 92% of pre-seed deals now close on SAFE notes, with convertible notes at a record-low 7%. Meanwhile, AI-related valuations are commanding premiums far above non-AI peers — a widening gap that is reshaping how founders outside the AI mainstream should price and position their raises. Founders with proof-driven narratives and sector-aligned investor targeting remain best placed to compete in a market where the total capital pool keeps growing but selective conviction is increasingly the deciding factor.
+The private investor market has grown sharply more polarised heading into Q4 2026. ACA-reported angel investment rose 12% year over year to $491.3 million in 2025, with groups writing larger checks into fewer companies — a pattern now confirmed by Q2 2026 data showing US VC invested $144.9 billion across just 3,644 deals, while US startups surpassed every previous full-year funding total in H1 alone. The recovery, however, remains structurally uneven: corporate investors now account for a record 87.9% of US AI VC deal value, and multistage funds have crowded into Series A at record levels, compressing the space available to traditional angels and early-stage founders outside AI. Defensetech has hardened into a genuine second capital magnet — alongside Life Sciences in the angel market — giving non-AI founders a clearer alternative sector to target. The SAFE note's pre-seed dominance is unchanged at roughly 90%. Founders with proof-driven narratives, sector-aligned investor targeting, and a credible path to commercial traction remain best placed in a market where aggregate capital is at record highs but conviction is concentrating faster than deal count.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.
