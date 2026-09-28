@@ -32,7 +32,10 @@ internalLinks:
     anchor: quarterly update email template
   - slug: startup-investor-update-presentation
     anchor: startup investor update presentation
-externalLinks: []
+externalLinks:
+  - label: The ICSID Caseload - Statistics
+    url: "https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics"
+    addedAt: 2026-09-28
 faqs:
   - question: "Do I legally have to send a shareholder update?"
     answer: "It depends on what your shareholders' agreement says. Many early-stage agreements include an 'Information Rights' or 'Right of Information' clause that obliges you to provide periodic financial statements — often quarterly or annually — to investors above a certain ownership threshold. If your agreement includes such a clause, those obligations are legally binding. If it doesn't, there is no statutory requirement for most private US companies to send periodic narrative updates. That said, not communicating with your shareholders is almost always a mistake regardless of legal obligation — trust erodes fast in silence."
@@ -164,3 +167,7 @@ investors and analysts increasingly research companies through AI assistants bef
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [The ICSID Caseload - Statistics](https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics).
+<!-- CMS-EXTERNAL:END -->

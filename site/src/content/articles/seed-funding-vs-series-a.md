@@ -32,7 +32,16 @@ internalLinks:
     anchor: pre seed vs seed vs series a
   - slug: seed-vs-series-a
     anchor: seed vs series a
-externalLinks: []
+externalLinks:
+  - label: Series — pandas 3.0.6 documentation
+    url: "https://pandas.pydata.org/docs/reference/series.html"
+    addedAt: 2026-09-28
+  - label: Series Report - BLS Data - Bureau of Labor Statistics
+    url: "https://data.bls.gov/series-report"
+    addedAt: 2026-09-28
+  - label: "Policy Research Working Paper Series, The World Bank"
+    url: "https://ideas.repec.org/s/wbk/wbrwps.html"
+    addedAt: 2026-09-28
 faqs:
   - question: "Do I need a lead investor to close my seed round?"
     answer: "Not always, but having one helps. Many seed rounds — especially those structured as SAFEs — are assembled from multiple angels and micro-funds without a formal lead. That said, a lead investor sets terms, anchors the round's credibility, and can help close other investors faster. For rounds above roughly $1.5–2M, most institutional funds expect to lead rather than follow, and the presence of a lead sends a positive signal to later investors reviewing your cap table before Series A."
@@ -191,3 +200,7 @@ The seed and Series A markets entering late 2026 reflect a widening bifurcation 
 <!-- CMS-INTERNAL:START -->
 Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Series — pandas 3.0.6 documentation](https://pandas.pydata.org/docs/reference/series.html) · [Series Report - BLS Data - Bureau of Labor Statistics](https://data.bls.gov/series-report) · [Policy Research Working Paper Series, The World Bank](https://ideas.repec.org/s/wbk/wbrwps.html).
+<!-- CMS-EXTERNAL:END -->

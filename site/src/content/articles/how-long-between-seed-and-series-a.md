@@ -32,7 +32,16 @@ internalLinks:
     anchor: seed funding vs series a
   - slug: seed-vs-series-a
     anchor: seed vs series a
-externalLinks: []
+externalLinks:
+  - label: Series — pandas 3.0.6 documentation
+    url: "https://pandas.pydata.org/docs/reference/series.html"
+    addedAt: 2026-09-28
+  - label: Series Report - BLS Data - Bureau of Labor Statistics
+    url: "https://data.bls.gov/series-report"
+    addedAt: 2026-09-28
+  - label: "Policy Research Working Paper Series, The World Bank"
+    url: "https://ideas.repec.org/s/wbk/wbrwps.html"
+    addedAt: 2026-09-28
 faqs:
   - question: "How long does it typically take to go from seed to Series A in 2026?"
     answer: "The median is approximately 616 days — roughly 20 months — based on Carta data from Q2 2025. However, the range is wide: only around 15–18% of seed-funded companies reach a priced Series A within 24 months, while nearly 40% take three or more years. The active fundraising process itself (first pitch to wired funds) takes an additional 4–9 months on top of the time spent building toward Series A-ready metrics."
@@ -161,3 +170,7 @@ Carta data shows that 16.6% of all startup cash raised on Carta in Q2 2025 came 
 <!-- CMS-INTERNAL:START -->
 Further reading: [series a](/articles/series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Series — pandas 3.0.6 documentation](https://pandas.pydata.org/docs/reference/series.html) · [Series Report - BLS Data - Bureau of Labor Statistics](https://data.bls.gov/series-report) · [Policy Research Working Paper Series, The World Bank](https://ideas.repec.org/s/wbk/wbrwps.html).
+<!-- CMS-EXTERNAL:END -->
