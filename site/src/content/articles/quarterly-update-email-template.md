@@ -24,7 +24,15 @@ keywords:
   - investor update template
   - investor crm
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-crm
+    anchor: investor crm
+  - slug: investor-update-template
+    anchor: investor update template
+  - slug: shareholder-update
+    anchor: shareholder update
+  - slug: startup-investor-update-presentation
+    anchor: startup investor update presentation
 externalLinks: []
 faqs:
   - question: "Can I send investor updates before I've closed a round?"
@@ -122,3 +130,7 @@ The fundamentals of investor update best practices have remained stable heading 
 - Silence during hard months is the worst signal you can send; honest lowlights with a clear corrective plan build more trust than a streak of good news followed by an unexplained gap.
 - A quarterly update email template should include a fuller financial snapshot, plan-versus-actual performance against milestones, and a forward-looking priorities section — structure the monthly format for momentum and reserve the depth for quarterly.
 - Send updates to current investors and advisors as your core list, plus 5–10 warm prospects who have explicitly opted in; never cold-add someone who hasn't agreed to receive them.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
+<!-- CMS-INTERNAL:END -->

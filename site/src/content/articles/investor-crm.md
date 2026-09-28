@@ -21,7 +21,25 @@ imageAlt: Founder reviewing a kanban-style investor CRM pipeline on a laptop wit
 keywords:
   - investor crm
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-update-template
+    anchor: investor update template
+  - slug: quarterly-update-email-template
+    anchor: quarterly update email template
+  - slug: shareholder-update
+    anchor: shareholder update
+  - slug: startup-investor-update-presentation
+    anchor: startup investor update presentation
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: investor-database
+    anchor: investor database
+  - slug: series-a
+    anchor: series a
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: venture-capital
+    anchor: venture capital
 externalLinks: []
 faqs:
   - question: "What is an investor CRM and how is it different from a regular sales CRM?"
@@ -33,8 +51,6 @@ faqs:
   - question: "Does using an investor CRM guarantee a better fundraising outcome?"
     answer: "No — and this is an important distinction. An investor CRM gives you process discipline and visibility, but it cannot fix bad targeting. If the investor list loaded into the CRM is poorly researched or thesis-misaligned, even a perfectly managed pipeline will produce no term sheets. The CRM is a system for executing well once the right investor list exists. That targeting work — understanding which funds are actively writing checks at your stage and sector — must come first, before any outreach begins."
 ---
-
-# Investor CRM: A Founder's Guide to Fundraising Pipelines
 
 Fundraising is one of the most relationship-intensive processes a founder will ever run. You're managing dozens of simultaneous conversations, each at a different stage, each requiring a tailored follow-up at exactly the right moment, each tied to a partner's specific thesis, check-size preference, and decision-making cadence. And you're doing all of it while trying to run a company. The tool sitting at the center of that process — the investor CRM — is either a source of discipline and momentum, or it quietly lets the whole thing unravel.
 
@@ -189,3 +205,7 @@ the bar has moved in 2026: eighteen months ago, a clean kanban board felt suffic
 The right investor CRM doesn't just keep your pipeline organized — it gives you the situational awareness to make better decisions in real time: which conversations to accelerate, which investors to re-engage after a long silence, and where momentum is quietly building or quietly dying. That awareness is what separates founders who feel in control of their raise from those who feel at the mercy of it.
 
 For founders who want that structure and visibility without spending their building time maintaining it, the most effective path is working with experienced operators who research, personalize, and track every investor interaction — while ensuring the founder retains full visibility into every conversation and owns every relationship that results. The process discipline of a well-run CRM, combined with the judgment of people who have run hundreds of investor outreach campaigns, is what a professional fundraise actually looks like. The tool is the infrastructure. The expertise is what makes it work.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/).
+<!-- CMS-INTERNAL:END -->

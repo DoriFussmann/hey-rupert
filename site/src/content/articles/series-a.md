@@ -44,6 +44,8 @@ internalLinks:
     anchor: startup funding
   - slug: venture-capital
     anchor: venture capital
+  - slug: investor-crm
+    anchor: investor crm
 externalLinks:
   - label: Series A Funding Guide — How to Prepare and Close ...
     url: "https://www.awake-partners.com/post/series-a-funding-guide"
@@ -234,7 +236,7 @@ The Series A market in mid-2026 is defined by a stark divergence: headline ventu
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/).
+Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/).
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

@@ -23,7 +23,15 @@ keywords:
   - investor update template
   - investor crm
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-crm
+    anchor: investor crm
+  - slug: investor-update-template
+    anchor: investor update template
+  - slug: quarterly-update-email-template
+    anchor: quarterly update email template
+  - slug: shareholder-update
+    anchor: shareholder update
 externalLinks: []
 faqs:
   - question: "How long should a monthly investor update be?"
@@ -140,3 +148,7 @@ Recent data indicates the market has stabilized and even begun a modest recovery
 - Build sections in order — Highlights, Metrics, Challenges with your mitigation plan, Team news, and a specific named Ask — and never omit the ask, since fewer than 40% of updates include one.
 - Plain-text email is the right format for monthly seed-stage updates; reserve a slide-based investor update presentation for board meetings and formal quarterly reviews where strategic depth is expected.
 - Pick a fixed send date, protect it every month, and add a 30-minute data-pull block two days before — consistency is what converts an update into a trust-building asset that shortens your next raise.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/).
+<!-- CMS-INTERNAL:END -->
