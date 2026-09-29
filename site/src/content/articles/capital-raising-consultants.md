@@ -23,7 +23,17 @@ keywords:
   - capital raising services
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: capital-raising-advisory-services
+    anchor: capital raising advisory services
+  - slug: capital-raising-fees
+    anchor: capital raising fees
+  - slug: capital-raising-services
+    anchor: capital raising services
+  - slug: startup-fundraising-consultant
+    anchor: startup fundraising consultant
 externalLinks: []
 faqs:
   - question: "What is a fair success fee for a capital raising consultant?"
@@ -154,3 +164,7 @@ Separately, heightened regulatory scrutiny around transaction-based compensation
 - Fee structure transparency — including what you pay if the round doesn't close and which investors are explicitly carved out of the tail period — should be fully documented before you sign anything.
 - Track record questions should be scoped to the last 18 months and to your specific stage (Seed or Series A), because performance in the 2021–2022 vintage market does not predict performance in today's far more selective environment.
 - The checklist doubles as a self-audit: founders who can answer all eight questions about their own current process are running a professional fundraising operation regardless of whether they use an outside service.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+<!-- CMS-INTERNAL:END -->

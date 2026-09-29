@@ -46,6 +46,16 @@ internalLinks:
     anchor: venture capital
   - slug: investor-crm
     anchor: investor crm
+  - slug: capital-raising-advisory-services
+    anchor: capital raising advisory services
+  - slug: capital-raising-consultants
+    anchor: capital raising consultants
+  - slug: capital-raising-fees
+    anchor: capital raising fees
+  - slug: capital-raising-services
+    anchor: capital raising services
+  - slug: startup-fundraising-consultant
+    anchor: startup fundraising consultant
 externalLinks:
   - label: Institutional Investor Database - Dakota
     url: "https://www.dakota.com/institutional-investor-database"
@@ -174,7 +184,7 @@ The venture capital environment heading into Q4 2026 makes disciplined investor 
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/).
+Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

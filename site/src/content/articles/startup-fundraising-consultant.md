@@ -23,7 +23,17 @@ keywords:
   - capital raising services
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: capital-raising-advisory-services
+    anchor: capital raising advisory services
+  - slug: capital-raising-consultants
+    anchor: capital raising consultants
+  - slug: capital-raising-fees
+    anchor: capital raising fees
+  - slug: capital-raising-services
+    anchor: capital raising services
 externalLinks: []
 faqs:
   - question: "What is a startup fundraising consultant and what do they actually do?"
@@ -117,3 +127,7 @@ Investors are increasingly deciding not off the deck but off the conversation �
 - Fee structure must be negotiated before signing — understand whether retainers credit against the success fee at close, how the tail period and carve-outs are defined, and whether the pricing model puts the consultant on your side of the table.
 - Four things disqualify a consultant immediately: bulk impersonalized outreach, refusal to share the investor target list, vague deliverables, and no references from comparable founders.
 - Onboarding is not a formality — a rigorous consultant uses it to do real positioning work before building the target list, because who you reach is determined entirely by how the story is framed.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/).
+<!-- CMS-INTERNAL:END -->

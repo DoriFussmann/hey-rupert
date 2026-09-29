@@ -23,7 +23,9 @@ keywords:
   - investors near me
   - how to find investors
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
 externalLinks:
   - label: SEC capital raising guide
     url: "https://www.sec.gov/education/capital-raising"
@@ -80,3 +82,7 @@ The operator-investor trend has continued gaining momentum into late 2026. Execu
 - Pitching an operator means treating them as a peer: anchor on the problem and your solution, not market education.
 - Build a targeted list filtered by check size, thesis fit, and connection strength before outreach begins.
 - In 2026's selective funding environment, starting with investors who already understand your space is not just strategic — it is essential.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/).
+<!-- CMS-INTERNAL:END -->
