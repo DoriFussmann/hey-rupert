@@ -23,7 +23,17 @@ keywords:
   - capital raising services
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: capital-raising-consultants
+    anchor: capital raising consultants
+  - slug: capital-raising-fees
+    anchor: capital raising fees
+  - slug: capital-raising-services
+    anchor: capital raising services
+  - slug: startup-fundraising-consultant
+    anchor: startup fundraising consultant
 externalLinks: []
 faqs:
   - question: "Can a capital raising advisory service legally receive a success fee?"
@@ -117,3 +127,7 @@ The regulatory and market environment around capital raising advisory services r
 - Tail periods — typically 12 to 24 months in broker-dealer agreements — mean a fee obligation can follow a founder long after an engagement ends; advisory contracts vary far more on this point and the scope and duration must be negotiated explicitly before signing.
 - The quality gap inside the advisory category is enormous: a genuine expert-run service builds thesis-matched investor targeting and manages conversations with full founder transparency, while lower-quality providers sell access to a database and call it outreach.
 - For early-stage founders, the right selection criteria are transparency, sector-specific targeting precision, and confirmed ownership of every investor relationship introduced — not regulatory label.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+<!-- CMS-INTERNAL:END -->

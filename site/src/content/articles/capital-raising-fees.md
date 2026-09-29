@@ -23,7 +23,17 @@ keywords:
   - capital raising services
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: capital-raising-advisory-services
+    anchor: capital raising advisory services
+  - slug: capital-raising-consultants
+    anchor: capital raising consultants
+  - slug: capital-raising-services
+    anchor: capital raising services
+  - slug: startup-fundraising-consultant
+    anchor: startup fundraising consultant
 externalLinks: []
 faqs:
   - question: "Can I negotiate the success fee percentage with a capital raising advisor?"
@@ -161,3 +171,7 @@ in February 2026, the SEC Small Business Capital Formation Advisory Committee ap
 - Finder's fees paid to unregistered individuals for investor introductions carry real legal risk in the US — no general federal finder exemption exists as of 2026, and both parties can face SEC enforcement exposure if transaction-based compensation is involved.
 - Tail periods of 12–24 months are standard, but founders should negotiate a shorter tail, a named exclusion list for pre-existing relationships, and precise language defining what constitutes an "introduction" for fee purposes.
 - The real cost of a poor capital raising service is not the fee paid — it is the reputational damage from bulk, impersonal investor outreach that poisons relationships the founder may need again at this round or the next.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+<!-- CMS-INTERNAL:END -->
