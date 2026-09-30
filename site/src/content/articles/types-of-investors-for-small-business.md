@@ -3,7 +3,7 @@ title: "Types of Investors for Small Business: Plain-English FAQ"
 description: "New to fundraising? This plain-English FAQ breaks down every investor type for small business founders — angels, VCs, SBICs, revenue-based, and more."
 slug: types-of-investors-for-small-business
 date: 2026-08-27
-updatedDate: 2026-08-27
+updatedDate: 2026-09-30
 author: dori-fussmann
 category: how to find investors
 pillarKeyword: how to find investors
@@ -55,8 +55,6 @@ faqs:
     answer: "Friends and family rounds can close in days or weeks because trust is already established and documentation is minimal. Solo angels can move in two to six weeks once they decide to engage. Angel syndicates add coordination time — expect four to eight weeks. Micro-VCs typically run a structured diligence process that takes six to twelve weeks from first meeting to term sheet. SBICs, which use SBA-backed capital, often have more formal underwriting and may take two to four months. Revenue-based financers usually move the fastest of any institutional option — some decisions come within days of application if you can show clean revenue data."
 ---
 
-# Types of Investors for Small Business: Plain-English FAQ
-
 If you've recently started exploring how to raise capital, you've probably noticed that the word "investor" gets used to describe an enormous range of people and institutions — from a supportive family member writing a $10,000 check to a billion-dollar venture fund making multi-million-dollar bets. Treating all of them as the same category isn't just imprecise; it leads to real mistakes: wasted outreach, mismatched expectations, and rounds that stall because a founder approached the wrong type of capital for their stage and business model.
 
 This FAQ is designed to give you a clear, jargon-free map of the investor landscape as it applies to small businesses and early-stage companies. It won't cover every nuance, but it will give you a working framework that prevents the most common mismatches.
@@ -85,6 +83,7 @@ Unlike venture capital, angels don't manage outside funds — they make decision
 
 An angel syndicate is a group of individual angels who pool their capital for a specific deal, led by an experienced operator or investor who sources and vets the opportunity. Syndicates let angels participate in deals at a scale no single check could cover, and they give founders a way to bring in multiple investors while only managing one primary relationship. For founders, a syndicate investment can feel faster and more personal than a VC process while delivering a larger aggregate check than a solo angel could write.
 
+An angel syndicate is a group of individual angels who pool their capital for a specific deal, led by an experienced operator or investor who sources and vets the opportunity. Syndicates let angels participate in deals at a scale no single check could cover, and they give founders a way to bring in multiple investors while only managing one primary relationship. For example, a founder raising a $500,000 seed round might secure $350,000 through a single syndicate led by a former fintech executive, whose network of 40 individual angels each contribute between $5,000 and $25,000. For founders, a syndicate investment can feel faster and more personal than a VC process while delivering a larger aggregate check than a solo angel could write.
 ### Micro-VCs
 
 Micro-VCs are formal venture funds (typically managing anywhere from $10 million to $100 million in assets) that focus on pre-seed and seed-stage companies. Unlike solo angels, micro-VCs have limited partners they report to and an investment committee that signs off on decisions. This adds process and timeline, but it also means micro-VCs bring structured support: they may offer follow-on reserves, LP introductions, and a formal portfolio network. For a founder raising a seed round of $500,000 or more, micro-VCs are often the most appropriate institutional target.
