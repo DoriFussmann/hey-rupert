@@ -23,7 +23,17 @@ keywords:
   - pre seed funding
   - startup funding
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: angel-investors-for-pre-seed-funding
+    anchor: angel investors for pre seed funding
+  - slug: pre-seed-funding
+    anchor: pre seed funding
+  - slug: pre-seed-vs-seed-funding
+    anchor: pre seed vs seed funding
+  - slug: what-is-pre-seed-funding
+    anchor: what is pre seed funding
 externalLinks: []
 faqs:
   - question: "How long does a pre-seed raise actually take in 2026?"
@@ -146,3 +156,7 @@ SAFEs have solidified their position as the default financing instrument, with c
 The sequencing and investor-research work described in this playbook is precisely what consumes the most founder time — and the most founder energy — during a raise. Researching 70 investors, personalizing 70 outreach emails, tracking 70 pipeline stages, and managing the follow-up cadence across all of them is a full-time job running in parallel with actually building the company. Most founders who try to do it themselves do it partially: the list is smaller than it should be, the personalization is shallower than it needs to be, and the pipeline review happens when there's time rather than on a weekly cadence.
 
 That's the gap Rupert is built to close. Experienced operators handle the investor research, craft the personalized outreach, and manage the pipeline so that the process runs in the right order and at the right pace — while founders retain complete visibility into every conversation and every relationship. The goal is not to hand off the raise; it's to make sure the process is executed the way this playbook describes, without the founder having to be the one doing it at midnight.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+<!-- CMS-INTERNAL:END -->

@@ -22,7 +22,17 @@ keywords:
   - pre seed funding
   - startup funding
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: angel-investors-for-pre-seed-funding
+    anchor: angel investors for pre seed funding
+  - slug: how-to-raise-pre-seed-funding
+    anchor: how to raise pre seed funding
+  - slug: pre-seed-vs-seed-funding
+    anchor: pre seed vs seed funding
+  - slug: what-is-pre-seed-funding
+    anchor: what is pre seed funding
 externalLinks: []
 faqs:
   - question: "How much should I raise in a pre-seed round?"
@@ -164,3 +174,7 @@ even with the increase in average check size, few pre-seed deals exceed $2.5 mil
 - Investor types at pre-seed — angels, micro-VCs, and accelerators — each have different check sizes, decision speeds, and criteria; at this stage, team signal and founder insight matter more than revenue traction.
 - Round size should be driven by milestone math (monthly burn × months to milestone + buffer), with a target of 12 to 18 months of runway, not by peer comparison or round-number ambition.
 - Post-money SAFE mechanics and option pool pre-money conventions compound founder dilution in ways most cap tables don't show at signing; modeling every instrument before you sign it is non-negotiable.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+<!-- CMS-INTERNAL:END -->

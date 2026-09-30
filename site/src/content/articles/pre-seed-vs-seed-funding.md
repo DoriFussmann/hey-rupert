@@ -23,7 +23,17 @@ keywords:
   - pre seed funding
   - startup funding
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: angel-investors-for-pre-seed-funding
+    anchor: angel investors for pre seed funding
+  - slug: how-to-raise-pre-seed-funding
+    anchor: how to raise pre seed funding
+  - slug: pre-seed-funding
+    anchor: pre seed funding
+  - slug: what-is-pre-seed-funding
+    anchor: what is pre seed funding
 externalLinks: []
 faqs:
   - question: "What is the main difference between pre-seed and seed funding?"
@@ -127,3 +137,7 @@ VCs are becoming increasingly specialized rather than generalist
 - The investor base shifts meaningfully between stages — pre-seed draws angels, micro-VCs, and accelerators, while seed attracts dedicated seed funds and occasionally multi-stage VCs entering early, each with different process expectations.
 - Dilution increases and timelines lengthen at seed: founders typically give up 10–15% at pre-seed on a quick SAFE close, versus 20%+ at seed in a process that can run 8–16 weeks and may include board observer rights.
 - The most costly mistake is misreading your stage: trying to raise seed without seed-stage proof wastes months and burns relationships, while over-preparing for seed when a pre-seed raise could fund the needed milestones costs equally precious time.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+<!-- CMS-INTERNAL:END -->
