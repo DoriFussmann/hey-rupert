@@ -22,7 +22,7 @@ draft: false
 pillarKeyword: pitch deck
 articleType: comprehensive
 targetKeyword: pitch deck
-updatedDate: 2026-08-28
+updatedDate: 2026-09-30
 keywords:
   - pitch deck
 faqs:
@@ -185,7 +185,7 @@ The personalization dimension is particularly undervalued. An investor who funds
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Through the first half of 2026, global venture funding hit a record $510 billion — already surpassing the entire $440 billion invested in all of 2025 — but the headline obscures a historic concentration: OpenAI and Anthropic alone absorbed $217 billion, or 43% of every dollar deployed worldwide, while AI-focused companies captured more than 70% of Q2 global capital, up from roughly 50% a year earlier. For early-stage founders, the squeeze is now quantified: seed deal volume fell 27% in North America's first half even as total dollars broke records, and KPMG's Q2 2026 Venture Pulse notes that early-stage activity remains a key watch area — with potential Anthropic and OpenAI IPOs in H2 potentially recycling capital back into the ecosystem. Funded AI decks continue to require a demonstrable proprietary moat over generic AI application, and investors are explicitly asking not "could this work?" but "does this already work — can you prove it?" — raising the traction bar for every slide in the deck.
+Through the first half of 2026, global venture funding hit a record $510 billion — already surpassing the entire $440 billion invested in all of 2025 — but the headline obscures a historic concentration: OpenAI and Anthropic alone absorbed $217 billion, or 43% of every dollar deployed worldwide, while AI now commands nearly 80% of trailing 12-month deal value while representing just 43% of deal count, the widest value-to-count gap PitchBook has ever recorded. The IPO picture that was meant to recycle capital has materially shifted: OpenAI has ruled out a 2026 listing entirely, with CEO Sam Altman citing AI safety concerns, while Anthropic's leaked S-1 — targeting a $2 trillion Nasdaq debut as early as October — devotes 80 of 261 pages to existential risk disclosures and reveals a $42 billion 2025 net loss against $4.6 billion in revenue. Meanwhile, Bessemer Venture Partners' $5.75 billion close (September 23), weighted 70% toward growth over seed, confirms the traction bar investors are holding: funded AI decks must prove the business already works, not merely that it could.
 <!-- WHERE-THINGS-STAND:END -->
 
 ---
