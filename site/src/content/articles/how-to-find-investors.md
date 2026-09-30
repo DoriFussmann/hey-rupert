@@ -20,8 +20,59 @@ imageAlt: "A founder sitting at a desk reviewing a structured investor target li
 keywords:
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-groups-in-your-city-for-a-first-check-2
+    anchor: angel groups in your city for a first check
+  - slug: angel-investors-for-small-business
+    anchor: angel investors for small business
+  - slug: angel-investors-for-startups
+    anchor: angel investors for startups
+  - slug: angel-investors-vs-venture-capital
+    anchor: angel investors vs venture capital
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: find-investors-online-free
+    anchor: find investors online free
+  - slug: first-check-from-local-operators
+    anchor: first check from local operators
+  - slug: how-to-find-investors-for-startup
+    anchor: how to find investors for startup
+  - slug: how-to-get-investors-for-small-business
+    anchor: how to get investors for small business
+  - slug: how-to-get-investors-for-your-business-idea
+    anchor: how to get investors for your business idea
+  - slug: how-to-get-investors-for-your-business
+    anchor: how to get investors for your business
+  - slug: how-to-get-private-investors-for-your-business
+    anchor: how to get private investors for your business
+  - slug: investors-for-small-business
+    anchor: investors for small business
+  - slug: investors-looking-for-projects-to-fund
+    anchor: investors looking for projects to fund
+  - slug: investors-near-me
+    anchor: investors near me
+  - slug: local-angel-investors-for-first-time-founders-2
+    anchor: local angel investors for first-time founders
+  - slug: local-investors-vs-national-investors-for-startups
+    anchor: local investors vs national investors for startups
+  - slug: operators-who-write-the-first-check
+    anchor: operators who write the first check
+  - slug: types-of-investors-for-small-business
+    anchor: types of investors for small business
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: where to find investors for startup
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: investor-crm
+    anchor: investor crm
+  - slug: investor-database
+    anchor: investor database
+  - slug: series-a
+    anchor: series a
+externalLinks:
+  - label: "QED Investors: Home"
+    url: "https://www.qedinvestors.com/"
+    addedAt: 2026-09-30
 faqs:
   - question: "How many investors should I target in a single fundraising campaign?"
     answer: "Quality beats volume. A focused list of 80–120 genuinely thesis-matched investors typically outperforms a spray-and-pray blast of 500+ names. Prioritise investors whose stage focus, sector thesis, check size, and geographic preferences all align with your company. Start with your warmest, most aligned targets, launch outreach in structured waves rather than all at once, and refine your list based on real response signals as you go."
@@ -160,3 +211,11 @@ Sixteen megafunds raised nearly 70% of the $72.4 billion in VC fundraising in th
 targeting investors whose focus and thesis align precisely with your startup is now critical, since venture firms have become highly selective and will back only startups that fit precisely into their stage, industry, and business model.
  Precision targeting and disciplined, personalised outreach are not optional refinements in this environment — they are the baseline requirements for getting a first meeting.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [angel investors vs venture capital](/articles/angel-investors-vs-venture-capital/) · [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [first check from local operators](/articles/first-check-from-local-operators/) · [how to find investors for startup](/articles/how-to-find-investors-for-startup/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [how to get investors for your business idea](/articles/how-to-get-investors-for-your-business-idea/) · [how to get investors for your business](/articles/how-to-get-investors-for-your-business/) · [how to get private investors for your business](/articles/how-to-get-private-investors-for-your-business/) · [investors for small business](/articles/investors-for-small-business/) · [investors looking for projects to fund](/articles/investors-looking-for-projects-to-fund/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/) · [types of investors for small business](/articles/types-of-investors-for-small-business/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) · [pitch deck](/articles/pitch-deck/) · [investor crm](/articles/investor-crm/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [QED Investors: Home](https://www.qedinvestors.com/).
+<!-- CMS-EXTERNAL:END -->

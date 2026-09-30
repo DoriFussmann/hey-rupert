@@ -40,7 +40,20 @@ internalLinks:
     anchor: startup funding
   - slug: venture-capital
     anchor: venture capital
-externalLinks: []
+  - slug: how-to-find-investors
+    anchor: how to find investors
+  - slug: pitch-deck
+    anchor: pitch deck
+externalLinks:
+  - label: "Investor.gov: Home"
+    url: "https://www.investor.gov/"
+    addedAt: 2026-09-30
+  - label: "Investor's Business Daily | Stock News and Stock Market ..."
+    url: "https://www.investors.com/"
+    addedAt: 2026-09-30
+  - label: "The Investor Agenda | Accelerating action for a net-zero ..."
+    url: "https://theinvestoragenda.org/"
+    addedAt: 2026-09-30
 faqs:
   - question: "What is an investor CRM and how is it different from a regular sales CRM?"
     answer: "An investor CRM is purpose-built for the long-cycle, relationship-driven work of raising venture capital. Unlike a sales CRM — which is optimized for deal velocity and repeatable commercial transactions — an investor CRM tracks pipeline stages specific to a funding round (intro requested, first meeting, diligence, term sheet), logs conversation history with individual partners, manages follow-up cadence over weeks or months, and often includes features like deck engagement tracking, investor update tools, and data room access. The workflows are fundamentally different: a sales CRM assumes many short cycles; an investor CRM assumes a small number of high-stakes, slow-moving relationships."
@@ -207,5 +220,9 @@ The right investor CRM doesn't just keep your pipeline organized — it gives yo
 For founders who want that structure and visibility without spending their building time maintaining it, the most effective path is working with experienced operators who research, personalize, and track every investor interaction — while ensuring the founder retains full visibility into every conversation and owns every relationship that results. The process discipline of a well-run CRM, combined with the judgment of people who have run hundreds of investor outreach campaigns, is what a professional fundraise actually looks like. The tool is the infrastructure. The expertise is what makes it work.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/).
+Further reading: [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [how to find investors](/articles/how-to-find-investors/) · [pitch deck](/articles/pitch-deck/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Investor.gov: Home](https://www.investor.gov/) · [Investor's Business Daily | Stock News and Stock Market ...](https://www.investors.com/) · [The Investor Agenda | Accelerating action for a net-zero ...](https://theinvestoragenda.org/).
+<!-- CMS-EXTERNAL:END -->

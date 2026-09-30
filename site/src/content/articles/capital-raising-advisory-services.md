@@ -34,7 +34,16 @@ internalLinks:
     anchor: capital raising services
   - slug: startup-fundraising-consultant
     anchor: startup fundraising consultant
-externalLinks: []
+externalLinks:
+  - label: "Raising Riley | Riley County Official Website"
+    url: "https://www.rileycountyks.gov/1248/Raising-Riley"
+    addedAt: 2026-09-30
+  - label: Raising Films - Supporting parents and carers in the UK ...
+    url: "https://www.raisingfilms.com/"
+    addedAt: 2026-09-30
+  - label: "Raising Boys & Girls - Podcast"
+    url: "https://podcasts.apple.com/us/podcast/raising-boys-girls/id1366344369"
+    addedAt: 2026-09-30
 faqs:
   - question: "Can a capital raising advisory service legally receive a success fee?"
     answer: "This depends heavily on the structure. Under U.S. securities law, receiving transaction-based compensation tied directly to the closing of a securities offering triggers broker-dealer registration requirements. Advisory services that operate on flat retainers or project fees avoid this regulatory exposure. If any success fee is contemplated, the engagement should be reviewed by legal counsel to ensure it does not cross into unlicensed broker-dealer activity — which can create rescission rights for investors and complications in future due diligence."
@@ -131,3 +140,7 @@ The regulatory and market environment around capital raising advisory services r
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor database](/articles/investor-database/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Raising Riley | Riley County Official Website](https://www.rileycountyks.gov/1248/Raising-Riley) · [Raising Films - Supporting parents and carers in the UK ...](https://www.raisingfilms.com/) · [Raising Boys & Girls - Podcast](https://podcasts.apple.com/us/podcast/raising-boys-girls/id1366344369).
+<!-- CMS-EXTERNAL:END -->

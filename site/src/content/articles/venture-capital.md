@@ -56,6 +56,8 @@ internalLinks:
     anchor: startup funding
   - slug: investor-crm
     anchor: investor crm
+  - slug: how-to-find-investors
+    anchor: how to find investors
 externalLinks:
   - label: Data & Statistics - Venture Capital & Private Equity
     url: https://guides.lib.uchicago.edu/venture/data
@@ -208,5 +210,5 @@ See Related below for more on this topic.
 See Sources below for the references behind this article.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector](/articles/biggest-venture-capital-firms/) · [biggest venture capital firms in silicon valley](/articles/biggest-venture-capital-firms-in-silicon-valley/) · [famous venture capital firms](/articles/famous-venture-capital-firms/) · [largest venture capital firms by aum](/articles/largest-venture-capital-firms-by-aum/) · [top vc firms](/articles/top-vc-firms/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [investor crm](/articles/investor-crm/).
+Further reading: [The Biggest VC Firms in 2026: Ranked by AUM, Stage, Sector](/articles/biggest-venture-capital-firms/) · [biggest venture capital firms in silicon valley](/articles/biggest-venture-capital-firms-in-silicon-valley/) · [famous venture capital firms](/articles/famous-venture-capital-firms/) · [largest venture capital firms by aum](/articles/largest-venture-capital-firms-by-aum/) · [top vc firms](/articles/top-vc-firms/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [investor crm](/articles/investor-crm/) · [how to find investors](/articles/how-to-find-investors/).
 <!-- CMS-INTERNAL:END -->

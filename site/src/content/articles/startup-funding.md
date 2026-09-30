@@ -56,6 +56,8 @@ internalLinks:
     anchor: venture capital
   - slug: investor-crm
     anchor: investor crm
+  - slug: how-to-find-investors
+    anchor: how to find investors
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
     url: https://carta.com/learn/startups/fundraising/
@@ -256,5 +258,5 @@ See Related below for more on this topic.
 See Sources below for the references behind this article.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/).
+Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how to find investors](/articles/how-to-find-investors/).
 <!-- CMS-INTERNAL:END -->

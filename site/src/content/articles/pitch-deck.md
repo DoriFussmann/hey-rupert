@@ -57,6 +57,12 @@ internalLinks:
     anchor: venture capital
   - slug: investor-crm
     anchor: investor crm
+  - slug: investment-presentation-checklist
+    anchor: investment presentation
+  - slug: investor-presentation-template
+    anchor: investor presentation template
+  - slug: how-to-find-investors
+    anchor: how to find investors
 externalLinks:
   - label: The Quick and Dirty Guide to Creating a Winning Pitch Deck
     url: https://www.startupgrind.com/blog/the-quick-and-dirty-guide-to-creating-a-winning-pitch-deck/
@@ -202,5 +208,5 @@ See Related below for more on this topic.
 See Sources below for the references behind this article.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [The Complete Seed Pitch Deck Guide for Raising Founders](/articles/seed-pitch-deck/) · [pre seed pitch deck](/articles/pre-seed-pitch-deck/) · [seed funding pitch deck](/articles/seed-funding-pitch-deck-faq/) · [seed pitch deck examples](/articles/seed-pitch-deck-examples/) · [seed round pitch deck](/articles/seed-round-pitch-deck-template/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/).
+Further reading: [The Complete Seed Pitch Deck Guide for Raising Founders](/articles/seed-pitch-deck/) · [pre seed pitch deck](/articles/pre-seed-pitch-deck/) · [seed funding pitch deck](/articles/seed-funding-pitch-deck-faq/) · [seed pitch deck examples](/articles/seed-pitch-deck-examples/) · [seed round pitch deck](/articles/seed-round-pitch-deck-template/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [investment presentation](/articles/investment-presentation-checklist/) · [investor presentation template](/articles/investor-presentation-template/) · [how to find investors](/articles/how-to-find-investors/).
 <!-- CMS-INTERNAL:END -->

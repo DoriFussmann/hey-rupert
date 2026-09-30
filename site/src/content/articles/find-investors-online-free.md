@@ -23,8 +23,23 @@ keywords:
   - how to find investors for startup
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: how-to-find-investors-for-startup
+    anchor: how to find investors for startup
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: where to find investors for startup
+externalLinks:
+  - label: Find My - App Store - Apple
+    url: "https://apps.apple.com/us/app/find-my/id1514844621"
+    addedAt: 2026-09-30
+  - label: Find Devices - Apple iCloud
+    url: "https://www.icloud.com/find"
+    addedAt: 2026-09-30
+  - label: "FIND | Diagnosis for all"
+    url: "https://www.finddx.org/"
+    addedAt: 2026-09-30
 faqs:
   - question: "Is the free tier on Crunchbase actually useful for finding investors, or do you hit a wall quickly?"
     answer: "Crunchbase's free tier is useful for confirming that a firm exists, checking its sector focus, and reading a high-level profile — but it caps search results tightly and withholds direct contact details. Most founders use it for initial market mapping and qualification, then either upgrade to a paid plan or cross-reference names found on free platforms like OpenVC to get actionable outreach information."
@@ -139,3 +154,11 @@ Recent analysis notes that the best free VC databases for founders now include s
 raising venture capital has increasingly become a precise targeting game rather than a volume play, with single blast emails to unfiltered lists no longer generating replies.
  The broader trend observed across multiple sources is that founders who move from spray-and-pray volume to thesis-level personalization are the ones seeing meaningful response rates — a shift that makes the quality of research behind any free list more important than the size of the list itself. No major structural changes to platforms like SEC EDGAR, AngelList, or OpenVC have been reported in the past 45 days; the competitive dynamic is stable, though the bar for what counts as genuinely personalized outreach continues to rise.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [how to find investors for startup](/articles/how-to-find-investors-for-startup/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Find My - App Store - Apple](https://apps.apple.com/us/app/find-my/id1514844621) · [Find Devices - Apple iCloud](https://www.icloud.com/find) · [FIND | Diagnosis for all](https://www.finddx.org/).
+<!-- CMS-EXTERNAL:END -->

@@ -22,8 +22,17 @@ keywords:
   - how to find investors for startup
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: find-investors-online-free
+    anchor: find investors online free
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: where to find investors for startup
+externalLinks:
+  - label: "QED Investors: Home"
+    url: "https://www.qedinvestors.com/"
+    addedAt: 2026-09-30
 faqs:
   - question: "How many investors should I target in a single fundraising campaign?"
     answer: "Most experienced operators recommend building a tiered list of 50–100 investors, segmented into A, B, and C tiers based on thesis fit and likelihood of interest. You should run warm outreach to your A-tier in parallel, not sequentially — creating a compressed timeline that generates momentum and signals social proof. Reaching out to too few investors reduces your optionality; reaching out to too many with generic messaging signals a lack of focus."
@@ -146,3 +155,11 @@ warm introductions have become more important than ever, with cold outreach conv
  — reinforcing the case for researched, relationship-mapped targeting over volume-based spray-and-pray approaches. 
 Investors are conducting more due diligence than ever, ensuring companies aren't just hype, and are looking for real value with the unit economics to back it up.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [QED Investors: Home](https://www.qedinvestors.com/).
+<!-- CMS-EXTERNAL:END -->

@@ -23,8 +23,23 @@ keywords:
   - investors near me
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-groups-in-your-city-for-a-first-check-2
+    anchor: angel groups in your city for a first check
+  - slug: first-check-from-local-operators
+    anchor: first check from local operators
+  - slug: investors-near-me
+    anchor: investors near me
+  - slug: local-angel-investors-for-first-time-founders-2
+    anchor: local angel investors for first-time founders
+  - slug: operators-who-write-the-first-check
+    anchor: operators who write the first check
+externalLinks:
+  - label: "QED Investors: Home"
+    url: "https://www.qedinvestors.com/"
+    addedAt: 2026-09-30
 faqs:
   - question: "Do local investors actually invest more in nearby startups?"
     answer: "Yes — research consistently shows that both angel investors and venture capitalists have a strong preference for companies in their local or regional area. The main reason is information: it's easier for a nearby investor to visit operations, speak with local customers, and assess the founding team's reputation through shared contacts. This proximity reduces the information asymmetry that makes early-stage investing so risky."
@@ -145,3 +160,11 @@ That distinction is exactly what Rupert is built to solve. Every outreach campai
 <!-- WHERE-THINGS-STAND:START -->
 The geography-versus-fit debate in startup fundraising remains active in mid-2026, with recent data adding useful texture on both sides. Regional funding activity is holding up in deal count terms — the Midwest, for example, closed more deals in Q2 2026 than in Q1 — but average cheque sizes have fallen across every state in that region, and its share of national venture dollars has contracted sharply even as deal volume rose, illustrating in concrete terms the gap between local momentum and local capital capacity. At the same time, recent analysis of June 2026 funding trends notes that geography matters less than it once did, with investors increasingly open to remote teams and cross-border founders, particularly in sectors with clear multi-market ambition — a shift that benefits founders prepared to run both local and national outreach simultaneously. What has not changed is the access dynamic: recent reporting confirms that network density, local investor familiarity, and the speed at which a founder can reach a decision-maker are still meaningful filters that raw regional activity data does not capture, meaning founders outside major hubs need a wider top of funnel, not merely a local one.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [first check from local operators](/articles/first-check-from-local-operators/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [QED Investors: Home](https://www.qedinvestors.com/).
+<!-- CMS-EXTERNAL:END -->

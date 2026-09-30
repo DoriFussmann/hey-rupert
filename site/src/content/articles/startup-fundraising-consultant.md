@@ -34,7 +34,16 @@ internalLinks:
     anchor: capital raising fees
   - slug: capital-raising-services
     anchor: capital raising services
-externalLinks: []
+externalLinks:
+  - label: Consultant
+    url: "https://consultant.vet.cornell.edu/"
+    addedAt: 2026-09-30
+  - label: "Find a Lactation Consultant | ILCA"
+    url: "https://portal.ilca.org/custom/directory-with-map/"
+    addedAt: 2026-09-30
+  - label: 31.205-33 Professional and consultant service costs.
+    url: "https://www.acquisition.gov/far/31.205-33"
+    addedAt: 2026-09-30
 faqs:
   - question: "What is a startup fundraising consultant and what do they actually do?"
     answer: "A startup fundraising consultant helps founders execute the capital-raising process — typically covering investor research and targeting, outreach and follow-up management, and pipeline tracking. Some consultants also offer pitch deck refinement or financial modeling, but those are distinct services. The best engagements are scoped tightly around what you actually need, so you're not paying for work that doesn't move your round forward."
@@ -131,3 +140,7 @@ Investors are increasingly deciding not off the deck but off the conversation �
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Consultant](https://consultant.vet.cornell.edu/) · [Find a Lactation Consultant | ILCA](https://portal.ilca.org/custom/directory-with-map/) · [31.205-33 Professional and consultant service costs.](https://www.acquisition.gov/far/31.205-33).
+<!-- CMS-EXTERNAL:END -->

@@ -23,8 +23,29 @@ keywords:
   - investors near me
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-groups-in-your-city-for-a-first-check-2
+    anchor: angel groups in your city for a first check
+  - slug: first-check-from-local-operators
+    anchor: first check from local operators
+  - slug: investors-near-me
+    anchor: investors near me
+  - slug: local-investors-vs-national-investors-for-startups
+    anchor: local investors vs national investors for startups
+  - slug: operators-who-write-the-first-check
+    anchor: operators who write the first check
+externalLinks:
+  - label: Voting Assistance Guide
+    url: "https://www.fvap.gov/guide"
+    addedAt: 2026-09-30
+  - label: "Statistics | Texas A&M University College of Arts and Sciences"
+    url: "https://artsci.tamu.edu/statistics/index.html"
+    addedAt: 2026-09-30
+  - label: "Statistics at UC Berkeley | Department of Statistics"
+    url: "https://statistics.berkeley.edu/"
+    addedAt: 2026-09-30
 faqs:
   - question: "How do I find angel investors in my city if I don't have an existing network?"
     answer: "Start with your local startup ecosystem before cold-emailing anyone. University entrepreneurship centers, regional accelerator demo days, and operator communities (like local chapters of industry associations) are all places where angels show up consistently. Your early customers are another underused path — if someone is paying you to solve a problem, they likely know others in that world who invest."
@@ -106,3 +127,11 @@ New York Angels reported over 2x investment from members in Q1 2026 compared to 
 - Early customers are an underused source of angel introductions — people who understand and pay for your solution often know investors who back companies solving the same problem.
 - Angels write checks of $25,000–$150,000 and move quickly, but you will typically need five to ten of them to assemble a meaningful pre-seed round, which makes relationship management and pipeline discipline as important as the pitch itself.
 - The angel market in 2026 is concentrating — fewer new deals, larger individual checks, and more capital flowing to follow-on rounds — making warm introductions and genuine fit more important than ever for first-time founders.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [first check from local operators](/articles/first-check-from-local-operators/) · [investors near me](/articles/investors-near-me/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Voting Assistance Guide](https://www.fvap.gov/guide) · [Statistics | Texas A&M University College of Arts and Sciences](https://artsci.tamu.edu/statistics/index.html) · [Statistics at UC Berkeley | Department of Statistics](https://statistics.berkeley.edu/).
+<!-- CMS-EXTERNAL:END -->

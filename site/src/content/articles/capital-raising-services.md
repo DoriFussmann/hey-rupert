@@ -33,7 +33,16 @@ internalLinks:
     anchor: capital raising fees
   - slug: startup-fundraising-consultant
     anchor: startup fundraising consultant
-externalLinks: []
+externalLinks:
+  - label: Database
+    url: "https://supabase.com/database"
+    addedAt: 2026-09-30
+  - label: UNSDG
+    url: "https://unstats.un.org/sdgs/unsdg/"
+    addedAt: 2026-09-30
+  - label: Consumer Complaint Database
+    url: "https://www.consumerfinance.gov/data-research/consumer-complaints/"
+    addedAt: 2026-09-30
 faqs:
   - question: "What is the difference between a capital raising service and an investor database?"
     answer: "An investor database is a self-serve research tool that gives you access to a list of investors you then contact yourself. A capital raising service — specifically an expert-managed outreach model — does the research, personalization, sequencing, and pipeline management on your behalf. The database is an input; the service is the full process. Founders who lack the bandwidth or network to run a disciplined outreach campaign benefit most from the latter."
@@ -189,3 +198,7 @@ as recently as September 28, 2026, a new fundraising platform announced its 2027
 <!-- CMS-INTERNAL:START -->
 Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [Database](https://supabase.com/database) · [UNSDG](https://unstats.un.org/sdgs/unsdg/) · [Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/).
+<!-- CMS-EXTERNAL:END -->
