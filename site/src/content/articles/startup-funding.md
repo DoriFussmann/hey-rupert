@@ -58,6 +58,16 @@ internalLinks:
     anchor: investor crm
   - slug: how-to-find-investors
     anchor: how to find investors
+  - slug: angel-investors-for-pre-seed-funding
+    anchor: angel investors for pre seed funding
+  - slug: how-to-raise-pre-seed-funding
+    anchor: how to raise pre seed funding
+  - slug: pre-seed-funding
+    anchor: pre seed funding
+  - slug: pre-seed-vs-seed-funding
+    anchor: pre seed vs seed funding
+  - slug: what-is-pre-seed-funding
+    anchor: what is pre seed funding
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
     url: https://carta.com/learn/startups/fundraising/
@@ -258,5 +268,5 @@ See Related below for more on this topic.
 See Sources below for the references behind this article.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how to find investors](/articles/how-to-find-investors/).
+Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how to find investors](/articles/how-to-find-investors/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
 <!-- CMS-INTERNAL:END -->

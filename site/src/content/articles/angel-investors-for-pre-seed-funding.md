@@ -23,7 +23,17 @@ keywords:
   - pre seed funding
   - startup funding
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: how-to-raise-pre-seed-funding
+    anchor: how to raise pre seed funding
+  - slug: pre-seed-funding
+    anchor: pre seed funding
+  - slug: pre-seed-vs-seed-funding
+    anchor: pre seed vs seed funding
+  - slug: what-is-pre-seed-funding
+    anchor: what is pre seed funding
 externalLinks: []
 faqs:
   - question: "What is the typical check size for an angel investor at pre-seed?"
@@ -136,3 +146,7 @@ Q3 2026 data on the most active pre-seed and seed-stage investors in the United 
 - The four signals that define a well-matched angel are recent activity in your stage and sector, check size compatibility, a reachable warm introduction path, and strategic fit beyond the check itself.
 - An angel who hasn't written a pre-seed check in your category in the past 12 months is a lower priority than their brand name suggests, regardless of how impressive their historical portfolio looks.
 - Warm introductions from portfolio founders convert far better than cold outreach — and when cold outreach is necessary, specificity about the angel's thesis and recent deals is the only variable that moves the needle.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [startup funding](/articles/startup-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+<!-- CMS-INTERNAL:END -->

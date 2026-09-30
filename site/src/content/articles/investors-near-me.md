@@ -22,7 +22,19 @@ keywords:
   - investors near me
   - how to find investors
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-groups-in-your-city-for-a-first-check-2
+    anchor: angel groups in your city for a first check
+  - slug: first-check-from-local-operators
+    anchor: first check from local operators
+  - slug: local-angel-investors-for-first-time-founders-2
+    anchor: local angel investors for first-time founders
+  - slug: local-investors-vs-national-investors-for-startups
+    anchor: local investors vs national investors for startups
+  - slug: operators-who-write-the-first-check
+    anchor: operators who write the first check
 externalLinks: []
 faqs:
   - question: "Do investors really prefer to fund startups in their own city?"
@@ -168,3 +180,7 @@ global venture is not converging on one template — different regions are attra
 , a pattern that gives locally embedded founders a genuine structural advantage when targeting investors who understand their specific ecosystem. 
 Ecosystem-wide metrics indicate more than $35 billion in annual global angel investment, with regions that have active angel networks showing 20–25% higher startup survival rates.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [first check from local operators](/articles/first-check-from-local-operators/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
+<!-- CMS-INTERNAL:END -->

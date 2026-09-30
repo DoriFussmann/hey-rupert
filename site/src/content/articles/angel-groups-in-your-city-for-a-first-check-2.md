@@ -23,7 +23,19 @@ keywords:
   - investors near me
   - how to find investors
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: first-check-from-local-operators
+    anchor: first check from local operators
+  - slug: investors-near-me
+    anchor: investors near me
+  - slug: local-angel-investors-for-first-time-founders-2
+    anchor: local angel investors for first-time founders
+  - slug: local-investors-vs-national-investors-for-startups
+    anchor: local investors vs national investors for startups
+  - slug: operators-who-write-the-first-check
+    anchor: operators who write the first check
 externalLinks: []
 faqs:
   - question: "What is a realistic check size from a local angel group?"
@@ -112,3 +124,7 @@ if your business sits inside one of those high-conviction sectors, the market ma
 - Formal angel groups are a complement to warm-path work, not a replacement for it; most groups invest the majority of their capital within a short drive and are heavily influenced by member champions inside the group.
 - Position angel groups as your first institutional capital, not a fallback after VC rejections—local investors compare notes, and a string of VC passes will follow your application into the room.
 - The 2026 angel market is increasingly concentrated in AI and life sciences; founders in other sectors need sharper differentiation and stronger traction evidence to clear group screening committees.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [first check from local operators](/articles/first-check-from-local-operators/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
+<!-- CMS-INTERNAL:END -->

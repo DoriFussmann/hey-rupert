@@ -23,7 +23,17 @@ keywords:
   - pre seed funding
   - startup funding
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: startup-funding
+    anchor: startup funding
+  - slug: angel-investors-for-pre-seed-funding
+    anchor: angel investors for pre seed funding
+  - slug: how-to-raise-pre-seed-funding
+    anchor: how to raise pre seed funding
+  - slug: pre-seed-funding
+    anchor: pre seed funding
+  - slug: pre-seed-vs-seed-funding
+    anchor: pre seed vs seed funding
 externalLinks: []
 faqs:
   - question: "Do I need a product to raise pre-seed funding?"
@@ -146,3 +156,7 @@ This trend is largely tied to investor enthusiasm for AI companies, which have c
 Understanding pre-seed funding at a conceptual level is the necessary first step, but it's only that — a first step. The founders who actually close rounds efficiently aren't just well-informed; they're disciplined about *who* they approach and *how* they approach them. Pre-seed investors are a heterogeneous group: some write checks in your sector actively, others haven't done a deal in your space in three years, and a cold email to the wrong fund at the wrong time rarely recovers regardless of how strong the pitch is. The difference between a 12-week raise and a 9-month one is often less about the quality of the opportunity and more about the quality of the investor list and the sequencing of outreach.
 
 That's where having experienced operators doing the research and execution on your behalf changes the math. Rupert's expert-managed outreach process is built around exactly that discipline — researching which investors are actively writing pre-seed checks in your sector right now, personalizing every touchpoint based on genuine portfolio and thesis analysis, and managing the pipeline so founders stay in front of the right people at the right time, with complete visibility into every conversation and every relationship. If you've internalized what pre-seed requires, the next step is making sure the right investors actually hear your story — through a process that reflects the quality of what you're building.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/).
+<!-- CMS-INTERNAL:END -->
