@@ -36,6 +36,15 @@ externalLinks:
   - label: The ICSID Caseload - Statistics
     url: "https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics"
     addedAt: 2026-09-28
+  - label: Shareowner Online
+    url: "https://www.shareowneronline.com/"
+    addedAt: 2026-09-30
+  - label: Shareholder
+    url: "https://en.wikipedia.org/wiki/Shareholder"
+    addedAt: 2026-09-30
+  - label: Shareholder Letters
+    url: "https://investors.carvana.com/investor-resources/shareholder-letters"
+    addedAt: 2026-09-30
 faqs:
   - question: "Do I legally have to send a shareholder update?"
     answer: "It depends on what your shareholders' agreement says. Many early-stage agreements include an 'Information Rights' or 'Right of Information' clause that obliges you to provide periodic financial statements — often quarterly or annually — to investors above a certain ownership threshold. If your agreement includes such a clause, those obligations are legally binding. If it doesn't, there is no statutory requirement for most private US companies to send periodic narrative updates. That said, not communicating with your shareholders is almost always a mistake regardless of legal obligation — trust erodes fast in silence."
@@ -169,5 +178,5 @@ Further reading: [investor crm](/articles/investor-crm/) · [investor update tem
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
-Sources: [The ICSID Caseload - Statistics](https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics).
+Sources: [The ICSID Caseload - Statistics](https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics) · [Shareowner Online](https://www.shareowneronline.com/) · [Shareholder](https://en.wikipedia.org/wiki/Shareholder) · [Shareholder Letters](https://investors.carvana.com/investor-resources/shareholder-letters).
 <!-- CMS-EXTERNAL:END -->

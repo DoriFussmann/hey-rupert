@@ -23,8 +23,20 @@ keywords:
   - how to find investors for startup
   - how to find investors
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: find-investors-online-free
+    anchor: find investors online free
+  - slug: how-to-find-investors-for-startup
+    anchor: how to find investors for startup
+externalLinks:
+  - label: "QED Investors: Home"
+    url: "https://www.qedinvestors.com/"
+    addedAt: 2026-09-30
+  - label: Investor Signatories
+    url: "https://www.climateaction100.org/whos-involved/investors/"
+    addedAt: 2026-09-30
 faqs:
   - question: "Can a founder raise a round using only cold outreach, without any warm introductions?"
     answer: "Yes, but it is statistically rare and requires significantly higher volume and precision. Data suggests that seed-stage founders have closed rounds with at least one investor sourced through cold outreach, but the conversion rate — roughly 1–5% response and under 1% meeting conversion — means you need a large, well-targeted list and a highly personalized message. Cold-only strategies work best when paired with strong traction signals and a thesis-matching approach. For most founders, cold outreach should complement a warm-intro effort, not replace it."
@@ -131,3 +143,11 @@ August 2026 funding data shows that money is still flowing, but many seed and ea
 Investors are closely vetting early-stage startups to find companies with traction and massive potential, and VC funding has already reached $300B across 6,000 startups in 2026 according to Crunchbase
  — though that capital is concentrated in select sectors and later-stage deals. For founders at Seed and Series A, this environment makes the quality of every investor touchpoint — warm or cold — more consequential than it was during the looser funding conditions of prior cycles.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to find investors for startup](/articles/how-to-find-investors-for-startup/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [QED Investors: Home](https://www.qedinvestors.com/) · [Investor Signatories](https://www.climateaction100.org/whos-involved/investors/).
+<!-- CMS-EXTERNAL:END -->

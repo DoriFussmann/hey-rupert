@@ -23,7 +23,11 @@ keywords:
   - investor presentation
   - pitch deck
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: investor-presentation-template
+    anchor: investor presentation template
 externalLinks: []
 faqs:
   - question: "How do VCs actually score a pitch deck internally?"
@@ -191,3 +195,7 @@ Investors are opening more decks, scanning faster, and bouncing at record rates,
 at Series A, investors are demanding an LTV:CAC ratio of at least 3:1, consistent month-over-month ARR growth, and evidence of genuine product-market fit, and the founders getting meetings are the ones who walk in with numbers, not narratives.
  No major structural shifts to investor scoring criteria have emerged in the past six weeks; the discipline bar is simply higher than it was twelve months ago.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [pitch deck](/articles/pitch-deck/) · [investor presentation template](/articles/investor-presentation-template/).
+<!-- CMS-INTERNAL:END -->

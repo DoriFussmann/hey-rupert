@@ -23,8 +23,21 @@ keywords:
   - investor presentation
   - pitch deck
 draft: false
-internalLinks: []
-externalLinks: []
+internalLinks:
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: investment-presentation-checklist
+    anchor: investment presentation
+externalLinks:
+  - label: The AI presentation workspace
+    url: "https://pitch.com/"
+    addedAt: 2026-09-30
+  - label: Pitch (resin)
+    url: "https://en.wikipedia.org/wiki/Pitch_(resin)"
+    addedAt: 2026-09-30
+  - label: "Worldwide Leader in Pitch Deck Design | PitchDeck.com"
+    url: "https://pitchdeck.com/"
+    addedAt: 2026-09-30
 faqs:
   - question: "How many slides should an investor presentation template include?"
     answer: "Deck length should match your stage. At pre-seed, 10–12 slides is the standard — enough to cover the core narrative without overwhelming an investor who is still deciding whether to engage. At seed and Series A, 12–15 slides is appropriate because traction data, cohort analysis, and financial projections warrant more depth. Deep-dive material — detailed unit economics, technical architecture, full cap table — belongs in a separate appendix rather than the main deck, so the core narrative stays tight regardless of stage."
@@ -123,3 +136,11 @@ the fundraising landscape remains highly competitive, with investors presented w
 AI tools such as Gamma, Tome, and Canva AI have become industry-standard for layout and iteration in 2026, though practitioners note they should not be used for content generation, since VCs pattern-recognize generic AI output in seconds. As startups continue seeking capital in competitive investment environments, demand for professionally structured presentations has increased — investors often review large numbers of pitch decks, making clarity, organisation, and visual communication important factors during initial evaluation.
  The core structural principles — slide count discipline, problem-first sequencing, and the two-version build — remain stable and consistent with what the investor community has rewarded across recent funding cycles.
 <!-- WHERE-THINGS-STAND:END -->
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [pitch deck](/articles/pitch-deck/) · [investment presentation](/articles/investment-presentation-checklist/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [The AI presentation workspace](https://pitch.com/) · [Pitch (resin)](https://en.wikipedia.org/wiki/Pitch_(resin)) · [Worldwide Leader in Pitch Deck Design | PitchDeck.com](https://pitchdeck.com/).
+<!-- CMS-EXTERNAL:END -->

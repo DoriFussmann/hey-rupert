@@ -23,7 +23,19 @@ keywords:
   - investors near me
   - how to find investors
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: angel-investors
+    anchor: angel investors
+  - slug: angel-groups-in-your-city-for-a-first-check-2
+    anchor: angel groups in your city for a first check
+  - slug: investors-near-me
+    anchor: investors near me
+  - slug: local-angel-investors-for-first-time-founders-2
+    anchor: local angel investors for first-time founders
+  - slug: local-investors-vs-national-investors-for-startups
+    anchor: local investors vs national investors for startups
+  - slug: operators-who-write-the-first-check
+    anchor: operators who write the first check
 externalLinks:
   - label: SEC capital raising guide
     url: "https://www.sec.gov/education/capital-raising"
@@ -33,6 +45,15 @@ externalLinks:
     url: "https://www.sba.gov/funding-programs"
     addedAt: 2026-09-28
     kind: author-source
+  - label: Operators — Airflow 3.3.2 Documentation
+    url: "https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/operators.html"
+    addedAt: 2026-09-30
+  - label: "Blue Star Operators | Office of National Marine Sanctuaries"
+    url: "https://sanctuaries.noaa.gov/bluestar/operators.html"
+    addedAt: 2026-09-30
+  - label: "Operators | Tom Clancy's Rainbow Six Siege"
+    url: "https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators"
+    addedAt: 2026-09-30
 faqs:
   - question: "What is an operator-investor and why do they matter at the pre-seed stage?"
     answer: "An operator-investor is typically a former or current founder, executive, or domain expert who invests personal capital alongside their operational knowledge. At pre-seed, when you have little traction to show, their pattern recognition and problem-space familiarity often matter more than a generalist fund's brand."
@@ -79,3 +100,11 @@ operator angels with sector expertise are faster and more useful than generalist
 - Geography still matters at the pre-seed stage: investors with ties to your local market are more likely to add hands-on value after writing the check.
 - The first conversation with an operator-angel should be about the problem, not a formal pitch — shared domain depth is what converts a conversation into a commitment.
 - When you're ready to scale outreach systematically, a disciplined, expert-run process ensures every operator introduction is earned, not sprayed.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [angel investors](/articles/angel-investors/) · [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
+<!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [SEC capital raising guide](https://www.sec.gov/education/capital-raising) · [SBA funding programs](https://www.sba.gov/funding-programs) · [Operators — Airflow 3.3.2 Documentation](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/operators.html) · [Blue Star Operators | Office of National Marine Sanctuaries](https://sanctuaries.noaa.gov/bluestar/operators.html) · [Operators | Tom Clancy's Rainbow Six Siege](https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators).
+<!-- CMS-EXTERNAL:END -->
