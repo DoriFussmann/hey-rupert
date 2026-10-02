@@ -36,7 +36,16 @@ internalLinks:
     anchor: local investors vs national investors for startups
   - slug: operators-who-write-the-first-check
     anchor: operators who write the first check
-externalLinks: []
+externalLinks:
+  - label: "YOUR | English meaning - Cambridge Dictionary"
+    url: "https://dictionary.cambridge.org/dictionary/english/your"
+    addedAt: 2026-10-02
+  - label: Find Your Representative
+    url: "http://www.house.gov/representatives/find-your-representative"
+    addedAt: 2026-10-02
+  - label: Register And Vote in Your State
+    url: "https://www.eac.gov/voters/register-and-vote-in-your-state"
+    addedAt: 2026-10-02
 faqs:
   - question: "What is a realistic check size from a local angel group?"
     answer: "Most regional angel groups invest between $100,000 and $250,000 per company at the seed stage. Individual group members typically write checks of $10,000–$50,000 each, and the group pools those contributions. Groups will sometimes co-invest with other local angels or a VC to support rounds up to $2 million."
@@ -128,3 +137,7 @@ if your business sits inside one of those high-conviction sectors, the market ma
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [first check from local operators](/articles/first-check-from-local-operators/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [YOUR | English meaning - Cambridge Dictionary](https://dictionary.cambridge.org/dictionary/english/your) · [Find Your Representative](http://www.house.gov/representatives/find-your-representative) · [Register And Vote in Your State](https://www.eac.gov/voters/register-and-vote-in-your-state).
+<!-- CMS-EXTERNAL:END -->
