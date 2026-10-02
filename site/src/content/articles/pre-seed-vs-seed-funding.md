@@ -34,7 +34,16 @@ internalLinks:
     anchor: pre seed funding
   - slug: what-is-pre-seed-funding
     anchor: what is pre seed funding
-externalLinks: []
+externalLinks:
+  - label: SEED - Official Website
+    url: "https://www.ea.com/seed"
+    addedAt: 2026-10-02
+  - label: "Rose B. Simpson: \"Seed\""
+    url: "https://madisonsquarepark.org/art/exhibitions/rose-b-simpson-seed/"
+    addedAt: 2026-10-02
+  - label: "Home - SEED | Eating Disorders Support Service %"
+    url: "https://seed.charity/"
+    addedAt: 2026-10-02
 faqs:
   - question: "What is the main difference between pre-seed and seed funding?"
     answer: "Pre-seed is fundamentally a bet on the founding team and vision. Investors are backing conviction and insight before a product is fully built or users are acquired. Seed funding shifts the burden of proof: investors at this stage expect a working product, early user or revenue signal, and a credible path toward repeatable growth. The difference is not just semantics — it shapes which investors you can approach, what terms you'll receive, and how much dilution you'll take."
@@ -141,3 +150,7 @@ VCs are becoming increasingly specialized rather than generalist
 <!-- CMS-INTERNAL:START -->
 Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
 <!-- CMS-INTERNAL:END -->
+
+<!-- CMS-EXTERNAL:START -->
+Sources: [SEED - Official Website](https://www.ea.com/seed) · [Rose B. Simpson: "Seed"](https://madisonsquarepark.org/art/exhibitions/rose-b-simpson-seed/) · [Home - SEED | Eating Disorders Support Service %](https://seed.charity/).
+<!-- CMS-EXTERNAL:END -->

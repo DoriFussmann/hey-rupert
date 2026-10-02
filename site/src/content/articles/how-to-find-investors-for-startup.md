@@ -33,6 +33,12 @@ externalLinks:
   - label: "QED Investors: Home"
     url: "https://www.qedinvestors.com/"
     addedAt: 2026-09-30
+  - label: Investor Signatories
+    url: "https://www.climateaction100.org/whos-involved/investors/"
+    addedAt: 2026-10-02
+  - label: Investors
+    url: "https://www.natureaction100.org/investors/"
+    addedAt: 2026-10-02
 faqs:
   - question: "How many investors should I target in a single fundraising campaign?"
     answer: "Most experienced operators recommend building a tiered list of 50–100 investors, segmented into A, B, and C tiers based on thesis fit and likelihood of interest. You should run warm outreach to your A-tier in parallel, not sequentially — creating a compressed timeline that generates momentum and signals social proof. Reaching out to too few investors reduces your optionality; reaching out to too many with generic messaging signals a lack of focus."
@@ -161,5 +167,5 @@ Further reading: [angel investors](/articles/angel-investors/) · [find investor
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
-Sources: [QED Investors: Home](https://www.qedinvestors.com/).
+Sources: [QED Investors: Home](https://www.qedinvestors.com/) · [Investor Signatories](https://www.climateaction100.org/whos-involved/investors/) · [Investors](https://www.natureaction100.org/investors/).
 <!-- CMS-EXTERNAL:END -->
