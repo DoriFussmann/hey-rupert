@@ -23,7 +23,13 @@ keywords:
   - investor list
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: investor-list
+    anchor: investor list
+  - slug: list-of-investors-for-startups
+    anchor: list of investors for startups
 externalLinks: []
 faqs:
   - question: "What's the fastest way to build a list of private investors for a seed round?"
@@ -156,3 +162,7 @@ Angel capital in 2026 is quietly consolidating around fewer, deeper, more convic
 ---
 
 For founders who want none of the risk of unverified contact files and none of the time cost of manual research, there is a different path. Rupert builds a fully qualified, thesis-matched investor list for your specific raise — researching portfolio signals, confirming active deployment, mapping relationship paths, and tiering targets — and then owns the outreach process from first contact through follow-up. Every conversation and every investor relationship stays with you. No CSV required, no black box, no burned domain. Just a structured process run by experienced operators who have done this before.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [investor list](/articles/investor-list/) · [list of investors for startups](/articles/list-of-investors-for-startups/).
+<!-- CMS-INTERNAL:END -->

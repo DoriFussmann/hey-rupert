@@ -23,7 +23,13 @@ keywords:
   - investor list
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: investor-list
+    anchor: investor list
+  - slug: list-of-private-investors
+    anchor: list of private investors
 externalLinks: []
 faqs:
   - question: "How many investors should be on my list before I start outreach?"
@@ -126,3 +132,7 @@ The median Series A deal reached $19.4M in early 2026, nearly triple 2020 levels
 - Qualify every candidate against five criteria — stage match, sector thesis, recent deal activity within 18 months, check size alignment, and a named contact — and cut anyone who fails two or more.
 - Tier the qualified list into A (dream fit), B (strong fit), and C (good fit) groups, then start outreach with B and C to sharpen your pitch before approaching your most important targets.
 - Load the final list into an investor CRM and assign a specific next action to every name before outreach begins — a list without next actions is just a spreadsheet.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [investor list](/articles/investor-list/) · [list of private investors](/articles/list-of-private-investors/).
+<!-- CMS-INTERNAL:END -->

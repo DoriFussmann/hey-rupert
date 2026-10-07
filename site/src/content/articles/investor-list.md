@@ -22,7 +22,13 @@ keywords:
   - investor list
   - investor database
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: investor-database
+    anchor: investor database
+  - slug: list-of-investors-for-startups
+    anchor: list of investors for startups
+  - slug: list-of-private-investors
+    anchor: list of private investors
 externalLinks: []
 faqs:
   - question: "How many investors should be on my list before I start outreach?"
@@ -129,3 +135,7 @@ The best investor database for a founder is rarely the biggest one — broad pla
 - A focused list of 50–100 well-qualified investors consistently outperforms a mass list of 500 cold names because relevance — not volume — determines whether your outreach earns a reply.
 - Tiering investors into A, B, and C groups allows founders to sequence parallel outreach deliberately, leading with highest-conviction targets whose momentum shapes later conversations.
 - Building a proper investor list takes 2–3 weeks of research before fundraising opens; founders who compress or skip this step waste their most irreplaceable asset — the first impression with each investor.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [investor database](/articles/investor-database/) · [list of investors for startups](/articles/list-of-investors-for-startups/) · [list of private investors](/articles/list-of-private-investors/).
+<!-- CMS-INTERNAL:END -->
