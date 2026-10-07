@@ -58,6 +58,12 @@ internalLinks:
     anchor: startup fundraising consultant
   - slug: how-to-find-investors
     anchor: how to find investors
+  - slug: investor-list
+    anchor: investor list
+  - slug: list-of-investors-for-startups
+    anchor: list of investors for startups
+  - slug: list-of-private-investors
+    anchor: list of private investors
 externalLinks:
   - label: Institutional Investor Database - Dakota
     url: "https://www.dakota.com/institutional-investor-database"
@@ -186,7 +192,7 @@ The venture capital environment heading into Q4 2026 makes disciplined investor 
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/) · [how to find investors](/articles/how-to-find-investors/).
+Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/) · [how to find investors](/articles/how-to-find-investors/) · [investor list](/articles/investor-list/) · [list of investors for startups](/articles/list-of-investors-for-startups/) · [list of private investors](/articles/list-of-private-investors/).
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
