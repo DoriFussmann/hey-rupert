@@ -189,10 +189,11 @@ export async function signServiceOrder(
     return { ok: false, error: clientUpdateError.message };
   }
 
+  // Kick-off first, so the admin email reports the up-to-date next step.
+  await advanceToKickoff(supabase, user.id);
   await notifyAdmin(supabase, user.id, "service_order_agreed", {
     email: true,
   });
-  await advanceToKickoff(supabase, user.id, { email: true });
 
   revalidateOnboarding(user.id);
   revalidatePath("/portal/service-order");

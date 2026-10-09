@@ -145,6 +145,7 @@ export type NotificationType =
   | "nda_signed"
   | "password_set"
   | "kickoff_ready"
+  | "setup_fee_paid"
   | string;
 
 export type AdminNotification = {

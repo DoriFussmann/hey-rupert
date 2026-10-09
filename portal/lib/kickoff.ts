@@ -7,18 +7,19 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 
 // Stages a client can be in before kick-off. The conditional update below
 // makes the transition happen exactly once, even if the Service Order is
-// signed and the payment is marked at the same moment.
+// signed and the payment is recorded at the same moment.
 const PRE_KICKOFF_STAGES = "stage.is.null,stage.in.(sow,service_order,payment)";
 
 /**
  * Moves the client to the NDA stage once the Service Order is signed and the
- * Setup Fee is received, and tells the admin it is their turn.
+ * Setup Fee is received, and records an in-app "Kick-off ready" notification.
+ * It sends no email: the caller emails about the event that triggered it, and
+ * that email already says it is the admin's turn.
  * Returns true only on the call that performed the transition.
  */
 export async function advanceToKickoff(
   supabase: ServiceClient,
   clientId: string,
-  { email }: { email: boolean },
 ) {
   const { data: client, error: loadError } = await supabase
     .from("clients")
@@ -41,6 +42,6 @@ export async function advanceToKickoff(
   }
   if (!updated || updated.length === 0) return false;
 
-  await notifyAdmin(supabase, clientId, "kickoff_ready", { email });
+  await notifyAdmin(supabase, clientId, "kickoff_ready", { email: false });
   return true;
 }

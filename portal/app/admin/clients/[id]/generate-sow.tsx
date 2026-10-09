@@ -92,7 +92,12 @@ export function GenerateStatementOfWork({
         setError(result.error);
         return;
       }
-      setSuccess("Sent to the client portal.");
+      if (result.clientEmail.ok) {
+        setSuccess("Sent to the client portal and emailed the client.");
+      } else {
+        setSuccess("Sent to the client portal.");
+        setError(`The client was not emailed. ${result.clientEmail.reason}`);
+      }
       setDraft("");
       setView("active");
       router.refresh();

@@ -115,7 +115,16 @@ export function GenerateServiceOrder({
         setError(result.error);
         return;
       }
-      setSuccess("Service Order and Setup Fee invoice pushed to the client portal.");
+      if (result.clientEmail.ok) {
+        setSuccess(
+          "Service Order and Setup Fee invoice pushed to the client portal, and the client was emailed.",
+        );
+      } else {
+        setSuccess(
+          "Service Order and Setup Fee invoice pushed to the client portal.",
+        );
+        setError(`The client was not emailed. ${result.clientEmail.reason}`);
+      }
       setDraft("");
       setPaymentLink("");
       setLinkTouched(false);
