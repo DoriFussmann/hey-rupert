@@ -1,13 +1,9 @@
 import type { Metadata } from "next";
-import { Allura, IBM_Plex_Mono, Inter } from "next/font/google";
+import { Allura, IBM_Plex_Mono } from "next/font/google";
+import "@fontsource/inter/latin-300.css";
+import "@fontsource/inter/latin-400.css";
+import "@fontsource/inter/latin-500.css";
 import "./globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500"],
-  variable: "--font-sans",
-  display: "swap",
-});
 
 const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
@@ -39,10 +35,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en-US">
-      <body
-        className={`${inter.variable} ${ibmPlexMono.variable} ${allura.variable} font-sans`}
-      >
+    <html
+      lang="en-US"
+      className={`${ibmPlexMono.variable} ${allura.variable} font-sans`}
+    >
+      <body>
         {children}
       </body>
     </html>
