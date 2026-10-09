@@ -119,7 +119,9 @@ export async function agreeToServiceOrder(
 
   const { data: existing, error: loadError } = await supabase
     .from("clients")
-    .select("id, stage, sow_confirmed_at, service_order_agreed_at")
+    .select(
+      "id, stage, sow_confirmed_at, service_order_content, service_order_agreed_at",
+    )
     .eq("id", user.id)
     .maybeSingle();
 
@@ -137,6 +139,10 @@ export async function agreeToServiceOrder(
     existing.stage !== "live"
   ) {
     return { ok: false, error: "The service order is not available yet." };
+  }
+
+  if (!String(existing.service_order_content ?? "").trim()) {
+    return { ok: false, error: "The service order has not been issued yet." };
   }
 
   if (existing.service_order_agreed_at) {

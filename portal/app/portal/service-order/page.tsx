@@ -19,29 +19,45 @@ export default async function ServiceOrderPage() {
     }
   }
 
+  const issued = Boolean(client?.service_order_content?.trim());
+  const agreed = Boolean(client?.service_order_agreed_at);
+
   return (
     <>
       <BackLink href="/portal/onboarding" label="Onboarding" />
       <PageHeader
         title="Service Order"
-        description="Commercial terms for this engagement. Agree once you have reviewed them."
+        description={
+          issued || agreed
+            ? "Commercial terms for this engagement. Agree once you have reviewed them."
+            : "Rupert will issue the Service Order for this engagement."
+        }
       />
       <section className="rounded-card border border-border bg-surface p-lg">
-        <MarkdownBody
-          content={client?.service_order_content ?? ""}
-          emptyLabel="No service order has been added yet."
-        />
-        {client ? (
-          <ServiceOrderForm
-            agreedAt={client.service_order_agreed_at ?? null}
-            initial={{
-              linkedin_url: client.linkedin_url ?? "",
-              booking_link: client.booking_link ?? "",
-              company_website: client.company_website ?? "",
-              company_description: client.company_description ?? "",
-            }}
-          />
-        ) : null}
+        {issued || agreed ? (
+          <>
+            <MarkdownBody
+              content={client?.service_order_content ?? ""}
+              emptyLabel="No service order has been added yet."
+            />
+            {client ? (
+              <ServiceOrderForm
+                agreedAt={client.service_order_agreed_at ?? null}
+                initial={{
+                  linkedin_url: client.linkedin_url ?? "",
+                  booking_link: client.booking_link ?? "",
+                  company_website: client.company_website ?? "",
+                  company_description: client.company_description ?? "",
+                }}
+              />
+            ) : null}
+          </>
+        ) : (
+          <p className="text-body-sm text-body">
+            Rupert will issue your Service Order. You can confirm it here once
+            it is ready.
+          </p>
+        )}
       </section>
     </>
   );
