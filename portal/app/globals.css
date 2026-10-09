@@ -5,6 +5,7 @@
 @layer base {
   html {
     color-scheme: light;
+    @apply font-sans;
   }
 
   b,
