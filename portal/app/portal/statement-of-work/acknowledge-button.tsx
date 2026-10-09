@@ -44,12 +44,6 @@ export function AcknowledgeButton({
 
   return (
     <div>
-      <p className="mb-sm text-body-sm text-body">
-        Review of the Statement of Work is not a commitment.
-      </p>
-      <p className="mb-md text-body-sm text-body">
-        Next Step: You will receive a Service Order to confirm.
-      </p>
       <button
         type="button"
         onClick={onClick}
@@ -59,6 +53,12 @@ export function AcknowledgeButton({
         {pending ? "Submitting…" : "I Confirm the Statement of Work"}
       </button>
       {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
+      <p className="mt-md text-body-sm text-body">
+        Review of the Statement of Work is not a commitment.
+      </p>
+      <p className="mt-sm text-body-sm text-body">
+        Next Step: You will receive a Service Order to confirm.
+      </p>
     </div>
   );
 }
