@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   updateChecklistStatus,
   updateOnboardingTimestamp,
@@ -105,6 +106,7 @@ function DoneToggle({
   column: OnboardingTimestampColumn;
   done: boolean;
 }) {
+  const router = useRouter();
   const [checked, setChecked] = useState(done);
   const [pending, setPending] = useState(false);
   const [updated, setUpdated] = useState(false);
@@ -126,6 +128,8 @@ function DoneToggle({
         return;
       }
       setUpdated(true);
+      // Marking the Setup Fee paid can trigger kick-off; refresh the page.
+      router.refresh();
     } catch (err) {
       setChecked(previous);
       setError(err instanceof Error ? err.message : "Unable to update.");
@@ -170,7 +174,8 @@ export function EngagementProgress({
       <div className="border-b border-border px-lg py-lg">
         <h2 className="text-h4">Engagement Progress</h2>
         <p className="mt-xs text-body-sm text-muted">
-          Status shown to the client on Setup and Live Campaign.
+          Status shown to the client across Onboarding, Setup and Live
+          Campaign.
         </p>
       </div>
 

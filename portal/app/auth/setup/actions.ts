@@ -6,6 +6,7 @@ import {
   SETUP_LINK_UNAVAILABLE_MESSAGE,
   validateNewPassword,
 } from "@/lib/password-policy";
+import { notifyAdmin } from "@/lib/notify";
 import { findActiveSetup, markSetupUsed } from "@/lib/password-setup";
 import { roleFromUser } from "@/lib/roles";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -64,9 +65,7 @@ export async function completePasswordSetup(
   await markSetupUsed(supabase, clientId, token);
 
   // Best effort: the admin notification must not block the client.
-  await supabase
-    .from("notifications")
-    .insert({ client_id: clientId, type: "password_set" });
+  await notifyAdmin(supabase, clientId, "password_set", { email: true });
 
   revalidatePath("/admin", "layout");
   revalidatePath(`/admin/clients/${clientId}`);

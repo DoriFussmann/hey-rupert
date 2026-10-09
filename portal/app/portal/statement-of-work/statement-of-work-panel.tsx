@@ -8,9 +8,11 @@ import { AcknowledgeButton } from "@/app/portal/statement-of-work/acknowledge-bu
 export function StatementOfWorkPanel({
   content,
   acknowledgedAt,
+  readOnly = false,
 }: {
   content: string;
   acknowledgedAt?: string | null;
+  readOnly?: boolean;
 }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState<number | null>(null);
@@ -74,7 +76,10 @@ export function StatementOfWorkPanel({
       </div>
       {acknowledgedAt !== undefined ? (
         <div className="mt-md shrink-0">
-          <AcknowledgeButton acknowledgedAt={acknowledgedAt} />
+          <AcknowledgeButton
+            acknowledgedAt={acknowledgedAt}
+            readOnly={readOnly}
+          />
         </div>
       ) : null}
     </div>

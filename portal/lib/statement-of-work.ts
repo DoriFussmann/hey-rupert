@@ -8,15 +8,15 @@ Approval of this document confirms alignment on the proposed engagement, but **d
 
 The process is:
 
-**SOW Approval → Service Order → NDA → Client Intake → Setup → Go-Live**
+**SOW Approval → Service Order & Setup Fee → NDA → Client Intake → Setup → Go-Live**
 
 ---
 
 # 01 — Setup
 
-**Duration:** 2 weeks
+**Duration:** Target 2 to 4 weeks from Kick-off
 
-**Fee:** $250
+**Fee:** $250, one-time, due on signing the Service Order
 
 During Setup, Rupert collects and reviews the core company, fundraising, financial, team and positioning information required to prepare the campaign.
 
@@ -35,7 +35,7 @@ Before launch, the client will approve the investor list, campaign positioning a
 
 Rupert will not launch the campaign before these approvals are received.
 
-The Setup Phase remains two weeks. Client delays in providing information or approvals may delay launch, but do not extend the Setup period or delay the start of monthly billing.
+Setup targets 2 to 4 weeks from Kick-off. This is an estimate, not a deadline, and it extends for any client delay in providing information, materials, access or approvals.
 
 ---
 
@@ -45,7 +45,7 @@ The Setup Phase remains two weeks. Client delays in providing information or app
 
 **Term:** Month-to-month
 
-The first monthly service period begins immediately following the two-week Setup Phase.
+When Setup is complete, Rupert issues the first monthly invoice. Paying it confirms the decision to launch, and the first monthly service period begins on the launch date.
 
 During the active campaign, Rupert manages the approved investor outreach campaign and underlying outreach infrastructure.
 
@@ -79,11 +79,11 @@ Information approved by the client may be used by Rupert in connection with the 
 
 **Monthly Campaign Fee:** $1,000
 
-The monthly fee begins immediately after the two-week Setup Phase and is invoiced in advance.
+The first monthly invoice is issued when Setup is complete. Monthly fees are invoiced in advance.
 
 The engagement continues month-to-month.
 
-Cancellation takes effect at the next renewal date. Rupert will continue providing the agreed service through the end of any month already paid for.
+Cancellation requires written notice at least 7 days before the next renewal date and takes effect on that date. Rupert will continue providing the agreed service through the end of any month already paid for.
 
 ---
 
@@ -111,7 +111,7 @@ Rupert does not act as a broker, placement agent, legal advisor or financial adv
 
 # Commercial Summary
 
-**Setup:** 2 weeks
+**Setup:** Target 2 to 4 weeks from Kick-off
 
 **Setup Fee:** $250
 
@@ -121,13 +121,13 @@ Rupert does not act as a broker, placement agent, legal advisor or financial adv
 
 **Term:** Month-to-month
 
-**Cancellation:** Effective at next renewal
+**Cancellation:** 7 days' notice, effective at next renewal
 
-**Launch:** Following Setup and required client approvals
+**Launch:** Following Setup, required client approvals and payment of the first monthly invoice
 
 ## Next Step
 
-Approval of this Statement of Work allows Rupert to issue the **Service Order**.
+Approval of this Statement of Work allows Rupert to issue the **Service Order** and the **Setup Fee invoice**.
 
-The Service Order is the document that creates the binding engagement. Once signed, the NDA, Client Intake Form and Setup Invoice will follow.
+The Service Order is the document that creates the binding engagement. Once it is signed and the Setup Fee is paid, the engagement kicks off and the NDA and Client Intake Form follow.
 `;

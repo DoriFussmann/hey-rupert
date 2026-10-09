@@ -1,20 +1,29 @@
 import { AppShell } from "@/components/app-shell";
 import { PortalNav } from "@/components/portal-nav";
+import { ViewAsBanner } from "@/components/view-as-banner";
 import { requirePortalUser } from "@/lib/auth";
-import { getPortalClient } from "@/lib/data";
+import { getPortalView } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
+import type { Client } from "@/lib/types";
 
 export const metadata = {
   title: "Portal",
   description: "Your Rupert engagement, tracked in one place.",
 };
 
-function portalGreeting(client: Awaited<ReturnType<typeof getPortalClient>>) {
+function portalGreeting(client: Client | null) {
   const firstName =
     client?.first_name?.trim() ||
     client?.founder_name?.trim().split(/\s+/)[0] ||
     "";
   return firstName ? `Hey ${firstName}` : "Rupert";
+}
+
+function viewAsLabel(client: Client) {
+  const person = client.founder_name?.trim();
+  const company = client.company_name?.trim();
+  if (person && company && person !== company) return `${person} · ${company}`;
+  return company || person || "client";
 }
 
 export default async function PortalLayout({
@@ -26,7 +35,7 @@ export default async function PortalLayout({
     await requirePortalUser();
   }
 
-  const client = await getPortalClient();
+  const { client, viewAs } = await getPortalView();
 
   return (
     <AppShell
@@ -38,11 +47,13 @@ export default async function PortalLayout({
           onboarding={
             client
               ? {
+                  // The nav only counts completed steps, so the Service Order
+                  // text and invoice link are not sent to it.
                   sow_confirmed_at: client.sow_confirmed_at,
                   service_order_agreed_at: client.service_order_agreed_at,
+                  payment_received_at: client.payment_received_at,
                   nda_signed_at: client.nda_signed_at,
                   intake_completed_at: client.intake_completed_at,
-                  payment_received_at: client.payment_received_at,
                 }
               : null
           }
@@ -63,6 +74,7 @@ export default async function PortalLayout({
         />
       }
     >
+      {viewAs && client ? <ViewAsBanner label={viewAsLabel(client)} /> : null}
       {children}
     </AppShell>
   );

@@ -1,9 +1,10 @@
 import { PageHeader } from "@/components/page-header";
-import { StatementOfWorkTemplateEditor } from "@/app/admin/forms/statement-of-work/template-editor";
+import { FormTemplateEditor } from "@/components/form-template-editor";
 import { getFormTemplate } from "@/app/admin/actions";
+import { STATEMENT_OF_WORK_SLUG } from "@/lib/form-fields";
 
 export default async function StatementOfWorkFormPage() {
-  const template = await getFormTemplate();
+  const template = await getFormTemplate(STATEMENT_OF_WORK_SLUG);
 
   return (
     <>
@@ -11,7 +12,12 @@ export default async function StatementOfWorkFormPage() {
         title="Statement of Work"
         description="The Statement of Work sent to clients. Edit the text, then generate and send it from a client page."
       />
-      <StatementOfWorkTemplateEditor initialContent={template.content} />
+      <FormTemplateEditor
+        slug={STATEMENT_OF_WORK_SLUG}
+        title={template.title}
+        initialContent={template.content}
+        defaultContent={template.defaultContent}
+      />
     </>
   );
 }

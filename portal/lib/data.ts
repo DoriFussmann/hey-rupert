@@ -9,8 +9,9 @@ import {
   placeholderInvestors,
   placeholderReplies,
   placeholderScopeOfWork,
-  placeholderServiceOrder,
 } from "@/lib/placeholders";
+import { DEFAULT_SERVICE_ORDER } from "@/lib/service-order";
+import { readViewAsClientId } from "@/lib/view-as";
 import { createClient } from "@/lib/supabase/server";
 import type {
   Acknowledgement,
@@ -19,6 +20,7 @@ import type {
   ClientStatus,
   Investor,
   InvestorReply,
+  ServiceOrderSend,
   SowSend,
 } from "@/lib/types";
 
@@ -146,6 +148,8 @@ function asClient(row: Record<string, unknown>): Client {
       row.service_order_agreed_at != null
         ? String(row.service_order_agreed_at)
         : null,
+    setup_invoice_url:
+      row.setup_invoice_url != null ? String(row.setup_invoice_url) : null,
     linkedin_url:
       row.linkedin_url != null ? String(row.linkedin_url) : null,
     booking_link:
@@ -247,21 +251,124 @@ export async function listSowSends(clientId: string): Promise<SowSend[]> {
   }
 }
 
-export const getPortalClient = cache(async (): Promise<Client | null> => {
+function asServiceOrderSend(row: Record<string, unknown>): ServiceOrderSend {
+  const text = (value: unknown) => (value != null ? String(value) : "");
+  const signedAt = row.signed_at != null ? String(row.signed_at) : null;
+
+  return {
+    id: String(row.id),
+    client_id: text(row.client_id),
+    content: text(row.content),
+    payment_link: text(row.payment_link),
+    sent_at: String(row.sent_at ?? new Date().toISOString()),
+    archived_at: row.archived_at != null ? String(row.archived_at) : null,
+    signature: signedAt
+      ? {
+          company_name: text(row.signer_company),
+          signer_name: text(row.signer_name),
+          signer_email: text(row.signer_email),
+          signer_title: text(row.signer_title),
+          signed_at: signedAt,
+        }
+      : null,
+    signed_content:
+      row.signed_content != null ? String(row.signed_content) : null,
+    signed_ip: row.signed_ip != null ? String(row.signed_ip) : null,
+  };
+}
+
+export async function listServiceOrderSends(
+  clientId: string,
+): Promise<ServiceOrderSend[]> {
+  if (!isServiceRoleConfigured()) return [];
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("service_order_sends")
+      .select("*")
+      .eq("client_id", clientId)
+      .order("sent_at", { ascending: false });
+
+    if (error || !data) return [];
+    return data.map((row) =>
+      asServiceOrderSend(row as Record<string, unknown>),
+    );
+  } catch {
+    return [];
+  }
+}
+
+export async function getActiveServiceOrder(
+  clientId: string,
+): Promise<ServiceOrderSend | null> {
+  if (!isServiceRoleConfigured()) return null;
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("service_order_sends")
+      .select("*")
+      .eq("client_id", clientId)
+      .is("archived_at", null)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return asServiceOrderSend(data as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
+export type PortalView = {
+  client: Client | null;
+  /** True when an admin is previewing this client's portal (read-only). */
+  viewAs: boolean;
+};
+
+async function loadClientById(id: string) {
+  if (!isServiceRoleConfigured()) return null;
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("clients")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    if (error || !data) return null;
+    return asClient(data as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
+export const getPortalView = cache(async (): Promise<PortalView> => {
   if (!isSupabaseConfigured()) {
     const preview = placeholderClients[2] ?? placeholderClients[0];
     return {
-      ...preview,
-      stage: "sow",
-      statement_of_work_content: placeholderScopeOfWork,
-      sow_confirmed_at: null,
-      service_order_content: placeholderServiceOrder,
-      service_order_agreed_at: null,
+      client: {
+        ...preview,
+        stage: "service_order",
+        statement_of_work_content: placeholderScopeOfWork,
+        sow_confirmed_at: "2026-08-21T17:02:00.000Z",
+        service_order_content: DEFAULT_SERVICE_ORDER,
+        service_order_agreed_at: null,
+        setup_invoice_url: "https://invoice.stripe.com/i/preview",
+      },
+      viewAs: false,
     };
   }
 
-  const { user } = await getAuthContext();
-  if (!user) return null;
+  const { user, role } = await getAuthContext();
+  if (!user) return { client: null, viewAs: false };
+
+  if (role === "admin") {
+    const clientId = readViewAsClientId();
+    if (!clientId) return { client: null, viewAs: false };
+    const client = await loadClientById(clientId);
+    return { client, viewAs: Boolean(client) };
+  }
 
   try {
     const supabase = createClient();
@@ -271,30 +378,21 @@ export const getPortalClient = cache(async (): Promise<Client | null> => {
       .eq("id", user.id)
       .maybeSingle();
     if (!error && data) {
-      return asClient(data as Record<string, unknown>);
+      return {
+        client: asClient(data as Record<string, unknown>),
+        viewAs: false,
+      };
     }
   } catch {
     // Fall through to the service-role lookup.
   }
 
-  if (isServiceRoleConfigured()) {
-    try {
-      const supabase = createServiceClient();
-      const { data, error } = await supabase
-        .from("clients")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
-      if (!error && data) {
-        return asClient(data as Record<string, unknown>);
-      }
-    } catch {
-      return null;
-    }
-  }
-
-  return null;
+  return { client: await loadClientById(user.id), viewAs: false };
 });
+
+export const getPortalClient = cache(
+  async (): Promise<Client | null> => (await getPortalView()).client,
+);
 
 export async function listAcknowledgements() {
   return fromTable<Acknowledgement>(

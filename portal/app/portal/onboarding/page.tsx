@@ -12,7 +12,7 @@ export default async function OnboardingPage() {
     <>
       <PageHeader
         title="Onboarding"
-        description={`${complete} of ${total} complete. Confirm each step in order — Rupert will handle the rest.`}
+        description={`${complete} of ${total} complete. Work through each step below — Rupert will handle the rest.`}
       />
       <OnboardingChecklist items={items} />
     </>

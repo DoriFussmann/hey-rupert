@@ -44,6 +44,7 @@ const config: Config = {
           "sans-serif",
         ],
         mono: ["var(--font-mono)", "IBM Plex Mono", "Courier New", "monospace"],
+        signature: ["var(--font-signature)", "Allura", "cursive"],
       },
       fontWeight: {
         light: "300",
