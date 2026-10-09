@@ -8,6 +8,8 @@ function isPublicPath(pathname: string) {
     pathname === "/login" ||
     pathname.startsWith("/login/") ||
     pathname === "/auth/setup" ||
+    // Stripe calls this without a session; it verifies Stripe's signature.
+    pathname === "/api/stripe/webhook" ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   );

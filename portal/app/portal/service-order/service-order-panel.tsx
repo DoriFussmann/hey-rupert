@@ -208,8 +208,8 @@ export function ServiceOrderPanel({
           ) : (
             <>
               <p className="text-body-sm text-muted">
-                One-time, paid securely through Stripe. Rupert marks it paid
-                here once it is received.
+                One-time, paid securely through Stripe. It shows as paid here
+                automatically once your payment goes through.
               </p>
               {invoiceUrl && !readOnly ? (
                 <a

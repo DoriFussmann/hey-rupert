@@ -29,7 +29,9 @@ import {
   type FormSlug,
 } from "@/lib/form-fields";
 import { clientDisplayName } from "@/lib/format";
+import { sendAdminEmail, type EmailResult } from "@/lib/email";
 import { advanceToKickoff } from "@/lib/kickoff";
+import { notifyClient } from "@/lib/notify";
 import {
   DEFAULT_SERVICE_ORDER,
   isStripePaymentLink,
@@ -53,6 +55,12 @@ export type CreateClientInput = {
 
 export type ActionResult =
   | { ok: true; linked?: boolean }
+  | { ok: false; error: string };
+
+// Pushing a document to the portal also emails the client; the email result
+// is reported separately because a failed email does not undo the push.
+export type SendToClientResult =
+  | { ok: true; clientEmail: EmailResult }
   | { ok: false; error: string };
 
 // On success the admin gets the client's set-password link to email them.
@@ -489,9 +497,9 @@ export async function updateOnboardingTimestamp(
   }
 
   if (column === "payment_received_at" && done) {
-    // The admin is the one acting here, so no email; the in-app
-    // notification still records that kick-off is ready.
-    await advanceToKickoff(access.supabase, clientId, { email: false });
+    // The admin is the one acting here, so no email; kick-off still records
+    // its in-app notification.
+    await advanceToKickoff(access.supabase, clientId);
   }
 
   revalidateProgressPaths(clientId);
@@ -774,7 +782,7 @@ export async function generateStatementOfWork(
 export async function sendStatementOfWork(
   clientId: string,
   content: string,
-): Promise<ActionResult> {
+): Promise<SendToClientResult> {
   const access = await requireAdminService();
   if (!access.ok) return access;
 
@@ -850,10 +858,16 @@ export async function sendStatementOfWork(
     return { ok: false, error: error.message };
   }
 
+  const clientEmail = await notifyClient(
+    access.supabase,
+    clientId,
+    "statement_of_work_ready",
+  );
+
   revalidatePath("/admin");
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/portal/statement-of-work");
-  return { ok: true };
+  return { ok: true, clientEmail };
 }
 
 function sowSendsTableError(message: string, code?: string) {
@@ -959,7 +973,10 @@ function serviceOrderTableError(message: string, code?: string) {
   );
 }
 
-function serviceOrderError(message: string, code?: string): ActionResult {
+function serviceOrderError(
+  message: string,
+  code?: string,
+): { ok: false; error: string } {
   return {
     ok: false,
     error: serviceOrderTableError(message, code)
@@ -990,7 +1007,7 @@ export async function sendServiceOrder(
   clientId: string,
   content: string,
   paymentLink: string,
-): Promise<ActionResult> {
+): Promise<SendToClientResult> {
   const access = await requireAdminService();
   if (!access.ok) return access;
 
@@ -1050,8 +1067,14 @@ export async function sendServiceOrder(
     .eq("id", clientId)
     .or("stage.is.null,stage.eq.sow");
 
+  const clientEmail = await notifyClient(
+    supabase,
+    clientId,
+    "service_order_ready",
+  );
+
   revalidateServiceOrderPaths(clientId);
-  return { ok: true };
+  return { ok: true, clientEmail };
 }
 
 /**
@@ -1094,4 +1117,15 @@ export async function archiveServiceOrder(
 
   revalidateServiceOrderPaths(clientId);
   return { ok: true };
+}
+
+/** Sends a test email to the admin address so email setup can be checked. */
+export async function sendTestEmail(): Promise<EmailResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return { ok: false, reason: access.error };
+
+  return sendAdminEmail(
+    "Rupert test email",
+    "Email notifications from the Rupert portal are working.",
+  );
 }
