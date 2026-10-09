@@ -10,6 +10,7 @@ import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { getAdminClient, listSowSends } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { getClientAccess } from "@/lib/password-setup";
 
 export default async function ClientDetailPage({
   params,
@@ -22,7 +23,10 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const sends = await listSowSends(client.id);
+  const [sends, access] = await Promise.all([
+    listSowSends(client.id),
+    getClientAccess(client.id),
+  ]);
 
   return (
     <>
@@ -90,6 +94,7 @@ export default async function ClientDetailPage({
         companyName={client.company_name}
         firstName={client.first_name ?? ""}
         email={client.email ?? ""}
+        access={access}
       />
       <GenerateStatementOfWork
         clientId={client.id}

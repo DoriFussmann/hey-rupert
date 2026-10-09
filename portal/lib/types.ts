@@ -169,3 +169,11 @@ export type SowSend = {
   sent_at: string;
   archived_at: string | null;
 };
+
+// A client's portal login state, as shown to admins.
+export type ClientAccess =
+  | { status: "pending"; url: string; expiresAt: string }
+  | { status: "expired"; expiresAt: string }
+  | { status: "set"; usedAt: string }
+  | { status: "legacy" }
+  | { status: "unavailable"; error: string };

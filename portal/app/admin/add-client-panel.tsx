@@ -5,12 +5,10 @@ import { useRouter } from "next/navigation";
 import { createClientRecord } from "@/app/admin/actions";
 import { Select } from "@/components/select";
 import {
-  CopyButton,
-  CredentialsResult,
-  buildEmail,
-  generatePassword,
-  type Credentials,
-} from "@/app/admin/credentials-result";
+  SetupLinkResult,
+  buildWelcomeEmail,
+  type SetupLinkDetails,
+} from "@/app/admin/setup-link-result";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
@@ -27,10 +25,18 @@ const emptyForm = {
   geography: "",
   fund_match_count: "",
   admin_notes: "",
-  password: "",
 };
 
-type Created = Credentials & { linked: boolean };
+type Created = SetupLinkDetails & { linked: boolean };
+
+function RequiredMark() {
+  return (
+    <span className="text-error" aria-hidden="true">
+      {" "}
+      *
+    </span>
+  );
+}
 
 export function AddClientButton() {
   const router = useRouter();
@@ -39,17 +45,8 @@ export function AddClientButton() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
-  const [showPassword, setShowPassword] = useState(true);
   const [created, setCreated] = useState<Created | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
-
-  // Auto-generate a password whenever the panel is opened fresh.
-  useEffect(() => {
-    if (open && !created && !form.password) {
-      setForm((current) => ({ ...current, password: generatePassword() }));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -108,11 +105,12 @@ export function AddClientButton() {
       const createdInfo: Created = {
         firstName: form.first_name.trim(),
         email: result.email,
-        password: result.password,
+        setupUrl: result.setupUrl,
+        expiresAt: result.expiresAt,
         linked: result.linked,
       };
       setCreated(createdInfo);
-      setEmailDraft(buildEmail(createdInfo));
+      setEmailDraft(buildWelcomeEmail(createdInfo));
       setPending(false);
     } catch {
       setError("Unable to add the client. Please try again.");
@@ -155,7 +153,7 @@ export function AddClientButton() {
                   Admin
                 </p>
                 <h2 id={titleId} className="mt-sm text-h3">
-                  {created ? "Client ready - send the login" : "Add client"}
+                  {created ? "New Client & Portal Created" : "Add client"}
                 </h2>
               </div>
               <button
@@ -170,14 +168,17 @@ export function AddClientButton() {
             {created ? (
               <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto px-lg py-lg">
-                  <p className="mb-lg text-body-sm text-success">
+                  <p
+                    role="status"
+                    className="mb-lg text-body-sm text-success"
+                  >
                     {created.linked
-                      ? "Linked to the existing login and set a new password."
-                      : "Client created."}{" "}
-                    Send them these details to log in.
+                      ? "Linked to the login that already existed for this email."
+                      : "Client and portal login created."}{" "}
+                    Send them the link below to set their password.
                   </p>
-                  <CredentialsResult
-                    credentials={created}
+                  <SetupLinkResult
+                    details={created}
                     emailDraft={emailDraft}
                     setEmailDraft={setEmailDraft}
                   />
@@ -186,8 +187,8 @@ export function AddClientButton() {
                   <button
                     type="button"
                     onClick={() => {
+                      router.refresh();
                       resetAll();
-                      setForm({ ...emptyForm, password: generatePassword() });
                     }}
                     className="mr-auto rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
                   >
@@ -208,8 +209,13 @@ export function AddClientButton() {
                 className="flex flex-1 flex-col overflow-hidden"
               >
                 <div className="grid flex-1 gap-lg overflow-y-auto px-lg py-lg">
+                  <p className="text-body-sm text-muted">
+                    <span className="text-error">*</span> Required. A
+                    set-password link is created for the client.
+                  </p>
                   <label className={labelClass}>
                     First name
+                    <RequiredMark />
                     <input
                       className={fieldClass}
                       name="first_name"
@@ -221,6 +227,7 @@ export function AddClientButton() {
                   </label>
                   <label className={labelClass}>
                     Last name
+                    <RequiredMark />
                     <input
                       className={fieldClass}
                       name="last_name"
@@ -231,6 +238,7 @@ export function AddClientButton() {
                   </label>
                   <label className={labelClass}>
                     Email
+                    <RequiredMark />
                     <input
                       className={fieldClass}
                       name="email"
@@ -242,45 +250,8 @@ export function AddClientButton() {
                   </label>
 
                   <label className={labelClass}>
-                    Password
-                    <span className="mt-sm flex gap-sm">
-                      <input
-                        className={fieldClass + " mt-0 flex-1"}
-                        name="password"
-                        type={showPassword ? "text" : "password"}
-                        value={form.password}
-                        onChange={update("password")}
-                        autoComplete="off"
-                        spellCheck={false}
-                        placeholder="Auto-generated"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="rounded-md border border-border bg-surface px-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
-                        aria-pressed={showPassword}
-                      >
-                        {showPassword ? "Hide" : "Show"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setForm((c) => ({ ...c, password: generatePassword() }))
-                        }
-                        className="rounded-md border border-border bg-surface px-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
-                      >
-                        New
-                      </button>
-                      <CopyButton value={form.password} />
-                    </span>
-                    <span className="mt-sm block text-body-sm normal-case tracking-normal text-muted">
-                      Set as their login password and included in the email. If
-                      the email already has an account, this resets it.
-                    </span>
-                  </label>
-
-                  <label className={labelClass}>
                     Company name
+                    <RequiredMark />
                     <input
                       className={fieldClass}
                       name="company_name"
