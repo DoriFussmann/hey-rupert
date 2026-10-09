@@ -1,6 +1,9 @@
 export const SITE_URL = "https://www.heyrupert.com";
 export const SITE_NAME = "Rupert";
 
+/** Portal sign-in. The site Login button goes here, not through an interstitial. */
+export const PORTAL_LOGIN_URL = "https://hey-rupert-portal.vercel.app/login";
+
 /** Public LinkedIn profile for Dori. Used on Person schema, not as a company profile. */
 export const DORI_LINKEDIN =
   "https://www.linkedin.com/in/dori-fussmann-663ba242";

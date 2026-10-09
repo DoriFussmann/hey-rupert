@@ -1,6 +1,6 @@
 ---
 import { Image } from "astro:assets";
-import { SITE_NAME } from "../config/site";
+import { PORTAL_LOGIN_URL, SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
 import rupertLogo from "../assets/brand/rupert-logo.svg";
 ---
@@ -24,7 +24,7 @@ import rupertLogo from "../assets/brand/rupert-logo.svg";
       <a class="btn-primary btn-primary--nav" href={sitePath("/book-call/")}>
         Request a Discovery Call
       </a>
-      <a class="btn-outline btn-outline--nav" href={sitePath("/login/")}>
+      <a class="btn-outline btn-outline--nav" href={PORTAL_LOGIN_URL}>
         Login
       </a>
     </div>
