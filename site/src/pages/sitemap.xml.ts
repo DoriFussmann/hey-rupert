@@ -9,6 +9,7 @@ const STATIC_PATHS = [
   "/database/",
   "/articles/",
   "/about/",
+  "/team/",
   "/book-call/",
 ];
 

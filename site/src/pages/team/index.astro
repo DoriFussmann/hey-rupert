@@ -1,19 +1,102 @@
 ---
+import { Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
-import { SITE_NAME } from "../../config/site";
+import CaseStack from "../../components/CaseStack.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
+import { DORI_LINKEDIN, SITE_NAME } from "../../config/site";
 import { sitePath } from "../../lib/url";
+import doriPortrait from "../../assets/team/dori-fussmann/photo.jpg";
+import linkedinLogo from "../../assets/brand/linkedin.png";
 
-const title = `Team — ${SITE_NAME}`;
+const title = `Dori Fussmann, Founder | ${SITE_NAME}`;
 const description =
-  "Meet the Rupert team. Dori Fussmann founded Rupert to run researched, personalized investor outreach for founders raising capital.";
+  "Dori Fussmann founded Rupert after leading The Vets, advising companies at Citi, Morgan Stanley and Ion Pacific, and serving as CFO of BlueMark.";
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/team/">
-  <main id="main-content" class="site-wrap flex-1 py-2xl lg:py-3xl">
-    <h1 class="type-h1">Team</h1>
-    <p class="type-body mt-lg max-w-prose">
-      Rupert is founded by Dori Fussmann. Read more on the
-      <a href={sitePath("/about/")}>About</a> page.
-    </p>
+  <main id="main-content" class="flex-1">
+    <section class="site-wrap section-block pt-2xl lg:pt-3xl" aria-labelledby="team-heading">
+      <div class="founder-grid">
+        <div class="founder-copy">
+          <p class="type-label">Team</p>
+          <h1 id="team-heading" class="type-h1 mt-md">
+            Built by someone who has raised, advised and operated.
+          </h1>
+          <p class="type-body mt-lg max-w-prose">
+            Rupert was founded by Dori Fussmann, an entrepreneur, finance
+            executive, and former investment banker who has worked on both sides
+            of the fundraising table.
+          </p>
+          <p class="type-body mt-md max-w-prose">
+            Before founding Rupert, Dori founded and led The Vets, a
+            tech-enabled pet healthcare company that raised institutional
+            capital and later merged with BetterVet. He previously worked in
+            investment banking at Citi, Morgan Stanley, and Ion Pacific,
+            advising technology and consumer companies on M&A, IPOs, and
+            strategic financing.
+          </p>
+          <p class="type-body mt-md max-w-prose">
+            Today, Dori serves as CFO of BlueMark, an impact-investment
+            intelligence platform, and has supported fundraising and financing
+            work as a fractional CFO. He also mentors early-stage founders
+            through Cornell Tech's Runway Startups Program and Yale's Tsai CITY.
+          </p>
+          <p class="mt-xl flex flex-wrap items-center gap-md">
+            <a class="btn-primary" href={sitePath("/book-call/")}>Request a Discovery Call</a>
+            <a class="btn-quiet" href={sitePath("/about/")}>About Dori Fussmann</a>
+          </p>
+        </div>
+        <aside class="founder-panel">
+          <div class="founder-panel__top">
+            <Image
+              class="founder-panel__photo photo"
+              src={doriPortrait}
+              alt="Photograph of Dori Fussmann, founder of Rupert"
+              width={192}
+              height={192}
+            />
+            <div class="founder-panel__identity">
+              <h2 class="type-h3 founder-panel__name">
+                <a href={sitePath("/about/")}>Dori Fussmann</a>
+              </h2>
+              <p class="type-label mt-xs">Founder</p>
+              <p class="founder-panel__links">
+                <a
+                  class="founder-panel__linkedin"
+                  href={DORI_LINKEDIN}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Dori Fussmann on LinkedIn"
+                >
+                  <Image src={linkedinLogo} alt="" width={20} height={20} />
+                </a>
+              </p>
+            </div>
+            <button
+              type="button"
+              class="founder-panel__expand"
+              data-case-expand
+              aria-expanded="false"
+              aria-label="Expand all roles"
+            >
+              <span class="founder-panel__expand-chevron" aria-hidden="true"></span>
+            </button>
+          </div>
+          <CaseStack />
+        </aside>
+      </div>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="why-rupert">
+      <h2 id="why-rupert" class="type-h2">Why Rupert exists</h2>
+      <p class="type-body mt-md max-w-prose">
+        Rupert brings the discipline of institutional dealmaking to founder-led
+        fundraising: carefully researched investor targeting, personalized
+        outreach, and a transparent process in which founders retain ownership
+        of every investor relationship.
+        <a href={sitePath("/how-it-works/")}>See how Rupert runs investor outreach</a>.
+      </p>
+    </section>
   </main>
+  <CtaBanner />
 </BaseLayout>

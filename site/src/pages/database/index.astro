@@ -1,29 +1,78 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
+import FaqBlock from "../../components/FaqBlock.astro";
 import { sitePath } from "../../lib/url";
 
 const title = "Investor Research & Targeting Database | Rupert";
 const description =
   "See how Rupert uses structured investor research to identify VCs, family offices and other capital sources that fit a startup's stage, sector and raise.";
 
-const capabilities = [
+const proofPoints = [
   {
-    title: "Fit, not volume",
-    body: "The dataset is used to narrow a large market into investors whose stage, sector, geography and mandate fit the company being raised for.",
+    title: "10,000+ funds in the research universe",
+    body: "A broad starting point for building a focused, relevant investor list.",
   },
   {
-    title: "Structured criteria",
-    body: "Research considers investment thesis, check size, financing type and actual activity — not a generic list of names.",
+    title: "Stage and sector alignment",
+    body: "Research considers investment thesis, check size, geography, financing stage, and actual investment activity.",
   },
   {
-    title: "Used inside the work",
-    body: "Founders buy the outcome of that research: a relevant target list and outreach built from it. The database is not a self-serve export product.",
+    title: "Human judgment, not automated list-building",
+    body: "Investors are selected for their relevance to your company and raise, rather than simply included because they appear in a directory.",
+  },
+];
+
+const faqs = [
+  {
+    question: "What types of investors does Rupert research?",
+    answer:
+      "Rupert researches venture funds, family offices, and other relevant capital sources, selecting targets based on the company's stage, sector, geography, investment thesis, and raise.",
+  },
+  {
+    question: "How does Rupert identify relevant investors?",
+    answer:
+      "Rupert combines structured investor research with human judgment, considering mandate, check size, stage, sector, geography, and available information about investment activity.",
+  },
+  {
+    question: "Can I buy or download Rupert's investor database?",
+    answer:
+      "No. The research is used within Rupert's managed investor outreach service to build a relevant target list for each campaign. It is not offered as a self-service database export.",
+  },
+  {
+    question: "Do I approve the investor list and outreach?",
+    answer:
+      "Yes. Founders review and approve the targeting strategy, target list, and messaging before outreach begins.",
+  },
+  {
+    question: "How large is Rupert's investor research universe?",
+    answer:
+      "Rupert's existing company materials describe a research universe of more than 10,000 funds. This refers to the broader research universe, not a guarantee that every fund is active, eligible, or appropriate for a particular raise.",
+  },
+];
+
+const jsonLd: Record<string, unknown>[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
   },
 ];
 ---
 
-<BaseLayout title={title} description={description} canonicalPath="/database/">
+<BaseLayout
+  title={title}
+  description={description}
+  canonicalPath="/database/"
+  jsonLd={jsonLd}
+>
   <main id="main-content" class="flex-1">
     <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
       <p class="type-label">Our Database</p>
@@ -31,25 +80,25 @@ const capabilities = [
         The research behind every Rupert campaign.
       </h1>
       <p class="type-body-lg mt-lg max-w-prose">
-        Rupert works from a structured investor dataset covering venture funds,
-        family offices and other relevant capital sources. The database helps
-        narrow a large market into investors whose stage, sector, geography and
-        mandate fit the company being raised for.
+        Rupert works from a structured investor research universe covering
+        venture funds, family offices, and other relevant capital sources. The
+        research helps narrow a large market into investors whose stage, sector,
+        geography, and investment mandate fit the company being raised for.
       </p>
     </section>
 
-    <section class="site-wrap section-block rule" aria-labelledby="research-heading">
-      <h2 id="research-heading" class="type-h2">
-        Built for targeting, not browsing.
+    <section class="site-wrap section-block rule" aria-labelledby="fit-heading">
+      <h2 id="fit-heading" class="type-h2">
+        A research universe built around investor fit
       </h2>
       <p class="type-body mt-md max-w-prose">
-        The founder is buying the quality of the match and the outreach, not an
-        Excel file. Research stays inside the campaign process —
-        <a href={sitePath("/how-it-works/")}>see how that process runs</a>.
+        Fit, not volume. The criteria below narrow a large market into investors
+        whose stage, sector, geography, and mandate fit the company — not a
+        generic list of names.
       </p>
       <ul class="editorial-grid editorial-grid--3 mt-2xl">
         {
-          capabilities.map((item) => (
+          proofPoints.map((item) => (
             <li class="editorial-cell">
               <h3 class="type-h3">{item.title}</h3>
               <p class="type-body mt-sm">{item.body}</p>
@@ -57,6 +106,32 @@ const capabilities = [
           ))
         }
       </ul>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="campaign-heading">
+      <h2 id="campaign-heading" class="type-h2">Built into the campaign</h2>
+      <p class="type-body mt-md max-w-prose">
+        Rupert uses its research to develop your target investor universe,
+        personalize outreach, and manage follow-up. You review and approve the
+        strategy, targets, and messaging before anything goes out.
+      </p>
+      <p class="type-body mt-md max-w-prose">
+        The result is a more disciplined approach to investor outreach, with
+        visibility into the process and ownership of every investor relationship
+        remaining with you. The research is used within the managed campaign. It
+        is not offered as a self-service database export.
+      </p>
+      <p class="type-body mt-md max-w-prose">
+        <a href={sitePath("/how-it-works/")}>See how Rupert runs investor outreach</a>,
+        or read about <a href={sitePath("/about/")}>Dori Fussmann</a>, who leads
+        the work.
+        <a href={sitePath("/book-call/")}>Request a discovery call</a> when you
+        are ready to talk through a raise.
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="faq-heading">
+      <FaqBlock faqs={faqs} bordered={false} />
     </section>
   </main>
   <CtaBanner />

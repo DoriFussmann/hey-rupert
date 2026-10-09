@@ -1,15 +1,18 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
+import { DORI_LINKEDIN } from "../../config/site";
 import { BOOKING_ENDPOINT, CAL_COM_URL } from "../../config/publicEnv";
+import { sitePath } from "../../lib/url";
 
 const title = "Request a Discovery Call | Rupert";
 const description =
-  "A 30-minute conversation with Dori to understand what you're raising, where you are in the process, and whether Rupert is the right fit.";
+  "A 30-minute call with Dori Fussmann for founders preparing to raise or actively fundraising, especially Pre-Seed through Series A.";
 
-const bullets = [
-  "Discuss your target investor profile",
-  "Understand how Rupert runs outreach",
-  "Determine whether the engagement makes sense",
+const cover = [
+  "Your company, fundraising stage, target round, and current investor pipeline.",
+  "Which investor profiles and funding sources may be relevant to your raise.",
+  "How Rupert approaches investor research, personalized outreach, and follow-up.",
+  "Whether Rupert's managed service is the right fit for your company.",
 ];
 
 const formConfigured = Boolean(BOOKING_ENDPOINT);
@@ -19,85 +22,118 @@ const canBook = formConfigured || calendarConfigured;
 
 <BaseLayout title={title} description={description} canonicalPath="/book-call/">
   <main id="main-content" class="flex-1">
-    <section class="site-wrap grid gap-2xl py-2xl lg:grid-cols-12 lg:gap-lg lg:py-3xl">
-      <div class="lg:col-span-6">
+    <section class="site-wrap grid gap-2xl py-2xl lg:grid-cols-12 lg:gap-x-lg lg:py-3xl">
+      <div class="order-1 lg:col-span-6 lg:col-start-1 lg:row-start-1">
         <h1 class="type-h1">Let's talk about your raise.</h1>
         <p class="type-body-lg mt-lg max-w-prose">
-          A 30-minute conversation with Dori to understand what you're raising,
-          where you are in the process, and whether Rupert is the right fit.
+          A 30-minute conversation with
+          <a href={sitePath("/about/")}>Dori Fussmann</a>, founder of Rupert,
+          for founders preparing to raise or actively fundraising.
         </p>
-        <ul class="mt-xl">
+        <p class="mt-md">
+          <a href={DORI_LINKEDIN} target="_blank" rel="noopener noreferrer">
+            Dori Fussmann on LinkedIn
+          </a>
+        </p>
+
+        <h2 class="type-h2 mt-2xl">Who the call is for</h2>
+        <p class="type-body mt-md max-w-prose">
+          Founders of venture-scale companies, particularly those preparing for
+          or raising Pre-Seed through Series A, who need a more disciplined
+          approach to investor research and outreach.
+        </p>
+      </div>
+
+      <div class="order-3 lg:col-span-6 lg:col-start-1 lg:row-start-2">
+        <h2 class="type-h2">What we'll cover</h2>
+        <ul class="mt-md">
           {
-            bullets.map((item) => (
+            cover.map((item) => (
               <li class="rule py-md type-body">{item}</li>
             ))
           }
         </ul>
+
+        <h2 class="type-h2 mt-2xl">Why speak with Dori?</h2>
+        <p class="type-body mt-md max-w-prose">
+          <a href={sitePath("/about/")}>Dori</a> has experience across investment
+          banking at Citi and Morgan Stanley, founding and leading The Vets, and
+          serving as CFO of BlueMark. He built Rupert to bring that operator and
+          finance experience to founders managing a raise.
+        </p>
+        <p class="type-body rule mt-xl max-w-prose pt-lg">
+          The goal is straightforward: understand your situation, explain
+          <a href={sitePath("/how-it-works/")}>how Rupert works</a>, and
+          determine whether there's a sensible fit. No funding guarantees, no
+          pressure, and no obligation to proceed.
+        </p>
       </div>
 
-      <div class="lg:col-span-6">
-        <form
-          class="lead-form"
-          id="booking-form"
-          method="post"
-          action={formConfigured ? BOOKING_ENDPOINT : undefined}
-          data-configured={formConfigured ? "true" : "false"}
-          data-calendar={calendarConfigured ? CAL_COM_URL : ""}
-        >
-          <h2 class="type-h2">Request a Discovery Call</h2>
-
-          <p class="mt-xl">
-            <label class="type-label" for="full-name">Full Name</label>
-            <input
-              class="field-input"
-              id="full-name"
-              name="name"
-              type="text"
-              autocomplete="name"
-              required
-            />
-          </p>
-          <p class="mt-lg">
-            <label class="type-label" for="work-email">Email</label>
-            <input
-              class="field-input"
-              id="work-email"
-              name="email"
-              type="email"
-              autocomplete="email"
-              required
-            />
-          </p>
-          <p class="mt-lg">
-            <label class="type-label" for="company">Company</label>
-            <input class="field-input" id="company" name="company" type="text" required />
-          </p>
-          <p class="mt-lg">
-            <label class="type-label" for="notes">Optional Note</label>
-            <textarea class="field-textarea" id="notes" name="notes"></textarea>
-          </p>
-          <p class="mt-xl">
-            <button class="btn-primary" type="submit">
-              {calendarConfigured ? "Submit & Pick a Time" : "Request a call"}
-            </button>
-          </p>
-          <p
-            class="form-status"
-            id="booking-status"
-            role="status"
-            hidden={canBook}
+      <div class="order-2 lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1">
+        <div class="lg:sticky lg:top-24">
+          <form
+            class="lead-form"
+            id="booking-form"
+            method="post"
+            action={formConfigured ? BOOKING_ENDPOINT : undefined}
+            data-configured={formConfigured ? "true" : "false"}
+            data-calendar={calendarConfigured ? CAL_COM_URL : ""}
           >
-            {
-              !canBook &&
-                "Online booking is not connected yet. The form is ready, but submissions are not being sent until a booking calendar is configured."
-            }
-          </p>
-        </form>
+            <h2 class="type-h2">Request a Discovery Call</h2>
 
-        <div class="lead-form" id="booking-scheduler" hidden>
-          <h2 class="type-h2">You're in. Pick a time below.</h2>
-          <p class="type-body mt-md">Choose a 30-minute slot that works for you.</p>
-          <div class="cal-embed" id="cal-embed"></div>
+            <p class="mt-xl">
+              <label class="type-label" for="full-name">Full Name</label>
+              <input
+                class="field-input"
+                id="full-name"
+                name="name"
+                type="text"
+                autocomplete="name"
+                required
+              />
+            </p>
+            <p class="mt-lg">
+              <label class="type-label" for="work-email">Email</label>
+              <input
+                class="field-input"
+                id="work-email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                required
+              />
+            </p>
+            <p class="mt-lg">
+              <label class="type-label" for="company">Company</label>
+              <input class="field-input" id="company" name="company" type="text" required />
+            </p>
+            <p class="mt-lg">
+              <label class="type-label" for="notes">Optional Note</label>
+              <textarea class="field-textarea" id="notes" name="notes"></textarea>
+            </p>
+            <p class="mt-xl">
+              <button class="btn-primary" type="submit">
+                {calendarConfigured ? "Submit & Pick a Time" : "Request a call"}
+              </button>
+            </p>
+            <p
+              class="form-status"
+              id="booking-status"
+              role="status"
+              hidden={canBook}
+            >
+              {
+                !canBook &&
+                  "Online booking is not connected yet. The form is ready, but submissions are not being sent until a booking calendar is configured."
+              }
+            </p>
+          </form>
+
+          <div class="lead-form" id="booking-scheduler" hidden>
+            <h2 class="type-h2">You're in. Pick a time below.</h2>
+            <p class="type-body mt-md">Choose a 30-minute slot that works for you.</p>
+            <div class="cal-embed" id="cal-embed"></div>
+          </div>
         </div>
       </div>
     </section>

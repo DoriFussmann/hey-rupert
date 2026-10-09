@@ -1,5 +1,6 @@
 ---
 import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
 import { sitePath } from "../../lib/url";
@@ -11,7 +12,18 @@ const title = "How Rupert Runs Investor Outreach | Rupert";
 const description =
   "See how Rupert works in three stages: discovery and strategy, campaign launch, and meetings and momentum — with the founder in control of every conversation.";
 
-const pillars = [
+const pillars: {
+  title: string;
+  summary: string;
+  src: ImageMetadata;
+  alt: string;
+  stages: {
+    title: string;
+    body: string;
+    linkHref?: string;
+    linkLabel?: string;
+  }[];
+}[] = [
   {
     title: "Discovery & Strategy",
     summary:
@@ -22,10 +34,14 @@ const pillars = [
       {
         title: "Understand the Raise",
         body: "It starts with a direct conversation with Dori — the company, the story, the round, traction, and what has already been tried. The goal is to understand what makes the company fundable and where the outreach should concentrate, not to run a generic intake form.",
+        linkHref: "/about/",
+        linkLabel: "Dori",
       },
       {
         title: "Build the Investor Universe",
         body: "Rupert researches a tailor-made target list from a proprietary investor database — filtered by stage, sector, geography, check size, and genuine fit. Names are selected with human judgment, not sprayed across a directory and called a match.",
+        linkHref: "/database/",
+        linkLabel: "proprietary investor database",
       },
       {
         title: "Develop the Strategy",
@@ -115,12 +131,28 @@ const pillars = [
             </div>
           </div>
           <ol class="work-stages">
-            {pillar.stages.map((stage) => (
-              <li class="work-stage">
-                <h3 class="type-h3">{stage.title}</h3>
-                <p class="type-body mt-sm">{stage.body}</p>
-              </li>
-            ))}
+            {pillar.stages.map((stage) => {
+              const linkAt =
+                stage.linkHref && stage.linkLabel
+                  ? stage.body.indexOf(stage.linkLabel)
+                  : -1;
+              return (
+                <li class="work-stage">
+                  <h3 class="type-h3">{stage.title}</h3>
+                  <p class="type-body mt-sm">
+                    {linkAt >= 0 && stage.linkHref && stage.linkLabel ? (
+                      <>
+                        {stage.body.slice(0, linkAt)}
+                        <a href={sitePath(stage.linkHref)}>{stage.linkLabel}</a>
+                        {stage.body.slice(linkAt + stage.linkLabel.length)}
+                      </>
+                    ) : (
+                      stage.body
+                    )}
+                  </p>
+                </li>
+              );
+            })}
           </ol>
         </section>
       ))
