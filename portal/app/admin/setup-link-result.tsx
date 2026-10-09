@@ -39,8 +39,6 @@ You can also see the overall onboarding process in the portal, so you'll have vi
 
 Your portal link is below.
 
-Curious about how you got to me - pls let me know!
-
 ///
 Your Rupert Portal
 
