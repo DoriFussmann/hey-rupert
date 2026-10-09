@@ -1,45 +1,78 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
-import { resetClientPassword } from "@/app/admin/actions";
+import { useRouter } from "next/navigation";
+import { issueClientSetupLink } from "@/app/admin/actions";
 import {
   CopyButton,
-  CredentialsResult,
+  SetupLinkResult,
   buildResetEmail,
-  generatePassword,
-  type Credentials,
-} from "@/app/admin/credentials-result";
+  type SetupLinkDetails,
+} from "@/app/admin/setup-link-result";
+import { formatDate } from "@/lib/format";
+import type { ClientAccess } from "@/lib/types";
 
-const fieldClass =
-  "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
-const labelClass = "block text-label uppercase tracking-label text-muted";
+function AccessStatus({ access }: { access: ClientAccess }) {
+  switch (access.status) {
+    case "pending":
+      return (
+        <>
+          <p className="mt-xs text-body-sm text-muted">
+            Set-password link pending. Valid until{" "}
+            {formatDate(access.expiresAt)}.
+          </p>
+          <div className="mt-sm flex items-center justify-between gap-sm rounded-md border border-border bg-background px-sm py-sm">
+            <span className="min-w-0 break-all text-body-sm text-body">
+              {access.url}
+            </span>
+            <CopyButton value={access.url} />
+          </div>
+        </>
+      );
+    case "expired":
+      return (
+        <p className="mt-xs text-body-sm text-muted">
+          Set-password link expired on {formatDate(access.expiresAt)}. Reset
+          to create a new one.
+        </p>
+      );
+    case "set":
+      return (
+        <p className="mt-xs text-body-sm text-muted">
+          Password set on {formatDate(access.usedAt)}.
+        </p>
+      );
+    case "legacy":
+      return (
+        <p className="mt-xs text-body-sm text-muted">
+          Password set (legacy). Reset to create a set-password link.
+        </p>
+      );
+    case "unavailable":
+      return <p className="mt-xs text-body-sm text-error">{access.error}</p>;
+  }
+}
 
 export function ResetPasswordSection({
   clientId,
   companyName,
   firstName,
   email,
+  access,
 }: {
   clientId: string;
   companyName: string;
   firstName: string;
   email: string;
+  access: ClientAccess;
 }) {
+  const router = useRouter();
   const titleId = useId();
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(true);
-  const [result, setResult] = useState<Credentials | null>(null);
+  const [result, setResult] = useState<SetupLinkDetails | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
-
-  useEffect(() => {
-    if (open && !result && !password) {
-      setPassword(generatePassword());
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -52,7 +85,6 @@ export function ResetPasswordSection({
   }, [open, pending]);
 
   function reset() {
-    setPassword("");
     setResult(null);
     setEmailDraft("");
     setError(null);
@@ -62,6 +94,7 @@ export function ResetPasswordSection({
   function close() {
     if (pending) return;
     setOpen(false);
+    if (result) router.refresh();
     reset();
   }
 
@@ -69,22 +102,23 @@ export function ResetPasswordSection({
     setPending(true);
     setError(null);
     try {
-      const res = await resetClientPassword(clientId, password);
+      const res = await issueClientSetupLink(clientId);
       if (!res.ok) {
         setError(res.error);
         setPending(false);
         return;
       }
-      const creds: Credentials = {
+      const details: SetupLinkDetails = {
         firstName,
-        email: res.email || email,
-        password: res.password,
+        email: res.email,
+        setupUrl: res.setupUrl,
+        expiresAt: res.expiresAt,
       };
-      setResult(creds);
-      setEmailDraft(buildResetEmail(creds));
+      setResult(details);
+      setEmailDraft(buildResetEmail(details));
       setPending(false);
     } catch {
-      setError("Unable to reset the password. Please try again.");
+      setError("Unable to create a new link. Please try again.");
       setPending(false);
     }
   }
@@ -94,12 +128,9 @@ export function ResetPasswordSection({
   return (
     <>
       <section className="mt-lg flex flex-wrap items-end justify-between gap-md rounded-card border border-border bg-surface px-lg py-lg">
-        <div>
+        <div className="min-w-0 flex-1">
           <h2 className="text-h4">Login &amp; access</h2>
-          <p className="mt-xs max-w-prose text-body-sm text-muted">
-            Generate a new password for this client and get the login email
-            ready to send. Their old password stops working immediately.
-          </p>
+          <AccessStatus access={access} />
         </div>
         <div className="flex flex-wrap gap-sm">
           <button
@@ -135,7 +166,7 @@ export function ResetPasswordSection({
                   {name}
                 </p>
                 <h2 id={titleId} className="mt-sm text-h3">
-                  {result ? "New password ready" : "Reset password"}
+                  {result ? "New link ready" : "Reset password"}
                 </h2>
               </div>
               <button
@@ -150,11 +181,11 @@ export function ResetPasswordSection({
             {result ? (
               <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto px-lg py-lg">
-                  <p className="mb-lg text-body-sm text-success">
-                    Password updated. Send them the new login details.
+                  <p role="status" className="mb-lg text-body-sm text-success">
+                    New set-password link created. Send it to the client.
                   </p>
-                  <CredentialsResult
-                    credentials={result}
+                  <SetupLinkResult
+                    details={result}
                     emailDraft={emailDraft}
                     setEmailDraft={setEmailDraft}
                   />
@@ -173,38 +204,11 @@ export function ResetPasswordSection({
               <div className="flex flex-1 flex-col overflow-hidden">
                 <div className="flex-1 overflow-y-auto px-lg py-lg">
                   <p className="text-body-sm text-muted">
-                    Resetting the password for{" "}
-                    <span className="text-body">{email}</span>.
+                    This creates a new set-password link for{" "}
+                    <span className="text-body">{email}</span>. Any previous
+                    link stops working. Their current password keeps working
+                    until they set a new one.
                   </p>
-                  <label className={labelClass + " mt-lg"}>
-                    New password
-                    <span className="mt-sm flex gap-sm">
-                      <input
-                        className={fieldClass + " mt-0 flex-1"}
-                        type={showPassword ? "text" : "password"}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        autoComplete="off"
-                        spellCheck={false}
-                        placeholder="Auto-generated"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword((v) => !v)}
-                        className="rounded-md border border-border bg-surface px-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
-                      >
-                        {showPassword ? "Hide" : "Show"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPassword(generatePassword())}
-                        className="rounded-md border border-border bg-surface px-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
-                      >
-                        New
-                      </button>
-                      <CopyButton value={password} />
-                    </span>
-                  </label>
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
                   {error ? (
@@ -224,7 +228,7 @@ export function ResetPasswordSection({
                     disabled={pending}
                     className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
                   >
-                    {pending ? "Resetting..." : "Reset password"}
+                    {pending ? "Creating..." : "Create new link"}
                   </button>
                 </div>
               </div>

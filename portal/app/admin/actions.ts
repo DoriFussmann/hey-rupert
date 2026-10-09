@@ -1,11 +1,11 @@
 "use server";
 
-import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import type { User } from "@supabase/supabase-js";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { roleFromUser } from "@/lib/roles";
+import { issueSetupLink } from "@/lib/password-setup";
 import { createServiceClient } from "@/lib/supabase/admin";
 import {
   ENGAGEMENT_STAGES,
@@ -37,34 +37,27 @@ export type CreateClientInput = {
   geography: string;
   fund_match_count: string;
   admin_notes: string;
-  // Optional. If blank, a strong temporary password is generated automatically.
-  password?: string;
 };
 
 export type ActionResult =
   | { ok: true; linked?: boolean }
   | { ok: false; error: string };
 
-// Result specific to client creation: on success we hand back the login
-// credentials so the admin can drop them straight into an email. `linked` is
-// true when we attached the client to a login that already existed.
+// On success the admin gets the client's set-password link to email them.
+// `linked` is true when the client was attached to a login that already existed.
 export type CreateClientResult =
-  | { ok: true; linked: boolean; email: string; password: string }
+  | {
+      ok: true;
+      linked: boolean;
+      email: string;
+      setupUrl: string;
+      expiresAt: string;
+    }
   | { ok: false; error: string };
 
-// Readable, strong temporary password. Avoids ambiguous characters (0/O, 1/l/I)
-// so it survives being copied into an email and typed back in by the client.
-// Not exported: files with "use server" may only export async actions.
-function generateTempPassword(): string {
-  const alphabet = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789";
-  const bytes = randomBytes(12);
-  let out = "";
-  for (let i = 0; i < 12; i += 1) {
-    out += alphabet[bytes[i] % alphabet.length];
-    if (i === 3 || i === 7) out += "-";
-  }
-  return out; // e.g. "Rk7m-Qp9x-2Ftz"
-}
+export type SetupLinkResult =
+  | { ok: true; email: string; setupUrl: string; expiresAt: string }
+  | { ok: false; error: string };
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -176,17 +169,11 @@ export async function createClientRecord(
   const email = input.email.trim().toLowerCase();
   const companyName = input.company_name.trim();
 
-  // Use the admin-supplied password, or generate a strong one. This is the
-  // password that gets set on the auth user AND handed back for the email, so
-  // the client can always log in with what the admin sends them.
-  const providedPassword = (input.password ?? "").trim();
-  if (providedPassword && providedPassword.length < 8) {
-    return { ok: false, error: "Password must be at least 8 characters." };
-  }
-  const clientPassword = providedPassword || generateTempPassword();
-
   if (!firstName || !lastName || !email || !companyName) {
-    return { ok: false, error: "First name, last name, email, and company name are required." };
+    return {
+      ok: false,
+      error: "First name, last name, email, and company name are required.",
+    };
   }
 
   if (!email.includes("@")) {
@@ -226,13 +213,23 @@ export async function createClientRecord(
   }
 
   let userId: string;
-  let createdNewUser = false;
+  const existingUser = existingAuth.user;
 
-  if (existingAuth.user) {
+  if (existingUser) {
+    // Link the existing login. Its password is left alone; the setup link
+    // lets the client choose a new one.
+    if (roleFromUser(existingUser) === "admin") {
+      return {
+        ok: false,
+        error:
+          "This email belongs to an admin account and cannot be added as a client.",
+      };
+    }
+
     const { data: existingById, error: existingByIdError } = await supabase
       .from("clients")
       .select("id")
-      .eq("id", existingAuth.user.id)
+      .eq("id", existingUser.id)
       .maybeSingle();
 
     if (existingByIdError) {
@@ -245,73 +242,32 @@ export async function createClientRecord(
       };
     }
 
-    const roleResult = await ensureClientRole(supabase, existingAuth.user);
-    if (!roleResult.ok) return roleResult;
-
-    userId = existingAuth.user.id;
-
-    // The login already exists — set the password to the one we're about to
-    // send so the client can sign in immediately. This is what fixes accounts
-    // that were created in Supabase without a usable password.
-    const { error: pwError } = await supabase.auth.admin.updateUserById(userId, {
-      password: clientPassword,
-      email_confirm: true,
-    });
-    if (pwError) {
-      return { ok: false, error: pwError.message };
-    }
+    userId = existingUser.id;
   } else {
+    // No password: nobody can sign in until the client sets one via the link.
     const { data: created, error: createError } =
       await supabase.auth.admin.createUser({
         email,
-        password: clientPassword,
         email_confirm: true,
+        app_metadata: { role: "client" },
       });
 
     if (createError || !created.user) {
-      const alreadyRegistered = (createError?.message ?? "")
-        .toLowerCase()
-        .includes("already been registered");
+      return {
+        ok: false,
+        error: createError?.message ?? "Unable to create the client account.",
+      };
+    }
 
-      if (!alreadyRegistered) {
-        return {
-          ok: false,
-          error: createError?.message ?? "Unable to create the client account.",
-        };
-      }
+    userId = created.user.id;
+  }
 
-      const retry = await findAuthUserByEmail(supabase, email);
-      if (!retry.user) {
-        return {
-          ok: false,
-          error: createError?.message ?? "Unable to create the client account.",
-        };
-      }
-
-      const roleResult = await ensureClientRole(supabase, retry.user);
-      if (!roleResult.ok) return roleResult;
-      userId = retry.user.id;
-
-      const { error: pwError } = await supabase.auth.admin.updateUserById(
-        userId,
-        { password: clientPassword, email_confirm: true },
-      );
-      if (pwError) {
-        return { ok: false, error: pwError.message };
-      }
-    } else {
-      userId = created.user.id;
-      createdNewUser = true;
-
-      const { error: claimError } = await supabase.auth.admin.updateUserById(
-        userId,
-        { app_metadata: { role: "client" } },
-      );
-
-      if (claimError) {
-        await supabase.auth.admin.deleteUser(userId);
-        return { ok: false, error: claimError.message };
-      }
+  // Undo everything this request created. An existing login keeps its
+  // password; only a role it was given here may remain.
+  async function rollback() {
+    await supabase.from("clients").delete().eq("id", userId);
+    if (!existingUser) {
+      await supabase.auth.admin.deleteUser(userId);
     }
   }
 
@@ -331,41 +287,48 @@ export async function createClientRecord(
   });
 
   if (insertError) {
-    if (createdNewUser) {
+    if (!existingUser) {
       await supabase.auth.admin.deleteUser(userId);
     }
     return { ok: false, error: insertError.message };
   }
 
+  if (existingUser) {
+    const roleResult = await ensureClientRole(supabase, existingUser);
+    if (!roleResult.ok) {
+      await rollback();
+      return roleResult;
+    }
+  }
+
+  const issued = await issueSetupLink(supabase, userId);
+  if (!issued.ok) {
+    await rollback();
+    return issued;
+  }
+
   revalidatePath("/admin");
   return {
     ok: true,
-    linked: !createdNewUser,
+    linked: Boolean(existingUser),
     email,
-    password: clientPassword,
+    setupUrl: issued.link.url,
+    expiresAt: issued.link.expiresAt,
   };
 }
 
-// Regenerate (or set) the login password for a client that already exists.
-// No delete/re-add needed. Returns the email + new password so the admin can
-// send the login email straight away.
-export async function resetClientPassword(
+// Issue a new set-password link for an existing client. Any previous link
+// stops working immediately; the current password keeps working until the
+// client sets a new one.
+export async function issueClientSetupLink(
   clientId: string,
-  password?: string,
-): Promise<CreateClientResult> {
+): Promise<SetupLinkResult> {
   const access = await requireAdminService();
   if (!access.ok) return access;
 
-  const provided = (password ?? "").trim();
-  if (provided && provided.length < 8) {
-    return { ok: false, error: "Password must be at least 8 characters." };
-  }
-  const newPassword = provided || generateTempPassword();
-
   const { supabase } = access;
 
-  // The client id is the auth user id. Read the login to get the authoritative
-  // email address for the outgoing message.
+  // The client id is the auth user id.
   const { data: userData, error: getError } =
     await supabase.auth.admin.getUserById(clientId);
 
@@ -376,31 +339,32 @@ export async function resetClientPassword(
     };
   }
 
-  const email = userData.user.email ?? "";
+  const user = userData.user;
+  if (!user.email) {
+    return { ok: false, error: "This client's login has no email address." };
+  }
 
-  // If the login is missing the client role (e.g. it was created directly in
-  // the Supabase dashboard), it can't reach the portal even with a correct
-  // password. Set it here so this button fully repairs the account. Never
-  // downgrade an admin.
-  if (roleFromUser(userData.user) === "admin") {
+  if (roleFromUser(user) === "admin") {
     return {
       ok: false,
       error: "This login is an admin account and can't be reset here.",
     };
   }
 
-  const { error } = await supabase.auth.admin.updateUserById(clientId, {
-    password: newPassword,
-    email_confirm: true,
-    app_metadata: { ...userData.user.app_metadata, role: "client" },
-  });
+  // Repairs logins created directly in Supabase without the client role.
+  const roleResult = await ensureClientRole(supabase, user);
+  if (!roleResult.ok) return roleResult;
 
-  if (error) {
-    return { ok: false, error: error.message };
-  }
+  const issued = await issueSetupLink(supabase, clientId);
+  if (!issued.ok) return issued;
 
   revalidatePath(`/admin/clients/${clientId}`);
-  return { ok: true, linked: true, email, password: newPassword };
+  return {
+    ok: true,
+    email: user.email,
+    setupUrl: issued.link.url,
+    expiresAt: issued.link.expiresAt,
+  };
 }
 
 const STAGE_VALUES = new Set<string>(

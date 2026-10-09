@@ -43,6 +43,7 @@ export function notificationLabel(type: string) {
   }
   if (type === "service_order_agreed") return "Agreed to Service Order";
   if (type === "nda_signed") return "Signed NDA";
+  if (type === "password_set") return "Set Portal Password";
   return statusLabel(type);
 }
 
@@ -52,6 +53,7 @@ export function notificationAction(type: string) {
   }
   if (type === "service_order_agreed") return "agreed to the Service Order";
   if (type === "nda_signed") return "signed the NDA";
+  if (type === "password_set") return "set their portal password";
   return notificationLabel(type).toLowerCase();
 }
 
