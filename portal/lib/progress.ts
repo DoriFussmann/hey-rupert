@@ -15,8 +15,6 @@ import {
 export const TRACKED_TOTAL =
   ONBOARDING_TOTAL + SETUP_ITEMS.length + LIVE_ITEMS.length;
 
-const CLIENT_OWNED_ONBOARDING = new Set(["sow", "service_order", "nda"]);
-
 const ONBOARDING_SHORT: Record<string, string> = {
   sow: "Statement of Work",
   service_order: "Service Order",
@@ -47,8 +45,11 @@ export function nextActionText(source: ProgressSource | null | undefined) {
   );
   if (onboardingNext) {
     const label = ONBOARDING_SHORT[onboardingNext.id] ?? onboardingNext.title;
-    if (CLIENT_OWNED_ONBOARDING.has(onboardingNext.id)) {
+    if (onboardingNext.status === "your_turn") {
       return `Waiting on client: ${label}`;
+    }
+    if (onboardingNext.id === "service_order") {
+      return "Your action: Issue Service Order";
     }
     return `Your action: ${label}`;
   }

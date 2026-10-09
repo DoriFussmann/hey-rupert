@@ -1,5 +1,6 @@
 export type OnboardingTimestamps = {
   sow_confirmed_at?: string | null;
+  service_order_content?: string | null;
   service_order_agreed_at?: string | null;
   nda_signed_at?: string | null;
   intake_completed_at?: string | null;
@@ -29,6 +30,7 @@ export function getOnboardingItems(
   const paymentAt = timestamps?.payment_received_at ?? null;
 
   const sowDone = Boolean(sowAt);
+  const orderIssued = Boolean(timestamps?.service_order_content?.trim());
   const orderDone = Boolean(orderAt);
   const ndaDone = Boolean(ndaAt);
   const intakeDone = Boolean(intakeAt);
@@ -46,13 +48,15 @@ export function getOnboardingItems(
     {
       id: "service_order",
       title: "Service Order",
-      detail: orderDone ? "Signed" : "Sign",
-      href: "/portal/service-order",
+      detail: orderDone ? "Signed" : orderIssued ? "Sign" : "Rupert will issue",
+      href: orderDone || orderIssued ? "/portal/service-order" : undefined,
       status: orderDone
         ? "done"
-        : sowDone
+        : sowDone && orderIssued
           ? "your_turn"
-          : "open",
+          : sowDone
+            ? "waiting"
+            : "open",
       completedAt: orderAt,
     },
     {
