@@ -41,9 +41,10 @@ export function notificationLabel(type: string) {
   if (type === "sow_confirmed" || type === "scope_acknowledged") {
     return "Confirmed Statement of Work";
   }
-  if (type === "service_order_agreed") return "Agreed to Service Order";
+  if (type === "service_order_agreed") return "Signed Service Order";
   if (type === "nda_signed") return "Signed NDA";
   if (type === "password_set") return "Set Portal Password";
+  if (type === "kickoff_ready") return "Ready for Kick-off";
   return statusLabel(type);
 }
 
@@ -51,10 +52,32 @@ export function notificationAction(type: string) {
   if (type === "sow_confirmed" || type === "scope_acknowledged") {
     return "confirmed the Statement of Work";
   }
-  if (type === "service_order_agreed") return "agreed to the Service Order";
+  if (type === "service_order_agreed") return "signed the Service Order";
   if (type === "nda_signed") return "signed the NDA";
   if (type === "password_set") return "set their portal password";
+  if (type === "kickoff_ready") return "is ready for kick-off: issue the NDA";
   return notificationLabel(type).toLowerCase();
+}
+
+/** Best available person name for a raw `clients` row. */
+export function clientDisplayName(row: Record<string, unknown>) {
+  const text = (value: unknown) => (value != null ? String(value).trim() : "");
+  const fullName = [text(row.first_name), text(row.last_name)]
+    .filter(Boolean)
+    .join(" ");
+
+  return (
+    fullName ||
+    text(row.founder_name) ||
+    text(row.company_name) ||
+    text(row.email) ||
+    "Unknown client"
+  );
+}
+
+/** "Maya Chen · Lena Health", or just the name when they match. */
+export function personWithCompany(name: string, company: string) {
+  return company && company !== name ? `${name} · ${company}` : name;
 }
 
 export function acknowledgementLabel(type: AcknowledgementType) {

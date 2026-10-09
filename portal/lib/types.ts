@@ -12,16 +12,14 @@ export type EngagementStage =
   | "service_order"
   | "nda"
   | "intake"
-  | "payment"
   | "setup"
   | "live";
 
 export const ENGAGEMENT_STAGES: { value: EngagementStage; label: string }[] = [
   { value: "sow", label: "Statement of Work" },
-  { value: "service_order", label: "Service Order" },
+  { value: "service_order", label: "Service Order & Setup Fee" },
   { value: "nda", label: "NDA" },
   { value: "intake", label: "Client Intake" },
-  { value: "payment", label: "Invoice & Payment" },
   { value: "setup", label: "Setup" },
   { value: "live", label: "Live" },
 ];
@@ -64,6 +62,7 @@ export type Client = {
   engagement_tracker_status?: string | null;
   service_order_content?: string | null;
   service_order_agreed_at?: string | null;
+  setup_invoice_url?: string | null;
   linkedin_url?: string | null;
   booking_link?: string | null;
   company_website?: string | null;
@@ -144,6 +143,8 @@ export type NotificationType =
   | "sow_confirmed"
   | "service_order_agreed"
   | "nda_signed"
+  | "password_set"
+  | "kickoff_ready"
   | string;
 
 export type AdminNotification = {
@@ -168,6 +169,26 @@ export type SowSend = {
   client_id: string;
   sent_at: string;
   archived_at: string | null;
+};
+
+export type ServiceOrderSignature = {
+  company_name: string;
+  signer_name: string;
+  signer_email: string;
+  signer_title: string;
+  signed_at: string;
+};
+
+export type ServiceOrderSend = {
+  id: string;
+  client_id: string;
+  content: string;
+  payment_link: string;
+  sent_at: string;
+  archived_at: string | null;
+  signature: ServiceOrderSignature | null;
+  signed_content: string | null;
+  signed_ip: string | null;
 };
 
 // A client's portal login state, as shown to admins.

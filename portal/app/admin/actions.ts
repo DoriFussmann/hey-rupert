@@ -21,7 +21,19 @@ import {
   type ChecklistStatusColumn,
   type OnboardingTimestampColumn,
 } from "@/lib/checklists";
-import { STATEMENT_OF_WORK_SLUG } from "@/lib/form-fields";
+import {
+  FORM_TITLES,
+  SERVICE_ORDER_SLUG,
+  STATEMENT_OF_WORK_SLUG,
+  isFormSlug,
+  type FormSlug,
+} from "@/lib/form-fields";
+import { clientDisplayName } from "@/lib/format";
+import { advanceToKickoff } from "@/lib/kickoff";
+import {
+  DEFAULT_SERVICE_ORDER,
+  isStripePaymentLink,
+} from "@/lib/service-order";
 import { DEFAULT_STATEMENT_OF_WORK } from "@/lib/statement-of-work";
 
 const RAISE_STAGES = new Set<string>(["Pre-seed", "Seed", "Series A"]);
@@ -476,6 +488,12 @@ export async function updateOnboardingTimestamp(
     return { ok: false, error: error.message };
   }
 
+  if (column === "payment_received_at" && done) {
+    // The admin is the one acting here, so no email; the in-app
+    // notification still records that kick-off is ready.
+    await advanceToKickoff(access.supabase, clientId, { email: false });
+  }
+
   revalidateProgressPaths(clientId);
   return { ok: true };
 }
@@ -573,26 +591,6 @@ export async function updateScopeOfWork(
   return { ok: true };
 }
 
-function clientDisplayName(row: Record<string, unknown>) {
-  const firstName = row.first_name != null ? String(row.first_name).trim() : "";
-  const lastName = row.last_name != null ? String(row.last_name).trim() : "";
-  const fullName = [firstName, lastName].filter(Boolean).join(" ");
-  if (fullName) return fullName;
-
-  const founder =
-    row.founder_name != null ? String(row.founder_name).trim() : "";
-  if (founder) return founder;
-
-  const company =
-    row.company_name != null ? String(row.company_name).trim() : "";
-  if (company) return company;
-
-  const email = row.email != null ? String(row.email).trim() : "";
-  if (email) return email;
-
-  return "Unknown";
-}
-
 export async function listAdminNotifications(): Promise<AdminNotification[]> {
   const access = await requireAdminService();
   if (!access.ok) return [];
@@ -616,7 +614,7 @@ export async function listAdminNotifications(): Promise<AdminNotification[]> {
   if (clientIds.length > 0) {
     const { data: clients } = await access.supabase
       .from("clients")
-      .select("id, first_name, last_name, founder_name, company_name, email")
+      .select("*")
       .in("id", clientIds);
 
     for (const client of clients ?? []) {
@@ -633,7 +631,7 @@ export async function listAdminNotifications(): Promise<AdminNotification[]> {
       type: String(row.type ?? ""),
       read: row.read === true,
       created_at: String(row.created_at ?? new Date().toISOString()),
-      client_name: client ? clientDisplayName(client) : "Unknown",
+      client_name: client ? clientDisplayName(client) : "Deleted client",
       company_name:
         client?.company_name != null ? String(client.company_name) : "",
     };
@@ -676,14 +674,26 @@ export async function markNotificationRead(
   return { ok: true };
 }
 
+const FORM_DEFAULTS: Record<FormSlug, string> = {
+  [STATEMENT_OF_WORK_SLUG]: DEFAULT_STATEMENT_OF_WORK,
+  [SERVICE_ORDER_SLUG]: DEFAULT_SERVICE_ORDER,
+};
+
+const FORM_PATHS: Record<FormSlug, string> = {
+  [STATEMENT_OF_WORK_SLUG]: "/admin/forms/statement-of-work",
+  [SERVICE_ORDER_SLUG]: "/admin/forms/service-order",
+};
+
 export async function getFormTemplate(
-  slug: string = STATEMENT_OF_WORK_SLUG,
-): Promise<FormTemplate> {
-  const empty: FormTemplate = {
+  slug: FormSlug = STATEMENT_OF_WORK_SLUG,
+): Promise<FormTemplate & { defaultContent: string }> {
+  const defaultContent = FORM_DEFAULTS[slug];
+  const empty = {
     slug,
-    title: "Statement of Work",
-    content: DEFAULT_STATEMENT_OF_WORK,
+    title: FORM_TITLES[slug],
+    content: defaultContent,
     updated_at: null,
+    defaultContent,
   };
 
   const access = await requireAdminService();
@@ -698,14 +708,16 @@ export async function getFormTemplate(
   if (error || !data) return empty;
 
   const content = String(data.content ?? "").trim();
-  const staleMergeTemplate = content.includes("{{");
+  // Early Statement of Work templates used {{merge}} fields that no longer exist.
+  const staleMergeTemplate =
+    slug === STATEMENT_OF_WORK_SLUG && content.includes("{{");
 
   return {
-    slug: String(data.slug ?? slug),
-    title: String(data.title ?? "Statement of Work"),
-    content:
-      content && !staleMergeTemplate ? content : DEFAULT_STATEMENT_OF_WORK,
+    slug,
+    title: FORM_TITLES[slug],
+    content: content && !staleMergeTemplate ? content : defaultContent,
     updated_at: data.updated_at != null ? String(data.updated_at) : null,
+    defaultContent,
   };
 }
 
@@ -716,9 +728,17 @@ export async function saveFormTemplate(
   const access = await requireAdminService();
   if (!access.ok) return access;
 
+  if (!isFormSlug(slug)) {
+    return { ok: false, error: "Unknown form." };
+  }
+
+  if (!content.trim()) {
+    return { ok: false, error: "The document cannot be empty." };
+  }
+
   const { error } = await access.supabase.from("form_templates").upsert({
     slug,
-    title: "Statement of Work",
+    title: FORM_TITLES[slug],
     content,
     updated_at: new Date().toISOString(),
   });
@@ -734,7 +754,7 @@ export async function saveFormTemplate(
     return { ok: false, error: error.message };
   }
 
-  revalidatePath("/admin/forms/statement-of-work");
+  revalidatePath(FORM_PATHS[slug]);
   return { ok: true };
 }
 
@@ -923,5 +943,155 @@ export async function unarchiveSowSend(
   }
 
   revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true };
+}
+
+const SERVICE_ORDER_TABLE_MISSING =
+  "The service_order_sends table is missing. Run portal/supabase/service_order.sql in the Supabase SQL editor, then try again.";
+
+function serviceOrderTableError(message: string, code?: string) {
+  return (
+    code === "42P01" ||
+    code === "42703" ||
+    message.includes("service_order_sends") ||
+    message.includes("setup_invoice_url") ||
+    message.toLowerCase().includes("schema cache")
+  );
+}
+
+function serviceOrderError(message: string, code?: string): ActionResult {
+  return {
+    ok: false,
+    error: serviceOrderTableError(message, code)
+      ? SERVICE_ORDER_TABLE_MISSING
+      : message,
+  };
+}
+
+function revalidateServiceOrderPaths(clientId: string) {
+  revalidateClientPaths(clientId);
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal/onboarding");
+  revalidatePath("/portal/service-order");
+}
+
+export async function generateServiceOrder(
+  clientId: string,
+): Promise<ActionResult & { content?: string }> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+  void clientId;
+
+  const template = await getFormTemplate(SERVICE_ORDER_SLUG);
+  return { ok: true, content: template.content.trim() || DEFAULT_SERVICE_ORDER };
+}
+
+export async function sendServiceOrder(
+  clientId: string,
+  content: string,
+  paymentLink: string,
+): Promise<ActionResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  if (!content.trim()) {
+    return { ok: false, error: "Generate the Service Order before sending." };
+  }
+
+  const link = paymentLink.trim();
+  if (!isStripePaymentLink(link)) {
+    return {
+      ok: false,
+      error: "Enter the Stripe payment link for the Setup Fee invoice (https://…stripe.com/…).",
+    };
+  }
+
+  const { supabase } = access;
+
+  const { data: activeSends, error: activeError } = await supabase
+    .from("service_order_sends")
+    .select("id")
+    .eq("client_id", clientId)
+    .is("archived_at", null)
+    .limit(1);
+
+  if (activeError) return serviceOrderError(activeError.message, activeError.code);
+
+  const alreadySent =
+    "A Service Order has already been sent. Archive it to send a new one.";
+  if (activeSends && activeSends.length > 0) {
+    return { ok: false, error: alreadySent };
+  }
+
+  const { error: insertError } = await supabase
+    .from("service_order_sends")
+    .insert({ client_id: clientId, content, payment_link: link });
+
+  if (insertError) {
+    if (insertError.code === "23505") return { ok: false, error: alreadySent };
+    return serviceOrderError(insertError.message, insertError.code);
+  }
+
+  const { error: clientError } = await supabase
+    .from("clients")
+    .update({
+      service_order_content: content,
+      setup_invoice_url: link,
+      service_order_agreed_at: null,
+    })
+    .eq("id", clientId);
+
+  if (clientError) return serviceOrderError(clientError.message, clientError.code);
+
+  // Move a client still at the Statement of Work stage forward.
+  await supabase
+    .from("clients")
+    .update({ stage: "service_order" })
+    .eq("id", clientId)
+    .or("stage.is.null,stage.eq.sow");
+
+  revalidateServiceOrderPaths(clientId);
+  return { ok: true };
+}
+
+/**
+ * Archiving the active Service Order voids it: it disappears from the portal
+ * (including any signature) so a new one can be issued. The client's stage
+ * and payment status are left as they are.
+ */
+export async function archiveServiceOrder(
+  clientId: string,
+  sendId: string,
+): Promise<ActionResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { supabase } = access;
+
+  const { data: archived, error } = await supabase
+    .from("service_order_sends")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", sendId)
+    .eq("client_id", clientId)
+    .is("archived_at", null)
+    .select("id");
+
+  if (error) return serviceOrderError(error.message, error.code);
+  if (!archived || archived.length === 0) {
+    return { ok: false, error: "That Service Order is already archived." };
+  }
+
+  const { error: clientError } = await supabase
+    .from("clients")
+    .update({
+      service_order_content: null,
+      setup_invoice_url: null,
+      service_order_agreed_at: null,
+    })
+    .eq("id", clientId);
+
+  if (clientError) return serviceOrderError(clientError.message, clientError.code);
+
+  revalidateServiceOrderPaths(clientId);
   return { ok: true };
 }

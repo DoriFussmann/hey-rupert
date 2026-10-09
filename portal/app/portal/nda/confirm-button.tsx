@@ -7,8 +7,10 @@ import { formatDate } from "@/lib/format";
 
 export function ConfirmNdaButton({
   signedAt,
+  readOnly = false,
 }: {
   signedAt: string | null;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -23,6 +25,7 @@ export function ConfirmNdaButton({
   }
 
   async function onClick() {
+    if (readOnly) return;
     setPending(true);
     setError(null);
 
@@ -47,7 +50,7 @@ export function ConfirmNdaButton({
       <button
         type="button"
         onClick={onClick}
-        disabled={pending}
+        disabled={pending || readOnly}
         className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
       >
         {pending ? "Submitting…" : "Confirm NDA"}

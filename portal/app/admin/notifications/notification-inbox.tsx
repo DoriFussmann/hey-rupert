@@ -3,7 +3,11 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { markNotificationRead } from "@/app/admin/actions";
-import { formatDateAtTime, notificationAction } from "@/lib/format";
+import {
+  formatDateAtTime,
+  notificationAction,
+  personWithCompany,
+} from "@/lib/format";
 import type { AdminNotification } from "@/lib/types";
 
 export function NotificationInbox({
@@ -38,11 +42,7 @@ export function NotificationInbox({
       <ul>
         {notifications.map((item) => {
           const unread = !item.read;
-          const company =
-            item.company_name &&
-            item.company_name !== item.client_name
-              ? item.company_name
-              : "";
+          const who = personWithCompany(item.client_name, item.company_name);
 
           return (
             <li key={item.id} className="border-b border-border last:border-b-0">
@@ -61,10 +61,10 @@ export function NotificationInbox({
                   aria-hidden
                 />
                 <span className="min-w-0 flex-1 truncate text-body-sm text-heading">
-                  {item.client_name} {notificationAction(item.type)}
-                  {company ? (
-                    <span className="text-muted"> · {company}</span>
-                  ) : null}
+                  <span className={unread ? "font-medium" : undefined}>
+                    {who}
+                  </span>{" "}
+                  {notificationAction(item.type)}
                 </span>
                 <span className="shrink-0 text-body-sm text-muted">
                   {formatDateAtTime(item.created_at)}

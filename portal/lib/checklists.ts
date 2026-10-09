@@ -81,19 +81,19 @@ export const ONBOARDING_TOGGLES: {
   detail: string;
 }[] = [
   {
+    column: "payment_received_at",
+    title: "Setup Fee",
+    detail: "Payment received",
+  },
+  {
     column: "nda_signed_at",
     title: "NDA",
-    detail: "Mutually Signed",
+    detail: "Mutually signed",
   },
   {
     column: "intake_completed_at",
     title: "Client Intake Form",
     detail: "Completed",
-  },
-  {
-    column: "payment_received_at",
-    title: "Invoice & Setup Payment",
-    detail: "Received",
   },
 ];
 

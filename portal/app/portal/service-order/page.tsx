@@ -1,26 +1,19 @@
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
-import { MarkdownBody } from "@/components/markdown-body";
-import { ServiceOrderForm } from "@/app/portal/service-order/service-order-form";
-import { getPortalClient } from "@/lib/data";
+import { ServiceOrderPanel } from "@/app/portal/service-order/service-order-panel";
+import { getActiveServiceOrder, getPortalView } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 
 export default async function ServiceOrderPage() {
-  const client = await getPortalClient();
+  const { client, viewAs } = await getPortalView();
 
-  if (isSupabaseConfigured()) {
-    if (
-      client?.stage !== "service_order" &&
-      client?.stage !== "live" &&
-      !client?.sow_confirmed_at
-    ) {
-      redirect("/portal/statement-of-work");
-    }
+  if (isSupabaseConfigured() && client && !client.sow_confirmed_at) {
+    redirect("/portal/statement-of-work");
   }
 
-  const issued = Boolean(client?.service_order_content?.trim());
-  const agreed = Boolean(client?.service_order_agreed_at);
+  const send = client ? await getActiveServiceOrder(client.id) : null;
+  const content = send?.content || client?.service_order_content || "";
 
   return (
     <>
@@ -28,37 +21,36 @@ export default async function ServiceOrderPage() {
       <PageHeader
         title="Service Order"
         description={
-          issued || agreed
-            ? "Commercial terms for this engagement. Agree once you have reviewed them."
-            : "Rupert will issue the Service Order for this engagement."
+          content.trim()
+            ? "Sign the Service Order and pay the Setup Fee, in either order. Once both are done, we kick off."
+            : "Rupert will issue your Service Order and Setup Fee invoice."
         }
       />
-      <section className="rounded-card border border-border bg-surface p-lg">
-        {issued || agreed ? (
-          <>
-            <MarkdownBody
-              content={client?.service_order_content ?? ""}
-              emptyLabel="No service order has been added yet."
-            />
-            {client ? (
-              <ServiceOrderForm
-                agreedAt={client.service_order_agreed_at ?? null}
-                initial={{
-                  linkedin_url: client.linkedin_url ?? "",
-                  booking_link: client.booking_link ?? "",
-                  company_website: client.company_website ?? "",
-                  company_description: client.company_description ?? "",
-                }}
-              />
-            ) : null}
-          </>
-        ) : (
+      {client && content.trim() ? (
+        <ServiceOrderPanel
+          content={content}
+          signedContent={send?.signed_content ?? null}
+          issuedAt={send?.sent_at ?? null}
+          signedAt={client.service_order_agreed_at ?? null}
+          signature={send?.signature ?? null}
+          invoiceUrl={client.setup_invoice_url || send?.payment_link || null}
+          paidAt={client.payment_received_at ?? null}
+          defaults={{
+            company_name: client.company_name ?? "",
+            signer_name: client.founder_name ?? "",
+            signer_email: client.email ?? client.founder_email ?? "",
+            signer_title: "",
+          }}
+          readOnly={viewAs}
+        />
+      ) : (
+        <section className="max-w-prose rounded-card border border-border bg-surface p-lg">
           <p className="text-body-sm text-body">
-            Rupert will issue your Service Order. You can confirm it here once
-            it is ready.
+            Your Service Order will appear here once Rupert issues it. You can
+            review and sign it here, and pay the Setup Fee from the same page.
           </p>
-        )}
-      </section>
+        </section>
+      )}
     </>
   );
 }

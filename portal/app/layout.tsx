@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { IBM_Plex_Mono, Inter } from "next/font/google";
+import { Allura, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 const inter = Inter({
@@ -13,6 +13,14 @@ const ibmPlexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400"],
   variable: "--font-mono",
+  display: "swap",
+});
+
+// Handwriting face used only to render typed e-signatures.
+const allura = Allura({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-signature",
   display: "swap",
 });
 
@@ -32,7 +40,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en-US">
-      <body className={`${inter.variable} ${ibmPlexMono.variable} font-sans`}>
+      <body
+        className={`${inter.variable} ${ibmPlexMono.variable} ${allura.variable} font-sans`}
+      >
         {children}
       </body>
     </html>

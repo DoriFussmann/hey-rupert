@@ -7,8 +7,10 @@ import { formatDate } from "@/lib/format";
 
 export function AcknowledgeButton({
   acknowledgedAt,
+  readOnly = false,
 }: {
   acknowledgedAt: string | null;
+  readOnly?: boolean;
 }) {
   const router = useRouter();
   const [pending, setPending] = useState(false);
@@ -23,6 +25,7 @@ export function AcknowledgeButton({
   }
 
   async function onClick() {
+    if (readOnly) return;
     setPending(true);
     setError(null);
 
@@ -47,7 +50,7 @@ export function AcknowledgeButton({
       <button
         type="button"
         onClick={onClick}
-        disabled={pending}
+        disabled={pending || readOnly}
         className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
       >
         {pending ? "Submitting…" : "I Confirm the Statement of Work"}
@@ -57,7 +60,7 @@ export function AcknowledgeButton({
         Review of the Statement of Work is not a commitment.
       </p>
       <p className="mt-sm text-body-sm text-body">
-        Next Step: You will receive a Service Order to confirm.
+        Next step: you will receive a Service Order to sign and a Setup Fee invoice.
       </p>
     </div>
   );

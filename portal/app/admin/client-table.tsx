@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ViewAsClientLink } from "@/components/eye-icon";
 import { ProgressBar } from "@/components/progress-bar";
 import { StagePill } from "@/components/stage-pill";
 import { nextActionText, overallProgress } from "@/lib/progress";
@@ -14,7 +15,6 @@ const STAGE_FILTERS: { value: "all" | EngagementStage; label: string }[] = [
   { value: "service_order", label: "Service Order" },
   { value: "nda", label: "NDA" },
   { value: "intake", label: "Intake" },
-  { value: "payment", label: "Payment" },
   { value: "setup", label: "Setup" },
   { value: "live", label: "Live" },
 ];
@@ -140,6 +140,9 @@ export function ClientTable({ clients }: { clients: Client[] }) {
                 <th className="px-lg py-sm font-medium">Stage</th>
                 <th className="px-lg py-sm font-medium">Progress</th>
                 <th className="px-lg py-sm font-medium">Next action</th>
+                <th className="px-lg py-sm font-medium">
+                  <span className="sr-only">View as client</span>
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -182,6 +185,9 @@ export function ClientTable({ clients }: { clients: Client[] }) {
                     </td>
                     <td className="px-lg py-md text-muted">
                       {nextActionText(client)}
+                    </td>
+                    <td className="px-sm py-md text-right">
+                      <ViewAsClientLink clientId={client.id} label={heading} />
                     </td>
                   </tr>
                 );

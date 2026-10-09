@@ -12,15 +12,6 @@ The work covers building the investor universe, drafting outreach for your appro
 
 Rupert does not take a percentage of the raise. Outcomes are not guaranteed. The engagement continues through the live outreach period described in the service order.`;
 
-export const placeholderServiceOrder = `This service order sits under the statement of work. It covers the current raise only and can be replaced if the round changes.
-
-- Engagement length: 90 days from kickoff
-- Fee: as agreed on the discovery call
-- Included: research, matching, copy, outreach, reply handling
-- Not included: legal negotiation, term-sheet counsel, placement
-
-Work begins when this order is agreed. Pause or scope changes are handled in writing through this portal.`;
-
 export const placeholderClients: Client[] = [
   {
     id: "lena-health",

@@ -20,19 +20,48 @@ const setupLiveLabel = {
   done: "Done",
 } as const;
 
+// The client portal's view, translated for the admin: steps waiting on Rupert
+// are highlighted as the admin's turn.
 function onboardingRows(timestamps: OnboardingTimestamps): ChecklistRowItem[] {
   return getOnboardingItems(timestamps).map((item) => {
     const done = item.status === "done";
-    const waiting = item.status === "your_turn" || item.status === "waiting";
+    const detail =
+      done && item.completedAt ? formatDate(item.completedAt) : item.detail;
 
+    if (done) {
+      return {
+        id: item.id,
+        title: item.title,
+        detail,
+        status: "done",
+        statusLabel: "Done",
+      };
+    }
+    if (item.status === "waiting") {
+      return {
+        id: item.id,
+        title: item.title,
+        detail,
+        status: "your_turn",
+        statusLabel: "Your turn",
+      };
+    }
+    if (item.status === "your_turn") {
+      return {
+        id: item.id,
+        title: item.title,
+        detail,
+        status: "waiting",
+        statusLabel: "Waiting on client",
+      };
+    }
     return {
       id: item.id,
       title: item.title,
-      detail:
-        done && item.completedAt ? formatDate(item.completedAt) : undefined,
-      status: done ? "done" : waiting ? "waiting" : "open",
-      statusLabel: done ? "Done" : waiting ? "Waiting" : "Open",
-      dimmed: item.status === "open",
+      detail,
+      status: "open",
+      statusLabel: "Open",
+      dimmed: true,
     };
   });
 }

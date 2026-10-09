@@ -9,18 +9,28 @@ import {
   ONBOARDING_TOTAL,
   getOnboardingItems,
   onboardingProgress,
+  type OnboardingItemId,
   type OnboardingTimestamps,
 } from "@/lib/onboarding";
 
 export const TRACKED_TOTAL =
   ONBOARDING_TOTAL + SETUP_ITEMS.length + LIVE_ITEMS.length;
 
-const ONBOARDING_SHORT: Record<string, string> = {
+const ONBOARDING_SHORT: Record<OnboardingItemId, string> = {
   sow: "Statement of Work",
   service_order: "Service Order",
+  payment: "Setup Fee",
   nda: "NDA",
   intake: "Client Intake",
-  payment: "Invoice & Payment",
+};
+
+// What the admin has to do when an onboarding step is waiting on Rupert.
+const ADMIN_ACTION: Record<OnboardingItemId, string> = {
+  sow: "Send Statement of Work",
+  service_order: "Issue Service Order",
+  payment: "Issue Setup Fee invoice",
+  nda: "Issue NDA",
+  intake: "Send Client Intake",
 };
 
 export type ProgressSource = OnboardingTimestamps & ChecklistStatuses;
@@ -44,14 +54,10 @@ export function nextActionText(source: ProgressSource | null | undefined) {
     (item) => item.status !== "done",
   );
   if (onboardingNext) {
-    const label = ONBOARDING_SHORT[onboardingNext.id] ?? onboardingNext.title;
     if (onboardingNext.status === "your_turn") {
-      return `Waiting on client: ${label}`;
+      return `Waiting on client: ${ONBOARDING_SHORT[onboardingNext.id]}`;
     }
-    if (onboardingNext.id === "service_order") {
-      return "Your action: Issue Service Order";
-    }
-    return `Your action: ${label}`;
+    return `Your action: ${ADMIN_ACTION[onboardingNext.id]}`;
   }
 
   const setupNext = SETUP_ITEMS.find(
