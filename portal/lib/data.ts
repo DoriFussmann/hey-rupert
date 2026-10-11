@@ -11,6 +11,8 @@ import {
   placeholderScopeOfWork,
 } from "@/lib/placeholders";
 import { DEFAULT_SERVICE_ORDER } from "@/lib/service-order";
+import type { IntakeInterview } from "@/lib/intake";
+import { asIntakeInterview } from "@/lib/intake-server";
 import { readViewAsClientId } from "@/lib/view-as";
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -383,6 +385,26 @@ export async function getActiveServiceOrder(
 
     if (error || !data) return null;
     return asServiceOrderSend(data as Record<string, unknown>);
+  } catch {
+    return null;
+  }
+}
+
+export async function getIntakeInterview(
+  clientId: string,
+): Promise<IntakeInterview | null> {
+  if (!isServiceRoleConfigured()) return null;
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("intake_interviews")
+      .select("*")
+      .eq("client_id", clientId)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return asIntakeInterview(data as Record<string, unknown>);
   } catch {
     return null;
   }

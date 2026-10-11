@@ -58,6 +58,7 @@ export default async function NdaPage() {
           }}
           readOnly={viewAs}
           sign={signNda}
+          afterSignHref="/portal/intake"
         />
       ) : (
         <section className="max-w-prose rounded-card border border-border bg-surface p-lg">

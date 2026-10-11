@@ -32,6 +32,7 @@ const PHASES: {
       "/portal/statement-of-work",
       "/portal/service-order",
       "/portal/nda",
+      "/portal/intake",
     ],
   },
   {

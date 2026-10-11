@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { getIntakeSettings } from "@/app/admin/actions";
 import { ClientForm } from "@/app/admin/clients/[id]/client-form";
 import { ClientActions } from "@/app/admin/clients/[id]/client-actions";
 import { ResetPasswordSection } from "@/app/admin/clients/[id]/reset-password";
@@ -8,11 +9,13 @@ import { ClientStageSelect } from "@/app/admin/clients/[id]/stage-select";
 import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-order";
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
+import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { ViewAsClientLink } from "@/components/eye-icon";
 import {
   getAdminClient,
+  getIntakeInterview,
   listServiceOrderSends,
   listSignedDocuments,
   listSowSends,
@@ -33,12 +36,15 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const [sends, serviceOrderSends, ndaSends, access] = await Promise.all([
-    listSowSends(client.id),
-    listServiceOrderSends(client.id),
-    listSignedDocuments(client.id, "nda"),
-    getClientAccess(client.id),
-  ]);
+  const [sends, serviceOrderSends, ndaSends, access, interview, intake] =
+    await Promise.all([
+      listSowSends(client.id),
+      listServiceOrderSends(client.id),
+      listSignedDocuments(client.id, "nda"),
+      getClientAccess(client.id),
+      getIntakeInterview(client.id),
+      getIntakeSettings(),
+    ]);
 
   const kickedOffAt = kickoffDate(client);
   const turn = nextTurn(client);
@@ -151,6 +157,11 @@ export default async function ClientDetailPage({
         clientId={client.id}
         sends={ndaSends}
         available={isKickoffReady(client)}
+      />
+      <IntakePanel
+        interview={interview}
+        topics={intake.topics}
+        completedAt={client.intake_completed_at ?? null}
       />
     </>
   );

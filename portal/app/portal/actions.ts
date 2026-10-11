@@ -2,10 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { getAuthContext } from "@/lib/auth";
-import { isServiceRoleConfigured } from "@/lib/env";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
+import {
+  requirePortalService,
+  type PortalAccess,
+} from "@/lib/portal-access";
 import {
   isKickoffReady,
   mergeServiceOrder,
@@ -13,7 +15,6 @@ import {
   type FieldErrors,
   type ServiceOrderFields,
 } from "@/lib/service-order";
-import { createServiceClient } from "@/lib/supabase/admin";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -22,39 +23,6 @@ export type SignDocumentInput = ServiceOrderFields & { consent: boolean };
 export type SignDocumentResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: FieldErrors };
-
-const VIEW_AS_ERROR =
-  "You are viewing this portal as the client. Actions are disabled.";
-
-// Client actions run only for the client's own login. Admins previewing the
-// portal ("view as client") are refused here, whatever the UI shows.
-async function requirePortalService() {
-  const { user, role } = await getAuthContext();
-
-  if (user && role === "admin") {
-    return { ok: false as const, error: VIEW_AS_ERROR };
-  }
-
-  if (!user || role !== "client") {
-    return {
-      ok: false as const,
-      error: "You do not have permission to do that.",
-    };
-  }
-
-  if (!isServiceRoleConfigured()) {
-    return {
-      ok: false as const,
-      error: "Service role key is not configured.",
-    };
-  }
-
-  return {
-    ok: true as const,
-    user,
-    supabase: createServiceClient(),
-  };
-}
 
 function revalidateOnboarding(clientId: string) {
   revalidatePath("/portal", "layout");
@@ -101,11 +69,6 @@ function requestOrigin() {
     userAgent: list.get("user-agent")?.slice(0, 500) || null,
   };
 }
-
-type PortalAccess = Extract<
-  Awaited<ReturnType<typeof requirePortalService>>,
-  { ok: true }
->;
 
 function validateSignatureInput(
   input: SignDocumentInput,

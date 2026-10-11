@@ -61,9 +61,9 @@ export const ONBOARDING_STEPS: Record<
   },
   nda: { title: "NDA", short: "NDA", adminAction: "Issue NDA" },
   intake: {
-    title: "Client Intake Form",
+    title: "Client Intake",
     short: "Client Intake",
-    adminAction: "Send Client Intake",
+    adminAction: "Review Client Intake",
   },
 };
 
@@ -72,10 +72,13 @@ export const ONBOARDING_TOTAL = Object.keys(ONBOARDING_STEPS).length;
 export const SERVICE_ORDER_HREF = "/portal/service-order";
 export const SETUP_FEE_HREF = "/portal/service-order#setup-fee";
 export const NDA_HREF = "/portal/nda";
+export const INTAKE_HREF = "/portal/intake";
 
 /**
  * Client onboarding, in order:
- * SoW → Service Order + Setup Fee (either order) → kick-off → NDA → Intake.
+ * SoW → Service Order + Setup Fee (either order) → kick-off → NDA →
+ * Intake (an interview with Rupert, the client's turn as soon as the NDA is
+ * signed).
  */
 export function getOnboardingItems(
   source: OnboardingTimestamps | null | undefined,
@@ -161,9 +164,10 @@ export function getOnboardingItems(
       detail: intakeAt
         ? "Completed"
         : kickedOff && ndaAt
-          ? "Rupert will send the intake form"
+          ? "A short interview with Rupert"
           : "After the NDA",
-      status: intakeAt ? "done" : kickedOff && ndaAt ? "waiting" : "open",
+      href: intakeAt || (kickedOff && ndaAt) ? INTAKE_HREF : undefined,
+      status: intakeAt ? "done" : kickedOff && ndaAt ? "your_turn" : "open",
       completedAt: intakeAt,
     }),
   ];

@@ -147,6 +147,7 @@ export type NotificationType =
   | "password_set"
   | "kickoff_ready"
   | "setup_fee_paid"
+  | "intake_completed"
   | string;
 
 export type AdminNotification = {

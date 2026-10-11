@@ -46,6 +46,7 @@ export function notificationLabel(type: string) {
   if (type === "password_set") return "Set Portal Password";
   if (type === "kickoff_ready") return "Ready for Kick-off";
   if (type === "setup_fee_paid") return "Paid Setup Fee";
+  if (type === "intake_completed") return "Completed Client Intake";
   return statusLabel(type);
 }
 
@@ -58,6 +59,7 @@ export function notificationAction(type: string) {
   if (type === "password_set") return "set their portal password";
   if (type === "kickoff_ready") return "is ready for kick-off: issue the NDA";
   if (type === "setup_fee_paid") return "paid the Setup Fee";
+  if (type === "intake_completed") return "completed the Client Intake";
   return notificationLabel(type).toLowerCase();
 }
 
