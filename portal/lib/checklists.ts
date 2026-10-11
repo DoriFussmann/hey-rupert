@@ -92,7 +92,7 @@ export const ONBOARDING_TOGGLES: {
   },
   {
     column: "intake_completed_at",
-    title: "Client Intake Form",
+    title: "Client Intake",
     detail: "Completed",
   },
 ];

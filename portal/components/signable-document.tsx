@@ -52,6 +52,7 @@ export function SignableDocument({
   defaults,
   readOnly,
   sign,
+  afterSignHref,
 }: {
   title: string;
   content: string;
@@ -62,6 +63,8 @@ export function SignableDocument({
   defaults: ServiceOrderFields;
   readOnly: boolean;
   sign: SignDocumentAction;
+  /** Where to take the client after signing; stays on the page if omitted. */
+  afterSignHref?: string;
 }) {
   const router = useRouter();
   const [values, setValues] = useState<ServiceOrderFields>(defaults);
@@ -114,6 +117,9 @@ export function SignableDocument({
         setError(result.error);
         setPending(false);
         return;
+      }
+      if (afterSignHref) {
+        router.push(afterSignHref);
       }
       router.refresh();
     } catch (err) {
