@@ -59,10 +59,56 @@ async function loadOpenClient({ user, supabase }: PortalAccess) {
       error: "The intake opens once your NDA is signed.",
     };
   }
-  if (client.intake_completed_at) {
-    return { ok: false as const, error: "Your intake is already complete." };
-  }
   return { ok: true as const, client };
+}
+
+const CONFIRMED_ERROR = "Your intake is complete and confirmed.";
+
+function topicNotes(
+  topics: { id: string; title: string }[],
+  topicStatus: IntakeInterview["topic_status"],
+) {
+  const lines = topics
+    .map((topic) => {
+      const note = topicStatus[topic.id]?.note?.trim();
+      return note ? `- ${topic.title}: ${note}` : null;
+    })
+    .filter(Boolean);
+  return lines.length > 0
+    ? `What Rupert gathered:\n${lines.join("\n")}`
+    : undefined;
+}
+
+/**
+ * Completes the intake the first time every required topic is covered:
+ * marks it done, moves the stage to Setup and emails the admin what was
+ * gathered. The client can keep chatting to add the optional extras.
+ */
+async function completeIfEssentialsCovered(
+  { supabase, user }: PortalAccess,
+  client: Record<string, unknown>,
+  topics: Parameters<typeof intakeProgress>[0],
+  topicStatus: IntakeInterview["topic_status"],
+) {
+  if (client.intake_completed_at) return;
+  if (!intakeProgress(topics, topicStatus).ready) return;
+
+  const { data, error } = await supabase
+    .from("clients")
+    .update({ intake_completed_at: now() })
+    .eq("id", user.id)
+    .is("intake_completed_at", null)
+    .select("id");
+
+  if (error || !data || data.length === 0) return;
+
+  // Stage first, so the admin email reports the up-to-date next step.
+  await advanceStage(supabase, user.id, ["nda", "intake"], "setup");
+  await notifyAdmin(supabase, user.id, "intake_completed", {
+    email: true,
+    details: topicNotes(topics, topicStatus),
+  });
+  revalidateIntake(user.id);
 }
 
 /** Creates the interview with Rupert's opening message, if not started yet. */
@@ -78,6 +124,9 @@ export async function startIntake(): Promise<IntakeActionResult> {
   if (!existing.ok) return { ok: false, error: TABLE_MISSING };
   if (existing.interview && existing.interview.messages.length > 0) {
     return { ok: true, interview: existing.interview };
+  }
+  if (opened.client.intake_completed_at) {
+    return { ok: false, error: "Your intake is already complete." };
   }
 
   const settings = await loadIntakeSettings(supabase);
@@ -105,6 +154,12 @@ export async function startIntake(): Promise<IntakeActionResult> {
     .single();
 
   if (error || !data) return { ok: false, error: TABLE_MISSING };
+  await completeIfEssentialsCovered(
+    access,
+    opened.client,
+    settings.topics,
+    topicStatus,
+  );
   return { ok: true, interview: asIntakeInterview(data) };
 }
 
@@ -131,6 +186,9 @@ export async function sendIntakeMessage(
   if (!loaded.ok) return { ok: false, error: TABLE_MISSING };
   const interview = loaded.interview;
   if (!interview) return { ok: false, error: "The interview has not started yet." };
+  if (interview.status === "completed") {
+    return { ok: false, error: CONFIRMED_ERROR };
+  }
   if (interview.status !== "in_progress") {
     return { ok: false, error: "Go back to the conversation to add more." };
   }
@@ -188,6 +246,13 @@ export async function sendIntakeMessage(
     };
   }
 
+  await completeIfEssentialsCovered(
+    access,
+    opened.client,
+    settings.topics,
+    topicStatus,
+  );
+
   revalidatePath(`/admin/clients/${user.id}`);
   return { ok: true, interview: asIntakeInterview(data[0]) };
 }
@@ -205,6 +270,9 @@ export async function requestIntakeSummary(): Promise<IntakeActionResult> {
   if (!loaded.ok) return { ok: false, error: TABLE_MISSING };
   const interview = loaded.interview;
   if (!interview) return { ok: false, error: "The interview has not started yet." };
+  if (interview.status === "completed") {
+    return { ok: false, error: CONFIRMED_ERROR };
+  }
   if (interview.status === "review" && interview.summary) {
     return { ok: true, interview };
   }
@@ -306,16 +374,20 @@ export async function confirmIntake(
 
   if (error) return { ok: false, error: error.message };
 
-  const { error: clientError } = await supabase
-    .from("clients")
-    .update({ intake_completed_at: completedAt })
-    .eq("id", user.id);
+  // Normally the intake was already completed when the essentials were
+  // covered; confirming the summary then only records the client's edits.
+  if (!opened.client.intake_completed_at) {
+    const { error: clientError } = await supabase
+      .from("clients")
+      .update({ intake_completed_at: completedAt })
+      .eq("id", user.id);
 
-  if (clientError) return { ok: false, error: clientError.message };
+    if (clientError) return { ok: false, error: clientError.message };
 
-  // Stage first, so the admin email reports the up-to-date next step.
-  await advanceStage(supabase, user.id, ["nda", "intake"], "setup");
-  await notifyAdmin(supabase, user.id, "intake_completed", { email: true });
+    // Stage first, so the admin email reports the up-to-date next step.
+    await advanceStage(supabase, user.id, ["nda", "intake"], "setup");
+    await notifyAdmin(supabase, user.id, "intake_completed", { email: true });
+  }
 
   revalidateIntake(user.id);
   return {

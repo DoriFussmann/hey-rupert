@@ -31,6 +31,7 @@ function text(value: unknown) {
 
 /**
  * Records an admin notification and, when `email` is set, emails it too.
+ * `details` is optional extra text placed in the email body.
  * The email says "you're up" only when the next step is the admin's, using
  * the same next-action logic as the admin client list.
  * Best effort: callers have already saved the change, so failures here are
@@ -41,7 +42,7 @@ export async function notifyAdmin(
   supabase: ServiceClient,
   clientId: string,
   type: string,
-  { email }: { email: boolean },
+  { email, details }: { email: boolean; details?: string },
 ) {
   const { error } = await supabase
     .from("notifications")
@@ -65,8 +66,11 @@ export async function notifyAdmin(
     adminTurn
       ? `You're up: ${turn.action}.`
       : `Next: ${nextActionText(row as ProgressSource)}.`,
+    details,
     `Open the client: ${PORTAL_URL}/admin/clients/${clientId}`,
-  ].join("\n\n");
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 
   await sendAdminEmail(subject, body);
 }

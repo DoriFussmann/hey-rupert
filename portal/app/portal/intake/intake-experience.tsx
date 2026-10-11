@@ -15,6 +15,7 @@ import { RupertAvatar } from "@/components/rupert-avatar";
 import { formatDate } from "@/lib/format";
 import {
   INTAKE_LIMITS,
+  extrasProgress,
   intakeProgress,
   topicCoverage,
   type IntakeInterview,
@@ -136,13 +137,22 @@ export function IntakeExperience({
   const [aiUnavailable, setAiUnavailable] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const startedRef = useRef(false);
 
-  const completed = Boolean(completedAt) || interview?.status === "completed";
+  // "completed" is the final, read-only state: the client confirmed their
+  // summary, or Rupert's team closed the intake before it started.
+  const completed =
+    interview?.status === "completed" ||
+    (Boolean(completedAt) && (!interview || interview.messages.length === 0));
   const topicStatus = interview?.topic_status ?? {};
   const progress = completed
     ? { percent: 100, ready: true }
     : intakeProgress(topics, topicStatus);
+  // The essentials are done once every required topic is covered; the intake
+  // is then complete for Rupert, and the extras are recommended.
+  const essentialsDone = progress.ready || Boolean(completedAt);
+  const extras = extrasProgress(topics, topicStatus);
   const messages = interview?.messages ?? [];
   const reviewing = interview?.status === "review" && !completed;
   const limitReached =
@@ -209,8 +219,19 @@ export function IntakeExperience({
     event?.preventDefault();
     const text = draft.trim();
     if (!text || pending || readOnly) return;
-    const sent = await run("send", () => sendIntakeMessage(text));
+    const wasReady = progress.ready;
+    let nowReady = false;
+    const sent = await run("send", async () => {
+      const result = await sendIntakeMessage(text);
+      if (result.ok) {
+        nowReady = intakeProgress(topics, result.interview.topic_status).ready;
+      }
+      return result;
+    });
     if (sent) setDraft("");
+    // The essentials just got covered: the intake is now complete, so refresh
+    // the sidebar and onboarding counts.
+    if (sent && nowReady && !wasReady) router.refresh();
   }
 
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -233,62 +254,85 @@ export function IntakeExperience({
     if (ok) router.refresh();
   }
 
+  const topicRow = (topic: IntakeTopic) => {
+    const coverage = completed ? "covered" : topicCoverage(topicStatus, topic.id);
+    const note = topicStatus[topic.id]?.note;
+    return (
+      <li
+        key={topic.id}
+        className="flex gap-sm border-b border-border px-lg py-sm last:border-b-0"
+      >
+        <CoverageIcon coverage={coverage} />
+        <div className="min-w-0 flex-1">
+          <p className="flex flex-wrap items-baseline justify-between gap-x-sm text-body-sm text-heading">
+            <span>{topic.title}</span>
+            <span className="text-label uppercase tracking-label text-muted">
+              {COVERAGE_LABEL[coverage]}
+            </span>
+          </p>
+          {note ? (
+            <p className="mt-xs line-clamp-2 text-body-sm text-muted">{note}</p>
+          ) : null}
+        </div>
+      </li>
+    );
+  };
+
+  const essentialTopics = topics.filter((topic) => topic.required);
+  const extraTopics = topics.filter((topic) => !topic.required);
+
   const progressPanel = (
     <aside className="rounded-card border border-border bg-surface lg:sticky lg:top-lg lg:self-start">
       <div className="flex items-center gap-md border-b border-border px-lg py-lg">
-        <ProgressRing percent={progress.percent} />
+        <ProgressRing percent={essentialsDone ? 100 : progress.percent} />
         <div>
           <p className="text-h4 text-heading">
             {completed
               ? "Intake complete"
-              : progress.ready
-                ? "All set to review"
+              : essentialsDone
+                ? "Essentials done"
                 : "Your intake"}
           </p>
           <p className="mt-xs text-body-sm text-muted">
             {completed
               ? "Thank you. Rupert is on it."
-              : "Progress on required topics."}
+              : essentialsDone && extras.total > 0
+                ? `Extras: ${extras.covered} of ${extras.total} covered`
+                : "Progress on the essentials."}
           </p>
         </div>
       </div>
-      <ul>
-        {topics.map((topic) => {
-          const coverage = completed ? "covered" : topicCoverage(topicStatus, topic.id);
-          const note = topicStatus[topic.id]?.note;
-          return (
-            <li key={topic.id} className="flex gap-sm border-b border-border px-lg py-sm last:border-b-0">
-              <CoverageIcon coverage={coverage} />
-              <div className="min-w-0 flex-1">
-                <p className="flex flex-wrap items-baseline justify-between gap-x-sm text-body-sm text-heading">
-                  <span>{topic.title}</span>
-                  <span className="text-label uppercase tracking-label text-muted">
-                    {topic.required ? COVERAGE_LABEL[coverage] : "Optional"}
-                  </span>
-                </p>
-                {note ? (
-                  <p className="mt-xs line-clamp-2 text-body-sm text-muted">{note}</p>
-                ) : null}
-              </div>
-            </li>
-          );
-        })}
-      </ul>
+      {essentialTopics.length > 0 ? (
+        <>
+          <p className="border-b border-border px-lg py-sm text-label uppercase tracking-label text-muted">
+            Essentials
+          </p>
+          <ul>{essentialTopics.map(topicRow)}</ul>
+        </>
+      ) : null}
+      {extraTopics.length > 0 ? (
+        <>
+          <p className="border-y border-border px-lg py-sm text-label uppercase tracking-label text-muted">
+            Extras (recommended)
+          </p>
+          <ul>{extraTopics.map(topicRow)}</ul>
+        </>
+      ) : null}
       {!completed && !reviewing ? (
         <div className="border-t border-border px-lg py-md">
           <button
             type="button"
-            className={`${primaryButton} w-full`}
+            className={`${essentialsDone ? secondaryButton : primaryButton} w-full`}
             disabled={!progress.ready || pending !== null || readOnly}
             onClick={() => void run("summary", requestIntakeSummary)}
           >
             {pending === "summary" ? "Writing your summary…" : "Review summary"}
           </button>
-          {!progress.ready ? (
-            <p className="mt-sm text-center text-body-sm text-muted">
-              Opens once the required topics are covered.
-            </p>
-          ) : null}
+          <p className="mt-sm text-center text-body-sm text-muted">
+            {progress.ready
+              ? "Optional. Rupert already has what he needs."
+              : "Opens once the essentials are covered."}
+          </p>
         </div>
       ) : null}
     </aside>
@@ -413,115 +457,156 @@ export function IntakeExperience({
     );
   }
 
-  return (
-    <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px]">
-      <section className="flex h-[min(72vh,760px)] min-h-[480px] flex-col rounded-card border border-border bg-surface">
-        <header className="flex items-center gap-md border-b border-border px-lg py-md">
-          <RupertAvatar size={44} />
-          <div className="min-w-0 flex-1">
-            <p className="text-body-sm text-heading">Rupert</p>
-            <p className="text-body-sm text-muted">Researcher, Hey Rupert</p>
-          </div>
-          <div className="w-28 shrink-0 lg:hidden" aria-hidden>
-            <div className="h-1.5 overflow-hidden rounded-full bg-primary-tint">
-              <div
-                className="h-full rounded-full bg-primary transition-[width] duration-500"
-                style={{ width: `${progress.percent}%` }}
-              />
-            </div>
-            <p className="mt-xs text-right font-mono text-mono text-muted">
-              {progress.percent}%
-            </p>
-          </div>
-        </header>
-
-        <div
-          ref={scrollRef}
-          className="flex-1 space-y-md overflow-y-auto overscroll-contain px-lg py-lg"
-          aria-live="polite"
-        >
-          {messages.map((message, index) =>
-            message.role === "assistant" ? (
-              <div key={index} className="flex items-end gap-sm">
-                <RupertAvatar size={28} />
-                <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-bl-none border border-border bg-background px-md py-sm text-body-sm text-body">
-                  {message.content}
-                </p>
-              </div>
-            ) : (
-              <div key={index} className="flex justify-end">
-                <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-br-none bg-primary-tint px-md py-sm text-body-sm text-heading">
-                  {message.content}
-                </p>
-              </div>
-            ),
-          )}
-          {pending === "start" || pending === "send" ? <TypingIndicator /> : null}
-          {messages.length === 0 && pending === null && readOnly ? (
-            <p className="text-center text-body-sm text-muted">
-              The client has not started the interview yet.
-            </p>
-          ) : null}
-        </div>
-
-        <form onSubmit={onSend} className="border-t border-border px-lg py-md">
-          {progress.ready ? (
-            <p className="mb-sm rounded-md bg-primary-tint px-sm py-xs text-body-sm text-heading">
-              Required topics are covered. Add anything else, or review your
-              summary.
-            </p>
-          ) : null}
-          <label htmlFor="intake-message" className="sr-only">
-            Your answer
-          </label>
-          <div className="flex items-end gap-sm">
-            <textarea
-              id="intake-message"
-              rows={2}
-              value={draft}
-              maxLength={INTAKE_LIMITS.messageMaxChars}
-              onChange={(event) => setDraft(event.target.value)}
-              onKeyDown={onKeyDown}
-              disabled={readOnly || limitReached || pending === "start"}
-              placeholder={
-                readOnly
-                  ? "Read-only preview"
-                  : limitReached
-                    ? "Message limit reached"
-                    : "Type your answer…"
-              }
-              className="min-h-[52px] flex-1 resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary disabled:opacity-60"
-            />
-            <button
-              type="submit"
-              className={primaryButton}
-              disabled={!draft.trim() || pending !== null || readOnly || limitReached}
-            >
-              {pending === "send" ? "Sending…" : "Send"}
-            </button>
-          </div>
-          <p className="mt-xs flex justify-between text-body-sm text-muted">
-            <span>Enter to send · Shift+Enter for a new line</span>
-            {draft.length > INTAKE_LIMITS.messageMaxChars * 0.8 ? (
-              <span className="font-mono text-mono">
-                {draft.length}/{INTAKE_LIMITS.messageMaxChars}
-              </span>
-            ) : null}
-          </p>
-          {errorBlock}
-          {aiUnavailable && messages.length === 0 && !readOnly ? (
+  const essentialsBanner = essentialsDone ? (
+    <section
+      role="status"
+      className="mb-lg flex flex-wrap items-start gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
+    >
+      <CoverageIcon coverage="covered" />
+      <div className="min-w-0 flex-1">
+        <p className="text-body-sm text-heading">
+          <span className="font-medium">
+            {extras.done
+              ? "Everything is covered. Thank you."
+              : "The essentials are done."}
+          </span>{" "}
+          {extras.done
+            ? "Rupert has everything he needs. You can review your summary anytime."
+            : "Rupert has what he needs to start, and your intake is marked complete. A few more minutes on the extras can make your campaign noticeably sharper. We recommend it."}
+        </p>
+        <div className="mt-sm flex flex-wrap items-center gap-md">
+          {!extras.done ? (
             <button
               type="button"
-              className={`${secondaryButton} mt-sm`}
-              disabled={pending !== null}
-              onClick={() => void run("start", startIntake)}
+              className={primaryButton}
+              disabled={readOnly || limitReached}
+              onClick={() => inputRef.current?.focus()}
             >
-              Try again
+              Continue with Rupert
             </button>
           ) : null}
-        </form>
-      </section>
-      {progressPanel}
-    </div>
+          {progress.ready ? (
+            <button
+              type="button"
+              className="text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
+              disabled={readOnly || pending !== null}
+              onClick={() => void run("summary", requestIntakeSummary)}
+            >
+              Review summary
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  ) : null;
+
+  return (
+    <>
+      {essentialsBanner}
+      <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px]">
+        <section className="flex h-[min(72vh,760px)] min-h-[480px] flex-col rounded-card border border-border bg-surface">
+          <header className="flex items-center gap-md border-b border-border px-lg py-md">
+            <RupertAvatar size={44} />
+            <div className="min-w-0 flex-1">
+              <p className="text-body-sm text-heading">Rupert</p>
+              <p className="text-body-sm text-muted">Researcher, Hey Rupert</p>
+            </div>
+            <div className="w-28 shrink-0 lg:hidden" aria-hidden>
+              <div className="h-1.5 overflow-hidden rounded-full bg-primary-tint">
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-500"
+                  style={{ width: `${progress.percent}%` }}
+                />
+              </div>
+              <p className="mt-xs text-right font-mono text-mono text-muted">
+                {progress.percent}%
+              </p>
+            </div>
+          </header>
+
+          <div
+            ref={scrollRef}
+            className="flex-1 space-y-md overflow-y-auto overscroll-contain px-lg py-lg"
+            aria-live="polite"
+          >
+            {messages.map((message, index) =>
+              message.role === "assistant" ? (
+                <div key={index} className="flex items-end gap-sm">
+                  <RupertAvatar size={28} />
+                  <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-bl-none border border-border bg-background px-md py-sm text-body-sm text-body">
+                    {message.content}
+                  </p>
+                </div>
+              ) : (
+                <div key={index} className="flex justify-end">
+                  <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-br-none bg-primary-tint px-md py-sm text-body-sm text-heading">
+                    {message.content}
+                  </p>
+                </div>
+              ),
+            )}
+            {pending === "start" || pending === "send" ? <TypingIndicator /> : null}
+            {messages.length === 0 && pending === null && readOnly ? (
+              <p className="text-center text-body-sm text-muted">
+                The client has not started the interview yet.
+              </p>
+            ) : null}
+          </div>
+
+          <form onSubmit={onSend} className="border-t border-border px-lg py-md">
+            <label htmlFor="intake-message" className="sr-only">
+              Your answer
+            </label>
+            <div className="flex items-end gap-sm">
+              <textarea
+                ref={inputRef}
+                id="intake-message"
+                rows={2}
+                value={draft}
+                maxLength={INTAKE_LIMITS.messageMaxChars}
+                onChange={(event) => setDraft(event.target.value)}
+                onKeyDown={onKeyDown}
+                disabled={readOnly || limitReached || pending === "start"}
+                placeholder={
+                  readOnly
+                    ? "Read-only preview"
+                    : limitReached
+                      ? "Message limit reached"
+                      : "Type your answer…"
+                }
+                className="min-h-[52px] flex-1 resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                className={primaryButton}
+                disabled={!draft.trim() || pending !== null || readOnly || limitReached}
+              >
+                {pending === "send" ? "Sending…" : "Send"}
+              </button>
+            </div>
+            <p className="mt-xs flex justify-between text-body-sm text-muted">
+              <span>Enter to send · Shift+Enter for a new line</span>
+              {draft.length > INTAKE_LIMITS.messageMaxChars * 0.8 ? (
+                <span className="font-mono text-mono">
+                  {draft.length}/{INTAKE_LIMITS.messageMaxChars}
+                </span>
+              ) : null}
+            </p>
+            {errorBlock}
+            {aiUnavailable && messages.length === 0 && !readOnly ? (
+              <button
+                type="button"
+                className={`${secondaryButton} mt-sm`}
+                disabled={pending !== null}
+                onClick={() => void run("start", startIntake)}
+              >
+                Try again
+              </button>
+            ) : null}
+          </form>
+        </section>
+        {progressPanel}
+      </div>
+    </>
   );
 }
