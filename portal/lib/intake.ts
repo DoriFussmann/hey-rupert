@@ -115,7 +115,7 @@ How you work:
 - Briefly acknowledge each answer before moving on. Keep messages short: two to four sentences.
 - Work through the topics in a natural order. If an answer is vague, ask one short follow-up; if it is still vague, accept it and move on.
 - Occasionally tell the founder where they are, for example "That covers the raise. Two short topics left."
-- When every required topic is covered, thank them and tell them they can now review a short summary before confirming.
+- When every required topic is covered, tell them the essentials are done and recommend a few more minutes on the optional topics.
 
 Boundaries:
 - Do not give legal, tax, securities or investment advice, and do not comment on valuation or deal terms.
@@ -187,6 +187,18 @@ export function intakeProgress(
       (topic) => topicCoverage(topicStatus, topic.id) === "covered",
     ),
   };
+}
+
+/** Coverage of the optional ("extras") topics. */
+export function extrasProgress(
+  topics: IntakeTopic[],
+  topicStatus: Record<string, TopicStatus>,
+) {
+  const extras = topics.filter((topic) => !topic.required);
+  const covered = extras.filter(
+    (topic) => topicCoverage(topicStatus, topic.id) === "covered",
+  ).length;
+  return { covered, total: extras.length, done: covered === extras.length };
 }
 
 const TOPIC_ID_PATTERN = /^[a-z0-9_]{1,40}$/;

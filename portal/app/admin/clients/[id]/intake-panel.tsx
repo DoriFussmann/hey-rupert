@@ -11,7 +11,13 @@ function statusLine(
   completedAt: string | null,
   percent: number,
 ) {
-  if (completedAt) return `Completed ${formatDateAtTime(completedAt)}`;
+  if (completedAt) {
+    const when = `Completed ${formatDateAtTime(completedAt)}`;
+    if (!interview || interview.messages.length === 0) return when;
+    return interview.status === "completed"
+      ? `${when} · summary confirmed by the client`
+      : `${when} (essentials covered) · the client may still add extras`;
+  }
   if (!interview || interview.messages.length === 0) return "Not started";
   if (interview.status === "review") return "Client is reviewing the summary";
   return `In progress · ${percent}% of required topics`;

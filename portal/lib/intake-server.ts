@@ -195,6 +195,8 @@ function systemPrompt(
     context,
     "## Interview topics",
     topicsBlock(settings.topics, topicStatus),
+    "## When the essentials are done",
+    "The intake is complete as soon as every required topic is covered: Rupert then has what he needs to start, and the founder is notified that the essentials are done. When your topic update marks the last required topic as covered (in this turn or earlier), make this clear in your reply, once: say warmly that the essentials are done and Rupert has what he needs to get started; then name the remaining optional topics, explain in one sentence that a few more minutes on them can make the campaign noticeably sharper, recommend continuing, and ask whether they would like to. If they prefer to stop, thank them and tell them they are all set. If every topic, required and optional, is covered, thank them and say they can review their summary anytime. This section overrides any earlier instruction about when to offer the summary.",
     "## How to respond",
     "Always respond by calling the `respond` tool. `reply` is the message the founder sees. `topics` reports the coverage of EVERY topic after this turn: `covered` when you have what the topic needs, `partial` when you have some of it, `missing` otherwise. `note` is a short factual summary of what you have learned for that topic so far (empty if nothing). Count information you already knew from the company details as known.",
   ].join("\n\n");
