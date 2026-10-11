@@ -41,6 +41,7 @@ import {
   parseIntakeTopics,
   type IntakeTopic,
 } from "@/lib/intake";
+import { callClaudeTool } from "@/lib/anthropic";
 import { loadIntakeSettings } from "@/lib/intake-server";
 import { notifyClient } from "@/lib/notify";
 import {
@@ -1354,4 +1355,36 @@ export async function saveIntakeSettings(
 
   revalidatePath("/admin/forms/intake");
   return { ok: true };
+}
+
+/** Sends a tiny request to Claude so the admin can check the AI setup. */
+export async function testClaudeConnection(): Promise<
+  { ok: true; reply: string; model: string } | { ok: false; reason: string }
+> {
+  const access = await requireAdminService();
+  if (!access.ok) return { ok: false, reason: access.error };
+
+  const result = await callClaudeTool<{ reply?: unknown }>({
+    system:
+      "You are a connection test. Reply by calling the respond tool with one short friendly sentence.",
+    messages: [{ role: "user", content: "Say hello from Rupert." }],
+    tool: {
+      name: "respond",
+      description: "Send the reply.",
+      input_schema: {
+        type: "object",
+        properties: { reply: { type: "string" } },
+        required: ["reply"],
+      },
+    },
+    maxTokens: 200,
+    fallbackFromText: (text) => ({ reply: text }),
+  });
+  if (!result.ok) return { ok: false, reason: result.reason };
+
+  return {
+    ok: true,
+    reply: String(result.input.reply ?? "").trim() || "(empty reply)",
+    model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
+  };
 }
