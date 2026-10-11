@@ -38,10 +38,6 @@ internalLinks:
   - slug: local-investors-vs-national-investors-for-startups
     anchor: local investors vs national investors for startups
 externalLinks:
-  - label: SEC capital raising guide
-    url: "https://www.sec.gov/education/capital-raising"
-    addedAt: 2026-09-28
-    kind: author-source
   - label: SBA funding programs
     url: "https://www.sba.gov/funding-programs"
     addedAt: 2026-09-28
@@ -108,5 +104,5 @@ Further reading: [angel investors](/articles/angel-investors/) · [angel groups 
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
-Sources: [SEC capital raising guide](https://www.sec.gov/education/capital-raising) · [SBA funding programs](https://www.sba.gov/funding-programs) · [Find My - App Store - Apple](https://apps.apple.com/us/app/find-my/id1514844621) · [Find Devices - Apple iCloud](https://www.icloud.com/find) · [FIND | Diagnosis for all](https://www.finddx.org/).
+Sources: [SBA funding programs](https://www.sba.gov/funding-programs) · [Find My - App Store - Apple](https://apps.apple.com/us/app/find-my/id1514844621) · [Find Devices - Apple iCloud](https://www.icloud.com/find) · [FIND | Diagnosis for all](https://www.finddx.org/).
 <!-- CMS-EXTERNAL:END -->

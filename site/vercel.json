@@ -1,4 +1,36 @@
 {
+  "redirects": [
+    {
+      "source": "/articles/deck-investor-relations",
+      "destination": "/articles/investor-presentation-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/deck-investor-relations/",
+      "destination": "/articles/investor-presentation-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-find-investors-by-location",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-find-investors-by-location/",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investor-presentation",
+      "destination": "/articles/investor-presentation-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investor-presentation/",
+      "destination": "/articles/investor-presentation-template/",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
       "source": "/login",

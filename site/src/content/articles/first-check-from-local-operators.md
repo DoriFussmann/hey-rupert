@@ -38,10 +38,6 @@ internalLinks:
   - slug: operators-who-write-the-first-check
     anchor: operators who write the first check
 externalLinks:
-  - label: SEC capital raising guide
-    url: "https://www.sec.gov/education/capital-raising"
-    addedAt: 2026-09-28
-    kind: author-source
   - label: SBA funding programs
     url: "https://www.sba.gov/funding-programs"
     addedAt: 2026-09-28
@@ -107,5 +103,5 @@ Further reading: [angel investors](/articles/angel-investors/) · [angel groups 
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
-Sources: [SEC capital raising guide](https://www.sec.gov/education/capital-raising) · [SBA funding programs](https://www.sba.gov/funding-programs) · [Operators — Airflow 3.3.2 Documentation](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/operators.html) · [Blue Star Operators | Office of National Marine Sanctuaries](https://sanctuaries.noaa.gov/bluestar/operators.html) · [Operators | Tom Clancy's Rainbow Six Siege](https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators).
+Sources: [SBA funding programs](https://www.sba.gov/funding-programs) · [Operators — Airflow 3.3.2 Documentation](https://airflow.apache.org/docs/apache-airflow/stable/core-concepts/operators.html) · [Blue Star Operators | Office of National Marine Sanctuaries](https://sanctuaries.noaa.gov/bluestar/operators.html) · [Operators | Tom Clancy's Rainbow Six Siege](https://www.ubisoft.com/en-us/game/rainbow-six/siege/game-info/operators).
 <!-- CMS-EXTERNAL:END -->
