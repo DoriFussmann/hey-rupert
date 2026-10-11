@@ -23,6 +23,7 @@ import {
 } from "@/lib/checklists";
 import {
   FORM_TITLES,
+  NDA_SLUG,
   SERVICE_ORDER_SLUG,
   STATEMENT_OF_WORK_SLUG,
   isFormSlug,
@@ -30,10 +31,12 @@ import {
 } from "@/lib/form-fields";
 import { clientDisplayName } from "@/lib/format";
 import { sendAdminEmail, type EmailResult } from "@/lib/email";
-import { advanceToKickoff } from "@/lib/kickoff";
+import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
+import { DEFAULT_NDA } from "@/lib/nda";
 import { notifyClient } from "@/lib/notify";
 import {
   DEFAULT_SERVICE_ORDER,
+  isKickoffReady,
   isStripePaymentLink,
 } from "@/lib/service-order";
 import { DEFAULT_STATEMENT_OF_WORK } from "@/lib/statement-of-work";
@@ -502,6 +505,10 @@ export async function updateOnboardingTimestamp(
     await advanceToKickoff(access.supabase, clientId);
   }
 
+  if (column === "nda_signed_at" && done) {
+    await advanceStage(access.supabase, clientId, ["nda"], "intake");
+  }
+
   revalidateProgressPaths(clientId);
   return { ok: true };
 }
@@ -685,11 +692,13 @@ export async function markNotificationRead(
 const FORM_DEFAULTS: Record<FormSlug, string> = {
   [STATEMENT_OF_WORK_SLUG]: DEFAULT_STATEMENT_OF_WORK,
   [SERVICE_ORDER_SLUG]: DEFAULT_SERVICE_ORDER,
+  [NDA_SLUG]: DEFAULT_NDA,
 };
 
 const FORM_PATHS: Record<FormSlug, string> = {
   [STATEMENT_OF_WORK_SLUG]: "/admin/forms/statement-of-work",
   [SERVICE_ORDER_SLUG]: "/admin/forms/service-order",
+  [NDA_SLUG]: "/admin/forms/nda",
 };
 
 export async function getFormTemplate(
@@ -1128,4 +1137,144 @@ export async function sendTestEmail(): Promise<EmailResult> {
     "Rupert test email",
     "Email notifications from the Rupert portal are working.",
   );
+}
+
+// ---------------------------------------------------------------------------
+// NDA (stored in signed_documents)
+
+const SIGNED_DOCUMENTS_TABLE_MISSING =
+  "The signed_documents table is missing. Run portal/supabase/signed_documents.sql in the Supabase SQL editor, then try again.";
+
+function signedDocumentsError(
+  message: string,
+  code?: string,
+): { ok: false; error: string } {
+  const missing =
+    code === "42P01" ||
+    code === "42703" ||
+    message.includes("signed_documents") ||
+    message.includes("nda_sent_at") ||
+    message.toLowerCase().includes("schema cache");
+  return { ok: false, error: missing ? SIGNED_DOCUMENTS_TABLE_MISSING : message };
+}
+
+function revalidateNdaPaths(clientId: string) {
+  revalidateClientPaths(clientId);
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal/onboarding");
+  revalidatePath("/portal/nda");
+}
+
+export async function generateNda(
+  clientId: string,
+): Promise<ActionResult & { content?: string }> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+  void clientId;
+
+  const template = await getFormTemplate(NDA_SLUG);
+  return { ok: true, content: template.content.trim() || DEFAULT_NDA };
+}
+
+export async function sendNda(
+  clientId: string,
+  content: string,
+): Promise<SendToClientResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  if (!content.trim()) {
+    return { ok: false, error: "Generate the NDA before sending." };
+  }
+
+  const { supabase } = access;
+
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("id, service_order_agreed_at, payment_received_at")
+    .eq("id", clientId)
+    .maybeSingle();
+
+  if (clientError) return { ok: false, error: clientError.message };
+  if (!client) return { ok: false, error: "Client not found." };
+  if (!isKickoffReady(client)) {
+    return {
+      ok: false,
+      error:
+        "The NDA can be sent after kick-off: the Service Order must be signed and the Setup Fee received.",
+    };
+  }
+
+  const alreadySent = "An NDA has already been sent. Archive it to send a new one.";
+
+  const { data: active, error: activeError } = await supabase
+    .from("signed_documents")
+    .select("id")
+    .eq("client_id", clientId)
+    .eq("doc_type", "nda")
+    .is("archived_at", null)
+    .limit(1);
+
+  if (activeError) return signedDocumentsError(activeError.message, activeError.code);
+  if (active && active.length > 0) return { ok: false, error: alreadySent };
+
+  const sentAt = new Date().toISOString();
+  const { error: insertError } = await supabase
+    .from("signed_documents")
+    .insert({ client_id: clientId, doc_type: "nda", content, sent_at: sentAt });
+
+  if (insertError) {
+    if (insertError.code === "23505") return { ok: false, error: alreadySent };
+    return signedDocumentsError(insertError.message, insertError.code);
+  }
+
+  const { error: updateError } = await supabase
+    .from("clients")
+    .update({ nda_sent_at: sentAt, nda_signed_at: null })
+    .eq("id", clientId);
+
+  if (updateError) return signedDocumentsError(updateError.message, updateError.code);
+
+  const clientEmail = await notifyClient(supabase, clientId, "nda_ready");
+
+  revalidateNdaPaths(clientId);
+  return { ok: true, clientEmail };
+}
+
+/**
+ * Archiving the active NDA voids it: it disappears from the portal
+ * (including any signature) so a new one can be issued.
+ */
+export async function archiveNda(
+  clientId: string,
+  sendId: string,
+): Promise<ActionResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { supabase } = access;
+
+  const { data: archived, error } = await supabase
+    .from("signed_documents")
+    .update({ archived_at: new Date().toISOString() })
+    .eq("id", sendId)
+    .eq("client_id", clientId)
+    .eq("doc_type", "nda")
+    .is("archived_at", null)
+    .select("id");
+
+  if (error) return signedDocumentsError(error.message, error.code);
+  if (!archived || archived.length === 0) {
+    return { ok: false, error: "That NDA is already archived." };
+  }
+
+  const { error: clientError } = await supabase
+    .from("clients")
+    .update({ nda_sent_at: null, nda_signed_at: null })
+    .eq("id", clientId);
+
+  if (clientError) return signedDocumentsError(clientError.message, clientError.code);
+
+  revalidateNdaPaths(clientId);
+  return { ok: true };
 }

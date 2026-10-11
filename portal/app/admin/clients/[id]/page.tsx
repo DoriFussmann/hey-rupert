@@ -7,15 +7,18 @@ import { ResetPasswordSection } from "@/app/admin/clients/[id]/reset-password";
 import { ClientStageSelect } from "@/app/admin/clients/[id]/stage-select";
 import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-order";
+import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { ViewAsClientLink } from "@/components/eye-icon";
 import {
   getAdminClient,
   listServiceOrderSends,
+  listSignedDocuments,
   listSowSends,
 } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { nextTurn } from "@/lib/progress";
 import { isKickoffReady, kickoffDate } from "@/lib/service-order";
 import { getClientAccess } from "@/lib/password-setup";
 
@@ -30,14 +33,15 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const [sends, serviceOrderSends, access] = await Promise.all([
+  const [sends, serviceOrderSends, ndaSends, access] = await Promise.all([
     listSowSends(client.id),
     listServiceOrderSends(client.id),
+    listSignedDocuments(client.id, "nda"),
     getClientAccess(client.id),
   ]);
 
   const kickedOffAt = kickoffDate(client);
-  const awaitingNda = isKickoffReady(client) && !client.nda_signed_at;
+  const turn = nextTurn(client);
 
   return (
     <>
@@ -63,7 +67,7 @@ export default async function ClientDetailPage({
           </div>
         }
       />
-      {awaitingNda ? (
+      {turn.owner === "admin" ? (
         <section
           role="status"
           className="mb-lg rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
@@ -72,10 +76,10 @@ export default async function ClientDetailPage({
             Your turn
           </p>
           <p className="mt-xs text-body-sm text-heading">
-            Kick-off ready
-            {kickedOffAt ? ` since ${formatDate(kickedOffAt)}` : ""}: the
-            Service Order is signed and the Setup Fee is received. Issue the
-            NDA.
+            {turn.action}
+            {kickedOffAt && !client.nda_sent_at && !client.nda_signed_at
+              ? ` — kick-off ready since ${formatDate(kickedOffAt)}: the Service Order is signed and the Setup Fee is received.`
+              : "."}
           </p>
         </section>
       ) : null}
@@ -87,6 +91,7 @@ export default async function ClientDetailPage({
           service_order_agreed_at: client.service_order_agreed_at,
           setup_invoice_url: client.setup_invoice_url,
           payment_received_at: client.payment_received_at,
+          nda_sent_at: client.nda_sent_at,
           nda_signed_at: client.nda_signed_at,
           intake_completed_at: client.intake_completed_at,
         }}
@@ -141,6 +146,11 @@ export default async function ClientDetailPage({
         clientId={client.id}
         sends={serviceOrderSends}
         paymentReceivedAt={client.payment_received_at ?? null}
+      />
+      <GenerateNda
+        clientId={client.id}
+        sends={ndaSends}
+        available={isKickoffReady(client)}
       />
     </>
   );
