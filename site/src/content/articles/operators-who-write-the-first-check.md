@@ -1,5 +1,6 @@
 ---
 title: Why Founders Should Target Operators Who Write Early Checks
+h1: "Operators Who Write the First Check"
 description: Most founders email distant funds first. The smarter move is to start with operators who write the first check — they already understand your problem.
 slug: operators-who-write-the-first-check
 date: "2026-09-28"

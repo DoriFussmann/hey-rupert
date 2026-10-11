@@ -1,5 +1,6 @@
 ---
 title: The Complete Seed Pitch Deck Guide for Raising Founders
+h1: "How to Build a Seed Pitch Deck"
 description: Learn what goes in a seed pitch deck, which slides drive investor decisions, and how to build one that gets meetings in a competitive funding market.
 slug: seed-pitch-deck
 date: 2026-08-13

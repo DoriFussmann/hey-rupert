@@ -1,5 +1,6 @@
 ---
 title: How Founders Can Land a First Check from Local Operators
+h1: "Landing Your First Check from Local Operators"
 description: "Before you cold-email a distant fund, learn why founders raising their first check get better results by starting with operators who know the problem."
 slug: first-check-from-local-operators
 date: "2026-09-28"

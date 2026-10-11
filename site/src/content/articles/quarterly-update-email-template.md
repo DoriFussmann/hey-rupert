@@ -1,5 +1,6 @@
 ---
 title: "Investor Update FAQ: Questions Every Founder Asks First"
+h1: "Investor Updates: Common Founder Questions Answered"
 description: "Frequency, length, what to include, and how to handle bad months — direct answers to the investor update questions every first-time founder asks."
 slug: quarterly-update-email-template
 date: "2026-09-28"

@@ -1,5 +1,6 @@
 ---
 title: "Investors Near Me: The Founder's Guide to Local Capital"
+h1: "How to Find Investors Near You"
 description: "Learn how to find local angel investors, regional VCs, and nearby funding networks — and how to approach them with outreach that actually gets a response."
 slug: investors-near-me
 date: "2026-08-03"

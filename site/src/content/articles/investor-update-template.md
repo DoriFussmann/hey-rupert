@@ -1,5 +1,6 @@
 ---
 title: The Investor Update Template for Seed and Series A Founders
+h1: "Investor Update Template for Seed and Series A"
 description: "A proven investor update template for seed and Series A founders: what to include, how often to send it, and how to use updates to warm your next raise."
 slug: investor-update-template
 date: "2026-09-28"

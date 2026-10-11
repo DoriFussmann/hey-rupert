@@ -1,5 +1,6 @@
 ---
 title: "Investor Database: How Founders Find, Filter, and Use One"
+h1: "Choosing and Using an Investor Database"
 description: "A founder's guide to investor databases: what they cover, how to filter by stage and sector, and how to turn a qualified list into real meetings."
 slug: investor-database
 date: 2026-08-18

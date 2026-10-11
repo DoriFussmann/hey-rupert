@@ -1,5 +1,6 @@
 ---
 title: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+h1: "Seed Pitch Deck Questions, Answered"
 description: "Fast answers to the questions founders ask most when finalizing a seed pitch deck: format, length, when to send it, and what investors actually read."
 slug: seed-funding-pitch-deck-faq
 date: 2026-08-13

@@ -1,5 +1,6 @@
 ---
 title: "Startup Funding: A Founder's Full Guide to Raising Capital"
+h1: "How Startup Funding Works, Round by Round"
 description: "What founders need to know about startup funding: stages, instruments, investor targeting, and how to run a disciplined raise from pre-seed to Series A."
 slug: startup-funding
 date: 2026-08-18

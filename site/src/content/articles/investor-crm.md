@@ -1,5 +1,6 @@
 ---
 title: "Investor CRM: A Founder's Guide to Fundraising Pipelines"
+h1: "How to Run Your Raise with an Investor CRM"
 description: "What founders raising Seed or Series A need to know about investor CRMs — what they track, which tools fit your stage, and how to run a pipeline that closes."
 slug: investor-crm
 date: "2026-09-20"

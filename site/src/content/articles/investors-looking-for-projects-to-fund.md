@@ -1,5 +1,6 @@
 ---
 title: What Investors Looking for Projects to Fund Actually Want
+h1: "What Investors Look for in Projects to Fund"
 description: Discover what active investors evaluate before funding a project — team quality, market size, traction by stage, and deal terms that actually close.
 slug: investors-looking-for-projects-to-fund
 date: 2026-08-13

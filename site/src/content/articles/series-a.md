@@ -1,5 +1,6 @@
 ---
 title: "Series A Funding: The Complete Founder's Guide for 2026"
+h1: "How Series A Funding Works"
 description: "What Series A really means in 2026: round sizes, ARR benchmarks, valuation math, dilution, the fundraising process timeline, and how to find a lead investor."
 slug: series-a
 date: 2026-08-18

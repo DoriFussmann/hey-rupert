@@ -1,5 +1,6 @@
 ---
 title: "Seed vs Series A: The Definitive 2026 Guide for Founders"
+h1: "Seed vs Series A: How the Two Rounds Differ"
 description: "How seed and Series A rounds actually differ in 2026 — check sizes, valuations, deal structure, investor types, dilution, and the path between them."
 slug: seed-vs-series-a
 date: "2026-09-28"

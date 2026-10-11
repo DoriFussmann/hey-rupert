@@ -1,5 +1,6 @@
 ---
 title: "Venture Capital: How VC Works and What Founders Must Know"
+h1: "How Venture Capital Works for Founders"
 description: A complete guide to how venture capital works — fund structure, funding stages, what VCs look for, and how to run a disciplined fundraise as a founder.
 slug: venture-capital
 date: 2026-08-17

@@ -1,5 +1,6 @@
 ---
 title: How to Find Local Angel Investors as a First-Time Founder
+h1: "Local Angel Investors for First-Time Founders"
 description: The fastest path to a first angel check isn't mass outreach. Here's how first-time founders find local investors who already understand the problem.
 slug: local-angel-investors-for-first-time-founders-2
 date: "2026-09-28"

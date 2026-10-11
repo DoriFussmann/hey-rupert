@@ -1,5 +1,6 @@
 ---
 title: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+h1: "Top VC Firms: Mega-Funds vs. Specialists"
 description: Should you pitch a mega-fund or a sector specialist first? The answer depends on your signal, stage, and round competitiveness — here's the framework.
 slug: top-vc-firms
 date: 2026-08-17

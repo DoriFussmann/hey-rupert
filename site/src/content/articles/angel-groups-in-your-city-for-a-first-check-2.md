@@ -1,5 +1,6 @@
 ---
 title: How to Find Angel Groups in Your City for a First Check
+h1: "Finding a Local Angel Group for Your First Check"
 description: "Local angel groups offer more than capital—they can pressure-test your story, open doors, and write a first check. Here's how to find the right ones."
 slug: angel-groups-in-your-city-for-a-first-check-2
 date: "2026-09-28"

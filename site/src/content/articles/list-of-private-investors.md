@@ -1,5 +1,6 @@
 ---
 title: "Investor List vs. Angel Database vs. Paid Contact File?"
+h1: "Investor Lists, Angel Databases, and Paid Contact Files Compared"
 description: "Not all investor contact sources are equal. This guide breaks down curated private investor lists, angel databases, and purchased CSV files — and which to use."
 slug: list-of-private-investors
 date: "2026-10-07"

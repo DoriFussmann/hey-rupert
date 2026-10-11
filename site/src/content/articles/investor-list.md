@@ -1,5 +1,6 @@
 ---
 title: "Investor List: A Founder's Guide to Building One That Works"
+h1: "How to Build an Investor List That Works"
 description: "Learn how to build an investor list that actually works — what belongs on it, how to structure it, and how to use it to run a disciplined fundraise."
 slug: investor-list
 date: "2026-10-07"

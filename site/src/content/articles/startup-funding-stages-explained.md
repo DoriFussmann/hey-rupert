@@ -1,5 +1,6 @@
 ---
 title: How to Diagnose Your Startup Funding Stage and Raise Right
+h1: "Which Startup Funding Stage Are You In?"
 description: A step-by-step process for founders to diagnose their funding stage, map traction to benchmarks, time their raise, and match with the right investors.
 slug: startup-funding-stages-explained
 date: 2026-08-18

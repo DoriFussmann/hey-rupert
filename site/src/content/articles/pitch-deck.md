@@ -1,5 +1,6 @@
 ---
 title: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
+h1: "How to Build a Pitch Deck That Raises Capital"
 description: What every pitch deck must include, how structure changes from seed to Series A, and what turns a strong deck into investor meetings and term sheets.
 slug: pitch-deck
 date: 2026-08-13

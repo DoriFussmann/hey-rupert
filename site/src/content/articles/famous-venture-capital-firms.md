@@ -1,5 +1,6 @@
 ---
 title: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
+h1: "Famous Venture Capital Firms: A Founder FAQ"
 description: The most famous VC firms earn reputations through landmark exits, not just AUM. Here's what first-time founders need to know before targeting them.
 slug: famous-venture-capital-firms
 date: 2026-08-17

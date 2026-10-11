@@ -1,5 +1,6 @@
 ---
 title: How to Use Largest VC Firms by AUM to Build Your Target List
+h1: "The Largest VC Firms by AUM, and How to Target Them"
 description: AUM rankings show VC firm size, not fit. Learn to filter by fund vintage, check size, and sector to build an investor list that actually matches your raise.
 slug: largest-venture-capital-firms-by-aum
 date: 2026-08-17
