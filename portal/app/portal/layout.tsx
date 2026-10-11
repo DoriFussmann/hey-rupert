@@ -1,4 +1,5 @@
 import { AppShell } from "@/components/app-shell";
+import { BookCallLink } from "@/components/book-call-link";
 import { PortalNav } from "@/components/portal-nav";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { requirePortalUser } from "@/lib/auth";
@@ -42,36 +43,39 @@ export default async function PortalLayout({
       brand={portalGreeting(client)}
       eyebrow="Portal"
       navigation={
-        <PortalNav
-          stage={client?.stage}
-          onboarding={
-            client
-              ? {
-                  // The nav only counts completed steps, so the Service Order
-                  // text and invoice link are not sent to it.
-                  sow_confirmed_at: client.sow_confirmed_at,
-                  service_order_agreed_at: client.service_order_agreed_at,
-                  payment_received_at: client.payment_received_at,
-                  nda_signed_at: client.nda_signed_at,
-                  intake_completed_at: client.intake_completed_at,
-                }
-              : null
-          }
-          checklists={
-            client
-              ? {
-                  pitch_deck_status: client.pitch_deck_status,
-                  business_brief_status: client.business_brief_status,
-                  outreach_messaging_status: client.outreach_messaging_status,
-                  investor_match_status: client.investor_match_status,
-                  target_list_status: client.target_list_status,
-                  campaign_analytics_status: client.campaign_analytics_status,
-                  investor_inbox_status: client.investor_inbox_status,
-                  engagement_tracker_status: client.engagement_tracker_status,
-                }
-              : null
-          }
-        />
+        <>
+          <PortalNav
+            stage={client?.stage}
+            onboarding={
+              client
+                ? {
+                    // The nav only counts completed steps, so the Service Order
+                    // text and invoice link are not sent to it.
+                    sow_confirmed_at: client.sow_confirmed_at,
+                    service_order_agreed_at: client.service_order_agreed_at,
+                    payment_received_at: client.payment_received_at,
+                    nda_signed_at: client.nda_signed_at,
+                    intake_completed_at: client.intake_completed_at,
+                  }
+                : null
+            }
+            checklists={
+              client
+                ? {
+                    pitch_deck_status: client.pitch_deck_status,
+                    business_brief_status: client.business_brief_status,
+                    outreach_messaging_status: client.outreach_messaging_status,
+                    investor_match_status: client.investor_match_status,
+                    target_list_status: client.target_list_status,
+                    campaign_analytics_status: client.campaign_analytics_status,
+                    investor_inbox_status: client.investor_inbox_status,
+                    engagement_tracker_status: client.engagement_tracker_status,
+                  }
+                : null
+            }
+          />
+          <BookCallLink disabled={viewAs} />
+        </>
       }
     >
       {viewAs && client ? <ViewAsBanner label={viewAsLabel(client)} /> : null}

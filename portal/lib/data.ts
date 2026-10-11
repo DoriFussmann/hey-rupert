@@ -21,6 +21,9 @@ import type {
   Investor,
   InvestorReply,
   ServiceOrderSend,
+  ServiceOrderSignature,
+  SignedDocumentSend,
+  SignedDocumentType,
   SowSend,
 } from "@/lib/types";
 
@@ -100,6 +103,7 @@ function asClient(row: Record<string, unknown>): Client {
         : null,
     sow_confirmed_at:
       row.sow_confirmed_at != null ? String(row.sow_confirmed_at) : null,
+    nda_sent_at: row.nda_sent_at != null ? String(row.nda_sent_at) : null,
     nda_signed_at:
       row.nda_signed_at != null ? String(row.nda_signed_at) : null,
     intake_completed_at:
@@ -251,10 +255,22 @@ export async function listSowSends(clientId: string): Promise<SowSend[]> {
   }
 }
 
-function asServiceOrderSend(row: Record<string, unknown>): ServiceOrderSend {
-  const text = (value: unknown) => (value != null ? String(value) : "");
-  const signedAt = row.signed_at != null ? String(row.signed_at) : null;
+function text(value: unknown) {
+  return value != null ? String(value) : "";
+}
 
+function asSignature(row: Record<string, unknown>): ServiceOrderSignature | null {
+  if (row.signed_at == null) return null;
+  return {
+    company_name: text(row.signer_company),
+    signer_name: text(row.signer_name),
+    signer_email: text(row.signer_email),
+    signer_title: text(row.signer_title),
+    signed_at: String(row.signed_at),
+  };
+}
+
+function asServiceOrderSend(row: Record<string, unknown>): ServiceOrderSend {
   return {
     id: String(row.id),
     client_id: text(row.client_id),
@@ -262,19 +278,71 @@ function asServiceOrderSend(row: Record<string, unknown>): ServiceOrderSend {
     payment_link: text(row.payment_link),
     sent_at: String(row.sent_at ?? new Date().toISOString()),
     archived_at: row.archived_at != null ? String(row.archived_at) : null,
-    signature: signedAt
-      ? {
-          company_name: text(row.signer_company),
-          signer_name: text(row.signer_name),
-          signer_email: text(row.signer_email),
-          signer_title: text(row.signer_title),
-          signed_at: signedAt,
-        }
-      : null,
+    signature: asSignature(row),
     signed_content:
       row.signed_content != null ? String(row.signed_content) : null,
     signed_ip: row.signed_ip != null ? String(row.signed_ip) : null,
   };
+}
+
+function asSignedDocument(row: Record<string, unknown>): SignedDocumentSend {
+  return {
+    id: String(row.id),
+    client_id: text(row.client_id),
+    doc_type: "nda",
+    content: text(row.content),
+    sent_at: String(row.sent_at ?? new Date().toISOString()),
+    archived_at: row.archived_at != null ? String(row.archived_at) : null,
+    signature: asSignature(row),
+    signed_content:
+      row.signed_content != null ? String(row.signed_content) : null,
+    signed_ip: row.signed_ip != null ? String(row.signed_ip) : null,
+  };
+}
+
+export async function listSignedDocuments(
+  clientId: string,
+  docType: SignedDocumentType,
+): Promise<SignedDocumentSend[]> {
+  if (!isServiceRoleConfigured()) return [];
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("signed_documents")
+      .select("*")
+      .eq("client_id", clientId)
+      .eq("doc_type", docType)
+      .order("sent_at", { ascending: false });
+
+    if (error || !data) return [];
+    return data.map((row) => asSignedDocument(row as Record<string, unknown>));
+  } catch {
+    return [];
+  }
+}
+
+export async function getActiveSignedDocument(
+  clientId: string,
+  docType: SignedDocumentType,
+): Promise<SignedDocumentSend | null> {
+  if (!isServiceRoleConfigured()) return null;
+
+  try {
+    const supabase = createServiceClient();
+    const { data, error } = await supabase
+      .from("signed_documents")
+      .select("*")
+      .eq("client_id", clientId)
+      .eq("doc_type", docType)
+      .is("archived_at", null)
+      .maybeSingle();
+
+    if (error || !data) return null;
+    return asSignedDocument(data as Record<string, unknown>);
+  } catch {
+    return null;
+  }
 }
 
 export async function listServiceOrderSends(

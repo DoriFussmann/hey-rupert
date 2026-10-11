@@ -49,6 +49,7 @@ export type Client = {
   stage?: string;
   statement_of_work_content?: string | null;
   sow_confirmed_at?: string | null;
+  nda_sent_at?: string | null;
   nda_signed_at?: string | null;
   intake_completed_at?: string | null;
   payment_received_at?: string | null;
@@ -178,6 +179,21 @@ export type ServiceOrderSignature = {
   signer_email: string;
   signer_title: string;
   signed_at: string;
+};
+
+export type SignedDocumentType = "nda";
+
+/** A signable document (other than the Service Order) pushed to a client. */
+export type SignedDocumentSend = {
+  id: string;
+  client_id: string;
+  doc_type: SignedDocumentType;
+  content: string;
+  sent_at: string;
+  archived_at: string | null;
+  signature: ServiceOrderSignature | null;
+  signed_content: string | null;
+  signed_ip: string | null;
 };
 
 export type ServiceOrderSend = {

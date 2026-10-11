@@ -45,3 +45,27 @@ export async function advanceToKickoff(
   await notifyAdmin(supabase, clientId, "kickoff_ready", { email: false });
   return true;
 }
+
+/**
+ * Moves a client from one of `from` stages to `to`, once. Returns true when
+ * this call made the change.
+ */
+export async function advanceStage(
+  supabase: ServiceClient,
+  clientId: string,
+  from: string[],
+  to: string,
+) {
+  const { data, error } = await supabase
+    .from("clients")
+    .update({ stage: to })
+    .eq("id", clientId)
+    .in("stage", from)
+    .select("id");
+
+  if (error) {
+    console.error(`Stage update to ${to} failed: ${error.message}`);
+    return false;
+  }
+  return Boolean(data && data.length > 0);
+}

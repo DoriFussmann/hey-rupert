@@ -6,10 +6,17 @@ export type OnboardingTimestamps = {
   service_order_agreed_at?: string | null;
   setup_invoice_url?: string | null;
   payment_received_at?: string | null;
+  nda_sent_at?: string | null;
   nda_signed_at?: string | null;
   intake_completed_at?: string | null;
 };
 
+/**
+ * Whose turn a step is:
+ * - "your_turn": the client's (shown to the client as "Your turn")
+ * - "waiting":   Rupert's (shown to the client as "Waiting on Rupert")
+ * - "done" / "open" (not reachable yet)
+ */
 export type OnboardingStatus = "done" | "your_turn" | "waiting" | "open";
 
 export type OnboardingItemId =
@@ -28,10 +35,43 @@ export type OnboardingItem = {
   completedAt: string | null;
 };
 
-export const ONBOARDING_TOTAL = 5;
+/**
+ * One definition per step: how it is named for the client, what the admin
+ * has to do when it is Rupert's turn, and the short label used in
+ * "Waiting on client: …". Every screen and email reads from here.
+ */
+export const ONBOARDING_STEPS: Record<
+  OnboardingItemId,
+  { title: string; short: string; adminAction: string }
+> = {
+  sow: {
+    title: "Statement of Work",
+    short: "Statement of Work",
+    adminAction: "Send Statement of Work",
+  },
+  service_order: {
+    title: "Service Order",
+    short: "Service Order",
+    adminAction: "Issue Service Order",
+  },
+  payment: {
+    title: "Setup Fee",
+    short: "Setup Fee",
+    adminAction: "Issue Setup Fee invoice",
+  },
+  nda: { title: "NDA", short: "NDA", adminAction: "Issue NDA" },
+  intake: {
+    title: "Client Intake Form",
+    short: "Client Intake",
+    adminAction: "Send Client Intake",
+  },
+};
+
+export const ONBOARDING_TOTAL = Object.keys(ONBOARDING_STEPS).length;
 
 export const SERVICE_ORDER_HREF = "/portal/service-order";
 export const SETUP_FEE_HREF = "/portal/service-order#setup-fee";
+export const NDA_HREF = "/portal/nda";
 
 /**
  * Client onboarding, in order:
@@ -49,23 +89,25 @@ export function getOnboardingItems(
   const sowDone = Boolean(sowAt);
   const orderIssued = Boolean(source?.service_order_content?.trim());
   const invoiceIssued = Boolean(source?.setup_invoice_url?.trim());
+  const ndaIssued = Boolean(source?.nda_sent_at);
   const kickedOff = isKickoffReady({
     service_order_agreed_at: orderAt,
     payment_received_at: paymentAt,
   });
 
+  const item = (
+    id: OnboardingItemId,
+    fields: Omit<OnboardingItem, "id" | "title">,
+  ): OnboardingItem => ({ id, title: ONBOARDING_STEPS[id].title, ...fields });
+
   return [
-    {
-      id: "sow",
-      title: "Statement of Work",
+    item("sow", {
       detail: sowDone ? "Confirmed" : "Review and confirm",
       href: "/portal/statement-of-work",
       status: sowDone ? "done" : "your_turn",
       completedAt: sowAt,
-    },
-    {
-      id: "service_order",
-      title: "Service Order",
+    }),
+    item("service_order", {
       detail: orderAt
         ? "Signed"
         : orderIssued
@@ -80,10 +122,8 @@ export function getOnboardingItems(
             ? "waiting"
             : "open",
       completedAt: orderAt,
-    },
-    {
-      id: "payment",
-      title: "Setup Fee",
+    }),
+    item("payment", {
       detail: paymentAt
         ? "Paid"
         : invoiceIssued
@@ -98,21 +138,26 @@ export function getOnboardingItems(
             ? "waiting"
             : "open",
       completedAt: paymentAt,
-    },
-    {
-      id: "nda",
-      title: "NDA",
+    }),
+    item("nda", {
       detail: ndaAt
         ? "Signed"
-        : kickedOff
-          ? "Rupert is preparing your NDA"
-          : "After the Service Order and Setup Fee",
-      status: ndaAt ? "done" : kickedOff ? "waiting" : "open",
+        : kickedOff && ndaIssued
+          ? "Review and sign"
+          : kickedOff
+            ? "Rupert is preparing your NDA"
+            : "After the Service Order and Setup Fee",
+      href: ndaAt || (kickedOff && ndaIssued) ? NDA_HREF : undefined,
+      status: ndaAt
+        ? "done"
+        : kickedOff && ndaIssued
+          ? "your_turn"
+          : kickedOff
+            ? "waiting"
+            : "open",
       completedAt: ndaAt,
-    },
-    {
-      id: "intake",
-      title: "Client Intake Form",
+    }),
+    item("intake", {
       detail: intakeAt
         ? "Completed"
         : kickedOff && ndaAt
@@ -120,7 +165,7 @@ export function getOnboardingItems(
           : "After the NDA",
       status: intakeAt ? "done" : kickedOff && ndaAt ? "waiting" : "open",
       completedAt: intakeAt,
-    },
+    }),
   ];
 }
 
@@ -128,7 +173,7 @@ export function onboardingProgress(
   source: OnboardingTimestamps | null | undefined,
 ) {
   const complete = getOnboardingItems(source).filter(
-    (item) => item.status === "done",
+    (entry) => entry.status === "done",
   ).length;
   return { complete, total: ONBOARDING_TOTAL };
 }

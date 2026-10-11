@@ -7,12 +7,14 @@ import {
   personWithCompany,
 } from "@/lib/format";
 import { PORTAL_URL } from "@/lib/portal-url";
-import { nextActionText, type ProgressSource } from "@/lib/progress";
+import {
+  nextActionText,
+  nextTurn,
+  type ProgressSource,
+} from "@/lib/progress";
 import { SETUP_FEE_LABEL } from "@/lib/service-order";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
-
-const ADMIN_ACTION_PREFIX = "Your action: ";
 
 async function loadClientRow(supabase: ServiceClient, clientId: string) {
   const { data } = await supabase
@@ -54,22 +56,25 @@ export async function notifyAdmin(
   const row = await loadClientRow(supabase, clientId);
   const who = personWithCompany(clientDisplayName(row), text(row.company_name));
   const event = `${who} ${notificationAction(type)}`;
-  const next = nextActionText(row as ProgressSource);
-  const adminTurn = next.startsWith(ADMIN_ACTION_PREFIX);
+  const turn = nextTurn(row as ProgressSource);
+  const adminTurn = turn.owner === "admin";
 
   const subject = adminTurn ? `${event} — you're up` : event;
   const body = [
     `${event}.`,
     adminTurn
-      ? `You're up: ${next.slice(ADMIN_ACTION_PREFIX.length)}.`
-      : `Next: ${next}.`,
+      ? `You're up: ${turn.action}.`
+      : `Next: ${nextActionText(row as ProgressSource)}.`,
     `Open the client: ${PORTAL_URL}/admin/clients/${clientId}`,
   ].join("\n\n");
 
   await sendAdminEmail(subject, body);
 }
 
-export type ClientTurn = "statement_of_work_ready" | "service_order_ready";
+export type ClientTurn =
+  | "statement_of_work_ready"
+  | "service_order_ready"
+  | "nda_ready";
 
 const CLIENT_TURN_EMAILS: Record<
   ClientTurn,
@@ -86,6 +91,12 @@ const CLIENT_TURN_EMAILS: Record<
     prepared: `Rupert has prepared your Service Order and the ${SETUP_FEE_LABEL} Setup Fee invoice.`,
     task: "You're up: sign the Service Order and pay the Setup Fee in your portal, in either order. Once both are done, we kick off.",
     path: "/portal/service-order",
+  },
+  nda_ready: {
+    subject: "Your NDA is ready — you're up",
+    prepared: "Rupert has prepared your Non-Disclosure Agreement.",
+    task: "You're up: review and sign it in your portal. It protects everything you share with us from here on.",
+    path: "/portal/nda",
   },
 };
 

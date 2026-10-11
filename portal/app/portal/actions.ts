@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { advanceToKickoff } from "@/lib/kickoff";
+import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
 import {
   isKickoffReady,
@@ -17,9 +17,9 @@ import { createServiceClient } from "@/lib/supabase/admin";
 
 export type ActionResult = { ok: true } | { ok: false; error: string };
 
-export type SignServiceOrderInput = ServiceOrderFields & { consent: boolean };
+export type SignDocumentInput = ServiceOrderFields & { consent: boolean };
 
-export type SignServiceOrderResult =
+export type SignDocumentResult =
   | { ok: true }
   | { ok: false; error: string; fieldErrors?: FieldErrors };
 
@@ -102,12 +102,16 @@ function requestOrigin() {
   };
 }
 
-export async function signServiceOrder(
-  input: SignServiceOrderInput,
-): Promise<SignServiceOrderResult> {
-  const access = await requirePortalService();
-  if (!access.ok) return access;
+type PortalAccess = Extract<
+  Awaited<ReturnType<typeof requirePortalService>>,
+  { ok: true }
+>;
 
+function validateSignatureInput(
+  input: SignDocumentInput,
+):
+  | { ok: true; fields: ServiceOrderFields }
+  | { ok: false; error: string; fieldErrors?: FieldErrors } {
   const validated = validateServiceOrderFields(input);
   if (!validated.ok) {
     return {
@@ -116,13 +120,79 @@ export async function signServiceOrder(
       fieldErrors: validated.errors,
     };
   }
-
   if (input.consent !== true) {
     return {
       ok: false,
       error: "Please confirm you agree to sign electronically.",
     };
   }
+  return { ok: true, fields: validated.value };
+}
+
+/**
+ * Signs the client's active (unarchived) copy of a document. The signed copy
+ * is rebuilt here from the stored content, never taken from the browser, so
+ * it is exactly the text that was issued.
+ * `signedAt` is set only on the call that performed the signature.
+ */
+async function signActiveDocument(
+  { user, supabase }: PortalAccess,
+  table: "service_order_sends" | "signed_documents",
+  docType: string | null,
+  label: string,
+  fields: ServiceOrderFields,
+): Promise<
+  { ok: true; signedAt: string | null } | { ok: false; error: string }
+> {
+  let query = supabase
+    .from(table)
+    .select("id, content, signed_at")
+    .eq("client_id", user.id)
+    .is("archived_at", null);
+  if (docType) query = query.eq("doc_type", docType);
+
+  const { data: send, error: sendError } = await query.maybeSingle();
+
+  if (sendError) return { ok: false, error: sendError.message };
+  if (!send || !String(send.content ?? "").trim()) {
+    return { ok: false, error: `The ${label} has not been issued yet.` };
+  }
+  if (send.signed_at) return { ok: true, signedAt: null };
+
+  const signedAt = new Date().toISOString();
+  const { ip, userAgent } = requestOrigin();
+
+  const { data: signedRows, error: signError } = await supabase
+    .from(table)
+    .update({
+      signed_at: signedAt,
+      signer_company: fields.company_name,
+      signer_name: fields.signer_name,
+      signer_email: fields.signer_email,
+      signer_title: fields.signer_title,
+      signed_content: mergeServiceOrder(String(send.content), fields),
+      signed_ip: ip,
+      signed_user_agent: userAgent,
+    })
+    .eq("id", send.id)
+    .is("signed_at", null)
+    .select("id");
+
+  if (signError) return { ok: false, error: signError.message };
+  if (!signedRows || signedRows.length === 0) {
+    return { ok: true, signedAt: null };
+  }
+  return { ok: true, signedAt };
+}
+
+export async function signServiceOrder(
+  input: SignDocumentInput,
+): Promise<SignDocumentResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+
+  const validated = validateSignatureInput(input);
+  if (!validated.ok) return validated;
 
   const { user, supabase } = access;
 
@@ -142,47 +212,19 @@ export async function signServiceOrder(
   }
   if (client.service_order_agreed_at) return { ok: true };
 
-  const { data: send, error: sendError } = await supabase
-    .from("service_order_sends")
-    .select("id, content, signed_at")
-    .eq("client_id", user.id)
-    .is("archived_at", null)
-    .maybeSingle();
-
-  if (sendError) return { ok: false, error: sendError.message };
-  if (!send || !String(send.content ?? "").trim()) {
-    return { ok: false, error: "The Service Order has not been issued yet." };
-  }
-  if (send.signed_at) return { ok: true };
-
-  const fields = validated.value;
-  const signedAt = new Date().toISOString();
-  const { ip, userAgent } = requestOrigin();
-
-  // The signed copy is rebuilt here from the stored content, never taken
-  // from the browser, so it is exactly the text that was issued.
-  const { data: signedRows, error: signError } = await supabase
-    .from("service_order_sends")
-    .update({
-      signed_at: signedAt,
-      signer_company: fields.company_name,
-      signer_name: fields.signer_name,
-      signer_email: fields.signer_email,
-      signer_title: fields.signer_title,
-      signed_content: mergeServiceOrder(String(send.content), fields),
-      signed_ip: ip,
-      signed_user_agent: userAgent,
-    })
-    .eq("id", send.id)
-    .is("signed_at", null)
-    .select("id");
-
-  if (signError) return { ok: false, error: signError.message };
-  if (!signedRows || signedRows.length === 0) return { ok: true };
+  const signed = await signActiveDocument(
+    access,
+    "service_order_sends",
+    null,
+    "Service Order",
+    validated.fields,
+  );
+  if (!signed.ok) return signed;
+  if (!signed.signedAt) return { ok: true };
 
   const { error: clientUpdateError } = await supabase
     .from("clients")
-    .update({ service_order_agreed_at: signedAt })
+    .update({ service_order_agreed_at: signed.signedAt })
     .eq("id", user.id);
 
   if (clientUpdateError) {
@@ -200,32 +242,51 @@ export async function signServiceOrder(
   return { ok: true };
 }
 
-export async function confirmNda(): Promise<ActionResult> {
+export async function signNda(
+  input: SignDocumentInput,
+): Promise<SignDocumentResult> {
   const access = await requirePortalService();
   if (!access.ok) return access;
 
+  const validated = validateSignatureInput(input);
+  if (!validated.ok) return validated;
+
   const { user, supabase } = access;
 
-  const { data: existing, error: loadError } = await supabase
+  const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id, service_order_agreed_at, payment_received_at, nda_signed_at")
     .eq("id", user.id)
     .maybeSingle();
 
-  if (loadError) return { ok: false, error: loadError.message };
-  if (!existing) return { ok: false, error: "Client record not found." };
-  if (!isKickoffReady(existing)) {
+  if (clientError) return { ok: false, error: clientError.message };
+  if (!client) return { ok: false, error: "Client record not found." };
+  if (!isKickoffReady(client)) {
     return { ok: false, error: "The NDA is not available yet." };
   }
-  if (existing.nda_signed_at) return { ok: true };
+  if (client.nda_signed_at) return { ok: true };
 
-  const { error: updateError } = await supabase
+  const signed = await signActiveDocument(
+    access,
+    "signed_documents",
+    "nda",
+    "NDA",
+    validated.fields,
+  );
+  if (!signed.ok) return signed;
+  if (!signed.signedAt) return { ok: true };
+
+  const { error: clientUpdateError } = await supabase
     .from("clients")
-    .update({ nda_signed_at: new Date().toISOString() })
+    .update({ nda_signed_at: signed.signedAt })
     .eq("id", user.id);
 
-  if (updateError) return { ok: false, error: updateError.message };
+  if (clientUpdateError) {
+    return { ok: false, error: clientUpdateError.message };
+  }
 
+  // Stage first, so the admin email reports the up-to-date next step.
+  await advanceStage(supabase, user.id, ["nda"], "intake");
   await notifyAdmin(supabase, user.id, "nda_signed", { email: true });
 
   revalidateOnboarding(user.id);
