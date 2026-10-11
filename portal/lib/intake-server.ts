@@ -284,6 +284,9 @@ export async function nextInterviewTurn(
     system: systemPrompt(settings, buildClientContext(client), topicStatus),
     messages: toClaudeMessages(messages),
     tool: RESPOND_TOOL,
+    // A plain-text answer is still shown to the client; topic coverage is
+    // simply left unchanged for that turn.
+    fallbackFromText: (text) => ({ reply: text, topics: [] }),
   });
   if (!result.ok) return result;
 
