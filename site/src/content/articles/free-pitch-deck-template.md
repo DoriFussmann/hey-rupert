@@ -24,7 +24,15 @@ keywords:
   - pitch deck template
   - pitch deck
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: sequoia-pitch-deck-template
+    anchor: sequoia pitch deck template
+  - slug: startup-pitch-deck-template
+    anchor: startup pitch deck template
+  - slug: vc-pitch-deck-template
+    anchor: vc pitch deck template
 externalLinks: []
 faqs:
   - question: "Is a free pitch deck template good enough for a serious seed or Series A raise?"
@@ -129,3 +137,7 @@ Industry analysis in 2026 emphasizes that credible data is essential for trust a
 - Paid templates are worth evaluating on the quality of their slide-by-slide content prompts and fundraising guidance — not on design features, animation, or aesthetic polish.
 - Format choice (Google Slides, PowerPoint, Keynote) is a secondary decision; pick whichever your team can update quickly and your investors can open without friction.
 - A free template removes the cost barrier to building a deck, but getting that deck to the right investors — through targeted research, personalized outreach, and disciplined pipeline management — is the part of fundraising that most determines whether the deck is ever read at all.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [pitch deck](/articles/pitch-deck/) · [sequoia pitch deck template](/articles/sequoia-pitch-deck-template/) · [startup pitch deck template](/articles/startup-pitch-deck-template/) · [vc pitch deck template](/articles/vc-pitch-deck-template/).
+<!-- CMS-INTERNAL:END -->
