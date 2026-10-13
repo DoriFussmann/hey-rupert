@@ -1,6 +1,5 @@
 import {
   LIVE_ITEMS,
-  SETUP_ITEMS,
   checklistProgress,
   parseChecklistStatus,
   type ChecklistStatuses,
@@ -12,15 +11,23 @@ import {
   onboardingProgress,
   type OnboardingTimestamps,
 } from "@/lib/onboarding";
+import {
+  SETUP_TOTAL,
+  getSetupItems,
+  isSetupComplete,
+  setupProgress,
+  type SetupSource,
+} from "@/lib/setup";
 
-export const TRACKED_TOTAL =
-  ONBOARDING_TOTAL + SETUP_ITEMS.length + LIVE_ITEMS.length;
+export const TRACKED_TOTAL = ONBOARDING_TOTAL + SETUP_TOTAL + LIVE_ITEMS.length;
 
-export type ProgressSource = OnboardingTimestamps & ChecklistStatuses;
+export type ProgressSource = OnboardingTimestamps &
+  ChecklistStatuses &
+  SetupSource;
 
 export function overallProgress(source: ProgressSource | null | undefined) {
   const onboarding = onboardingProgress(source);
-  const setup = checklistProgress(SETUP_ITEMS, source);
+  const setup = setupProgress(source);
   const live = checklistProgress(LIVE_ITEMS, source);
 
   return {
@@ -37,6 +44,8 @@ export type NextTurn =
   | { owner: "client"; step: string }
   | { owner: "none" };
 
+export const FIRST_INVOICE_ACTION = "Issue the first monthly invoice and launch";
+
 /** Whose turn it is next, and what the step is. */
 export function nextTurn(source: ProgressSource | null | undefined): NextTurn {
   const onboardingNext = getOnboardingItems(source).find(
@@ -49,10 +58,18 @@ export function nextTurn(source: ProgressSource | null | undefined): NextTurn {
       : { owner: "admin", action: step.adminAction };
   }
 
-  const setupNext = SETUP_ITEMS.find(
-    (item) => parseChecklistStatus(source?.[item.column]) !== "done",
+  const setupNext = getSetupItems(source).find(
+    (item) => item.status === "your_turn" || item.status === "waiting",
   );
-  if (setupNext) return { owner: "admin", action: setupNext.title };
+  if (setupNext) {
+    return setupNext.status === "your_turn"
+      ? { owner: "client", step: setupNext.short }
+      : { owner: "admin", action: setupNext.adminAction };
+  }
+
+  if (isSetupComplete(source) && source?.stage !== "live") {
+    return { owner: "admin", action: FIRST_INVOICE_ACTION };
+  }
 
   const liveNext = LIVE_ITEMS.find(
     (item) => parseChecklistStatus(source?.[item.column]) !== "done",

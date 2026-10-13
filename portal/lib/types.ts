@@ -1,3 +1,5 @@
+import type { SetupStepState } from "@/lib/setup";
+
 export type ClientStatus =
   | "onboarding"
   | "preparation"
@@ -69,6 +71,8 @@ export type Client = {
   company_website?: string | null;
   company_description?: string | null;
   status: ClientStatus;
+  /** Setup Turn Engine rows (loaded separately from `setup_steps`). */
+  setup_steps?: SetupStepState[];
   archived_at?: string | null;
   last_activity_at: string;
   created_at: string;
@@ -148,6 +152,14 @@ export type NotificationType =
   | "kickoff_ready"
   | "setup_fee_paid"
   | "intake_completed"
+  | "materials_submitted"
+  | "framing_confirmed"
+  | "framing_changes_requested"
+  | "investor_list_confirmed"
+  | "investor_list_changes_requested"
+  | "email_copy_confirmed"
+  | "email_copy_changes_requested"
+  | "client_stalled"
   | string;
 
 export type AdminNotification = {

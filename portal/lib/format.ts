@@ -47,6 +47,16 @@ export function notificationLabel(type: string) {
   if (type === "kickoff_ready") return "Ready for Kick-off";
   if (type === "setup_fee_paid") return "Paid Setup Fee";
   if (type === "intake_completed") return "Completed Client Intake";
+  if (type === "materials_submitted") return "Submitted Company Materials";
+  if (type === "framing_confirmed") return "Confirmed Message Framing";
+  if (type === "framing_changes_requested") return "Requested Framing Changes";
+  if (type === "investor_list_confirmed") return "Confirmed Investor List";
+  if (type === "investor_list_changes_requested") {
+    return "Questions on Investor List";
+  }
+  if (type === "email_copy_confirmed") return "Confirmed Email Copy";
+  if (type === "email_copy_changes_requested") return "Requested Email Changes";
+  if (type === "client_stalled") return "Stalled: No Response After Reminders";
   return statusLabel(type);
 }
 
@@ -60,6 +70,22 @@ export function notificationAction(type: string) {
   if (type === "kickoff_ready") return "is ready for kick-off: issue the NDA";
   if (type === "setup_fee_paid") return "paid the Setup Fee";
   if (type === "intake_completed") return "completed the Client Intake";
+  if (type === "materials_submitted") return "submitted their company materials";
+  if (type === "framing_confirmed") return "confirmed the message framing";
+  if (type === "framing_changes_requested") {
+    return "asked for changes to the message framing";
+  }
+  if (type === "investor_list_confirmed") return "confirmed the investor list";
+  if (type === "investor_list_changes_requested") {
+    return "sent questions on the investor list";
+  }
+  if (type === "email_copy_confirmed") return "confirmed the email copy";
+  if (type === "email_copy_changes_requested") {
+    return "asked for changes to the email copy";
+  }
+  if (type === "client_stalled") {
+    return "has not responded after 3 reminders";
+  }
   return notificationLabel(type).toLowerCase();
 }
 

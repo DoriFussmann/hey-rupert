@@ -12,7 +12,12 @@ import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
+import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
 import { ViewAsClientLink } from "@/components/eye-icon";
+import { isServiceRoleConfigured } from "@/lib/env";
+import { asMaterials } from "@/lib/setup";
+import { signMaterialLinks } from "@/lib/setup-server";
+import { createServiceClient } from "@/lib/supabase/admin";
 import {
   getAdminClient,
   getIntakeInterview,
@@ -48,6 +53,26 @@ export default async function ClientDetailPage({
 
   const kickedOffAt = kickoffDate(client);
   const turn = nextTurn(client);
+
+  const setupSource = {
+    stage: client.stage ?? null,
+    intake_completed_at: client.intake_completed_at ?? null,
+    setup_steps: client.setup_steps ?? [],
+  };
+  const materialsRow = setupSource.setup_steps.find(
+    (row) => row.step === "materials",
+  );
+  const materialLinks =
+    materialsRow && isServiceRoleConfigured()
+      ? await signMaterialLinks(
+          createServiceClient(),
+          asMaterials(
+            materialsRow.status === "submitted"
+              ? materialsRow.published
+              : materialsRow.draft,
+          ),
+        )
+      : {};
 
   return (
     <>
@@ -102,15 +127,11 @@ export default async function ClientDetailPage({
           intake_completed_at: client.intake_completed_at,
         }}
         statuses={{
-          pitch_deck_status: client.pitch_deck_status,
-          business_brief_status: client.business_brief_status,
-          outreach_messaging_status: client.outreach_messaging_status,
-          investor_match_status: client.investor_match_status,
-          target_list_status: client.target_list_status,
           campaign_analytics_status: client.campaign_analytics_status,
           investor_inbox_status: client.investor_inbox_status,
           engagement_tracker_status: client.engagement_tracker_status,
         }}
+        setup={setupSource}
       />
       <ClientForm client={client} />
       <EngagementProgress
@@ -121,11 +142,6 @@ export default async function ClientDetailPage({
           payment_received_at: client.payment_received_at,
         }}
         statuses={{
-          pitch_deck_status: client.pitch_deck_status,
-          business_brief_status: client.business_brief_status,
-          outreach_messaging_status: client.outreach_messaging_status,
-          investor_match_status: client.investor_match_status,
-          target_list_status: client.target_list_status,
           campaign_analytics_status: client.campaign_analytics_status,
           investor_inbox_status: client.investor_inbox_status,
           engagement_tracker_status: client.engagement_tracker_status,
@@ -163,6 +179,13 @@ export default async function ClientDetailPage({
         topics={intake.topics}
         completedAt={client.intake_completed_at ?? null}
       />
+      {client.intake_completed_at ? (
+        <SetupWorkspace
+          clientId={client.id}
+          source={setupSource}
+          materialLinks={materialLinks}
+        />
+      ) : null}
     </>
   );
 }

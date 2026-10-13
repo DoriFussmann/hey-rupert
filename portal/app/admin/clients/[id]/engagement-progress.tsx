@@ -10,7 +10,6 @@ import {
   CHECKLIST_STATUS_VALUES,
   LIVE_ITEMS,
   ONBOARDING_TOGGLES,
-  SETUP_ITEMS,
   parseChecklistStatus,
   type ChecklistStatus,
   type ChecklistStatusColumn,
@@ -174,8 +173,7 @@ export function EngagementProgress({
       <div className="border-b border-border px-lg py-lg">
         <h2 className="text-h4">Engagement Progress</h2>
         <p className="mt-xs text-body-sm text-muted">
-          Status shown to the client across Onboarding, Setup and Live
-          Campaign.
+          Manual overrides for Onboarding and Live Campaign.
         </p>
       </div>
 
@@ -203,20 +201,11 @@ export function EngagementProgress({
 
       <div className="border-b border-border px-lg py-md">
         <p className="text-label uppercase tracking-label text-muted">Setup</p>
+        <p className="mt-xs text-body-sm text-muted">
+          Driven by the Setup workspace below: it moves as you push and the
+          client submits or confirms.
+        </p>
       </div>
-      {SETUP_ITEMS.map((item) => (
-        <div
-          key={item.column}
-          className="flex flex-wrap items-center justify-between gap-md border-b border-border px-lg py-md"
-        >
-          <p className="text-body-sm text-heading">{item.title}</p>
-          <StatusControl
-            clientId={clientId}
-            column={item.column}
-            value={statuses[item.column]}
-          />
-        </div>
-      ))}
 
       <div className="border-b border-border px-lg py-md">
         <p className="text-label uppercase tracking-label text-muted">

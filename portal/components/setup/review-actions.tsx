@@ -1,0 +1,122 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { respondToSetupStep } from "@/app/portal/setup/actions";
+import { NOTE_MAX } from "@/lib/setup";
+
+const primaryButton =
+  "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
+const secondaryButton =
+  "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
+
+/**
+ * Confirm / request changes for a review step. Item notes (per fund, per
+ * tier) are owned by the page and passed in, so they travel with the answer.
+ */
+export function ReviewActions({
+  step,
+  version,
+  itemNotes,
+  confirmLabel,
+  changesLabel = "Request changes",
+  notePlaceholder = "Anything Rupert should know, change, or answer",
+  readOnly,
+}: {
+  step: "framing" | "investor_list" | "email_copy";
+  version: number;
+  itemNotes?: Record<string, string>;
+  confirmLabel: string;
+  changesLabel?: string;
+  notePlaceholder?: string;
+  readOnly: boolean;
+}) {
+  const router = useRouter();
+  const [note, setNote] = useState("");
+  const [pending, setPending] = useState<null | "confirmed" | "changes_requested">(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const noteCount = Object.values(itemNotes ?? {}).filter((value) => value.trim()).length;
+
+  async function respond(decision: "confirmed" | "changes_requested") {
+    if (pending) return;
+    if (decision === "changes_requested" && !note.trim() && noteCount === 0) {
+      setError("Write what you'd like changed or asked first.");
+      return;
+    }
+    setPending(decision);
+    setError(null);
+    try {
+      const result = await respondToSetupStep({
+        step,
+        version,
+        decision,
+        note,
+        itemNotes,
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  return (
+    <section className="mt-lg rounded-card border border-primary/30 bg-surface">
+      <div className="border-b border-border px-lg py-md">
+        <p className="text-label uppercase tracking-label text-primary">Your turn</p>
+        <p className="mt-xs text-body-sm text-muted">
+          Confirm to move forward, or send Rupert your changes and questions.
+          {noteCount > 0
+            ? ` Your ${noteCount} note${noteCount === 1 ? "" : "s"} above will be included.`
+            : ""}
+        </p>
+      </div>
+      <div className="px-lg py-lg">
+        <label className="block text-label uppercase tracking-label text-muted">
+          Note for Rupert (optional when confirming)
+          <textarea
+            className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary"
+            rows={4}
+            maxLength={NOTE_MAX}
+            value={note}
+            disabled={readOnly || pending !== null}
+            onChange={(event) => setNote(event.target.value)}
+            placeholder={notePlaceholder}
+          />
+        </label>
+        <div className="mt-md flex flex-wrap items-center gap-sm">
+          <button
+            type="button"
+            className={primaryButton}
+            disabled={readOnly || pending !== null}
+            onClick={() => respond("confirmed")}
+          >
+            {pending === "confirmed" ? "Confirming…" : confirmLabel}
+          </button>
+          <button
+            type="button"
+            className={secondaryButton}
+            disabled={readOnly || pending !== null}
+            onClick={() => respond("changes_requested")}
+          >
+            {pending === "changes_requested" ? "Sending…" : changesLabel}
+          </button>
+          {readOnly ? (
+            <p className="text-body-sm text-muted">Preview only: actions are disabled.</p>
+          ) : null}
+        </div>
+        {error ? (
+          <p role="alert" className="mt-sm text-body-sm text-error">
+            {error}
+          </p>
+        ) : null}
+      </div>
+    </section>
+  );
+}

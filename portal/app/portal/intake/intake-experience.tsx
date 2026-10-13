@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   confirmIntake,
@@ -373,6 +374,22 @@ export function IntakeExperience({
                 has everything he needs to start Setup.
               </p>
             </div>
+          </div>
+          <div className="mt-lg flex flex-wrap items-center justify-between gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
+            <div>
+              <p className="text-label uppercase tracking-label text-primary">
+                Next: your turn
+              </p>
+              <p className="mt-xs text-body-sm text-heading">
+                Share your pitch deck and company materials.
+              </p>
+            </div>
+            <Link
+              href="/portal/setup/materials"
+              className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
+            >
+              Go to Setup
+            </Link>
           </div>
           {interview?.summary ? (
             <dl className="mt-lg divide-y divide-border border-t border-border">

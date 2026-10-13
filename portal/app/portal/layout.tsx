@@ -5,6 +5,7 @@ import { ViewAsBanner } from "@/components/view-as-banner";
 import { requirePortalUser } from "@/lib/auth";
 import { getPortalView } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
+import { getSetupItems } from "@/lib/setup";
 import type { Client } from "@/lib/types";
 
 export const metadata = {
@@ -37,6 +38,7 @@ export default async function PortalLayout({
   }
 
   const { client, viewAs } = await getPortalView();
+  const setupItems = getSetupItems(client);
 
   return (
     <AppShell
@@ -59,14 +61,14 @@ export default async function PortalLayout({
                   }
                 : null
             }
+            setup={{
+              complete: setupItems.filter((item) => item.status === "done").length,
+              total: setupItems.length,
+            }}
+            setupYourTurn={setupItems.some((item) => item.status === "your_turn")}
             checklists={
               client
                 ? {
-                    pitch_deck_status: client.pitch_deck_status,
-                    business_brief_status: client.business_brief_status,
-                    outreach_messaging_status: client.outreach_messaging_status,
-                    investor_match_status: client.investor_match_status,
-                    target_list_status: client.target_list_status,
                     campaign_analytics_status: client.campaign_analytics_status,
                     investor_inbox_status: client.investor_inbox_status,
                     engagement_tracker_status: client.engagement_tracker_status,

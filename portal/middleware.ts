@@ -10,6 +10,8 @@ function isPublicPath(pathname: string) {
     pathname === "/auth/setup" ||
     // Stripe calls this without a session; it verifies Stripe's signature.
     pathname === "/api/stripe/webhook" ||
+    // Vercel Cron calls this without a session; it checks CRON_SECRET.
+    pathname === "/api/cron/reminders" ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   );

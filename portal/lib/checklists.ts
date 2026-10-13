@@ -1,18 +1,11 @@
 export type ChecklistStatus = "open" | "wip" | "done";
 
-export type SetupStatusColumn =
-  | "pitch_deck_status"
-  | "business_brief_status"
-  | "outreach_messaging_status"
-  | "investor_match_status"
-  | "target_list_status";
-
 export type LiveStatusColumn =
   | "campaign_analytics_status"
   | "investor_inbox_status"
   | "engagement_tracker_status";
 
-export type ChecklistStatusColumn = SetupStatusColumn | LiveStatusColumn;
+export type ChecklistStatusColumn = LiveStatusColumn;
 
 export type OnboardingTimestampColumn =
   | "nda_signed_at"
@@ -29,33 +22,8 @@ export type PhaseItem<Column extends string> = {
   href: string;
 };
 
-export const SETUP_ITEMS: PhaseItem<SetupStatusColumn>[] = [
-  {
-    column: "pitch_deck_status",
-    title: "Pitch Deck Review",
-    href: "/portal/preparation/deck-review",
-  },
-  {
-    column: "business_brief_status",
-    title: "Business Brief",
-    href: "/portal/preparation/abstract-review",
-  },
-  {
-    column: "outreach_messaging_status",
-    title: "Outreach Messaging",
-    href: "/portal/preparation/messaging-review",
-  },
-  {
-    column: "investor_match_status",
-    title: "Investor Match",
-    href: "/portal/preparation/investor-matching",
-  },
-  {
-    column: "target_list_status",
-    title: "Target List",
-    href: "/portal/preparation/investor-list",
-  },
-];
+// Setup is driven by the Turn Engine in lib/setup.ts. The old manual
+// Setup status columns (pitch_deck_status, …) are no longer used.
 
 export const LIVE_ITEMS: PhaseItem<LiveStatusColumn>[] = [
   {

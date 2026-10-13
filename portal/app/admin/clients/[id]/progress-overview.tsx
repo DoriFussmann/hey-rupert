@@ -1,12 +1,11 @@
 import { Checklist, type ChecklistRowItem } from "@/components/checklist";
 import {
   LIVE_ITEMS,
-  SETUP_ITEMS,
   isLiveUnlocked,
-  isSetupUnlocked,
   parseChecklistStatus,
   type ChecklistStatuses,
 } from "@/lib/checklists";
+import { getSetupItems, type SetupSource } from "@/lib/setup";
 import { formatDate } from "@/lib/format";
 import {
   getOnboardingItems,
@@ -66,6 +65,47 @@ function onboardingRows(timestamps: OnboardingTimestamps): ChecklistRowItem[] {
   });
 }
 
+// Setup steps, translated for the admin the same way as onboarding.
+function setupRows(source: SetupSource): ChecklistRowItem[] {
+  return getSetupItems(source).map((item) => {
+    if (item.status === "done") {
+      return {
+        id: item.id,
+        title: item.title,
+        detail: item.completedAt ? formatDate(item.completedAt) : item.detail,
+        status: "done",
+        statusLabel: "Done",
+      };
+    }
+    if (item.status === "waiting") {
+      return {
+        id: item.id,
+        title: item.title,
+        detail: item.adminAction,
+        status: "your_turn",
+        statusLabel: "Your turn",
+      };
+    }
+    if (item.status === "your_turn") {
+      return {
+        id: item.id,
+        title: item.title,
+        detail: item.detail,
+        status: "waiting",
+        statusLabel: "Waiting on client",
+      };
+    }
+    return {
+      id: item.id,
+      title: item.title,
+      detail: item.detail,
+      status: "open",
+      statusLabel: "Open",
+      dimmed: true,
+    };
+  });
+}
+
 function phaseRows(
   items: { column: keyof ChecklistStatuses; title: string }[],
   statuses: ChecklistStatuses,
@@ -112,12 +152,14 @@ export function ProgressOverview({
   stage,
   timestamps,
   statuses,
+  setup,
 }: {
   stage?: string;
   timestamps: OnboardingTimestamps;
   statuses: ChecklistStatuses;
+  setup: SetupSource;
 }) {
-  const progress = overallProgress({ ...timestamps, ...statuses });
+  const progress = overallProgress({ ...timestamps, ...statuses, ...setup });
 
   return (
     <section className="mb-lg rounded-card border border-border bg-surface">
@@ -142,7 +184,7 @@ export function ProgressOverview({
         divided
       />
       <Checklist
-        items={phaseRows(SETUP_ITEMS, statuses, !isSetupUnlocked(stage))}
+        items={setupRows(setup)}
         framed={false}
       />
 

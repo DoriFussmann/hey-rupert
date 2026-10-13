@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   LIVE_ITEMS,
-  SETUP_ITEMS,
   checklistProgress,
   isLiveUnlocked,
   isSetupUnlocked,
@@ -39,7 +38,7 @@ const PHASES: {
     id: "setup",
     label: "Setup",
     href: "/portal/setup",
-    prefixes: ["/portal/setup", "/portal/preparation"],
+    prefixes: ["/portal/setup"],
   },
   {
     id: "live",
@@ -69,16 +68,22 @@ function currentPhase(stage?: string): PhaseId {
 export function PortalNav({
   stage,
   onboarding,
+  setup,
+  setupYourTurn = false,
   checklists,
 }: {
   stage?: string;
   onboarding?: OnboardingTimestamps | null;
+  /** Setup progress, computed on the server from the Turn Engine. */
+  setup: { complete: number; total: number };
+  /** True when a Setup step is waiting on the client. */
+  setupYourTurn?: boolean;
   checklists?: ChecklistStatuses | null;
 }) {
   const pathname = usePathname();
   const counts = {
     onboarding: onboardingProgress(onboarding),
-    setup: checklistProgress(SETUP_ITEMS, checklists),
+    setup,
     live: checklistProgress(LIVE_ITEMS, checklists),
   };
   const locked = {
@@ -116,7 +121,11 @@ export function PortalNav({
           >
             <span className="flex items-center justify-between gap-sm">
               <span className="text-body-sm">{phase.label}</span>
-              {isCurrent ? (
+              {phase.id === "setup" && setupYourTurn && !isLocked ? (
+                <span className="text-label uppercase tracking-label text-primary">
+                  Your turn
+                </span>
+              ) : isCurrent ? (
                 <span className="text-label uppercase tracking-label text-primary">
                   Current
                 </span>

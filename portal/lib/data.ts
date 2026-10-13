@@ -13,6 +13,7 @@ import {
 import { DEFAULT_SERVICE_ORDER } from "@/lib/service-order";
 import type { IntakeInterview } from "@/lib/intake";
 import { asIntakeInterview } from "@/lib/intake-server";
+import { loadSetupSteps } from "@/lib/setup-server";
 import { readViewAsClientId } from "@/lib/view-as";
 import { createClient } from "@/lib/supabase/server";
 import type {
@@ -174,6 +175,29 @@ function asClient(row: Record<string, unknown>): Client {
   };
 }
 
+/** Attaches each client's Setup rows. Best effort: no rows on error. */
+async function withSetupSteps(clients: Client[]): Promise<Client[]> {
+  if (clients.length === 0 || !isServiceRoleConfigured()) return clients;
+  try {
+    const grouped = await loadSetupSteps(
+      createServiceClient(),
+      clients.map((client) => client.id),
+    );
+    return clients.map((client) => ({
+      ...client,
+      setup_steps: grouped.get(client.id) ?? [],
+    }));
+  } catch {
+    return clients;
+  }
+}
+
+async function withClientSetup(client: Client | null) {
+  if (!client) return null;
+  const [withSteps] = await withSetupSteps([client]);
+  return withSteps;
+}
+
 export async function listClients() {
   if (!isSupabaseConfigured()) return placeholderClients;
 
@@ -185,7 +209,9 @@ export async function listClients() {
         .select("*")
         .order("created_at", { ascending: false });
       if (!error && data) {
-        return data.map((row) => asClient(row as Record<string, unknown>));
+        return withSetupSteps(
+          data.map((row) => asClient(row as Record<string, unknown>)),
+        );
       }
     } catch {
       // Fall through to the cookie-scoped lookup.
@@ -199,7 +225,9 @@ export async function listClients() {
       .select("*")
       .order("created_at", { ascending: false });
     if (error || !data) return [];
-    return data.map((row) => asClient(row as Record<string, unknown>));
+    return withSetupSteps(
+      data.map((row) => asClient(row as Record<string, unknown>)),
+    );
   } catch {
     return [];
   }
@@ -220,7 +248,7 @@ export async function getAdminClient(id: string) {
         .eq("id", id)
         .maybeSingle();
       if (!error && data) {
-        return asClient(data as Record<string, unknown>);
+        return withClientSetup(asClient(data as Record<string, unknown>));
       }
     } catch {
       // Fall through to the cookie-scoped lookup.
@@ -427,7 +455,7 @@ async function loadClientById(id: string) {
       .eq("id", id)
       .maybeSingle();
     if (error || !data) return null;
-    return asClient(data as Record<string, unknown>);
+    return withClientSetup(asClient(data as Record<string, unknown>));
   } catch {
     return null;
   }
@@ -469,7 +497,7 @@ export const getPortalView = cache(async (): Promise<PortalView> => {
       .maybeSingle();
     if (!error && data) {
       return {
-        client: asClient(data as Record<string, unknown>),
+        client: await withClientSetup(asClient(data as Record<string, unknown>)),
         viewAs: false,
       };
     }

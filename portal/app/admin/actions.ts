@@ -15,7 +15,6 @@ import {
 } from "@/lib/types";
 import {
   LIVE_ITEMS,
-  SETUP_ITEMS,
   isChecklistStatus,
   type ChecklistStatus,
   type ChecklistStatusColumn,
@@ -444,10 +443,7 @@ function revalidateClientPaths(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
 }
 
-const CHECKLIST_COLUMNS = new Set<string>([
-  ...SETUP_ITEMS.map((item) => item.column),
-  ...LIVE_ITEMS.map((item) => item.column),
-]);
+const CHECKLIST_COLUMNS = new Set<string>(LIVE_ITEMS.map((item) => item.column));
 
 const ONBOARDING_TIMESTAMP_COLUMNS = new Set<string>([
   "nda_signed_at",
