@@ -24,7 +24,15 @@ keywords:
   - pitch deck template
   - pitch deck
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: free-pitch-deck-template
+    anchor: free pitch deck template
+  - slug: sequoia-pitch-deck-template
+    anchor: sequoia pitch deck template
+  - slug: vc-pitch-deck-template
+    anchor: vc pitch deck template
 externalLinks: []
 faqs:
   - question: "How many slides should a startup pitch deck template have?"
@@ -126,3 +134,7 @@ Early-stage investors are inspecting evidence much more closely, meaning founder
 - Treat each template prompt as an investor question and answer it with specific evidence — customer quotes, unit economics, or comparable outcomes — not aspirational language.
 - The market size, business model, and financial projection slides are where most template decks fail; ground each one in bottoms-up logic rather than top-down figures.
 - Apply a 90-second cold-read test after completing the deck — if the investment case isn't clear in a scroll, tighten the narrative before touching the design.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [pitch deck](/articles/pitch-deck/) · [free pitch deck template](/articles/free-pitch-deck-template/) · [sequoia pitch deck template](/articles/sequoia-pitch-deck-template/) · [vc pitch deck template](/articles/vc-pitch-deck-template/).
+<!-- CMS-INTERNAL:END -->

@@ -24,7 +24,15 @@ keywords:
   - pitch deck template
   - pitch deck
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: free-pitch-deck-template
+    anchor: free pitch deck template
+  - slug: startup-pitch-deck-template
+    anchor: startup pitch deck template
+  - slug: vc-pitch-deck-template
+    anchor: vc pitch deck template
 externalLinks: []
 faqs:
   - question: "Can I mix elements from the Sequoia, YC, and Guy Kawasaki frameworks in one deck?"
@@ -132,3 +140,7 @@ The pitch deck framework conversation remains stable at the structural level —
 - Guy Kawasaki's 10/20/30 rule (10 slides, 20 minutes, 30pt font minimum) is an in-room presentation framework first — its constraints are valuable for demo days and live pitches but leave too little context for an asynchronously read emailed deck.
 - Using a named, credible framework signals investor-literacy to VC partners; it shows the founder understands the questions a fund uses to evaluate deals, before a single conversation takes place.
 - The right framework depends on raise stage, distribution format (email vs. live pitch), and the company's strongest proof point — no single template is universally optimal across every fundraising scenario.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [pitch deck](/articles/pitch-deck/) · [free pitch deck template](/articles/free-pitch-deck-template/) · [startup pitch deck template](/articles/startup-pitch-deck-template/) · [vc pitch deck template](/articles/vc-pitch-deck-template/).
+<!-- CMS-INTERNAL:END -->

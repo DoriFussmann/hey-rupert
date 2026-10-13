@@ -24,7 +24,15 @@ keywords:
   - pitch deck template
   - pitch deck
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: pitch-deck
+    anchor: pitch deck
+  - slug: free-pitch-deck-template
+    anchor: free pitch deck template
+  - slug: sequoia-pitch-deck-template
+    anchor: sequoia pitch deck template
+  - slug: startup-pitch-deck-template
+    anchor: startup pitch deck template
 externalLinks: []
 faqs:
   - question: "Do investors actually care whether a pitch deck uses a template or custom design?"
@@ -133,3 +141,7 @@ Whether a founder goes with a template or a custom deck, that decision shapes th
 That is the gap most founders underestimate. A beautifully designed deck sent to the wrong investors, or a strong template shared through a mass email blast with no follow-up, produces the same result: silence. The deck gets the investor's attention for a matter of seconds. The quality of the outreach process determines whether those seconds convert into a meeting.
 
 Rupert is built for exactly that part of the process. Every investor outreach campaign is researched and personalized by experienced operators who understand which funds are actively investing at which stages, which partners have thesis fit for specific business models, and how to craft the kind of contextual introduction that earns a response. Founders retain complete visibility into every conversation and every investor relationship — because the relationship belongs to the founder, not to the service running the outreach. Whether the deck is a refined template or a fully custom-designed asset, what it needs around it is a process rigorous enough to make sure the right investors actually open it.
+
+<!-- CMS-INTERNAL:START -->
+Further reading: [pitch deck](/articles/pitch-deck/) · [free pitch deck template](/articles/free-pitch-deck-template/) · [sequoia pitch deck template](/articles/sequoia-pitch-deck-template/) · [startup pitch deck template](/articles/startup-pitch-deck-template/).
+<!-- CMS-INTERNAL:END -->

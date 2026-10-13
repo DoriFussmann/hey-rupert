@@ -64,6 +64,14 @@ internalLinks:
     anchor: investor presentation template
   - slug: how-to-find-investors
     anchor: how to find investors
+  - slug: free-pitch-deck-template
+    anchor: free pitch deck template
+  - slug: sequoia-pitch-deck-template
+    anchor: sequoia pitch deck template
+  - slug: startup-pitch-deck-template
+    anchor: startup pitch deck template
+  - slug: vc-pitch-deck-template
+    anchor: vc pitch deck template
 externalLinks:
   - label: The Quick and Dirty Guide to Creating a Winning Pitch Deck
     url: https://www.startupgrind.com/blog/the-quick-and-dirty-guide-to-creating-a-winning-pitch-deck/
@@ -209,5 +217,5 @@ See Related below for more on this topic.
 See Sources below for the references behind this article.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [The Complete Seed Pitch Deck Guide for Raising Founders](/articles/seed-pitch-deck/) · [pre seed pitch deck](/articles/pre-seed-pitch-deck/) · [seed funding pitch deck](/articles/seed-funding-pitch-deck-faq/) · [seed pitch deck examples](/articles/seed-pitch-deck-examples/) · [seed round pitch deck](/articles/seed-round-pitch-deck-template/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [investment presentation](/articles/investment-presentation-checklist/) · [investor presentation template](/articles/investor-presentation-template/) · [how to find investors](/articles/how-to-find-investors/).
+Further reading: [The Complete Seed Pitch Deck Guide for Raising Founders](/articles/seed-pitch-deck/) · [pre seed pitch deck](/articles/pre-seed-pitch-deck/) · [seed funding pitch deck](/articles/seed-funding-pitch-deck-faq/) · [seed pitch deck examples](/articles/seed-pitch-deck-examples/) · [seed round pitch deck](/articles/seed-round-pitch-deck-template/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [investment presentation](/articles/investment-presentation-checklist/) · [investor presentation template](/articles/investor-presentation-template/) · [how to find investors](/articles/how-to-find-investors/) · [free pitch deck template](/articles/free-pitch-deck-template/) · [sequoia pitch deck template](/articles/sequoia-pitch-deck-template/) · [startup pitch deck template](/articles/startup-pitch-deck-template/) · [vc pitch deck template](/articles/vc-pitch-deck-template/).
 <!-- CMS-INTERNAL:END -->
