@@ -48,6 +48,7 @@ internalLinks:
     anchor: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
   - slug: largest-venture-capital-firms-by-aum
     anchor: How to Use Largest VC Firms by AUM to Build Your Target List
+
 externalLinks:
   - label: NVCA Yearbook - National Venture Capital Association
     url: https://nvca.org/nvca-yearbook/

@@ -29,6 +29,116 @@
       "source": "/articles/investor-presentation/",
       "destination": "/articles/investor-presentation-template/",
       "permanent": true
+    },
+    {
+      "source": "/blog",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/blog/:path*",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/team",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/team/",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/team/:path*",
+      "destination": "/about/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/local-angel-investors-for-first-time-founders-2",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/local-angel-investors-for-first-time-founders-2/",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-groups-in-your-city-for-a-first-check-2",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-groups-in-your-city-for-a-first-check-2/",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/first-check-from-local-operators",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/first-check-from-local-operators/",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/operators-who-write-the-first-check",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/operators-who-write-the-first-check/",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/list-of-investors-for-startups",
+      "destination": "/articles/investor-list/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/list-of-investors-for-startups/",
+      "destination": "/articles/investor-list/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-investors-for-your-business",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-investors-for-your-business/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-find-investors-for-startup",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-find-investors-for-startup/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/quarterly-update-email-template",
+      "destination": "/articles/investor-update-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/quarterly-update-email-template/",
+      "destination": "/articles/investor-update-template/",
+      "permanent": true
     }
   ],
   "rewrites": [

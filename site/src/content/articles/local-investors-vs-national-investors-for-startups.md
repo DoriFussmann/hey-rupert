@@ -26,16 +26,9 @@ draft: false
 internalLinks:
   - slug: angel-investors
     anchor: angel investors
-  - slug: angel-groups-in-your-city-for-a-first-check-2
-    anchor: angel groups in your city for a first check
-  - slug: first-check-from-local-operators
-    anchor: first check from local operators
   - slug: investors-near-me
     anchor: investors near me
-  - slug: local-angel-investors-for-first-time-founders-2
-    anchor: local angel investors for first-time founders
-  - slug: operators-who-write-the-first-check
-    anchor: operators who write the first check
+
 externalLinks:
   - label: "QED Investors: Home"
     url: "https://www.qedinvestors.com/"
@@ -168,7 +161,7 @@ The geography-versus-fit debate in startup fundraising remains active in mid-202
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [first check from local operators](/articles/first-check-from-local-operators/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [operators who write the first check](/articles/operators-who-write-the-first-check/).
+Further reading: [angel investors](/articles/angel-investors/) · [investors near me](/articles/investors-near-me/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

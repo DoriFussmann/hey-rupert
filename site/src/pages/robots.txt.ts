@@ -12,7 +12,11 @@ const AI_CRAWLERS: Record<string, "allow" | "deny"> = {
 };
 
 export const GET: APIRoute = () => {
-  return new Response(generateRobotsTxt({ siteUrl: SITE_URL, aiCrawlers: AI_CRAWLERS }), {
+  const body = generateRobotsTxt({ siteUrl: SITE_URL, aiCrawlers: AI_CRAWLERS }).replace(
+    /Sitemap:\s+\S+/,
+    `Sitemap: ${SITE_URL.replace(/\/+$/, "")}/sitemap.xml`,
+  );
+  return new Response(body, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 };

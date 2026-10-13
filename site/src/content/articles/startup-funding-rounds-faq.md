@@ -48,6 +48,7 @@ internalLinks:
     anchor: How to Diagnose Your Startup Funding Stage and Raise Right
   - slug: types-of-funding-for-startups
     anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+
 externalLinks:
   - label: "Startup Funding Rounds: A Complete Guide"
     url: https://www.thatround.com/startup-funding-rounds-a-complete-guide

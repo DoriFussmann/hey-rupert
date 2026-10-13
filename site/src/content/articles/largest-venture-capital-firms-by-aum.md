@@ -49,6 +49,7 @@ internalLinks:
     anchor: "Famous VC Firms FAQ: What Every First-Time Founder Must Know"
   - slug: top-vc-firms
     anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+
 externalLinks:
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/

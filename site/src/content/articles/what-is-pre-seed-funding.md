@@ -34,6 +34,7 @@ internalLinks:
     anchor: pre seed funding
   - slug: pre-seed-vs-seed-funding
     anchor: pre seed vs seed funding
+
 externalLinks: []
 faqs:
   - question: "Do I need a product to raise pre-seed funding?"
@@ -158,5 +159,5 @@ Understanding pre-seed funding at a conceptual level is the necessary first step
 That's where having experienced operators doing the research and execution on your behalf changes the math. Rupert's expert-managed outreach process is built around exactly that discipline — researching which investors are actively writing pre-seed checks in your sector right now, personalizing every touchpoint based on genuine portfolio and thesis analysis, and managing the pipeline so founders stay in front of the right people at the right time, with complete visibility into every conversation and every relationship. If you've internalized what pre-seed requires, the next step is making sure the right investors actually hear your story — through a process that reflects the quality of what you're building.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/).
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/)
 <!-- CMS-INTERNAL:END -->

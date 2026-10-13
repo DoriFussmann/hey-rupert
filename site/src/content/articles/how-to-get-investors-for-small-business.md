@@ -34,6 +34,7 @@ internalLinks:
     anchor: investors for small business
   - slug: types-of-investors-for-small-business
     anchor: types of investors for small business
+
 externalLinks:
   - label: Homepage - Small Business Administration
     url: "https://www.sba.gov/"
@@ -129,7 +130,7 @@ in 2026, a spray-and-pray approach to investor targeting is not only inefficient
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/).
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

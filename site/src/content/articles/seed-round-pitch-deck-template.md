@@ -47,6 +47,7 @@ internalLinks:
     anchor: The Complete Seed Pitch Deck Guide for Raising Founders
   - slug: seed-pitch-deck-examples
     anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
+
 externalLinks:
   - label: Pitch Deck Statistics | 22 Must Know Stats and Facts
     url: https://www.pitchdeckcreators.com/blog-posts/pitch-deck-statistics-22-must-know-facts

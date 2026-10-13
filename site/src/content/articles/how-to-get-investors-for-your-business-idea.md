@@ -41,12 +41,13 @@ internalLinks:
     anchor: "How to Find Investors for Your Startup: The Complete Guide"
   - slug: angel-investors-vs-venture-capital
     anchor: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
-  - slug: how-to-get-investors-for-your-business
-    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-find-investors
+    anchor: how to find investors
   - slug: how-to-get-private-investors-for-your-business
     anchor: "How to Get Private Investors for Your Business: A Guide"
   - slug: investors-looking-for-projects-to-fund
     anchor: What Investors Looking for Projects to Fund Actually Want
+
 externalLinks:
   - label: Guide to Finding Business Investors | CO
     url: https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors

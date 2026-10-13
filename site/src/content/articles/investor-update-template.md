@@ -4,7 +4,7 @@ h1: "Investor Update Template for Seed and Series A"
 description: "A proven investor update template for seed and Series A founders: what to include, how often to send it, and how to use updates to warm your next raise."
 slug: investor-update-template
 date: "2026-09-28"
-updatedDate: "2026-09-28"
+updatedDate: "2026-10-12"
 author: dori-fussmann
 category: investor crm
 pillarKeyword: investor crm
@@ -26,12 +26,11 @@ draft: false
 internalLinks:
   - slug: investor-crm
     anchor: investor crm
-  - slug: quarterly-update-email-template
-    anchor: quarterly update email template
   - slug: shareholder-update
     anchor: shareholder update
   - slug: startup-investor-update-presentation
     anchor: startup investor update presentation
+
 externalLinks:
   - label: The ICSID Caseload - Statistics
     url: "https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics"
@@ -45,6 +44,8 @@ faqs:
     answer: "Under 500 words for a monthly update. Your investors are reading this between meetings, often on their phones. If the email requires more than two or three scrolls, most recipients will skim or defer it. Use bullet points for the metrics block, one short paragraph for wins, one for challenges, a brief team note if relevant, and one specific ask. Save detailed analysis for quarterly updates and board decks. The monthly update is a pulse check, not an annual report."
   - question: "When should I start sending investor updates — before or after closing a round?"
     answer: "Start before you close if possible, but definitely within the first month after closing. The sooner you establish the cadence, the easier it is to maintain — and the longer your track record of consistent communication when your next raise opens. Founders who start updates immediately after a seed close arrive at their Series A with 12–18 months of documented progress that prospective investors can review. That history is a fundraising asset that cannot be recreated in a hurry."
+  - question: "Should I use a dedicated platform or just send plain email?"
+    answer: "Plain email is enough for most seed-stage founders. Every investor reads it, replies come straight back, and BCC keeps the thread from turning into reply-all. A purpose-built tool is worth it when you want open and click data, or when the update list lives in the same system as your fundraising pipeline. Do not let the tool choice delay the first send."
 ---
 
 ## The Investor Update Template for Seed and Series A Founders
@@ -123,7 +124,9 @@ Consistency is the point: an investor who has seen your format three times reads
 The single most important variable in an investor update program is not the writing quality, not the design, and not which platform you send from. It is cadence discipline. 
 Sticking to your update schedule builds trust with investors, which is key to getting them involved in your startup.
 
-The right cadence depends on stage and how much is actually happening month to month. Pre-seed and seed: monthly. The pace of change is too fast for quarterly. Investors expect monthly at this stage and read what they receive. At Series A, maintain monthly updates with a longer quarterly update that includes deeper financials and board-deck-grade context. Series B and later, quarterly suffices, with monthly metric updates for institutional investors who require them.
+The right cadence depends on stage and how much is actually happening month to month. Pre-seed and seed: monthly. The pace of change is too fast for quarterly. Investors expect monthly at this stage and read what they receive. Send monthly for at least the first 24 to 36 months. At Series A, keep the monthly note and add a longer quarterly update. Series B and later, quarterly suffices, with monthly metric updates for institutional investors who require them.
+
+A quarterly note is not a longer monthly email. Use it for plan versus actual: where the quarter landed against what you told investors three months ago, which assumptions broke, and the next 90 days against the annual milestones. That version runs roughly 750 to 1,500 words and can carry gross margin, customer acquisition cost, and net revenue retention. The monthly note stays under 500 words.
 
 Send on the same date every month. 
 Wednesdays and Thursdays get the most opens, and the same day every month beats sporadic bursts.
@@ -200,7 +203,7 @@ the median time between funding rounds has stretched to 744 days as of Q4 2024, 
 - The investor update template is not a standalone tool — it works best as part of a structured investor CRM that tracks communication history, engagement signals, and pipeline stage for every current and prospective investor on your list.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor crm](/articles/investor-crm/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
+Further reading: [investor crm](/articles/investor-crm/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

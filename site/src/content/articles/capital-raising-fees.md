@@ -34,6 +34,7 @@ internalLinks:
     anchor: capital raising services
   - slug: startup-fundraising-consultant
     anchor: startup fundraising consultant
+
 externalLinks: []
 faqs:
   - question: "Can I negotiate the success fee percentage with a capital raising advisor?"
@@ -173,5 +174,5 @@ in February 2026, the SEC Small Business Capital Formation Advisory Committee ap
 - The real cost of a poor capital raising service is not the fee paid — it is the reputational damage from bulk, impersonal investor outreach that poisons relationships the founder may need again at this round or the next.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
 <!-- CMS-INTERNAL:END -->

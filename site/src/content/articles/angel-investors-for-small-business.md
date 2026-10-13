@@ -34,6 +34,7 @@ internalLinks:
     anchor: investors for small business
   - slug: types-of-investors-for-small-business
     anchor: types of investors for small business
+
 externalLinks:
   - label: "Investor's Business Daily | Stock News and Stock Market ..."
     url: "https://www.investors.com/"
@@ -161,7 +162,7 @@ The global angel investment market is expected to grow from approximately $31 bi
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/).
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

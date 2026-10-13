@@ -25,8 +25,6 @@ draft: false
 internalLinks:
   - slug: investor-update-template
     anchor: investor update template
-  - slug: quarterly-update-email-template
-    anchor: quarterly update email template
   - slug: shareholder-update
     anchor: shareholder update
   - slug: startup-investor-update-presentation
@@ -45,6 +43,7 @@ internalLinks:
     anchor: how to find investors
   - slug: pitch-deck
     anchor: pitch deck
+
 externalLinks:
   - label: "Investor.gov: Home"
     url: "https://www.investor.gov/"
@@ -221,7 +220,7 @@ The right investor CRM doesn't just keep your pipeline organized — it gives yo
 For founders who want that structure and visibility without spending their building time maintaining it, the most effective path is working with experienced operators who research, personalize, and track every investor interaction — while ensuring the founder retains full visibility into every conversation and owns every relationship that results. The process discipline of a well-run CRM, combined with the judgment of people who have run hundreds of investor outreach campaigns, is what a professional fundraise actually looks like. The tool is the infrastructure. The expertise is what makes it work.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [how to find investors](/articles/how-to-find-investors/) · [pitch deck](/articles/pitch-deck/).
+Further reading: [investor update template](/articles/investor-update-template/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [how to find investors](/articles/how-to-find-investors/) · [pitch deck](/articles/pitch-deck/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

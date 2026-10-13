@@ -9,7 +9,7 @@ const articles = defineCollection({
 });
 
 const team = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/content/team" }),
+  loader: glob({ pattern: "**/*.md", base: "./src/content/authors" }),
   schema: ({ image }) =>
     teamSchema(image).extend({
       slug: z.string().optional(),

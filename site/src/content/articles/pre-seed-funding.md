@@ -33,6 +33,7 @@ internalLinks:
     anchor: pre seed vs seed funding
   - slug: what-is-pre-seed-funding
     anchor: what is pre seed funding
+
 externalLinks: []
 faqs:
   - question: "How much should I raise in a pre-seed round?"
@@ -176,5 +177,5 @@ even with the increase in average check size, few pre-seed deals exceed $2.5 mil
 - Post-money SAFE mechanics and option pool pre-money conventions compound founder dilution in ways most cap tables don't show at signing; modeling every instrument before you sign it is non-negotiable.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
 <!-- CMS-INTERNAL:END -->

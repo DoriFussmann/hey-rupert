@@ -34,6 +34,7 @@ internalLinks:
     anchor: capital raising services
   - slug: startup-fundraising-consultant
     anchor: startup fundraising consultant
+
 externalLinks: []
 faqs:
   - question: "What is a fair success fee for a capital raising consultant?"
@@ -166,5 +167,5 @@ Separately, heightened regulatory scrutiny around transaction-based compensation
 - The checklist doubles as a self-audit: founders who can answer all eight questions about their own current process are running a professional fundraising operation regardless of whether they use an outside service.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
 <!-- CMS-INTERNAL:END -->

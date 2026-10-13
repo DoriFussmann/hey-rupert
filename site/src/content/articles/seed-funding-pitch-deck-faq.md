@@ -48,6 +48,7 @@ internalLinks:
     anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
   - slug: seed-round-pitch-deck-template
     anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+
 externalLinks:
   - label: The Best Startup Pitch Deck Examples - Powderkeg
     url: https://powderkeg.com/pitch-deck-examples/

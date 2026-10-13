@@ -1,4 +1,3 @@
-import sitemap from "@astrojs/sitemap";
 import { defineConfig } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 import { rehypeEmitWtsComments, rehypeKeyTakeaways, remarkPreserveWts } from "seo-core";
@@ -38,10 +37,5 @@ export default defineConfig({
       },
     },
   },
-  integrations: [
-    sitemap({
-      filter: (page) => !page.includes("/404"),
-    }),
-  ],
 });
 

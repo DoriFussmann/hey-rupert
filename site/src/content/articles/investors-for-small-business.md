@@ -33,6 +33,7 @@ internalLinks:
     anchor: how to get investors for small business
   - slug: types-of-investors-for-small-business
     anchor: types of investors for small business
+
 externalLinks:
   - label: How to find investors for your small business
     url: "https://mercury.com/blog/how-to-find-investors-for-small-business"
@@ -186,7 +187,7 @@ That execution layer is where most rounds are won or lost. Not at the pitch meet
 For founders who have the conviction and the story but lack the bandwidth to build that infrastructure themselves, working with experienced operators who specialize in investor outreach — who handle the research, personalization, and pipeline management while the founder retains complete ownership of every conversation and every relationship — is not a shortcut. It's a recognition that fundraising is a full-time job, and building the company is another one. Rupert is built for exactly that moment: when the fit is confirmed, the story is ready, and what's needed is a disciplined, transparent process run by people who have done this before.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/).
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

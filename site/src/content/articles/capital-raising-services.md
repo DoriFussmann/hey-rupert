@@ -33,6 +33,7 @@ internalLinks:
     anchor: capital raising fees
   - slug: startup-fundraising-consultant
     anchor: startup fundraising consultant
+
 externalLinks:
   - label: Database
     url: "https://supabase.com/database"
@@ -196,7 +197,7 @@ as recently as September 28, 2026, a new fundraising platform announced its 2027
 - Before engaging any capital raising service, founders should demand clear answers on five points: data recency, personalization method, transparency and reporting, fee structure and exit terms, and explicit confirmation that every investor relationship transfers to the founder at engagement end.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

@@ -34,6 +34,7 @@ internalLinks:
     anchor: pre seed vs seed funding
   - slug: what-is-pre-seed-funding
     anchor: what is pre seed funding
+
 externalLinks: []
 faqs:
   - question: "What is the typical check size for an angel investor at pre-seed?"
@@ -148,5 +149,5 @@ Q3 2026 data on the most active pre-seed and seed-stage investors in the United 
 - Warm introductions from portfolio founders convert far better than cold outreach — and when cold outreach is necessary, specificity about the angel's thesis and recent deals is the only variable that moves the needle.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [startup funding](/articles/startup-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+Further reading: [startup funding](/articles/startup-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
 <!-- CMS-INTERNAL:END -->

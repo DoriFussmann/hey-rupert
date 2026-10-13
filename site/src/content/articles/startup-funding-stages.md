@@ -46,6 +46,7 @@ internalLinks:
     anchor: How to Diagnose Your Startup Funding Stage and Raise Right
   - slug: types-of-funding-for-startups
     anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+
 externalLinks:
   - label: The 8 Stages of Startup Funding
     url: "https://www.indeed.com/career-advice/career-development/startup-funding-stages"

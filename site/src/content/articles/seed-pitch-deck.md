@@ -47,6 +47,7 @@ internalLinks:
     anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
   - slug: seed-round-pitch-deck-template
     anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+
 externalLinks:
   - label: "The Perfect Seed Pitch Deck: 10 Slides You Need to Win ..."
     url: https://www.reddit.com/r/startups/comments/1lcyta0/the_perfect_seed_pitch_deck_10_slides_you_need_to/

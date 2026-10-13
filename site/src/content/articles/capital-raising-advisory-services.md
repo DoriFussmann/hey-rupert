@@ -34,6 +34,7 @@ internalLinks:
     anchor: capital raising services
   - slug: startup-fundraising-consultant
     anchor: startup fundraising consultant
+
 externalLinks:
   - label: "Raising Riley | Riley County Official Website"
     url: "https://www.rileycountyks.gov/1248/Raising-Riley"
@@ -138,7 +139,7 @@ The regulatory and market environment around capital raising advisory services r
 - For early-stage founders, the right selection criteria are transparency, sector-specific targeting precision, and confirmed ownership of every investor relationship introduced — not regulatory label.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/).
+Further reading: [investor database](/articles/investor-database/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

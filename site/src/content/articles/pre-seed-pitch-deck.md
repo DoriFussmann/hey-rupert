@@ -47,6 +47,7 @@ internalLinks:
     anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
   - slug: seed-round-pitch-deck-template
     anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+
 externalLinks:
   - label: How to build your seed round pitch deck
     url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck

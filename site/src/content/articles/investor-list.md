@@ -4,7 +4,7 @@ h1: "How to Build an Investor List That Works"
 description: "Learn how to build an investor list that actually works — what belongs on it, how to structure it, and how to use it to run a disciplined fundraise."
 slug: investor-list
 date: "2026-10-07"
-updatedDate: "2026-10-07"
+updatedDate: "2026-10-12"
 author: dori-fussmann
 category: investor database
 pillarKeyword: investor database
@@ -26,10 +26,9 @@ draft: false
 internalLinks:
   - slug: investor-database
     anchor: investor database
-  - slug: list-of-investors-for-startups
-    anchor: list of investors for startups
   - slug: list-of-private-investors
     anchor: list of private investors
+
 externalLinks: []
 faqs:
   - question: "How many investors should be on my list before I start outreach?"
@@ -40,6 +39,10 @@ faqs:
     answer: "Expect 2–3 weeks of dedicated research before outreach opens. This includes identifying candidates, filtering by fit, verifying data points, tiering investors into A/B/C groups, and mapping your access path (direct network, warm introduction, or cold outreach) for each name. Founders who compress this step tend to burn early momentum on poorly qualified targets."
   - question: "What is the difference between an A-tier and a B-tier investor on the list?"
     answer: "A-tier investors are your highest-conviction targets — strong thesis alignment, recent deals in your sector, correct check size, and ideally a warm introduction path. B-tier investors meet most criteria but may have a thinner connection to your specific sector or require cold outreach. C-tier names are longer shots that are worth contacting in parallel but should not drive your primary sequencing strategy."
+  - question: "Why talk to B- and C-tier investors before the targets I most want?"
+    answer: "Your A-tier investors should hear the pitch after it has survived a few real conversations. Early B- and C-tier meetings surface objections you have not rehearsed. You still run the tiers in overlapping waves — you do not park every A-tier name until the end — but you do not open the raise with your best targets on day one."
+  - question: "How often should I update the investor list once outreach is underway?"
+    answer: "Review it at least once a week during an active raise. Take off investors who have passed, add names that arrive through referrals, and move a tier when you learn a firm's current thesis. A stale list spends energy on dead ends and misses the new paths."
 ---
 
 Most founders approach fundraising the wrong way. They open a spreadsheet, type in the names of every VC they've ever heard of, add a few more from a Google search, and call it an investor list. Then they start sending emails and wonder why the replies never come. The list wasn't the problem. The process was. Building an investor list is not a filing exercise — it is a research discipline that determines whether your outreach ever lands, and it deserves as much rigor as the pitch itself.
@@ -51,6 +54,12 @@ An investor list is a researched, tiered target set — a living document filter
 That distinction matters because investor attention is finite and first impressions are non-renewable. Every email you send to someone who doesn't invest at your stage, doesn't write checks at your size, or just led a competing deal is a wasted touchpoint. In a fundraising process where momentum compounds — where a yes from one credible investor makes the next conversation easier — wasted touchpoints don't just fail. They slow the whole machine down.
 
 The investor list is also where your fundraising strategy becomes legible. Before you have a pipeline, before you have meetings, before you have term sheets, the list is the only concrete artifact of your process. A well-built one tells you how many qualified investors exist in your target universe, where your warm introduction paths are, which firm-level decisions you need to make about sequencing, and how long the process is realistically going to take.
+
+## Write a One-Paragraph Brief Before You Search
+
+Before you open a database, write one paragraph that names five things: stage, sector, geography, the check size you need, and one sentence of current traction. A brief such as "seed-stage B2B SaaS, US-based, raising $2 million, selling to enterprise HR teams, $250,000 in MRR" is specific enough that someone else could search with it and return names you would keep.
+
+Use that paragraph as the filter for every search. Export the raw candidates that clear it, and do not start cutting during the export. Founders drop good names too early — a plain website hiding a partner with a real thesis in the space — and then cannot get them back. Qualification comes after the sweep, against the five data points below. Cut a name that fails two or more of them.
 
 ## The Five Data Points Every Entry Needs
 
@@ -88,6 +97,8 @@ Once every entry has its five data points confirmed, the list needs to be tiered
 
 This tiering structure also helps founders think about their outreach as a parallel process rather than a sequential one. You don't approach Tier A, wait for responses, then move to Tier B. You run all three tiers in overlapping waves, pacing the Tier A conversations with enough lead time that their momentum can influence the later conversations still in progress.
 
+One refinement inside that sequence: let a few B- and C-tier conversations happen before the investors you most want hear the sharpest version of the story. Those earlier meetings surface the objections you have not rehearsed. You still do not save every A-tier name for the end of the raise. You also do not open with them on the first day.
+
 ## The List Is a Living Document
 
 Building the list is not a one-time event. The list should be updated continuously throughout the fundraising process as new intelligence surfaces. When a conversation with a Tier A investor reveals that they recently made a competing investment you weren't aware of, they move. When an investor you didn't know passes your name along to a partner at another firm, that firm gets added and tiered. When a Tier B target follows up unprompted after seeing your announcement in their portfolio company's Slack, they move to Tier A.
@@ -111,6 +122,8 @@ Warm introductions remain the fastest path to a venture capitalist's inbox — i
 ## What the List Makes Possible
 
 A properly built investor list changes the character of a fundraising process. Instead of reacting to whoever happens to reply, the founder is executing a deliberate sequence against a qualified universe. Instead of wondering whether the right investors have seen the pitch, the founder has a clear view of who's been contacted, who's responded, who's in diligence, and who hasn't been approached yet.
+
+Put the list in a CRM, or in a spreadsheet that can act like one, and give every name a next action with a date: send the intro, ask for the warm path, follow up if there is no reply. A tiered list with no next action is still a reference document. During an active raise, review it at least once a week. Passes come off, referrals go on, and a tier changes when you learn a firm's current thesis.
 
 The list also gives founders something to show experienced advisors and operators who can help pressure-test it. A list of 80 tiered investors with confirmed thesis fit and mapped access paths is a much more productive starting point for a review conversation than "here are some firms I'm planning to reach out to." Advisors can spot firms you've missed, flag portfolio conflicts you didn't know about, and identify warm paths you hadn't considered — but only when the list is structured enough to be reviewable.
 
@@ -138,5 +151,5 @@ The best investor database for a founder is rarely the biggest one — broad pla
 - Building a proper investor list takes 2–3 weeks of research before fundraising opens; founders who compress or skip this step waste their most irreplaceable asset — the first impression with each investor.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [list of investors for startups](/articles/list-of-investors-for-startups/) · [list of private investors](/articles/list-of-private-investors/).
+Further reading: [investor database](/articles/investor-database/) · [list of private investors](/articles/list-of-private-investors/)
 <!-- CMS-INTERNAL:END -->

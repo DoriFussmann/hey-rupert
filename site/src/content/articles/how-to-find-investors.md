@@ -3,7 +3,7 @@ title: "How to Find the Right Investors: A Complete Founder's Guide"
 description: "Everything founders need to know about how to find investors: type, targeting, warm intros, cold outreach, and pipeline management to close your round."
 slug: how-to-find-investors
 date: "2026-08-03"
-updatedDate: "2026-09-30"
+updatedDate: "2026-10-12"
 author: dori-fussmann
 category: how to find investors
 pillarKeyword: how to find investors
@@ -21,8 +21,8 @@ keywords:
   - how to find investors
 draft: false
 internalLinks:
-  - slug: angel-groups-in-your-city-for-a-first-check-2
-    anchor: angel groups in your city for a first check
+  - slug: investors-near-me
+    anchor: investors near me
   - slug: angel-investors-for-small-business
     anchor: angel investors for small business
   - slug: angel-investors-for-startups
@@ -33,30 +33,18 @@ internalLinks:
     anchor: angel investors
   - slug: find-investors-online-free
     anchor: find investors online free
-  - slug: first-check-from-local-operators
-    anchor: first check from local operators
-  - slug: how-to-find-investors-for-startup
-    anchor: how to find investors for startup
   - slug: how-to-get-investors-for-small-business
     anchor: how to get investors for small business
   - slug: how-to-get-investors-for-your-business-idea
     anchor: how to get investors for your business idea
-  - slug: how-to-get-investors-for-your-business
-    anchor: how to get investors for your business
   - slug: how-to-get-private-investors-for-your-business
     anchor: how to get private investors for your business
   - slug: investors-for-small-business
     anchor: investors for small business
   - slug: investors-looking-for-projects-to-fund
     anchor: investors looking for projects to fund
-  - slug: investors-near-me
-    anchor: investors near me
-  - slug: local-angel-investors-for-first-time-founders-2
-    anchor: local angel investors for first-time founders
   - slug: local-investors-vs-national-investors-for-startups
     anchor: local investors vs national investors for startups
-  - slug: operators-who-write-the-first-check
-    anchor: operators who write the first check
   - slug: types-of-investors-for-small-business
     anchor: types of investors for small business
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
@@ -67,8 +55,11 @@ internalLinks:
     anchor: investor crm
   - slug: investor-database
     anchor: investor database
+  - slug: investor-list
+    anchor: investor list
   - slug: series-a
     anchor: series a
+
 externalLinks:
   - label: "QED Investors: Home"
     url: "https://www.qedinvestors.com/"
@@ -82,6 +73,8 @@ faqs:
     answer: "For a pre-seed or seed round, founders should budget three to six months from the start of structured outreach to a signed term sheet, with another four to eight weeks to close documents and receive funds. Series A processes often run longer given more extensive due diligence. Founders who begin relationship-building six to twelve months before they need capital — and who manage their pipeline with discipline — consistently close faster than those who start outreach only when runway pressure forces their hand."
   - question: "Should I approach investors who have already funded a direct competitor?"
     answer: "Generally, no. Most institutional investors avoid funding direct competitors to their existing portfolio companies due to conflicts of interest, and some have formal policies against it. However, investors with adjacent portfolio companies in your space can be strong targets — they already understand the market thesis and may see your company as complementary rather than competitive. Always check a fund's portfolio carefully before outreach and, if you are uncertain, raise the question directly with the investor rather than hoping they will not notice."
+  - question: "What is the difference between a micro-VC and an institutional seed fund?"
+    answer: "Micro-VCs typically manage funds under $50 million and write cheques from about $100,000 to $1 million at pre-seed or seed. They move faster and are more flexible on traction. Institutional seed funds are larger and more process-driven. They usually want clearer evidence that customers use and pay for the product, and they bring a wider later-stage network."
 ---
 
 Finding investors is not a single action. It is a process — one that starts long before any email is sent and continues well after a first meeting. Founders who treat it as a series of connected, disciplined steps consistently outperform those who improvise. This guide covers that full process: how to identify the right type of investor for your stage, how to build a list worth using, how to reach investors through channels that actually work, and how to manage the pipeline all the way to a close.
@@ -92,11 +85,13 @@ Finding investors is not a single action. It is a process — one that starts lo
 
 The most common mistake founders make at the beginning of a raise is jumping straight to names — scrolling through databases, collecting email addresses, and firing off pitches before they have answered a more fundamental question: what kind of investor is right for this company, right now?
 
-The investor landscape is more varied than most founders realise. Angel investors typically write early cheques — often anywhere from $10,000 to $250,000 — and are best suited to pre-seed rounds where the company is still proving a concept. Venture capital firms operate across a wide spectrum: some back companies at the idea stage, others will not look at a business until it has crossed $1M in annual recurring revenue. Family offices bring longer time horizons and sometimes more flexible structures, but they vary enormously in how actively they engage with portfolio companies. Strategic or corporate investors can unlock distribution and partnership value alongside capital, but they often move slowly and carry agenda risks that pure financial investors do not.
+The investor landscape is more varied than most founders realise. Angel investors typically write early cheques — often anywhere from $10,000 to $250,000 — and are best suited to pre-seed rounds where the company is still proving a concept. Micro-VCs sit between angels and institutional seed funds: they usually manage under $50 million and write cheques from about $100,000 to $1 million, with more flexibility on traction than a larger seed fund and a faster decision than an institutional process. Venture capital firms operate across a wide spectrum: some back companies at the idea stage, others will not look at a business until it has crossed $1M in annual recurring revenue. Family offices bring longer time horizons and sometimes more flexible structures, but they vary enormously in how actively they engage with portfolio companies. Strategic or corporate investors can unlock distribution and partnership value alongside capital, but they often move slowly and carry agenda risks that pure financial investors do not.
 
 Beyond investor category, founders must screen for fit across at least four dimensions before any outreach begins. Stage focus tells you whether this investor routinely writes cheques at your current round size or whether you are outside their mandate entirely. Sector thesis tells you whether they have a genuine conviction in your space or whether you would be an opportunistic bet at best. Portfolio conflicts matter — most institutional investors will not back a direct competitor to an existing portfolio company, and pitching one is wasted effort and a trust-eroding signal. Finally, lead versus follow-on behaviour shapes how you should approach them: a fund that only ever co-invests alongside a named lead is not the right target for an unanchored round that still needs its first commitment.
 
 Mismatched targeting is the single biggest reason fundraising stalls. A founder raising a pre-seed for a healthcare software company who spends three months pitching growth-stage fintech funds is not running a raise — they are generating rejections. Getting the investor type right before building any list is not preliminary work; it is the work.
+
+Do not open outreach until the materials can survive a first meeting. The deck should tell a coherent story in 12 to 14 slides. The model should show that you understand burn, unit economics, and the milestone this round is funding. The data room — cap table, incorporation documents, key contracts, and metrics — should be organised before a serious investor asks, because speed of response is itself a signal. A premature pitch is rarely recoverable.
 
 ---
 
@@ -104,7 +99,7 @@ Mismatched targeting is the single biggest reason fundraising stalls. A founder 
 
 Once you know what kind of investor you are looking for, the next task is building a qualified list — and a qualified list is not the same as a large one. Generic databases like Crunchbase and AngelList are legitimate starting points. They let you filter by stage, sector, and geography and surface names you would not otherwise find. But a name in a database is not evidence of fit. Fund vintages matter: a firm that raised its flagship vehicle in 2018 and has not closed a new fund since may be in harvest mode, not deployment mode. Recent deal activity matters: investors who have not made a new investment in 18 months are signalling something, even if their website still says they are open for business. Portfolio patterns matter: an investor who has backed five companies with the same go-to-market model as yours is worth twenty investors whose thesis statements sound vaguely aligned.
 
-Building a genuinely qualified list means cross-referencing at least three data points for every name: what they say they invest in, what they have actually invested in recently, and whether the companies they have backed resemble yours in stage, model, and ambition. This takes time, but the return on that time is enormous. 
+Building a genuinely qualified list means cross-referencing at least three data points for every name: what they say they invest in, what they have actually invested in recently, and whether the companies they have backed resemble yours in stage, model, and ambition. The working artifact is an [investor list](/articles/investor-list/): stage, sector, cheque size, recent deals, and a named contact for every entry, tiered before the first email goes out. This takes time, but the return on that time is enormous. 
 A focused list of 100 genuinely-matched funds beats a 1,000-name blast
  — not just in response rates, but in the quality of conversations you have when investors do respond.
 
@@ -118,7 +113,7 @@ Many founders treat geography as a logistical question — do I need to travel t
 
 Investors tend to back companies they can monitor, support, and occasionally visit without crossing time zones. Local and regional investors often move faster through diligence because they understand the operating context: the talent market, the regulatory environment, the competitive landscape. They also tend to have more relevant networks in the founder's home market — customer introductions, hiring referrals, and co-investor relationships that are genuinely proximate rather than theoretical.
 
-The instinct to search for "investors near me" is often dismissed as unsophisticated, but it reflects something real: geographic proximity creates a different kind of investor attention. This is especially true at early stages, where much of what an investor evaluates is not yet in the numbers but in the judgement calls they observe a founder making up close. Building a local investor base first, then expanding outward, is a sequencing decision many successful founders make deliberately rather than by accident.
+The instinct to search for "investors near me" is often dismissed as unsophisticated, but it reflects something real: geographic proximity creates a different kind of investor attention. This is especially true at early stages, where much of what an investor evaluates is not yet in the numbers but in the judgement calls they observe a founder making up close. Building a local investor base first, then expanding outward, is a sequencing decision many successful founders make deliberately rather than by accident. Whether to anchor locally or go to national funds first is covered in [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/).
 
 ---
 
@@ -213,7 +208,7 @@ targeting investors whose focus and thesis align precisely with your startup is 
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel groups in your city for a first check](/articles/angel-groups-in-your-city-for-a-first-check-2/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [angel investors vs venture capital](/articles/angel-investors-vs-venture-capital/) · [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [first check from local operators](/articles/first-check-from-local-operators/) · [how to find investors for startup](/articles/how-to-find-investors-for-startup/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [how to get investors for your business idea](/articles/how-to-get-investors-for-your-business-idea/) · [how to get investors for your business](/articles/how-to-get-investors-for-your-business/) · [how to get private investors for your business](/articles/how-to-get-private-investors-for-your-business/) · [investors for small business](/articles/investors-for-small-business/) · [investors looking for projects to fund](/articles/investors-looking-for-projects-to-fund/) · [investors near me](/articles/investors-near-me/) · [local angel investors for first-time founders](/articles/local-angel-investors-for-first-time-founders-2/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [operators who write the first check](/articles/operators-who-write-the-first-check/) · [types of investors for small business](/articles/types-of-investors-for-small-business/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) · [pitch deck](/articles/pitch-deck/) · [investor crm](/articles/investor-crm/) · [investor database](/articles/investor-database/) · [series a](/articles/series-a/).
+Further reading: [investors near me](/articles/investors-near-me/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [angel investors vs venture capital](/articles/angel-investors-vs-venture-capital/) · [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [how to get investors for your business idea](/articles/how-to-get-investors-for-your-business-idea/) · [how to get private investors for your business](/articles/how-to-get-private-investors-for-your-business/) · [investors for small business](/articles/investors-for-small-business/) · [investors looking for projects to fund](/articles/investors-looking-for-projects-to-fund/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [types of investors for small business](/articles/types-of-investors-for-small-business/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) · [pitch deck](/articles/pitch-deck/) · [investor crm](/articles/investor-crm/) · [investor database](/articles/investor-database/) · [investor list](/articles/investor-list/) · [series a](/articles/series-a/).
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

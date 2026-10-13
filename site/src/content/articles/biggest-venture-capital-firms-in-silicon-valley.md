@@ -47,6 +47,7 @@ internalLinks:
     anchor: How to Use Largest VC Firms by AUM to Build Your Target List
   - slug: top-vc-firms
     anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+
 externalLinks:
   - label: "Forbes 2026 Midas List: Top Venture Capital Investors ..."
     url: https://www.forbes.com/lists/midas/

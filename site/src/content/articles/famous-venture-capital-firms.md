@@ -48,6 +48,7 @@ internalLinks:
     anchor: How to Use Largest VC Firms by AUM to Build Your Target List
   - slug: top-vc-firms
     anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+
 externalLinks:
   - label: "Top VC Firms 2026: 18 Largest Venture Capital Firms by AUM"
     url: https://dealroom.net/blog/top-venture-capital-firms

@@ -9,7 +9,7 @@ Dori currently serves as CFO of BlueMark and mentors early-stage founders throug
 Having worked on both sides of the table—as an investment banker advising companies and as a founder building and financing one—Dori brings a practical understanding of how founders should approach capital raising, investor positioning, and the fundraising process.
 
 Dori holds degrees in Accounting and Business Management (B.A.) and Law (LL.B.) from IDC Herzliya."
-photo: ../../assets/team/dori-fussmann/photo.jpg
+photo: ../../assets/founder/dori-fussmann/photo.jpg
 sameAs:
   - https://www.linkedin.com/in/dori-fussmann-663ba242
 ---

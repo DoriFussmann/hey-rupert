@@ -46,6 +46,7 @@ internalLinks:
     anchor: How to Use Largest VC Firms by AUM to Build Your Target List
   - slug: top-vc-firms
     anchor: "Top VC Firms: Mega-Fund or Specialist — Pitch Which First?"
+
 externalLinks:
   - label: Global venture capital
     url: https://dealroom.co/guides/global

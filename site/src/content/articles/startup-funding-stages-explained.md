@@ -48,6 +48,7 @@ internalLinks:
     anchor: "Startup Funding Stages: The Definitive Guide for Founders"
   - slug: types-of-funding-for-startups
     anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+
 externalLinks:
   - label: A Guide to Different Stages of Funding for Startups
     url: https://www.startups.com/articles/different-stages-of-funding-for-startups
