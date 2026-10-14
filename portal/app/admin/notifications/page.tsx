@@ -11,7 +11,7 @@ export default async function NotificationsPage() {
     <>
       <PageHeader
         title="Notifications"
-        description="Client activity across onboarding and setup. Clients get an email reminder when their turn has waited 24 hours (up to 3), then you get a stalled alert."
+        description="Client activity across onboarding and setup. Which emails go out, and the reminder schedule for each step, are set in Forms → Emails."
         actions={
           <div className="flex flex-wrap items-start gap-md">
             <RunRemindersButton />

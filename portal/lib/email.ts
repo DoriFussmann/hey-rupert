@@ -8,7 +8,7 @@ const TIMEOUT_MS = 8000;
 
 export type EmailResult = { ok: true } | { ok: false; reason: string };
 
-function adminAddresses() {
+export function adminAddresses() {
   return (process.env.ADMIN_NOTIFY_EMAIL ?? "")
     .split(",")
     .map((address) => address.trim())
@@ -31,10 +31,13 @@ function missingConfiguration() {
 
 export async function sendEmail({
   to,
+  bcc = [],
   subject,
   text,
 }: {
   to: string[];
+  /** Blind copies, e.g. a copy to Rupert of an email to a client. */
+  bcc?: string[];
   subject: string;
   text: string;
 }): Promise<EmailResult> {
@@ -45,6 +48,9 @@ export async function sendEmail({
   if (recipients.length === 0) {
     return { ok: false, reason: "No recipient email address." };
   }
+  const blindCopies = bcc
+    .map((address) => address.trim())
+    .filter((address) => address && !recipients.includes(address));
 
   try {
     const response = await fetch(RESEND_ENDPOINT, {
@@ -56,6 +62,7 @@ export async function sendEmail({
       body: JSON.stringify({
         from: process.env.EMAIL_FROM,
         to: recipients,
+        ...(blindCopies.length > 0 ? { bcc: blindCopies } : {}),
         reply_to: adminAddresses()[0],
         subject,
         text,

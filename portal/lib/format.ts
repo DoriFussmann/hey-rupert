@@ -84,7 +84,7 @@ export function notificationAction(type: string) {
     return "asked for changes to the email copy";
   }
   if (type === "client_stalled") {
-    return "has not responded after 3 reminders";
+    return "has not responded after reminders";
   }
   return notificationLabel(type).toLowerCase();
 }

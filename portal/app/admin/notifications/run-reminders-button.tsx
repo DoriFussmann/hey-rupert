@@ -45,7 +45,7 @@ export function RunRemindersButton() {
         type="button"
         onClick={onClick}
         disabled={pending}
-        title="Emails clients whose turn has been waiting 24h or more (max 3 reminders per step), then alerts you."
+        title="Sends any reminders that are due now, following the schedule in Forms → Emails."
         className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
       >
         {pending ? "Checking…" : "Send due reminders"}
