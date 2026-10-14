@@ -699,6 +699,25 @@ export async function markNotificationRead(
   return { ok: true };
 }
 
+/** Removes every admin notification. Does not affect emails already sent. */
+export async function clearAllNotifications(): Promise<ActionResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { error } = await access.supabase
+    .from("notifications")
+    .delete()
+    .not("id", "is", null);
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  revalidatePath("/admin", "layout");
+  revalidatePath("/admin/notifications");
+  return { ok: true };
+}
+
 const FORM_DEFAULTS: Record<FormSlug, string> = {
   [STATEMENT_OF_WORK_SLUG]: DEFAULT_STATEMENT_OF_WORK,
   [SERVICE_ORDER_SLUG]: DEFAULT_SERVICE_ORDER,
