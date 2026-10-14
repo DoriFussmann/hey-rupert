@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
@@ -13,11 +14,35 @@ import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
+import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
+import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
+import { CompletedPanel } from "@/components/completed-panel";
 import { ViewAsClientLink } from "@/components/eye-icon";
+import { listEmailLog, type EmailLogResult } from "@/lib/email-log";
+import { loadEmailSettings } from "@/lib/email-settings";
+import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { asMaterials } from "@/lib/setup";
+import { asMaterials, isSetupComplete } from "@/lib/setup";
 import { signMaterialLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+
+async function loadEmailPanel(clientId: string): Promise<{
+  signature: string;
+  log: EmailLogResult;
+}> {
+  if (!isServiceRoleConfigured()) {
+    return {
+      signature: DEFAULT_SIGNATURE,
+      log: { ok: false, error: "Service role key is not configured." },
+    };
+  }
+  const supabase = createServiceClient();
+  const [settings, log] = await Promise.all([
+    loadEmailSettings(supabase),
+    listEmailLog(supabase, clientId),
+  ]);
+  return { signature: settings.signature, log };
+}
 import {
   getAdminClient,
   getIntakeInterview,
@@ -41,7 +66,7 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const [sends, serviceOrderSends, ndaSends, access, interview, intake] =
+  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel] =
     await Promise.all([
       listSowSends(client.id),
       listServiceOrderSends(client.id),
@@ -49,6 +74,7 @@ export default async function ClientDetailPage({
       getClientAccess(client.id),
       getIntakeInterview(client.id),
       getIntakeSettings(),
+      loadEmailPanel(client.id),
     ]);
 
   const kickedOffAt = kickoffDate(client);
@@ -73,6 +99,76 @@ export default async function ClientDetailPage({
           ),
         )
       : {};
+
+  // Each work panel, in process order. Finished ones move to the collapsed
+  // Completed panel at the bottom; open ones stay at the top.
+  const panels: { key: string; done: boolean; node: React.ReactNode }[] = [
+    {
+      key: "sow",
+      done: Boolean(client.sow_confirmed_at),
+      node: (
+        <GenerateStatementOfWork
+          clientId={client.id}
+          sentContent={client.statement_of_work_content ?? ""}
+          sends={sends}
+        />
+      ),
+    },
+    {
+      key: "service_order",
+      done: isKickoffReady(client),
+      node: (
+        <GenerateServiceOrder
+          clientId={client.id}
+          sends={serviceOrderSends}
+          paymentReceivedAt={client.payment_received_at ?? null}
+        />
+      ),
+    },
+    {
+      key: "nda",
+      done: Boolean(client.nda_signed_at),
+      node: (
+        <GenerateNda
+          clientId={client.id}
+          sends={ndaSends}
+          available={isKickoffReady(client)}
+        />
+      ),
+    },
+    {
+      key: "intake",
+      done: Boolean(client.intake_completed_at),
+      node: (
+        <IntakePanel
+          interview={interview}
+          topics={intake.topics}
+          completedAt={client.intake_completed_at ?? null}
+        />
+      ),
+    },
+  ];
+
+  if (client.intake_completed_at) {
+    panels.push({
+      key: "setup",
+      done: isSetupComplete(setupSource),
+      node: (
+        <SetupWorkspace
+          clientId={client.id}
+          source={setupSource}
+          materialLinks={materialLinks}
+        />
+      ),
+    });
+  }
+
+  const openPanels = panels
+    .filter((panel) => !panel.done)
+    .map((panel) => <Fragment key={panel.key}>{panel.node}</Fragment>);
+  const completedPanels = panels
+    .filter((panel) => panel.done)
+    .map((panel) => <Fragment key={panel.key}>{panel.node}</Fragment>);
 
   return (
     <>
@@ -133,7 +229,7 @@ export default async function ClientDetailPage({
         }}
         setup={setupSource}
       />
-      <ClientForm client={client} />
+      {openPanels}
       <EngagementProgress
         clientId={client.id}
         timestamps={{
@@ -147,6 +243,16 @@ export default async function ClientDetailPage({
           engagement_tracker_status: client.engagement_tracker_status,
         }}
       />
+      <ClientEmails
+        clientId={client.id}
+        address={client.email || client.founder_email || ""}
+        paused={Boolean(client.emails_paused)}
+        signature={emailPanel.signature}
+        history={emailPanel.log.ok ? emailPanel.log.entries : []}
+        historyError={emailPanel.log.ok ? null : emailPanel.log.error}
+      />
+      <ClientTimeline source={client} />
+      <ClientForm client={client} />
       <ClientActions
         clientId={client.id}
         companyName={client.company_name}
@@ -159,33 +265,9 @@ export default async function ClientDetailPage({
         email={client.email ?? ""}
         access={access}
       />
-      <GenerateStatementOfWork
-        clientId={client.id}
-        sentContent={client.statement_of_work_content ?? ""}
-        sends={sends}
-      />
-      <GenerateServiceOrder
-        clientId={client.id}
-        sends={serviceOrderSends}
-        paymentReceivedAt={client.payment_received_at ?? null}
-      />
-      <GenerateNda
-        clientId={client.id}
-        sends={ndaSends}
-        available={isKickoffReady(client)}
-      />
-      <IntakePanel
-        interview={interview}
-        topics={intake.topics}
-        completedAt={client.intake_completed_at ?? null}
-      />
-      {client.intake_completed_at ? (
-        <SetupWorkspace
-          clientId={client.id}
-          source={setupSource}
-          materialLinks={materialLinks}
-        />
-      ) : null}
+      <CompletedPanel count={completedPanels.length}>
+        {completedPanels}
+      </CompletedPanel>
     </>
   );
 }

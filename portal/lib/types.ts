@@ -74,6 +74,10 @@ export type Client = {
   /** Setup Turn Engine rows (loaded separately from `setup_steps`). */
   setup_steps?: SetupStepState[];
   archived_at?: string | null;
+  /** Automatic emails and reminders to this client are switched off. */
+  emails_paused?: boolean;
+  /** When the client first moved to Live (null for clients live before it was recorded). */
+  live_at?: string | null;
   last_activity_at: string;
   created_at: string;
 };

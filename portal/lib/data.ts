@@ -170,6 +170,8 @@ function asClient(row: Record<string, unknown>): Client {
     status,
     archived_at:
       row.archived_at != null ? String(row.archived_at) : null,
+    emails_paused: row.emails_paused === true,
+    live_at: row.live_at != null ? String(row.live_at) : null,
     last_activity_at: String(row.last_activity_at ?? createdAt),
     created_at: createdAt,
   };

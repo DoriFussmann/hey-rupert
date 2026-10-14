@@ -1,5 +1,11 @@
 import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
+import { loadEmailSettings } from "@/lib/email-settings";
+import {
+  isReminderTurnKey,
+  type ReminderTiming,
+  type ReminderTurnKey,
+} from "@/lib/email-templates";
 import { clientDisplayName, formatDate } from "@/lib/format";
 import {
   notifyAdmin,
@@ -13,42 +19,75 @@ import { loadSetupSteps } from "@/lib/setup-server";
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
 const HOUR = 60 * 60 * 1000;
+const DAY = 24 * HOUR;
 
-/** First reminder 24h after the turn starts, then every 24h. */
-export const REMINDER_INTERVAL_HOURS = 24;
-/** Reminders per turn before Rupert gets a "client stalled" alert instead. */
-export const REMINDER_MAX = 3;
 /**
  * Minimum gap between two reminders for the same turn, so a turn that was
  * already old when reminders started does not get several emails in a row.
  */
 const MIN_GAP_HOURS = 20;
 
-type Turn = PendingClientTurn & { key: string };
+type Turn = PendingClientTurn & { key: ReminderTurnKey };
+
+/** When the active Statement of Work / Service Order was pushed. */
+export type ActiveSends = {
+  sowSentAt?: string | null;
+  serviceOrderSentAt?: string | null;
+};
 
 function text(value: unknown) {
   return value != null ? String(value).trim() : "";
 }
 
 /**
- * Every turn currently waiting on the client, once kick-off has happened
- * (Service Order signed and Setup Fee paid). Before kick-off there are no
- * reminders.
+ * Every turn currently waiting on the client: the Statement of Work and the
+ * Service Order & Setup Fee before kick-off, then the NDA, the intake and
+ * the Setup steps. Whether each one is reminded is set per step in
+ * Forms → Emails.
  */
 export function pendingClientTurns(
   row: Record<string, unknown> & { setup_steps?: SetupStepState[] },
+  sends: ActiveSends = {},
 ): Turn[] {
   if (row.archived_at) return [];
-  if (
-    !isKickoffReady({
-      service_order_agreed_at: text(row.service_order_agreed_at) || null,
-      payment_received_at: text(row.payment_received_at) || null,
-    })
-  ) {
-    return [];
-  }
 
   const turns: Turn[] = [];
+  const orderAt = text(row.service_order_agreed_at);
+  const paidAt = text(row.payment_received_at);
+  const kickedOff = isKickoffReady({
+    service_order_agreed_at: orderAt || null,
+    payment_received_at: paidAt || null,
+  });
+
+  if (
+    sends.sowSentAt &&
+    text(row.statement_of_work_content) &&
+    !text(row.sow_confirmed_at)
+  ) {
+    turns.push({
+      key: "sow",
+      task: "review and confirm your Statement of Work",
+      path: "/portal/statement-of-work",
+      since: sends.sowSentAt,
+    });
+  }
+
+  if (sends.serviceOrderSentAt && text(row.service_order_content) && !kickedOff) {
+    turns.push({
+      key: "service_order",
+      task:
+        !orderAt && !paidAt
+          ? "sign the Service Order and pay the Setup Fee"
+          : !orderAt
+            ? "sign the Service Order"
+            : "pay the Setup Fee",
+      path: "/portal/service-order",
+      since: sends.serviceOrderSentAt,
+    });
+  }
+
+  if (!kickedOff) return turns;
+
   const ndaSentAt = text(row.nda_sent_at);
   const ndaSignedAt = text(row.nda_signed_at);
   const intakeAt = text(row.intake_completed_at);
@@ -77,9 +116,11 @@ export function pendingClientTurns(
       intake_completed_at: intakeAt,
       setup_steps: row.setup_steps ?? [],
     })) {
+      const key = `setup:${item.id}`;
       if (item.status !== "your_turn" || !item.since) continue;
+      if (!isReminderTurnKey(key)) continue;
       turns.push({
-        key: `setup:${item.id}`,
+        key,
         task: item.clientTask,
         path: item.href,
         since: item.since,
@@ -103,6 +144,11 @@ function sameInstant(a: string | null | undefined, b: string | null | undefined)
   return Date.parse(a) === Date.parse(b);
 }
 
+/** When reminder number `count + 1` is due, in ms. */
+export function reminderDueAt(sinceMs: number, count: number, timing: ReminderTiming) {
+  return sinceMs + timing.first_after_days * DAY + timing.every_days * DAY * count;
+}
+
 export type ReminderRun = {
   checked: number;
   emailed: { client: string; turns: string[] }[];
@@ -110,11 +156,36 @@ export type ReminderRun = {
   errors: string[];
 };
 
+/** Active (not archived) send dates per client, from one sends table. */
+async function activeSendDates(
+  supabase: ServiceClient,
+  table: "statement_of_work_sends" | "service_order_sends",
+  ids: string[],
+  errors: string[],
+) {
+  const dates = new Map<string, string>();
+  const { data, error } = await supabase
+    .from(table)
+    .select("client_id, sent_at")
+    .in("client_id", ids)
+    .is("archived_at", null);
+
+  if (error) {
+    errors.push(`Loading ${table} failed: ${error.message}`);
+    return dates;
+  }
+  for (const row of data ?? []) {
+    if (row.sent_at) dates.set(String(row.client_id), String(row.sent_at));
+  }
+  return dates;
+}
+
 /**
  * Sends due reminders. Safe to run as often as you like (hourly or daily):
- * each turn gets at most REMINDER_MAX emails, spaced at least a day apart,
- * then one "stalled" alert to Rupert. A client with several waiting turns
- * gets one combined email.
+ * each step follows its own schedule from Forms → Emails (first reminder,
+ * repeat interval, maximum), then optionally one "stalled" alert to Rupert.
+ * A client with several waiting steps gets one combined email. Clients with
+ * automatic emails paused are skipped.
  */
 export async function runClientReminders(
   supabase: ServiceClient,
@@ -125,18 +196,25 @@ export async function runClientReminders(
   const { data: clients, error } = await supabase
     .from("clients")
     .select("*")
-    .is("archived_at", null)
-    .not("service_order_agreed_at", "is", null)
-    .not("payment_received_at", "is", null);
+    .is("archived_at", null);
 
   if (error) {
     run.errors.push(`Loading clients failed: ${error.message}`);
     return run;
   }
-  if (!clients || clients.length === 0) return run;
 
-  const ids = clients.map((client) => String(client.id));
-  const setup = await loadSetupSteps(supabase, ids);
+  const active = (clients ?? []).filter((client) => client.emails_paused !== true);
+  if (active.length === 0) return run;
+
+  const settings = await loadEmailSettings(supabase);
+  if (settings.error) run.errors.push(`Email settings: ${settings.error}`);
+
+  const ids = active.map((client) => String(client.id));
+  const [setup, sowSends, orderSends] = await Promise.all([
+    loadSetupSteps(supabase, ids),
+    activeSendDates(supabase, "statement_of_work_sends", ids, run.errors),
+    activeSendDates(supabase, "service_order_sends", ids, run.errors),
+  ]);
 
   const { data: records, error: recordsError } = await supabase
     .from("turn_reminders")
@@ -169,21 +247,25 @@ export async function runClientReminders(
   const nowMs = now.getTime();
   const nowIso = now.toISOString();
 
-  for (const client of clients) {
+  for (const client of active) {
     const clientId = String(client.id);
     const row = {
       ...(client as Record<string, unknown>),
       setup_steps: setup.get(clientId) ?? [],
     };
-    const turns = pendingClientTurns(row);
+    const turns = pendingClientTurns(row, {
+      sowSentAt: sowSends.get(clientId) ?? null,
+      serviceOrderSentAt: orderSends.get(clientId) ?? null,
+    }).filter((turn) => settings.timings[turn.key].enabled);
     if (turns.length === 0) continue;
     run.checked += 1;
 
     const records = byClient.get(clientId) ?? new Map<string, ReminderRecord>();
-    const due: (Turn & { count: number })[] = [];
-    const stalled: Turn[] = [];
+    const due: (Turn & { count: number; max: number })[] = [];
+    const stalled: (Turn & { max: number })[] = [];
 
     for (const turn of turns) {
+      const timing = settings.timings[turn.key];
       const record = records.get(turn.key);
       const current = record && sameInstant(record.turn_since, turn.since);
       const count = current ? record.sent_count : 0;
@@ -191,27 +273,27 @@ export async function runClientReminders(
       const sinceMs = Date.parse(turn.since);
       if (Number.isNaN(sinceMs)) continue;
 
-      if (count < REMINDER_MAX) {
-        const dueAt = sinceMs + REMINDER_INTERVAL_HOURS * HOUR * (count + 1);
+      if (count < timing.max_reminders) {
         const gapOk =
           !lastSent || nowMs - Date.parse(lastSent) >= MIN_GAP_HOURS * HOUR;
-        if (nowMs >= dueAt && gapOk) due.push({ ...turn, count });
+        if (nowMs >= reminderDueAt(sinceMs, count, timing) && gapOk) {
+          due.push({ ...turn, count, max: timing.max_reminders });
+        }
       } else if (
+        timing.stall_alert &&
         !(current && record.stalled_alert_at) &&
         lastSent &&
-        nowMs - Date.parse(lastSent) >= REMINDER_INTERVAL_HOURS * HOUR
+        nowMs - Date.parse(lastSent) >= timing.every_days * DAY
       ) {
-        stalled.push(turn);
+        stalled.push({ ...turn, max: timing.max_reminders });
       }
     }
 
     const name = clientDisplayName(row);
 
     if (due.length > 0) {
-      const attempt = Math.max(...due.map((turn) => turn.count)) + 1;
-      const result = await sendClientReminder(row, due, {
-        attempt,
-        max: REMINDER_MAX,
+      const result = await sendClientReminder(supabase, settings, row, due, {
+        lastAttempt: due.some((turn) => turn.count + 1 >= turn.max),
       });
       if (!result.ok) {
         run.errors.push(`${name}: ${result.reason}`);
@@ -237,9 +319,10 @@ export async function runClientReminders(
 
     if (stalled.length > 0) {
       const details = [
-        `Still waiting after ${REMINDER_MAX} reminders:`,
+        "Still waiting after the last reminder:",
         ...stalled.map(
-          (turn) => `- ${turn.task} (waiting since ${formatDate(turn.since)})`,
+          (turn) =>
+            `- ${turn.task} (${turn.max} reminder${turn.max === 1 ? "" : "s"}, waiting since ${formatDate(turn.since)})`,
         ),
         "Consider a personal email or a call.",
       ].join("\n");

@@ -1,6 +1,16 @@
 import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
-import { sendAdminEmail, sendEmail, type EmailResult } from "@/lib/email";
+import { sendAdminEmail, type EmailResult } from "@/lib/email";
+import { sendClientEmail } from "@/lib/email-log";
+import { loadEmailSettings } from "@/lib/email-settings";
+import {
+  emailTemplate,
+  isAdminEmailType,
+  renderEmail,
+  updatedSubject,
+  type ClientTurn,
+  type EmailSettings,
+} from "@/lib/email-templates";
 import {
   clientDisplayName,
   notificationAction,
@@ -12,8 +22,9 @@ import {
   nextTurn,
   type ProgressSource,
 } from "@/lib/progress";
-import { SETUP_FEE_LABEL } from "@/lib/service-order";
 import { loadSetupSteps } from "@/lib/setup-server";
+
+export type { ClientTurn };
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -34,7 +45,8 @@ function text(value: unknown) {
 }
 
 /**
- * Records an admin notification and, when `email` is set, emails it too.
+ * Records an admin notification and, when `email` is set and that email is
+ * switched on in Forms → Emails, emails it too.
  * `details` is optional extra text placed in the email body.
  * The email says "you're up" only when the next step is the admin's, using
  * the same next-action logic as the admin client list.
@@ -58,103 +70,58 @@ export async function notifyAdmin(
 
   if (!email) return;
 
+  const settings = await loadEmailSettings(supabase);
+  const setting = isAdminEmailType(type)
+    ? settings.templates[`admin:${type}`]
+    : null;
+  if (setting && !setting.enabled) return;
+
   const row = await loadClientRow(supabase, clientId);
   const who = personWithCompany(clientDisplayName(row), text(row.company_name));
-  const event = `${who} ${notificationAction(type)}`;
   const turn = nextTurn(row as ProgressSource);
   const adminTurn = turn.owner === "admin";
 
-  const subject = adminTurn ? `${event} — you're up` : event;
-  const body = [
-    `${event}.`,
-    adminTurn
+  // Events without a catalog entry keep the generic wording.
+  const template = setting ?? {
+    subject: `{client} ${notificationAction(type)}{youre_up}`,
+    body: `{client} ${notificationAction(type)}.\n\n{next_step}\n\n{details}\n\nOpen the client: {client_link}`,
+  };
+
+  const message = renderEmail(template, {
+    client: who,
+    company: text(row.company_name),
+    next_step: adminTurn
       ? `You're up: ${turn.action}.`
       : `Next: ${nextActionText(row as ProgressSource)}.`,
-    details,
-    `Open the client: ${PORTAL_URL}/admin/clients/${clientId}`,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+    youre_up: adminTurn ? " — you're up" : "",
+    details: details?.trim() ?? "",
+    client_link: `${PORTAL_URL}/admin/clients/${clientId}`,
+  });
 
-  await sendAdminEmail(subject, body);
+  await sendAdminEmail(message.subject, message.body);
 }
 
-export type ClientTurn =
-  | "statement_of_work_ready"
-  | "service_order_ready"
-  | "nda_ready"
-  | "materials_reopened"
-  | "deck_review_ready"
-  | "framing_ready"
-  | "investor_list_ready"
-  | "email_copy_ready";
-
-const CLIENT_TURN_EMAILS: Record<
-  ClientTurn,
-  { subject: string; prepared: string; task: string; path: string }
-> = {
-  statement_of_work_ready: {
-    subject: "Your Statement of Work is ready — you're up",
-    prepared: "Rupert has prepared your Statement of Work.",
-    task: "You're up: review it and confirm in your portal.",
-    path: "/portal/statement-of-work",
-  },
-  service_order_ready: {
-    subject: "Your Service Order and Setup Fee invoice are ready — you're up",
-    prepared: `Rupert has prepared your Service Order and the ${SETUP_FEE_LABEL} Setup Fee invoice.`,
-    task: "You're up: sign the Service Order and pay the Setup Fee in your portal, in either order. Once both are done, we kick off.",
-    path: "/portal/service-order",
-  },
-  nda_ready: {
-    subject: "Your NDA is ready — you're up",
-    prepared: "Rupert has prepared your Non-Disclosure Agreement.",
-    task: "You're up: review and sign it in your portal. It protects everything you share with us from here on.",
-    path: "/portal/nda",
-  },
-  materials_reopened: {
-    subject: "Rupert needs a little more from you — you're up",
-    prepared: "Rupert has reviewed your company materials and needs a few more things.",
-    task: "You're up: add what's missing and submit again in your portal.",
-    path: "/portal/setup/materials",
-  },
-  deck_review_ready: {
-    subject: "Rupert's comments on your deck are ready",
-    prepared: "Rupert has reviewed your pitch deck and materials.",
-    task: "Read the comments in your portal. Nothing to sign off: they are yours to apply as you see fit.",
-    path: "/portal/setup/deck-review",
-  },
-  framing_ready: {
-    subject: "Your message framing is ready — you're up",
-    prepared: "Rupert has written the message framing for your investor outreach.",
-    task: "You're up: review it in your portal, then confirm or tell us what to change.",
-    path: "/portal/setup/framing",
-  },
-  investor_list_ready: {
-    subject: "Your matched investor list is ready — you're up",
-    prepared: "Rupert has matched investors for your raise, grouped into three fit tiers.",
-    task: "You're up: review the list in your portal. Add a note on any fund, ask questions, or confirm.",
-    path: "/portal/setup/investor-list",
-  },
-  email_copy_ready: {
-    subject: "Your outreach emails are ready — you're up",
-    prepared: "Rupert has written the outreach emails for each of the three investor tiers.",
-    task: "You're up: review them in your portal, then confirm or tell us what to change.",
-    path: "/portal/setup/email-copy",
-  },
-};
-
-function firstNameOf(row: Record<string, unknown>) {
+export function firstNameOf(row: Record<string, unknown>) {
   return text(row.first_name) || text(row.founder_name).split(/\s+/)[0] || "";
 }
 
-function clientAddress(row: Record<string, unknown>) {
+export function clientAddress(row: Record<string, unknown>) {
   return text(row.email) || text(row.founder_email);
 }
+
+export function greetingFor(row: Record<string, unknown>) {
+  const firstName = firstNameOf(row);
+  return firstName ? `Hi ${firstName},` : "Hi,";
+}
+
+export const PAUSED_REASON = "Automatic emails are paused for this client.";
 
 /**
  * Emails the client when the turn passes to them. `note` is an optional
  * message from Rupert placed in the email (for example what changed).
  * `updated` words the email as a revised version.
+ * Skipped (with the reason) when the email is switched off in Forms → Emails
+ * or automatic emails are paused for this client.
  */
 export async function notifyClient(
   supabase: ServiceClient,
@@ -167,24 +134,40 @@ export async function notifyClient(
   if (!address) {
     return { ok: false, reason: "This client has no email address." };
   }
+  if (row.emails_paused === true) {
+    return { ok: false, reason: PAUSED_REASON };
+  }
 
-  const firstName = firstNameOf(row);
-  const copy = CLIENT_TURN_EMAILS[turn];
-  const subject = updated
-    ? copy.subject.replace(" is ready", " has been updated").replace(" are ready", " have been updated")
-    : copy.subject;
-  const body = [
-    firstName ? `Hi ${firstName},` : "Hi,",
-    updated ? `${copy.prepared} This is an updated version based on your feedback.` : copy.prepared,
-    note?.trim() ? `A note from Rupert:\n${note.trim()}` : "",
-    copy.task,
-    `Open your portal: ${PORTAL_URL}${copy.path}`,
-    "Dori\nHey Rupert",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const key = `client:${turn}` as const;
+  const settings = await loadEmailSettings(supabase);
+  const setting = settings.templates[key];
+  if (!setting.enabled) {
+    return {
+      ok: false,
+      reason: "This email is switched off in Forms → Emails.",
+    };
+  }
 
-  return sendEmail({ to: [address], subject, text: body });
+  const message = renderEmail(setting, {
+    greeting: greetingFor(row),
+    first_name: firstNameOf(row),
+    company: text(row.company_name),
+    portal_link: `${PORTAL_URL}${emailTemplate(key)?.path ?? "/portal"}`,
+    note: note?.trim() ? `A note from Rupert:\n${note.trim()}` : "",
+    updated_line: updated
+      ? " This is an updated version based on your feedback."
+      : "",
+    signature: settings.signature,
+  });
+
+  return sendClientEmail(supabase, {
+    clientId,
+    kind: "automatic",
+    templateKey: key,
+    to: [address],
+    subject: updated ? updatedSubject(message.subject) : message.subject,
+    text: message.body,
+  });
 }
 
 export type PendingClientTurn = {
@@ -196,40 +179,44 @@ export type PendingClientTurn = {
 
 /**
  * A reminder that one or more turns are waiting on the client.
- * `attempt` is 1-based; the last attempt says so.
+ * `lastAttempt` is true when this is the final reminder for any of them.
  */
 export async function sendClientReminder(
+  supabase: ServiceClient,
+  settings: EmailSettings,
   row: Record<string, unknown>,
   turns: PendingClientTurn[],
-  { attempt, max }: { attempt: number; max: number },
+  { lastAttempt }: { lastAttempt: boolean },
 ): Promise<EmailResult> {
   const address = clientAddress(row);
   if (!address) return { ok: false, reason: "This client has no email address." };
   if (turns.length === 0) return { ok: false, reason: "Nothing to remind." };
 
-  const firstName = firstNameOf(row);
   const [first] = turns;
-  const subject =
-    turns.length === 1
-      ? `Reminder: ${first.task} — you're up`
-      : `Reminder: ${turns.length} steps are waiting on you`;
-  const list =
-    turns.length === 1
-      ? `Rupert is waiting on you to ${first.task}.`
-      : `Rupert is waiting on you for:\n${turns.map((turn) => `- ${turn.task}: ${PORTAL_URL}${turn.path}`).join("\n")}`;
+  const single = turns.length === 1;
 
-  const body = [
-    firstName ? `Hi ${firstName},` : "Hi,",
-    `A quick nudge. ${list}`,
-    "Each step takes a few minutes, and your campaign moves forward as soon as it is done.",
-    turns.length === 1 ? `Open your portal: ${PORTAL_URL}${first.path}` : "",
-    attempt >= max
+  const message = renderEmail(settings.templates.reminder, {
+    greeting: greetingFor(row),
+    first_name: firstNameOf(row),
+    company: text(row.company_name),
+    task_summary: single
+      ? first.task
+      : `complete ${turns.length} waiting steps`,
+    task_links: single
+      ? `Open your portal: ${PORTAL_URL}${first.path}`
+      : turns.map((turn) => `- ${turn.task}: ${PORTAL_URL}${turn.path}`).join("\n"),
+    closing: lastAttempt
       ? "If something is holding you up, just reply to this email or book a call — happy to help."
       : "Questions? Just reply to this email.",
-    "Dori\nHey Rupert",
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+    signature: settings.signature,
+  });
 
-  return sendEmail({ to: [address], subject, text: body });
+  return sendClientEmail(supabase, {
+    clientId: String(row.id),
+    kind: "reminder",
+    templateKey: "reminder",
+    to: [address],
+    subject: message.subject,
+    text: message.body,
+  });
 }
