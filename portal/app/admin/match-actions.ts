@@ -44,8 +44,9 @@ import {
   type MatchView,
   type Tier,
 } from "@/lib/match/shared";
+import { notifyClient } from "@/lib/notify";
 import { asInvestorList } from "@/lib/setup";
-import { nowIso, setupTableError } from "@/lib/setup-server";
+import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -551,12 +552,12 @@ export async function checkClientWebsites(
 }
 
 /**
- * Writes the fund list (funds, tiers and contact counts; never people) to
- * the client's Investor List draft. Rupert still pushes it from Setup.
+ * Publishes the fund list (funds, tiers, websites and contact counts; never
+ * people) on the client's Investor List. The client can open it immediately.
  */
 export async function sendMatchToClient(
   clientId: string,
-): Promise<Result<{ funds: number }>> {
+): Promise<Result<{ funds: number; emailed: boolean; emailError: string | null }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const run = await runClientMatch(access.supabase, clientId);
@@ -564,12 +565,72 @@ export async function sendMatchToClient(
   const list = buildClientList(run.value);
   if (!list.ok) return list;
   const draft = asInvestorList(list.value);
+  if (draft.rows.length === 0) return { ok: false, error: "No funds in the tiers to send." };
 
-  const { error } = await access.supabase.from("setup_steps").upsert(
-    { client_id: clientId, step: "investor_list", draft, updated_at: nowIso() },
-    { onConflict: "client_id,step", ignoreDuplicates: false },
-  );
-  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  const rows = (await loadSetupSteps(access.supabase, [clientId])).get(clientId) ?? [];
+  const row = rows.find((item) => item.step === "investor_list") ?? null;
+  const later = rows.some((item) => item.step === "email_copy" && item.version > 0);
+  if (row?.status === "confirmed" && later) {
+    return {
+      ok: false,
+      error:
+        "The client already confirmed this and later steps are under way. Talk to the client before changing it.",
+    };
+  }
+
+  const at = nowIso();
+  const version = (row?.version ?? 0) + 1;
+  const values = {
+    client_id: clientId,
+    step: "investor_list" as const,
+    status: "with_client" as const,
+    draft,
+    published: draft,
+    version,
+    published_at: at,
+    response: null,
+    history: [...(row?.history ?? []), { version, published_at: at, response: null }],
+    turn_since: at,
+    completed_at: null,
+    client_viewed_at: null,
+    updated_at: at,
+  };
+
+  if (row) {
+    const { data, error } = await access.supabase
+      .from("setup_steps")
+      .update(values)
+      .eq("client_id", clientId)
+      .eq("step", "investor_list")
+      .eq("version", row.version)
+      .select("client_id");
+    if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+    if (!data || data.length === 0) {
+      return { ok: false, error: "This step changed meanwhile. Refresh and try again." };
+    }
+  } else {
+    const { error } = await access.supabase.from("setup_steps").insert(values);
+    if (error) {
+      return {
+        ok: false,
+        error:
+          error.code === "23505"
+            ? "This step changed meanwhile. Refresh and try again."
+            : setupTableError(error.message, error.code),
+      };
+    }
+  }
+
+  const clientEmail = await notifyClient(access.supabase, clientId, "investor_list_ready", {
+    updated: version > 1,
+  });
   revalidateMatch(clientId);
-  return { ok: true, funds: draft.rows.length };
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal/setup", "layout");
+  return {
+    ok: true,
+    funds: draft.rows.length,
+    emailed: clientEmail.ok,
+    emailError: clientEmail.ok ? null : clientEmail.reason,
+  };
 }

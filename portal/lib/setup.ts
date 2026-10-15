@@ -461,14 +461,20 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
       materials?.completed_at ?? null,
     ),
   );
+  // A list Rupert already sent is the client's to review, even before the
+  // outreach narrative is confirmed. A saved draft can be pushed from Setup.
+  const listReady =
+    framingDone ||
+    (list?.version ?? 0) > 0 ||
+    asInvestorList(list?.draft).rows.length > 0;
   items.push(
     reviewItem(
       "investor_list",
       list,
-      framingDone,
+      listReady,
       "After the outreach narrative is confirmed",
       "Rupert is matching investors",
-      framing?.completed_at ?? null,
+      framing?.completed_at ?? list?.updated_at ?? null,
     ),
   );
   items.push(

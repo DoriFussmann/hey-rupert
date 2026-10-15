@@ -117,18 +117,20 @@ export function MatchWorkspace({
   function sendToClient() {
     if (
       !window.confirm(
-        "Replace the Investor List draft with these funds? The client sees fund names, tiers and contact counts, never people. You still push it from Setup.",
+        "Send these funds to the client's Investor List? They see fund names, tiers, websites and contact counts, never people. This replaces the list on their portal.",
       )
     ) {
       return;
     }
     void run(
-      "Writing the investor list…",
+      "Sending the investor list…",
       () => sendMatchToClient(clientId),
       (result) => {
         setNotice({
-          kind: "ok",
-          text: `${n(result.funds)} funds are in the Investor List draft. Review and push it from the client page, under Setup.`,
+          kind: result.emailed ? "ok" : "error",
+          text: result.emailed
+            ? `${n(result.funds)} funds are on the client's Investor List, and they were emailed.`
+            : `${n(result.funds)} funds are on the client's Investor List. The email was not sent: ${result.emailError ?? "unknown reason"}.`,
         });
       },
     );
