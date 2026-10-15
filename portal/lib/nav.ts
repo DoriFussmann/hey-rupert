@@ -10,4 +10,6 @@ export const adminFormNav = [
   { href: "/admin/forms/nda", label: "NDA" },
   { href: "/admin/forms/emails", label: "Emails" },
   { href: "/admin/forms/intake", label: "Intake Interviewer" },
+  { href: "/admin/forms/materials", label: "Company Materials" },
+  { href: "/admin/forms/agents", label: "AI Agents" },
 ] as const;

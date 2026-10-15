@@ -23,7 +23,7 @@ export const ADMIN_BLOCKED: Record<SetupStepId, string> = {
   materials: "Waiting for the client's materials",
   deck_review: "Push opens once the client submits their materials",
   framing: "Push opens once the client submits their materials",
-  investor_list: "Push opens once the client confirms the message framing",
+  investor_list: "Push opens once the client confirms the outreach narrative",
   email_copy: "Push opens once the client confirms the investor list",
 };
 

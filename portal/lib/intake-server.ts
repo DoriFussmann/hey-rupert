@@ -2,6 +2,7 @@ import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeTool, type ClaudeMessage } from "@/lib/anthropic";
 import {
+  asIntakeBrief,
   DEFAULT_INTAKE_PROMPT,
   DEFAULT_INTAKE_TOPICS,
   INTAKE_PROMPT_SLUG,
@@ -99,6 +100,7 @@ export function asIntakeInterview(row: Record<string, unknown>): IntakeInterview
     messages: asMessages(row.messages),
     topic_status: asTopicStatus(row.topic_status),
     summary: asSummary(row.summary),
+    admin_brief: asIntakeBrief(row.admin_brief),
     status,
     client_message_count:
       typeof row.client_message_count === "number"

@@ -14,6 +14,7 @@ export type EmailToken =
   | "company"
   | "portal_link"
   | "note"
+  | "message"
   | "updated_line"
   | "signature"
   | "client"
@@ -31,6 +32,8 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   company: "Company name",
   portal_link: "Link to the right page in the client's portal",
   note: 'Your note, as "A note from Rupert: …" (blank when there is none)',
+  message:
+    "The email text you drafted for this client (with Draft email). When there is none: a short default line",
   updated_line:
     '" This is an updated version based on your feedback." on revised versions, otherwise blank',
   signature: "Your sign-off (edited once, at the top of this page)",
@@ -54,6 +57,8 @@ export const SAMPLE_VALUES: Record<EmailToken, string> = {
   company: "Acme Robotics",
   portal_link: "",
   note: "A note from Rupert:\nThis is where your note to the client appears.",
+  message:
+    "I went through your deck and materials. The full feedback is in your portal. This is where the email you drafted for the client appears.",
   updated_line: "",
   signature: "",
   client: "Maya Chen · Acme Robotics",
@@ -119,7 +124,7 @@ export type ClientTurn =
   | "service_order_ready"
   | "nda_ready"
   | "materials_reopened"
-  | "deck_review_ready"
+  | "feedback_ready"
   | "framing_ready"
   | "investor_list_ready"
   | "email_copy_ready";
@@ -132,6 +137,7 @@ export type AdminEmailType =
   | "nda_signed"
   | "intake_completed"
   | "materials_submitted"
+  | "feedback_viewed"
   | "framing_confirmed"
   | "framing_changes_requested"
   | "investor_list_confirmed"
@@ -161,6 +167,8 @@ export type EmailTemplateDefinition = {
   /** False when the email cannot be switched off here (reminders have
    * per-step switches instead). */
   switchable: boolean;
+  /** Whether the email is on before the admin changes it (default: on). */
+  defaultEnabled?: boolean;
 };
 
 export const CLIENT_TOKENS_LIST: readonly EmailToken[] = [
@@ -181,6 +189,20 @@ export const ADMIN_TOKENS_LIST: readonly EmailToken[] = [
   "details",
   "client_link",
 ];
+
+export const FEEDBACK_TOKENS_LIST: readonly EmailToken[] = [
+  "greeting",
+  "first_name",
+  "company",
+  "message",
+  "portal_link",
+  "updated_line",
+  "signature",
+];
+
+/** Used for {message} when Rupert sends the feedback without drafting an email. */
+export const FEEDBACK_DEFAULT_MESSAGE =
+  "Rupert has reviewed your pitch deck and materials, and his feedback is ready in your portal. Nothing to sign off: it is yours to apply as you see fit. Next, he follows up shortly with your outreach narrative, and is working on your investor matching in parallel.";
 
 export const REMINDER_TOKENS_LIST: readonly EmailToken[] = [
   "greeting",
@@ -264,22 +286,30 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "Rupert has reviewed your company materials and needs a few more things.",
     "You're up: add what's missing and submit again in your portal.",
   ),
-  clientTemplate(
-    "deck_review_ready",
-    "Deck comments ready",
-    "When you publish your deck & materials comments.",
-    "/portal/setup/deck-review",
-    "Rupert's comments on your deck are ready",
-    "Rupert has reviewed your pitch deck and materials.",
-    "Read the comments in your portal. Nothing to sign off: they are yours to apply as you see fit.",
-  ),
+  {
+    key: "client:feedback_ready",
+    group: "client",
+    title: "Feedback ready",
+    trigger:
+      "When you send the Analysis & Feedback to the client. {message} is the email you drafted with Draft email; the subject you drafted replaces the one below.",
+    subject: "Rupert's feedback on your materials is ready",
+    body: [
+      "{greeting}",
+      "{message}",
+      "Read the full feedback in your portal: {portal_link}",
+      "{signature}",
+    ].join("\n\n"),
+    tokens: FEEDBACK_TOKENS_LIST,
+    path: "/portal/setup/deck-review",
+    switchable: true,
+  },
   clientTemplate(
     "framing_ready",
-    "Message framing ready",
-    "When you publish the message framing (or a revised version).",
+    "Outreach narrative ready",
+    "When you publish the outreach narrative (or a revised version).",
     "/portal/setup/framing",
-    "Your message framing is ready — you're up",
-    "Rupert has written the message framing for your investor outreach.",
+    "Your outreach narrative is ready — you're up",
+    "Rupert has written the outreach narrative for your investor campaign: the story, the first email and your LinkedIn messages.",
     "You're up: review it in your portal, then confirm or tell us what to change.",
   ),
   clientTemplate(
@@ -332,11 +362,25 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
   adminTemplate("nda_signed", "NDA signed", "signed the NDA"),
   adminTemplate("intake_completed", "Intake completed", "completed the Client Intake"),
   adminTemplate("materials_submitted", "Materials submitted", "submitted their company materials"),
-  adminTemplate("framing_confirmed", "Framing confirmed", "confirmed the message framing"),
+  {
+    ...adminTemplate(
+      "feedback_viewed",
+      "Client opened the feedback",
+      "opened your Analysis & Feedback",
+    ),
+    trigger:
+      "The first time a client opens the feedback you sent (each version). You always get an in-app notification; this email is optional.",
+    defaultEnabled: false,
+  },
+  adminTemplate(
+    "framing_confirmed",
+    "Outreach narrative confirmed",
+    "confirmed the outreach narrative",
+  ),
   adminTemplate(
     "framing_changes_requested",
-    "Framing changes requested",
-    "asked for changes to the message framing",
+    "Outreach narrative changes requested",
+    "asked for changes to the outreach narrative",
   ),
   adminTemplate("investor_list_confirmed", "Investor list confirmed", "confirmed the investor list"),
   adminTemplate(
@@ -454,7 +498,7 @@ export const REMINDER_STEPS: {
   { key: "nda", label: "NDA", defaults: timing(true) },
   { key: "intake", label: "Client Intake", defaults: timing(true) },
   { key: "setup:materials", label: "Company Materials", defaults: timing(true) },
-  { key: "setup:framing", label: "Message Framing", defaults: timing(true) },
+  { key: "setup:framing", label: "Outreach Narrative", defaults: timing(true) },
   { key: "setup:investor_list", label: "Investor List", defaults: timing(true) },
   { key: "setup:email_copy", label: "Email Copy", defaults: timing(true) },
 ];
@@ -540,7 +584,7 @@ export function defaultEmailSettings(): EmailSettings {
   const templates = {} as Record<EmailTemplateKey, EmailTemplateSetting>;
   for (const template of EMAIL_TEMPLATES) {
     templates[template.key] = {
-      enabled: true,
+      enabled: template.defaultEnabled ?? true,
       subject: template.subject,
       body: template.body,
       customized: false,

@@ -123,6 +123,52 @@ function phaseRows(
   });
 }
 
+/**
+ * One phase of the overview. A finished phase collapses to a single line
+ * (native <details>: keyboard and screen-reader friendly, no JS).
+ */
+function Phase({
+  title,
+  complete,
+  total,
+  divided = false,
+  children,
+}: {
+  title: string;
+  complete: number;
+  total: number;
+  divided?: boolean;
+  children: React.ReactNode;
+}) {
+  if (total === 0 || complete < total) {
+    return (
+      <>
+        <SectionHeading title={title} complete={complete} total={total} divided={divided} />
+        {children}
+      </>
+    );
+  }
+  return (
+    <details className={`group/phase ${divided ? "border-t border-border" : ""}`}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-sm px-lg py-md [&::-webkit-details-marker]:hidden">
+        <span className="flex items-center gap-sm">
+          <span
+            aria-hidden
+            className="inline-block text-muted transition-transform duration-hover group-open/phase:rotate-90"
+          >
+            ›
+          </span>
+          <span className="text-label uppercase tracking-label text-muted">{title}</span>
+        </span>
+        <span className="text-body-sm text-success">
+          {complete} of {total} complete
+        </span>
+      </summary>
+      <div className="border-t border-border">{children}</div>
+    </details>
+  );
+}
+
 function SectionHeading({
   title,
   complete,
@@ -170,34 +216,34 @@ export function ProgressOverview({
         </p>
       </div>
 
-      <SectionHeading
+      <Phase
         title="Onboarding"
         complete={progress.onboarding.complete}
         total={progress.onboarding.total}
-      />
-      <Checklist items={onboardingRows(timestamps)} framed={false} />
+      >
+        <Checklist items={onboardingRows(timestamps)} framed={false} />
+      </Phase>
 
-      <SectionHeading
+      <Phase
         title="Setup"
         complete={progress.setup.complete}
         total={progress.setup.total}
         divided
-      />
-      <Checklist
-        items={setupRows(setup)}
-        framed={false}
-      />
+      >
+        <Checklist items={setupRows(setup)} framed={false} />
+      </Phase>
 
-      <SectionHeading
+      <Phase
         title="Live Campaign"
         complete={progress.live.complete}
         total={progress.live.total}
         divided
-      />
-      <Checklist
-        items={phaseRows(LIVE_ITEMS, statuses, !isLiveUnlocked(stage))}
-        framed={false}
-      />
+      >
+        <Checklist
+          items={phaseRows(LIVE_ITEMS, statuses, !isLiveUnlocked(stage))}
+          framed={false}
+        />
+      </Phase>
     </section>
   );
 }

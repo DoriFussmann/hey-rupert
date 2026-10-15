@@ -57,6 +57,8 @@ export type SetupStepState = {
   /** When the current turn (client's or Rupert's) began. */
   turn_since: string | null;
   completed_at: string | null;
+  /** First time the client opened the current version (feedback only). */
+  client_viewed_at: string | null;
   updated_at: string;
 };
 
@@ -73,11 +75,89 @@ export type MaterialFile = {
 
 export type MaterialsPayload = {
   files: MaterialFile[];
-  company_text: string;
-  other_inputs: string;
+  /** Answers to the Company Materials fields, by field id. */
+  fields: Record<string, string>;
 };
 
-export type ReviewPayload = { body: string };
+// Analysis & Feedback (stored on the deck_review step). The draft is Rupert's
+// workspace; the published payload is the client's view of it.
+
+export type FeedbackArea = "deck" | "story" | "metrics" | "materials" | "other";
+export type FeedbackPriority = "high" | "medium" | "low";
+
+export const FEEDBACK_AREAS: { value: FeedbackArea; label: string }[] = [
+  { value: "deck", label: "Deck" },
+  { value: "story", label: "Story" },
+  { value: "metrics", label: "Metrics" },
+  { value: "materials", label: "Materials" },
+  { value: "other", label: "Other" },
+];
+
+export const FEEDBACK_PRIORITIES: { value: FeedbackPriority; label: string }[] = [
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+];
+
+export type FeedbackItem = {
+  id: string;
+  area: FeedbackArea;
+  priority: FeedbackPriority;
+  /** Slide reference, e.g. "4" or "6–7". Empty when not slide-specific. */
+  slide: string;
+  title: string;
+  body: string;
+  /** False keeps the item internal: the client never sees it. */
+  visible: boolean;
+};
+
+export type FeedbackLink = { id: string; label: string; url: string };
+
+export type MaterialsAnalysis = {
+  /** Internal company summary for Rupert. */
+  summary: string;
+  /** Internal investor framing: positioning, angles, weak spots. */
+  framing: string;
+  generated_at: string;
+  /** What the agent read, and what it could not. */
+  read: string[];
+  skipped: string[];
+};
+
+export type FeedbackEmail = { subject: string; body: string };
+
+export type FeedbackDraft = {
+  analysis: MaterialsAnalysis | null;
+  /** Opening message to the client, above the recommendations (markdown). */
+  intro: string;
+  items: FeedbackItem[];
+  attachments: MaterialFile[];
+  links: FeedbackLink[];
+  email: FeedbackEmail;
+};
+
+/** What the client sees. */
+export type FeedbackPublished = {
+  intro: string;
+  items: FeedbackItem[];
+  attachments: MaterialFile[];
+  links: FeedbackLink[];
+};
+
+// Outreach Narrative (stored on the framing step).
+
+export type NarrativePayload = {
+  /** The core story every message is built on (markdown). */
+  core: string;
+  email_subject: string;
+  email_body: string;
+  /** LinkedIn connection request note. */
+  linkedin_note: string;
+  /** LinkedIn message once the connection is accepted. */
+  linkedin_followup: string;
+};
+
+export const LINKEDIN_NOTE_MAX = 300;
 
 export type FitTier = 1 | 2 | 3;
 
@@ -150,20 +230,20 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
   },
   {
     id: "deck_review",
-    title: "Deck & Materials Review",
-    short: "Deck & Materials Review",
+    title: "Analysis & Feedback",
+    short: "Analysis & Feedback",
     href: "/portal/setup/deck-review",
-    clientTask: "read Rupert's comments on your deck",
-    adminAction: "Write deck & materials comments",
+    clientTask: "read Rupert's feedback on your materials",
+    adminAction: "Analyze the materials and send feedback",
     kind: "inform",
   },
   {
     id: "framing",
-    title: "Message Framing",
-    short: "Message Framing",
+    title: "Outreach Narrative",
+    short: "Outreach Narrative",
     href: "/portal/setup/framing",
-    clientTask: "review and confirm the message framing",
-    adminAction: "Write the message framing",
+    clientTask: "review and confirm the outreach narrative",
+    adminAction: "Build the outreach narrative",
     kind: "review",
   },
   {
@@ -269,7 +349,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
     visible: open,
   });
 
-  // 2. Deck & materials review: Rupert writes comments, publishes them.
+  // 2. Analysis & Feedback: Rupert analyzes the materials and sends feedback.
   const deckDone = deck?.status === "published";
   items.push({
     ...setupStep("deck_review"),
@@ -277,7 +357,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
     detail: !materialsDone
       ? "After you share your materials"
       : deckDone
-        ? "Comments ready"
+        ? "Feedback ready"
         : "Rupert is reviewing your materials",
     since: !materialsDone || deckDone ? null : materials?.completed_at ?? null,
     completedAt: deck?.completed_at ?? null,
@@ -351,7 +431,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
       framing,
       materialsDone,
       "After you share your materials",
-      "Rupert is writing your message framing",
+      "Rupert is writing your outreach narrative",
       materials?.completed_at ?? null,
     ),
   );
@@ -360,7 +440,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
       "investor_list",
       list,
       framingDone,
-      "After the message framing is confirmed",
+      "After the outreach narrative is confirmed",
       "Rupert is matching investors",
       framing?.completed_at ?? null,
     ),
@@ -426,19 +506,161 @@ export function asMaterials(value: unknown): MaterialsPayload {
         }))
         .filter((item) => item.path)
     : [];
+  const fields: Record<string, string> = {};
+  const rawFields =
+    raw.fields && typeof raw.fields === "object" && !Array.isArray(raw.fields)
+      ? (raw.fields as Record<string, unknown>)
+      : {};
+  for (const [id, text] of Object.entries(rawFields)) {
+    if (/^[a-z0-9_]{1,40}$/.test(id)) fields[id] = str(text);
+  }
+  // Answers saved before the fields were editable.
+  for (const legacy of ["company_text", "other_inputs"]) {
+    if (fields[legacy] === undefined && raw[legacy] != null) {
+      fields[legacy] = str(raw[legacy]);
+    }
+  }
+  return { files, fields };
+}
+
+function asFiles(value: unknown): MaterialFile[] {
+  return asMaterials({ files: value }).files;
+}
+
+function oneOf<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
+  return allowed.includes(value as T) ? (value as T) : fallback;
+}
+
+const AREA_VALUES = FEEDBACK_AREAS.map((area) => area.value);
+const PRIORITY_VALUES = FEEDBACK_PRIORITIES.map((priority) => priority.value);
+
+export const FEEDBACK_ITEMS_MAX = 60;
+export const FEEDBACK_LINKS_MAX = 20;
+
+export function asFeedbackItems(value: unknown): FeedbackItem[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    )
+    .slice(0, FEEDBACK_ITEMS_MAX)
+    .map((item, index) => ({
+      id: str(item.id, 40) || `f${index + 1}`,
+      area: oneOf(item.area, AREA_VALUES, "other"),
+      priority: oneOf(item.priority, PRIORITY_VALUES, "medium"),
+      slide: str(item.slide, 40),
+      title: str(item.title, 200),
+      body: str(item.body, 5000),
+      visible: item.visible !== false,
+    }));
+}
+
+function asLinks(value: unknown): FeedbackLink[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    )
+    .slice(0, FEEDBACK_LINKS_MAX)
+    .map((item, index) => ({
+      id: str(item.id, 40) || `l${index + 1}`,
+      label: str(item.label, 200),
+      url: str(item.url, 2000),
+    }))
+    .filter((link) => link.url);
+}
+
+function asStringList(value: unknown, max = 40) {
+  return Array.isArray(value)
+    ? value.map((item) => str(item, 500)).filter(Boolean).slice(0, max)
+    : [];
+}
+
+function asAnalysis(value: unknown): MaterialsAnalysis | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  const summary = str(raw.summary, 30000);
+  const framing = str(raw.framing, 30000);
+  if (!summary && !framing) return null;
   return {
-    files,
-    company_text: str(raw.company_text),
-    other_inputs: str(raw.other_inputs),
+    summary,
+    framing,
+    generated_at: str(raw.generated_at, 40),
+    read: asStringList(raw.read),
+    skipped: asStringList(raw.skipped),
   };
 }
 
-export function asReview(value: unknown): ReviewPayload {
+/** Rupert's feedback workspace. Older rows stored a single markdown `body`,
+ * which becomes the intro. */
+export function asFeedback(value: unknown): FeedbackDraft {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
     string,
     unknown
   >;
-  return { body: str(raw.body, 50000) };
+  const email = (raw.email && typeof raw.email === "object"
+    ? raw.email
+    : {}) as Record<string, unknown>;
+  return {
+    analysis: asAnalysis(raw.analysis),
+    intro: str(raw.intro ?? raw.body, 30000),
+    items: asFeedbackItems(raw.items),
+    attachments: asFiles(raw.attachments),
+    links: asLinks(raw.links),
+    email: { subject: str(email.subject, 300), body: str(email.body, 10000) },
+  };
+}
+
+/** The part of the feedback the client sees. */
+export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
+  return {
+    intro: draft.intro,
+    items: draft.items.filter((item) => item.visible && (item.title || item.body)),
+    attachments: draft.attachments,
+    links: draft.links,
+  };
+}
+
+export function asFeedbackPublished(value: unknown): FeedbackPublished {
+  return feedbackForClient(asFeedback(value));
+}
+
+export function feedbackProblem(draft: FeedbackDraft) {
+  const published = feedbackForClient(draft);
+  if (!published.intro.trim() && published.items.length === 0) {
+    return "Add an opening message or at least one recommendation the client can see.";
+  }
+  return null;
+}
+
+/** Files Rupert attaches to the feedback live under this storage folder. */
+export function feedbackFolder(clientId: string) {
+  return `${clientId}/feedback/`;
+}
+
+/** Older rows stored the framing as one markdown `body`: it becomes the core. */
+export function asNarrative(value: unknown): NarrativePayload {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<
+    string,
+    unknown
+  >;
+  return {
+    core: str(raw.core ?? raw.body, 30000),
+    email_subject: str(raw.email_subject, 300),
+    email_body: str(raw.email_body, 10000),
+    linkedin_note: str(raw.linkedin_note, 2000),
+    linkedin_followup: str(raw.linkedin_followup, 5000),
+  };
+}
+
+export function narrativeProblem(narrative: NarrativePayload) {
+  if (!narrative.core.trim()) return "Write the core narrative before pushing.";
+  if (narrative.linkedin_note.length > LINKEDIN_NOTE_MAX) {
+    return `The LinkedIn connection note is ${narrative.linkedin_note.length} characters. LinkedIn allows ${LINKEDIN_NOTE_MAX}.`;
+  }
+  return null;
 }
 
 function asTier(value: unknown): FitTier | null {

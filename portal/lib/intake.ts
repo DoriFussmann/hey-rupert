@@ -27,11 +27,35 @@ export type IntakeSummaryItem = {
 
 export type IntakeInterviewStatus = "in_progress" | "review" | "completed";
 
+/** Rupert's internal brief from the intake, written by the AI and editable. */
+export type IntakeBrief = {
+  summary: string;
+  industry: string;
+  geography: string;
+  stage: string;
+  raise_amount: string;
+  generated_at: string;
+  /** Interview `updated_at` the brief was written from (to spot newer answers). */
+  based_on: string;
+  edited_at: string | null;
+};
+
+export const INTAKE_BRIEF_FIELDS: {
+  key: "industry" | "geography" | "stage" | "raise_amount";
+  label: string;
+}[] = [
+  { key: "industry", label: "Industry" },
+  { key: "geography", label: "Geography" },
+  { key: "stage", label: "Stage" },
+  { key: "raise_amount", label: "Raise amount" },
+];
+
 export type IntakeInterview = {
   client_id: string;
   messages: IntakeMessage[];
   topic_status: Record<string, TopicStatus>;
   summary: IntakeSummaryItem[] | null;
+  admin_brief: IntakeBrief | null;
   status: IntakeInterviewStatus;
   client_message_count: number;
   completed_at: string | null;
@@ -199,6 +223,26 @@ export function extrasProgress(
     (topic) => topicCoverage(topicStatus, topic.id) === "covered",
   ).length;
   return { covered, total: extras.length, done: covered === extras.length };
+}
+
+/** Reads a stored brief; null when missing or empty. */
+export function asIntakeBrief(value: unknown): IntakeBrief | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  const raw = value as Record<string, unknown>;
+  const text = (key: string, max: number) =>
+    raw[key] != null ? String(raw[key]).trim().slice(0, max) : "";
+  const summary = text("summary", 20000);
+  if (!summary) return null;
+  return {
+    summary,
+    industry: text("industry", 200),
+    geography: text("geography", 200),
+    stage: text("stage", 100),
+    raise_amount: text("raise_amount", 100),
+    generated_at: text("generated_at", 40),
+    based_on: text("based_on", 40),
+    edited_at: text("edited_at", 40) || null,
+  };
 }
 
 const TOPIC_ID_PATTERN = /^[a-z0-9_]{1,40}$/;

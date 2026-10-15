@@ -6,10 +6,15 @@ import {
   createMaterialUpload,
   registerMaterialFile,
   removeMaterialFile,
-  saveMaterialsText,
+  saveMaterialsFields,
   submitMaterials,
 } from "@/app/portal/setup/actions";
 import { createClient } from "@/lib/supabase/client";
+import {
+  MATERIAL_FIELD_VALUE_MAX,
+  materialFieldProblems,
+  type MaterialField,
+} from "@/lib/material-fields";
 import {
   MATERIALS_BUCKET,
   MATERIAL_EXTENSIONS,
@@ -34,11 +39,14 @@ const ACCEPT = MATERIAL_EXTENSIONS.map((extension) => `.${extension}`).join(",")
 
 export function MaterialsWorkspace({
   initial,
+  fields,
   links,
   submitted,
   readOnly,
 }: {
   initial: MaterialsPayload;
+  /** The questions set in Forms → Company Materials. */
+  fields: MaterialField[];
   links: Record<string, string>;
   submitted: boolean;
   readOnly: boolean;
@@ -49,16 +57,14 @@ export function MaterialsWorkspace({
   const submittedRef = useRef(false);
   const [files, setFiles] = useState<MaterialFile[]>(initial.files);
   const [uploads, setUploads] = useState<Upload[]>([]);
-  const [companyText, setCompanyText] = useState(initial.company_text);
-  const [otherInputs, setOtherInputs] = useState(initial.other_inputs);
+  const [values, setValues] = useState<Record<string, string>>(() =>
+    Object.fromEntries(fields.map((field) => [field.id, initial.fields[field.id] ?? ""])),
+  );
   const [dragging, setDragging] = useState(false);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">("idle");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [savedText, setSavedText] = useState({
-    company: initial.company_text,
-    other: initial.other_inputs,
-  });
+  const [savedValues, setSavedValues] = useState(values);
 
   const locked = submitted || readOnly;
   const busy = uploads.some((upload) => upload.state === "uploading");
@@ -142,28 +148,32 @@ export function MaterialsWorkspace({
     }
   }
 
+  const changed = fields.some((field) => values[field.id] !== savedValues[field.id]);
+
   async function saveText() {
-    if (locked) return;
-    if (companyText === savedText.company && otherInputs === savedText.other) return;
+    if (locked || !changed) return;
+    const snapshot = values;
     setSaveState("saving");
-    const result = await saveMaterialsText({
-      company_text: companyText,
-      other_inputs: otherInputs,
-    });
+    const result = await saveMaterialsFields(snapshot);
     if (submittedRef.current) return;
     if (!result.ok) {
       setSaveState("idle");
       setError(result.error);
       return;
     }
-    setSavedText({ company: companyText, other: otherInputs });
+    setSavedValues(snapshot);
     setSaveState("saved");
   }
 
   async function onSubmit() {
     if (locked || submitting || busy) return;
-    if (files.length === 0 && !companyText.trim()) {
-      setError("Upload your pitch deck or paste a description of the company first.");
+    const problems = materialFieldProblems(fields, values);
+    if (problems.length > 0) {
+      setError(problems.join(" "));
+      return;
+    }
+    if (files.length === 0 && !Object.values(values).some((value) => value.trim())) {
+      setError("Upload your pitch deck or tell us about the company first.");
       return;
     }
     if (
@@ -176,10 +186,7 @@ export function MaterialsWorkspace({
     setSubmitting(true);
     setError(null);
     try {
-      const result = await submitMaterials({
-        company_text: companyText,
-        other_inputs: otherInputs,
-      });
+      const result = await submitMaterials(values);
       if (!result.ok) {
         setError(result.error);
         return;
@@ -201,9 +208,10 @@ export function MaterialsWorkspace({
         <div className="border-b border-border px-lg py-md">
           <h2 className="text-h4">Pitch deck & files</h2>
           <p className="mt-xs text-body-sm text-muted">
-            Your latest pitch deck first. Add one-pagers, financial summaries or
-            anything else useful. PDF, PowerPoint, Keynote, Word, Excel, CSV or
-            images, up to {formatBytes(MATERIAL_MAX_BYTES)} each.
+            Your latest pitch deck first, as a PDF if you can: Rupert reads PDFs
+            in full, slides and visuals included. Add one-pagers, financial
+            summaries or anything else useful. PowerPoint, Word, Excel, CSV and
+            images also work, up to {formatBytes(MATERIAL_MAX_BYTES)} each.
           </p>
         </div>
 
@@ -325,46 +333,63 @@ export function MaterialsWorkspace({
         </ul>
       </section>
 
-      {/* Text */}
-      <section className="rounded-card border border-border bg-surface px-lg py-lg">
-        <label className="block text-label uppercase tracking-label text-muted">
-          About the company
-          <span className="mt-xs block text-body-sm normal-case tracking-normal text-muted">
-            Paste your one-pager, website copy, or describe the company in your
-            own words: what you do, for whom, and why now.
-          </span>
-          <textarea
-            rows={10}
-            className={fieldClass}
-            value={companyText}
-            disabled={locked}
-            onChange={(event) => {
-              setCompanyText(event.target.value);
+      {/* Questions */}
+      {fields.length > 0 ? (
+        <section className="grid gap-lg rounded-card border border-border bg-surface px-lg py-lg">
+          {fields.map((field) => {
+            const inputId = `material-field-${field.id}`;
+            const helpId = field.help ? `${inputId}-help` : undefined;
+            const common = {
+              id: inputId,
+              className: fieldClass,
+              value: values[field.id] ?? "",
+              disabled: locked,
+              required: field.required,
+              maxLength: MATERIAL_FIELD_VALUE_MAX,
+              placeholder: field.placeholder || undefined,
+              "aria-describedby": helpId,
+              onBlur: saveText,
+            };
+            const onChange = (
+              event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+            ) => {
+              const next = event.target.value;
+              setValues((current) => ({ ...current, [field.id]: next }));
               setSaveState("idle");
-            }}
-            onBlur={saveText}
-          />
-        </label>
-
-        <label className="mt-lg block text-label uppercase tracking-label text-muted">
-          Anything else
-          <span className="mt-xs block text-body-sm normal-case tracking-normal text-muted">
-            Links (data room, product demo, press), recent wins, investors
-            you&apos;re already talking to, or anything Rupert should keep in mind.
-          </span>
-          <textarea
-            rows={6}
-            className={fieldClass}
-            value={otherInputs}
-            disabled={locked}
-            onChange={(event) => {
-              setOtherInputs(event.target.value);
-              setSaveState("idle");
-            }}
-            onBlur={saveText}
-          />
-        </label>
-      </section>
+            };
+            return (
+              <div key={field.id}>
+                <label
+                  htmlFor={inputId}
+                  className="block text-label uppercase tracking-label text-muted"
+                >
+                  {field.label}
+                  {field.required ? (
+                    <span className="text-error" aria-hidden>
+                      {" "}
+                      *
+                    </span>
+                  ) : null}
+                </label>
+                {field.help ? (
+                  <p id={helpId} className="mt-xs text-body-sm text-muted">
+                    {field.help}
+                  </p>
+                ) : null}
+                {field.type === "textarea" ? (
+                  <textarea rows={8} {...common} onChange={onChange} />
+                ) : (
+                  <input
+                    type={field.type === "url" ? "url" : "text"}
+                    {...common}
+                    onChange={onChange}
+                  />
+                )}
+              </div>
+            );
+          })}
+        </section>
+      ) : null}
 
       {!submitted ? (
         <div className="flex flex-wrap items-center gap-sm">
