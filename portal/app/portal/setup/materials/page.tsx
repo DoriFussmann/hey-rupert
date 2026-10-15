@@ -8,15 +8,20 @@ import { asMaterials } from "@/lib/setup";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { signMaterialLinks } from "@/lib/setup-server";
+import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
+import { loadMaterialFields } from "@/lib/material-fields-server";
 
 export default async function MaterialsPage() {
   const { client, viewAs, item, row } = await getPortalSetup("materials");
   const submitted = row?.status === "submitted";
   const payload = asMaterials(submitted ? row?.published : row?.draft);
-  const links =
-    isServiceRoleConfigured() && payload.files.length > 0
-      ? await signMaterialLinks(createServiceClient(), payload)
-      : {};
+  const supabase = isServiceRoleConfigured() ? createServiceClient() : null;
+  const [links, fields] = await Promise.all([
+    supabase && payload.files.length > 0
+      ? signMaterialLinks(supabase, payload)
+      : Promise.resolve({}),
+    supabase ? loadMaterialFields(supabase) : Promise.resolve(DEFAULT_MATERIAL_FIELDS),
+  ]);
 
   // When Rupert sent the materials back, his note is on the last round.
   const lastRound = row ? row.history[row.history.length - 1] : undefined;
@@ -43,7 +48,7 @@ export default async function MaterialsPage() {
         <TurnBanner
           owner="rupert"
           title={`Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Rupert is reviewing your materials.`}
-          detail="We'll email you when his comments and your message framing are ready."
+          detail="We'll email you when his feedback is ready."
         />
       ) : (
         <TurnBanner
@@ -75,6 +80,7 @@ export default async function MaterialsPage() {
       {client && item && item.status !== "open" ? (
         <MaterialsWorkspace
           initial={payload}
+          fields={fields}
           links={links}
           submitted={submitted}
           readOnly={viewAs}

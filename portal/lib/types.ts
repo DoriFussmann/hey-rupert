@@ -157,6 +157,7 @@ export type NotificationType =
   | "setup_fee_paid"
   | "intake_completed"
   | "materials_submitted"
+  | "feedback_viewed"
   | "framing_confirmed"
   | "framing_changes_requested"
   | "investor_list_confirmed"

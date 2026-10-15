@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { reopenMaterials } from "@/app/admin/setup-actions";
 import { formatDateAtTime } from "@/lib/format";
 import {
+  isHttpUrl,
+  labelledAnswers,
+  type MaterialField,
+} from "@/lib/material-fields";
+import {
   asMaterials,
   fileExtension,
   formatBytes,
@@ -17,18 +22,23 @@ import {
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 
+// Formats the AI cannot read: the admin should ask for a PDF.
+const NEEDS_PDF = new Set(["key", "ppt", "doc"]);
+
 export function MaterialsPanel({
   clientId,
   item,
   row,
+  fields,
   links,
   canReopen,
 }: {
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
+  fields: MaterialField[];
   links: Record<string, string>;
-  /** False once the framing is with the client. */
+  /** False once the outreach narrative is with the client. */
   canReopen: boolean;
 }) {
   const router = useRouter();
@@ -66,15 +76,15 @@ export function MaterialsPanel({
     }
   }
 
-  const empty =
-    materials.files.length === 0 && !materials.company_text && !materials.other_inputs;
+  const answers = labelledAnswers(fields, materials.fields);
+  const empty = materials.files.length === 0 && answers.length === 0;
 
   return (
     <StepFrame
       item={item}
       intro={
         submitted
-          ? `Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Download the files, then write your comments and the message framing below.`
+          ? `Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Run Analyze below to review everything with the AI.`
           : "The client uploads their deck and shares company details here, then submits. Below is what they have added so far."
       }
     >
@@ -97,6 +107,11 @@ export function MaterialsPanel({
                   <span className="min-w-0 flex-1 truncate text-body-sm text-heading">
                     {file.name}
                   </span>
+                  {NEEDS_PDF.has(fileExtension(file.name)) ? (
+                    <span className="text-body-sm text-warning">
+                      The AI can&apos;t read this. Ask the client for a PDF.
+                    </span>
+                  ) : null}
                   <span className="text-body-sm text-muted">{formatBytes(file.size)}</span>
                   {links[file.path] ? (
                     <a href={links[file.path]} className="text-body-sm text-primary hover:text-primary-hover">
@@ -111,23 +126,27 @@ export function MaterialsPanel({
           </>
         ) : null}
 
-        {materials.company_text ? (
-          <div className="mt-md">
-            <p className="text-label uppercase tracking-label text-muted">About the company</p>
-            <p className="mt-xs max-h-80 overflow-auto whitespace-pre-wrap rounded-md bg-background px-md py-sm text-body-sm text-body">
-              {materials.company_text}
-            </p>
+        {answers.map((answer) => (
+          <div key={answer.id} className="mt-md">
+            <p className="text-label uppercase tracking-label text-muted">{answer.label}</p>
+            {answer.type === "url" && isHttpUrl(answer.value) ? (
+              <p className="mt-xs break-all text-body-sm">
+                <a
+                  href={answer.value}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:text-primary-hover"
+                >
+                  {answer.value}
+                </a>
+              </p>
+            ) : (
+              <p className="mt-xs max-h-80 overflow-auto whitespace-pre-wrap rounded-md bg-background px-md py-sm text-body-sm text-body">
+                {answer.value}
+              </p>
+            )}
           </div>
-        ) : null}
-
-        {materials.other_inputs ? (
-          <div className="mt-md">
-            <p className="text-label uppercase tracking-label text-muted">Anything else</p>
-            <p className="mt-xs max-h-80 overflow-auto whitespace-pre-wrap rounded-md bg-background px-md py-sm text-body-sm text-body">
-              {materials.other_inputs}
-            </p>
-          </div>
-        ) : null}
+        ))}
       </div>
 
       {submitted ? (
@@ -172,7 +191,7 @@ export function MaterialsPanel({
               title={
                 canReopen
                   ? "Makes it the client's turn again, with your note"
-                  : "The framing is already with the client; ask by email instead."
+                  : "The outreach narrative is already with the client; ask by email instead."
               }
               onClick={() => setShowReopen(true)}
             >

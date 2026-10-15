@@ -6,14 +6,23 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { notifyClient, type ClientTurn } from "@/lib/notify";
 import { createServiceClient } from "@/lib/supabase/admin";
 import type { EmailResult } from "@/lib/email";
+import { FEEDBACK_DEFAULT_MESSAGE } from "@/lib/email-templates";
+import { isHttpUrl } from "@/lib/material-fields";
 import {
   SETUP_STEPS,
   asEmailCopy,
+  asFeedback,
   asInvestorList,
   asMaterials,
-  asReview,
+  asNarrative,
   canPublish,
   emailCopyProblems,
+  feedbackFolder,
+  feedbackForClient,
+  feedbackProblem,
+  narrativeProblem,
+  type FeedbackDraft,
+  type NarrativePayload,
   type SetupStepId,
   type SetupStepState,
 } from "@/lib/setup";
@@ -36,7 +45,7 @@ const PUBLISHABLE = new Set<PublishableStep>([
 ]);
 
 const READY_EMAIL: Record<PublishableStep, ClientTurn> = {
-  deck_review: "deck_review_ready",
+  deck_review: "feedback_ready",
   framing: "framing_ready",
   investor_list: "investor_list_ready",
   email_copy: "email_copy_ready",
@@ -83,11 +92,25 @@ async function loadState(supabase: ServiceClient, clientId: string) {
   };
 }
 
+/** Keeps only this client's feedback uploads and http(s) links. */
+function cleanFeedback(clientId: string, draft: unknown): FeedbackDraft {
+  const feedback = asFeedback(draft);
+  const folder = feedbackFolder(clientId);
+  return {
+    ...feedback,
+    attachments: feedback.attachments.filter(
+      (file) => file.path.startsWith(folder) && !file.path.includes(".."),
+    ),
+    links: feedback.links.filter((link) => isHttpUrl(link.url)),
+  };
+}
+
 /** Cleans a draft to the shape its step stores. */
-function normalizeDraft(step: PublishableStep, draft: unknown) {
+function normalizeDraft(clientId: string, step: PublishableStep, draft: unknown) {
   if (step === "investor_list") return asInvestorList(draft);
   if (step === "email_copy") return asEmailCopy(draft);
-  return asReview(draft);
+  if (step === "deck_review") return cleanFeedback(clientId, draft);
+  return asNarrative(draft);
 }
 
 function draftProblem(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
@@ -100,9 +123,8 @@ function draftProblem(step: PublishableStep, draft: ReturnType<typeof normalizeD
     const problems = emailCopyProblems(draft as ReturnType<typeof asEmailCopy>);
     return problems.length > 0 ? problems.join(" ") : null;
   }
-  return (draft as ReturnType<typeof asReview>).body.trim()
-    ? null
-    : "Write something before pushing.";
+  if (step === "deck_review") return feedbackProblem(draft as FeedbackDraft);
+  return narrativeProblem(draft as NarrativePayload);
 }
 
 /** Saves Rupert's work in progress. The client does not see drafts. */
@@ -122,7 +144,7 @@ export async function saveSetupDraft(
     {
       client_id: clientId,
       step,
-      draft: normalizeDraft(step as PublishableStep, draft),
+      draft: normalizeDraft(clientId, step as PublishableStep, draft),
       updated_at: at,
     },
     { onConflict: "client_id,step", ignoreDuplicates: false },
@@ -163,13 +185,13 @@ export async function publishSetupStep(
     const blocked: Record<PublishableStep, string> = {
       deck_review: "Available once the client submits their materials.",
       framing: "Available once the client submits their materials.",
-      investor_list: "Available once the client confirms the message framing.",
+      investor_list: "Available once the client confirms the outreach narrative.",
       email_copy: "Available once the client confirms the investor list.",
     };
     return { ok: false, error: blocked[publishable] };
   }
 
-  const payload = normalizeDraft(publishable, draft);
+  const payload = normalizeDraft(clientId, publishable, draft);
   const problem = draftProblem(publishable, payload);
   if (problem) return { ok: false, error: problem };
 
@@ -195,13 +217,16 @@ export async function publishSetupStep(
     step,
     status: inform ? "published" : "with_client",
     draft: payload,
-    published: payload,
+    // The client sees only the feedback meant for them, never the analysis.
+    published: inform ? feedbackForClient(payload as FeedbackDraft) : payload,
     version,
     published_at: at,
     response: null,
     history,
     turn_since: at,
     completed_at: inform ? at : null,
+    // Each version is "new" for the client until they open it.
+    client_viewed_at: null,
     updated_at: at,
   };
 
@@ -230,11 +255,18 @@ export async function publishSetupStep(
     }
   }
 
+  const email = inform ? (payload as FeedbackDraft).email : null;
   const clientEmail = await notifyClient(
     access.supabase,
     clientId,
     READY_EMAIL[publishable],
-    { note, updated: version > 1 },
+    email
+      ? {
+          message: email.body.trim() || FEEDBACK_DEFAULT_MESSAGE,
+          subject: email.subject,
+          updated: version > 1,
+        }
+      : { note, updated: version > 1 },
   );
 
   revalidateSetup(clientId);
@@ -243,7 +275,7 @@ export async function publishSetupStep(
 
 /**
  * Sends the materials back to the client (for example a deck is missing).
- * Only before the message framing has been pushed.
+ * Only before the outreach narrative has been pushed.
  */
 export async function reopenMaterials(
   clientId: string,
@@ -267,7 +299,7 @@ export async function reopenMaterials(
     return {
       ok: false,
       error:
-        "The message framing is already with the client. Ask for extra materials by email instead.",
+        "The outreach narrative is already with the client. Ask for extra materials by email instead.",
     };
   }
 

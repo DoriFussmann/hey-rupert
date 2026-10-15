@@ -2,6 +2,12 @@
 
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
+import { loadMaterialFields } from "@/lib/material-fields-server";
+import {
+  labelledAnswers,
+  materialFieldProblems,
+  type MaterialField,
+} from "@/lib/material-fields";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 import {
@@ -65,7 +71,7 @@ async function loadMaterials(access: PortalAccess) {
     client_id: access.user.id,
     step: "materials",
     status: "draft",
-    draft: { files: [], company_text: "", other_inputs: "" },
+    draft: { files: [], fields: {} },
   });
   if (error && error.code !== "23505") {
     return { ok: false as const, error: setupTableError(error.message, error.code) };
@@ -241,22 +247,41 @@ export async function removeMaterialFile(path: string): Promise<SetupActionResul
   return { ok: true };
 }
 
-function cleanText(value: unknown) {
-  return String(value ?? "").trim().slice(0, TEXT_MAX);
+/**
+ * Merges the client's answers into the draft. Only fields that exist in
+ * Forms → Company Materials are taken; answers to fields removed since are
+ * kept as they were.
+ */
+function mergeFields(
+  fields: MaterialField[],
+  current: Record<string, string>,
+  input: unknown,
+) {
+  const values =
+    input && typeof input === "object" && !Array.isArray(input)
+      ? (input as Record<string, unknown>)
+      : {};
+  const merged = { ...current };
+  for (const field of fields) {
+    if (values[field.id] !== undefined) {
+      merged[field.id] = String(values[field.id] ?? "").trim().slice(0, TEXT_MAX);
+    }
+  }
+  return merged;
 }
 
-export async function saveMaterialsText(input: {
-  company_text: string;
-  other_inputs: string;
-}): Promise<SetupActionResult> {
+export async function saveMaterialsFields(
+  input: Record<string, string>,
+): Promise<SetupActionResult> {
   const opened = await openMaterialsDraft();
   if (!opened.ok) return opened;
   const { access, row } = opened;
 
+  const fields = await loadMaterialFields(access.supabase);
+  const draft = asMaterials(row.draft);
   const saved = await saveDraft(access, row, {
-    ...asMaterials(row.draft),
-    company_text: cleanText(input?.company_text),
-    other_inputs: cleanText(input?.other_inputs),
+    ...draft,
+    fields: mergeFields(fields, draft.fields, input),
   });
   if (!saved.ok) return saved;
 
@@ -265,24 +290,28 @@ export async function saveMaterialsText(input: {
 }
 
 /** Submits the materials: the turn passes to Rupert. */
-export async function submitMaterials(input: {
-  company_text: string;
-  other_inputs: string;
-}): Promise<SetupActionResult> {
+export async function submitMaterials(
+  input: Record<string, string>,
+): Promise<SetupActionResult> {
   const opened = await openMaterialsDraft();
   if (!opened.ok) return opened;
   const { access, row } = opened;
 
+  const fields = await loadMaterialFields(access.supabase);
+  const draft = asMaterials(row.draft);
   const payload: MaterialsPayload = {
-    ...asMaterials(row.draft),
-    company_text: cleanText(input?.company_text),
-    other_inputs: cleanText(input?.other_inputs),
+    ...draft,
+    fields: mergeFields(fields, draft.fields, input),
   };
 
-  if (payload.files.length === 0 && !payload.company_text) {
+  const problems = materialFieldProblems(fields, payload.fields);
+  if (problems.length > 0) return { ok: false, error: problems.join(" ") };
+
+  const answers = labelledAnswers(fields, payload.fields);
+  if (payload.files.length === 0 && answers.length === 0) {
     return {
       ok: false,
-      error: "Upload your pitch deck or paste a description of the company before submitting.",
+      error: "Upload your pitch deck or tell us about the company before submitting.",
     };
   }
 
@@ -316,8 +345,7 @@ export async function submitMaterials(input: {
     payload.files.length > 0
       ? `Files:\n${payload.files.map((file) => `- ${file.name} (${formatBytes(file.size)})`).join("\n")}`
       : "No files uploaded.",
-    payload.company_text ? `About the company:\n${excerpt(payload.company_text)}` : "",
-    payload.other_inputs ? `Other inputs:\n${excerpt(payload.other_inputs)}` : "",
+    ...answers.map((answer) => `${answer.label}:\n${excerpt(answer.value)}`),
   ]
     .filter(Boolean)
     .join("\n\n");

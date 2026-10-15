@@ -48,8 +48,9 @@ export function notificationLabel(type: string) {
   if (type === "setup_fee_paid") return "Paid Setup Fee";
   if (type === "intake_completed") return "Completed Client Intake";
   if (type === "materials_submitted") return "Submitted Company Materials";
-  if (type === "framing_confirmed") return "Confirmed Message Framing";
-  if (type === "framing_changes_requested") return "Requested Framing Changes";
+  if (type === "feedback_viewed") return "Opened Analysis & Feedback";
+  if (type === "framing_confirmed") return "Confirmed Outreach Narrative";
+  if (type === "framing_changes_requested") return "Requested Narrative Changes";
   if (type === "investor_list_confirmed") return "Confirmed Investor List";
   if (type === "investor_list_changes_requested") {
     return "Questions on Investor List";
@@ -71,9 +72,10 @@ export function notificationAction(type: string) {
   if (type === "setup_fee_paid") return "paid the Setup Fee";
   if (type === "intake_completed") return "completed the Client Intake";
   if (type === "materials_submitted") return "submitted their company materials";
-  if (type === "framing_confirmed") return "confirmed the message framing";
+  if (type === "feedback_viewed") return "opened your Analysis & Feedback";
+  if (type === "framing_confirmed") return "confirmed the outreach narrative";
   if (type === "framing_changes_requested") {
-    return "asked for changes to the message framing";
+    return "asked for changes to the outreach narrative";
   }
   if (type === "investor_list_confirmed") return "confirmed the investor list";
   if (type === "investor_list_changes_requested") {

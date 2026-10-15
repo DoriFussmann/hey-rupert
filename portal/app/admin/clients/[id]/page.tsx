@@ -11,6 +11,7 @@ import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-order";
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
+import { IntakeBriefPanel } from "@/app/admin/clients/[id]/intake-brief-panel";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
@@ -22,9 +23,15 @@ import { listEmailLog, type EmailLogResult } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
 import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { asMaterials, isSetupComplete } from "@/lib/setup";
-import { signMaterialLinks } from "@/lib/setup-server";
+import { isClaudeConfigured } from "@/lib/anthropic";
+import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
+import { loadMaterialFields } from "@/lib/material-fields-server";
+import { asFeedback, asMaterials, isSetupComplete } from "@/lib/setup";
+import { signFileLinks, signMaterialLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+
+// The AI analysis runs in server actions on this page and can take minutes.
+export const maxDuration = 300;
 
 async function loadEmailPanel(clientId: string): Promise<{
   signature: string;
@@ -88,17 +95,29 @@ export default async function ClientDetailPage({
   const materialsRow = setupSource.setup_steps.find(
     (row) => row.step === "materials",
   );
-  const materialLinks =
-    materialsRow && isServiceRoleConfigured()
-      ? await signMaterialLinks(
-          createServiceClient(),
+  const feedbackRow = setupSource.setup_steps.find(
+    (row) => row.step === "deck_review",
+  );
+  const service = isServiceRoleConfigured() ? createServiceClient() : null;
+  const [materialLinks, feedbackLinks, materialFields] = await Promise.all([
+    materialsRow && service
+      ? signMaterialLinks(
+          service,
           asMaterials(
             materialsRow.status === "submitted"
               ? materialsRow.published
               : materialsRow.draft,
           ),
         )
-      : {};
+      : Promise.resolve({}),
+    feedbackRow && service
+      ? signFileLinks(service, asFeedback(feedbackRow.draft).attachments)
+      : Promise.resolve({}),
+    service
+      ? loadMaterialFields(service)
+      : Promise.resolve(DEFAULT_MATERIAL_FIELDS),
+  ]);
+  const claudeReady = isClaudeConfigured();
 
   // Each work panel, in process order. Finished ones move to the collapsed
   // Completed panel at the bottom; open ones stay at the top.
@@ -157,7 +176,10 @@ export default async function ClientDetailPage({
         <SetupWorkspace
           clientId={client.id}
           source={setupSource}
+          materialFields={materialFields}
           materialLinks={materialLinks}
+          feedbackLinks={feedbackLinks}
+          claudeReady={claudeReady}
         />
       ),
     });
@@ -209,6 +231,16 @@ export default async function ClientDetailPage({
               : "."}
           </p>
         </section>
+      ) : null}
+      {client.intake_completed_at ? (
+        <IntakeBriefPanel
+          clientId={client.id}
+          initialBrief={interview?.admin_brief ?? null}
+          interviewUpdatedAt={interview?.updated_at ?? null}
+          hasInterview={Boolean(interview && interview.messages.length > 0)}
+          claudeReady={claudeReady}
+          completedAt={client.intake_completed_at}
+        />
       ) : null}
       <ProgressOverview
         stage={client.stage}

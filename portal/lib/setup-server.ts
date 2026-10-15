@@ -5,6 +5,7 @@ import {
   asMaterials,
   asResponse,
   isSetupStepId,
+  type MaterialFile,
   type SetupHistoryEntry,
   type SetupRowStatus,
   type SetupStepId,
@@ -53,6 +54,8 @@ export function asSetupStepState(row: Record<string, unknown>): SetupStepState |
     history: asHistory(row.history),
     turn_since: row.turn_since != null ? String(row.turn_since) : null,
     completed_at: row.completed_at != null ? String(row.completed_at) : null,
+    client_viewed_at:
+      row.client_viewed_at != null ? String(row.client_viewed_at) : null,
     updated_at: String(row.updated_at ?? new Date().toISOString()),
   };
 }
@@ -101,7 +104,13 @@ export async function loadSetupStep(
   };
 }
 
+export const AGENTS_MIGRATION_MISSING =
+  "The database is missing the new Setup columns. Run portal/supabase/setup_agents.sql in Supabase.";
+
 export function setupTableError(message: string, code?: string) {
+  if (message.includes("client_viewed_at") || message.includes("admin_brief")) {
+    return AGENTS_MIGRATION_MISSING;
+  }
   if (
     code === "42P01" ||
     code === "PGRST205" ||
@@ -118,7 +127,14 @@ export async function signMaterialLinks(
   supabase: ServiceClient,
   payload: unknown,
 ): Promise<Record<string, string>> {
-  const { files } = asMaterials(payload);
+  return signFileLinks(supabase, asMaterials(payload).files);
+}
+
+/** Signed download links (1 hour) for files in the materials bucket. */
+export async function signFileLinks(
+  supabase: ServiceClient,
+  files: MaterialFile[],
+): Promise<Record<string, string>> {
   const links: Record<string, string> = {};
   await Promise.all(
     files.map(async (file) => {
