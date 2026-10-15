@@ -175,6 +175,9 @@ export function PublishBar({
   onSaved,
   pushLabel,
   problem,
+  noteLabel,
+  notePlaceholder,
+  noteOnPage = false,
 }: {
   clientId: string;
   step: SetupStepId;
@@ -186,6 +189,10 @@ export function PublishBar({
   pushLabel: string;
   /** A reason the draft cannot be pushed yet, shown next to the button. */
   problem?: string | null;
+  noteLabel?: string;
+  notePlaceholder?: string;
+  /** When set, the note is also stored where the client reads it on the page. */
+  noteOnPage?: boolean;
 }) {
   const router = useRouter();
   const [note, setNote] = useState("");
@@ -237,12 +244,17 @@ export function PublishBar({
       }
       onSaved();
       setNote("");
+      const onPage = noteOnPage
+        ? note.trim()
+          ? " Your reply is on their list."
+          : " No reply was added to their list."
+        : "";
       setMessage(
         result.clientEmail.ok
-          ? { kind: "ok", text: "Pushed to the portal, and the client was emailed." }
+          ? { kind: "ok", text: `Pushed to the portal, and the client was emailed.${onPage}` }
           : {
               kind: "error",
-              text: `Pushed to the portal, but the client was not emailed. ${result.clientEmail.reason}`,
+              text: `Pushed to the portal, but the client was not emailed. ${result.clientEmail.reason}${onPage}`,
             },
       );
       router.refresh();
@@ -256,16 +268,17 @@ export function PublishBar({
   return (
     <div className="border-t border-border px-lg py-md">
       <label className="block text-label uppercase tracking-label text-muted">
-        Note to the client (optional, included in the email)
+        {noteLabel ?? "Note to the client (optional, included in the email)"}
         <input
           className={`${inputClass} mt-sm normal-case tracking-normal`}
           value={note}
           maxLength={1000}
           onChange={(event) => setNote(event.target.value)}
           placeholder={
-            row && row.version > 0
+            notePlaceholder ??
+            (row && row.version > 0
               ? "What changed in this version"
-              : "A line of context for the client"
+              : "A line of context for the client")
           }
         />
       </label>

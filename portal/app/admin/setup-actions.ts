@@ -191,7 +191,14 @@ export async function publishSetupStep(
     return { ok: false, error: blocked[publishable] };
   }
 
-  const payload = normalizeDraft(clientId, publishable, draft);
+  let payload = normalizeDraft(clientId, publishable, draft);
+  if (publishable === "investor_list") {
+    const reply = String(note ?? "").trim().slice(0, 4000);
+    payload = {
+      ...(payload as ReturnType<typeof asInvestorList>),
+      admin_note: reply || undefined,
+    };
+  }
   const problem = draftProblem(publishable, payload);
   if (problem) return { ok: false, error: problem };
 
