@@ -2,8 +2,8 @@
 
 import { useMemo, useRef, useState } from "react";
 import {
-  FIT_TIERS,
   INVESTOR_CSV_TEMPLATE,
+  NOTE_MAX,
   asInvestorList,
   parseInvestorCsv,
   tierCounts,
@@ -12,12 +12,16 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 import Link from "next/link";
+import { publishSetupStep } from "@/app/admin/setup-actions";
+import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
 import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
 import {
   ClientAnswer,
   EarlierRounds,
   PublishBar,
   StepFrame,
+  inputClass,
+  primaryButton,
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 
@@ -43,8 +47,14 @@ export function InvestorListPanel({
   const [errors, setErrors] = useState<string[]>([]);
   const [warnings, setWarnings] = useState<string[]>([]);
   const [dragging, setDragging] = useState(false);
+  const [reply, setReply] = useState("");
+  const [replyPending, setReplyPending] = useState(false);
+  const [replyMessage, setReplyMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(
+    null,
+  );
 
   const counts = tierCounts(list.rows);
+  const askedForChanges = row?.status === "changes_requested";
   const templateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(INVESTOR_CSV_TEMPLATE)}`;
 
   async function loadFile(file: File) {
@@ -67,12 +77,99 @@ export function InvestorListPanel({
     setList({ rows: parsed.rows, source_file: file.name });
   }
 
+  async function sendBack() {
+    if (replyPending || list.rows.length === 0) return;
+    if (
+      !window.confirm(
+        "Send this list back so the client can confirm it? They will see your reply. This is not a conversation.",
+      )
+    ) {
+      return;
+    }
+    setReplyPending(true);
+    setReplyMessage(null);
+    const note = reply.trim();
+    const next = { ...list, admin_note: note || undefined };
+    try {
+      const result = await publishSetupStep(clientId, "investor_list", next, note);
+      if (!result.ok) {
+        setReplyMessage({ kind: "error", text: result.error });
+        return;
+      }
+      setList(next);
+      setSavedKey(JSON.stringify(next));
+      setReply("");
+      setReplyMessage({
+        kind: result.clientEmail.ok ? "ok" : "error",
+        text: result.clientEmail.ok
+          ? "Sent back. The client can confirm the list."
+          : `Sent back for confirmation, but the email was not sent. ${result.clientEmail.reason}`,
+      });
+    } catch (err) {
+      setReplyMessage({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Unable to send it back.",
+      });
+    } finally {
+      setReplyPending(false);
+    }
+  }
+
   return (
     <StepFrame
       item={item}
       intro="Send the list from Rupert Match (fund names, tiers and contact counts; never people), or upload a CSV with: Fund Name, Fund Point of Contact, General Details, Fit Level (Tier 1, 2 or 3), Why It Works, Comments. Check the preview, then push. The client can add a note on any fund, ask questions, or confirm."
     >
       <ClientAnswer row={row} />
+      {askedForChanges ? (
+        <div className="mx-lg mt-md rounded-card border border-primary/30 bg-background px-md py-md">
+          <p className="text-body-sm text-heading">Send the list back for confirmation</p>
+          <p className="mt-xs text-body-sm text-muted">
+            Reply if you want, then send the same list back. The client confirms it. This is not a
+            back-and-forth.
+          </p>
+          <label className="mt-sm block text-label uppercase tracking-label text-muted">
+            Reply (optional, shown on their list)
+            <textarea
+              className={`${inputClass} mt-sm normal-case tracking-normal`}
+              rows={3}
+              maxLength={NOTE_MAX}
+              value={reply}
+              disabled={replyPending}
+              onChange={(event) => setReply(event.target.value)}
+              placeholder="A short reply, then they confirm"
+            />
+          </label>
+          <button
+            type="button"
+            className={`${primaryButton} mt-sm`}
+            disabled={replyPending || list.rows.length === 0}
+            onClick={() => void sendBack()}
+          >
+            {replyPending ? "Sending…" : "Send back for confirmation"}
+          </button>
+          {replyMessage ? (
+            <p
+              role={replyMessage.kind === "error" ? "alert" : "status"}
+              className={`mt-sm text-body-sm ${replyMessage.kind === "error" ? "text-error" : "text-success"}`}
+            >
+              {replyMessage.text}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <PublishBar
+        clientId={clientId}
+        step="investor_list"
+        item={item}
+        row={row}
+        draft={list}
+        dirty={JSON.stringify(list) !== savedKey}
+        onSaved={() => setSavedKey(JSON.stringify(list))}
+        pushLabel="Push list for confirmation"
+        problem={list.rows.length === 0 ? "Upload the investor CSV before pushing." : null}
+      />
 
       <div className="flex flex-wrap items-center gap-sm px-lg pt-md">
         <Link href={`/admin/clients/${clientId}/match`} className={`${secondaryButton} no-underline`}>
@@ -166,63 +263,36 @@ export function InvestorListPanel({
       </div>
 
       {list.rows.length > 0 ? (
-        <div className="max-h-[520px] overflow-auto border-t border-border">
-          <table className="w-full min-w-[860px] text-left text-body-sm">
-            <thead className="sticky top-0 bg-surface">
-              <tr className="border-b border-border text-label uppercase tracking-label text-muted">
-                <th className="px-lg py-sm font-medium">Tier</th>
-                <th className="px-md py-sm font-medium">Fund</th>
-                <th className="px-md py-sm font-medium">Point of contact</th>
-                <th className="px-md py-sm font-medium">Details</th>
-                <th className="px-md py-sm font-medium">Why it works</th>
-                <th className="px-md py-sm font-medium">Comments</th>
-              </tr>
-            </thead>
-            <tbody>
-              {FIT_TIERS.flatMap(({ tier }) =>
-                list.rows
-                  .filter((entry) => entry.tier === tier)
-                  .map((entry) => (
-                    <tr key={entry.id} className="border-b border-border align-top last:border-b-0">
-                      <td className="px-lg py-sm text-primary">T{entry.tier}</td>
-                      <td className="px-md py-sm text-heading">
-                        {entry.fund_name}
-                        {entry.website ? (
-                          <a
-                            href={entry.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ml-sm text-primary hover:text-primary-hover"
-                            aria-label={`Open ${entry.fund_name} website in a new tab`}
-                          >
-                            ↗
-                          </a>
-                        ) : null}
-                      </td>
-                      <td className="px-md py-sm">{entry.contact}</td>
-                      <td className="px-md py-sm text-muted">{entry.details}</td>
-                      <td className="px-md py-sm">{entry.why}</td>
-                      <td className="px-md py-sm text-muted">{entry.comments}</td>
-                    </tr>
-                  )),
-              )}
-            </tbody>
-          </table>
+        <div className="border-t border-border py-md">
+          <InvestorFundGroups
+            rows={list.rows}
+            renderRow={(entry) => (
+              <li key={entry.id} className="px-lg py-md text-body-sm">
+                <p className="text-heading">
+                  {entry.fund_name}
+                  {entry.website ? (
+                    <a
+                      href={entry.website}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-sm text-primary hover:text-primary-hover"
+                      aria-label={`Open ${entry.fund_name} website in a new tab`}
+                    >
+                      Website ↗
+                    </a>
+                  ) : null}
+                </p>
+                {entry.contact ? <p className="text-secondary">{entry.contact}</p> : null}
+                {entry.details ? <p className="mt-xs text-muted">{entry.details}</p> : null}
+                {entry.why ? <p className="mt-xs whitespace-pre-wrap text-body">{entry.why}</p> : null}
+                {entry.comments ? <p className="mt-xs text-muted">{entry.comments}</p> : null}
+              </li>
+            )}
+          />
         </div>
       ) : null}
 
       <EarlierRounds row={row} />
-      <PublishBar
-        clientId={clientId}
-        step="investor_list"
-        item={item}
-        row={row}
-        draft={list}
-        dirty={JSON.stringify(list) !== savedKey}
-        onSaved={() => setSavedKey(JSON.stringify(list))}
-        pushLabel="Push list for confirmation"
-        problem={list.rows.length === 0 ? "Upload the investor CSV before pushing." : null}
-      />
     </StepFrame>
   );
 }

@@ -17,6 +17,7 @@ import {
   SITE_LABEL,
   TIERS,
   TIER_TO_FIT,
+  dropSectorFocus,
   firmTypeLabel,
   type ContactBrief,
   type Count,
@@ -487,7 +488,7 @@ export function buildClientList(run: MatchRun): Result<InvestorListPayload> {
         .join(" · "),
       website: websiteHref(firm.web) || undefined,
       tier: TIER_TO_FIT[result.tier],
-      why: [result.why, ...result.pros.slice(0, 3)].join("\n"),
+      why: dropSectorFocus([result.why, ...result.pros.slice(0, 3)].join("\n")),
       comments: result.overflow ? "Bullseye-grade; planned for the second wave." : "",
     };
   });

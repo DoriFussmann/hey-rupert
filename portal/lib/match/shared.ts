@@ -327,6 +327,22 @@ export function siteSummaryText(summary: Record<string, number>) {
     .join(" · ");
 }
 
+const SECTOR_FOCUS_LINE = /^Your sectors are \d+% of its focus\.?$/i;
+
+/** True for the generated line "Your sectors are 100% of its focus". */
+export function isSectorFocusLine(text: string) {
+  return SECTOR_FOCUS_LINE.test(text.trim());
+}
+
+/** Drops that generated line from a why-it-works blurb. */
+export function dropSectorFocus(text: string) {
+  return text
+    .split("\n")
+    .filter((line) => !isSectorFocusLine(line))
+    .join("\n")
+    .trim();
+}
+
 /** Fields where "none" is a real answer. */
 export const NONE_OK_FIELDS = new Set(["existing_investors", "already_pitched", "competitors"]);
 

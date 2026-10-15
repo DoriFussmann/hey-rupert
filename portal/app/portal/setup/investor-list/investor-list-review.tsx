@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
 import { ReviewActions } from "@/components/setup/review-actions";
 import {
   FIT_TIERS,
@@ -14,6 +15,7 @@ export function InvestorListReview({
   version,
   open,
   sentNotes,
+  adminNote,
   readOnly,
 }: {
   rows: InvestorRow[];
@@ -22,16 +24,14 @@ export function InvestorListReview({
   open: boolean;
   /** Notes the client already sent on this version. */
   sentNotes: Record<string, string>;
+  /** Rupert's reply, shown when the list is back for confirmation. */
+  adminNote?: string;
   readOnly: boolean;
 }) {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
   const [tierFilter, setTierFilter] = useState<0 | 1 | 2 | 3>(0);
   const counts = useMemo(() => tierCounts(rows), [rows]);
-
-  const shown = FIT_TIERS.filter(
-    ({ tier }) => tierFilter === 0 || tierFilter === tier,
-  );
 
   const tabClass = (active: boolean) =>
     `rounded-md px-md py-sm text-body-sm transition-colors duration-hover ${
@@ -40,8 +40,30 @@ export function InvestorListReview({
         : "border border-border bg-surface text-secondary hover:text-heading"
     }`;
 
+  const actions = open ? (
+    <div className="sticky top-0 z-20 mb-lg">
+      {adminNote ? (
+        <section className="mb-sm rounded-card border border-border bg-surface px-lg py-md">
+          <p className="text-label uppercase tracking-label text-muted">From Rupert</p>
+          <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{adminNote}</p>
+        </section>
+      ) : null}
+      <ReviewActions
+        step="investor_list"
+        version={version}
+        itemNotes={notes}
+        confirmLabel="Confirm list"
+        changesLabel="Ask a question first"
+        notePlaceholder="A comment for Rupert. Confirming the list sends it."
+        intro="Add a comment if you want, then confirm the list. A question goes to Rupert, who replies and sends the list back for you to confirm."
+        readOnly={readOnly}
+      />
+    </div>
+  ) : null;
+
   return (
     <>
+      {actions}
       <div className="mb-md flex flex-wrap gap-sm" role="tablist" aria-label="Filter by tier">
         <button
           type="button"
@@ -66,24 +88,9 @@ export function InvestorListReview({
         ))}
       </div>
 
-      {shown.map(({ tier, label, detail }) => {
-        const tierRows = rows.filter((row) => row.tier === tier);
-        if (tierRows.length === 0) return null;
-        return (
-          <section
-            key={tier}
-            className="mb-lg overflow-hidden rounded-card border border-border bg-surface"
-          >
-            <div className="flex flex-wrap items-baseline justify-between gap-sm border-b border-border px-lg py-md">
-              <h2 className="text-h4">
-                {label} <span className="text-muted">· {detail}</span>
-              </h2>
-              <p className="text-body-sm text-muted">
-                {tierRows.length} fund{tierRows.length === 1 ? "" : "s"}
-              </p>
-            </div>
-            <ul className="divide-y divide-border">
-              {tierRows.map((row) => {
+      <InvestorFundGroups
+        rows={rows.filter((row) => tierFilter === 0 || row.tier === tierFilter)}
+        renderRow={(row) => {
                 const note = notes[row.id] ?? "";
                 const sent = sentNotes[row.id];
                 const isEditing = editing[row.id] || Boolean(note);
@@ -180,23 +187,8 @@ export function InvestorListReview({
                     ) : null}
                   </li>
                 );
-              })}
-            </ul>
-          </section>
-        );
-      })}
-
-      {open ? (
-        <ReviewActions
-          step="investor_list"
-          version={version}
-          itemNotes={notes}
-          confirmLabel="Confirm list"
-          changesLabel="Send questions / changes"
-          notePlaceholder="Questions, funds to add or remove, anything else"
-          readOnly={readOnly}
-        />
-      ) : null}
+        }}
+      />
     </>
   );
 }

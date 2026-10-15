@@ -21,9 +21,14 @@ export default async function InvestorListPage() {
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Investor Matching"
-        description="The investors Rupert matched for this raise, in three fit tiers. Add a note on any fund (already in touch, not a fit, a question), then confirm."
+        description="The investors Rupert matched for this raise. Open a fund type to look through it. Add a comment if you want, then confirm."
       />
-      <ReviewStatus item={item} row={row} />
+      <ReviewStatus
+        item={item}
+        row={row}
+        waitingTitle="Rupert has your note."
+        waitingDetail="He'll reply and send this list back for you to confirm."
+      />
       {visible && row ? (
         <>
           {list.summary ? (
@@ -36,6 +41,7 @@ export default async function InvestorListPage() {
             version={row.version}
             open={row.status === "with_client"}
             sentNotes={sentNotes}
+            adminNote={list.admin_note}
             readOnly={viewAs}
           />
           <ResponseHistory history={row.history} currentVersion={row.version} />

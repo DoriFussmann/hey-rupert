@@ -2,6 +2,8 @@
 // decide whose turn each step is. Pure module: safe on the server and in the
 // browser. Every screen, email and reminder reads from here.
 
+import { dropSectorFocus } from "@/lib/match/shared";
+
 export type SetupStepId =
   | "materials"
   | "deck_review"
@@ -200,6 +202,8 @@ export type InvestorListPayload = {
   rows: InvestorRow[];
   source_file: string;
   summary?: InvestorListSummary | null;
+  /** Rupert's note when the list is sent back for the client to confirm. */
+  admin_note?: string;
 };
 
 export type CopyEmail = { subject: string; body: string };
@@ -717,15 +721,17 @@ export function asInvestorList(value: unknown): InvestorListPayload {
           contact: str(item.contact, CSV_FIELD_MAX),
           details: str(item.details, CSV_FIELD_MAX),
           tier: asTier(item.tier) ?? 3,
-          why: str(item.why, CSV_FIELD_MAX),
+          why: dropSectorFocus(str(item.why, CSV_FIELD_MAX)),
           comments: str(item.comments, CSV_FIELD_MAX),
           website: websiteHref(str(item.website, 500)) || undefined,
         }))
     : [];
+  const adminNote = str(raw.admin_note, NOTE_MAX).trim();
   return {
     rows,
     source_file: str(raw.source_file, 255),
     summary: asInvestorListSummary(raw.summary),
+    admin_note: adminNote || undefined,
   };
 }
 

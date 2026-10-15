@@ -21,6 +21,7 @@ export function ReviewActions({
   confirmLabel,
   changesLabel = "Request changes",
   notePlaceholder = "Anything Rupert should know, change, or answer",
+  intro,
   readOnly,
 }: {
   step: "framing" | "investor_list" | "email_copy";
@@ -29,6 +30,7 @@ export function ReviewActions({
   confirmLabel: string;
   changesLabel?: string;
   notePlaceholder?: string;
+  intro?: string;
   readOnly: boolean;
 }) {
   const router = useRouter();
@@ -71,15 +73,16 @@ export function ReviewActions({
       <div className="border-b border-border px-lg py-md">
         <p className="text-label uppercase tracking-label text-primary">Your turn</p>
         <p className="mt-xs text-body-sm text-muted">
-          Confirm to move forward, or send Rupert your changes and questions.
+          {intro ??
+            "Confirm to move forward, or send Rupert your changes and questions."}
           {noteCount > 0
-            ? ` Your ${noteCount} note${noteCount === 1 ? "" : "s"} above will be included.`
+            ? ` Your ${noteCount} note${noteCount === 1 ? "" : "s"} on specific funds will be included.`
             : ""}
         </p>
       </div>
       <div className="px-lg py-lg">
         <label className="block text-label uppercase tracking-label text-muted">
-          Note for Rupert (optional when confirming)
+          Comment (optional — sent when you confirm)
           <textarea
             className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary"
             rows={4}
