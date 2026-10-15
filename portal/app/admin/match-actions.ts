@@ -36,6 +36,7 @@ import {
   DEFAULT_SETTINGS,
   FUND_DB_BUCKET,
   FUND_DB_MAX_BYTES,
+  FUND_UPLOAD_CHUNK_BYTES,
   REJECT_REASONS,
   type FirmDetail,
   type FundDbVersion,
@@ -78,7 +79,7 @@ function errorText(err: unknown, fallback: string) {
 export async function createFundUpload(file: {
   name: string;
   size: number;
-}): Promise<Result<{ path: string; token: string }>> {
+}): Promise<Result<{ path: string }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const name = String(file?.name ?? "");
@@ -89,17 +90,43 @@ export async function createFundUpload(file: {
   if (!(size > 0) || size > FUND_DB_MAX_BYTES) {
     return { ok: false, error: "The file must be under 50 MB." };
   }
-  const path = `${FUND_UPLOAD_FOLDER}${randomUUID()}.xlsx`;
-  const { data, error } = await access.supabase.storage
-    .from(FUND_DB_BUCKET)
-    .createSignedUploadUrl(path);
-  if (error || !data) {
-    return {
-      ok: false,
-      error: matchTableError(`Upload could not start: ${error?.message ?? "unknown error"}.`),
-    };
+  return { ok: true, path: `${FUND_UPLOAD_FOLDER}${randomUUID()}.xlsx` };
+}
+
+const UPLOAD_PATH = /^uploads\/[0-9a-f-]{36}\.xlsx$/;
+const MAX_PARTS = Math.ceil(FUND_DB_MAX_BYTES / FUND_UPLOAD_CHUNK_BYTES);
+
+function partPath(path: string, index: number) {
+  return `${path}.parts/${String(index).padStart(4, "0")}`;
+}
+
+/**
+ * Stores one piece of the workbook. The browser sends the file in pieces
+ * through the website (each under the hosting request limit), so it never
+ * talks to storage directly.
+ */
+export async function uploadFundChunk(form: FormData): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const path = String(form.get("path") ?? "");
+  const index = Number(form.get("index"));
+  const chunk = form.get("chunk");
+  if (!UPLOAD_PATH.test(path) || !Number.isInteger(index) || index < 0 || index >= MAX_PARTS) {
+    return { ok: false, error: "Unknown upload." };
   }
-  return { ok: true, path: data.path, token: data.token };
+  if (!(chunk instanceof Blob) || chunk.size === 0 || chunk.size > FUND_UPLOAD_CHUNK_BYTES) {
+    return { ok: false, error: "Upload piece is missing or too large." };
+  }
+  const { error } = await access.supabase.storage
+    .from(FUND_DB_BUCKET)
+    .upload(partPath(path, index), Buffer.from(await chunk.arrayBuffer()), {
+      contentType: "application/octet-stream",
+      upsert: true,
+    });
+  if (error) {
+    return { ok: false, error: matchTableError(`Upload failed: ${error.message}.`) };
+  }
+  return { ok: true };
 }
 
 async function removeStaged(supabase: ReturnType<typeof createServiceClient>) {
@@ -119,33 +146,49 @@ async function removeStaged(supabase: ReturnType<typeof createServiceClient>) {
 export async function stageFundUpload(
   path: string,
   fileName: string,
+  parts: number,
 ): Promise<Result<{ version: FundDbVersion }> & { errors?: string[] }> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const supabase = access.supabase;
   const cleanPath = String(path ?? "");
-  if (
-    !cleanPath.startsWith(FUND_UPLOAD_FOLDER) ||
-    cleanPath.includes("..") ||
-    !/\.xlsx$/i.test(cleanPath)
-  ) {
+  const count = Number(parts);
+  if (!UPLOAD_PATH.test(cleanPath) || !Number.isInteger(count) || count < 1 || count > MAX_PARTS) {
     return { ok: false, error: "Unknown upload." };
   }
-  const discardUpload = () => supabase.storage.from(FUND_DB_BUCKET).remove([cleanPath]);
+  const pieces = Array.from({ length: count }, (_, index) => partPath(cleanPath, index));
+  const removePieces = () => supabase.storage.from(FUND_DB_BUCKET).remove(pieces);
+  const discardUpload = () => supabase.storage.from(FUND_DB_BUCKET).remove([cleanPath, ...pieces]);
 
   try {
-    const { data: file, error: downloadError } = await supabase.storage
-      .from(FUND_DB_BUCKET)
-      .download(cleanPath);
-    if (downloadError || !file) {
-      return { ok: false, error: `The upload could not be read: ${downloadError?.message ?? "missing file"}.` };
+    // Join the pieces back into the workbook and keep it as one file.
+    const buffers: Buffer[] = [];
+    for (const piece of pieces) {
+      const { data, error } = await supabase.storage.from(FUND_DB_BUCKET).download(piece);
+      if (error || !data) {
+        await discardUpload();
+        return { ok: false, error: `The upload is incomplete: ${error?.message ?? "missing piece"}. Upload again.` };
+      }
+      buffers.push(Buffer.from(await data.arrayBuffer()));
     }
-    if (file.size > FUND_DB_MAX_BYTES) {
+    const workbook = Buffer.concat(buffers);
+    if (workbook.length > FUND_DB_MAX_BYTES) {
       await discardUpload();
       return { ok: false, error: "The file must be under 50 MB." };
     }
+    const { error: saveError } = await supabase.storage
+      .from(FUND_DB_BUCKET)
+      .upload(cleanPath, workbook, {
+        contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        upsert: true,
+      });
+    if (saveError) {
+      await discardUpload();
+      return { ok: false, error: `The upload could not be saved: ${saveError.message}.` };
+    }
+    await removePieces();
 
-    const built = await buildFundDb(Buffer.from(await file.arrayBuffer()));
+    const built = await buildFundDb(workbook);
     if (!built.ok) {
       await discardUpload();
       return { ok: false, error: "The workbook was not imported.", errors: built.errors };
