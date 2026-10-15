@@ -81,9 +81,15 @@ export function MatchProfilePanel({
             </span>
           </div>
           {state && state.gaps.length > 0 ? (
-            <p className="mt-xs text-body-sm text-warning">
-              Needs: {state.gaps.map((gap) => gap.label).join(", ")}
-            </p>
+            <>
+              <p className="mt-xs text-body-sm text-warning">
+                Missing answers: {state.gaps.map((gap) => gap.label).join(", ")}
+              </p>
+              <p className="mt-xs text-body-sm text-secondary">
+                Add them in Rupert Match (from your notes, or ask the founder) and click Save and run match.
+                Nothing is needed from the client in the portal, and the match runs in the meantime.
+              </p>
+            </>
           ) : null}
           {state?.editedAt && isBehind(state, interviewUpdatedAt) ? (
             <p className="mt-xs text-body-sm text-secondary">

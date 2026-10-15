@@ -17,10 +17,20 @@ import {
 } from "@/app/admin/clients/[id]/match/ui";
 import {
   DEFAULT_SETTINGS,
+  TIERS,
+  siteSummaryText,
   type MatchProfileState,
   type MatchSettings,
   type MatchView,
 } from "@/lib/match/shared";
+
+function profileNotice(action: string, state: MatchProfileState, ran: boolean) {
+  const gaps = state.gaps.map((gap) => gap.label).join(", ");
+  const match = ran ? " and the match is updated" : "";
+  return gaps
+    ? `${action}${match}. Still missing: ${gaps}. Fill them in the profile and click Save and run match.`
+    : `${action}${match}. The profile is complete: ready to match.`;
+}
 
 export function MatchWorkspace({
   clientId,
@@ -85,13 +95,21 @@ export function MatchWorkspace({
       () => checkClientWebsites(clientId),
       (result) => {
         setView(result.view);
-        setNotice({
-          kind: "ok",
-          text:
-            result.checked === 0
-              ? "All websites in the top funds were checked in the last 14 days."
-              : `Checked ${n(result.checked)} websites.${result.pending > 0 ? ` ${n(result.pending)} still to check: run it again.` : ""}`,
-        });
+        const dropped = TIERS.reduce((sum, tier) => sum + result.view.tiers[tier.key].deadRemoved.length, 0);
+        const parts =
+          result.checked === 0
+            ? ["Every top fund's website was already checked in the last 14 days."]
+            : [`Checked ${n(result.checked)} websites: ${siteSummaryText(result.summary)}.`];
+        if (result.pending > 0) parts.push(`${n(result.pending)} still to check: click Check websites again.`);
+        parts.push(
+          dropped > 0
+            ? `${n(dropped)} fund${dropped === 1 ? " is" : "s are"} out of the tiers because the site is dead, parked or not investing (listed under "dropped for dead websites" in each tier).`
+            : "No fund was dropped for its website.",
+        );
+        parts.push(
+          'Sites that block checks or can\'t be read are not proof of anything: filter the leads by website status and open them yourself.',
+        );
+        setNotice({ kind: "ok", text: parts.join(" ") });
       },
     );
   }
@@ -165,12 +183,17 @@ export function MatchWorkspace({
           setNotice(
             runError && database
               ? { kind: "error", text: runError }
-              : { kind: "ok", text: nextView ? "Saved. The match is up to date." : "Saved." },
+              : { kind: "ok", text: profileNotice("Saved", nextState, Boolean(nextView)) },
           );
         }}
-        onBuilt={(nextState) => {
+        onBuilt={(nextState, nextView, runError) => {
           setState(nextState);
-          setNotice({ kind: "ok", text: "Profile rebuilt from the intake. Check it, then save to run." });
+          if (nextView) setView(nextView);
+          setNotice(
+            !nextView && runError && database
+              ? { kind: "error", text: `Profile rebuilt from the intake, but the match could not run: ${runError}` }
+              : { kind: "ok", text: profileNotice("Rebuilt from the intake", nextState, Boolean(nextView)) },
+          );
         }}
       />
 

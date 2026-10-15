@@ -319,6 +319,17 @@ export const SITE_LABEL: Record<SiteState, string> = {
   unscanned: "Not checked yet",
 };
 
+/** "150 Website OK · 12 Dead website …" from status counts, biggest first. */
+export function siteSummaryText(summary: Record<string, number>) {
+  return Object.entries(summary)
+    .sort((a, b) => b[1] - a[1])
+    .map(([status, count]) => `${count.toLocaleString("en-US")} ${SITE_LABEL[status as SiteState] ?? status}`)
+    .join(" · ");
+}
+
+/** Fields where "none" is a real answer. */
+export const NONE_OK_FIELDS = new Set(["existing_investors", "already_pitched", "competitors"]);
+
 export type ContactBrief = { name: string; title: string; role: string };
 
 export type FirmRow = {
