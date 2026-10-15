@@ -29,7 +29,12 @@ import {
   type SiteState,
   type TierSummary,
 } from "@/lib/match/shared";
-import type { InvestorListPayload, InvestorListSummary, InvestorRow } from "@/lib/setup";
+import {
+  websiteHref,
+  type InvestorListPayload,
+  type InvestorListSummary,
+  type InvestorRow,
+} from "@/lib/setup";
 import type { createServiceClient } from "@/lib/supabase/admin";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -222,6 +227,7 @@ function toRow(result: MatchResult, reviews: Map<string, Review>): FirmRow {
     hq: hqOf(result),
     loc: result.loc,
     year: result.f.year,
+    web: websiteHref(result.f.web),
     people: investingPeople(result),
     tier: result.tier,
     overflow: Boolean(result.overflow),
@@ -476,14 +482,10 @@ export function buildClientList(run: MatchRun): Result<InvestorListPayload> {
         people > 0
           ? `${people} investing contact${people === 1 ? "" : "s"} identified`
           : "Contacts being confirmed",
-      details: [
-        [firmTypeLabel(firm.type), hqOf(result), firm.year ? `Founded ${firm.year}` : ""]
-          .filter(Boolean)
-          .join(" · "),
-        firm.web,
-      ]
+      details: [firmTypeLabel(firm.type), hqOf(result), firm.year ? `Founded ${firm.year}` : ""]
         .filter(Boolean)
-        .join("\n"),
+        .join(" · "),
+      website: websiteHref(firm.web) || undefined,
       tier: TIER_TO_FIT[result.tier],
       why: [result.why, ...result.pros.slice(0, 3)].join("\n"),
       comments: result.overflow ? "Bullseye-grade; planned for the second wave." : "",

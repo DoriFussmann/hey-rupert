@@ -184,6 +184,18 @@ export function LeadsTable({
                         >
                           {row.name}
                         </button>
+                        {row.web ? (
+                          <a
+                            href={row.web}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-sm text-body-sm text-primary hover:text-primary-hover"
+                            aria-label={`Open ${row.name} website in a new tab`}
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            Website ↗
+                          </a>
+                        ) : null}
                         <p className="text-muted">
                           {row.type} · {row.hq || row.loc}
                           {row.year ? ` · est. ${row.year}` : ""} · {n(row.people)} contact{row.people === 1 ? "" : "s"}

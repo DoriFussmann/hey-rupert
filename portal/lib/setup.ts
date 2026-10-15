@@ -169,7 +169,21 @@ export type InvestorRow = {
   tier: FitTier;
   why: string;
   comments: string;
+  /** The fund's website as a full http(s) link (lists sent from Rupert Match). */
+  website?: string;
 };
+
+/** A fund website as a safe http(s) link, or "" when it isn't one. */
+export function websiteHref(value: string | null | undefined) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return url.protocol === "https:" || url.protocol === "http:" ? url.href : "";
+  } catch {
+    return "";
+  }
+}
 
 /** Funds and contact counts per tier, written by Rupert Match. No people. */
 export type InvestorListSummary = {
@@ -699,6 +713,7 @@ export function asInvestorList(value: unknown): InvestorListPayload {
           tier: asTier(item.tier) ?? 3,
           why: str(item.why, CSV_FIELD_MAX),
           comments: str(item.comments, CSV_FIELD_MAX),
+          website: websiteHref(str(item.website, 500)) || undefined,
         }))
     : [];
   return {
