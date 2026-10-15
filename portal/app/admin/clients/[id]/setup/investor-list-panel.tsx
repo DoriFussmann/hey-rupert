@@ -185,7 +185,20 @@ export function InvestorListPanel({
                   .map((entry) => (
                     <tr key={entry.id} className="border-b border-border align-top last:border-b-0">
                       <td className="px-lg py-sm text-primary">T{entry.tier}</td>
-                      <td className="px-md py-sm text-heading">{entry.fund_name}</td>
+                      <td className="px-md py-sm text-heading">
+                        {entry.fund_name}
+                        {entry.website ? (
+                          <a
+                            href={entry.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-sm text-primary hover:text-primary-hover"
+                            aria-label={`Open ${entry.fund_name} website in a new tab`}
+                          >
+                            ↗
+                          </a>
+                        ) : null}
+                      </td>
                       <td className="px-md py-sm">{entry.contact}</td>
                       <td className="px-md py-sm text-muted">{entry.details}</td>
                       <td className="px-md py-sm">{entry.why}</td>

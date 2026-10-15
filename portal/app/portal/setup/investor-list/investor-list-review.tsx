@@ -91,7 +91,20 @@ export function InvestorListReview({
                   <li key={row.id} className="px-lg py-md">
                     <div className="grid gap-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
                       <div className="min-w-0">
-                        <p className="text-body-sm text-heading">{row.fund_name}</p>
+                        <p className="text-body-sm text-heading">
+                          {row.fund_name}
+                          {row.website ? (
+                            <a
+                              href={row.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-sm text-primary hover:text-primary-hover"
+                              aria-label={`Open ${row.fund_name} website in a new tab`}
+                            >
+                              Website ↗
+                            </a>
+                          ) : null}
+                        </p>
                         {row.contact ? (
                           <p className="text-body-sm text-secondary">{row.contact}</p>
                         ) : null}

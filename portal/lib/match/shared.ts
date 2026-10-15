@@ -339,6 +339,8 @@ export type FirmRow = {
   hq: string;
   loc: string;
   year: number | null;
+  /** Website as a full http(s) link, or "". */
+  web: string;
   /** Investing contacts with an email at this fund. */
   people: number;
   tier: Tier;
