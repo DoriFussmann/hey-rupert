@@ -9,8 +9,6 @@ const STATIC_PATHS = [
   "/database/",
   "/articles/",
   "/about/",
-  "/team/",
-  "/book-call/",
 ];
 
 function escapeXml(value: string): string {

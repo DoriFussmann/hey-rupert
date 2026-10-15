@@ -32,6 +32,7 @@ internalLinks:
     anchor: pre seed vs seed vs series a
   - slug: seed-funding-vs-series-a
     anchor: seed funding vs series a
+
 externalLinks:
   - label: Series — pandas 3.0.6 documentation
     url: "https://pandas.pydata.org/docs/reference/series.html"
@@ -232,7 +233,7 @@ Year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, a
 - Institutional Series A investors run formal IC processes with reference checks, financial model reviews, and 8–12 week timelines; targeting the wrong investors or running an undisciplined process doesn't just fail — it actively narrows your options for future attempts.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/).
+Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

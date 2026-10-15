@@ -34,6 +34,7 @@ internalLinks:
     anchor: pre seed vs seed funding
   - slug: what-is-pre-seed-funding
     anchor: what is pre seed funding
+
 externalLinks: []
 faqs:
   - question: "How long does a pre-seed raise actually take in 2026?"
@@ -158,5 +159,5 @@ The sequencing and investor-research work described in this playbook is precisel
 That's the gap Rupert is built to close. Experienced operators handle the investor research, craft the personalized outreach, and manage the pipeline so that the process runs in the right order and at the right pace — while founders retain complete visibility into every conversation and every relationship. The goal is not to hand off the raise; it's to make sure the process is executed the way this playbook describes, without the founder having to be the one doing it at midnight.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
 <!-- CMS-INTERNAL:END -->

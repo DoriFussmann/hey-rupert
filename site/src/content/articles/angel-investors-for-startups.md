@@ -34,6 +34,7 @@ internalLinks:
     anchor: investors for small business
   - slug: types-of-investors-for-small-business
     anchor: types of investors for small business
+
 externalLinks:
   - label: Learn how to find and work with angel investors
     url: "https://www.svb.com/startup-insights/raising-capital/how-to-find-the-right-angel-investors/"
@@ -201,7 +202,7 @@ July's reported investments from ACA member groups highlight the continued bread
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/).
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

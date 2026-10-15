@@ -28,10 +28,9 @@ internalLinks:
     anchor: investor crm
   - slug: investor-update-template
     anchor: investor update template
-  - slug: quarterly-update-email-template
-    anchor: quarterly update email template
   - slug: startup-investor-update-presentation
     anchor: startup investor update presentation
+
 externalLinks:
   - label: The ICSID Caseload - Statistics
     url: "https://icsid.worldbank.org/resources/publications/icsid-caseload-statistics"
@@ -174,7 +173,7 @@ investors and analysts increasingly research companies through AI assistants bef
 - Upgrade to a tiered reporting system only when your shareholder count, institutional lead requirements, or board structure genuinely demand it; don't over-engineer communication before the cap table complexity makes it necessary.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [startup investor update presentation](/articles/startup-investor-update-presentation/).
+Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [startup investor update presentation](/articles/startup-investor-update-presentation/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

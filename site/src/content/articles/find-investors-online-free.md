@@ -26,10 +26,11 @@ draft: false
 internalLinks:
   - slug: angel-investors
     anchor: angel investors
-  - slug: how-to-find-investors-for-startup
-    anchor: how to find investors for startup
+  - slug: how-to-find-investors
+    anchor: how to find investors
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
     anchor: where to find investors for startup
+
 externalLinks:
   - label: Find My - App Store - Apple
     url: "https://apps.apple.com/us/app/find-my/id1514844621"
@@ -156,7 +157,7 @@ raising venture capital has increasingly become a precise targeting game rather 
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [how to find investors for startup](/articles/how-to-find-investors-for-startup/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/).
+Further reading: [angel investors](/articles/angel-investors/) · [how to find investors](/articles/how-to-find-investors/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

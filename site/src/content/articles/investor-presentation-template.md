@@ -28,6 +28,7 @@ internalLinks:
     anchor: pitch deck
   - slug: investment-presentation-checklist
     anchor: investment presentation
+
 externalLinks:
   - label: The AI presentation workspace
     url: "https://pitch.com/"
@@ -138,7 +139,7 @@ AI tools such as Gamma, Tome, and Canva AI have become industry-standard for lay
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [pitch deck](/articles/pitch-deck/) · [investment presentation](/articles/investment-presentation-checklist/).
+Further reading: [pitch deck](/articles/pitch-deck/) · [investment presentation](/articles/investment-presentation-checklist/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

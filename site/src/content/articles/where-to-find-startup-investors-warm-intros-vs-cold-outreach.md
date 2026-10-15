@@ -28,8 +28,9 @@ internalLinks:
     anchor: angel investors
   - slug: find-investors-online-free
     anchor: find investors online free
-  - slug: how-to-find-investors-for-startup
-    anchor: how to find investors for startup
+  - slug: how-to-find-investors
+    anchor: how to find investors
+
 externalLinks:
   - label: "QED Investors: Home"
     url: "https://www.qedinvestors.com/"
@@ -145,7 +146,7 @@ Investors are closely vetting early-stage startups to find companies with tracti
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to find investors for startup](/articles/how-to-find-investors-for-startup/).
+Further reading: [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to find investors](/articles/how-to-find-investors/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

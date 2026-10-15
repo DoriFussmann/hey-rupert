@@ -47,6 +47,7 @@ internalLinks:
     anchor: How to Diagnose Your Startup Funding Stage and Raise Right
   - slug: types-of-funding-for-startups
     anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+
 externalLinks:
   - label: "Early Stage Venture Capital: A Comprehensive Guide"
     url: https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/early-stage-venture-capital

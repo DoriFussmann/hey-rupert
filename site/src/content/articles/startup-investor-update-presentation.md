@@ -28,10 +28,9 @@ internalLinks:
     anchor: investor crm
   - slug: investor-update-template
     anchor: investor update template
-  - slug: quarterly-update-email-template
-    anchor: quarterly update email template
   - slug: shareholder-update
     anchor: shareholder update
+
 externalLinks:
   - label: Drink Update
     url: "https://drinkupdate.com/?srsltid=AU7gw4Wk-36CV2y3I8AH47m1GlI7qkqQC49lsI66BWpk0QflaneEodRO"
@@ -159,7 +158,7 @@ Recent data indicates the market has stabilized and even begun a modest recovery
 - Pick a fixed send date, protect it every month, and add a 30-minute data-pull block two days before — consistency is what converts an update into a trust-building asset that shortens your next raise.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [quarterly update email template](/articles/quarterly-update-email-template/) · [shareholder update](/articles/shareholder-update/).
+Further reading: [investor crm](/articles/investor-crm/) · [investor update template](/articles/investor-update-template/) · [shareholder update](/articles/shareholder-update/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

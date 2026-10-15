@@ -47,6 +47,7 @@ internalLinks:
     anchor: "Startup Funding Stages: The Definitive Guide for Founders"
   - slug: startup-funding-stages-explained
     anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+
 externalLinks:
   - label: "6 Types of Funding for Startups: Definitive Guide"
     url: https://foundersnetwork.com/types-of-funding-for-startups/

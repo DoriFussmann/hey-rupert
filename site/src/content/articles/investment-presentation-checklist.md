@@ -28,6 +28,7 @@ internalLinks:
     anchor: pitch deck
   - slug: investor-presentation-template
     anchor: investor presentation template
+
 externalLinks: []
 faqs:
   - question: "How do VCs actually score a pitch deck internally?"
@@ -197,5 +198,5 @@ at Series A, investors are demanding an LTV:CAC ratio of at least 3:1, consisten
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [pitch deck](/articles/pitch-deck/) · [investor presentation template](/articles/investor-presentation-template/).
+Further reading: [pitch deck](/articles/pitch-deck/) · [investor presentation template](/articles/investor-presentation-template/)
 <!-- CMS-INTERNAL:END -->

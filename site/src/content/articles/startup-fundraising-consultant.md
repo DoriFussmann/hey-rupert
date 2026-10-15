@@ -34,6 +34,7 @@ internalLinks:
     anchor: capital raising fees
   - slug: capital-raising-services
     anchor: capital raising services
+
 externalLinks:
   - label: Consultant
     url: "https://consultant.vet.cornell.edu/"
@@ -138,7 +139,7 @@ Investors are increasingly deciding not off the deck but off the conversation �
 - Onboarding is not a formality — a rigorous consultant uses it to do real positioning work before building the target list, because who you reach is determined entirely by how the story is framed.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/).
+Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

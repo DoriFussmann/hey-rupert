@@ -32,6 +32,7 @@ internalLinks:
     anchor: seed funding vs series a
   - slug: seed-vs-series-a
     anchor: seed vs series a
+
 externalLinks:
   - label: Series — pandas 3.0.6 documentation
     url: "https://pandas.pydata.org/docs/reference/series.html"
@@ -168,7 +169,7 @@ Carta data shows that 16.6% of all startup cash raised on Carta in Q2 2025 came 
 - Start building investor relationships and Series A preparation materials — data room, financial model, cohort analysis — at least 6 months before you intend to formally launch the process, not the month before your first pitch.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [series a](/articles/series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
+Further reading: [series a](/articles/series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

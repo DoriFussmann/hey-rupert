@@ -34,6 +34,7 @@ internalLinks:
     anchor: pre seed funding
   - slug: what-is-pre-seed-funding
     anchor: what is pre seed funding
+
 externalLinks:
   - label: SEED - Official Website
     url: "https://www.ea.com/seed"
@@ -148,7 +149,7 @@ VCs are becoming increasingly specialized rather than generalist
 - The most costly mistake is misreading your stage: trying to raise seed without seed-stage proof wastes months and burns relationships, while over-preparing for seed when a pre-seed raise could fund the needed milestones costs equally precious time.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/).
+Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

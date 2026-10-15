@@ -32,6 +32,7 @@ internalLinks:
     anchor: pre seed vs seed vs series a
   - slug: seed-vs-series-a
     anchor: seed vs series a
+
 externalLinks:
   - label: Series — pandas 3.0.6 documentation
     url: "https://pandas.pydata.org/docs/reference/series.html"
@@ -198,7 +199,7 @@ The seed and Series A markets entering late 2026 reflect a widening bifurcation 
 - Only 15–20% of seed-funded companies reach a Series A within 24 months, which means timing, investor selection, and process discipline matter as much as the quality of your underlying metrics.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
+Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

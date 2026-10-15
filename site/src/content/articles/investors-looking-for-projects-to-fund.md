@@ -42,12 +42,13 @@ internalLinks:
     anchor: "How to Find Investors for Your Startup: The Complete Guide"
   - slug: angel-investors-vs-venture-capital
     anchor: "Angel Investors vs. Venture Capital: What Fits Your Raise?"
-  - slug: how-to-get-investors-for-your-business
-    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-find-investors
+    anchor: how to find investors
   - slug: how-to-get-investors-for-your-business-idea
     anchor: "Get Investors for Your Business Idea: Readiness Checklist"
   - slug: how-to-get-private-investors-for-your-business
     anchor: "How to Get Private Investors for Your Business: A Guide"
+
 externalLinks:
   - label: OpenVC | Find investors for your startup — raise for free.
     url: https://www.openvc.app/

@@ -39,14 +39,15 @@ faqs:
 internalLinks:
   - slug: angel-investors
     anchor: "How to Find Investors for Your Startup: The Complete Guide"
-  - slug: how-to-get-investors-for-your-business
-    anchor: "How to Get Investors for Your Business: A Founder's Guide"
+  - slug: how-to-find-investors
+    anchor: how to find investors
   - slug: how-to-get-investors-for-your-business-idea
     anchor: "Get Investors for Your Business Idea: Readiness Checklist"
   - slug: how-to-get-private-investors-for-your-business
     anchor: "How to Get Private Investors for Your Business: A Guide"
   - slug: investors-looking-for-projects-to-fund
     anchor: What Investors Looking for Projects to Fund Actually Want
+
 externalLinks:
   - label: What's the Difference? Venture Capitalist vs. Angel Investor
     url: https://www.rivier.edu/academics/blog-posts/whats-the-difference-venture-capitalist-vs-angel-investor/

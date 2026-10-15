@@ -12,13 +12,14 @@ export const GET: APIRoute = async () => {
   const team = await getCollection("team");
   const services = (await getCollection("services")).sort((a, b) => a.data.order - b.data.order);
 
+  const aboutUrl = `${SITE_URL.replace(/\/+$/, "")}/about/`;
   const body = generateLlmsTxt({
     siteUrl: SITE_URL,
     siteName: SITE_NAME,
     siteTagline: SITE_DESCRIPTION,
     articlesBase: ARTICLES_BASE,
     articles,
-    team,
+    team: [],
     services,
     extraPages: [
       {
@@ -42,7 +43,16 @@ export const GET: APIRoute = async () => {
     ],
   });
 
-  return new Response(body, {
+  const teamBlock = [
+    "## Team",
+    "",
+    ...team.map((member) => `- [${member.data.name}](${aboutUrl}): ${member.data.role}`),
+    "",
+    "## Services",
+  ].join("\n");
+  const rewritten = body.replace("## Team\n\n\n## Services", teamBlock);
+
+  return new Response(rewritten, {
     headers: { "Content-Type": "text/plain; charset=utf-8" },
   });
 };

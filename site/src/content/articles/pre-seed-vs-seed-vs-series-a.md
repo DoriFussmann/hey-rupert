@@ -3,7 +3,7 @@ title: "Pre-Seed vs Seed vs Series A: 10 Signals That Place You"
 description: "Not sure which funding stage you're actually in? These 10 concrete signals map your product, revenue, team, and traction to the right funding round."
 slug: pre-seed-vs-seed-vs-series-a
 date: "2026-09-28"
-updatedDate: "2026-09-28"
+updatedDate: "2026-10-12"
 author: dori-fussmann
 category: series-a
 pillarKeyword: series a
@@ -28,10 +28,13 @@ internalLinks:
     anchor: series a
   - slug: how-long-between-seed-and-series-a
     anchor: how long between seed and series a
+  - slug: pre-seed-vs-seed-funding
+    anchor: pre-seed vs seed funding
   - slug: seed-funding-vs-series-a
     anchor: seed funding vs series a
   - slug: seed-vs-series-a
     anchor: seed vs series a
+
 externalLinks:
   - label: Department of Statistics
     url: "https://statistics.stanford.edu/"
@@ -55,7 +58,7 @@ The more useful question is: what signals does your company currently exhibit, a
 A startup stage is really shorthand for what has already been proven — customer demand, product-market fit, repeatability, retention, go-to-market efficiency, and market scale.
  When you map your own company against those dimensions, a clearer picture emerges.
 
-The ten signals below are designed to do exactly that. Work through them honestly. The diagnosis they produce is more useful than any label you give yourself.
+The ten signals below are designed to do exactly that. Work through them honestly. The diagnosis they produce is more useful than any label you give yourself. If the open question is only pre-seed versus seed, [pre-seed vs seed funding](/articles/pre-seed-vs-seed-funding/) covers round size, who invests, and dilution without the Series A signals.
 
 ---
 
@@ -230,7 +233,7 @@ While capital is available, founders need to be acutely aware of changing valuat
 - In 2026, the ARR bar for a competitive Series A has risen materially; founders should calibrate their expectations against current benchmarks, not the numbers from two fundraising cycles ago.
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/).
+Further reading: [series a](/articles/series-a/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre-seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->

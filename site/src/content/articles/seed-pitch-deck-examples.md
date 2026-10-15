@@ -47,6 +47,7 @@ internalLinks:
     anchor: The Complete Seed Pitch Deck Guide for Raising Founders
   - slug: seed-round-pitch-deck-template
     anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+
 externalLinks:
   - label: The Ultimate Pitch Deck Guide for Startup Founders
     url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders

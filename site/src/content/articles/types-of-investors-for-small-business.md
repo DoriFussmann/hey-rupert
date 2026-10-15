@@ -34,6 +34,7 @@ internalLinks:
     anchor: how to get investors for small business
   - slug: investors-for-small-business
     anchor: investors for small business
+
 externalLinks:
   - label: How to find investors for your small business
     url: "https://mercury.com/blog/how-to-find-investors-for-small-business"
@@ -184,7 +185,7 @@ the accredited investor filter has been cracking open since 2020, and reforms ar
 <!-- WHERE-THINGS-STAND:END -->
 
 <!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/).
+Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
 
 <!-- CMS-EXTERNAL:START -->
