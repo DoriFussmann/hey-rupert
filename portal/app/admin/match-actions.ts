@@ -305,10 +305,14 @@ export async function runWebsiteBatchNow(): Promise<
 // ---------------------------------------------------------------------------
 // Match profile
 
-/** Builds (or rebuilds) the match profile from the client's intake. */
+/**
+ * Builds (or rebuilds) the match profile from the client's intake. With
+ * `run`, the match is re-run on the new profile when it has enough to run.
+ */
 export async function buildMatchProfile(
   clientId: string,
-): Promise<Result<{ state: MatchProfileState }>> {
+  options?: { run?: boolean },
+): Promise<Result<{ state: MatchProfileState; view: MatchView | null; runError: string | null }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   if (!isClaudeConfigured()) {
@@ -340,8 +344,11 @@ export async function buildMatchProfile(
     sourceInterviewAt: interview.updated_at,
   });
   if (!saved.ok) return saved;
+  const { view, error } = options?.run
+    ? await viewFor(supabase, clientId)
+    : { view: null, error: null };
   revalidateMatch(clientId);
-  return { ok: true, state: saved.value };
+  return { ok: true, state: saved.value, view, runError: error };
 }
 
 async function viewFor(
@@ -516,7 +523,9 @@ export async function restoreHiddenFund(
 /** Re-checks this client's top funds per tier whose result is old or missing. */
 export async function checkClientWebsites(
   clientId: string,
-): Promise<Result<{ view: MatchView; checked: number; pending: number }>> {
+): Promise<
+  Result<{ view: MatchView; checked: number; pending: number; summary: Record<string, number> }>
+> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const run = await runClientMatch(access.supabase, clientId);
@@ -529,14 +538,16 @@ export async function checkClientWebsites(
     (firm) => firm.web && isStale(checkedAt[firm.id]),
   );
   let checked = 0;
+  let summary: Record<string, number> = {};
   if (due.length > 0) {
     const result = await checkAndStoreSites(access.supabase, due, SITE_BUDGET_MS);
     if (!result.ok) return result;
     checked = result.checked;
+    summary = result.summary;
   }
   const { view, error } = await viewFor(access.supabase, clientId);
   if (!view) return { ok: false, error: error ?? "The match could not run." };
-  return { ok: true, view, checked, pending: Math.max(0, due.length - checked) };
+  return { ok: true, view, checked, pending: Math.max(0, due.length - checked), summary };
 }
 
 /**

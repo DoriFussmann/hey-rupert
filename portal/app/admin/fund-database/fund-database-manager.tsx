@@ -15,6 +15,7 @@ import {
   DAILY_SITE_BATCH,
   FUND_DB_MAX_BYTES,
   FUND_UPLOAD_CHUNK_BYTES,
+  siteSummaryText,
   type FundDbVersion,
 } from "@/lib/match/shared";
 
@@ -209,10 +210,11 @@ export function FundDatabaseManager({
         setMessage({ kind: "error", text: result.error });
         return;
       }
-      const summary = Object.entries(result.summary)
-        .map(([status, count]) => `${status} ${count}`)
-        .join(", ");
-      setMessage({ kind: "ok", text: `Checked ${n(result.checked)} websites${summary ? ` (${summary})` : ""}.` });
+      const summary = siteSummaryText(result.summary);
+      setMessage({
+        kind: "ok",
+        text: `Checked ${n(result.checked)} websites${summary ? `: ${summary}` : ""}. Dead, parked and not-investing funds now drop out of client tiers automatically.`,
+      });
       router.refresh();
     } catch (err) {
       setMessage({ kind: "error", text: errorText(err, "The website check failed.") });

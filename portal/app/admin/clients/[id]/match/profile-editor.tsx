@@ -16,6 +16,7 @@ import {
   MARKETS,
   MATCH_FIELDS,
   MATCH_SECTIONS,
+  NONE_OK_FIELDS,
   US_STATES,
   firmTypeLabel,
   isListField,
@@ -36,6 +37,7 @@ const chipClass =
   "inline-flex items-center gap-xs rounded-full border border-border bg-background px-sm py-xs text-body-sm text-heading";
 
 function ChipList({
+  inputId,
   label,
   value,
   options,
@@ -43,6 +45,7 @@ function ChipList({
   ranked,
   onChange,
 }: {
+  inputId: string;
   label: string;
   value: string[];
   options: string[];
@@ -82,6 +85,7 @@ function ChipList({
       </div>
       {value.length < max ? (
         <select
+          id={inputId}
           aria-label={`Add to ${label}`}
           className={`${inputClass} mt-xs`}
           value=""
@@ -149,14 +153,14 @@ function FieldInput({
     case "state":
       return select(US_STATES);
     case "verticals":
-      return <ChipList label={field.label} value={list} options={taxonomy.verticals} max={3} ranked onChange={onChange} />;
+      return <ChipList inputId={id} label={field.label} value={list} options={taxonomy.verticals} max={3} ranked onChange={onChange} />;
     case "industries":
-      return <ChipList label={field.label} value={list} options={taxonomy.industries} max={3} ranked onChange={onChange} />;
+      return <ChipList inputId={id} label={field.label} value={list} options={taxonomy.industries} max={3} ranked onChange={onChange} />;
     case "markets":
-      return <ChipList label={field.label} value={list} options={MARKETS} max={MARKETS.length} ranked={false} onChange={onChange} />;
+      return <ChipList inputId={id} label={field.label} value={list} options={MARKETS} max={MARKETS.length} ranked={false} onChange={onChange} />;
     case "investor_types":
       return (
-        <div className="mt-xs flex flex-wrap gap-sm">
+        <div id={id} tabIndex={-1} className="mt-xs flex flex-wrap gap-sm">
           {FIRM_TYPES.map((type) => (
             <label key={type} className="inline-flex items-center gap-xs text-body-sm text-body">
               <input
@@ -203,7 +207,7 @@ export function ProfileEditor({
   busy: boolean;
   run: RunAction;
   onSaved: (state: MatchProfileState, view: MatchView | null, runError: string | null) => void;
-  onBuilt: (state: MatchProfileState) => void;
+  onBuilt: (state: MatchProfileState, view: MatchView | null, runError: string | null) => void;
 }) {
   const [answers, setAnswers] = useState<MatchAnswers>(
     state?.answers ?? { company_name: companyName },
@@ -238,12 +242,28 @@ export function ProfileEditor({
     ) {
       return;
     }
-    void run("Reading the intake and building the profile…", () => buildMatchProfile(clientId), (result) => {
-      setAnswers(result.state.answers);
-      setSavedKey(JSON.stringify(result.state.answers));
-      setOpen(true);
-      onBuilt(result.state);
-    });
+    void run(
+      "Reading the intake, building the profile and running the match…",
+      () => buildMatchProfile(clientId, { run: true }),
+      (result) => {
+        setAnswers(result.state.answers);
+        setSavedKey(JSON.stringify(result.state.answers));
+        setOpen(result.state.status !== "ready");
+        onBuilt(result.state, result.view, result.runError);
+      },
+    );
+  }
+
+  /** Opens the form and puts the cursor in the field that needs an answer. */
+  function goTo(fieldId: string) {
+    setOpen(true);
+    if (fieldId === "hq_state" && !isUs) fieldId = "hq_country";
+    // Wait for the form to render when it was closed.
+    window.setTimeout(() => {
+      const element = document.getElementById(`match-${fieldId}`);
+      element?.scrollIntoView({ behavior: "smooth", block: "center" });
+      element?.focus({ preventScroll: true });
+    }, 50);
   }
 
   const status = !state
@@ -288,16 +308,38 @@ export function ProfileEditor({
       </div>
 
       {missing.length > 0 || unasked.length > 0 || (state?.warnings.length ?? 0) > 0 ? (
-        <div className="space-y-xs border-t border-border px-lg py-md text-body-sm">
+        <div className="space-y-sm border-t border-border px-lg py-md text-body-sm">
+          {missing.length > 0 || unasked.length > 0 ? (
+            <p className="text-secondary">
+              The intake didn&apos;t cover these. Answer them yourself (from your notes, or ask the founder),
+              then click <span className="text-heading">Save and run match</span>. Nothing needs approving and
+              nothing goes to the client. The match already runs; these answers make it more precise.
+            </p>
+          ) : null}
           {missing.length > 0 ? (
             <p className="text-warning">
-              <span className="text-heading">Missing:</span> {missing.map((gap) => gap.label).join(", ")}
+              <span className="text-heading">Missing:</span>{" "}
+              {missing.map((gap, index) => (
+                <span key={gap.id}>
+                  {index > 0 ? ", " : ""}
+                  <button type="button" className="underline hover:text-primary" onClick={() => goTo(gap.id)}>
+                    {gap.label}
+                  </button>
+                </span>
+              ))}
             </p>
           ) : null}
           {unasked.length > 0 ? (
             <p className="text-warning">
-              <span className="text-heading">Not asked yet (&ldquo;none&rdquo; is a valid answer):</span>{" "}
-              {unasked.map((gap) => gap.label).join(", ")}
+              <span className="text-heading">Not asked yet (&ldquo;none&rdquo; counts as an answer):</span>{" "}
+              {unasked.map((gap, index) => (
+                <span key={gap.id}>
+                  {index > 0 ? ", " : ""}
+                  <button type="button" className="underline hover:text-primary" onClick={() => goTo(gap.id)}>
+                    {gap.label}
+                  </button>
+                </span>
+              ))}
             </p>
           ) : null}
           {state?.warnings.map((warning) => (
@@ -328,13 +370,24 @@ export function ProfileEditor({
                           : ""
                       }
                     >
-                      {isListField(field) ? (
-                        <p className={labelClass}>{field.label}</p>
-                      ) : (
-                        <label htmlFor={`match-${field.id}`} className={labelClass}>
-                          {field.label}
-                        </label>
-                      )}
+                      <div className="flex items-center justify-between gap-sm">
+                        {isListField(field) ? (
+                          <p className={labelClass}>{field.label}</p>
+                        ) : (
+                          <label htmlFor={`match-${field.id}`} className={labelClass}>
+                            {field.label}
+                          </label>
+                        )}
+                        {NONE_OK_FIELDS.has(field.id) && !answers[field.id] ? (
+                          <button
+                            type="button"
+                            className="text-body-sm text-primary hover:text-primary-hover"
+                            onClick={() => set(field.id, "none")}
+                          >
+                            Set to none
+                          </button>
+                        ) : null}
+                      </div>
                       <FieldInput
                         field={field}
                         value={answers[field.id]}
