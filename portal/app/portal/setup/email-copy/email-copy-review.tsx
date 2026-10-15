@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AdminReply } from "@/components/setup/admin-reply";
 import { ReviewActions } from "@/components/setup/review-actions";
 import {
   EMAIL_SEQUENCE_LABELS,
@@ -16,6 +17,7 @@ export function EmailCopyReview({
   version,
   open,
   sentNotes,
+  adminNote,
   readOnly,
 }: {
   copy: EmailCopyPayload;
@@ -23,6 +25,7 @@ export function EmailCopyReview({
   version: number;
   open: boolean;
   sentNotes: Record<string, string>;
+  adminNote?: string;
   readOnly: boolean;
 }) {
   const [tier, setTier] = useState<FitTier>(1);
@@ -40,6 +43,11 @@ export function EmailCopyReview({
 
   return (
     <>
+      {open && adminNote ? (
+        <div className="sticky top-0 z-20">
+          <AdminReply note={adminNote} />
+        </div>
+      ) : null}
       <div className="mb-md flex flex-wrap gap-sm" role="tablist" aria-label="Investor tier">
         {FIT_TIERS.map((entry) => {
           const count = counts.find((item) => item.tier === entry.tier)?.count ?? 0;
@@ -111,13 +119,16 @@ export function EmailCopyReview({
       </section>
 
       {open ? (
-        <ReviewActions
-          step="email_copy"
-          version={version}
-          itemNotes={notes}
-          confirmLabel="Confirm emails"
-          readOnly={readOnly}
-        />
+        <>
+          <AdminReply note={adminNote} />
+          <ReviewActions
+            step="email_copy"
+            version={version}
+            itemNotes={notes}
+            confirmLabel="Confirm emails"
+            readOnly={readOnly}
+          />
+        </>
       ) : null}
     </>
   );

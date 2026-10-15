@@ -24,7 +24,12 @@ export default async function EmailCopyPage() {
         title="Email Copy"
         description="The outreach emails for each investor tier: a first email and two follow-ups. Personal details like the investor's name are filled in per recipient."
       />
-      <ReviewStatus item={item} row={row} />
+      <ReviewStatus
+        item={item}
+        row={row}
+        waitingTitle="Rupert has your note."
+        waitingDetail="He'll reply and send the emails back for you to confirm."
+      />
       {visible && row ? (
         <>
           <EmailCopyReview
@@ -33,6 +38,7 @@ export default async function EmailCopyPage() {
             version={row.version}
             open={row.status === "with_client"}
             sentNotes={sentNotes}
+            adminNote={copy.admin_note}
             readOnly={viewAs}
           />
           <ResponseHistory history={row.history} currentVersion={row.version} />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { AdminReply } from "@/components/setup/admin-reply";
 import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
 import { ReviewActions } from "@/components/setup/review-actions";
 import {
@@ -42,12 +43,7 @@ export function InvestorListReview({
 
   const actions = open ? (
     <div className="sticky top-0 z-20 mb-lg">
-      {adminNote ? (
-        <section className="mb-sm rounded-card border border-border bg-surface px-lg py-md">
-          <p className="text-label uppercase tracking-label text-muted">From Rupert</p>
-          <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{adminNote}</p>
-        </section>
-      ) : null}
+      <AdminReply note={adminNote} />
       <ReviewActions
         step="investor_list"
         version={version}

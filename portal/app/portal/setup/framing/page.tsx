@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { MarkdownBody } from "@/components/markdown-body";
 import { ResponseHistory } from "@/components/setup/response-history";
+import { AdminReply } from "@/components/setup/admin-reply";
 import { ReviewActions } from "@/components/setup/review-actions";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { getPortalSetup } from "@/lib/portal-setup";
@@ -54,9 +55,19 @@ export default async function FramingPage() {
         title="Outreach Narrative"
         description="How we'll present the company to investors: the story every message is built on, the first email, and your LinkedIn messages."
       />
-      <ReviewStatus item={item} row={row} />
+      <ReviewStatus
+        item={item}
+        row={row}
+        waitingTitle="Rupert has your note."
+        waitingDetail="He'll reply and send the narrative back for you to confirm."
+      />
       {visible && row ? (
         <>
+          {row.status === "with_client" && narrative.admin_note ? (
+            <div className="sticky top-0 z-20">
+              <AdminReply note={narrative.admin_note} />
+            </div>
+          ) : null}
           <div className="grid gap-lg">
             <section className="rounded-card border border-border bg-surface">
               <div className="border-b border-border px-lg py-md">
@@ -84,12 +95,15 @@ export default async function FramingPage() {
             />
           </div>
           {row.status === "with_client" ? (
-            <ReviewActions
-              step="framing"
-              version={row.version}
-              confirmLabel="Confirm narrative"
-              readOnly={viewAs}
-            />
+            <>
+              <AdminReply note={narrative.admin_note} />
+              <ReviewActions
+                step="framing"
+                version={row.version}
+                confirmLabel="Confirm narrative"
+                readOnly={viewAs}
+              />
+            </>
           ) : null}
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>

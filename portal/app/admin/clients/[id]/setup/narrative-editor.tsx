@@ -100,6 +100,26 @@ export function NarrativeEditor({
       intro="The story the outreach is built on, the first cold email and the LinkedIn messages. The client confirms or asks for changes."
     >
       <ClientAnswer row={row} />
+      {changesRequested ? (
+        <p className="px-lg pt-md text-body-sm text-secondary">
+          The narrative does not need to change. Write a reply below if you want, then push it.
+          The client sees that reply above Confirm.
+        </p>
+      ) : null}
+      <PublishBar
+        clientId={clientId}
+        step="framing"
+        item={item}
+        row={row}
+        draft={narrative}
+        dirty={JSON.stringify(narrative) !== saved}
+        onSaved={() => setSaved(JSON.stringify(narrative))}
+        pushLabel="Push narrative for confirmation"
+        problem={narrativeProblem(narrative)}
+        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
+        notePlaceholder="For example: left the story, tightened the email."
+        noteOnPage
+      />
       <div className="flex flex-wrap items-center gap-sm px-lg pt-md">
         <button
           type="button"
@@ -199,17 +219,6 @@ export function NarrativeEditor({
       </div>
 
       <EarlierRounds row={row} />
-      <PublishBar
-        clientId={clientId}
-        step="framing"
-        item={item}
-        row={row}
-        draft={narrative}
-        dirty={JSON.stringify(narrative) !== saved}
-        onSaved={() => setSaved(JSON.stringify(narrative))}
-        pushLabel="Push narrative for confirmation"
-        problem={narrativeProblem(narrative)}
-      />
     </StepFrame>
   );
 }
