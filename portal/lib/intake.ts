@@ -76,7 +76,14 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     id: "company",
     title: "Company basics",
     guidance:
-      "Company website, a one-line description of what the company does, HQ location, year founded and team size.",
+      "Company website, a one-line description of what the company does, HQ location (city, and state for US companies), year founded and team size.",
+    required: true,
+  },
+  {
+    id: "sector",
+    title: "Sector",
+    guidance:
+      "Where investors would file the company: the core sector and up to two secondary ones, in order of importance. Suggest two or three plain labels from what the founder said (for example fintech, SaaS, healthtech) and ask which fits best. Also the business model (B2B, B2C, marketplace, hardware).",
     required: true,
   },
   {
@@ -91,6 +98,13 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     title: "The raise",
     guidance:
       "Round (pre-seed, seed, Series A…), amount being raised, amount already committed, lead investor if there is one, and the target close date.",
+    required: true,
+  },
+  {
+    id: "round_terms",
+    title: "Round terms",
+    guidance:
+      "The instrument (SAFE, convertible note, priced equity or debt), whether they still need a lead investor, and the valuation or cap if set.",
     required: true,
   },
   {
@@ -115,11 +129,25 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     required: true,
   },
   {
+    id: "markets_background",
+    title: "Markets & background",
+    guidance:
+      "Countries or regions they sell into, where the company is incorporated (for example a US Delaware C-corp), the founders' backgrounds, and any previous rounds.",
+    required: false,
+  },
+  {
     id: "existing_and_exclusions",
     title: "Existing investors & exclusions",
     guidance:
-      "Current investors, and any investors to exclude from outreach (already in conversation, conflicts, or not a fit).",
-    required: false,
+      "Current investors, and any investors to exclude from outreach (already in conversation, conflicts, or not a fit). Also: funds already pitched in the last 12 months, and how it went. \"None\" is a valid answer.",
+    required: true,
+  },
+  {
+    id: "competitors",
+    title: "Competitors",
+    guidance:
+      "Direct competitors investors would compare them to, so Rupert avoids funds backing a competitor. \"None\" is a valid answer.",
+    required: true,
   },
   {
     id: "anything_else",

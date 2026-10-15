@@ -3,6 +3,7 @@ import { BackLink } from "@/components/back-link";
 import { ResponseHistory } from "@/components/setup/response-history";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
+import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
 import { getPortalSetup } from "@/lib/portal-setup";
 import { asInvestorList } from "@/lib/setup";
 
@@ -25,6 +26,11 @@ export default async function InvestorListPage() {
       <ReviewStatus item={item} row={row} />
       {visible && row ? (
         <>
+          {list.summary ? (
+            <div className="mb-lg">
+              <InvestorListSummaryPanel summary={list.summary} />
+            </div>
+          ) : null}
           <InvestorListReview
             rows={list.rows}
             version={row.version}

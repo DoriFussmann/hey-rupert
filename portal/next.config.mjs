@@ -32,6 +32,8 @@ const nextConfig = {
     ];
   },
   experimental: {
+    // Read the fund database workbook with Node's own module loader.
+    serverComponentsExternalPackages: ["exceljs"],
     serverActions: {
       // Investor lists are sent to a server action as JSON.
       bodySizeLimit: "4mb",

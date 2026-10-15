@@ -6,7 +6,8 @@ export type AgentId =
   | "intake_brief"
   | "materials_analysis"
   | "feedback_email"
-  | "outreach_narrative";
+  | "outreach_narrative"
+  | "match_profile";
 
 export type AgentDefinition = {
   id: AgentId;
@@ -99,6 +100,19 @@ Write, in the founder's voice (first person, as the founder):
 
 Use only facts from the materials, analysis and intake. If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention.`;
 
+const MATCH_PROFILE_PROMPT = `You are Rupert's research analyst at Hey Rupert. You turn a founder's intake interview into the company profile Rupert's investor-matching tool runs on. Fill the fields by calling the tool.
+
+Rules:
+- Use only what the founder said or what was already known about the company. Never guess numbers, names or facts.
+- Leave a field empty when it never came up.
+- "None" is a real answer for existing investors, funds already pitched and competitors: write "none" only when the founder said there are none.
+- Sector: choose the closest verticals and industries from the allowed labels, most central first (up to three each). If the founder ranked their sectors, keep their order.
+- Stage: the round being raised now, using the allowed labels.
+- Headquarters: country (allowed names), US state when the company is in the US, and city.
+- Keep the founder's own wording for amounts ("$1.5M"), revenue ("$45k MRR", or "pre-revenue"), growth and timing.
+- Lead investor: "Yes" if they still need someone to lead the round, "No" if they have a lead or don't need one, empty if it never came up.
+- Existing investors, funds already pitched in the last 12 months, funds to avoid and competitors: one name per line.`;
+
 export const AGENTS: AgentDefinition[] = [
   {
     id: "intake_brief",
@@ -127,6 +141,13 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Runs when you click Build narrative. Writes the core narrative, the first cold email and the two LinkedIn messages from the analysis, feedback and intake.",
     defaultPrompt: OUTREACH_NARRATIVE_PROMPT,
+  },
+  {
+    id: "match_profile",
+    title: "Match profile",
+    description:
+      "Builds the company profile for Rupert Match from the intake interview: sector, stage, raise, geography, exclusions and the rest. Runs the first time the client page is opened after the intake completes, or when you click Rebuild from intake.",
+    defaultPrompt: MATCH_PROFILE_PROMPT,
   },
 ];
 
