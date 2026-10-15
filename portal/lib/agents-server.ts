@@ -15,12 +15,14 @@ import {
 } from "@/lib/agents";
 import {
   INTAKE_BRIEF_FIELDS,
+  intakeMessageText,
   type IntakeBrief,
   type IntakeInterview,
 } from "@/lib/intake";
 import { buildClientContext, loadInterview } from "@/lib/intake-server";
 import { labelledAnswers, type MaterialField } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
+import { profileText } from "@/lib/match/shared";
 import { OFFICE_TEXT_EXTENSIONS, extractOfficeText } from "@/lib/office-text";
 import {
   FEEDBACK_AREAS,
@@ -88,6 +90,16 @@ function text(value: unknown) {
 }
 
 /** What the intake taught us, best source first. */
+/** The company profile Rupert maintains, as text. Missing table or row: none. */
+async function profileContext(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase
+    .from("match_profiles")
+    .select("answers")
+    .eq("client_id", clientId)
+    .maybeSingle();
+  return profileText(data?.answers);
+}
+
 function intakeContext(interview: IntakeInterview | null) {
   if (!interview) return "No intake interview on record.";
   if (interview.admin_brief) {
@@ -217,7 +229,7 @@ export async function writeIntakeBrief(
 
   const transcript = interview.messages
     .map((message) =>
-      `${message.role === "assistant" ? "Rupert" : "Founder"}: ${message.content}`,
+      `${message.role === "assistant" ? "Rupert" : "Founder"}: ${intakeMessageText(message)}`,
     )
     .join("\n\n");
   const confirmed =
@@ -288,7 +300,7 @@ type PreparedFiles = {
   skipped: string[];
 };
 
-async function prepareFiles(
+export async function prepareFiles(
   supabase: ServiceClient,
   files: ReturnType<typeof asMaterials>["files"],
 ): Promise<PreparedFiles> {
@@ -412,12 +424,13 @@ export async function runMaterialsAnalysis(
   supabase: ServiceClient,
   clientId: string,
 ): Promise<AgentResult<AnalysisOutcome>> {
-  const [loaded, interviewResult, prompts, fields, grouped] = await Promise.all([
+  const [loaded, interviewResult, prompts, fields, grouped, profile] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
     loadAgentPrompts(supabase),
     loadMaterialFields(supabase),
     loadSetupSteps(supabase, [clientId]),
+    profileContext(supabase, clientId),
   ]);
   if (!loaded.ok) return loaded;
 
@@ -438,7 +451,9 @@ export async function runMaterialsAnalysis(
   }
 
   const context = [
-    "## Company profile",
+    "## Company profile (Rupert's source of truth; prefer it where sources differ)",
+    profile,
+    "## Client record",
     buildClientContext(loaded.client),
     "## Intake",
     intakeContext(interview),
@@ -607,12 +622,13 @@ export async function buildNarrative(
   supabase: ServiceClient,
   clientId: string,
 ): Promise<AgentResult<NarrativePayload>> {
-  const [loaded, interviewResult, prompts, fields, grouped] = await Promise.all([
+  const [loaded, interviewResult, prompts, fields, grouped, profile] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
     loadAgentPrompts(supabase),
     loadMaterialFields(supabase),
     loadSetupSteps(supabase, [clientId]),
+    profileContext(supabase, clientId),
   ]);
   if (!loaded.ok) return loaded;
 
@@ -638,7 +654,9 @@ export async function buildNarrative(
       : "";
 
   const context = [
-    "## Company profile",
+    "## Company profile (Rupert's source of truth; prefer it where sources differ)",
+    profile,
+    "## Client record",
     buildClientContext(loaded.client),
     "## Intake",
     intakeContext(interviewResult.ok ? interviewResult.interview : null),

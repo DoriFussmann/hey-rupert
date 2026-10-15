@@ -1,7 +1,11 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
+import { ChevronDown } from "@/components/chevron";
 import { FIT_TIERS, type InvestorRow } from "@/lib/setup";
+
+/** Rows shown when a panel opens; "Show more" adds the same again. */
+const PAGE_SIZE = 25;
 
 /** Fund type is the first part of the details line ("Venture Capital · …"). */
 export function fundTypeOf(row: InvestorRow) {
@@ -23,7 +27,7 @@ function groupsOf(rows: InvestorRow[]) {
 
 /**
  * A long investor list as collapsed panels, one per fund type inside each
- * tier. Rows render only after a panel is opened.
+ * tier. Rows render only after a panel is opened, a page at a time.
  */
 export function InvestorFundGroups({
   rows,
@@ -41,6 +45,7 @@ export function InvestorFundGroups({
     [rows],
   );
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [shown, setShown] = useState<Record<string, number>>({});
   const keys = tiers.flatMap((tier) =>
     tier.groups.map(([type]) => `${tier.tier}:${type}`),
   );
@@ -86,20 +91,51 @@ export function InvestorFundGroups({
             {tier.groups.map(([type, list]) => {
               const key = `${tier.tier}:${type}`;
               const expanded = Boolean(open[key]);
+              const limit = shown[key] ?? PAGE_SIZE;
+              const remaining = list.length - limit;
               return (
                 <div key={key}>
                   <button
                     type="button"
-                    className="flex w-full items-center justify-between gap-sm px-lg py-md text-left hover:bg-background"
+                    className="flex min-h-[48px] w-full items-center justify-between gap-sm px-lg py-md text-left transition-colors duration-hover hover:bg-background"
                     aria-expanded={expanded}
                     onClick={() => toggle(key)}
                   >
                     <span className="text-body-sm text-heading">{type}</span>
-                    <span className="shrink-0 text-body-sm text-muted">
-                      {list.length} {list.length === 1 ? "fund" : "funds"} {expanded ? "▾" : "▸"}
+                    <span className="flex shrink-0 items-center gap-sm text-body-sm text-muted">
+                      {list.length} {list.length === 1 ? "fund" : "funds"}
+                      <span className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-surface">
+                        <ChevronDown
+                          className={`h-4 w-4 transition-transform duration-hover ${expanded ? "rotate-180" : ""}`}
+                        />
+                      </span>
                     </span>
                   </button>
-                  {expanded ? <ul className="divide-y divide-border border-t border-border">{list.map(renderRow)}</ul> : null}
+                  {expanded ? (
+                    <>
+                      <ul className="divide-y divide-border border-t border-border">
+                        {list.slice(0, limit).map(renderRow)}
+                      </ul>
+                      {remaining > 0 ? (
+                        <div className="flex flex-wrap items-center gap-md border-t border-border px-lg py-sm">
+                          <button
+                            type="button"
+                            className="text-body-sm text-primary hover:text-primary-hover"
+                            onClick={() => setShown((current) => ({ ...current, [key]: limit + PAGE_SIZE }))}
+                          >
+                            Show {Math.min(PAGE_SIZE, remaining)} more
+                          </button>
+                          <button
+                            type="button"
+                            className="text-body-sm text-muted hover:text-heading"
+                            onClick={() => setShown((current) => ({ ...current, [key]: list.length }))}
+                          >
+                            Show all {list.length}
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
               );
             })}

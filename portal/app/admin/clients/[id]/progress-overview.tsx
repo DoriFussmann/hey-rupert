@@ -1,4 +1,5 @@
 import { Checklist, type ChecklistRowItem } from "@/components/checklist";
+import { ChevronDown } from "@/components/chevron";
 import {
   LIVE_ITEMS,
   isLiveUnlocked,
@@ -152,12 +153,7 @@ function Phase({
     <details className={`group/phase ${divided ? "border-t border-border" : ""}`}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-sm px-lg py-md [&::-webkit-details-marker]:hidden">
         <span className="flex items-center gap-sm">
-          <span
-            aria-hidden
-            className="inline-block text-muted transition-transform duration-hover group-open/phase:rotate-90"
-          >
-            ›
-          </span>
+          <ChevronDown className="h-4 w-4 -rotate-90 text-muted transition-transform duration-hover group-open/phase:rotate-0" />
           <span className="text-label uppercase tracking-label text-muted">{title}</span>
         </span>
         <span className="text-body-sm text-success">

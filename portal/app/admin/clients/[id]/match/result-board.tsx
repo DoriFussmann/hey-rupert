@@ -18,6 +18,8 @@ import {
 import {
   DEFAULT_SETTINGS,
   LEVEL_LABEL,
+  LEVEL_MAX,
+  LEVEL_MIN,
   SITE_N_OPTIONS,
   TIERS,
   type Count,
@@ -211,6 +213,14 @@ function SettingsPanel({
           <label className="flex items-start gap-sm">
             <input
               type="checkbox"
+              checked={filters.needEmail}
+              onChange={(event) => setFilter({ needEmail: event.target.checked })}
+            />
+            Only funds with an investing contact who has an email
+          </label>
+          <label className="flex items-start gap-sm">
+            <input
+              type="checkbox"
               checked={filters.nearOnly}
               onChange={(event) => setFilter({ nearOnly: event.target.checked })}
             />
@@ -356,7 +366,7 @@ export function ResultBoard({
 
   function step(tier: Tier, delta: 1 | -1) {
     const level = settings.tune[tier];
-    const nextLevel = Math.max(-2, Math.min(2, level + delta)) as Level;
+    const nextLevel = Math.max(LEVEL_MIN, Math.min(LEVEL_MAX, level + delta)) as Level;
     if (nextLevel === level) return;
     const label = TIERS.find((item) => item.key === tier)?.label ?? tier;
     const before = tier === "bullseye" ? view.qualifiedBullseye : view.counts[tier];
@@ -435,7 +445,7 @@ export function ResultBoard({
                     type="button"
                     className={smallButton}
                     aria-label={`Broaden ${tier.label}`}
-                    disabled={busy || level <= -2}
+                    disabled={busy || level <= LEVEL_MIN}
                     onClick={() => step(tier.key, -1)}
                   >
                     −
@@ -445,7 +455,7 @@ export function ResultBoard({
                     type="button"
                     className={smallButton}
                     aria-label={`Tighten ${tier.label}`}
-                    disabled={busy || level >= 2}
+                    disabled={busy || level >= LEVEL_MAX}
                     onClick={() => step(tier.key, 1)}
                   >
                     +

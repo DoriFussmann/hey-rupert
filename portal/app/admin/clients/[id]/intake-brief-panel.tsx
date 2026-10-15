@@ -113,12 +113,12 @@ export function IntakeBriefPanel({
     <section className="mb-lg rounded-card border border-border bg-surface">
       <div className="flex flex-wrap items-start justify-between gap-md border-b border-border px-lg py-lg">
         <div>
-          <h2 className="text-h4">Intake Summary</h2>
+          <h2 className="text-h4">Overview</h2>
           <p className="mt-xs text-body-sm text-muted">
             {completedAt ? `Intake completed ${formatDateAtTime(completedAt)}. ` : ""}
             {brief
               ? `${brief.edited_at ? `Edited ${formatDateAtTime(brief.edited_at)}` : `Written ${formatDateAtTime(brief.generated_at)}`}. Empty profile fields were filled from it.`
-              : "Written by the AI from the intake interview."}
+              : "A summary of the intake, written by the AI."}
           </p>
         </div>
         {hasInterview ? (
@@ -203,19 +203,9 @@ export function IntakeBriefPanel({
           </div>
         </div>
       ) : brief ? (
-        <>
-          <dl className="grid gap-md border-b border-border px-lg py-md sm:grid-cols-2 lg:grid-cols-4">
-            {INTAKE_BRIEF_FIELDS.map((field) => (
-              <div key={field.key}>
-                <dt className="text-label uppercase tracking-label text-muted">{field.label}</dt>
-                <dd className="mt-xs text-body-sm text-heading">{brief[field.key] || "—"}</dd>
-              </div>
-            ))}
-          </dl>
-          <div className="px-lg py-md">
-            <MarkdownBody content={brief.summary} emptyLabel="Empty." />
-          </div>
-        </>
+        <div className="px-lg py-md">
+          <MarkdownBody content={brief.summary} emptyLabel="Empty." />
+        </div>
       ) : (
         <p className="px-lg py-md text-body-sm text-muted">
           {claudeReady

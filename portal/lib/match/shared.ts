@@ -32,12 +32,18 @@ export const TIERS: { key: Tier; label: string; description: string }[] = [
 ];
 
 export const LEVEL_LABEL: Record<Level, string> = {
+  [-3]: "Widest",
   [-2]: "Broadest",
   [-1]: "Broader",
   0: "Default",
   1: "Tighter",
   2: "Tightest",
+  3: "Strictest",
 };
+
+/** Tuning steps per tier, widest to strictest. */
+export const LEVEL_MIN: Level = -3;
+export const LEVEL_MAX: Level = 3;
 
 /** Investor-list fit tier for each match tier (1 = best fit). */
 export const TIER_TO_FIT: Record<Tier, 1 | 2 | 3> = {
@@ -136,12 +142,13 @@ export const MATCH_FIELDS: MatchField[] = [
     label: "Instrument",
     section: "Round",
     kind: "text",
-    hint: "SAFE, convertible note, priced equity, venture debt…",
+    hint: "Empty means equity (SAFE, note or priced round). Set it only for debt or royalties.",
   },
   { id: "need_lead", label: "Needs a lead investor", section: "Round", kind: "lead" },
   { id: "committed_so_far", label: "Committed so far", section: "Round", kind: "text" },
   { id: "valuation", label: "Valuation or cap", section: "Round", kind: "text" },
   { id: "close_timeline", label: "Target close", section: "Round", kind: "text" },
+  { id: "previous_rounds", label: "Previous rounds", section: "Round", kind: "text" },
   {
     id: "core_vertical",
     label: "Verticals (first = core)",
@@ -175,33 +182,33 @@ export const MATCH_FIELDS: MatchField[] = [
   },
   { id: "growth", label: "Growth", section: "Traction", kind: "text" },
   { id: "traction_proof", label: "Proof points", section: "Traction", kind: "textarea" },
-  { id: "founders", label: "Founders' background", section: "Traction", kind: "textarea" },
-  { id: "previous_rounds", label: "Previous rounds", section: "Traction", kind: "text" },
+  { id: "founders", label: "Founders' background", section: "Team", kind: "textarea" },
+  { id: "team_size", label: "Team size", section: "Team", kind: "text" },
   {
     id: "existing_investors",
     label: "Existing investors",
-    section: "History & conflicts",
+    section: "Investors & conflicts",
     kind: "textarea",
     hint: "One per line, or “none”.",
   },
   {
     id: "already_pitched",
     label: "Funds pitched in the last 12 months",
-    section: "History & conflicts",
+    section: "Investors & conflicts",
     kind: "textarea",
     hint: "One per line, or “none”.",
   },
   {
     id: "competitors",
     label: "Direct competitors",
-    section: "History & conflicts",
+    section: "Investors & conflicts",
     kind: "textarea",
     hint: "One per line, or “none”.",
   },
   {
     id: "no_go",
     label: "Funds to avoid",
-    section: "History & conflicts",
+    section: "Investors & conflicts",
     kind: "textarea",
     hint: "One per line.",
   },
@@ -236,6 +243,31 @@ export function fieldLabel(id: string) {
 
 export type MatchAnswers = Record<string, string | string[]>;
 
+/**
+ * The company profile as plain text, by topic, for an AI prompt. Empty
+ * answers are left out, except the ones where empty means "none".
+ */
+export function profileText(raw: unknown) {
+  const answers = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
+  const lines: string[] = [];
+  for (const section of MATCH_SECTIONS) {
+    const rows = MATCH_FIELDS.filter((field) => field.section === section)
+      .map((field) => {
+        const value = answers[field.id];
+        const text = Array.isArray(value)
+          ? value.map(String).join(", ")
+          : value != null
+            ? String(value).trim()
+            : "";
+        if (text) return `- ${field.label}: ${text}`;
+        return NONE_OK_FIELDS.has(field.id) ? `- ${field.label}: none` : null;
+      })
+      .filter(Boolean);
+    if (rows.length > 0) lines.push(`### ${section}`, ...(rows as string[]));
+  }
+  return lines.length > 0 ? lines.join("\n") : "No company profile yet.";
+}
+
 // ---------------------------------------------------------------------------
 // Operator settings (set in the tool, not by the founder)
 
@@ -245,6 +277,8 @@ export type MatchSettings = {
   filters: {
     noPlatforms: boolean;
     needDecision: boolean;
+    /** Only funds with an investing contact who has an email. */
+    needEmail: boolean;
     nearOnly: boolean;
     minConf: 0 | 0.6 | 0.99;
     foundedAfter: number;
@@ -262,6 +296,7 @@ export const DEFAULT_SETTINGS: MatchSettings = {
   filters: {
     noPlatforms: false,
     needDecision: false,
+    needEmail: false,
     nearOnly: false,
     minConf: 0,
     foundedAfter: 0,

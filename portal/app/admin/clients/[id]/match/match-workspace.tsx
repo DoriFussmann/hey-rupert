@@ -7,7 +7,6 @@ import {
   sendMatchToClient,
   updateMatchSettings,
 } from "@/app/admin/match-actions";
-import { ProfileEditor, type Taxonomy } from "@/app/admin/clients/[id]/match/profile-editor";
 import { ResultBoard } from "@/app/admin/clients/[id]/match/result-board";
 import {
   errorText,
@@ -19,37 +18,61 @@ import {
   DEFAULT_SETTINGS,
   TIERS,
   siteSummaryText,
+  type MatchAnswers,
   type MatchProfileState,
   type MatchSettings,
   type MatchView,
 } from "@/lib/match/shared";
 
-function profileNotice(action: string, state: MatchProfileState, ran: boolean) {
-  const gaps = state.gaps.map((gap) => gap.label).join(", ");
-  const match = ran ? " and the match is updated" : "";
-  return gaps
-    ? `${action}${match}. Still missing: ${gaps}. Fill them in the profile and click Save and run match.`
-    : `${action}${match}. The profile is complete: ready to match.`;
+function answer(answers: MatchAnswers, id: string) {
+  const raw = answers[id];
+  return Array.isArray(raw) ? raw.join(", ") : (raw ?? "").trim();
+}
+
+/** The profile the match runs on, read-only here: it is edited in the company profile. */
+function ProfileStrip({ clientId, state }: { clientId: string; state: MatchProfileState | null }) {
+  const answers = state?.answers ?? {};
+  const facts = [
+    answer(answers, "stage"),
+    answer(answers, "raise_amount"),
+    answer(answers, "core_vertical") || answer(answers, "core_industry"),
+    [answer(answers, "hq_city"), answer(answers, "hq_country")].filter(Boolean).join(", "),
+  ].filter(Boolean);
+  return (
+    <section className="flex flex-wrap items-center justify-between gap-md rounded-card border border-border bg-surface px-lg py-md">
+      <div className="min-w-0">
+        <p className="text-label uppercase tracking-label text-muted">Matching on</p>
+        <p className="mt-xs text-body-sm text-heading">
+          {facts.length > 0 ? facts.join(" · ") : "No company profile yet."}
+        </p>
+        {state && state.gaps.length > 0 ? (
+          <p className="mt-xs text-body-sm text-warning">
+            Needs {state.gaps.map((gap) => gap.label).join(", ")} before it can run.
+          </p>
+        ) : null}
+      </div>
+      <Link
+        href={`/admin/clients/${clientId}/profile`}
+        className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+      >
+        Edit company profile
+      </Link>
+    </section>
+  );
 }
 
 export function MatchWorkspace({
   clientId,
-  companyName,
   initialState,
   initialView,
   initialError,
   database,
-  canBuildFromIntake,
-  taxonomy,
 }: {
   clientId: string;
-  companyName: string;
   initialState: MatchProfileState | null;
   initialView: MatchView | null;
   initialError: string | null;
   database: { firms: number; contacts: number } | null;
-  canBuildFromIntake: boolean;
-  taxonomy: Taxonomy;
 }) {
   const [state, setState] = useState(initialState);
   const [view, setView] = useState(initialView);
@@ -171,33 +194,7 @@ export function MatchWorkspace({
         </p>
       ) : null}
 
-      <ProfileEditor
-        clientId={clientId}
-        companyName={companyName}
-        state={state}
-        taxonomy={taxonomy}
-        canBuildFromIntake={canBuildFromIntake}
-        busy={Boolean(busy)}
-        run={run}
-        onSaved={(nextState, nextView, runError) => {
-          setState(nextState);
-          setView(nextView);
-          setNotice(
-            runError && database
-              ? { kind: "error", text: runError }
-              : { kind: "ok", text: profileNotice("Saved", nextState, Boolean(nextView)) },
-          );
-        }}
-        onBuilt={(nextState, nextView, runError) => {
-          setState(nextState);
-          if (nextView) setView(nextView);
-          setNotice(
-            !nextView && runError && database
-              ? { kind: "error", text: `Profile rebuilt from the intake, but the match could not run: ${runError}` }
-              : { kind: "ok", text: profileNotice("Rebuilt from the intake", nextState, Boolean(nextView)) },
-          );
-        }}
-      />
+      <ProfileStrip clientId={clientId} state={state} />
 
       {view ? (
         <ResultBoard
@@ -213,7 +210,7 @@ export function MatchWorkspace({
         />
       ) : database ? (
         <p className="rounded-card border border-border bg-surface px-lg py-lg text-body-sm text-muted">
-          Fill the profile (at least stage, sector and HQ country), then save to run the match.
+          The match runs once the company profile has a stage, a sector and an HQ country.
         </p>
       ) : null}
     </div>

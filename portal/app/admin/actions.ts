@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import type { User } from "@supabase/supabase-js";
 import { getAuthContext } from "@/lib/auth";
@@ -49,6 +50,12 @@ import {
   isStripePaymentLink,
 } from "@/lib/service-order";
 import { DEFAULT_STATEMENT_OF_WORK } from "@/lib/statement-of-work";
+import { createSetupFeeInvoice, isStripeConfigured, voidInvoice } from "@/lib/stripe";
+import {
+  TEST_PILOT_MIGRATION_MISSING,
+  isTestPilotColumnError,
+  testPilotEmail,
+} from "@/lib/test-pilot";
 
 const RAISE_STAGES = new Set<string>(["Pre-seed", "Seed", "Series A"]);
 
@@ -57,6 +64,9 @@ export type CreateClientInput = {
   last_name: string;
   email: string;
   company_name: string;
+  company_website: string;
+  /** Internal test client: no setup link, client emails and reminders off. */
+  is_test_pilot: boolean;
   raise_amount: string;
   raise_stage: string;
   vertical: string;
@@ -75,15 +85,18 @@ export type SendToClientResult =
   | { ok: true; clientEmail: EmailResult }
   | { ok: false; error: string };
 
-// On success the admin gets the client's set-password link to email them.
-// `linked` is true when the client was attached to a login that already existed.
+// On success the admin gets the client's set-password link to email them
+// (none for a test pilot client). `linked` is true when the client was
+// attached to a login that already existed.
 export type CreateClientResult =
   | {
       ok: true;
+      clientId: string;
+      testPilot: boolean;
       linked: boolean;
       email: string;
-      setupUrl: string;
-      expiresAt: string;
+      setupUrl: string | null;
+      expiresAt: string | null;
     }
   | { ok: false; error: string };
 
@@ -196,16 +209,24 @@ export async function createClientRecord(
   const access = await requireAdminService();
   if (!access.ok) return access;
 
-  const firstName = input.first_name.trim();
-  const lastName = input.last_name.trim();
-  const email = input.email.trim().toLowerCase();
+  const testPilot = input.is_test_pilot === true;
+  // A test pilot only needs a company name; the rest gets placeholders.
+  const firstName = input.first_name.trim() || (testPilot ? "Test" : "");
+  const lastName = input.last_name.trim() || (testPilot ? "Pilot" : "");
+  const email =
+    input.email.trim().toLowerCase() ||
+    (testPilot ? testPilotEmail(randomUUID().slice(0, 8)) : "");
   const companyName = input.company_name.trim();
+  const website = input.company_website.trim();
 
   if (!firstName || !lastName || !email || !companyName) {
     return {
       ok: false,
       error: "First name, last name, email, and company name are required.",
     };
+  }
+  if (website && !/^(https?:\/\/)?[^\s/]+\.[^\s]+$/i.test(website)) {
+    return { ok: false, error: "Enter a valid company website, e.g. acme.com." };
   }
 
   if (!email.includes("@")) {
@@ -315,14 +336,21 @@ export async function createClientRecord(
     geography: blankToNull(input.geography),
     fund_match_count: fundMatchCount,
     admin_notes: blankToNull(input.admin_notes),
+    ...(website ? { company_website: website } : {}),
     stage: "sow",
+    ...(testPilot ? { is_test_pilot: true, emails_paused: true } : {}),
   });
 
   if (insertError) {
     if (!existingUser) {
       await supabase.auth.admin.deleteUser(userId);
     }
-    return { ok: false, error: insertError.message };
+    return {
+      ok: false,
+      error: isTestPilotColumnError(insertError.message)
+        ? TEST_PILOT_MIGRATION_MISSING
+        : insertError.message,
+    };
   }
 
   if (existingUser) {
@@ -331,6 +359,20 @@ export async function createClientRecord(
       await rollback();
       return roleResult;
     }
+  }
+
+  // A test pilot is never signed into: Rupert views it as the client.
+  if (testPilot) {
+    revalidatePath("/admin");
+    return {
+      ok: true,
+      clientId: userId,
+      testPilot,
+      linked: Boolean(existingUser),
+      email,
+      setupUrl: null,
+      expiresAt: null,
+    };
   }
 
   const issued = await issueSetupLink(supabase, userId);
@@ -342,6 +384,8 @@ export async function createClientRecord(
   revalidatePath("/admin");
   return {
     ok: true,
+    clientId: userId,
+    testPilot,
     linked: Boolean(existingUser),
     email,
     setupUrl: issued.link.url,
@@ -908,6 +952,18 @@ export async function sendStatementOfWork(
   return { ok: true, clientEmail };
 }
 
+/** Generate & send in one step: the SoW from the Forms template, pushed as is. */
+export async function sendDefaultStatementOfWork(
+  clientId: string,
+): Promise<SendToClientResult> {
+  const generated = await generateStatementOfWork(clientId);
+  if (!generated.ok) return generated;
+  if (!generated.content?.trim()) {
+    return { ok: false, error: "The Statement of Work template is empty." };
+  }
+  return sendStatementOfWork(clientId, generated.content);
+}
+
 function sowSendsTableError(message: string, code?: string) {
   return (
     code === "42P01" ||
@@ -1017,9 +1073,11 @@ function serviceOrderError(
 ): { ok: false; error: string } {
   return {
     ok: false,
-    error: serviceOrderTableError(message, code)
-      ? SERVICE_ORDER_TABLE_MISSING
-      : message,
+    error: isTestPilotColumnError(message)
+      ? TEST_PILOT_MIGRATION_MISSING
+      : serviceOrderTableError(message, code)
+        ? SERVICE_ORDER_TABLE_MISSING
+        : message,
   };
 }
 
@@ -1053,15 +1111,33 @@ export async function sendServiceOrder(
     return { ok: false, error: "Generate the Service Order before sending." };
   }
 
-  const link = paymentLink.trim();
-  if (!isStripePaymentLink(link)) {
+  const { supabase } = access;
+
+  const { data: client, error: loadError } = await supabase
+    .from("clients")
+    .select("id, email, first_name, last_name, company_name, is_test_pilot")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (loadError) return serviceOrderError(loadError.message, loadError.code);
+  if (!client) return { ok: false, error: "Client not found." };
+  const testPilot = client.is_test_pilot === true;
+
+  // A pasted link wins. Without one, the Setup Fee invoice is created in
+  // Stripe automatically; test pilot clients have no invoice at all.
+  const pasted = paymentLink.trim();
+  if (pasted && !isStripePaymentLink(pasted)) {
     return {
       ok: false,
-      error: "Enter the Stripe payment link for the Setup Fee invoice (https://…stripe.com/…).",
+      error: "Enter an https link on stripe.com, or leave it empty to create the invoice automatically.",
     };
   }
-
-  const { supabase } = access;
+  if (!pasted && !testPilot && !isStripeConfigured()) {
+    return {
+      ok: false,
+      error:
+        "Enter the Stripe payment link for the Setup Fee invoice, or add STRIPE_SECRET_KEY to create it automatically.",
+    };
+  }
 
   const { data: activeSends, error: activeError } = await supabase
     .from("service_order_sends")
@@ -1078,11 +1154,31 @@ export async function sendServiceOrder(
     return { ok: false, error: alreadySent };
   }
 
+  let link = pasted;
+  let invoiceId: string | null = null;
+  if (!link && !testPilot) {
+    const email = String(client.email ?? "").trim();
+    if (!email) return { ok: false, error: "The client has no email for the Stripe invoice." };
+    const name =
+      [client.first_name, client.last_name].filter(Boolean).join(" ").trim() ||
+      String(client.company_name ?? "");
+    const invoice = await createSetupFeeInvoice({
+      clientId,
+      email,
+      name: client.company_name ? `${name} (${client.company_name})` : name,
+      attempt: randomUUID(),
+    });
+    if (!invoice.ok) return { ok: false, error: invoice.error };
+    link = invoice.value.url;
+    invoiceId = invoice.value.id;
+  }
+
   const { error: insertError } = await supabase
     .from("service_order_sends")
     .insert({ client_id: clientId, content, payment_link: link });
 
   if (insertError) {
+    if (invoiceId) await voidInvoice(invoiceId);
     if (insertError.code === "23505") return { ok: false, error: alreadySent };
     return serviceOrderError(insertError.message, insertError.code);
   }
@@ -1091,7 +1187,8 @@ export async function sendServiceOrder(
     .from("clients")
     .update({
       service_order_content: content,
-      setup_invoice_url: link,
+      setup_invoice_url: link || null,
+      stripe_invoice_id: invoiceId,
       service_order_agreed_at: null,
     })
     .eq("id", clientId);
@@ -1142,16 +1239,31 @@ export async function archiveServiceOrder(
     return { ok: false, error: "That Service Order is already archived." };
   }
 
+  const { data: invoiceRow } = await supabase
+    .from("clients")
+    .select("stripe_invoice_id, payment_received_at")
+    .eq("id", clientId)
+    .maybeSingle();
+
   const { error: clientError } = await supabase
     .from("clients")
     .update({
       service_order_content: null,
       setup_invoice_url: null,
+      stripe_invoice_id: null,
       service_order_agreed_at: null,
     })
     .eq("id", clientId);
 
   if (clientError) return serviceOrderError(clientError.message, clientError.code);
+
+  // An unpaid automatic invoice is voided so it cannot be paid by mistake.
+  if (invoiceRow?.stripe_invoice_id && !invoiceRow.payment_received_at) {
+    const voided = await voidInvoice(String(invoiceRow.stripe_invoice_id));
+    if (!voided.ok) {
+      console.error(`Setup Fee invoice not voided: ${voided.error}`);
+    }
+  }
 
   revalidateServiceOrderPaths(clientId);
   return { ok: true };

@@ -26,6 +26,8 @@ import {
   MATERIALS_BUCKET,
   MATERIAL_EXTENSIONS,
   asFeedback,
+  asFeedbackPublished,
+  feedbackChecks,
   feedbackForClient,
   feedbackProblem,
   fileExtension,
@@ -78,6 +80,9 @@ export function FeedbackWorkspace({
   const [message, setMessage] = useState<Message>(null);
 
   const dirty = JSON.stringify(draft) !== saved;
+  // The client's own ticks on the feedback they received.
+  const published = row?.status === "published" ? asFeedbackPublished(row.published).items : [];
+  const clientDone = new Set(row ? feedbackChecks(row.client_checks, published) : []);
   const visibleCount = feedbackForClient(draft).items.length;
   const sent = Boolean(row && row.version > 0);
   const busy = pending !== null;
@@ -296,6 +301,12 @@ export function FeedbackWorkspace({
                   : "Not analyzed yet."}
         </p>
       </div>
+      {published.length > 0 ? (
+        <p className="border-b border-border px-lg py-sm text-body-sm text-secondary">
+          Client progress: {clientDone.size} of {published.length} recommendation
+          {published.length === 1 ? "" : "s"} ticked as done.
+        </p>
+      ) : null}
       {analysis && (analysis.read.length > 0 || analysis.skipped.length > 0) ? (
         <details className="border-b border-border px-lg py-sm text-body-sm">
           <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
@@ -373,7 +384,9 @@ export function FeedbackWorkspace({
           <div>
             <p className={labelClass}>Opening message</p>
             <p className="mb-sm mt-xs text-body-sm text-muted">
-              Shown to the client above the recommendations.
+              {draft.email.body.trim()
+                ? "Not shown: an email is drafted below, and the client's portal shows the email text instead."
+                : "Shown to the client above the recommendations. Drafting an email below replaces it."}
             </p>
             <MarkdownField
               label="Opening message"
@@ -398,6 +411,11 @@ export function FeedbackWorkspace({
                   >
                     <div className="flex flex-wrap items-end gap-sm">
                       <span className="mb-xs w-6 font-mono text-mono text-muted">{index + 1}</span>
+                      {clientDone.has(entry.id) ? (
+                        <span className="mb-xs rounded-full border border-success/40 px-sm py-px text-label uppercase tracking-label text-success">
+                          Done by client
+                        </span>
+                      ) : null}
                       <label className={labelClass}>
                         Area
                         <select

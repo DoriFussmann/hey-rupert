@@ -10,7 +10,11 @@ const API_VERSION = "2023-06-01";
 const DEFAULT_MODEL = "claude-sonnet-5-5";
 const TIMEOUT_MS = 50_000;
 
-export type ClaudeMessage = { role: "user" | "assistant"; content: string };
+export type ClaudeMessage = {
+  role: "user" | "assistant";
+  /** Plain text, or content blocks (e.g. a PDF document with text). */
+  content: string | ClaudeContentBlock[];
+};
 
 export type ClaudeTool = {
   name: string;
@@ -31,12 +35,14 @@ export async function callClaudeTool<T>({
   messages,
   tool,
   maxTokens = 1024,
+  timeoutMs = TIMEOUT_MS,
   fallbackFromText,
 }: {
   system: string;
   messages: ClaudeMessage[];
   tool: ClaudeTool;
   maxTokens?: number;
+  timeoutMs?: number;
   /** Used when Claude answers in plain text instead of calling the tool. */
   fallbackFromText?: (text: string) => T | null;
 }): Promise<ClaudeResult<T>> {
@@ -61,7 +67,7 @@ export async function callClaudeTool<T>({
         tools: [tool],
         tool_choice: { type: "auto" },
       }),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
     });
 

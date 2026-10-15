@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { ChevronDown } from "@/components/chevron";
 import { useRouter } from "next/navigation";
 import {
   saveEmailSignature,
@@ -208,12 +209,7 @@ function TemplateCard({
     <details className="group/email rounded-card border border-border bg-surface">
       <summary className="flex cursor-pointer list-none [&::-webkit-details-marker]:hidden flex-wrap items-center justify-between gap-sm px-lg py-md">
         <span className="flex items-center gap-sm">
-          <span
-            aria-hidden
-            className="inline-block text-muted transition-transform duration-hover group-open/email:rotate-90"
-          >
-            ›
-          </span>
+          <ChevronDown className="h-4 w-4 -rotate-90 text-muted transition-transform duration-hover group-open/email:rotate-0" />
           <span className="text-body-sm text-heading">{definition.title}</span>
         </span>
         <span className="flex items-center gap-sm text-label uppercase tracking-label">

@@ -4,7 +4,7 @@ import { intakeToProfile } from "@/lib/match/intake/to-profile.mjs";
 import questionBank from "@/lib/match/intake/intake-questions.json";
 import { callClaudeTool } from "@/lib/anthropic";
 import { loadAgentPrompts } from "@/lib/agents-server";
-import type { IntakeInterview } from "@/lib/intake";
+import { intakeMessageText, type IntakeInterview } from "@/lib/intake";
 import {
   BUSINESS_MODELS,
   DEFAULT_SETTINGS,
@@ -27,7 +27,7 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
 const TEXT_MAX = 2000;
-const LEVELS: Level[] = [-2, -1, 0, 1, 2];
+const LEVELS: Level[] = [-3, -2, -1, 0, 1, 2, 3];
 
 function allowedValues(field: MatchField): string[] | null {
   switch (field.kind) {
@@ -104,6 +104,7 @@ export function cleanSettings(input: unknown): MatchSettings {
     filters: {
       noPlatforms: filters.noPlatforms === true,
       needDecision: filters.needDecision === true,
+      needEmail: filters.needEmail === true,
       nearOnly: filters.nearOnly === true,
       minConf: minConf === 0.6 || minConf === 0.99 ? minConf : 0,
       foundedAfter: founded >= 1900 && founded <= 2100 ? founded : 0,
@@ -132,12 +133,15 @@ export function buildProfile(answers: MatchAnswers, settings: MatchSettings) {
     siteN: settings.siteN,
     dropDead: settings.dropDead,
   };
-  const gaps: ProfileGap[] = [
-    ...converted.missing.map((id) => ({ id, label: fieldLabel(id), kind: "missing" as const })),
-    ...converted.unasked.map((id) => ({ id, label: fieldLabel(id), kind: "unasked" as const })),
-  ];
-  const ready = Boolean(converted.ready) && converted.unasked.length === 0;
-  return { profile, ready, gaps, warnings: converted.warnings };
+  // Only stage, sector and HQ country block a match. Everything else has a
+  // safe default: equity as the instrument, and "none" for existing
+  // investors, funds already pitched and competitors.
+  const gaps: ProfileGap[] = [];
+  const block = (id: string) => gaps.push({ id, label: fieldLabel(id), kind: "missing" });
+  if (!profile.stage) block("stage");
+  if (profile.verticals.length === 0 && profile.industries.length === 0) block("core_vertical");
+  if (!profile.country) block("hq_country");
+  return { profile, ready: gaps.length === 0, gaps, warnings: converted.warnings };
 }
 
 /** Enough to run a match (the rest only sharpens it). */
@@ -147,17 +151,6 @@ export function canRun(profile: MatchProfile) {
       (profile.verticals.length > 0 || profile.industries.length > 0) &&
       profile.country,
   );
-}
-
-function asGaps(value: unknown): ProfileGap[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .filter((item): item is Record<string, unknown> => Boolean(item) && typeof item === "object")
-    .map((item) => ({
-      id: String(item.id ?? ""),
-      label: String(item.label ?? item.id ?? ""),
-      kind: item.kind === "unasked" ? ("unasked" as const) : ("missing" as const),
-    }));
 }
 
 export async function loadProfileState(
@@ -171,14 +164,19 @@ export async function loadProfileState(
     .maybeSingle();
   if (error) return { ok: false, error: matchTableError(error.message, error.code) };
   if (!data) return { ok: true, value: null };
+  // Readiness is worked out from the answers each time, so profiles saved
+  // under older rules show the current ones.
+  const answers = cleanAnswers(data.answers);
+  const settings = cleanSettings(data.settings);
+  const built = buildProfile(answers, settings);
   return {
     ok: true,
     value: {
-      answers: cleanAnswers(data.answers),
-      settings: cleanSettings(data.settings),
-      status: data.status === "ready" ? "ready" : "needs_info",
-      gaps: asGaps(data.missing),
-      warnings: Array.isArray(data.warnings) ? data.warnings.map(String) : [],
+      answers,
+      settings,
+      status: built.ready ? "ready" : "needs_info",
+      gaps: built.gaps,
+      warnings: built.warnings,
       sourceInterviewAt: data.source_interview_at != null ? String(data.source_interview_at) : null,
       builtAt: data.built_at != null ? String(data.built_at) : null,
       editedAt: data.edited_at != null ? String(data.edited_at) : null,
@@ -254,14 +252,30 @@ function propertyFor(field: MatchField) {
     : { type: "string", description };
 }
 
+/** JSON schema properties for every profile field (for Claude tools). */
+export const PROFILE_PROPERTIES: Record<string, unknown> = Object.fromEntries(
+  MATCH_FIELDS.map((field) => [field.id, propertyFor(field)]),
+);
+
 const PROFILE_TOOL = {
   name: "save_profile",
   description: "Save the company profile for investor matching.",
   input_schema: {
     type: "object",
-    properties: Object.fromEntries(MATCH_FIELDS.map((field) => [field.id, propertyFor(field)])),
+    properties: PROFILE_PROPERTIES,
   },
 };
+
+/** The exact labels the profile accepts, for a Claude system prompt. */
+export function profileLabelsText() {
+  return [
+    "## Allowed labels",
+    `Stages: ${[...RME.VC_LADDER, ...RME.PE_STAGES].join(", ")}`,
+    `Verticals: ${RME.VERTICALS.join(", ")}`,
+    `Industries: ${RME.INDUSTRIES.join(", ")}`,
+    `Countries: ${RME.COUNTRIES.join(", ")}`,
+  ].join("\n\n");
+}
 
 function text(value: unknown) {
   return value != null ? String(value).trim() : "";
@@ -285,7 +299,7 @@ function knownFacts(client: Record<string, unknown>) {
 
 function interviewText(interview: IntakeInterview) {
   const transcript = interview.messages
-    .map((message) => `${message.role === "assistant" ? "Rupert" : "Founder"}: ${message.content}`)
+    .map((message) => `${message.role === "assistant" ? "Rupert" : "Founder"}: ${intakeMessageText(message)}`)
     .join("\n\n");
   const summary = (interview.summary ?? [])
     .map((item) => `${item.title}: ${item.answer}`)
@@ -308,11 +322,7 @@ export async function extractAnswers(
   const prompts = await loadAgentPrompts(supabase);
   const system = [
     prompts.match_profile,
-    "## Allowed labels",
-    `Stages: ${[...RME.VC_LADDER, ...RME.PE_STAGES].join(", ")}`,
-    `Verticals: ${RME.VERTICALS.join(", ")}`,
-    `Industries: ${RME.INDUSTRIES.join(", ")}`,
-    `Countries: ${RME.COUNTRIES.join(", ")}`,
+    profileLabelsText(),
     "## What was already known",
     knownFacts(client),
   ].join("\n\n");

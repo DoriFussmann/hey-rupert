@@ -11,14 +11,14 @@ import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-order";
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
-import { IntakeBriefPanel } from "@/app/admin/clients/[id]/intake-brief-panel";
-import { MatchProfilePanel } from "@/app/admin/clients/[id]/match-profile-panel";
+import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-card";
+import { NextAction, type NextActionTurn } from "@/app/admin/clients/[id]/next-action";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
 import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
 import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
-import { CompletedPanel } from "@/components/completed-panel";
+import { Disclosure } from "@/components/disclosure";
 import { ViewAsClientLink } from "@/components/eye-icon";
 import { listEmailLog, type EmailLogResult } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
@@ -68,9 +68,11 @@ import {
   listSowSends,
 } from "@/lib/data";
 import { formatDate } from "@/lib/format";
+import { getOnboardingItems } from "@/lib/onboarding";
 import { nextTurn } from "@/lib/progress";
 import { isKickoffReady, kickoffDate } from "@/lib/service-order";
 import { getClientAccess } from "@/lib/password-setup";
+import { isStripeConfigured } from "@/lib/stripe";
 
 export default async function ClientDetailPage({
   params,
@@ -152,6 +154,8 @@ export default async function ClientDetailPage({
           clientId={client.id}
           sends={serviceOrderSends}
           paymentReceivedAt={client.payment_received_at ?? null}
+          autoInvoice={isStripeConfigured()}
+          testPilot={Boolean(client.is_test_pilot)}
         />
       ),
     },
@@ -196,12 +200,41 @@ export default async function ClientDetailPage({
     });
   }
 
-  const openPanels = panels
-    .filter((panel) => !panel.done)
-    .map((panel) => <Fragment key={panel.key}>{panel.node}</Fragment>);
-  const completedPanels = panels
-    .filter((panel) => panel.done)
-    .map((panel) => <Fragment key={panel.key}>{panel.node}</Fragment>);
+  // The work panel for the step in progress (the Setup Fee lives on the
+  // Service Order panel).
+  const setupDone = isSetupComplete(setupSource);
+  const onboardingNext = getOnboardingItems(client).find((item) => item.status !== "done");
+  const currentKey = setupDone
+    ? null
+    : onboardingNext
+      ? onboardingNext.id === "payment"
+        ? "service_order"
+        : onboardingNext.id
+      : client.intake_completed_at
+        ? "setup"
+        : null;
+  const currentPanel = panels.find((panel) => panel.key === currentKey && !panel.done) ?? null;
+  const upcomingPanels = panels.filter((panel) => !panel.done && panel !== currentPanel);
+  const completedPanels = panels.filter((panel) => panel.done);
+
+  // A test pilot has no Setup Fee invoice: paying is the "client's" step.
+  const testFeeStep =
+    client.is_test_pilot && onboardingNext?.id === "payment" && onboardingNext.status === "waiting";
+  const nextActionTurn: NextActionTurn = testFeeStep
+    ? { owner: "client", step: "Setup Fee (test pilot: no invoice, mark it as paid)" }
+    : turn.owner === "admin"
+      ? {
+          owner: "admin",
+          action: turn.action,
+          detail:
+            kickedOffAt && !client.nda_sent_at && !client.nda_signed_at
+              ? `Kick-off ready since ${formatDate(kickedOffAt)}: the Service Order is signed and the Setup Fee is received.`
+              : undefined,
+        }
+      : turn;
+  const materialsFiles = materialsRow
+    ? asMaterials(materialsRow.status === "submitted" ? materialsRow.published : materialsRow.draft).files
+    : [];
 
   return (
     <>
@@ -215,9 +248,15 @@ export default async function ClientDetailPage({
       </p>
       <PageHeader
         title={client.company_name}
-        description={`${client.archived_at ? "Archived. " : ""}Opened ${formatDate(client.created_at)}. Last activity ${formatDate(client.last_activity_at)}.`}
+        description={`${client.is_test_pilot ? "Test pilot. " : ""}${client.archived_at ? "Archived. " : ""}Opened ${formatDate(client.created_at)}. Last activity ${formatDate(client.last_activity_at)}.`}
         actions={
           <div className="flex flex-wrap items-end gap-md">
+            <Link
+              href={`/admin/clients/${client.id}/profile`}
+              className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+            >
+              Company profile
+            </Link>
             <Link
               href={`/admin/clients/${client.id}/match`}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
@@ -233,34 +272,22 @@ export default async function ClientDetailPage({
           </div>
         }
       />
-      {turn.owner === "admin" ? (
-        <section
-          role="status"
-          className="mb-lg rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
-        >
-          <p className="text-label uppercase tracking-label text-primary">
-            Your turn
-          </p>
-          <p className="mt-xs text-body-sm text-heading">
-            {turn.action}
-            {kickedOffAt && !client.nda_sent_at && !client.nda_signed_at
-              ? ` — kick-off ready since ${formatDate(kickedOffAt)}: the Service Order is signed and the Setup Fee is received.`
-              : "."}
-          </p>
-        </section>
-      ) : null}
+      <NextAction
+        clientId={client.id}
+        turn={nextActionTurn}
+        targetId={currentPanel ? "current-step" : turn.owner === "none" ? null : "section-progress"}
+        testPilot={
+          client.is_test_pilot
+            ? {
+                website: client.company_website ?? "",
+                deckNames: materialsFiles.map((file) => file.name),
+                materialsSubmitted: materialsRow?.status === "submitted",
+              }
+            : null
+        }
+      />
       {client.intake_completed_at ? (
-        <IntakeBriefPanel
-          clientId={client.id}
-          initialBrief={interview?.admin_brief ?? null}
-          interviewUpdatedAt={interview?.updated_at ?? null}
-          hasInterview={Boolean(interview && interview.messages.length > 0)}
-          claudeReady={claudeReady}
-          completedAt={client.intake_completed_at}
-        />
-      ) : null}
-      {client.intake_completed_at ? (
-        <MatchProfilePanel
+        <CompanyProfileCard
           clientId={client.id}
           initialState={matchProfile}
           interviewUpdatedAt={interview?.updated_at ?? null}
@@ -268,64 +295,93 @@ export default async function ClientDetailPage({
           claudeReady={claudeReady}
         />
       ) : null}
-      <ProgressOverview
-        stage={client.stage}
-        timestamps={{
-          sow_confirmed_at: client.sow_confirmed_at,
-          service_order_content: client.service_order_content,
-          service_order_agreed_at: client.service_order_agreed_at,
-          setup_invoice_url: client.setup_invoice_url,
-          payment_received_at: client.payment_received_at,
-          nda_sent_at: client.nda_sent_at,
-          nda_signed_at: client.nda_signed_at,
-          intake_completed_at: client.intake_completed_at,
-        }}
-        statuses={{
-          campaign_analytics_status: client.campaign_analytics_status,
-          investor_inbox_status: client.investor_inbox_status,
-          engagement_tracker_status: client.engagement_tracker_status,
-        }}
-        setup={setupSource}
-      />
-      {openPanels}
-      <EngagementProgress
-        clientId={client.id}
-        timestamps={{
-          nda_signed_at: client.nda_signed_at,
-          intake_completed_at: client.intake_completed_at,
-          payment_received_at: client.payment_received_at,
-        }}
-        statuses={{
-          campaign_analytics_status: client.campaign_analytics_status,
-          investor_inbox_status: client.investor_inbox_status,
-          engagement_tracker_status: client.engagement_tracker_status,
-        }}
-      />
-      <ClientEmails
-        clientId={client.id}
-        address={client.email || client.founder_email || ""}
-        paused={Boolean(client.emails_paused)}
-        signature={emailPanel.signature}
-        history={emailPanel.log.ok ? emailPanel.log.entries : []}
-        historyError={emailPanel.log.ok ? null : emailPanel.log.error}
-      />
-      <ClientTimeline source={client} />
-      <ClientForm client={client} />
-      <ClientActions
-        clientId={client.id}
-        companyName={client.company_name}
-        archived={Boolean(client.archived_at)}
-      />
-      <ResetPasswordSection
-        clientId={client.id}
-        companyName={client.company_name}
-        firstName={client.first_name ?? ""}
-        email={client.email ?? ""}
-        access={access}
-      />
-      <CompletedPanel count={completedPanels.length}>
-        {completedPanels}
-      </CompletedPanel>
+      {currentPanel ? (
+        <div id="current-step" className="scroll-mt-lg">
+          {currentPanel.node}
+        </div>
+      ) : null}
+      {upcomingPanels.length > 0 ? (
+        <Disclosure
+          title="Upcoming steps"
+          meta={`${upcomingPanels.length}`}
+        >
+          {upcomingPanels.map((panel) => (
+            <Fragment key={panel.key}>{panel.node}</Fragment>
+          ))}
+        </Disclosure>
+      ) : null}
+      <Disclosure id="section-progress" title="Progress" defaultOpen={setupDone}>
+        <ProgressOverview
+          stage={client.stage}
+          timestamps={{
+            sow_confirmed_at: client.sow_confirmed_at,
+            service_order_content: client.service_order_content,
+            service_order_agreed_at: client.service_order_agreed_at,
+            setup_invoice_url: client.setup_invoice_url,
+            payment_received_at: client.payment_received_at,
+            nda_sent_at: client.nda_sent_at,
+            nda_signed_at: client.nda_signed_at,
+            intake_completed_at: client.intake_completed_at,
+          }}
+          statuses={{
+            campaign_analytics_status: client.campaign_analytics_status,
+            investor_inbox_status: client.investor_inbox_status,
+            engagement_tracker_status: client.engagement_tracker_status,
+          }}
+          setup={setupSource}
+        />
+        <EngagementProgress
+          clientId={client.id}
+          timestamps={{
+            nda_signed_at: client.nda_signed_at,
+            intake_completed_at: client.intake_completed_at,
+            payment_received_at: client.payment_received_at,
+          }}
+          statuses={{
+            campaign_analytics_status: client.campaign_analytics_status,
+            investor_inbox_status: client.investor_inbox_status,
+            engagement_tracker_status: client.engagement_tracker_status,
+          }}
+        />
+      </Disclosure>
+      <Disclosure
+        title="Emails"
+        meta={client.emails_paused ? "Paused" : undefined}
+      >
+        <ClientEmails
+          clientId={client.id}
+          address={client.email || client.founder_email || ""}
+          paused={Boolean(client.emails_paused)}
+          signature={emailPanel.signature}
+          history={emailPanel.log.ok ? emailPanel.log.entries : []}
+          historyError={emailPanel.log.ok ? null : emailPanel.log.error}
+        />
+      </Disclosure>
+      <Disclosure title="Timeline">
+        <ClientTimeline source={client} />
+      </Disclosure>
+      <Disclosure title="Client details & account">
+        <ClientForm client={client} />
+        <ClientActions
+          clientId={client.id}
+          companyName={client.company_name}
+          archived={Boolean(client.archived_at)}
+        />
+        <ResetPasswordSection
+          clientId={client.id}
+          companyName={client.company_name}
+          firstName={client.first_name ?? ""}
+          email={client.email ?? ""}
+          access={access}
+        />
+      </Disclosure>
+      {completedPanels.length > 0 ? (
+        <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
+          {completedPanels.map((panel) => (
+            <Fragment key={panel.key}>{panel.node}</Fragment>
+          ))}
+        </Disclosure>
+      ) : null}
     </>
   );
 }
