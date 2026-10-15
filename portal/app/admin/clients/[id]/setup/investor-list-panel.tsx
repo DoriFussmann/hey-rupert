@@ -11,6 +11,8 @@ import {
   type SetupItem,
   type SetupStepState,
 } from "@/lib/setup";
+import Link from "next/link";
+import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
 import {
   ClientAnswer,
   EarlierRounds,
@@ -68,9 +70,20 @@ export function InvestorListPanel({
   return (
     <StepFrame
       item={item}
-      intro="Upload the matched investors as a CSV with: Fund Name, Fund Point of Contact, General Details, Fit Level (Tier 1, 2 or 3), Why It Works, Comments. Check the preview, then push. The client can add a note on any fund, ask questions, or confirm."
+      intro="Send the list from Rupert Match (fund names, tiers and contact counts; never people), or upload a CSV with: Fund Name, Fund Point of Contact, General Details, Fit Level (Tier 1, 2 or 3), Why It Works, Comments. Check the preview, then push. The client can add a note on any fund, ask questions, or confirm."
     >
       <ClientAnswer row={row} />
+
+      <div className="flex flex-wrap items-center gap-sm px-lg pt-md">
+        <Link href={`/admin/clients/${clientId}/match`} className={`${secondaryButton} no-underline`}>
+          Open Rupert Match
+        </Link>
+      </div>
+      {list.summary ? (
+        <div className="px-lg pt-md">
+          <InvestorListSummaryPanel summary={list.summary} />
+        </div>
+      ) : null}
 
       <div className="px-lg py-md">
         <div

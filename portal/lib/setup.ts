@@ -171,9 +171,21 @@ export type InvestorRow = {
   comments: string;
 };
 
+/** Funds and contact counts per tier, written by Rupert Match. No people. */
+export type InvestorListSummary = {
+  generated_at: string;
+  tiers: {
+    tier: FitTier;
+    funds: number;
+    contacts: number;
+    by_type: { label: string; funds: number; contacts: number }[];
+  }[];
+};
+
 export type InvestorListPayload = {
   rows: InvestorRow[];
   source_file: string;
+  summary?: InvestorListSummary | null;
 };
 
 export type CopyEmail = { subject: string; body: string };
@@ -689,7 +701,49 @@ export function asInvestorList(value: unknown): InvestorListPayload {
           comments: str(item.comments, CSV_FIELD_MAX),
         }))
     : [];
-  return { rows, source_file: str(raw.source_file, 255) };
+  return {
+    rows,
+    source_file: str(raw.source_file, 255),
+    summary: asInvestorListSummary(raw.summary),
+  };
+}
+
+function count(value: unknown) {
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n > 0 ? n : 0;
+}
+
+function asInvestorListSummary(value: unknown): InvestorListSummary | null {
+  if (!value || typeof value !== "object") return null;
+  const raw = value as Record<string, unknown>;
+  if (!Array.isArray(raw.tiers)) return null;
+  const tiers = raw.tiers
+    .filter(
+      (item): item is Record<string, unknown> =>
+        Boolean(item) && typeof item === "object",
+    )
+    .map((item) => ({
+      tier: asTier(item.tier),
+      funds: count(item.funds),
+      contacts: count(item.contacts),
+      by_type: (Array.isArray(item.by_type) ? item.by_type : [])
+        .filter(
+          (entry): entry is Record<string, unknown> =>
+            Boolean(entry) && typeof entry === "object",
+        )
+        .slice(0, 10)
+        .map((entry) => ({
+          label: str(entry.label, 60),
+          funds: count(entry.funds),
+          contacts: count(entry.contacts),
+        })),
+    }))
+    .filter(
+      (item): item is InvestorListSummary["tiers"][number] => item.tier !== null,
+    );
+  return tiers.length > 0
+    ? { generated_at: str(raw.generated_at, 40), tiers }
+    : null;
 }
 
 export function emptyEmailCopy(): EmailCopyPayload {

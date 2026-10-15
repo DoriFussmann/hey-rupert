@@ -12,6 +12,7 @@ import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
 import { IntakeBriefPanel } from "@/app/admin/clients/[id]/intake-brief-panel";
+import { MatchProfilePanel } from "@/app/admin/clients/[id]/match-profile-panel";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
@@ -24,6 +25,8 @@ import { loadEmailSettings } from "@/lib/email-settings";
 import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
+import { loadProfileState } from "@/lib/match/profile-server";
+import type { MatchProfileState } from "@/lib/match/shared";
 import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 import { asFeedback, asMaterials, isSetupComplete } from "@/lib/setup";
@@ -50,6 +53,13 @@ async function loadEmailPanel(clientId: string): Promise<{
   ]);
   return { signature: settings.signature, log };
 }
+
+/** The match profile, or null when there is none (or the table is missing). */
+async function loadMatchProfile(clientId: string): Promise<MatchProfileState | null> {
+  if (!isServiceRoleConfigured()) return null;
+  const loaded = await loadProfileState(createServiceClient(), clientId);
+  return loaded.ok ? loaded.value : null;
+}
 import {
   getAdminClient,
   getIntakeInterview,
@@ -73,7 +83,7 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel] =
+  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel, matchProfile] =
     await Promise.all([
       listSowSends(client.id),
       listServiceOrderSends(client.id),
@@ -82,6 +92,7 @@ export default async function ClientDetailPage({
       getIntakeInterview(client.id),
       getIntakeSettings(),
       loadEmailPanel(client.id),
+      loadMatchProfile(client.id),
     ]);
 
   const kickedOffAt = kickoffDate(client);
@@ -207,6 +218,12 @@ export default async function ClientDetailPage({
         description={`${client.archived_at ? "Archived. " : ""}Opened ${formatDate(client.created_at)}. Last activity ${formatDate(client.last_activity_at)}.`}
         actions={
           <div className="flex flex-wrap items-end gap-md">
+            <Link
+              href={`/admin/clients/${client.id}/match`}
+              className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+            >
+              Rupert Match
+            </Link>
             <ViewAsClientLink
               clientId={client.id}
               label={client.company_name}
@@ -240,6 +257,15 @@ export default async function ClientDetailPage({
           hasInterview={Boolean(interview && interview.messages.length > 0)}
           claudeReady={claudeReady}
           completedAt={client.intake_completed_at}
+        />
+      ) : null}
+      {client.intake_completed_at ? (
+        <MatchProfilePanel
+          clientId={client.id}
+          initialState={matchProfile}
+          interviewUpdatedAt={interview?.updated_at ?? null}
+          hasInterview={Boolean(interview && interview.messages.length > 0)}
+          claudeReady={claudeReady}
         />
       ) : null}
       <ProgressOverview

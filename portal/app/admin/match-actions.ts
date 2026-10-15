@@ -1,0 +1,521 @@
+"use server";
+
+import { randomUUID } from "node:crypto";
+import { revalidatePath } from "next/cache";
+import { getAuthContext } from "@/lib/auth";
+import { isClaudeConfigured } from "@/lib/anthropic";
+import { isServiceRoleConfigured } from "@/lib/env";
+import { asIntakeInterview } from "@/lib/intake-server";
+import {
+  FUND_UPLOAD_FOLDER,
+  asFundDbVersion,
+  buildFundDb,
+  diffFundDb,
+  loadLiveDb,
+  matchTableError,
+  newVersionPaths,
+  selectAll,
+  snapshotBytes,
+} from "@/lib/match/db-server";
+import {
+  cleanAnswers,
+  cleanSettings,
+  extractAnswers,
+  loadProfileState,
+  saveProfileState,
+} from "@/lib/match/profile-server";
+import {
+  buildClientList,
+  buildDetail,
+  buildView,
+  runClientMatch,
+  siteCandidates,
+} from "@/lib/match/run-server";
+import { checkAndStoreSites, isStale, runSiteBatch } from "@/lib/match/sites-server";
+import {
+  DEFAULT_SETTINGS,
+  FUND_DB_BUCKET,
+  FUND_DB_MAX_BYTES,
+  REJECT_REASONS,
+  type FirmDetail,
+  type FundDbVersion,
+  type MatchProfileState,
+  type MatchView,
+  type Tier,
+} from "@/lib/match/shared";
+import { asInvestorList } from "@/lib/setup";
+import { nowIso, setupTableError } from "@/lib/setup-server";
+import { createServiceClient } from "@/lib/supabase/admin";
+
+type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
+
+/** Website checks inside a request stop here, leaving time to save and reply. */
+const SITE_BUDGET_MS = 200_000;
+
+async function requireAdmin() {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") {
+    return { ok: false as const, error: "You do not have permission to do that." };
+  }
+  if (!isServiceRoleConfigured()) {
+    return { ok: false as const, error: "Service role key is not configured." };
+  }
+  return { ok: true as const, supabase: createServiceClient(), email: user.email ?? null };
+}
+
+function revalidateMatch(clientId: string) {
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath(`/admin/clients/${clientId}/match`);
+}
+
+function errorText(err: unknown, fallback: string) {
+  return err instanceof Error ? err.message : fallback;
+}
+
+// ---------------------------------------------------------------------------
+// Fund database
+
+export async function createFundUpload(file: {
+  name: string;
+  size: number;
+}): Promise<Result<{ path: string; token: string }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const name = String(file?.name ?? "");
+  const size = Number(file?.size ?? 0);
+  if (!/\.xlsx$/i.test(name)) {
+    return { ok: false, error: "Upload the workbook as an .xlsx file." };
+  }
+  if (!(size > 0) || size > FUND_DB_MAX_BYTES) {
+    return { ok: false, error: "The file must be under 50 MB." };
+  }
+  const path = `${FUND_UPLOAD_FOLDER}${randomUUID()}.xlsx`;
+  const { data, error } = await access.supabase.storage
+    .from(FUND_DB_BUCKET)
+    .createSignedUploadUrl(path);
+  if (error || !data) {
+    return {
+      ok: false,
+      error: matchTableError(`Upload could not start: ${error?.message ?? "unknown error"}.`),
+    };
+  }
+  return { ok: true, path: data.path, token: data.token };
+}
+
+async function removeStaged(supabase: ReturnType<typeof createServiceClient>) {
+  const { data } = await supabase
+    .from("fund_db_versions")
+    .select("id, upload_path, snapshot_path")
+    .eq("status", "staged");
+  for (const row of data ?? []) {
+    await supabase.storage
+      .from(FUND_DB_BUCKET)
+      .remove([String(row.upload_path), String(row.snapshot_path)]);
+    await supabase.from("fund_db_versions").delete().eq("id", row.id).eq("status", "staged");
+  }
+}
+
+/** Reads the uploaded workbook and prepares it as a staged version. */
+export async function stageFundUpload(
+  path: string,
+  fileName: string,
+): Promise<Result<{ version: FundDbVersion }> & { errors?: string[] }> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const supabase = access.supabase;
+  const cleanPath = String(path ?? "");
+  if (
+    !cleanPath.startsWith(FUND_UPLOAD_FOLDER) ||
+    cleanPath.includes("..") ||
+    !/\.xlsx$/i.test(cleanPath)
+  ) {
+    return { ok: false, error: "Unknown upload." };
+  }
+  const discardUpload = () => supabase.storage.from(FUND_DB_BUCKET).remove([cleanPath]);
+
+  try {
+    const { data: file, error: downloadError } = await supabase.storage
+      .from(FUND_DB_BUCKET)
+      .download(cleanPath);
+    if (downloadError || !file) {
+      return { ok: false, error: `The upload could not be read: ${downloadError?.message ?? "missing file"}.` };
+    }
+    if (file.size > FUND_DB_MAX_BYTES) {
+      await discardUpload();
+      return { ok: false, error: "The file must be under 50 MB." };
+    }
+
+    const built = await buildFundDb(Buffer.from(await file.arrayBuffer()));
+    if (!built.ok) {
+      await discardUpload();
+      return { ok: false, error: "The workbook was not imported.", errors: built.errors };
+    }
+
+    const live = await loadLiveDb(supabase);
+    if (!live.ok && !live.empty) {
+      await discardUpload();
+      return { ok: false, error: live.error };
+    }
+
+    const [reviewed, hidden] = await Promise.all([
+      selectAll<{ firm_id: string }>((from, to) =>
+        supabase.from("match_reviews").select("firm_id").order("firm_id").range(from, to),
+      ),
+      selectAll<{ firm_id: string }>((from, to) =>
+        supabase.from("match_suppressions").select("firm_id").order("firm_id").range(from, to),
+      ),
+    ]);
+    if (!reviewed.ok) return reviewed;
+    if (!hidden.ok) return hidden;
+    const reviewedIds = new Set([
+      ...reviewed.rows.map((row) => row.firm_id),
+      ...hidden.rows.map((row) => row.firm_id),
+    ]);
+
+    const { db, offices, warnings } = built.value;
+    const diff = diffFundDb(live.ok ? live.value.db : null, db, reviewedIds, warnings);
+
+    await removeStaged(supabase);
+    const { id, snapshotPath } = newVersionPaths();
+    const { error: uploadError } = await supabase.storage
+      .from(FUND_DB_BUCKET)
+      .upload(snapshotPath, snapshotBytes(db), { contentType: "application/gzip", upsert: false });
+    if (uploadError) {
+      return { ok: false, error: `The database could not be stored: ${uploadError.message}.` };
+    }
+
+    const { data: row, error } = await supabase
+      .from("fund_db_versions")
+      .insert({
+        id,
+        file_name: String(fileName ?? "").slice(0, 255) || "workbook.xlsx",
+        upload_path: cleanPath,
+        snapshot_path: snapshotPath,
+        status: "staged",
+        firms: db.firms.length,
+        contacts: db.contacts.length,
+        offices,
+        diff,
+        created_by: access.email,
+      })
+      .select("*")
+      .single();
+    if (error || !row) {
+      await supabase.storage.from(FUND_DB_BUCKET).remove([snapshotPath]);
+      return { ok: false, error: matchTableError(error?.message ?? "The version was not saved.", error?.code) };
+    }
+
+    revalidatePath("/admin/fund-database");
+    return { ok: true, version: asFundDbVersion(row) };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The workbook could not be imported.") };
+  }
+}
+
+/** Makes a staged or earlier version the live database. */
+export async function applyFundVersion(id: string): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const { error } = await access.supabase.rpc("apply_fund_db_version", { p_id: String(id) });
+  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+  revalidatePath("/admin/fund-database");
+  return { ok: true };
+}
+
+export async function discardFundVersion(id: string): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const { data, error } = await access.supabase
+    .from("fund_db_versions")
+    .select("id, status, upload_path, snapshot_path")
+    .eq("id", String(id))
+    .maybeSingle();
+  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+  if (!data || data.status !== "staged") {
+    return { ok: false, error: "Only an upload that hasn't been applied can be discarded." };
+  }
+  await access.supabase.storage
+    .from(FUND_DB_BUCKET)
+    .remove([String(data.upload_path), String(data.snapshot_path)]);
+  const { error: deleteError } = await access.supabase
+    .from("fund_db_versions")
+    .delete()
+    .eq("id", data.id)
+    .eq("status", "staged");
+  if (deleteError) return { ok: false, error: matchTableError(deleteError.message, deleteError.code) };
+  revalidatePath("/admin/fund-database");
+  return { ok: true };
+}
+
+/** Runs the daily website batch now. */
+export async function runWebsiteBatchNow(): Promise<
+  Result<{ checked: number; summary: Record<string, number> }>
+> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const result = await runSiteBatch(access.supabase, SITE_BUDGET_MS);
+  if (!result.ok) return { ok: false, error: result.error };
+  revalidatePath("/admin/fund-database");
+  return { ok: true, checked: result.checked, summary: result.summary };
+}
+
+// ---------------------------------------------------------------------------
+// Match profile
+
+/** Builds (or rebuilds) the match profile from the client's intake. */
+export async function buildMatchProfile(
+  clientId: string,
+): Promise<Result<{ state: MatchProfileState }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!isClaudeConfigured()) {
+    return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
+  }
+  const supabase = access.supabase;
+  const [{ data: client, error: clientError }, { data: interviewRow, error: interviewError }, current] =
+    await Promise.all([
+      supabase.from("clients").select("*").eq("id", clientId).maybeSingle(),
+      supabase.from("intake_interviews").select("*").eq("client_id", clientId).maybeSingle(),
+      loadProfileState(supabase, clientId),
+    ]);
+  if (clientError) return { ok: false, error: clientError.message };
+  if (!client) return { ok: false, error: "Client not found." };
+  if (interviewError) return { ok: false, error: interviewError.message };
+  if (!current.ok) return current;
+  const interview = interviewRow ? asIntakeInterview(interviewRow) : null;
+  if (!interview || interview.messages.length === 0) {
+    return { ok: false, error: "There is no intake interview to build from yet." };
+  }
+
+  const extracted = await extractAnswers(supabase, client as Record<string, unknown>, interview);
+  if (!extracted.ok) return extracted;
+
+  const saved = await saveProfileState(supabase, clientId, {
+    answers: extracted.answers,
+    settings: current.value?.settings ?? DEFAULT_SETTINGS,
+    source: "intake",
+    sourceInterviewAt: interview.updated_at,
+  });
+  if (!saved.ok) return saved;
+  revalidateMatch(clientId);
+  return { ok: true, state: saved.value };
+}
+
+async function viewFor(
+  supabase: ReturnType<typeof createServiceClient>,
+  clientId: string,
+): Promise<{ view: MatchView | null; error: string | null }> {
+  const run = await runClientMatch(supabase, clientId);
+  return run.ok ? { view: buildView(run.value), error: null } : { view: null, error: run.error };
+}
+
+/** Saves edited answers, then re-runs the match when the profile allows. */
+export async function saveMatchProfile(
+  clientId: string,
+  answers: unknown,
+): Promise<Result<{ state: MatchProfileState; view: MatchView | null; runError: string | null }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const current = await loadProfileState(access.supabase, clientId);
+  if (!current.ok) return current;
+  const saved = await saveProfileState(access.supabase, clientId, {
+    answers: cleanAnswers(answers),
+    settings: current.value?.settings ?? DEFAULT_SETTINGS,
+    source: "edit",
+  });
+  if (!saved.ok) return saved;
+  const { view, error } = await viewFor(access.supabase, clientId);
+  revalidateMatch(clientId);
+  return { ok: true, state: saved.value, view, runError: error };
+}
+
+/** Saves the operator settings (tightness, filters, rules) and re-runs. */
+export async function updateMatchSettings(
+  clientId: string,
+  settings: unknown,
+): Promise<Result<{ view: MatchView }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const current = await loadProfileState(access.supabase, clientId);
+  if (!current.ok) return current;
+  if (!current.value) return { ok: false, error: "Fill the company profile first." };
+  const saved = await saveProfileState(access.supabase, clientId, {
+    answers: current.value.answers,
+    settings: cleanSettings(settings),
+    source: "settings",
+  });
+  if (!saved.ok) return saved;
+  const { view, error } = await viewFor(access.supabase, clientId);
+  if (!view) return { ok: false, error: error ?? "The match could not run." };
+  return { ok: true, view };
+}
+
+export async function runMatch(clientId: string): Promise<Result<{ view: MatchView }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const { view, error } = await viewFor(access.supabase, clientId);
+  if (!view) return { ok: false, error: error ?? "The match could not run." };
+  return { ok: true, view };
+}
+
+export async function getFirmDetail(
+  clientId: string,
+  firmId: string,
+): Promise<Result<{ detail: FirmDetail }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const run = await runClientMatch(access.supabase, clientId);
+  if (!run.ok) return run;
+  const detail = buildDetail(run.value, String(firmId));
+  if (!detail) return { ok: false, error: "This fund is no longer in the results." };
+  return { ok: true, detail };
+}
+
+// ---------------------------------------------------------------------------
+// Reviews
+
+export async function reviewFirm(
+  clientId: string,
+  input: {
+    firmId: string;
+    firmName: string;
+    tier: Tier;
+    status: "ok" | "no";
+    reason?: string;
+    note?: string;
+    hideForAll?: boolean;
+  },
+): Promise<Result<{ view: MatchView }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const firmId = String(input?.firmId ?? "").slice(0, 40);
+  const firmName = String(input?.firmName ?? "").slice(0, 255);
+  if (!firmId) return { ok: false, error: "Unknown fund." };
+  const status = input.status === "no" ? "no" : "ok";
+  const reason = String(input.reason ?? "");
+  if (status === "no" && !REJECT_REASONS.includes(reason)) {
+    return { ok: false, error: "Choose a reason for rejecting." };
+  }
+  const note = String(input.note ?? "").trim().slice(0, 1000);
+
+  const { error } = await access.supabase.from("match_reviews").upsert(
+    {
+      client_id: clientId,
+      firm_id: firmId,
+      firm_name: firmName,
+      status,
+      reason: status === "no" ? reason : null,
+      note: note || null,
+      tier: ["bullseye", "match", "expansion"].includes(input.tier) ? input.tier : null,
+      reviewed_by: access.email,
+      reviewed_at: nowIso(),
+    },
+    { onConflict: "client_id,firm_id" },
+  );
+  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+
+  if (status === "no" && input.hideForAll) {
+    const { error: hideError } = await access.supabase.from("match_suppressions").upsert(
+      {
+        firm_id: firmId,
+        firm_name: firmName,
+        reason: reason + (note ? `: ${note}` : ""),
+        from_client: clientId,
+        created_by: access.email,
+      },
+      { onConflict: "firm_id" },
+    );
+    if (hideError) return { ok: false, error: matchTableError(hideError.message, hideError.code) };
+  }
+
+  const { view, error: runError } = await viewFor(access.supabase, clientId);
+  if (!view) return { ok: false, error: runError ?? "The match could not run." };
+  return { ok: true, view };
+}
+
+export async function clearFirmReview(
+  clientId: string,
+  firmId: string,
+): Promise<Result<{ view: MatchView }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const { error } = await access.supabase
+    .from("match_reviews")
+    .delete()
+    .eq("client_id", clientId)
+    .eq("firm_id", String(firmId));
+  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+  const { view, error: runError } = await viewFor(access.supabase, clientId);
+  if (!view) return { ok: false, error: runError ?? "The match could not run." };
+  return { ok: true, view };
+}
+
+/** Shows a fund hidden for all clients again. */
+export async function restoreHiddenFund(
+  clientId: string,
+  firmId: string,
+): Promise<Result<{ view: MatchView }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const { error } = await access.supabase
+    .from("match_suppressions")
+    .delete()
+    .eq("firm_id", String(firmId));
+  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+  const { view, error: runError } = await viewFor(access.supabase, clientId);
+  if (!view) return { ok: false, error: runError ?? "The match could not run." };
+  return { ok: true, view };
+}
+
+// ---------------------------------------------------------------------------
+// Websites and sending to the client
+
+/** Re-checks this client's top funds per tier whose result is old or missing. */
+export async function checkClientWebsites(
+  clientId: string,
+): Promise<Result<{ view: MatchView; checked: number; pending: number }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const run = await runClientMatch(access.supabase, clientId);
+  if (!run.ok) return run;
+  const { out, profile, live, checkedAt } = run.value;
+  if (profile.siteN <= 0) {
+    return { ok: false, error: "The website check is off for this client. Turn it on under Rules." };
+  }
+  const due = siteCandidates(out, live.db, profile.siteN).filter(
+    (firm) => firm.web && isStale(checkedAt[firm.id]),
+  );
+  let checked = 0;
+  if (due.length > 0) {
+    const result = await checkAndStoreSites(access.supabase, due, SITE_BUDGET_MS);
+    if (!result.ok) return result;
+    checked = result.checked;
+  }
+  const { view, error } = await viewFor(access.supabase, clientId);
+  if (!view) return { ok: false, error: error ?? "The match could not run." };
+  return { ok: true, view, checked, pending: Math.max(0, due.length - checked) };
+}
+
+/**
+ * Writes the fund list (funds, tiers and contact counts; never people) to
+ * the client's Investor List draft. Rupert still pushes it from Setup.
+ */
+export async function sendMatchToClient(
+  clientId: string,
+): Promise<Result<{ funds: number }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const run = await runClientMatch(access.supabase, clientId);
+  if (!run.ok) return run;
+  const list = buildClientList(run.value);
+  if (!list.ok) return list;
+  const draft = asInvestorList(list.value);
+
+  const { error } = await access.supabase.from("setup_steps").upsert(
+    { client_id: clientId, step: "investor_list", draft, updated_at: nowIso() },
+    { onConflict: "client_id,step", ignoreDuplicates: false },
+  );
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  revalidateMatch(clientId);
+  return { ok: true, funds: draft.rows.length };
+}
