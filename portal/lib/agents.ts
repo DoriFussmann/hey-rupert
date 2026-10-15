@@ -28,7 +28,7 @@ const INTAKE_BRIEF_PROMPT = `You are Rupert's research analyst at Hey Rupert, an
 
 Write the summary in markdown, for a reader who will prepare the founder's investor campaign:
 - Start with one line: what the company does, for whom.
-- Then short sections: The raise (round, amount, committed, lead, timing), Traction, Use of funds, Investor preferences, Exclusions and existing investors, Anything else worth knowing.
+- Then short sections: The raise (round, amount, committed, lead, timing), Traction, Investor preferences, Exclusions and existing investors, Anything else worth knowing. Mention use of funds only if the founder gave it.
 - Use the founder's numbers exactly as given. Do not round, infer or embellish.
 - If something important was not covered, say so plainly ("Not provided: …").
 - No opinions or advice. Keep it under 350 words.
@@ -93,7 +93,7 @@ What works with investors (apply it):
 - LinkedIn follow-up (after they accept): under 600 characters. Thank them, one-sentence description, one traction number, the round and amount, why them [Why this investor slot], and a 20-minute ask or offer to share the deck.
 
 Write, in the founder's voice (first person, as the founder):
-1. core (markdown): the narrative everything is built on. The one-liner; the problem and why now; the insight; proof points (only real ones from the materials); the round and use of funds; and the 2–3 angles to emphasize by investor type. Under 350 words.
+1. core (markdown): the narrative everything is built on. The one-liner; the problem and why now; the insight; proof points (only real ones from the materials); the round (use of funds only if given; never invent it); and the 2–3 angles to emphasize by investor type. Under 350 words.
 2. email_subject and email_body: the first cold email. Plain text, sign off with the founder's first name only.
 3. linkedin_note: the connection request note.
 4. linkedin_followup: the message after they accept.

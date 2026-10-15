@@ -169,6 +169,11 @@ export function ClientTable({ clients }: { clients: Client[] }) {
                       >
                         {heading}
                       </Link>
+                      {client.is_test_pilot ? (
+                        <span className="ml-sm inline-flex rounded-full border border-warning/40 px-sm py-px align-middle text-label uppercase tracking-label text-warning">
+                          Test
+                        </span>
+                      ) : null}
                       {sub ? <p className="text-muted">{sub}</p> : null}
                     </td>
                     <td className="px-lg py-md">

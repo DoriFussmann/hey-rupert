@@ -62,7 +62,14 @@ export function NarrativeEditor({
   }
 
   async function onBuild() {
-    const hasText = Object.values(narrative).some((value) => value.trim());
+    // `admin_note` is optional (undefined), so only the text fields are checked.
+    const hasText = [
+      narrative.core,
+      narrative.email_subject,
+      narrative.email_body,
+      narrative.linkedin_note,
+      narrative.linkedin_followup,
+    ].some((value) => value.trim());
     if (
       hasText &&
       !window.confirm(

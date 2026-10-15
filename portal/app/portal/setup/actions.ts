@@ -17,6 +17,7 @@ import {
   MATERIAL_MAX_BYTES,
   MATERIAL_MAX_FILES,
   NOTE_MAX,
+  asFeedbackPublished,
   asInvestorList,
   asMaterials,
   fileExtension,
@@ -500,5 +501,46 @@ export async function respondToSetupStep(input: {
   );
 
   revalidateSetup(access.user.id);
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Analysis & Feedback: the client's own checklist
+
+/** Ticks a recommendation as done (or not) for the client's own tracking. */
+export async function toggleFeedbackItem(
+  itemId: string,
+  done: boolean,
+): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+
+  const loaded = await loadSetupStep(access.supabase, access.user.id, "deck_review");
+  if (!loaded.ok) return loaded;
+  const row = loaded.row;
+  if (!row || row.status !== "published") {
+    return { ok: false, error: "There is no feedback to track yet." };
+  }
+  const id = String(itemId ?? "");
+  if (!asFeedbackPublished(row.published).items.some((item) => item.id === id)) {
+    return { ok: false, error: "That recommendation is no longer in the feedback. Refresh to see the latest." };
+  }
+
+  const checks = { ...row.client_checks };
+  if (done) checks[id] = nowIso();
+  else delete checks[id];
+
+  const { error } = await access.supabase
+    .from("setup_steps")
+    .update({ client_checks: checks })
+    .eq("client_id", access.user.id)
+    .eq("step", "deck_review");
+  if (error) {
+    console.error(`Feedback check not saved: ${error.message}`);
+    return { ok: false, error: "Your tick could not be saved. Please try again." };
+  }
+
+  revalidatePath("/portal/setup/deck-review");
+  revalidatePath(`/admin/clients/${access.user.id}`);
   return { ok: true };
 }

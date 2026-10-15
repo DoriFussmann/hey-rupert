@@ -2,17 +2,15 @@ import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { PageHeader } from "@/components/page-header";
 import { MatchWorkspace } from "@/app/admin/clients/[id]/match/match-workspace";
-import { isClaudeConfigured } from "@/lib/anthropic";
-import { getAdminClient, getIntakeInterview } from "@/lib/data";
+import { getAdminClient } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
-import RME from "@/lib/match/engine/index.mjs";
 import { loadLiveDb } from "@/lib/match/db-server";
 import { buildProfile, canRun, loadProfileState } from "@/lib/match/profile-server";
 import { buildView, runClientMatch } from "@/lib/match/run-server";
 import type { MatchProfileState, MatchView } from "@/lib/match/shared";
 import { createServiceClient } from "@/lib/supabase/admin";
 
-// Matching, website checks and the intake profile run in server actions here.
+// Matching and website checks run in server actions here.
 export const maxDuration = 300;
 
 async function loadMatch(clientId: string): Promise<{
@@ -48,10 +46,7 @@ export default async function ClientMatchPage({ params }: { params: { id: string
   const client = await getAdminClient(params.id);
   if (!client) notFound();
 
-  const [{ state, view, database, error }, interview] = await Promise.all([
-    loadMatch(client.id),
-    getIntakeInterview(client.id),
-  ]);
+  const { state, view, database, error } = await loadMatch(client.id);
 
   return (
     <>
@@ -62,18 +57,10 @@ export default async function ClientMatchPage({ params }: { params: { id: string
       />
       <MatchWorkspace
         clientId={client.id}
-        companyName={client.company_name}
         initialState={state}
         initialView={view}
         initialError={error}
         database={database}
-        canBuildFromIntake={Boolean(interview && interview.messages.length > 0) && isClaudeConfigured()}
-        taxonomy={{
-          stages: [...RME.VC_LADDER, ...RME.PE_STAGES],
-          verticals: RME.VERTICALS,
-          industries: RME.INDUSTRIES,
-          countries: RME.COUNTRIES,
-        }}
       />
     </>
   );

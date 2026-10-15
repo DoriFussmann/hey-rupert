@@ -6,6 +6,7 @@ import {
   DEFAULT_INTAKE_PROMPT,
   DEFAULT_INTAKE_TOPICS,
   INTAKE_PROMPT_SLUG,
+  intakeMessageText,
   INTAKE_TOPICS_SLUG,
   isTopicCoverage,
   parseIntakeTopics,
@@ -57,11 +58,23 @@ function asMessages(value: unknown): IntakeMessage[] {
         Boolean(item) && typeof item === "object",
     )
     .filter((item) => item.role === "assistant" || item.role === "user")
-    .map((item) => ({
-      role: item.role as "assistant" | "user",
-      content: String(item.content ?? ""),
-      at: String(item.at ?? ""),
-    }));
+    .map((item) => {
+      const message: IntakeMessage = {
+        role: item.role as "assistant" | "user",
+        content: String(item.content ?? ""),
+        at: String(item.at ?? ""),
+      };
+      const file = item.attachment;
+      if (file && typeof file === "object") {
+        const entry = file as Record<string, unknown>;
+        message.attachment = {
+          name: String(entry.name ?? "file"),
+          path: String(entry.path ?? ""),
+          facts: String(entry.facts ?? ""),
+        };
+      }
+      return message;
+    });
 }
 
 function asTopicStatus(value: unknown): Record<string, TopicStatus> {
@@ -208,14 +221,17 @@ function systemPrompt(
 const OPENING_USER_TURN =
   "[The founder has just opened the intake interview. Greet them by first name if you know it, explain in one sentence what this is for and roughly how long it takes, then ask your first question.]";
 
-function toClaudeMessages(messages: IntakeMessage[]): ClaudeMessage[] {
-  const turns: ClaudeMessage[] = [{ role: "user", content: OPENING_USER_TURN }];
+function toClaudeMessages(messages: IntakeMessage[]): { role: "user" | "assistant"; content: string }[] {
+  const turns: { role: "user" | "assistant"; content: string }[] = [
+    { role: "user", content: OPENING_USER_TURN },
+  ];
   for (const message of messages) {
     const last = turns[turns.length - 1];
+    const content = intakeMessageText(message);
     if (last.role === message.role) {
-      last.content = `${last.content}\n\n${message.content}`;
+      last.content = `${last.content}\n\n${content}`;
     } else {
-      turns.push({ role: message.role, content: message.content });
+      turns.push({ role: message.role, content });
     }
   }
   return turns;
@@ -244,6 +260,11 @@ const RESPOND_TOOL = {
           required: ["id", "status", "note"],
         },
       },
+      document_facts: {
+        type: "string",
+        description:
+          "Only when the founder just shared a file: everything in it that matters for the interview topics, as a compact factual list (at most about 1,500 characters). Empty otherwise.",
+      },
     },
     required: ["reply", "topics"],
   },
@@ -252,11 +273,13 @@ const RESPOND_TOOL = {
 export type InterviewTurn = {
   reply: string;
   topics: { id: string; status: TopicCoverage; note: string }[];
+  /** What Rupert took from a file shared in this turn. */
+  documentFacts: string;
 };
 
 function readTurn(input: unknown): InterviewTurn | null {
   if (!input || typeof input !== "object") return null;
-  const value = input as { reply?: unknown; topics?: unknown };
+  const value = input as { reply?: unknown; topics?: unknown; document_facts?: unknown };
   const reply = typeof value.reply === "string" ? value.reply.trim() : "";
   if (!reply) return null;
 
@@ -274,8 +297,16 @@ function readTurn(input: unknown): InterviewTurn | null {
         }))
     : [];
 
-  return { reply, topics };
+  const documentFacts =
+    typeof value.document_facts === "string" ? value.document_facts.trim().slice(0, 3000) : "";
+  return { reply, topics, documentFacts };
 }
+
+/** A PDF the founder shares in this turn, read once. */
+export type SharedDocument = { name: string; base64: string };
+
+// Reading a deck takes longer than a chat reply.
+const DOCUMENT_TURN_TIMEOUT_MS = 100_000;
 
 /** Asks Claude for Rupert's next message, given the conversation so far. */
 export async function nextInterviewTurn(
@@ -283,11 +314,31 @@ export async function nextInterviewTurn(
   client: Record<string, unknown>,
   messages: IntakeMessage[],
   topicStatus: Record<string, TopicStatus>,
+  document?: SharedDocument,
 ): Promise<{ ok: true; turn: InterviewTurn } | { ok: false; reason: string }> {
+  const turns: ClaudeMessage[] = toClaudeMessages(messages);
+  const last = turns[turns.length - 1];
+  if (document && last.role === "user" && typeof last.content === "string") {
+    // The file goes in with the founder's latest turn.
+    last.content = [
+      {
+        type: "document",
+        source: { type: "base64", media_type: "application/pdf", data: document.base64 },
+        title: document.name,
+      },
+      {
+        type: "text",
+        text: `${last.content}\n\n[${document.name} is attached. Read it, mark every topic it answers as covered or partial, fill document_facts, then thank the founder briefly and ask only about what is still missing.]`,
+      },
+    ];
+  }
+
   const result = await callClaudeTool<unknown>({
     system: systemPrompt(settings, buildClientContext(client), topicStatus),
-    messages: toClaudeMessages(messages),
+    messages: turns,
     tool: RESPOND_TOOL,
+    maxTokens: document ? 3000 : 1024,
+    timeoutMs: document ? DOCUMENT_TURN_TIMEOUT_MS : undefined,
     // A plain-text answer is still shown to the client; topic coverage is
     // simply left unchanged for that turn.
     fallbackFromText: (text) => ({ reply: text, topics: [] }),
@@ -331,7 +382,7 @@ export async function writeInterviewSummary(
 ): Promise<{ ok: true; items: IntakeSummaryItem[] } | { ok: false; reason: string }> {
   const transcript = messages
     .map((message) =>
-      `${message.role === "assistant" ? "Rupert" : "Founder"}: ${message.content}`,
+      `${message.role === "assistant" ? "Rupert" : "Founder"}: ${intakeMessageText(message)}`,
     )
     .join("\n\n");
 

@@ -1,8 +1,12 @@
 "use client";
 
 import { useEffect, useId, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { createClientRecord } from "@/app/admin/actions";
+import {
+  createClientRecord,
+  sendDefaultStatementOfWork,
+} from "@/app/admin/actions";
 import { Select } from "@/components/select";
 import {
   SetupLinkResult,
@@ -13,12 +17,17 @@ import {
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
 const labelClass = "block text-label uppercase tracking-label text-muted";
+const primaryButton =
+  "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
+const secondaryButton =
+  "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 
 const emptyForm = {
   first_name: "",
   last_name: "",
   email: "",
   company_name: "",
+  company_website: "",
   raise_amount: "",
   raise_stage: "",
   vertical: "",
@@ -27,7 +36,22 @@ const emptyForm = {
   admin_notes: "",
 };
 
-type Created = SetupLinkDetails & { linked: boolean };
+type TextField = keyof typeof emptyForm;
+
+type Created = {
+  clientId: string;
+  testPilot: boolean;
+  linked: boolean;
+  email: string;
+  /** Set-password details; none for a test pilot client. */
+  setup: SetupLinkDetails | null;
+};
+
+type SowState =
+  | { kind: "idle" }
+  | { kind: "pending" }
+  | { kind: "sent"; emailed: boolean }
+  | { kind: "error"; text: string };
 
 function RequiredMark() {
   return (
@@ -38,6 +62,69 @@ function RequiredMark() {
   );
 }
 
+/** Generate & send the Statement of Work right after the client is added. */
+function SendSowStep({ clientId, testPilot }: { clientId: string; testPilot: boolean }) {
+  const [state, setState] = useState<SowState>({ kind: "idle" });
+
+  async function send() {
+    setState({ kind: "pending" });
+    try {
+      const result = await sendDefaultStatementOfWork(clientId);
+      setState(
+        result.ok
+          ? { kind: "sent", emailed: result.clientEmail.ok }
+          : { kind: "error", text: result.error },
+      );
+    } catch (err) {
+      setState({
+        kind: "error",
+        text: err instanceof Error ? err.message : "Unable to send the Statement of Work.",
+      });
+    }
+  }
+
+  return (
+    <section className="rounded-card border border-primary/30 bg-primary-tint px-md py-md">
+      <p className="text-label uppercase tracking-label text-primary">Next step</p>
+      <p className="mt-xs text-body-sm text-heading">
+        Send the Statement of Work, generated from your Forms template.
+      </p>
+      <div className="mt-sm flex flex-wrap items-center gap-sm">
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={state.kind === "pending" || state.kind === "sent"}
+          onClick={() => void send()}
+        >
+          {state.kind === "pending"
+            ? "Sending…"
+            : state.kind === "sent"
+              ? "Statement of Work sent"
+              : "Generate & send SoW"}
+        </button>
+        <Link
+          href={`/admin/clients/${clientId}`}
+          className="text-body-sm text-primary no-underline hover:text-primary-hover"
+        >
+          Edit it first on the client page
+        </Link>
+      </div>
+      {state.kind === "sent" ? (
+        <p role="status" className="mt-sm text-body-sm text-success">
+          {testPilot || !state.emailed
+            ? "In the client's portal."
+            : "In the client's portal, and the client was emailed."}
+        </p>
+      ) : null}
+      {state.kind === "error" ? (
+        <p role="alert" className="mt-sm text-body-sm text-error">
+          {state.text}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
 export function AddClientButton() {
   const router = useRouter();
   const titleId = useId();
@@ -45,6 +132,7 @@ export function AddClientButton() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [testPilot, setTestPilot] = useState(false);
   const [created, setCreated] = useState<Created | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
 
@@ -62,7 +150,7 @@ export function AddClientButton() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, pending]);
 
-  function update(field: keyof typeof emptyForm) {
+  function update(field: TextField) {
     return (
       event: React.ChangeEvent<
         HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
@@ -74,6 +162,7 @@ export function AddClientButton() {
 
   function resetAll() {
     setForm(emptyForm);
+    setTestPilot(false);
     setCreated(null);
     setEmailDraft("");
     setError(null);
@@ -94,7 +183,7 @@ export function AddClientButton() {
     setError(null);
 
     try {
-      const result = await createClientRecord(form);
+      const result = await createClientRecord({ ...form, is_test_pilot: testPilot });
 
       if (!result.ok) {
         setError(result.error);
@@ -102,21 +191,31 @@ export function AddClientButton() {
         return;
       }
 
-      const createdInfo: Created = {
-        firstName: form.first_name.trim(),
-        email: result.email,
-        setupUrl: result.setupUrl,
-        expiresAt: result.expiresAt,
+      const setup =
+        result.setupUrl && result.expiresAt
+          ? {
+              firstName: form.first_name.trim(),
+              email: result.email,
+              setupUrl: result.setupUrl,
+              expiresAt: result.expiresAt,
+            }
+          : null;
+      setCreated({
+        clientId: result.clientId,
+        testPilot: result.testPilot,
         linked: result.linked,
-      };
-      setCreated(createdInfo);
-      setEmailDraft(buildWelcomeEmail(createdInfo));
+        email: result.email,
+        setup,
+      });
+      setEmailDraft(setup ? buildWelcomeEmail(setup) : "");
       setPending(false);
     } catch {
       setError("Unable to add the client. Please try again.");
       setPending(false);
     }
   }
+
+  const required = !testPilot;
 
   return (
     <>
@@ -127,7 +226,7 @@ export function AddClientButton() {
             resetAll();
             setOpen(true);
           }}
-          className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover"
+          className={primaryButton}
         >
           Add client
         </button>
@@ -153,7 +252,11 @@ export function AddClientButton() {
                   Admin
                 </p>
                 <h2 id={titleId} className="mt-sm text-h3">
-                  {created ? "New Client & Portal Created" : "Add client"}
+                  {created
+                    ? created.testPilot
+                      ? "Test Pilot Client Created"
+                      : "New Client & Portal Created"
+                    : "Add client"}
                 </h2>
               </div>
               <button
@@ -167,21 +270,24 @@ export function AddClientButton() {
 
             {created ? (
               <div className="flex flex-1 flex-col overflow-hidden">
-                <div className="flex-1 overflow-y-auto px-lg py-lg">
-                  <p
-                    role="status"
-                    className="mb-lg text-body-sm text-success"
-                  >
-                    {created.linked
-                      ? "Linked to the login that already existed for this email."
-                      : "Client and portal login created."}{" "}
-                    Send them the link below to set their password.
+                <div className="grid flex-1 content-start gap-lg overflow-y-auto px-lg py-lg">
+                  <p role="status" className="text-body-sm text-success">
+                    {created.testPilot
+                      ? "Test pilot client created. Client emails and reminders are off. Run the steps from the client page."
+                      : `${
+                          created.linked
+                            ? "Linked to the login that already existed for this email."
+                            : "Client and portal login created."
+                        } Send them the link below to set their password.`}
                   </p>
-                  <SetupLinkResult
-                    details={created}
-                    emailDraft={emailDraft}
-                    setEmailDraft={setEmailDraft}
-                  />
+                  <SendSowStep clientId={created.clientId} testPilot={created.testPilot} />
+                  {created.setup ? (
+                    <SetupLinkResult
+                      details={created.setup}
+                      emailDraft={emailDraft}
+                      setEmailDraft={setEmailDraft}
+                    />
+                  ) : null}
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
                   <button
@@ -190,15 +296,17 @@ export function AddClientButton() {
                       router.refresh();
                       resetAll();
                     }}
-                    className="mr-auto rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
+                    className={`mr-auto ${secondaryButton}`}
                   >
                     Add another
                   </button>
-                  <button
-                    type="button"
-                    onClick={close}
-                    className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover"
+                  <Link
+                    href={`/admin/clients/${created.clientId}`}
+                    className={`${secondaryButton} no-underline`}
                   >
+                    Open client
+                  </Link>
+                  <button type="button" onClick={close} className={primaryButton}>
                     Done
                   </button>
                 </div>
@@ -208,44 +316,63 @@ export function AddClientButton() {
                 onSubmit={onSubmit}
                 className="flex flex-1 flex-col overflow-hidden"
               >
-                <div className="grid flex-1 gap-lg overflow-y-auto px-lg py-lg">
+                <div className="grid flex-1 content-start gap-lg overflow-y-auto px-lg py-lg">
+                  <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md">
+                    <input
+                      type="checkbox"
+                      className="mt-xs h-4 w-4 shrink-0 accent-primary"
+                      checked={testPilot}
+                      onChange={(event) => setTestPilot(event.target.checked)}
+                    />
+                    <span>
+                      <span className="block text-body-sm text-heading">Test pilot</span>
+                      <span className="mt-xs block text-body-sm text-muted">
+                        An internal test client. You complete the client&apos;s steps from the
+                        client page, with content filled in from the company website. No
+                        emails, no reminders, no invoice.
+                      </span>
+                    </span>
+                  </label>
                   <p className="text-body-sm text-muted">
-                    <span className="text-error">*</span> Required. A
-                    set-password link is created for the client.
+                    <span className="text-error">*</span> Required.
+                    {testPilot
+                      ? " Name and email are optional for a test pilot."
+                      : " A set-password link is created for the client."}
                   </p>
                   <label className={labelClass}>
                     First name
-                    <RequiredMark />
+                    {required ? <RequiredMark /> : null}
                     <input
                       className={fieldClass}
                       name="first_name"
                       value={form.first_name}
                       onChange={update("first_name")}
-                      required
+                      required={required}
                       autoFocus
                     />
                   </label>
                   <label className={labelClass}>
                     Last name
-                    <RequiredMark />
+                    {required ? <RequiredMark /> : null}
                     <input
                       className={fieldClass}
                       name="last_name"
                       value={form.last_name}
                       onChange={update("last_name")}
-                      required
+                      required={required}
                     />
                   </label>
                   <label className={labelClass}>
                     Email
-                    <RequiredMark />
+                    {required ? <RequiredMark /> : null}
                     <input
                       className={fieldClass}
                       name="email"
                       type="email"
                       value={form.email}
                       onChange={update("email")}
-                      required
+                      required={required}
+                      placeholder={testPilot ? "Optional: a placeholder login is used" : undefined}
                     />
                   </label>
 
@@ -259,6 +386,22 @@ export function AddClientButton() {
                       onChange={update("company_name")}
                       required
                     />
+                  </label>
+                  <label className={labelClass}>
+                    Company website
+                    <input
+                      className={fieldClass}
+                      name="company_website"
+                      value={form.company_website}
+                      onChange={update("company_website")}
+                      placeholder="acme.com"
+                      inputMode="url"
+                    />
+                    <span className="mt-xs block text-body-sm normal-case tracking-normal text-muted">
+                      {testPilot
+                        ? "Recommended: the test intake and materials are written from this site."
+                        : "Used by the intake and matching."}
+                    </span>
                   </label>
                   <label className={labelClass}>
                     Raise amount
@@ -328,22 +471,20 @@ export function AddClientButton() {
 
                 <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
                   {error ? (
-                    <p className="mr-auto text-body-sm text-error">{error}</p>
+                    <p role="alert" className="mr-auto text-body-sm text-error">
+                      {error}
+                    </p>
                   ) : null}
                   <button
                     type="button"
                     onClick={close}
                     disabled={pending}
-                    className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
+                    className={secondaryButton}
                   >
                     Cancel
                   </button>
-                  <button
-                    type="submit"
-                    disabled={pending}
-                    className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
-                  >
-                    {pending ? "Adding..." : "Add client"}
+                  <button type="submit" disabled={pending} className={primaryButton}>
+                    {pending ? "Adding..." : testPilot ? "Add test pilot" : "Add client"}
                   </button>
                 </div>
               </form>

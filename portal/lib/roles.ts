@@ -2,10 +2,11 @@ import type { User } from "@supabase/supabase-js";
 
 export type AppRole = "admin" | "client";
 
+// Roles are read only from server-controlled fields. `user_metadata` is
+// writable by the signed-in user, so it is never trusted for access.
 type JwtClaims = {
   role?: unknown;
   app_metadata?: { role?: unknown };
-  user_metadata?: { role?: unknown };
 };
 
 function decodeJwtClaims(accessToken: string): JwtClaims | null {
@@ -41,18 +42,14 @@ export function getRole(accessToken: string | null | undefined): AppRole | null 
 
   return (
     roleFromValue(claims.role) ??
-    roleFromValue(claims.app_metadata?.role) ??
-    roleFromValue(claims.user_metadata?.role)
+    roleFromValue(claims.app_metadata?.role)
   );
 }
 
 export function roleFromUser(user: User | null): AppRole | null {
   if (!user) return null;
 
-  return (
-    roleFromValue(user.app_metadata?.role) ??
-    roleFromValue(user.user_metadata?.role)
-  );
+  return roleFromValue(user.app_metadata?.role);
 }
 
 export function homePathForRole(role: AppRole | null) {

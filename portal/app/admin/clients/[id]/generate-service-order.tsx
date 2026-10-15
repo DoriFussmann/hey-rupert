@@ -33,10 +33,16 @@ export function GenerateServiceOrder({
   clientId,
   sends,
   paymentReceivedAt,
+  autoInvoice,
+  testPilot,
 }: {
   clientId: string;
   sends: ServiceOrderSend[];
   paymentReceivedAt: string | null;
+  /** Stripe is configured: an empty link creates the invoice automatically. */
+  autoInvoice: boolean;
+  /** Test pilot clients have no Setup Fee invoice. */
+  testPilot: boolean;
 }) {
   const router = useRouter();
   const [draft, setDraft] = useState("");
@@ -49,7 +55,11 @@ export function GenerateServiceOrder({
 
   const activeSend = sends.find((send) => !send.archived_at) ?? null;
   const hasDraft = Boolean(draft.trim());
-  const linkValid = isStripePaymentLink(paymentLink);
+  // The link is optional when the invoice is created for us (or not needed).
+  const linkOptional = autoInvoice || testPilot;
+  const linkValid = paymentLink.trim()
+    ? isStripePaymentLink(paymentLink)
+    : linkOptional;
   const canSend = hasDraft && linkValid && !activeSend && pending === null;
   const archivedCount = sends.filter((send) => send.archived_at).length;
 
@@ -93,7 +103,11 @@ export function GenerateServiceOrder({
       }
       setDraft(result.content);
       setSuccess(
-        "Generated from the Service Order template. Add the Stripe payment link, then push.",
+        testPilot
+          ? "Generated from the Service Order template. Test pilot: no invoice is needed. Push when ready."
+          : autoInvoice
+            ? "Generated from the Service Order template. Push it: the Setup Fee invoice is created in Stripe automatically."
+            : "Generated from the Service Order template. Add the Stripe payment link, then push.",
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to generate.");
@@ -115,15 +129,14 @@ export function GenerateServiceOrder({
         setError(result.error);
         return;
       }
+      const pushed = testPilot
+        ? "Service Order pushed to the client portal."
+        : "Service Order and Setup Fee invoice pushed to the client portal.";
       if (result.clientEmail.ok) {
-        setSuccess(
-          "Service Order and Setup Fee invoice pushed to the client portal, and the client was emailed.",
-        );
+        setSuccess(`${pushed.slice(0, -1)}, and the client was emailed.`);
       } else {
-        setSuccess(
-          "Service Order and Setup Fee invoice pushed to the client portal.",
-        );
-        setError(`The client was not emailed. ${result.clientEmail.reason}`);
+        setSuccess(pushed);
+        if (!testPilot) setError(`The client was not emailed. ${result.clientEmail.reason}`);
       }
       setDraft("");
       setPaymentLink("");
@@ -172,9 +185,10 @@ export function GenerateServiceOrder({
         <div>
           <h2 className="text-h4">Service Order &amp; Setup Fee</h2>
           <p className="mt-xs text-body-sm text-muted">
-            Generate from the Forms template, add the Stripe payment link for
-            the {SETUP_FEE_LABEL} Setup Fee, then push both to the client. One
-            active Service Order at a time; archive it to issue a new one.
+            {autoInvoice
+              ? `Generate from the Forms template and push. The ${SETUP_FEE_LABEL} Setup Fee invoice is created in Stripe automatically and shown to the client.`
+              : `Generate from the Forms template, add the Stripe payment link for the ${SETUP_FEE_LABEL} Setup Fee, then push both to the client.`}{" "}
+            One active Service Order at a time; archive it to issue a new one.
           </p>
         </div>
         <button
@@ -192,10 +206,10 @@ export function GenerateServiceOrder({
         </button>
       </div>
 
-      {hasDraft ? (
+      {hasDraft && !testPilot ? (
         <div className="border-b border-border px-lg py-lg">
           <label className="block max-w-prose text-label uppercase tracking-label text-muted">
-            Stripe payment link (Setup Fee invoice)
+            Stripe payment link (Setup Fee invoice){autoInvoice ? " · optional" : ""}
             <input
               type="url"
               inputMode="url"
@@ -220,7 +234,9 @@ export function GenerateServiceOrder({
             >
               {showLinkError
                 ? "Enter an https link on stripe.com (invoice or payment link)."
-                : "Required. The client sees a Pay button that opens this link."}
+                : autoInvoice
+                  ? "Leave empty to create the invoice in Stripe automatically. Paste a link only to use an invoice you made yourself."
+                  : "Required. The client sees a Pay button that opens this link."}
             </span>
           </label>
         </div>

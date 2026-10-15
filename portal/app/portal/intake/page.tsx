@@ -7,8 +7,8 @@ import { DEFAULT_INTAKE_TOPICS } from "@/lib/intake";
 import { loadIntakeSettings } from "@/lib/intake-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
-// Each message waits on Claude; allow server actions on this page up to 60s.
-export const maxDuration = 60;
+// Each message waits on Claude, and reading a shared PDF takes longer.
+export const maxDuration = 120;
 
 export default async function IntakePage() {
   const { client, viewAs } = await getPortalView();
@@ -31,7 +31,7 @@ export default async function IntakePage() {
       <BackLink href="/portal/onboarding" label="Onboarding" />
       <PageHeader
         title="Client Intake"
-        description="A short conversation with Rupert so we can prepare your investor campaign. Answer in your own words; you can leave and come back anytime."
+        description="A short conversation with Rupert so we can prepare your investor campaign. Answer in your own words, or drop in your deck as a PDF and Rupert will read it first. You can leave and come back anytime."
       />
       {client && open ? (
         <IntakeExperience

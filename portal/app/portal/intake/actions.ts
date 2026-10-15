@@ -1,5 +1,6 @@
 "use server";
 
+import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import {
   INTAKE_LIMITS,
@@ -14,7 +15,10 @@ import {
   loadInterview,
   nextInterviewTurn,
   writeInterviewSummary,
+  type SharedDocument,
 } from "@/lib/intake-server";
+import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
+import { MATERIALS_BUCKET, fileExtension, formatBytes } from "@/lib/setup";
 import { advanceStage } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
@@ -163,59 +167,62 @@ export async function startIntake(): Promise<IntakeActionResult> {
   return { ok: true, interview: asIntakeInterview(data) };
 }
 
-export async function sendIntakeMessage(
-  text: string,
-): Promise<IntakeActionResult> {
-  const access = await requirePortalService();
-  if (!access.ok) return access;
-
-  const content = String(text ?? "").trim();
-  if (!content) return { ok: false, error: "Write a message first." };
-  if (content.length > INTAKE_LIMITS.messageMaxChars) {
-    return {
-      ok: false,
-      error: `Please keep messages under ${INTAKE_LIMITS.messageMaxChars} characters.`,
-    };
-  }
-
+/** The interview, if the client can add to it right now. */
+async function loadOpenInterview(access: PortalAccess) {
   const opened = await loadOpenClient(access);
   if (!opened.ok) return opened;
 
-  const { supabase, user } = access;
-  const loaded = await loadInterview(supabase, user.id);
-  if (!loaded.ok) return { ok: false, error: TABLE_MISSING };
+  const loaded = await loadInterview(access.supabase, access.user.id);
+  if (!loaded.ok) return { ok: false as const, error: TABLE_MISSING };
   const interview = loaded.interview;
-  if (!interview) return { ok: false, error: "The interview has not started yet." };
+  if (!interview) return { ok: false as const, error: "The interview has not started yet." };
   if (interview.status === "completed") {
-    return { ok: false, error: CONFIRMED_ERROR };
+    return { ok: false as const, error: CONFIRMED_ERROR };
   }
   if (interview.status !== "in_progress") {
-    return { ok: false, error: "Go back to the conversation to add more." };
+    return { ok: false as const, error: "Go back to the conversation to add more." };
   }
   if (interview.client_message_count >= INTAKE_LIMITS.clientMessagesMax) {
     return {
-      ok: false,
+      ok: false as const,
       error:
         "We've reached the message limit for this interview. Review the summary, or use Book a call to finish with Dori.",
     };
   }
+  return { ok: true as const, client: opened.client, interview };
+}
 
+/** Adds the client's message, gets Rupert's reply and saves both. */
+async function takeTurn(
+  access: PortalAccess,
+  client: Record<string, unknown>,
+  interview: IntakeInterview,
+  message: IntakeMessage,
+  document?: SharedDocument,
+): Promise<IntakeActionResult> {
+  const { supabase, user } = access;
   const settings = await loadIntakeSettings(supabase);
-  const withUser: IntakeMessage[] = [
-    ...interview.messages,
-    { role: "user", content, at: now() },
-  ];
+  const withUser: IntakeMessage[] = [...interview.messages, message];
 
   const turn = await nextInterviewTurn(
     settings,
-    opened.client,
+    client,
     withUser,
     interview.topic_status,
+    document,
   );
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
 
+  // What Rupert took from a shared file stays with the message, so later
+  // turns (and the summary) still know what it said.
+  const saved: IntakeMessage[] = message.attachment
+    ? [
+        ...interview.messages,
+        { ...message, attachment: { ...message.attachment, facts: turn.turn.documentFacts } },
+      ]
+    : withUser;
   const messages: IntakeMessage[] = [
-    ...withUser,
+    ...saved,
     { role: "assistant", content: turn.turn.reply, at: now() },
   ];
   const topicStatus = mergeTopicStatus(
@@ -246,15 +253,132 @@ export async function sendIntakeMessage(
     };
   }
 
-  await completeIfEssentialsCovered(
-    access,
-    opened.client,
-    settings.topics,
-    topicStatus,
-  );
+  await completeIfEssentialsCovered(access, client, settings.topics, topicStatus);
 
   revalidatePath(`/admin/clients/${user.id}`);
   return { ok: true, interview: asIntakeInterview(data[0]) };
+}
+
+export async function sendIntakeMessage(
+  text: string,
+): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+
+  const content = String(text ?? "").trim();
+  if (!content) return { ok: false, error: "Write a message first." };
+  if (content.length > INTAKE_LIMITS.messageMaxChars) {
+    return {
+      ok: false,
+      error: `Please keep messages under ${INTAKE_LIMITS.messageMaxChars} characters.`,
+    };
+  }
+
+  const open = await loadOpenInterview(access);
+  if (!open.ok) return open;
+
+  return takeTurn(access, open.client, open.interview, {
+    role: "user",
+    content,
+    at: now(),
+  });
+}
+
+/**
+ * Step 1 of sharing a PDF in the chat: checks it and returns a one-time
+ * signed URL the browser uploads to directly.
+ */
+export async function createIntakeUpload(file: {
+  name: string;
+  size: number;
+}): Promise<{ ok: true; path: string; token: string } | { ok: false; error: string }> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const open = await loadOpenInterview(access);
+  if (!open.ok) return open;
+
+  const name = String(file?.name ?? "").trim();
+  const size = Number(file?.size) || 0;
+  if (fileExtension(name) !== "pdf") {
+    return { ok: false, error: "Share a PDF here. Other files can be added in Setup." };
+  }
+  if (size <= 0) return { ok: false, error: `${name} is empty.` };
+  if (size > INTAKE_LIMITS.fileMaxBytes) {
+    return {
+      ok: false,
+      error: `${name} is ${formatBytes(size)}. PDFs up to ${formatBytes(INTAKE_LIMITS.fileMaxBytes)} can be shared here; add larger files in Setup.`,
+    };
+  }
+
+  const path = `${access.user.id}/${randomUUID()}/${safeFileName(name)}`;
+  const { data, error } = await access.supabase.storage
+    .from(MATERIALS_BUCKET)
+    .createSignedUploadUrl(path);
+  if (error || !data) {
+    return { ok: false, error: `Upload could not start: ${error?.message ?? "unknown error"}.` };
+  }
+  return { ok: true, path: data.path, token: data.token };
+}
+
+/**
+ * Step 2: Rupert reads the uploaded PDF in this turn. The file is also added
+ * to the client's company materials, so they do not upload it again in Setup.
+ */
+export async function sendIntakeFile(input: {
+  path: string;
+  name: string;
+  size: number;
+  type: string;
+  note: string;
+}): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+
+  const path = String(input?.path ?? "");
+  if (!path.startsWith(`${access.user.id}/`) || path.includes("..")) {
+    return { ok: false, error: "That upload does not belong to you." };
+  }
+  const note = String(input?.note ?? "").trim().slice(0, INTAKE_LIMITS.messageMaxChars);
+  const name = String(input?.name ?? "file").slice(0, 255);
+
+  const open = await loadOpenInterview(access);
+  if (!open.ok) return open;
+
+  const { data: blob, error: downloadError } = await access.supabase.storage
+    .from(MATERIALS_BUCKET)
+    .download(path);
+  if (downloadError || !blob) {
+    return { ok: false, error: "The file could not be read. Please try uploading it again." };
+  }
+  const bytes = Buffer.from(await blob.arrayBuffer());
+  if (bytes.length > INTAKE_LIMITS.fileMaxBytes) {
+    return { ok: false, error: "That file is too large to read here. Add it in Setup instead." };
+  }
+
+  const result = await takeTurn(
+    access,
+    open.client,
+    open.interview,
+    {
+      role: "user",
+      content: note,
+      at: now(),
+      attachment: { name, path, facts: "" },
+    },
+    { name, base64: bytes.toString("base64") },
+  );
+
+  // Best effort: the chat goes on even if the file cannot be added to Setup.
+  if (result.ok) {
+    const attached = await attachMaterialFile(access.supabase, access.user.id, {
+      path,
+      name,
+      size: Number(input?.size) || bytes.length,
+      type: String(input?.type ?? "application/pdf"),
+    });
+    if (!attached.ok) console.error(`Intake file not added to materials: ${attached.error}`);
+  }
+  return result;
 }
 
 /** Writes the per-topic summary once every required topic is covered. */

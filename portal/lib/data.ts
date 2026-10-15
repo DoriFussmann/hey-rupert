@@ -171,6 +171,7 @@ function asClient(row: Record<string, unknown>): Client {
     archived_at:
       row.archived_at != null ? String(row.archived_at) : null,
     emails_paused: row.emails_paused === true,
+    is_test_pilot: row.is_test_pilot === true,
     live_at: row.live_at != null ? String(row.live_at) : null,
     last_activity_at: String(row.last_activity_at ?? createdAt),
     created_at: createdAt,

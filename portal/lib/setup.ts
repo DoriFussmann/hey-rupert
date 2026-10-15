@@ -61,6 +61,8 @@ export type SetupStepState = {
   completed_at: string | null;
   /** First time the client opened the current version (feedback only). */
   client_viewed_at: string | null;
+  /** Recommendations the client ticked as done (feedback only): item id → when. */
+  client_checks: Record<string, string>;
   updated_at: string;
 };
 
@@ -653,10 +655,13 @@ export function asFeedback(value: unknown): FeedbackDraft {
   };
 }
 
-/** The part of the feedback the client sees. */
+/**
+ * The part of the feedback the client sees. A drafted email replaces the
+ * opening message, so the portal shows the same text the client was emailed.
+ */
 export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
   return {
-    intro: draft.intro,
+    intro: draft.email.body.trim() ? draft.email.body : draft.intro,
     items: draft.items.filter((item) => item.visible && (item.title || item.body)),
     attachments: draft.attachments,
     links: draft.links,
@@ -665,6 +670,15 @@ export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
 
 export function asFeedbackPublished(value: unknown): FeedbackPublished {
   return feedbackForClient(asFeedback(value));
+}
+
+/** Ticked items, kept only if they still exist in the published feedback. */
+export function feedbackChecks(
+  checks: Record<string, string>,
+  items: FeedbackItem[],
+) {
+  const ids = new Set(items.map((item) => item.id));
+  return Object.keys(checks).filter((id) => ids.has(id));
 }
 
 export function feedbackProblem(draft: FeedbackDraft) {

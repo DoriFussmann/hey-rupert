@@ -41,7 +41,7 @@ export default async function SetupPage() {
         <TurnBanner
           owner="done"
           title="Setup is complete."
-          detail="Rupert will send your first monthly invoice. Your campaign launches once it is paid."
+          detail="Rupert will follow up shortly to launch your campaign."
         />
       ) : null}
 

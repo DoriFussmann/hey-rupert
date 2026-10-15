@@ -68,6 +68,7 @@ async function requireAdmin() {
 function revalidateMatch(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath(`/admin/clients/${clientId}/match`);
+  revalidatePath(`/admin/clients/${clientId}/profile`);
 }
 
 function errorText(err: unknown, fallback: string) {
@@ -306,14 +307,10 @@ export async function runWebsiteBatchNow(): Promise<
 // ---------------------------------------------------------------------------
 // Match profile
 
-/**
- * Builds (or rebuilds) the match profile from the client's intake. With
- * `run`, the match is re-run on the new profile when it has enough to run.
- */
+/** Builds (or rebuilds) the company profile from the client's intake. */
 export async function buildMatchProfile(
   clientId: string,
-  options?: { run?: boolean },
-): Promise<Result<{ state: MatchProfileState; view: MatchView | null; runError: string | null }>> {
+): Promise<Result<{ state: MatchProfileState }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   if (!isClaudeConfigured()) {
@@ -345,11 +342,8 @@ export async function buildMatchProfile(
     sourceInterviewAt: interview.updated_at,
   });
   if (!saved.ok) return saved;
-  const { view, error } = options?.run
-    ? await viewFor(supabase, clientId)
-    : { view: null, error: null };
   revalidateMatch(clientId);
-  return { ok: true, state: saved.value, view, runError: error };
+  return { ok: true, state: saved.value };
 }
 
 async function viewFor(
@@ -360,11 +354,11 @@ async function viewFor(
   return run.ok ? { view: buildView(run.value), error: null } : { view: null, error: run.error };
 }
 
-/** Saves edited answers, then re-runs the match when the profile allows. */
-export async function saveMatchProfile(
+/** Saves the company profile as edited. Rupert Match re-runs on its next open. */
+export async function saveCompanyProfile(
   clientId: string,
   answers: unknown,
-): Promise<Result<{ state: MatchProfileState; view: MatchView | null; runError: string | null }>> {
+): Promise<Result<{ state: MatchProfileState }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const current = await loadProfileState(access.supabase, clientId);
@@ -375,9 +369,8 @@ export async function saveMatchProfile(
     source: "edit",
   });
   if (!saved.ok) return saved;
-  const { view, error } = await viewFor(access.supabase, clientId);
   revalidateMatch(clientId);
-  return { ok: true, state: saved.value, view, runError: error };
+  return { ok: true, state: saved.value };
 }
 
 /** Saves the operator settings (tightness, filters, rules) and re-runs. */

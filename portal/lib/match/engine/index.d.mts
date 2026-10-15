@@ -71,12 +71,14 @@ export type SiteResult = {
 };
 
 export type Tier = "bullseye" | "match" | "expansion";
-export type Level = -2 | -1 | 0 | 1 | 2;
+export type Level = -3 | -2 | -1 | 0 | 1 | 2 | 3;
 export type Role = "decision" | "champion" | "scout" | "advisor" | "ops" | "other";
 
 export type MatchFilters = {
   noPlatforms?: boolean;
   needDecision?: boolean;
+  /** Only funds with an investing contact who has an email. */
+  needEmail?: boolean;
   nearOnly?: boolean;
   minConf?: number;
   foundedAfter?: number;

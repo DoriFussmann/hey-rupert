@@ -76,6 +76,8 @@ export type Client = {
   archived_at?: string | null;
   /** Automatic emails and reminders to this client are switched off. */
   emails_paused?: boolean;
+  /** Internal test client: client steps can be completed from the admin page. */
+  is_test_pilot?: boolean;
   /** When the client first moved to Live (null for clients live before it was recorded). */
   live_at?: string | null;
   last_activity_at: string;

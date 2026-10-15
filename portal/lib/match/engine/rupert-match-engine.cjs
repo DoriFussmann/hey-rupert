@@ -260,29 +260,35 @@ const RME = (() => {
     return { s: 0, how: 'outside geography' };
   }
 
-  // ---------- tuning levels (-2 broadest … +2 tightest) ----------
-  const LEVELS = [-2, -1, 0, 1, 2];
+  // ---------- tuning levels (-3 widest … +3 strictest) ----------
+  const LEVELS = [-3, -2, -1, 0, 1, 2, 3];
   const TUNE = {
     bullseye: {
+      '-3': { minFocus: 0.1, core: false, explicitGeo: false, maxStages: 99, both: false, minConf: 0 },
       '-2': { minFocus: 0.2, core: false, explicitGeo: false, maxStages: 99, both: false, minConf: 0 },
       '-1': { minFocus: 0.3, core: true, explicitGeo: false, maxStages: 99, both: false, minConf: 0 },
       '0': { minFocus: 0.4, core: true, explicitGeo: false, maxStages: 99, both: false, minConf: 0 },
       '1': { minFocus: 0.5, core: true, explicitGeo: true, maxStages: 4, both: false, minConf: 0.6 },
       '2': { minFocus: 0.6, core: true, explicitGeo: true, maxStages: 3, both: true, minConf: 0.99 },
+      '3': { minFocus: 0.75, core: true, explicitGeo: true, maxStages: 2, both: true, minConf: 0.99 },
     },
     match: {
+      '-3': { minSector: 0.3, minGeo: 0.35, adj: 'any' },
       '-2': { minSector: 0.4, minGeo: 0.6, adj: 'any' },
       '-1': { minSector: 0.5, minGeo: 0.6, adj: 'strong' },
       '0': { minSector: 0.6, minGeo: 0.8, adj: 'strong' },
       '1': { minSector: 0.75, minGeo: 0.8, adj: 'none' },
       '2': { minSector: 0.85, minGeo: 1, adj: 'none' },
+      '3': { minSector: 0.95, minGeo: 1, adj: 'none' },
     },
     expansion: {
+      '-3': { weakMin: 0, xb: 'all', generalist: true, minFit: 0 },
       '-2': { weakMin: 0.01, xb: 'all', generalist: true, minFit: 0 },
       '-1': { weakMin: 0.25, xb: 'all', generalist: true, minFit: 0 },
       '0': { weakMin: 0.35, xb: 'intl', generalist: true, minFit: 0 },
       '1': { weakMin: 0.4, xb: 'intl', generalist: false, minFit: 55 },
       '2': { weakMin: 0.5, xb: 'none', generalist: false, minFit: 60 },
+      '3': { weakMin: 0.6, xb: 'none', generalist: false, minFit: 65 },
     },
   };
   function rulesText(tier, lvl, p) {
@@ -301,11 +307,11 @@ const RME = (() => {
     if (tier === 'match') return [
       t.adj === 'none' ? `exact ${p.stage}` : t.adj === 'strong' ? `${p.stage}, or next stage if sector fit is strong` : `${p.stage} or next stage`,
       `sector fit ≥ ${Math.round(t.minSector * 100)}`,
-      t.minGeo >= 1 ? 'names your country/region' : t.minGeo >= 0.8 ? 'your country or region' : 'country, region or local team',
+      t.minGeo >= 1 ? 'names your country/region' : t.minGeo >= 0.8 ? 'your country or region' : t.minGeo >= 0.6 ? 'country, region or local team' : 'any geography link, incl. markets you sell into',
     ];
     return [
       'two of stage / sector / geography strong',
-      `third ≥ ${Math.round(t.weakMin * 100)}`,
+      t.weakMin ? `third ≥ ${Math.round(t.weakMin * 100)}` : 'third: any link',
       t.xb === 'all' ? 'all US funds if you sell in the US' : t.xb === 'intl' ? 'US funds only if they invest abroad' : 'no cross-border',
       t.generalist ? 'generalists allowed' : 'no generalists',
       t.minFit ? `fit ≥ ${t.minFit}` : null,
@@ -404,13 +410,13 @@ const RME = (() => {
   }
 
   // ---------- main ----------
-  // p.tune = {bullseye:-2..2, match, expansion}; p.filters = {maxStages8, needDecision, foundedAfter, minConf, nearOnly}
+  // p.tune = {bullseye:-3..3, match, expansion}; p.filters = {noPlatforms, needDecision, needEmail, foundedAfter, minConf, nearOnly}
   function run(db, p, opts = {}) {
     const types = (p.firmTypes && p.firmTypes.length) ? p.firmTypes : defaultTypes(p.stage);
     const inst = (p.instruments && p.instruments.length) ? p.instruments : ['Equity'];
     const tune = Object.assign({ bullseye: 0, match: 0, expansion: 0 }, p.tune || {});
     const TB = TUNE.bullseye[String(tune.bullseye)], TM = TUNE.match[String(tune.match)], TE = TUNE.expansion[String(tune.expansion)];
-    const flt = Object.assign({ noPlatforms: false, needDecision: false, foundedAfter: 0, minConf: 0, nearOnly: false }, p.filters || {});
+    const flt = Object.assign({ noPlatforms: false, needDecision: false, needEmail: false, foundedAfter: 0, minConf: 0, nearOnly: false }, p.filters || {});
     const excl = parseExclusions(p.exclusions);
     const suppressed = opts.suppressed || {};   // firmId -> reason (global "not active" etc.)
     const rejected = opts.rejected || {};       // firmId -> reason (this client)
@@ -437,7 +443,7 @@ const RME = (() => {
       const fit = fitScore(st, se, ge, f, seq, nearPeople, localPeople);
 
       // hard filters
-      if ((flt.noPlatforms && f.stages.length >= 8) || (flt.needDecision && !(seq[0] && ['decision', 'champion'].includes(seq[0].role)))
+      if ((flt.noPlatforms && f.stages.length >= 8) || (flt.needDecision && !(seq[0] && ['decision', 'champion'].includes(seq[0].role))) || (flt.needEmail && !seq.length)
         || (flt.foundedAfter && !(f.year && f.year >= flt.foundedAfter)) || (flt.minConf && A.conf < flt.minConf) || (flt.nearOnly && !nearPeople)) { funnel.filtered++; continue; }
 
       // tiers cascade: bullseye → match → expansion

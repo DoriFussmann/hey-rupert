@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
+import { ChevronDown } from "@/components/chevron";
 import { SignOutButton } from "@/components/sign-out-button";
 
 const STORAGE_KEY = "hey-rupert-nav-collapsed";
@@ -41,9 +42,17 @@ export function AppShell({
           type="button"
           onClick={toggle}
           aria-expanded={!collapsed}
-          className="mb-md self-start rounded-md px-sm py-xs text-body-sm text-secondary hover:bg-background hover:text-heading"
+          aria-label={collapsed ? "Show menu" : "Hide menu"}
+          title={collapsed ? "Show menu" : "Hide menu"}
+          className={`mb-md flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-secondary transition-colors duration-hover hover:border-primary hover:text-primary ${
+            collapsed ? "self-center" : "self-end"
+          }`}
         >
-          {collapsed ? "Show menu" : "Hide menu"}
+          <ChevronDown
+            className={`h-4 w-4 transition-transform duration-hover ${
+              collapsed ? "-rotate-90" : "rotate-90"
+            }`}
+          />
         </button>
         {collapsed ? (
           <div className="px-sm lg:mt-auto">

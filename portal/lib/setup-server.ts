@@ -37,6 +37,15 @@ function asHistory(value: unknown): SetupHistoryEntry[] {
     }));
 }
 
+function asChecks(value: unknown): Record<string, string> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([, at]) => typeof at === "string")
+      .map(([id, at]) => [id, String(at)]),
+  );
+}
+
 export function asSetupStepState(row: Record<string, unknown>): SetupStepState | null {
   if (!isSetupStepId(row.step)) return null;
   const status = ROW_STATUSES.includes(row.status as SetupRowStatus)
@@ -56,6 +65,7 @@ export function asSetupStepState(row: Record<string, unknown>): SetupStepState |
     completed_at: row.completed_at != null ? String(row.completed_at) : null,
     client_viewed_at:
       row.client_viewed_at != null ? String(row.client_viewed_at) : null,
+    client_checks: asChecks(row.client_checks),
     updated_at: String(row.updated_at ?? new Date().toISOString()),
   };
 }

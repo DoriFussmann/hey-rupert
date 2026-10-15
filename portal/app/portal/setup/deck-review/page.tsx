@@ -2,35 +2,20 @@ import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { MarkdownBody } from "@/components/markdown-body";
 import { TurnBanner } from "@/components/setup/turn-banner";
+import { FeedbackChecklist } from "@/app/portal/setup/deck-review/feedback-checklist";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { markFeedbackViewed } from "@/lib/feedback-server";
 import { formatDateAtTime } from "@/lib/format";
 import { isHttpUrl } from "@/lib/material-fields";
 import { getPortalSetup } from "@/lib/portal-setup";
 import {
-  FEEDBACK_AREAS,
-  FEEDBACK_PRIORITIES,
   asFeedbackPublished,
+  feedbackChecks,
   fileExtension,
   formatBytes,
-  type FeedbackItem,
 } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
-
-const PRIORITY_TONE: Record<FeedbackItem["priority"], string> = {
-  high: "border-primary/30 bg-primary-tint text-primary",
-  medium: "border-border text-secondary",
-  low: "border-border text-muted",
-};
-
-function areaLabel(value: FeedbackItem["area"]) {
-  return FEEDBACK_AREAS.find((area) => area.value === value)?.label ?? value;
-}
-
-function priorityLabel(value: FeedbackItem["priority"]) {
-  return FEEDBACK_PRIORITIES.find((priority) => priority.value === value)?.label ?? value;
-}
 
 export default async function DeckReviewPage() {
   const { item, row, viewAs } = await getPortalSetup("deck_review");
@@ -83,45 +68,11 @@ export default async function DeckReviewPage() {
             </section>
 
             {feedback.items.length > 0 ? (
-              <section className="rounded-card border border-border bg-surface">
-                <div className="border-b border-border px-lg py-md">
-                  <h2 className="text-h4">Recommendations</h2>
-                  <p className="mt-xs text-body-sm text-muted">
-                    {feedback.items.length} recommendation
-                    {feedback.items.length === 1 ? "" : "s"}, most important first.
-                  </p>
-                </div>
-                <ol className="divide-y divide-border">
-                  {feedback.items.map((entry, index) => (
-                    <li key={entry.id} className="flex gap-md px-lg py-md">
-                      <span className="mt-xs w-6 shrink-0 font-mono text-mono text-muted">
-                        {index + 1}
-                      </span>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-sm">
-                          <span
-                            className={`inline-flex rounded-full border px-sm text-label uppercase tracking-label ${PRIORITY_TONE[entry.priority]}`}
-                          >
-                            {priorityLabel(entry.priority)}
-                          </span>
-                          <span className="text-label uppercase tracking-label text-muted">
-                            {areaLabel(entry.area)}
-                            {entry.slide ? ` · Slide ${entry.slide}` : ""}
-                          </span>
-                        </div>
-                        {entry.title ? (
-                          <p className="mt-xs text-body-sm text-heading">{entry.title}</p>
-                        ) : null}
-                        {entry.body ? (
-                          <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
-                            {entry.body}
-                          </p>
-                        ) : null}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
+              <FeedbackChecklist
+                items={feedback.items}
+                initialDone={row ? feedbackChecks(row.client_checks, feedback.items) : []}
+                readOnly={viewAs}
+              />
             ) : null}
 
             {feedback.attachments.length > 0 || links.length > 0 ? (

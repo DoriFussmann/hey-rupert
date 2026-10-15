@@ -13,10 +13,19 @@ export type TopicCoverage = "missing" | "partial" | "covered";
 
 export type TopicStatus = { status: TopicCoverage; note: string };
 
+/** A file the founder shared in the chat (a PDF, also added to their materials). */
+export type IntakeAttachment = {
+  name: string;
+  path: string;
+  /** What Rupert took from it, so later turns still know its content. */
+  facts: string;
+};
+
 export type IntakeMessage = {
   role: "assistant" | "user";
   content: string;
   at: string;
+  attachment?: IntakeAttachment;
 };
 
 export type IntakeSummaryItem = {
@@ -24,6 +33,18 @@ export type IntakeSummaryItem = {
   title: string;
   answer: string;
 };
+
+/** A shared file reads as a note plus what Rupert took from it. */
+export function intakeMessageText(message: IntakeMessage) {
+  if (!message.attachment) return message.content;
+  const facts = message.attachment.facts.trim();
+  return [
+    `[The founder shared ${message.attachment.name}.${facts ? ` What it says:\n${facts}` : ""}]`,
+    message.content,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
 
 export type IntakeInterviewStatus = "in_progress" | "review" | "completed";
 
@@ -69,6 +90,8 @@ export const INTAKE_TOPICS_SLUG = "intake_topics";
 export const INTAKE_LIMITS = {
   messageMaxChars: 2000,
   clientMessagesMax: 40,
+  /** PDFs shared in the chat are read in one go; larger ones go in Setup. */
+  fileMaxBytes: 20 * 1024 * 1024,
 } as const;
 
 export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
@@ -105,13 +128,6 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     title: "Round terms",
     guidance:
       "The instrument (SAFE, convertible note, priced equity or debt), whether they still need a lead investor, and the valuation or cap if set.",
-    required: true,
-  },
-  {
-    id: "use_of_funds",
-    title: "Use of funds",
-    guidance:
-      "How the money will be used and what milestones it should reach.",
     required: true,
   },
   {
