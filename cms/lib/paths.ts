@@ -7,10 +7,10 @@ export const REPO_ROOT = path.resolve(CMS_ROOT, "..");
 export const SITE_ROOT = path.join(REPO_ROOT, "site");
 
 export const ARTICLES_DIR = path.join(SITE_ROOT, "src/content/articles");
-export const TEAM_DIR = path.join(SITE_ROOT, "src/content/team");
+export const TEAM_DIR = path.join(SITE_ROOT, "src/content/authors");
 export const SERVICES_DIR = path.join(SITE_ROOT, "src/content/services");
 export const ARTICLE_ASSETS_DIR = path.join(SITE_ROOT, "src/assets/articles");
-export const TEAM_ASSETS_DIR = path.join(SITE_ROOT, "src/assets/team");
+export const TEAM_ASSETS_DIR = path.join(SITE_ROOT, "src/assets/founder");
 export const PUBLIC_DIR = path.join(SITE_ROOT, "public");
 export const STAGING_DIR = path.join(CMS_ROOT, "staging");
 
@@ -39,5 +39,5 @@ export function articleImageFrontmatterPath(slug: string, filename: string): str
 }
 
 export function teamPhotoFrontmatterPath(slug: string, filename: string): string {
-  return toPosix(`../../assets/team/${slug}/${filename}`);
+  return toPosix(`../../assets/founder/${slug}/${filename}`);
 }
