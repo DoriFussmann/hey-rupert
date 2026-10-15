@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { inputClass, n, smallButton } from "@/app/admin/clients/[id]/match/ui";
-import { SITE_LABEL, type FirmRow, type SiteState } from "@/lib/match/shared";
+import { SITE_LABEL, isSectorFocusLine, type FirmRow, type SiteState } from "@/lib/match/shared";
 
 export type SplitFilter = { kind: "type" | "loc"; value: string } | null;
 
@@ -220,7 +220,7 @@ export function LeadsTable({
                         <p className="mt-px text-label uppercase tracking-label text-muted">{row.conf} data</p>
                       </td>
                       <td className="min-w-[14rem] px-md py-sm text-secondary">
-                        {row.pros.map((pro) => (
+                        {row.pros.filter((pro) => !isSectorFocusLine(pro)).map((pro) => (
                           <p key={pro}>+ {pro}</p>
                         ))}
                         {row.con ? <p className="text-warning">− {row.con}</p> : null}

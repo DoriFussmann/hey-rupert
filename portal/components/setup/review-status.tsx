@@ -6,9 +6,14 @@ import type { SetupItem, SetupStepState } from "@/lib/setup";
 export function ReviewStatus({
   item,
   row,
+  waitingTitle,
+  waitingDetail,
 }: {
   item: SetupItem | null;
   row: SetupStepState | null;
+  /** Replaces the generic "working on your feedback" copy. */
+  waitingTitle?: string;
+  waitingDetail?: string;
 }) {
   if (!item || item.status === "open") {
     return (
@@ -44,8 +49,8 @@ export function ReviewStatus({
       <>
         <TurnBanner
           owner="rupert"
-          title="Rupert is working on your feedback."
-          detail="We'll email you when the updated version is ready."
+          title={waitingTitle ?? "Rupert is working on your feedback."}
+          detail={waitingDetail ?? "We'll email you when the updated version is ready."}
         />
         {row.response?.note ? (
           <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">

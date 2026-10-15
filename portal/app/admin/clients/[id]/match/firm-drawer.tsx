@@ -13,6 +13,7 @@ import {
   REJECT_REASONS,
   SITE_LABEL,
   TIERS,
+  isSectorFocusLine,
   type FirmDetail,
   type FirmRow,
   type MatchView,
@@ -268,15 +269,17 @@ export function FirmDrawer({
               </Section>
             ) : null}
 
-            <Section title="Why it fits">
-              <ul className="space-y-px text-body-sm">
-                {detail.pros.map((pro) => (
-                  <li key={pro} className="text-body">
-                    <span className="text-success">+</span> {pro}
-                  </li>
-                ))}
-              </ul>
-            </Section>
+            {detail.pros.some((pro) => !isSectorFocusLine(pro)) ? (
+              <Section title="Why it fits">
+                <ul className="space-y-px text-body-sm">
+                  {detail.pros.filter((pro) => !isSectorFocusLine(pro)).map((pro) => (
+                    <li key={pro} className="text-body">
+                      <span className="text-success">+</span> {pro}
+                    </li>
+                  ))}
+                </ul>
+              </Section>
+            ) : null}
 
             {detail.cons.length > 0 || detail.flags.length > 0 ? (
               <Section title="Watch-outs & red flags">
