@@ -192,12 +192,9 @@ export async function publishSetupStep(
   }
 
   let payload = normalizeDraft(clientId, publishable, draft);
-  if (publishable === "investor_list") {
+  if (publishable === "framing" || publishable === "investor_list" || publishable === "email_copy") {
     const reply = String(note ?? "").trim().slice(0, 4000);
-    payload = {
-      ...(payload as ReturnType<typeof asInvestorList>),
-      admin_note: reply || undefined,
-    };
+    payload = { ...payload, admin_note: reply || undefined };
   }
   const problem = draftProblem(publishable, payload);
   if (problem) return { ok: false, error: problem };

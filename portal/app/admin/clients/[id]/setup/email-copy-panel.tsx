@@ -85,6 +85,26 @@ export function EmailCopyPanel({
       intro="A first email and two follow-ups for each fit tier. Leave a follow-up subject blank to send it in the same thread. Use placeholders like {{first_name}} and {{fund_name}} for personal details."
     >
       <ClientAnswer row={row} />
+      {row?.status === "changes_requested" ? (
+        <p className="px-lg pt-md text-body-sm text-secondary">
+          The emails do not need to change. Write a reply below if you want, then push them. The
+          client sees that reply above Confirm.
+        </p>
+      ) : null}
+      <PublishBar
+        clientId={clientId}
+        step="email_copy"
+        item={item}
+        row={row}
+        draft={copy}
+        dirty={JSON.stringify(copy) !== savedKey}
+        onSaved={() => setSavedKey(JSON.stringify(copy))}
+        pushLabel="Push emails for confirmation"
+        problem={problems.length > 0 ? problems.join(" ") : null}
+        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
+        notePlaceholder="For example: softened the first email."
+        noteOnPage
+      />
       <div className="px-lg py-md">
         <div className="flex flex-wrap items-center gap-sm" role="tablist" aria-label="Tier">
           {FIT_TIERS.map((entry) => {
@@ -152,17 +172,6 @@ export function EmailCopyPanel({
         ) : null}
       </div>
       <EarlierRounds row={row} />
-      <PublishBar
-        clientId={clientId}
-        step="email_copy"
-        item={item}
-        row={row}
-        draft={copy}
-        dirty={JSON.stringify(copy) !== savedKey}
-        onSaved={() => setSavedKey(JSON.stringify(copy))}
-        pushLabel="Push emails for confirmation"
-        problem={problems.length > 0 ? problems.join(" ") : null}
-      />
     </StepFrame>
   );
 }

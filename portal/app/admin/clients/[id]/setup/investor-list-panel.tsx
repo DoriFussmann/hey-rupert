@@ -90,7 +90,7 @@ export function InvestorListPanel({
         onSaved={() => setSavedKey(JSON.stringify(list))}
         pushLabel="Push list for confirmation"
         problem={list.rows.length === 0 ? "Upload the investor CSV before pushing." : null}
-        noteLabel="Reply (optional). Shown on their list, above Confirm, and in the email."
+        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
         notePlaceholder="For example: it's fine."
         noteOnPage
       />

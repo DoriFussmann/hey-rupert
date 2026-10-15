@@ -157,6 +157,8 @@ export type NarrativePayload = {
   linkedin_note: string;
   /** LinkedIn message once the connection is accepted. */
   linkedin_followup: string;
+  /** Rupert's reply when this version is sent back for confirmation. */
+  admin_note?: string;
 };
 
 export const LINKEDIN_NOTE_MAX = 300;
@@ -211,6 +213,8 @@ export type CopyEmail = { subject: string; body: string };
 /** Three emails per tier: the first email and two follow-ups. */
 export type EmailCopyPayload = {
   tiers: Record<`${FitTier}`, CopyEmail[]>;
+  /** Rupert's reply when this version is sent back for confirmation. */
+  admin_note?: string;
 };
 
 export const FIT_TIERS: { tier: FitTier; label: string; detail: string }[] = [
@@ -688,6 +692,7 @@ export function asNarrative(value: unknown): NarrativePayload {
     email_body: str(raw.email_body, 10000),
     linkedin_note: str(raw.linkedin_note, 2000),
     linkedin_followup: str(raw.linkedin_followup, 5000),
+    admin_note: str(raw.admin_note, NOTE_MAX).trim() || undefined,
   };
 }
 
@@ -797,7 +802,8 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
       return { subject: str(item.subject, 300), body: str(item.body, 10000) };
     });
   }
-  return result;
+  const adminNote = str(raw.admin_note, NOTE_MAX).trim();
+  return adminNote ? { ...result, admin_note: adminNote } : result;
 }
 
 /** Problems that stop the email copy from being pushed. */
