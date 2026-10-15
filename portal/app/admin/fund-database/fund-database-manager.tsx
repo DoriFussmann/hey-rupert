@@ -8,15 +8,15 @@ import {
   discardFundVersion,
   runWebsiteBatchNow,
   stageFundUpload,
+  uploadFundChunk,
 } from "@/app/admin/match-actions";
 import { formatDateAtTime } from "@/lib/format";
 import {
   DAILY_SITE_BATCH,
-  FUND_DB_BUCKET,
   FUND_DB_MAX_BYTES,
+  FUND_UPLOAD_CHUNK_BYTES,
   type FundDbVersion,
 } from "@/lib/match/shared";
-import { createClient } from "@/lib/supabase/client";
 
 const primaryButton =
   "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
@@ -155,17 +155,24 @@ export function FundDatabaseManager({
         setMessage({ kind: "error", text: ticket.error });
         return;
       }
-      const { error } = await createClient()
-        .storage.from(FUND_DB_BUCKET)
-        .uploadToSignedUrl(ticket.path, ticket.token, file, {
-          contentType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        });
-      if (error) {
-        setMessage({ kind: "error", text: `Upload failed: ${error.message}` });
-        return;
+      const parts = Math.ceil(file.size / FUND_UPLOAD_CHUNK_BYTES);
+      for (let index = 0; index < parts; index += 1) {
+        setBusy(`Uploading the workbook… ${index + 1} of ${parts}`);
+        const form = new FormData();
+        form.append("path", ticket.path);
+        form.append("index", String(index));
+        form.append(
+          "chunk",
+          file.slice(index * FUND_UPLOAD_CHUNK_BYTES, (index + 1) * FUND_UPLOAD_CHUNK_BYTES),
+        );
+        const sent = await uploadFundChunk(form);
+        if (!sent.ok) {
+          setMessage({ kind: "error", text: sent.error });
+          return;
+        }
       }
       setBusy("Reading and checking the workbook. This takes up to a minute…");
-      const staged = await stageFundUpload(ticket.path, file.name);
+      const staged = await stageFundUpload(ticket.path, file.name, parts);
       if (!staged.ok) {
         setMessage({ kind: "error", text: staged.error, details: staged.errors });
         return;

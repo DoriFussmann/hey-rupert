@@ -8,6 +8,8 @@ export type { Flag, Level, SiteResult, Tier };
 /** Private storage bucket for the fund database (server access only). */
 export const FUND_DB_BUCKET = "fund-database";
 export const FUND_DB_MAX_BYTES = 50 * 1024 * 1024;
+/** Workbook upload piece size: under the hosting request limit (4.5 MB). */
+export const FUND_UPLOAD_CHUNK_BYTES = 3 * 1024 * 1024;
 /** Funds the daily website job checks (the whole database refreshes about monthly). */
 export const DAILY_SITE_BATCH = 250;
 
