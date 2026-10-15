@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   checkClientWebsites,
+  runMatch,
   sendMatchToClient,
   updateMatchSettings,
 } from "@/app/admin/match-actions";
@@ -14,6 +15,7 @@ import {
   type Notice,
   type RunAction,
 } from "@/app/admin/clients/[id]/match/ui";
+import { formatDateAtTime } from "@/lib/format";
 import {
   DEFAULT_SETTINGS,
   TIERS,
@@ -65,22 +67,37 @@ export function MatchWorkspace({
   clientId,
   initialState,
   initialView,
+  initialStale,
   initialError,
   database,
+  intakeComplete,
+  narrativeConfirmed,
+  profileReady,
 }: {
   clientId: string;
   initialState: MatchProfileState | null;
   initialView: MatchView | null;
+  initialStale: boolean;
   initialError: string | null;
   database: { firms: number; contacts: number } | null;
+  intakeComplete: boolean;
+  narrativeConfirmed: boolean;
+  profileReady: boolean;
 }) {
   const [state, setState] = useState(initialState);
   const [view, setView] = useState(initialView);
+  const [stale, setStale] = useState(initialStale);
+  function showFresh(next: MatchView) {
+    setView(next);
+    setStale(false);
+  }
   const [notice, setNotice] = useState<Notice | null>(
     initialError ? { kind: "error", text: initialError } : null,
   );
   const [busy, setBusy] = useState<string | null>(null);
   const settings = state?.settings ?? DEFAULT_SETTINGS;
+  const databaseLive = Boolean(database);
+  const canMatch = profileReady && databaseLive;
 
   const run: RunAction = async (label, action, onDone) => {
     setBusy(label);
@@ -99,6 +116,17 @@ export function MatchWorkspace({
     }
   };
 
+  function onRunMatch() {
+    void run(
+      view ? "Re-running the match…" : "Running the match…",
+      () => runMatch(clientId),
+      (result) => {
+        showFresh(result.view);
+        setNotice({ kind: "ok", text: `Last run ${formatDateAtTime(result.view.ranAt)}.` });
+      },
+    );
+  }
+
   function changeSettings(next: MatchSettings, toast?: (after: MatchView) => string) {
     const before = view;
     void run(
@@ -106,7 +134,7 @@ export function MatchWorkspace({
       () => updateMatchSettings(clientId, next),
       (result) => {
         setState((current) => (current ? { ...current, settings: next } : current));
-        setView(result.view);
+        showFresh(result.view);
         if (toast && before) setNotice({ kind: "ok", text: toast(result.view) });
       },
     );
@@ -117,7 +145,7 @@ export function MatchWorkspace({
       "Checking this client's top funds' websites. This can take a few minutes…",
       () => checkClientWebsites(clientId),
       (result) => {
-        setView(result.view);
+        showFresh(result.view);
         const dropped = TIERS.reduce((sum, tier) => sum + result.view.tiers[tier.key].deadRemoved.length, 0);
         const parts =
           result.checked === 0
@@ -194,6 +222,51 @@ export function MatchWorkspace({
         </p>
       ) : null}
 
+      <section className="rounded-card border border-border bg-surface px-lg py-md">
+        <div className="flex flex-wrap items-center justify-between gap-md">
+          <div>
+            <button
+              type="button"
+              className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
+              disabled={!canMatch || Boolean(busy)}
+              onClick={onRunMatch}
+            >
+              {busy && busy.toLowerCase().includes("match")
+                ? "Running…"
+                : view
+                  ? "Re-run match"
+                  : "Run match"}
+            </button>
+            <p className="mt-xs text-body-sm text-muted">
+              {view
+                ? stale
+                  ? "Re-run to update."
+                  : `Last run ${formatDateAtTime(view.ranAt)}.`
+                : "No match yet."}
+            </p>
+          </div>
+        </div>
+        <ul className="mt-md grid gap-xs text-body-sm">
+          <li className={profileReady ? "text-success" : "text-secondary"}>
+            {profileReady ? "Company profile ready to match." : "Company profile is not ready to match."}{" "}
+            <Link href={`/admin/clients/${clientId}/profile`} className="text-primary hover:text-primary-hover">
+              Open the profile
+            </Link>
+          </li>
+          <li className={intakeComplete ? "text-success" : "text-secondary"}>
+            {intakeComplete ? "Intake complete." : "Intake is not complete."}
+          </li>
+          <li className={narrativeConfirmed ? "text-success" : "text-muted"}>
+            {narrativeConfirmed
+              ? "Outreach narrative confirmed."
+              : "Outreach narrative not confirmed. Recommended, not required to run."}
+          </li>
+          <li className={databaseLive ? "text-success" : "text-secondary"}>
+            {databaseLive ? "Fund database live." : "Fund database is not live."}
+          </li>
+        </ul>
+      </section>
+
       <ProfileStrip clientId={clientId} state={state} />
 
       {view ? (
@@ -203,14 +276,14 @@ export function MatchWorkspace({
           settings={settings}
           busy={Boolean(busy)}
           onSettings={changeSettings}
-          onView={setView}
+          onView={showFresh}
           onNotice={setNotice}
           onCheckWebsites={checkWebsites}
           onSendToClient={sendToClient}
         />
       ) : database ? (
         <p className="rounded-card border border-border bg-surface px-lg py-lg text-body-sm text-muted">
-          The match runs once the company profile has a stage, a sector and an HQ country.
+          No saved match yet. Run match when the profile can run and the fund database is live.
         </p>
       ) : null}
     </div>

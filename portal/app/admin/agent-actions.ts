@@ -8,6 +8,7 @@ import { isClaudeConfigured } from "@/lib/anthropic";
 import { AGENTS, AGENT_PROMPT_MAX, agentPromptSlug } from "@/lib/agents";
 import {
   buildNarrative,
+  draftEmailCopy,
   draftFeedbackEmail,
   runMaterialsAnalysis,
   saveIntakeBrief,
@@ -27,6 +28,7 @@ import {
   feedbackFolder,
   fileExtension,
   formatBytes,
+  type EmailCopyPayload,
   type FeedbackDraft,
   type FeedbackEmail,
   type NarrativePayload,
@@ -229,6 +231,25 @@ export async function buildClientNarrative(
 
   revalidateClient(clientId);
   return { ok: true, narrative: result.value };
+}
+
+export async function draftClientEmailCopy(
+  clientId: string,
+): Promise<Result<{ copy: EmailCopyPayload }>> {
+  const access = await requireAdminWithClaude();
+  if (!access.ok) return access;
+
+  const result = await draftEmailCopy(access.supabase, clientId);
+  if (!result.ok) return result;
+
+  const { error } = await access.supabase.from("setup_steps").upsert(
+    { client_id: clientId, step: "email_copy", draft: result.value, updated_at: nowIso() },
+    { onConflict: "client_id,step", ignoreDuplicates: false },
+  );
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+
+  revalidateClient(clientId);
+  return { ok: true, copy: result.value };
 }
 
 // ---------------------------------------------------------------------------

@@ -109,6 +109,10 @@ export function buildTimeline(
     payment_received_at: source.payment_received_at ?? null,
   });
 
+  const materialsRow =
+    source.setup_steps?.find((row) => row.step === "materials") ?? null;
+  const materialsSubmitted = materialsRow?.status === "submitted";
+
   const setupDone = new Map<string, string | null>();
   for (const item of getSetupItems({
     stage: source.stage ?? null,
@@ -126,7 +130,7 @@ export function buildTimeline(
     nda_sent: source.nda_sent_at ?? null,
     nda_signed: source.nda_signed_at ?? null,
     intake_completed: source.intake_completed_at ?? null,
-    materials: setupDone.get("materials") ?? null,
+    materials: materialsSubmitted ? (materialsRow?.completed_at ?? null) : null,
     deck_review: setupDone.get("deck_review") ?? null,
     framing: setupDone.get("framing") ?? null,
     investor_list: setupDone.get("investor_list") ?? null,
@@ -145,6 +149,9 @@ export function buildTimeline(
       dateUnknown:
         !at &&
         ((milestone.id === "live" && isLive) ||
+          (milestone.id === "materials" &&
+            materialsSubmitted &&
+            !materialsRow?.completed_at) ||
           (setupDone.has(milestone.id) && !setupDone.get(milestone.id))),
     };
   });

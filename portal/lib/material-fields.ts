@@ -1,6 +1,6 @@
-// Company Materials fields: what the client is asked in Setup, edited by the
-// admin in Forms → Company Materials. Pure module: safe on the server and in
-// the browser.
+// Company Materials fields: what the client is asked at the end of Onboarding,
+// edited by the admin in Forms → Company Materials. Pure module: safe on the
+// server and in the browser.
 
 export type MaterialFieldType = "text" | "textarea" | "url";
 
@@ -27,17 +27,10 @@ export const MATERIAL_FIELD_TYPES: { value: MaterialFieldType; label: string }[]
 export const MATERIAL_FIELDS_MAX = 20;
 export const MATERIAL_FIELD_VALUE_MAX = 20000;
 
-// The first two ids match the answers stored before fields were editable, so
-// existing clients keep what they wrote.
+// The intake already covers the company story. One optional field remains.
+// `company_text` is kept as a legacy label so answers saved under the old
+// default still display.
 export const DEFAULT_MATERIAL_FIELDS: MaterialField[] = [
-  {
-    id: "company_text",
-    label: "About the company",
-    help: "Paste your one-pager, website copy, or describe the company in your own words: what you do, for whom, and why now.",
-    placeholder: "",
-    type: "textarea",
-    required: false,
-  },
   {
     id: "other_inputs",
     label: "Anything else",
@@ -47,6 +40,11 @@ export const DEFAULT_MATERIAL_FIELDS: MaterialField[] = [
     required: false,
   },
 ];
+
+const LEGACY_FIELD_LABELS = new Map<string, string>([
+  ["company_text", "About the company"],
+  ["other_inputs", "Anything else"],
+]);
 
 const FIELD_ID_PATTERN = /^[a-z0-9_]{1,40}$/;
 
@@ -133,9 +131,7 @@ export function labelledAnswers(
   values: Record<string, string>,
 ) {
   const known = new Set(fields.map((field) => field.id));
-  const legacyLabels = new Map(
-    DEFAULT_MATERIAL_FIELDS.map((field) => [field.id, field.label]),
-  );
+  const legacyLabels = LEGACY_FIELD_LABELS;
   const answers = fields
     .map((field) => ({
       id: field.id,

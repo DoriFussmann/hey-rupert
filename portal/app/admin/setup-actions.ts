@@ -67,6 +67,8 @@ function revalidateSetup(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/portal", "layout");
   revalidatePath("/portal/setup", "layout");
+  revalidatePath("/portal/materials");
+  revalidatePath("/portal/onboarding");
 }
 
 async function loadState(supabase: ServiceClient, clientId: string) {
@@ -96,8 +98,11 @@ async function loadState(supabase: ServiceClient, clientId: string) {
 function cleanFeedback(clientId: string, draft: unknown): FeedbackDraft {
   const feedback = asFeedback(draft);
   const folder = feedbackFolder(clientId);
+  const message = feedback.email.body.trim() || feedback.intro.trim();
   return {
     ...feedback,
+    intro: message,
+    email: { ...feedback.email, body: message },
     attachments: feedback.attachments.filter(
       (file) => file.path.startsWith(folder) && !file.path.includes(".."),
     ),

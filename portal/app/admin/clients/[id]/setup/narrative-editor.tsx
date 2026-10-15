@@ -8,12 +8,11 @@ import {
   EarlierRounds,
   PublishBar,
   StepFrame,
-  inputClass,
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 import {
-  LINKEDIN_NOTE_MAX,
   asNarrative,
+  narrativeHasEarlierDraft,
   narrativeProblem,
   type NarrativePayload,
   type SetupItem,
@@ -21,20 +20,6 @@ import {
 } from "@/lib/setup";
 
 const labelClass = "block text-label uppercase tracking-label text-muted";
-const LINKEDIN_FOLLOWUP_TARGET = 600;
-
-function Counter({ length, max, hard }: { length: number; max: number; hard: boolean }) {
-  const over = length > max;
-  return (
-    <span
-      className={`font-mono text-mono normal-case tracking-normal ${
-        over ? (hard ? "text-error" : "text-warning") : "text-muted"
-      }`}
-    >
-      {length}/{max}
-    </span>
-  );
-}
 
 export function NarrativeEditor({
   clientId,
@@ -63,13 +48,9 @@ export function NarrativeEditor({
 
   async function onBuild() {
     // `admin_note` is optional (undefined), so only the text fields are checked.
-    const hasText = [
-      narrative.core,
-      narrative.email_subject,
-      narrative.email_body,
-      narrative.linkedin_note,
-      narrative.linkedin_followup,
-    ].some((value) => value.trim());
+    const hasText = [narrative.core, narrative.key_messages, narrative.approach].some(
+      (value) => value.trim(),
+    );
     if (
       hasText &&
       !window.confirm(
@@ -104,30 +85,16 @@ export function NarrativeEditor({
   return (
     <StepFrame
       item={item}
-      intro="The story the outreach is built on, the first cold email and the LinkedIn messages. The client confirms or asks for changes."
+      intro="The story, the messages Rupert will carry, and how he'll approach investors. The client confirms this before any email copy is written."
     >
       <ClientAnswer row={row} />
       {changesRequested ? (
         <p className="px-lg pt-md text-body-sm text-secondary">
-          The narrative does not need to change. Write a reply below if you want, then push it.
+          The narrative does not need to change. Write a reply when you push if you want.
           The client sees that reply above Confirm.
         </p>
       ) : null}
-      <PublishBar
-        clientId={clientId}
-        step="framing"
-        item={item}
-        row={row}
-        draft={narrative}
-        dirty={JSON.stringify(narrative) !== saved}
-        onSaved={() => setSaved(JSON.stringify(narrative))}
-        pushLabel="Push narrative for confirmation"
-        problem={narrativeProblem(narrative)}
-        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
-        notePlaceholder="For example: left the story, tightened the email."
-        noteOnPage
-      />
-      <div className="flex flex-wrap items-center gap-sm px-lg pt-md">
+      <div className="flex flex-wrap items-center gap-sm border-b border-border px-lg py-md">
         <button
           type="button"
           className={secondaryButton}
@@ -163,69 +130,110 @@ export function NarrativeEditor({
 
       <div className="grid gap-lg px-lg py-md">
         <div>
-          <p className={labelClass}>Core narrative</p>
+          <p className={labelClass}>Core story</p>
           <div className="mt-sm">
             <MarkdownField
-              label="Core narrative"
+              label="Core story"
               value={narrative.core}
               onChange={(value) => update({ core: value })}
-              height={360}
+              height={320}
             />
           </div>
         </div>
 
-        <div className="grid gap-sm">
-          <p className={labelClass}>First cold email</p>
-          <input
-            className={inputClass}
-            value={narrative.email_subject}
-            maxLength={300}
-            placeholder="Subject"
-            aria-label="Email subject"
-            onChange={(event) => update({ email_subject: event.target.value })}
-          />
-          <textarea
-            className={`${inputClass} min-h-[200px] resize-y`}
-            value={narrative.email_body}
-            maxLength={10000}
-            placeholder="Email body"
-            aria-label="Email body"
-            onChange={(event) => update({ email_body: event.target.value })}
+        <div>
+          <p className={labelClass}>Key messages</p>
+          <p className="mb-sm mt-xs text-body-sm text-muted">
+            3 to 6 messages Rupert will carry into outreach.
+          </p>
+          <MarkdownField
+            label="Key messages"
+            value={narrative.key_messages}
+            onChange={(value) => update({ key_messages: value })}
+            height={240}
           />
         </div>
 
-        <label className={labelClass}>
-          <span className="flex items-center justify-between gap-sm">
-            LinkedIn connection note
-            <Counter length={narrative.linkedin_note.length} max={LINKEDIN_NOTE_MAX} hard />
-          </span>
-          <textarea
-            className={`${inputClass} mt-sm min-h-[88px] resize-y normal-case tracking-normal`}
-            value={narrative.linkedin_note}
-            maxLength={2000}
-            onChange={(event) => update({ linkedin_note: event.target.value })}
+        <div>
+          <p className={labelClass}>Approach</p>
+          <p className="mb-sm mt-xs text-body-sm text-muted">
+            Positioning by investor type, tone, what leads, and what to hold back.
+          </p>
+          <MarkdownField
+            label="Approach"
+            value={narrative.approach}
+            onChange={(value) => update({ approach: value })}
+            height={240}
           />
-        </label>
+        </div>
 
-        <label className={labelClass}>
-          <span className="flex items-center justify-between gap-sm">
-            LinkedIn message after they accept
-            <Counter
-              length={narrative.linkedin_followup.length}
-              max={LINKEDIN_FOLLOWUP_TARGET}
-              hard={false}
-            />
-          </span>
+        <div>
+          <p className={labelClass}>What happens next</p>
+          <p className="mb-sm mt-xs text-body-sm text-muted">
+            Shown to the client above Confirm. Edit it for this client if you need to.
+          </p>
           <textarea
-            className={`${inputClass} mt-sm min-h-[140px] resize-y normal-case tracking-normal`}
-            value={narrative.linkedin_followup}
-            maxLength={5000}
-            onChange={(event) => update({ linkedin_followup: event.target.value })}
+            className="min-h-[96px] w-full resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
+            value={narrative.next_steps}
+            maxLength={2000}
+            onChange={(event) => update({ next_steps: event.target.value })}
           />
-        </label>
+        </div>
+
+        {narrativeHasEarlierDraft(narrative) ? (
+          <div className="rounded-md border border-border bg-background px-md py-md">
+            <p className={labelClass}>Earlier draft</p>
+            <p className="mt-xs text-body-sm text-muted">
+              Email and LinkedIn copy from before this step changed. Read only. It now lives in Email Copy.
+            </p>
+            {narrative.email_subject || narrative.email_body ? (
+              <div className="mt-md">
+                <p className="text-body-sm text-heading">First email</p>
+                {narrative.email_subject ? (
+                  <p className="mt-xs text-body-sm text-body">Subject: {narrative.email_subject}</p>
+                ) : null}
+                {narrative.email_body ? (
+                  <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
+                    {narrative.email_body}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+            {narrative.linkedin_note ? (
+              <div className="mt-md">
+                <p className="text-body-sm text-heading">LinkedIn connection note</p>
+                <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
+                  {narrative.linkedin_note}
+                </p>
+              </div>
+            ) : null}
+            {narrative.linkedin_followup ? (
+              <div className="mt-md">
+                <p className="text-body-sm text-heading">LinkedIn follow-up</p>
+                <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
+                  {narrative.linkedin_followup}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
       <EarlierRounds row={row} />
+      <PublishBar
+        clientId={clientId}
+        step="framing"
+        item={item}
+        row={row}
+        draft={narrative}
+        dirty={JSON.stringify(narrative) !== saved}
+        onSaved={() => setSaved(JSON.stringify(narrative))}
+        pushLabel="Push narrative for confirmation"
+        problem={narrativeProblem(narrative)}
+        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
+        notePlaceholder="For example: tightened the key messages."
+        noteOnPage
+      />
     </StepFrame>
   );
 }

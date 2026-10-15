@@ -3,10 +3,7 @@
 import { useEffect, useId, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import {
-  createClientRecord,
-  sendDefaultStatementOfWork,
-} from "@/app/admin/actions";
+import { createClientRecord } from "@/app/admin/actions";
 import { Select } from "@/components/select";
 import {
   SetupLinkResult,
@@ -45,13 +42,8 @@ type Created = {
   email: string;
   /** Set-password details; none for a test pilot client. */
   setup: SetupLinkDetails | null;
+  sow: { ok: true } | { ok: false; error: string } | null;
 };
-
-type SowState =
-  | { kind: "idle" }
-  | { kind: "pending" }
-  | { kind: "sent"; emailed: boolean }
-  | { kind: "error"; text: string };
 
 function RequiredMark() {
   return (
@@ -62,66 +54,40 @@ function RequiredMark() {
   );
 }
 
-/** Generate & send the Statement of Work right after the client is added. */
-function SendSowStep({ clientId, testPilot }: { clientId: string; testPilot: boolean }) {
-  const [state, setState] = useState<SowState>({ kind: "idle" });
+function SowPushStatus({
+  clientId,
+  sow,
+}: {
+  clientId: string;
+  sow: Created["sow"];
+}) {
+  if (!sow) {
+    return (
+      <p className="text-body-sm text-muted">
+        The Statement of Work was not pushed.{" "}
+        <Link
+          href={`/admin/clients/${clientId}`}
+          className="text-primary no-underline hover:text-primary-hover"
+        >
+          Push it from the client page
+        </Link>
+        .
+      </p>
+    );
+  }
 
-  async function send() {
-    setState({ kind: "pending" });
-    try {
-      const result = await sendDefaultStatementOfWork(clientId);
-      setState(
-        result.ok
-          ? { kind: "sent", emailed: result.clientEmail.ok }
-          : { kind: "error", text: result.error },
-      );
-    } catch (err) {
-      setState({
-        kind: "error",
-        text: err instanceof Error ? err.message : "Unable to send the Statement of Work.",
-      });
-    }
+  if (!sow.ok) {
+    return (
+      <p role="alert" className="text-body-sm text-error">
+        The client was created, but the Statement of Work was not pushed. {sow.error}
+      </p>
+    );
   }
 
   return (
-    <section className="rounded-card border border-primary/30 bg-primary-tint px-md py-md">
-      <p className="text-label uppercase tracking-label text-primary">Next step</p>
-      <p className="mt-xs text-body-sm text-heading">
-        Send the Statement of Work, generated from your Forms template.
-      </p>
-      <div className="mt-sm flex flex-wrap items-center gap-sm">
-        <button
-          type="button"
-          className={primaryButton}
-          disabled={state.kind === "pending" || state.kind === "sent"}
-          onClick={() => void send()}
-        >
-          {state.kind === "pending"
-            ? "Sending…"
-            : state.kind === "sent"
-              ? "Statement of Work sent"
-              : "Generate & send SoW"}
-        </button>
-        <Link
-          href={`/admin/clients/${clientId}`}
-          className="text-body-sm text-primary no-underline hover:text-primary-hover"
-        >
-          Edit it first on the client page
-        </Link>
-      </div>
-      {state.kind === "sent" ? (
-        <p role="status" className="mt-sm text-body-sm text-success">
-          {testPilot || !state.emailed
-            ? "In the client's portal."
-            : "In the client's portal, and the client was emailed."}
-        </p>
-      ) : null}
-      {state.kind === "error" ? (
-        <p role="alert" className="mt-sm text-body-sm text-error">
-          {state.text}
-        </p>
-      ) : null}
-    </section>
+    <p role="status" className="text-body-sm text-success">
+      Sent to the client portal. No email sent: it goes with your welcome email.
+    </p>
   );
 }
 
@@ -133,6 +99,7 @@ export function AddClientButton() {
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [testPilot, setTestPilot] = useState(false);
+  const [pushSow, setPushSow] = useState(true);
   const [created, setCreated] = useState<Created | null>(null);
   const [emailDraft, setEmailDraft] = useState("");
 
@@ -163,6 +130,7 @@ export function AddClientButton() {
   function resetAll() {
     setForm(emptyForm);
     setTestPilot(false);
+    setPushSow(true);
     setCreated(null);
     setEmailDraft("");
     setError(null);
@@ -183,7 +151,11 @@ export function AddClientButton() {
     setError(null);
 
     try {
-      const result = await createClientRecord({ ...form, is_test_pilot: testPilot });
+      const result = await createClientRecord({
+        ...form,
+        is_test_pilot: testPilot,
+        push_statement_of_work: pushSow,
+      });
 
       if (!result.ok) {
         setError(result.error);
@@ -206,6 +178,7 @@ export function AddClientButton() {
         linked: result.linked,
         email: result.email,
         setup,
+        sow: result.sow ?? null,
       });
       setEmailDraft(setup ? buildWelcomeEmail(setup) : "");
       setPending(false);
@@ -280,7 +253,7 @@ export function AddClientButton() {
                             : "Client and portal login created."
                         } Send them the link below to set their password.`}
                   </p>
-                  <SendSowStep clientId={created.clientId} testPilot={created.testPilot} />
+                  <SowPushStatus clientId={created.clientId} sow={created.sow} />
                   {created.setup ? (
                     <SetupLinkResult
                       details={created.setup}
@@ -317,6 +290,23 @@ export function AddClientButton() {
                 className="flex flex-1 flex-col overflow-hidden"
               >
                 <div className="grid flex-1 content-start gap-lg overflow-y-auto px-lg py-lg">
+                  <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md">
+                    <input
+                      type="checkbox"
+                      className="mt-xs h-4 w-4 shrink-0 accent-primary"
+                      checked={pushSow}
+                      onChange={(event) => setPushSow(event.target.checked)}
+                    />
+                    <span>
+                      <span className="block text-body-sm text-heading">
+                        Push the Statement of Work now
+                      </span>
+                      <span className="mt-xs block text-body-sm text-muted">
+                        Puts the Forms template in the portal as soon as the client is
+                        created. No email is sent; it goes with your welcome email.
+                      </span>
+                    </span>
+                  </label>
                   <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md">
                     <input
                       type="checkbox"

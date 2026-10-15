@@ -48,19 +48,7 @@ export default async function PortalLayout({
         <>
           <PortalNav
             stage={client?.stage}
-            onboarding={
-              client
-                ? {
-                    // The nav only counts completed steps, so the Service Order
-                    // text and invoice link are not sent to it.
-                    sow_confirmed_at: client.sow_confirmed_at,
-                    service_order_agreed_at: client.service_order_agreed_at,
-                    payment_received_at: client.payment_received_at,
-                    nda_signed_at: client.nda_signed_at,
-                    intake_completed_at: client.intake_completed_at,
-                  }
-                : null
-            }
+            onboarding={client}
             setup={{
               complete: setupItems.filter((item) => item.status === "done").length,
               total: setupItems.length,

@@ -10,7 +10,7 @@ import RME, {
   type Tier,
 } from "@/lib/match/engine/index.mjs";
 import { loadLiveDb, selectAll, type LiveDb } from "@/lib/match/db-server";
-import { buildProfile, canRun, loadProfileState } from "@/lib/match/profile-server";
+import { buildProfile, canRun, loadProfileState, matchBasis } from "@/lib/match/profile-server";
 import { loadSites } from "@/lib/match/sites-server";
 import {
   LEVEL_LABEL,
@@ -121,6 +121,68 @@ async function loadHidden(supabase: ServiceClient) {
       reason: row.reason ?? "",
     })),
   };
+}
+
+function asSavedView(value: unknown): MatchView | null {
+  if (!value || typeof value !== "object") return null;
+  const view = value as MatchView;
+  if (!view.ranAt || !Array.isArray(view.rows)) return null;
+  return view;
+}
+
+/** The last saved match, without running the engine. Null when none has been stored. */
+export async function loadStoredMatch(
+  supabase: ServiceClient,
+  clientId: string,
+): Promise<{ view: MatchView; stale: boolean } | null> {
+  const [{ data, error }, loaded] = await Promise.all([
+    supabase.from("match_profiles").select("settings").eq("client_id", clientId).maybeSingle(),
+    loadProfileState(supabase, clientId),
+  ]);
+  if (error || !data) return null;
+  const settings =
+    data.settings && typeof data.settings === "object"
+      ? (data.settings as Record<string, unknown>)
+      : null;
+  const saved = settings?.last_match;
+  if (!saved || typeof saved !== "object") return null;
+
+  const current =
+    loaded.ok && loaded.value ? matchBasis(loaded.value.answers, loaded.value.settings) : "";
+  const record = saved as Record<string, unknown>;
+  // Current shape: { view, basis }. An older blob is the view itself and has no basis.
+  if ("view" in record) {
+    const view = asSavedView(record.view);
+    if (!view) return null;
+    return { view, stale: record.basis !== current };
+  }
+  const view = asSavedView(saved);
+  if (!view) return null;
+  return { view, stale: true };
+}
+
+/** Remembers a run on the profile so the Match page can reopen it. */
+export async function storeMatch(
+  supabase: ServiceClient,
+  clientId: string,
+  view: MatchView,
+) {
+  const [{ data, error }, loaded] = await Promise.all([
+    supabase.from("match_profiles").select("settings").eq("client_id", clientId).maybeSingle(),
+    loadProfileState(supabase, clientId),
+  ]);
+  if (error || !data) return;
+  const settings =
+    data.settings && typeof data.settings === "object"
+      ? (data.settings as Record<string, unknown>)
+      : {};
+  const storedView = view.ranAt ? view : { ...view, ranAt: new Date().toISOString() };
+  const basis =
+    loaded.ok && loaded.value ? matchBasis(loaded.value.answers, loaded.value.settings) : "";
+  await supabase
+    .from("match_profiles")
+    .update({ settings: { ...settings, last_match: { view: storedView, basis } } })
+    .eq("client_id", clientId);
 }
 
 /** Runs the engine for a client: live database, profile, reviews, websites. */

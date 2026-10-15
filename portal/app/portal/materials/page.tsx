@@ -1,9 +1,9 @@
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { TurnBanner } from "@/components/setup/turn-banner";
-import { MaterialsWorkspace } from "@/app/portal/setup/materials/materials-workspace";
+import { MaterialsWorkspace } from "@/app/portal/materials/materials-workspace";
 import { formatDateAtTime } from "@/lib/format";
-import { getPortalSetup } from "@/lib/portal-setup";
+import { getPortalView } from "@/lib/data";
 import { asMaterials } from "@/lib/setup";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -12,7 +12,9 @@ import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 
 export default async function MaterialsPage() {
-  const { client, viewAs, item, row } = await getPortalSetup("materials");
+  const { client, viewAs } = await getPortalView();
+  const open = Boolean(client?.intake_completed_at);
+  const row = client?.setup_steps?.find((item) => item.step === "materials") ?? null;
   const submitted = row?.status === "submitted";
   const payload = asMaterials(submitted ? row?.published : row?.draft);
   const supabase = isServiceRoleConfigured() ? createServiceClient() : null;
@@ -32,13 +34,13 @@ export default async function MaterialsPage() {
 
   return (
     <>
-      <BackLink href="/portal/setup" label="Setup" />
+      <BackLink href="/portal/onboarding" label="Onboarding" />
       <PageHeader
         title="Company Materials"
-        description="Everything Rupert needs to prepare your campaign: your pitch deck, how you describe the company, and anything else worth knowing."
+        description="The last onboarding step. Files you shared in the intake are already here. Add your deck if it is not, plus anything else Rupert should know."
       />
 
-      {!item || item.status === "open" ? (
+      {!open ? (
         <section className="max-w-prose rounded-card border border-border bg-surface p-lg">
           <p className="text-body-sm text-body">
             This opens once your Client Intake is complete.
@@ -56,12 +58,12 @@ export default async function MaterialsPage() {
           title={
             rupertAsk
               ? "Rupert asked for a little more."
-              : "Upload your deck and tell us about the company, then submit."
+              : "Upload your deck and anything else, then submit."
           }
           detail={
             rupertAsk
               ? undefined
-              : "Your work saves as you go. Rupert starts as soon as you submit."
+              : "Files you shared in the intake are already here. Your work saves as you go."
           }
         />
       )}
@@ -77,7 +79,7 @@ export default async function MaterialsPage() {
         </section>
       ) : null}
 
-      {client && item && item.status !== "open" ? (
+      {client && open ? (
         <MaterialsWorkspace
           initial={payload}
           fields={fields}

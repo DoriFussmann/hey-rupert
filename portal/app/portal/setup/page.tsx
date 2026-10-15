@@ -7,7 +7,7 @@ import { SETUP_TOTAL, isSetupOpen } from "@/lib/setup";
 
 export default async function SetupPage() {
   const { client, items } = await getPortalSetup();
-  const open = isSetupOpen(client?.stage) || Boolean(client?.intake_completed_at);
+  const open = isSetupOpen(client?.stage);
   const complete = items.filter((item) => item.status === "done").length;
   const yourTurn = items.find((item) => item.status === "your_turn");
   const rupertsTurn = items.find((item) => item.status === "waiting");
@@ -18,8 +18,8 @@ export default async function SetupPage() {
         title="Setup"
         description={
           open
-            ? `${complete} of ${SETUP_TOTAL} complete. We prepare your campaign together: you share your materials, Rupert writes, you confirm.`
-            : "Opens once your Client Intake is complete."
+            ? `${complete} of ${SETUP_TOTAL} complete. Rupert writes, you confirm.`
+            : "Opens once you submit your company materials."
         }
       />
 
@@ -29,7 +29,7 @@ export default async function SetupPage() {
           title={yourTurn.title}
           detail={yourTurn.detail}
           href={yourTurn.href}
-          cta={yourTurn.id === "materials" ? "Share materials" : "Review now"}
+          cta="Review now"
         />
       ) : rupertsTurn ? (
         <TurnBanner
@@ -56,9 +56,7 @@ export default async function SetupPage() {
           href: item.href,
           status: item.status,
           clickable:
-            item.status === "your_turn" ||
-            item.visible ||
-            (item.id === "materials" && item.status === "done"),
+            item.status === "your_turn" || item.visible,
           dimmed: item.status === "open",
         }))}
       />

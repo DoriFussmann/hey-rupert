@@ -11,7 +11,7 @@ import {
 } from "@/lib/checklists";
 import {
   onboardingProgress,
-  type OnboardingTimestamps,
+  type OnboardingSource,
 } from "@/lib/onboarding";
 
 type PhaseId = "onboarding" | "setup" | "live";
@@ -32,6 +32,7 @@ const PHASES: {
       "/portal/service-order",
       "/portal/nda",
       "/portal/intake",
+      "/portal/materials",
     ],
   },
   {
@@ -59,9 +60,9 @@ function pathInPhase(pathname: string, prefixes: string[]) {
   );
 }
 
-function currentPhase(stage?: string): PhaseId {
+function currentPhase(stage: string | undefined, onboardingComplete: boolean): PhaseId {
   if (isLiveUnlocked(stage)) return "live";
-  if (isSetupUnlocked(stage)) return "setup";
+  if (isSetupUnlocked(stage) && onboardingComplete) return "setup";
   return "onboarding";
 }
 
@@ -73,7 +74,7 @@ export function PortalNav({
   checklists,
 }: {
   stage?: string;
-  onboarding?: OnboardingTimestamps | null;
+  onboarding?: OnboardingSource | null;
   /** Setup progress, computed on the server from the Turn Engine. */
   setup: { complete: number; total: number };
   /** True when a Setup step is waiting on the client. */
@@ -91,7 +92,10 @@ export function PortalNav({
     setup: !isSetupUnlocked(stage),
     live: !isLiveUnlocked(stage),
   };
-  const activeStage = currentPhase(stage);
+  const activeStage = currentPhase(
+    stage,
+    counts.onboarding.complete === counts.onboarding.total,
+  );
 
   return (
     <nav className="flex flex-col gap-xs">

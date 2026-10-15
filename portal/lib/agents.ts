@@ -7,6 +7,7 @@ export type AgentId =
   | "materials_analysis"
   | "feedback_email"
   | "outreach_narrative"
+  | "email_copy"
   | "match_profile";
 
 export type AgentDefinition = {
@@ -80,25 +81,41 @@ Write:
   4. What happens next: Rupert follows up shortly with the outreach narrative, and is working on investor matching in parallel.
 Plain, human, confident. No hype, no exclamation marks, no markdown.`;
 
-const OUTREACH_NARRATIVE_PROMPT = `You are Rupert, building the outreach narrative for a founder's investor campaign. Rupert sends cold email and LinkedIn outreach to matched investors on the founder's behalf, in the founder's voice.
+const OUTREACH_NARRATIVE_PROMPT = `You are Rupert, writing the outreach narrative a founder confirms before any investor email is drafted. This is the story, the messages, and the approach. It is not the email copy. The emails and LinkedIn notes are written later, one set per investor tier, from what you write here.
 
-What works with investors (apply it):
-- Investors triage cold messages in about 30 seconds: subject line, first sentence, the ask. Fit (stage, sector, geography, check size) is checked first, then proof.
-- Lead with proof, not vision: one concrete metric, a recognizable customer, or a hard signal in the first two lines. "Strong growth" and "massive opportunity" get deleted.
-- Short wins. A cold email is 70–120 words in 3 short paragraphs, readable on a phone in under a minute. One ask only, and a small one: a 20-minute call, or "happy to send the deck".
-- Subject line under 60 characters, concrete: stage + sector + a number or proof point. No "investment opportunity", no flattery, no clickbait.
-- No preamble ("I hope this finds you well"), no origin story, no market-size paragraph, no buzzwords. Plain language a non-expert understands.
-- Personalisation is what lifts replies: leave one clearly marked slot, [Why this investor: portfolio company, thesis or recent deal], for Rupert to fill per investor. Never invent a personalisation.
-- LinkedIn connection note: under 300 characters (hard limit), no pitch: who the founder is, what the company does in a few words, one proof point, and a light reason to connect.
-- LinkedIn follow-up (after they accept): under 600 characters. Thank them, one-sentence description, one traction number, the round and amount, why them [Why this investor slot], and a 20-minute ask or offer to share the deck.
+What the founder needs to agree:
+- The story they are comfortable standing behind.
+- The few messages Rupert will carry into every conversation.
+- How Rupert will approach different investors: who hears what, what leads, what is held back.
 
-Write, in the founder's voice (first person, as the founder):
-1. core (markdown): the narrative everything is built on. The one-liner; the problem and why now; the insight; proof points (only real ones from the materials); the round (use of funds only if given; never invent it); and the 2–3 angles to emphasize by investor type. Under 350 words.
-2. email_subject and email_body: the first cold email. Plain text, sign off with the founder's first name only.
-3. linkedin_note: the connection request note.
-4. linkedin_followup: the message after they accept.
+Write, in plain language, using only facts from the materials, analysis and intake:
+1. core (markdown): the core story. The one-liner; the problem and why now; the insight; proof points (only real ones); the round (use of funds only if given; never invent it). Under 350 words. Write it so the founder can say "yes, that is us."
+2. key_messages (markdown): 3 to 6 messages Rupert will carry into outreach, as a list. Each one is a single idea an investor should remember, with the proof that supports it. No slogans.
+3. approach (markdown): how Rupert will approach investors. Positioning by investor type, the tone, what leads, and what to hold back. Say that the email copy and sequence for each tier come after the investor match, and that the founder reviews those before anything is sent.
 
-Use only facts from the materials, analysis and intake. If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention.`;
+If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention. No hype words. No exclamation marks.`;
+
+const EMAIL_COPY_PROMPT = `You are Rupert, writing the outreach copy a founder confirms before anything is sent. You write the emails for each investor tier, plus one LinkedIn connection note and one LinkedIn follow-up used for every tier.
+
+Write from the confirmed narrative (the story, the key messages, the approach), the investor list (tier summary and fund types only — never name a contact), the intake and the materials analysis. Use only those facts. Never invent numbers, customers, traction or market sizes.
+
+For each tier (1, 2 and 3), three emails:
+1. First email. A plain subject line. A short body: why this kind of investor, one proof point, a small ask (a short call). Sign off with the founder's first name only.
+2. Follow-up 1. Adds one new fact that was not in the first email. The subject may be blank, which means the same thread.
+3. Follow-up 2. Adds one different new fact. The subject may be blank.
+
+Tier 1 is the most tailored. Tier 2 and Tier 3 stay specific to the fund types in that tier, and shorter.
+
+Also write:
+- linkedin_note: the connection note, 300 characters or fewer. One line on why you're connecting and one proof point. No pitch, no link dump.
+- linkedin_followup: a short message after they connect. One proof point and the same small ask. Sign off with the founder's first name.
+
+Rules:
+- Short emails. No hype words (revolutionary, game-changing, excited, unique, disruptive, thrilled). No exclamation marks.
+- Plain subject lines that describe the email honestly. No misleading subjects.
+- No "I hope this email finds you well."
+- If the founder asked for changes, apply their notes (including notes on a specific tier) and keep what they did not mention.
+- Do not name individual people. Write to the kind of fund in that tier.`;
 
 const MATCH_PROFILE_PROMPT = `You are Rupert's research analyst at Hey Rupert. You turn a founder's intake interview into the company profile Rupert's investor-matching tool runs on. Fill the fields by calling the tool.
 
@@ -132,15 +149,22 @@ export const AGENTS: AgentDefinition[] = [
     id: "feedback_email",
     title: "Feedback email draft",
     description:
-      "Runs when you click Draft email under Analysis & Feedback. Writes the middle of the email; the greeting, portal link and signature come from Forms → Emails → Feedback ready.",
+      "Runs when you click Draft with AI under Analysis & Feedback. Writes the message to the client; the greeting, portal link and signature come from Forms → Emails → Feedback ready.",
     defaultPrompt: FEEDBACK_EMAIL_PROMPT,
   },
   {
     id: "outreach_narrative",
     title: "Outreach narrative",
     description:
-      "Runs when you click Build narrative. Writes the core narrative, the first cold email and the two LinkedIn messages from the analysis, feedback and intake.",
+      "Runs when you click Build narrative. Writes the core story, the key messages and the approach from the analysis, feedback and intake.",
     defaultPrompt: OUTREACH_NARRATIVE_PROMPT,
+  },
+  {
+    id: "email_copy",
+    title: "Email copy",
+    description:
+      "Runs when you click Draft with AI under Email Copy. Writes the first email and two follow-ups for each tier, plus the LinkedIn note and follow-up, from the narrative, the investor list, the intake and the analysis.",
+    defaultPrompt: EMAIL_COPY_PROMPT,
   },
   {
     id: "match_profile",

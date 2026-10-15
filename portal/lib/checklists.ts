@@ -92,6 +92,7 @@ export function checklistProgress(
   return { complete, total: items.length };
 }
 
+/** Setup unlocks when the stage is setup or live. The stage moves to setup when Company Materials are submitted. */
 export function isSetupUnlocked(stage?: string | null) {
   return stage === "setup" || stage === "live";
 }

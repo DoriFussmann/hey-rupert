@@ -10,6 +10,7 @@ import { getSetupItems, type SetupSource } from "@/lib/setup";
 import { formatDate } from "@/lib/format";
 import {
   getOnboardingItems,
+  type OnboardingSource,
   type OnboardingTimestamps,
 } from "@/lib/onboarding";
 import { overallProgress } from "@/lib/progress";
@@ -22,8 +23,8 @@ const setupLiveLabel = {
 
 // The client portal's view, translated for the admin: steps waiting on Rupert
 // are highlighted as the admin's turn.
-function onboardingRows(timestamps: OnboardingTimestamps): ChecklistRowItem[] {
-  return getOnboardingItems(timestamps).map((item) => {
+function onboardingRows(source: OnboardingSource): ChecklistRowItem[] {
+  return getOnboardingItems(source).map((item) => {
     const done = item.status === "done";
     const detail =
       done && item.completedAt ? formatDate(item.completedAt) : item.detail;
@@ -217,7 +218,13 @@ export function ProgressOverview({
         complete={progress.onboarding.complete}
         total={progress.onboarding.total}
       >
-        <Checklist items={onboardingRows(timestamps)} framed={false} />
+        <Checklist
+          items={onboardingRows({
+            ...timestamps,
+            setup_steps: setup.setup_steps,
+          } satisfies OnboardingSource)}
+          framed={false}
+        />
       </Phase>
 
       <Phase

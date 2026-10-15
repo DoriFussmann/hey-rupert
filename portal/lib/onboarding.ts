@@ -11,6 +11,18 @@ export type OnboardingTimestamps = {
   intake_completed_at?: string | null;
 };
 
+/** Enough of a setup row to know whether Company Materials is submitted. */
+export type MaterialsStepSnapshot = {
+  step: string;
+  status: string;
+  version: number;
+  completed_at: string | null;
+};
+
+export type OnboardingSource = OnboardingTimestamps & {
+  setup_steps?: MaterialsStepSnapshot[] | null;
+};
+
 /**
  * Whose turn a step is:
  * - "your_turn": the client's (shown to the client as "Your turn")
@@ -24,7 +36,8 @@ export type OnboardingItemId =
   | "service_order"
   | "payment"
   | "nda"
-  | "intake";
+  | "intake"
+  | "materials";
 
 export type OnboardingItem = {
   id: OnboardingItemId;
@@ -65,6 +78,11 @@ export const ONBOARDING_STEPS: Record<
     short: "Client Intake",
     adminAction: "Review Client Intake",
   },
+  materials: {
+    title: "Company Materials",
+    short: "Company Materials",
+    adminAction: "Review company materials",
+  },
 };
 
 export const ONBOARDING_TOTAL = Object.keys(ONBOARDING_STEPS).length;
@@ -73,21 +91,28 @@ export const SERVICE_ORDER_HREF = "/portal/service-order";
 export const SETUP_FEE_HREF = "/portal/service-order#setup-fee";
 export const NDA_HREF = "/portal/nda";
 export const INTAKE_HREF = "/portal/intake";
+export const MATERIALS_HREF = "/portal/materials";
 
 /**
  * Client onboarding, in order:
  * SoW → Service Order + Setup Fee (either order) → kick-off → NDA →
- * Intake (an interview with Rupert, the client's turn as soon as the NDA is
- * signed).
+ * Intake → Company Materials. Onboarding ends when the client has given
+ * Rupert everything. Setup starts after the materials are submitted.
  */
 export function getOnboardingItems(
-  source: OnboardingTimestamps | null | undefined,
+  source: OnboardingSource | null | undefined,
 ): OnboardingItem[] {
   const sowAt = source?.sow_confirmed_at ?? null;
   const orderAt = source?.service_order_agreed_at ?? null;
   const paymentAt = source?.payment_received_at ?? null;
   const ndaAt = source?.nda_signed_at ?? null;
   const intakeAt = source?.intake_completed_at ?? null;
+  const materialsRow =
+    source?.setup_steps?.find((row) => row.step === "materials") ?? null;
+  const materialsDone = materialsRow?.status === "submitted";
+  const materialsSentBack = Boolean(
+    materialsRow && materialsRow.version > 0 && !materialsDone,
+  );
 
   const sowDone = Boolean(sowAt);
   const orderIssued = Boolean(source?.service_order_content?.trim());
@@ -170,11 +195,23 @@ export function getOnboardingItems(
       status: intakeAt ? "done" : kickedOff && ndaAt ? "your_turn" : "open",
       completedAt: intakeAt,
     }),
+    item("materials", {
+      detail: materialsDone
+        ? "Submitted"
+        : !intakeAt
+          ? "After the Client Intake"
+          : materialsSentBack
+            ? "Rupert asked for a few more things"
+            : "Share your deck and materials",
+      href: intakeAt ? MATERIALS_HREF : undefined,
+      status: materialsDone ? "done" : intakeAt ? "your_turn" : "open",
+      completedAt: materialsDone ? (materialsRow?.completed_at ?? null) : null,
+    }),
   ];
 }
 
 export function onboardingProgress(
-  source: OnboardingTimestamps | null | undefined,
+  source: OnboardingSource | null | undefined,
 ) {
   const complete = getOnboardingItems(source).filter(
     (entry) => entry.status === "done",

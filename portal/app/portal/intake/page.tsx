@@ -40,6 +40,11 @@ export default async function IntakePage() {
           completedAt={client.intake_completed_at ?? null}
           firstName={firstName}
           readOnly={viewAs}
+          materialsSubmitted={
+            client.setup_steps?.some(
+              (row) => row.step === "materials" && row.status === "submitted",
+            ) ?? false
+          }
         />
       ) : (
         <section className="max-w-prose rounded-card border border-border bg-surface p-lg">

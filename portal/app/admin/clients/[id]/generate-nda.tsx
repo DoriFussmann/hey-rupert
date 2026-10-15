@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { archiveNda, generateNda, sendNda } from "@/app/admin/actions";
+import { Disclosure } from "@/components/disclosure";
 import { MarkdownBody } from "@/components/markdown-body";
 import { formatDate, formatDateAtTime } from "@/lib/format";
 import { mergeServiceOrder } from "@/lib/service-order";
@@ -308,30 +309,39 @@ export function GenerateNda({
       ) : null}
 
       {hasDraft ? (
-        <div className="border-t border-border px-lg py-lg">
-          <p className="mb-md text-label uppercase tracking-label text-muted">
-            Preview · client fields are filled in when they sign
-          </p>
-          <MarkdownBody
-            content={mergeServiceOrder(draft, {})}
-            emptyLabel="Nothing generated yet."
-          />
+        <div className="border-t border-border px-lg">
+          <Disclosure title="NDA text — template from Forms">
+            <div className="py-md">
+              <p className="mb-md text-body-sm text-muted">
+                Client fields are filled in when they sign.
+              </p>
+              <MarkdownBody
+                content={mergeServiceOrder(draft, {})}
+                emptyLabel="Nothing generated yet."
+              />
+            </div>
+          </Disclosure>
         </div>
       ) : activeSend ? (
-        <details className="border-t border-border px-lg py-lg">
-          <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-            {activeSend.signature ? "Signed copy" : "Sent to client"}
-          </summary>
-          <div className="mt-md">
-            <MarkdownBody
-              content={
-                activeSend.signed_content ??
-                mergeServiceOrder(activeSend.content, {})
-              }
-              emptyLabel="Nothing sent yet."
-            />
-          </div>
-        </details>
+        <div className="border-t border-border px-lg">
+          <Disclosure
+            title={
+              activeSend.signature
+                ? "NDA text — signed copy"
+                : "NDA text — sent to client"
+            }
+          >
+            <div className="py-md">
+              <MarkdownBody
+                content={
+                  activeSend.signed_content ??
+                  mergeServiceOrder(activeSend.content, {})
+                }
+                emptyLabel="Nothing sent yet."
+              />
+            </div>
+          </Disclosure>
+        </div>
       ) : null}
     </section>
   );

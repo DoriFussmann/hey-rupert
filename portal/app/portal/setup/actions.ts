@@ -8,6 +8,7 @@ import {
   materialFieldProblems,
   type MaterialField,
 } from "@/lib/material-fields";
+import { advanceStage } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 import {
@@ -38,6 +39,8 @@ const TEXT_MAX = 20000;
 function revalidateSetup(clientId: string) {
   revalidatePath("/portal", "layout");
   revalidatePath("/portal/setup", "layout");
+  revalidatePath("/portal/materials");
+  revalidatePath("/portal/onboarding");
   revalidatePath("/admin", "layout");
   revalidatePath(`/admin/clients/${clientId}`);
 }
@@ -79,7 +82,7 @@ async function loadMaterials(access: PortalAccess) {
   }
   const again = await loadSetupStep(access.supabase, access.user.id, "materials");
   if (!again.ok) return again;
-  if (!again.row) return { ok: false as const, error: "Unable to start Setup." };
+  if (!again.row) return { ok: false as const, error: "Unable to start company materials." };
   return { ok: true as const, row: again.row };
 }
 
@@ -351,6 +354,7 @@ export async function submitMaterials(
     .filter(Boolean)
     .join("\n\n");
 
+  await advanceStage(access.supabase, access.user.id, ["nda", "intake"], "setup");
   await notifyAdmin(access.supabase, access.user.id, "materials_submitted", {
     email: true,
     details,

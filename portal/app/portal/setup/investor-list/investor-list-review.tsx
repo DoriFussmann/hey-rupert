@@ -41,25 +41,9 @@ export function InvestorListReview({
         : "border border-border bg-surface text-secondary hover:text-heading"
     }`;
 
-  const actions = open ? (
-    <div className="sticky top-0 z-20 mb-lg">
-      <AdminReply note={adminNote} />
-      <ReviewActions
-        step="investor_list"
-        version={version}
-        itemNotes={notes}
-        confirmLabel="Confirm list"
-        changesLabel="Ask a question first"
-        notePlaceholder="A comment for Rupert. Confirming the list sends it."
-        intro="Add a comment if you want, then confirm the list. A question goes to Rupert, who replies and sends the list back for you to confirm."
-        readOnly={readOnly}
-      />
-    </div>
-  ) : null;
-
   return (
     <>
-      {actions}
+      {open && adminNote ? <AdminReply note={adminNote} /> : null}
       <div className="mb-md flex flex-wrap gap-sm" role="tablist" aria-label="Filter by tier">
         <button
           type="button"
@@ -185,6 +169,19 @@ export function InvestorListReview({
                 );
         }}
       />
+      {open ? (
+        <ReviewActions
+          step="investor_list"
+          version={version}
+          itemNotes={notes}
+          confirmLabel="Confirm investor list"
+          changesLabel="Ask a question first"
+          notePlaceholder="A comment for Rupert. Confirming the list sends it."
+          intro="Confirm the list, or send Rupert your notes. Outreach can't start until you confirm."
+          readOnly={readOnly}
+          stickyFooter
+        />
+      ) : null}
     </>
   );
 }

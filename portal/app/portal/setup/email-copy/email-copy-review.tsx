@@ -118,6 +118,31 @@ export function EmailCopyReview({
         ) : null}
       </section>
 
+      {copy.linkedin_note?.trim() || copy.linkedin_followup?.trim() ? (
+        <section className="mt-lg rounded-card border border-border bg-surface">
+          <div className="border-b border-border px-lg py-md">
+            <h2 className="text-h4">LinkedIn</h2>
+            <p className="mt-xs text-body-sm text-muted">
+              One connection note and one follow-up, used for every tier.
+            </p>
+          </div>
+          <div className="divide-y divide-border">
+            <div className="px-lg py-lg">
+              <p className="text-label uppercase tracking-label text-muted">Connection note</p>
+              <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">
+                {copy.linkedin_note?.trim() || "—"}
+              </p>
+            </div>
+            <div className="px-lg py-lg">
+              <p className="text-label uppercase tracking-label text-muted">Follow-up</p>
+              <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">
+                {copy.linkedin_followup?.trim() || "—"}
+              </p>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       {open ? (
         <>
           <AdminReply note={adminNote} />

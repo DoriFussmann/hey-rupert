@@ -111,6 +111,17 @@ export function pendingClientTurns(
   }
 
   if (intakeAt) {
+    const materials = (row.setup_steps ?? []).find((item) => item.step === "materials");
+    if (!materials || materials.status !== "submitted") {
+      const sentBack = Boolean(materials && materials.version > 0 && materials.turn_since);
+      turns.push({
+        key: "setup:materials",
+        task: "share your pitch deck and company materials",
+        path: "/portal/materials",
+        since: sentBack ? materials!.turn_since! : intakeAt,
+      });
+    }
+
     for (const item of getSetupItems({
       stage: text(row.stage) || null,
       intake_completed_at: intakeAt,

@@ -23,6 +23,7 @@ export function ReviewActions({
   notePlaceholder = "Anything Rupert should know, change, or answer",
   intro,
   readOnly,
+  stickyFooter = false,
 }: {
   step: "framing" | "investor_list" | "email_copy";
   version: number;
@@ -32,6 +33,8 @@ export function ReviewActions({
   notePlaceholder?: string;
   intro?: string;
   readOnly: boolean;
+  /** Pins Confirm to the bottom of the viewport (long lists). */
+  stickyFooter?: boolean;
 }) {
   const router = useRouter();
   const [note, setNote] = useState("");
@@ -68,24 +71,31 @@ export function ReviewActions({
     }
   }
 
-  return (
-    <section className="mt-lg rounded-card border border-primary/30 bg-surface">
+  const section = (
+    <section
+      className={
+        stickyFooter
+          ? "fixed bottom-0 left-0 right-0 z-30 max-h-[45vh] overflow-y-auto border-t border-primary/30 bg-surface shadow-[0_-8px_24px_rgba(0,0,0,0.08)]"
+          : "mt-lg rounded-card border border-primary/30 bg-surface"
+      }
+    >
       <div className="border-b border-border px-lg py-md">
         <p className="text-label uppercase tracking-label text-primary">Your turn</p>
         <p className="mt-xs text-body-sm text-muted">
+          {stickyFooter ? `Fund notes: ${noteCount}. ` : ""}
           {intro ??
             "Confirm to move forward, or send Rupert your changes and questions."}
-          {noteCount > 0
+          {!stickyFooter && noteCount > 0
             ? ` Your ${noteCount} note${noteCount === 1 ? "" : "s"} on specific funds will be included.`
             : ""}
         </p>
       </div>
-      <div className="px-lg py-lg">
+      <div className="px-lg py-md">
         <label className="block text-label uppercase tracking-label text-muted">
           Comment (optional — sent when you confirm)
           <textarea
             className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary"
-            rows={4}
+            rows={stickyFooter ? 2 : 4}
             maxLength={NOTE_MAX}
             value={note}
             disabled={readOnly || pending !== null}
@@ -121,5 +131,13 @@ export function ReviewActions({
         ) : null}
       </div>
     </section>
+  );
+
+  if (!stickyFooter) return section;
+  return (
+    <>
+      <div className="h-64" aria-hidden />
+      {section}
+    </>
   );
 }

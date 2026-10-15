@@ -7,11 +7,13 @@ import {
   generateServiceOrder,
   sendServiceOrder,
 } from "@/app/admin/actions";
+import { Disclosure } from "@/components/disclosure";
 import { MarkdownBody } from "@/components/markdown-body";
 import { formatDate, formatDateAtTime } from "@/lib/format";
 import {
   SETUP_FEE_LABEL,
-  isStripePaymentLink,
+  STRIPE_INVOICE_LINK_ERROR,
+  isStripeInvoiceLink,
   mergeServiceOrder,
 } from "@/lib/service-order";
 import type { ServiceOrderSend } from "@/lib/types";
@@ -33,14 +35,11 @@ export function GenerateServiceOrder({
   clientId,
   sends,
   paymentReceivedAt,
-  autoInvoice,
   testPilot,
 }: {
   clientId: string;
   sends: ServiceOrderSend[];
   paymentReceivedAt: string | null;
-  /** Stripe is configured: an empty link creates the invoice automatically. */
-  autoInvoice: boolean;
   /** Test pilot clients have no Setup Fee invoice. */
   testPilot: boolean;
 }) {
@@ -55,18 +54,17 @@ export function GenerateServiceOrder({
 
   const activeSend = sends.find((send) => !send.archived_at) ?? null;
   const hasDraft = Boolean(draft.trim());
-  // The link is optional when the invoice is created for us (or not needed).
-  const linkOptional = autoInvoice || testPilot;
-  const linkValid = paymentLink.trim()
-    ? isStripePaymentLink(paymentLink)
-    : linkOptional;
+  // Test pilots have no invoice. Everyone else needs a hosted invoice link.
+  const linkValid = testPilot
+    ? true
+    : isStripeInvoiceLink(paymentLink);
   const canSend = hasDraft && linkValid && !activeSend && pending === null;
   const archivedCount = sends.filter((send) => send.archived_at).length;
 
   const status = hasDraft
     ? linkValid
       ? "Ready to send"
-      : "Add payment link"
+      : "Add invoice link"
     : activeSend
       ? sendStatus(activeSend)
       : "Not generated";
@@ -105,9 +103,7 @@ export function GenerateServiceOrder({
       setSuccess(
         testPilot
           ? "Generated from the Service Order template. Test pilot: no invoice is needed. Push when ready."
-          : autoInvoice
-            ? "Generated from the Service Order template. Push it: the Setup Fee invoice is created in Stripe automatically."
-            : "Generated from the Service Order template. Add the Stripe payment link, then push.",
+          : "Generated from the Service Order template. Add the Stripe invoice link, then push.",
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to generate.");
@@ -185,9 +181,9 @@ export function GenerateServiceOrder({
         <div>
           <h2 className="text-h4">Service Order &amp; Setup Fee</h2>
           <p className="mt-xs text-body-sm text-muted">
-            {autoInvoice
-              ? `Generate from the Forms template and push. The ${SETUP_FEE_LABEL} Setup Fee invoice is created in Stripe automatically and shown to the client.`
-              : `Generate from the Forms template, add the Stripe payment link for the ${SETUP_FEE_LABEL} Setup Fee, then push both to the client.`}{" "}
+            {testPilot
+              ? "Generate from the Forms template and push. A test pilot has no Setup Fee invoice."
+              : `Generate from the Forms template, add the Stripe invoice link for the ${SETUP_FEE_LABEL} Setup Fee, then push both to the client.`}{" "}
             One active Service Order at a time; archive it to issue a new one.
           </p>
         </div>
@@ -206,10 +202,10 @@ export function GenerateServiceOrder({
         </button>
       </div>
 
-      {hasDraft && !testPilot ? (
+      {!testPilot && !activeSend ? (
         <div className="border-b border-border px-lg py-lg">
           <label className="block max-w-prose text-label uppercase tracking-label text-muted">
-            Stripe payment link (Setup Fee invoice){autoInvoice ? " · optional" : ""}
+            Stripe invoice link
             <input
               type="url"
               inputMode="url"
@@ -233,10 +229,10 @@ export function GenerateServiceOrder({
               }`}
             >
               {showLinkError
-                ? "Enter an https link on stripe.com (invoice or payment link)."
-                : autoInvoice
-                  ? "Leave empty to create the invoice in Stripe automatically. Paste a link only to use an invoice you made yourself."
-                  : "Required. The client sees a Pay button that opens this link."}
+                ? paymentLink.trim()
+                  ? STRIPE_INVOICE_LINK_ERROR
+                  : "Add the Stripe invoice link for the Setup Fee invoice."
+                : "Required. The client sees a Pay button that opens this link."}
             </span>
           </label>
         </div>
@@ -269,7 +265,7 @@ export function GenerateServiceOrder({
                 <button
                   type="button"
                   onClick={onSend}
-                  disabled={!hasDraft || Boolean(activeSend) || pending !== null}
+                  disabled={!canSend}
                   className={primaryButton}
                 >
                   {pending === "send" ? "Pushing…" : "Push to Client Portal"}
@@ -284,7 +280,7 @@ export function GenerateServiceOrder({
         <dl className="grid gap-x-lg gap-y-sm border-t border-border px-lg py-md text-body-sm sm:grid-cols-[auto_1fr]">
           <dt className="text-muted">Sent</dt>
           <dd className="text-heading">{formatDateAtTime(activeSend.sent_at)}</dd>
-          <dt className="text-muted">Payment link</dt>
+          <dt className="text-muted">Invoice link</dt>
           <dd className="min-w-0 break-all">
             <a
               href={activeSend.payment_link}
@@ -400,30 +396,39 @@ export function GenerateServiceOrder({
       ) : null}
 
       {hasDraft ? (
-        <div className="border-t border-border px-lg py-lg">
-          <p className="mb-md text-label uppercase tracking-label text-muted">
-            Preview · client fields are filled in when they sign
-          </p>
-          <MarkdownBody
-            content={mergeServiceOrder(draft, {})}
-            emptyLabel="Nothing generated yet."
-          />
+        <div className="border-t border-border px-lg">
+          <Disclosure title="Service Order text — template from Forms">
+            <div className="py-md">
+              <p className="mb-md text-body-sm text-muted">
+                Client fields are filled in when they sign.
+              </p>
+              <MarkdownBody
+                content={mergeServiceOrder(draft, {})}
+                emptyLabel="Nothing generated yet."
+              />
+            </div>
+          </Disclosure>
         </div>
       ) : activeSend ? (
-        <details className="border-t border-border px-lg py-lg">
-          <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-            {activeSend.signature ? "Signed copy" : "Sent to client"}
-          </summary>
-          <div className="mt-md">
-            <MarkdownBody
-              content={
-                activeSend.signed_content ??
-                mergeServiceOrder(activeSend.content, {})
-              }
-              emptyLabel="Nothing sent yet."
-            />
-          </div>
-        </details>
+        <div className="border-t border-border px-lg">
+          <Disclosure
+            title={
+              activeSend.signature
+                ? "Service Order text — signed copy"
+                : "Service Order text — sent to client"
+            }
+          >
+            <div className="py-md">
+              <MarkdownBody
+                content={
+                  activeSend.signed_content ??
+                  mergeServiceOrder(activeSend.content, {})
+                }
+                emptyLabel="Nothing sent yet."
+              />
+            </div>
+          </Disclosure>
+        </div>
       ) : null}
     </section>
   );

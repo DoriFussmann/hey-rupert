@@ -253,7 +253,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   clientTemplate(
     "statement_of_work_ready",
     "Statement of Work ready",
-    "When you push a Statement of Work to the client's portal.",
+    "When you push a revised Statement of Work. The first one goes out with your welcome email.",
     "/portal/statement-of-work",
     "Your Statement of Work is ready — you're up",
     "Rupert has prepared your Statement of Work.",
@@ -281,7 +281,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "materials_reopened",
     "More materials needed",
     "When you send the company materials back to the client.",
-    "/portal/setup/materials",
+    "/portal/materials",
     "Rupert needs a little more from you — you're up",
     "Rupert has reviewed your company materials and needs a few more things.",
     "You're up: add what's missing and submit again in your portal.",
@@ -291,7 +291,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     group: "client",
     title: "Feedback ready",
     trigger:
-      "When you send the Analysis & Feedback to the client. {message} is the email you drafted with Draft email; the subject you drafted replaces the one below.",
+      "When you send the Analysis & Feedback to the client. {message} is the message to the client; the subject you drafted replaces the one below.",
     subject: "Rupert's feedback on your materials is ready",
     body: [
       "{greeting}",
@@ -309,7 +309,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "When you publish the outreach narrative (or a revised version).",
     "/portal/setup/framing",
     "Your outreach narrative is ready — you're up",
-    "Rupert has written the outreach narrative for your investor campaign: the story, the first email and your LinkedIn messages.",
+    "Rupert has written the outreach narrative for your investor campaign: the story, the key messages and how we'll approach investors.",
     "You're up: review it in your portal, then confirm or tell us what to change.",
   ),
   clientTemplate(
@@ -497,7 +497,7 @@ export const REMINDER_STEPS: {
   { key: "service_order", label: "Service Order & Setup Fee", defaults: timing(false) },
   { key: "nda", label: "NDA", defaults: timing(true) },
   { key: "intake", label: "Client Intake", defaults: timing(true) },
-  { key: "setup:materials", label: "Company Materials", defaults: timing(true) },
+  { key: "setup:materials", label: "Company Materials (onboarding)", defaults: timing(true) },
   { key: "setup:framing", label: "Outreach Narrative", defaults: timing(true) },
   { key: "setup:investor_list", label: "Investor List", defaults: timing(true) },
   { key: "setup:email_copy", label: "Email Copy", defaults: timing(true) },

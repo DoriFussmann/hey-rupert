@@ -8,6 +8,7 @@ import {
   sendStatementOfWork,
   unarchiveSowSend,
 } from "@/app/admin/actions";
+import { Disclosure } from "@/components/disclosure";
 import { MarkdownBody } from "@/components/markdown-body";
 import { formatDateAtTime } from "@/lib/format";
 import type { SowSend } from "@/lib/types";
@@ -92,7 +93,11 @@ export function GenerateStatementOfWork({
         setError(result.error);
         return;
       }
-      if (result.clientEmail.ok) {
+      if (result.firstPush) {
+        setSuccess(
+          "Sent to the client portal. No email sent: it goes with your welcome email.",
+        );
+      } else if (result.clientEmail.ok) {
         setSuccess("Sent to the client portal and emailed the client.");
       } else {
         setSuccess("Sent to the client portal.");
@@ -287,21 +292,20 @@ export function GenerateStatementOfWork({
       ) : null}
 
       {hasDraft ? (
-        <div className="border-t border-border px-lg py-lg">
-          <p className="mb-md text-label uppercase tracking-label text-muted">
-            Preview
-          </p>
-          <MarkdownBody content={draft} emptyLabel="Nothing generated yet." />
+        <div className="border-t border-border px-lg">
+          <Disclosure title="Statement of Work text — template from Forms">
+            <div className="py-md">
+              <MarkdownBody content={draft} emptyLabel="Nothing generated yet." />
+            </div>
+          </Disclosure>
         </div>
       ) : sentContent.trim() ? (
-        <div className="border-t border-border px-lg py-lg">
-          <p className="mb-md text-label uppercase tracking-label text-muted">
-            Sent to client
-          </p>
-          <MarkdownBody
-            content={sentContent}
-            emptyLabel="Nothing sent yet."
-          />
+        <div className="border-t border-border px-lg">
+          <Disclosure title="Statement of Work text — sent to client">
+            <div className="py-md">
+              <MarkdownBody content={sentContent} emptyLabel="Nothing sent yet." />
+            </div>
+          </Disclosure>
         </div>
       ) : null}
     </section>

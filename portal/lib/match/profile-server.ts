@@ -116,6 +116,25 @@ export function cleanSettings(input: unknown): MatchSettings {
   };
 }
 
+function stableJson(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(stableJson);
+  if (value && typeof value === "object") {
+    const record = value as Record<string, unknown>;
+    return Object.keys(record)
+      .sort()
+      .reduce<Record<string, unknown>>((out, key) => {
+        out[key] = stableJson(record[key]);
+        return out;
+      }, {});
+  }
+  return value;
+}
+
+/** Fingerprint of the profile and settings a match was run against. `last_match` is not a setting. */
+export function matchBasis(answers: MatchAnswers, settings: MatchSettings) {
+  return JSON.stringify(stableJson({ answers, settings: cleanSettings(settings) }));
+}
+
 /** The engine profile: intake answers through the converter, plus settings. */
 export function buildProfile(answers: MatchAnswers, settings: MatchSettings) {
   const converted = intakeToProfile(answers);
@@ -195,12 +214,13 @@ export async function saveProfileState(
     sourceInterviewAt?: string | null;
   },
 ): Promise<{ ok: true; value: MatchProfileState } | { ok: false; error: string }> {
-  const built = buildProfile(input.answers, input.settings);
+  const settings = cleanSettings(input.settings);
+  const built = buildProfile(input.answers, settings);
   const at = new Date().toISOString();
   const row: Record<string, unknown> = {
     client_id: clientId,
     answers: input.answers,
-    settings: input.settings,
+    settings,
     status: built.ready ? "ready" : "needs_info",
     missing: built.gaps,
     warnings: built.warnings,
@@ -212,6 +232,19 @@ export async function saveProfileState(
     row.source_interview_at = input.sourceInterviewAt ?? null;
   }
   if (input.source === "edit") row.edited_at = at;
+
+  const { data: existing } = await supabase
+    .from("match_profiles")
+    .select("settings")
+    .eq("client_id", clientId)
+    .maybeSingle();
+  const previous =
+    existing?.settings && typeof existing.settings === "object"
+      ? (existing.settings as Record<string, unknown>)
+      : {};
+  if (previous.last_match) {
+    row.settings = { ...(row.settings as object), last_match: previous.last_match };
+  }
 
   const { error } = await supabase.from("match_profiles").upsert(row, { onConflict: "client_id" });
   if (error) return { ok: false, error: matchTableError(error.message, error.code) };

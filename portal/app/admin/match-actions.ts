@@ -30,6 +30,7 @@ import {
   buildView,
   runClientMatch,
   siteCandidates,
+  storeMatch,
 } from "@/lib/match/run-server";
 import { checkAndStoreSites, isStale, runSiteBatch } from "@/lib/match/sites-server";
 import {
@@ -351,7 +352,10 @@ async function viewFor(
   clientId: string,
 ): Promise<{ view: MatchView | null; error: string | null }> {
   const run = await runClientMatch(supabase, clientId);
-  return run.ok ? { view: buildView(run.value), error: null } : { view: null, error: run.error };
+  if (!run.ok) return { view: null, error: run.error };
+  const view = buildView(run.value);
+  await storeMatch(supabase, clientId, view);
+  return { view, error: null };
 }
 
 /** Saves the company profile as edited. Rupert Match re-runs on its next open. */

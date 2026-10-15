@@ -38,7 +38,6 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 
-type Tab = "feedback" | "summary" | "framing";
 type Pending = null | "analyze" | "email" | "save" | "send" | "upload";
 type Message = { kind: "ok" | "error"; text: string } | null;
 
@@ -75,7 +74,6 @@ export function FeedbackWorkspace({
   const initial = asFeedback(row?.draft ?? row?.published);
   const [draft, setDraft] = useState<FeedbackDraft>(initial);
   const [saved, setSaved] = useState(JSON.stringify(initial));
-  const [tab, setTab] = useState<Tab>("feedback");
   const [pending, setPending] = useState<Pending>(null);
   const [message, setMessage] = useState<Message>(null);
 
@@ -139,7 +137,6 @@ export function FeedbackWorkspace({
       }
       setDraft(result.draft);
       setSaved(JSON.stringify(result.draft));
-      setTab("feedback");
       setMessage({ kind: "ok", text: "Analysis ready and saved as a draft. The client sees nothing until you send it." });
     } catch (err) {
       setMessage({ kind: "error", text: errorText(err, "The analysis failed.") });
@@ -149,9 +146,10 @@ export function FeedbackWorkspace({
   }
 
   async function onDraftEmail() {
+    const currentMessage = draft.email.body.trim() || draft.intro.trim();
     if (
-      draft.email.body.trim() &&
-      !window.confirm("Replace the current email draft with a new one?")
+      currentMessage &&
+      !window.confirm("Replace the current message with a new draft?")
     ) {
       return;
     }
@@ -163,8 +161,12 @@ export function FeedbackWorkspace({
         setMessage({ kind: "error", text: result.error });
         return;
       }
-      update({ email: result.email });
-      setMessage({ kind: "ok", text: "Email drafted. Edit it, then save or send." });
+      setDraft((current) => ({
+        ...current,
+        intro: result.email.body,
+        email: result.email,
+      }));
+      setMessage({ kind: "ok", text: "Message drafted. Edit it, then save or send." });
     } catch (err) {
       setMessage({ kind: "error", text: errorText(err, "Unable to draft the email.") });
     } finally {
@@ -194,9 +196,9 @@ export function FeedbackWorkspace({
       sent
         ? "Replace the feedback the client has with this version and email them?"
         : "Send the feedback to the client's portal and email them?",
-      draft.email.body.trim()
+      (draft.email.body.trim() || draft.intro.trim())
         ? ""
-        : "No email is drafted: the default text from Forms → Emails → Feedback ready is used.",
+        : "No message is written: the default text from Forms → Emails → Feedback ready is used.",
     ]
       .filter(Boolean)
       .join("\n\n");
@@ -268,19 +270,19 @@ export function FeedbackWorkspace({
   }
 
   const analysis = draft.analysis;
-  const tabs: { id: Tab; label: string }[] = [
-    { id: "feedback", label: `Feedback for the client (${visibleCount})` },
-    { id: "summary", label: "Company summary" },
-    { id: "framing", label: "Investor framing" },
-  ];
+  const clientMessage = draft.email.body.trim() ? draft.email.body : draft.intro;
 
   return (
     <StepFrame
       item={item}
-      intro="Analyze reads the deck, files, the client's answers, their links and the intake. Edit the result, draft the email, then send. The client reads it; no confirmation needed. Summary and framing stay internal."
+      intro="Work top to bottom. The client sees the recommendations you leave visible, the files and links, and the message."
     >
-      {/* Analyze */}
-      <div className="flex flex-wrap items-center gap-sm border-b border-border px-lg py-md">
+      <section className="border-b border-border px-lg py-md">
+        <h3 className="text-h4">Analysis</h3>
+        <p className="mt-xs max-w-prose text-body-sm text-muted">
+          Internal. Never shown to the client. Analyze reads the deck, files, answers, links and the intake.
+        </p>
+        <div className="mt-md flex flex-wrap items-center gap-sm">
         <button
           type="button"
           className={analysis ? secondaryButton : primaryButton}
@@ -300,104 +302,73 @@ export function FeedbackWorkspace({
                   ? `Last analyzed ${formatDateAtTime(analysis.generated_at)}.`
                   : "Not analyzed yet."}
         </p>
-      </div>
+        </div>
+        <div className="mt-md grid gap-md">
+          <div>
+            <p className={labelClass}>Company summary</p>
+            {analysis ? (
+              <div className="mt-sm">
+                <MarkdownField
+                  label="Company summary"
+                  value={analysis.summary}
+                  onChange={(value) => update({ analysis: { ...analysis, summary: value } })}
+                  height={280}
+                />
+              </div>
+            ) : (
+              <p className="mt-sm text-body-sm text-muted">Run Analyze to write this.</p>
+            )}
+          </div>
+          <div>
+            <p className={labelClass}>Investor framing</p>
+            {analysis ? (
+              <div className="mt-sm">
+                <MarkdownField
+                  label="Investor framing"
+                  value={analysis.framing}
+                  onChange={(value) => update({ analysis: { ...analysis, framing: value } })}
+                  height={280}
+                />
+              </div>
+            ) : (
+              <p className="mt-sm text-body-sm text-muted">Run Analyze to write this.</p>
+            )}
+          </div>
+        </div>
+        {analysis && (analysis.read.length > 0 || analysis.skipped.length > 0) ? (
+          <details className="mt-md text-body-sm">
+            <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
+              What the AI read ({analysis.read.length})
+              {analysis.skipped.length > 0 ? ` · couldn't read ${analysis.skipped.length}` : ""}
+            </summary>
+            <ul className="mt-sm list-disc space-y-xs pl-md text-body">
+              {analysis.read.map((entry) => (
+                <li key={entry}>{entry}</li>
+              ))}
+            </ul>
+            {analysis.skipped.length > 0 ? (
+              <ul className="mt-sm list-disc space-y-xs pl-md text-warning">
+                {analysis.skipped.map((entry) => (
+                  <li key={entry}>{entry}</li>
+                ))}
+              </ul>
+            ) : null}
+          </details>
+        ) : null}
+      </section>
       {published.length > 0 ? (
         <p className="border-b border-border px-lg py-sm text-body-sm text-secondary">
           Client progress: {clientDone.size} of {published.length} recommendation
           {published.length === 1 ? "" : "s"} ticked as done.
         </p>
       ) : null}
-      {analysis && (analysis.read.length > 0 || analysis.skipped.length > 0) ? (
-        <details className="border-b border-border px-lg py-sm text-body-sm">
-          <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-            What the AI read ({analysis.read.length})
-            {analysis.skipped.length > 0 ? ` · couldn't read ${analysis.skipped.length}` : ""}
-          </summary>
-          <ul className="mt-sm list-disc space-y-xs pl-md text-body">
-            {analysis.read.map((entry) => (
-              <li key={entry}>{entry}</li>
-            ))}
-          </ul>
-          {analysis.skipped.length > 0 ? (
-            <ul className="mt-sm list-disc space-y-xs pl-md text-warning">
-              {analysis.skipped.map((entry) => (
-                <li key={entry}>{entry}</li>
-              ))}
-            </ul>
-          ) : null}
-        </details>
-      ) : null}
 
-      {/* Tabs */}
-      <div role="tablist" aria-label="Analysis" className="flex flex-wrap gap-xs border-b border-border px-lg pt-md">
-        {tabs.map((entry) => (
-          <button
-            key={entry.id}
-            type="button"
-            role="tab"
-            id={`feedback-tab-${entry.id}`}
-            aria-selected={tab === entry.id}
-            aria-controls={`feedback-panel-${entry.id}`}
-            onClick={() => setTab(entry.id)}
-            className={`-mb-px rounded-t-md border px-md py-sm text-body-sm transition-colors duration-hover ${
-              tab === entry.id
-                ? "border-border border-b-surface bg-surface text-heading"
-                : "border-transparent text-muted hover:text-heading"
-            }`}
-          >
-            {entry.label}
-          </button>
-        ))}
-      </div>
-
-      {tab === "summary" || tab === "framing" ? (
-        <div
-          role="tabpanel"
-          id={`feedback-panel-${tab}`}
-          aria-labelledby={`feedback-tab-${tab}`}
-          className="px-lg py-md"
-        >
-          <p className="mb-sm text-body-sm text-muted">
-            Internal: the client never sees this. The narrative agent builds on it.
-          </p>
-          {analysis ? (
-            <MarkdownField
-              key={tab}
-              label={tab === "summary" ? "Company summary" : "Investor framing"}
-              value={tab === "summary" ? analysis.summary : analysis.framing}
-              onChange={(value) =>
-                update({ analysis: { ...analysis, [tab]: value } })
-              }
-              height={420}
-            />
-          ) : (
-            <p className="text-body-sm text-muted">Run Analyze to write this.</p>
-          )}
-        </div>
-      ) : (
-        <div
-          role="tabpanel"
-          id="feedback-panel-feedback"
-          aria-labelledby="feedback-tab-feedback"
-          className="grid gap-lg px-lg py-md"
-        >
+      <div className="grid gap-lg border-b border-border px-lg py-md">
           <div>
-            <p className={labelClass}>Opening message</p>
-            <p className="mb-sm mt-xs text-body-sm text-muted">
-              {draft.email.body.trim()
-                ? "Not shown: an email is drafted below, and the client's portal shows the email text instead."
-                : "Shown to the client above the recommendations. Drafting an email below replaces it."}
+            <h3 className="text-h4">Recommendations</h3>
+            <p className="mt-xs text-body-sm text-muted">
+              The client sees the ones marked visible. {visibleCount} visible.
             </p>
-            <MarkdownField
-              label="Opening message"
-              value={draft.intro}
-              onChange={(value) => update({ intro: value })}
-              height={200}
-            />
-          </div>
-
-          <div>
-            <p className={labelClass}>Recommendations</p>
             {draft.items.length === 0 ? (
               <p className="mt-sm text-body-sm text-muted">
                 None yet. Run Analyze, or add your own.
@@ -550,7 +521,7 @@ export function FeedbackWorkspace({
 
           {/* Attachments and links */}
           <div>
-            <p className={labelClass}>Files & links for the client</p>
+            <h3 className="text-h4">Files & links for the client</h3>
             <ul className="mt-sm divide-y divide-border">
               {draft.attachments.map((file) => (
                 <li key={file.path} className="flex flex-wrap items-center gap-md py-sm">
@@ -662,16 +633,14 @@ export function FeedbackWorkspace({
             </div>
           </div>
         </div>
-      )}
 
-      {/* Email */}
-      <div className="border-t border-border px-lg py-md">
+      <section className="border-b border-border px-lg py-md">
         <div className="flex flex-wrap items-center justify-between gap-sm">
           <div>
-            <p className={labelClass}>Email to the client</p>
+            <h3 className="text-h4">Message to the client</h3>
             <p className="mt-xs max-w-prose text-body-sm text-muted">
-              Draft it once the feedback is final. The greeting, portal link and
-              signature are added from Forms → Emails → Feedback ready.
+              This is the email and the intro at the top of their feedback page.
+              The greeting, portal link and signature are added from Forms → Emails.
             </p>
           </div>
           <button
@@ -680,7 +649,7 @@ export function FeedbackWorkspace({
             disabled={busy || !claudeReady}
             onClick={onDraftEmail}
           >
-            {pending === "email" ? "Drafting…" : draft.email.body ? "Redraft email" : "Draft email"}
+            {pending === "email" ? "Drafting…" : "Draft with AI"}
           </button>
         </div>
         <label className={`${labelClass} mt-md`}>
@@ -693,20 +662,23 @@ export function FeedbackWorkspace({
             onChange={(event) => update({ email: { ...draft.email, subject: event.target.value } })}
           />
         </label>
-        <label className={`${labelClass} mt-md`}>
-          Message
-          <textarea
-            className={`${inputClass} mt-sm min-h-[160px] resize-y normal-case tracking-normal`}
-            value={draft.email.body}
-            maxLength={10000}
-            placeholder="Leave empty to use the default text"
-            onChange={(event) => update({ email: { ...draft.email, body: event.target.value } })}
-          />
-        </label>
-      </div>
+        <div className="mt-md">
+          <p className={labelClass}>Message</p>
+          <div className="mt-sm">
+            <MarkdownField
+              label="Message to the client"
+              value={clientMessage}
+              height={220}
+              onChange={(value) =>
+                update({ intro: value, email: { ...draft.email, body: value } })
+              }
+            />
+          </div>
+        </div>
+      </section>
 
-      {/* Send */}
-      <div className="border-t border-border px-lg py-md">
+      <section className="px-lg py-md">
+        <h3 className="text-h4">Send to client</h3>
         {sent && row ? (
           <p className="mb-sm text-body-sm text-muted">
             Version {row.version} sent {row.published_at ? formatDateAtTime(row.published_at) : ""}
@@ -743,7 +715,7 @@ export function FeedbackWorkspace({
             {message.text}
           </p>
         ) : null}
-      </div>
+      </section>
     </StepFrame>
   );
 }

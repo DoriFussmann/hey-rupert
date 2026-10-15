@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { ResponseHistory } from "@/components/setup/response-history";
+import { TurnBanner } from "@/components/setup/turn-banner";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
 import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
@@ -23,6 +24,12 @@ export default async function InvestorListPage() {
         title="Investor Matching"
         description="The investors Rupert matched for this raise. Open a fund type to look through it. Add a comment if you want, then confirm."
       />
+      {row?.status === "with_client" ? (
+        <TurnBanner
+          owner="client"
+          title="Review the list and confirm it, or send Rupert your notes. Outreach can't start until you confirm."
+        />
+      ) : null}
       <ReviewStatus
         item={item}
         row={row}

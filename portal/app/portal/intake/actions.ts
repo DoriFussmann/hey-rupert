@@ -19,7 +19,6 @@ import {
 } from "@/lib/intake-server";
 import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
 import { MATERIALS_BUCKET, fileExtension, formatBytes } from "@/lib/setup";
-import { advanceStage } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 
@@ -85,8 +84,9 @@ function topicNotes(
 
 /**
  * Completes the intake the first time every required topic is covered:
- * marks it done, moves the stage to Setup and emails the admin what was
- * gathered. The client can keep chatting to add the optional extras.
+ * marks it done and emails the admin. The stage stays on intake until the
+ * client submits Company Materials. The client can keep chatting to add the
+ * optional extras.
  */
 async function completeIfEssentialsCovered(
   { supabase, user }: PortalAccess,
@@ -106,8 +106,6 @@ async function completeIfEssentialsCovered(
 
   if (error || !data || data.length === 0) return;
 
-  // Stage first, so the admin email reports the up-to-date next step.
-  await advanceStage(supabase, user.id, ["nda", "intake"], "setup");
   await notifyAdmin(supabase, user.id, "intake_completed", {
     email: true,
     details: topicNotes(topics, topicStatus),
@@ -508,8 +506,6 @@ export async function confirmIntake(
 
     if (clientError) return { ok: false, error: clientError.message };
 
-    // Stage first, so the admin email reports the up-to-date next step.
-    await advanceStage(supabase, user.id, ["nda", "intake"], "setup");
     await notifyAdmin(supabase, user.id, "intake_completed", { email: true });
   }
 

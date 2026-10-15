@@ -15,6 +15,7 @@ import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-car
 import { NextAction, type NextActionTurn } from "@/app/admin/clients/[id]/next-action";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
+import { MaterialsPanel } from "@/app/admin/clients/[id]/setup/materials-panel";
 import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
 import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
 import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
@@ -29,7 +30,14 @@ import { loadProfileState } from "@/lib/match/profile-server";
 import type { MatchProfileState } from "@/lib/match/shared";
 import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
-import { asFeedback, asMaterials, isSetupComplete } from "@/lib/setup";
+import {
+  asFeedback,
+  asMaterials,
+  isSetupComplete,
+  isSetupOpen,
+  setupStep,
+  type SetupItem,
+} from "@/lib/setup";
 import { signFileLinks, signMaterialLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -72,7 +80,6 @@ import { getOnboardingItems } from "@/lib/onboarding";
 import { nextTurn } from "@/lib/progress";
 import { isKickoffReady, kickoffDate } from "@/lib/service-order";
 import { getClientAccess } from "@/lib/password-setup";
-import { isStripeConfigured } from "@/lib/stripe";
 
 export default async function ClientDetailPage({
   params,
@@ -154,7 +161,6 @@ export default async function ClientDetailPage({
           clientId={client.id}
           sends={serviceOrderSends}
           paymentReceivedAt={client.payment_received_at ?? null}
-          autoInvoice={isStripeConfigured()}
           testPilot={Boolean(client.is_test_pilot)}
         />
       ),
@@ -183,7 +189,34 @@ export default async function ClientDetailPage({
     },
   ];
 
-  if (client.intake_completed_at) {
+  const materialsOnboarding = getOnboardingItems(client).find(
+    (item) => item.id === "materials",
+  );
+  const framingRow = setupSource.setup_steps.find((row) => row.step === "framing");
+  const materialsItem: SetupItem = {
+    ...setupStep("materials"),
+    status: materialsOnboarding?.status ?? "open",
+    detail: materialsOnboarding?.detail ?? "After the Client Intake",
+    since: materialsRow?.turn_since ?? null,
+    completedAt: materialsOnboarding?.completedAt ?? null,
+    visible: materialsOnboarding?.status !== "open",
+  };
+  panels.push({
+    key: "materials",
+    done: materialsRow?.status === "submitted",
+    node: (
+      <MaterialsPanel
+        clientId={client.id}
+        item={materialsItem}
+        row={materialsRow ?? null}
+        fields={materialFields}
+        links={materialLinks}
+        canReopen={!framingRow || framingRow.version === 0}
+      />
+    ),
+  });
+
+  if (isSetupOpen(client.stage)) {
     panels.push({
       key: "setup",
       done: isSetupComplete(setupSource),
@@ -191,8 +224,6 @@ export default async function ClientDetailPage({
         <SetupWorkspace
           clientId={client.id}
           source={setupSource}
-          materialFields={materialFields}
-          materialLinks={materialLinks}
           feedbackLinks={feedbackLinks}
           claudeReady={claudeReady}
         />
@@ -210,7 +241,7 @@ export default async function ClientDetailPage({
       ? onboardingNext.id === "payment"
         ? "service_order"
         : onboardingNext.id
-      : client.intake_completed_at
+      : isSetupOpen(client.stage)
         ? "setup"
         : null;
   const currentPanel = panels.find((panel) => panel.key === currentKey && !panel.done) ?? null;

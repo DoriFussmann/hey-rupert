@@ -88,14 +88,17 @@ export function validateServiceOrderFields(
     : { ok: true, value };
 }
 
-/** Accepts https links on stripe.com (invoice, payment link and checkout pages). */
-export function isStripePaymentLink(value: string) {
+export const STRIPE_INVOICE_LINK_ERROR =
+  "Paste the Stripe invoice link (invoice.stripe.com/…). Payment links and checkout links aren't recognised when paid.";
+
+/** Accepts a Stripe hosted invoice link. The webhook matches invoice.paid against this URL. */
+export function isStripeInvoiceLink(value: string) {
   try {
     const url = new URL(value.trim());
-    const host = url.hostname.toLowerCase();
     return (
       url.protocol === "https:" &&
-      (host === "stripe.com" || host.endsWith(".stripe.com"))
+      url.hostname.toLowerCase() === "invoice.stripe.com" &&
+      url.pathname.length > 1
     );
   } catch {
     return false;

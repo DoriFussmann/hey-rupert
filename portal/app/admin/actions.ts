@@ -47,10 +47,11 @@ import { notifyClient } from "@/lib/notify";
 import {
   DEFAULT_SERVICE_ORDER,
   isKickoffReady,
-  isStripePaymentLink,
+  STRIPE_INVOICE_LINK_ERROR,
+  isStripeInvoiceLink,
 } from "@/lib/service-order";
 import { DEFAULT_STATEMENT_OF_WORK } from "@/lib/statement-of-work";
-import { createSetupFeeInvoice, isStripeConfigured, voidInvoice } from "@/lib/stripe";
+import { voidInvoice } from "@/lib/stripe";
 import {
   TEST_PILOT_MIGRATION_MISSING,
   isTestPilotColumnError,
@@ -67,6 +68,8 @@ export type CreateClientInput = {
   company_website: string;
   /** Internal test client: no setup link, client emails and reminders off. */
   is_test_pilot: boolean;
+  /** Push the Forms SoW template into the portal right after the client is created. */
+  push_statement_of_work?: boolean;
   raise_amount: string;
   raise_stage: string;
   vertical: string;
@@ -82,7 +85,12 @@ export type ActionResult =
 // Pushing a document to the portal also emails the client; the email result
 // is reported separately because a failed email does not undo the push.
 export type SendToClientResult =
-  | { ok: true; clientEmail: EmailResult }
+  | {
+      ok: true;
+      clientEmail: EmailResult;
+      /** The first push is not emailed; it goes out with the welcome email. */
+      firstPush?: boolean;
+    }
   | { ok: false; error: string };
 
 // On success the admin gets the client's set-password link to email them
@@ -97,6 +105,8 @@ export type CreateClientResult =
       email: string;
       setupUrl: string | null;
       expiresAt: string | null;
+      /** Set when the form asked to push the Statement of Work. */
+      sow?: { ok: true } | { ok: false; error: string };
     }
   | { ok: false; error: string };
 
@@ -362,23 +372,22 @@ export async function createClientRecord(
   }
 
   // A test pilot is never signed into: Rupert views it as the client.
-  if (testPilot) {
-    revalidatePath("/admin");
-    return {
-      ok: true,
-      clientId: userId,
-      testPilot,
-      linked: Boolean(existingUser),
-      email,
-      setupUrl: null,
-      expiresAt: null,
-    };
+  let setupUrl: string | null = null;
+  let expiresAt: string | null = null;
+  if (!testPilot) {
+    const issued = await issueSetupLink(supabase, userId);
+    if (!issued.ok) {
+      await rollback();
+      return issued;
+    }
+    setupUrl = issued.link.url;
+    expiresAt = issued.link.expiresAt;
   }
 
-  const issued = await issueSetupLink(supabase, userId);
-  if (!issued.ok) {
-    await rollback();
-    return issued;
+  let sow: { ok: true } | { ok: false; error: string } | undefined;
+  if (input.push_statement_of_work) {
+    const pushed = await sendDefaultStatementOfWork(userId);
+    sow = pushed.ok ? { ok: true } : { ok: false, error: pushed.error };
   }
 
   revalidatePath("/admin");
@@ -388,8 +397,9 @@ export async function createClientRecord(
     testPilot,
     linked: Boolean(existingUser),
     email,
-    setupUrl: issued.link.url,
-    expiresAt: issued.link.expiresAt,
+    setupUrl,
+    expiresAt,
+    sow,
   };
 }
 
@@ -559,9 +569,8 @@ export async function updateOnboardingTimestamp(
     await advanceStage(access.supabase, clientId, ["nda"], "intake");
   }
 
-  if (column === "intake_completed_at" && done) {
-    await advanceStage(access.supabase, clientId, ["nda", "intake"], "setup");
-  }
+  // Intake complete does not open Setup. Company Materials is the last
+  // Onboarding step; submitting them moves the stage to setup.
 
   revalidateProgressPaths(clientId);
   return { ok: true };
@@ -898,6 +907,25 @@ export async function sendStatementOfWork(
     };
   }
 
+  const { count: priorSends, error: priorError } = await access.supabase
+    .from("statement_of_work_sends")
+    .select("id", { count: "exact", head: true })
+    .eq("client_id", clientId);
+
+  if (priorError) {
+    if (sowSendsTableError(priorError.message, priorError.code)) {
+      return {
+        ok: false,
+        error:
+          "The statement_of_work_sends table is missing. Run portal/supabase/sow_sends.sql in the Supabase SQL editor, then try again.",
+      };
+    }
+    return { ok: false, error: priorError.message };
+  }
+
+  // Any earlier row is archived (an active one would have blocked the push).
+  const revised = (priorSends ?? 0) > 0;
+
   const sentAt = new Date().toISOString();
   const { error: insertError } = await access.supabase
     .from("statement_of_work_sends")
@@ -940,16 +968,21 @@ export async function sendStatementOfWork(
     return { ok: false, error: error.message };
   }
 
-  const clientEmail = await notifyClient(
-    access.supabase,
-    clientId,
-    "statement_of_work_ready",
-  );
+  // The first push is not emailed. The welcome email Dori sends is the
+  // client's first message, and it already says the SoW is in the portal.
+  const clientEmail = revised
+    ? await notifyClient(access.supabase, clientId, "statement_of_work_ready", {
+        updated: true,
+      })
+    : {
+        ok: false as const,
+        reason: "No email sent: it goes with your welcome email.",
+      };
 
   revalidatePath("/admin");
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/portal/statement-of-work");
-  return { ok: true, clientEmail };
+  return { ok: true, clientEmail, firstPush: !revised };
 }
 
 /** Generate & send in one step: the SoW from the Forms template, pushed as is. */
@@ -1115,28 +1148,24 @@ export async function sendServiceOrder(
 
   const { data: client, error: loadError } = await supabase
     .from("clients")
-    .select("id, email, first_name, last_name, company_name, is_test_pilot")
+    .select("id, is_test_pilot")
     .eq("id", clientId)
     .maybeSingle();
   if (loadError) return serviceOrderError(loadError.message, loadError.code);
   if (!client) return { ok: false, error: "Client not found." };
   const testPilot = client.is_test_pilot === true;
 
-  // A pasted link wins. Without one, the Setup Fee invoice is created in
-  // Stripe automatically; test pilot clients have no invoice at all.
+  // Test pilots have no invoice. Every other client needs a hosted invoice
+  // link; the webhook matches invoice.paid against setup_invoice_url.
   const pasted = paymentLink.trim();
-  if (pasted && !isStripePaymentLink(pasted)) {
+  if (!testPilot && !pasted) {
     return {
       ok: false,
-      error: "Enter an https link on stripe.com, or leave it empty to create the invoice automatically.",
+      error: "Add the Stripe invoice link for the Setup Fee invoice.",
     };
   }
-  if (!pasted && !testPilot && !isStripeConfigured()) {
-    return {
-      ok: false,
-      error:
-        "Enter the Stripe payment link for the Setup Fee invoice, or add STRIPE_SECRET_KEY to create it automatically.",
-    };
+  if (pasted && !isStripeInvoiceLink(pasted)) {
+    return { ok: false, error: STRIPE_INVOICE_LINK_ERROR };
   }
 
   const { data: activeSends, error: activeError } = await supabase
@@ -1154,31 +1183,11 @@ export async function sendServiceOrder(
     return { ok: false, error: alreadySent };
   }
 
-  let link = pasted;
-  let invoiceId: string | null = null;
-  if (!link && !testPilot) {
-    const email = String(client.email ?? "").trim();
-    if (!email) return { ok: false, error: "The client has no email for the Stripe invoice." };
-    const name =
-      [client.first_name, client.last_name].filter(Boolean).join(" ").trim() ||
-      String(client.company_name ?? "");
-    const invoice = await createSetupFeeInvoice({
-      clientId,
-      email,
-      name: client.company_name ? `${name} (${client.company_name})` : name,
-      attempt: randomUUID(),
-    });
-    if (!invoice.ok) return { ok: false, error: invoice.error };
-    link = invoice.value.url;
-    invoiceId = invoice.value.id;
-  }
-
   const { error: insertError } = await supabase
     .from("service_order_sends")
-    .insert({ client_id: clientId, content, payment_link: link });
+    .insert({ client_id: clientId, content, payment_link: pasted });
 
   if (insertError) {
-    if (invoiceId) await voidInvoice(invoiceId);
     if (insertError.code === "23505") return { ok: false, error: alreadySent };
     return serviceOrderError(insertError.message, insertError.code);
   }
@@ -1187,8 +1196,8 @@ export async function sendServiceOrder(
     .from("clients")
     .update({
       service_order_content: content,
-      setup_invoice_url: link || null,
-      stripe_invoice_id: invoiceId,
+      setup_invoice_url: pasted || null,
+      stripe_invoice_id: null,
       service_order_agreed_at: null,
     })
     .eq("id", clientId);

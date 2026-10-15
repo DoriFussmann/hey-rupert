@@ -84,7 +84,7 @@ export function MaterialsPanel({
       item={item}
       intro={
         submitted
-          ? `Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Run Analyze below to review everything with the AI.`
+          ? `Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Run Analyze in Setup to review everything with the AI.`
           : "The client uploads their deck and shares company details here, then submits. Below is what they have added so far."
       }
     >

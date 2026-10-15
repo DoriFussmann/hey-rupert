@@ -150,17 +150,29 @@ export type FeedbackPublished = {
 
 // Outreach Narrative (stored on the framing step).
 
+/** Shown under What happens next unless Rupert edits it for this client. */
+export const NARRATIVE_NEXT_STEPS =
+  "Once you confirm this and the investor list is matched, Rupert writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
+
 export type NarrativePayload = {
-  /** The core story every message is built on (markdown). */
+  /** The core story (markdown). */
   core: string;
-  email_subject: string;
-  email_body: string;
-  /** LinkedIn connection request note. */
-  linkedin_note: string;
-  /** LinkedIn message once the connection is accepted. */
-  linkedin_followup: string;
+  /** 3–6 messages Rupert will carry into outreach (markdown). */
+  key_messages: string;
+  /** How Rupert will approach investors (markdown). */
+  approach: string;
+  /** What the client should expect after they confirm. */
+  next_steps: string;
   /** Rupert's reply when this version is sent back for confirmation. */
   admin_note?: string;
+  /**
+   * Outreach copy from narratives pushed before email copy moved to its own
+   * step. Read-only. Empty on new narratives.
+   */
+  email_subject?: string;
+  email_body?: string;
+  linkedin_note?: string;
+  linkedin_followup?: string;
 };
 
 export const LINKEDIN_NOTE_MAX = 300;
@@ -215,6 +227,10 @@ export type CopyEmail = { subject: string; body: string };
 /** Three emails per tier: the first email and two follow-ups. */
 export type EmailCopyPayload = {
   tiers: Record<`${FitTier}`, CopyEmail[]>;
+  /** One LinkedIn connection note for every tier. 300 characters or fewer. */
+  linkedin_note?: string;
+  /** One LinkedIn follow-up for every tier. */
+  linkedin_followup?: string;
   /** Rupert's reply when this version is sent back for confirmation. */
   admin_note?: string;
 };
@@ -254,16 +270,18 @@ export type SetupStepDefinition = {
   kind: "client" | "inform" | "review";
 };
 
+/** Stored on `setup_steps`, shown as the last Onboarding step. */
+export const MATERIALS_STEP: SetupStepDefinition = {
+  id: "materials",
+  title: "Company Materials",
+  short: "Company Materials",
+  href: "/portal/materials",
+  clientTask: "share your pitch deck and company materials",
+  adminAction: "Review company materials",
+  kind: "client",
+};
+
 export const SETUP_STEPS: SetupStepDefinition[] = [
-  {
-    id: "materials",
-    title: "Company Materials",
-    short: "Company Materials",
-    href: "/portal/setup/materials",
-    clientTask: "share your pitch deck and company materials",
-    adminAction: "Review company materials",
-    kind: "client",
-  },
   {
     id: "deck_review",
     title: "Analysis & Feedback",
@@ -304,14 +322,24 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
 
 export const SETUP_TOTAL = SETUP_STEPS.length;
 
+const STEP_BY_ID = new Map<SetupStepId, SetupStepDefinition>([
+  [MATERIALS_STEP.id, MATERIALS_STEP],
+  ...SETUP_STEPS.map((step) => [step.id, step] as const),
+]);
+
 export function setupStep(id: SetupStepId) {
-  return SETUP_STEPS.find((step) => step.id === id)!;
+  return STEP_BY_ID.get(id)!;
 }
 
 export function isSetupStepId(value: unknown): value is SetupStepId {
-  return SETUP_STEPS.some((step) => step.id === value);
+  return typeof value === "string" && STEP_BY_ID.has(value as SetupStepId);
 }
 
+/**
+ * Setup is open once the stage is setup or live. The stage moves to setup
+ * when Company Materials are submitted. A client already in setup stays open
+ * even if materials are later sent back.
+ */
 export function isSetupOpen(stage?: string | null) {
   return stage === "setup" || stage === "live";
 }
@@ -345,15 +373,8 @@ function rowFor(rows: SetupStepState[] | null | undefined, id: SetupStepId) {
   return rows?.find((row) => row.step === id) ?? null;
 }
 
-function later(a: string | null | undefined, b: string | null | undefined) {
-  if (!a) return b ?? null;
-  if (!b) return a;
-  return a > b ? a : b;
-}
-
 export function getSetupItems(source: SetupSource | null | undefined): SetupItem[] {
   const rows = source?.setup_steps ?? [];
-  const open = isSetupOpen(source?.stage) || Boolean(source?.intake_completed_at);
 
   const materials = rowFor(rows, "materials");
   const deck = rowFor(rows, "deck_review");
@@ -367,30 +388,14 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
 
   const items: SetupItem[] = [];
 
-  // 1. Company materials: the client's turn as soon as Setup opens.
-  items.push({
-    ...setupStep("materials"),
-    status: !open ? "open" : materialsDone ? "done" : "your_turn",
-    detail: !open
-      ? "Opens after your intake"
-      : materialsDone
-        ? "Submitted"
-        : materials?.version
-          ? "Rupert asked for a few more things"
-          : "Upload your deck and share company details",
-    since: materialsDone
-      ? null
-      : later(materials?.turn_since, source?.intake_completed_at),
-    completedAt: materials?.completed_at ?? null,
-    visible: open,
-  });
-
-  // 2. Analysis & Feedback: Rupert analyzes the materials and sends feedback.
+  // 1. Analysis & Feedback. Company Materials is the last Onboarding step.
+  // Feedback already sent stays visible if materials are sent back.
   const deckDone = deck?.status === "published";
+  const deckReachable = materialsDone || deckDone;
   items.push({
     ...setupStep("deck_review"),
-    status: !materialsDone ? "open" : deckDone ? "done" : "waiting",
-    detail: !materialsDone
+    status: !deckReachable ? "open" : deckDone ? "done" : "waiting",
+    detail: !deckReachable
       ? "After you share your materials"
       : deckDone
         ? "Feedback ready"
@@ -656,12 +661,12 @@ export function asFeedback(value: unknown): FeedbackDraft {
 }
 
 /**
- * The part of the feedback the client sees. A drafted email replaces the
- * opening message, so the portal shows the same text the client was emailed.
+ * The part of the feedback the client sees. The message is stored as both
+ * `email.body` and `intro`; older rows may have only one of them.
  */
 export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
   return {
-    intro: draft.email.body.trim() ? draft.email.body : draft.intro,
+    intro: draft.email.body.trim() || draft.intro,
     items: draft.items.filter((item) => item.visible && (item.title || item.body)),
     attachments: draft.attachments,
     links: draft.links,
@@ -684,7 +689,7 @@ export function feedbackChecks(
 export function feedbackProblem(draft: FeedbackDraft) {
   const published = feedbackForClient(draft);
   if (!published.intro.trim() && published.items.length === 0) {
-    return "Add an opening message or at least one recommendation the client can see.";
+    return "Add a message to the client or at least one recommendation the client can see.";
   }
   return null;
 }
@@ -694,27 +699,44 @@ export function feedbackFolder(clientId: string) {
   return `${clientId}/feedback/`;
 }
 
+function optionalText(value: unknown, max: number) {
+  const text = str(value, max).trim();
+  return text || undefined;
+}
+
 /** Older rows stored the framing as one markdown `body`: it becomes the core. */
 export function asNarrative(value: unknown): NarrativePayload {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
     string,
     unknown
   >;
+  const nextSteps = str(raw.next_steps, 2000).trim();
   return {
     core: str(raw.core ?? raw.body, 30000),
-    email_subject: str(raw.email_subject, 300),
-    email_body: str(raw.email_body, 10000),
-    linkedin_note: str(raw.linkedin_note, 2000),
-    linkedin_followup: str(raw.linkedin_followup, 5000),
+    key_messages: str(raw.key_messages, 20000),
+    approach: str(raw.approach, 20000),
+    next_steps: nextSteps || NARRATIVE_NEXT_STEPS,
     admin_note: str(raw.admin_note, NOTE_MAX).trim() || undefined,
+    email_subject: optionalText(raw.email_subject, 300),
+    email_body: optionalText(raw.email_body, 10000),
+    linkedin_note: optionalText(raw.linkedin_note, 2000),
+    linkedin_followup: optionalText(raw.linkedin_followup, 5000),
   };
 }
 
+export function narrativeHasEarlierDraft(narrative: NarrativePayload) {
+  return Boolean(
+    narrative.email_subject ||
+      narrative.email_body ||
+      narrative.linkedin_note ||
+      narrative.linkedin_followup,
+  );
+}
+
 export function narrativeProblem(narrative: NarrativePayload) {
-  if (!narrative.core.trim()) return "Write the core narrative before pushing.";
-  if (narrative.linkedin_note.length > LINKEDIN_NOTE_MAX) {
-    return `The LinkedIn connection note is ${narrative.linkedin_note.length} characters. LinkedIn allows ${LINKEDIN_NOTE_MAX}.`;
-  }
+  if (!narrative.core.trim()) return "Write the core story before pushing.";
+  if (!narrative.key_messages.trim()) return "Add the key messages before pushing.";
+  if (!narrative.approach.trim()) return "Describe how you'll approach investors before pushing.";
   return null;
 }
 
@@ -817,7 +839,14 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
     });
   }
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
-  return adminNote ? { ...result, admin_note: adminNote } : result;
+  const linkedinNote = str(raw.linkedin_note, 2000).trim();
+  const linkedinFollowup = str(raw.linkedin_followup, 10000).trim();
+  return {
+    ...result,
+    ...(adminNote ? { admin_note: adminNote } : {}),
+    ...(linkedinNote ? { linkedin_note: linkedinNote } : {}),
+    ...(linkedinFollowup ? { linkedin_followup: linkedinFollowup } : {}),
+  };
 }
 
 /** Problems that stop the email copy from being pushed. */
@@ -833,6 +862,12 @@ export function emailCopyProblems(copy: EmailCopyPayload) {
         problems.push(`${label}: ${EMAIL_SEQUENCE_LABELS[index]} has no body.`);
       }
     });
+  }
+  const linkedin = copy.linkedin_note?.trim() ?? "";
+  if (linkedin.length > LINKEDIN_NOTE_MAX) {
+    problems.push(
+      `The LinkedIn connection note is ${linkedin.length} characters. Keep it to ${LINKEDIN_NOTE_MAX}.`,
+    );
   }
   return problems;
 }

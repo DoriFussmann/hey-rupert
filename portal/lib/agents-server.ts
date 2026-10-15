@@ -28,18 +28,25 @@ import {
   FEEDBACK_AREAS,
   FEEDBACK_PRIORITIES,
   MATERIALS_BUCKET,
+  asEmailCopy,
   asFeedback,
   asFeedbackItems,
+  asInvestorList,
   asMaterials,
   asNarrative,
   feedbackForClient,
   fileExtension,
   formatBytes,
+  FIT_TIERS,
+  LINKEDIN_NOTE_MAX,
+  type EmailCopyPayload,
   type FeedbackDraft,
   type FeedbackEmail,
   type FeedbackItem,
   type MaterialsAnalysis,
   type NarrativePayload,
+  type SetupHistoryEntry,
+  type SetupResponse,
 } from "@/lib/setup";
 import {
   AGENTS_MIGRATION_MISSING,
@@ -604,17 +611,21 @@ export async function draftFeedbackEmail(
 
 const NARRATIVE_TOOL: ClaudeTool = {
   name: "submit_narrative",
-  description: "Deliver the outreach narrative and messages.",
+  description: "Deliver the outreach narrative: story, key messages and approach.",
   input_schema: {
     type: "object",
     properties: {
-      core: { type: "string", description: "Core narrative (markdown)." },
-      email_subject: { type: "string" },
-      email_body: { type: "string" },
-      linkedin_note: { type: "string", description: "Under 300 characters." },
-      linkedin_followup: { type: "string" },
+      core: { type: "string", description: "Core story (markdown)." },
+      key_messages: {
+        type: "string",
+        description: "3 to 6 key messages as a markdown list.",
+      },
+      approach: {
+        type: "string",
+        description: "How Rupert will approach investors (markdown).",
+      },
     },
-    required: ["core", "email_subject", "email_body", "linkedin_note", "linkedin_followup"],
+    required: ["core", "key_messages", "approach"],
   },
 };
 
@@ -691,9 +702,214 @@ export async function buildNarrative(
   });
   if (!result.ok) return { ok: false, error: result.reason };
 
-  const narrative = asNarrative(result.input);
-  if (!narrative.core.trim()) {
-    return { ok: false, error: "Claude returned an empty narrative." };
+  const working = asNarrative(framingRow?.draft ?? framingRow?.published);
+  const narrative = asNarrative({
+    ...result.input,
+    // Keep copy from an earlier narrative so a rebuild does not drop it.
+    email_subject: working.email_subject,
+    email_body: working.email_body,
+    linkedin_note: working.linkedin_note,
+    linkedin_followup: working.linkedin_followup,
+    next_steps: working.next_steps,
+  });
+  if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
+    return { ok: false, error: "Claude returned an incomplete narrative. Nothing was saved." };
   }
   return { ok: true, value: narrative };
+}
+
+// ---------------------------------------------------------------------------
+// Email copy
+
+const tierEmailSchema = {
+  type: "array",
+  minItems: 3,
+  maxItems: 3,
+  description: "First email, follow-up 1, follow-up 2. A blank follow-up subject means the same thread.",
+  items: {
+    type: "object",
+    properties: {
+      subject: { type: "string", description: "Plain subject. Blank on a follow-up means the same thread." },
+      body: { type: "string", description: "Email body. Sign off with the founder's first name." },
+    },
+    required: ["subject", "body"],
+  },
+};
+
+const EMAIL_COPY_TOOL: ClaudeTool = {
+  name: "submit_email_copy",
+  description: "Deliver the tier emails and the LinkedIn messages.",
+  input_schema: {
+    type: "object",
+    properties: {
+      tiers: {
+        type: "object",
+        properties: {
+          "1": tierEmailSchema,
+          "2": tierEmailSchema,
+          "3": tierEmailSchema,
+        },
+        required: ["1", "2", "3"],
+      },
+      linkedin_note: {
+        type: "string",
+        description: "LinkedIn connection note, 300 characters or fewer.",
+      },
+      linkedin_followup: {
+        type: "string",
+        description: "LinkedIn message after they connect.",
+      },
+    },
+    required: ["tiers", "linkedin_note", "linkedin_followup"],
+  },
+};
+
+function responseNotes(response: SetupResponse | null) {
+  if (!response) return "";
+  const notes = [
+    response.note,
+    ...Object.entries(response.item_notes).map(([key, value]) => `${key}: ${value}`),
+  ].filter((value) => value.trim());
+  return notes.join("\n");
+}
+
+function earlierNotes(history: SetupHistoryEntry[], current: SetupResponse | null) {
+  const rounds = history
+    .map((entry) => {
+      const text = responseNotes(entry.response);
+      return text ? `Version ${entry.version}:\n${text}` : "";
+    })
+    .filter(Boolean);
+  const latest = responseNotes(current);
+  if (latest) rounds.push(`Latest request:\n${latest}`);
+  return rounds.join("\n\n");
+}
+
+/** Tier counts and fund types only. Never fund names, contact names, or emails. */
+function listBrief(list: ReturnType<typeof asInvestorList>) {
+  if (list.summary && list.summary.tiers.length > 0) {
+    return list.summary.tiers
+      .map((tier) => {
+        const types =
+          tier.by_type.map((entry) => `${entry.label} (${entry.funds} funds)`).join(", ") ||
+          "types not grouped";
+        return `Tier ${tier.tier}: ${tier.funds} funds. ${types}.`;
+      })
+      .join("\n");
+  }
+  return FIT_TIERS.map(({ tier, label }) => {
+    const funds = list.rows.filter((row) => row.tier === tier).length;
+    return `${label}: ${funds} funds.`;
+  }).join("\n");
+}
+
+function intakeSummaryText(interview: { admin_brief?: { summary?: string } | null; summary?: { title: string; answer: string }[] | null } | null) {
+  if (!interview) return "No intake summary on record.";
+  const brief = interview.admin_brief?.summary?.trim();
+  if (brief) return brief;
+  if (interview.summary && interview.summary.length > 0) {
+    return interview.summary.map((item) => `${item.title}: ${item.answer}`).join("\n");
+  }
+  return "No intake summary on record.";
+}
+
+export async function draftEmailCopy(
+  supabase: ServiceClient,
+  clientId: string,
+): Promise<AgentResult<EmailCopyPayload>> {
+  const [loaded, interviewResult, prompts, grouped] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadInterview(supabase, clientId),
+    loadAgentPrompts(supabase),
+    loadSetupSteps(supabase, [clientId]),
+  ]);
+  if (!loaded.ok) return loaded;
+
+  const rows = grouped.get(clientId) ?? [];
+  const framingRow = rows.find((item) => item.step === "framing");
+  const feedbackRow = rows.find((item) => item.step === "deck_review");
+  const listRow = rows.find((item) => item.step === "investor_list");
+  const emailRow = rows.find((item) => item.step === "email_copy");
+
+  if (framingRow?.status !== "confirmed") {
+    return { ok: false, error: "Confirm the outreach narrative first." };
+  }
+  const narrative = asNarrative(framingRow.published);
+  if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
+    return {
+      ok: false,
+      error: "The confirmed narrative needs a core story, key messages and an approach. Rebuild it and confirm it again.",
+    };
+  }
+
+  if (listRow?.status !== "confirmed") {
+    return { ok: false, error: "Confirm the investor list first." };
+  }
+  const list = asInvestorList(listRow.published);
+
+  const feedback = asFeedback(feedbackRow?.draft ?? feedbackRow?.published);
+  const firstName =
+    text(loaded.client.first_name) || text(loaded.client.founder_name).split(/\s+/)[0] || "the founder";
+  const rebuilding = emailRow?.status === "changes_requested";
+  const clientAsk = rebuilding
+    ? earlierNotes(emailRow?.history ?? [], emailRow?.response ?? null)
+    : "";
+
+  const context = [
+    `Founder first name (sign the emails with this): ${firstName}`,
+    `Company: ${text(loaded.client.company_name)}`,
+    "## Outreach narrative",
+    `### Core story\n${narrative.core}`,
+    `### Key messages\n${narrative.key_messages}`,
+    `### Approach\n${narrative.approach}`,
+    "## Investor list (types and counts only — do not name people)",
+    listBrief(list),
+    "## Intake summary",
+    intakeSummaryText(interviewResult.ok ? interviewResult.interview : null),
+    "## Materials analysis",
+    feedback.analysis
+      ? `${feedback.analysis.summary}\n\n${feedback.analysis.framing}`
+      : "No analysis yet.",
+    clientAsk ? `## What the founder asked to change\n${clientAsk}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const result = await callClaudeAgent<Record<string, unknown>>({
+    system: prompts.email_copy,
+    content: [
+      {
+        type: "text",
+        text: `${context}\n\nDeliver the copy by calling the ${EMAIL_COPY_TOOL.name} tool.`,
+      },
+    ],
+    tool: EMAIL_COPY_TOOL,
+    maxTokens: 8000,
+  });
+  if (!result.ok) return { ok: false, error: result.reason };
+
+  const working = asEmailCopy(emailRow?.draft ?? emailRow?.published);
+  const copy = asEmailCopy({
+    ...result.input,
+    admin_note: working.admin_note,
+  });
+  const missingTier = FIT_TIERS.find(({ tier }) =>
+    copy.tiers[`${tier}`].some((email) => !email.body.trim()),
+  );
+  if (missingTier) {
+    return {
+      ok: false,
+      error: `Claude returned an incomplete ${missingTier.label} email. Nothing was saved.`,
+    };
+  }
+  if (!copy.linkedin_note?.trim() || !copy.linkedin_followup?.trim()) {
+    return { ok: false, error: "Claude left out a LinkedIn message. Nothing was saved." };
+  }
+  if (copy.linkedin_note.trim().length > LINKEDIN_NOTE_MAX) {
+    return {
+      ok: false,
+      error: `Claude's LinkedIn connection note is over ${LINKEDIN_NOTE_MAX} characters. Nothing was saved.`,
+    };
+  }
+  return { ok: true, value: copy };
 }

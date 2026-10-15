@@ -300,7 +300,6 @@ export async function completeIntakeWithTestData(
     .eq("id", clientId)
     .is("intake_completed_at", null);
   if (clientError) return { ok: false, error: clientError.message };
-  await advanceStage(supabase, clientId, ["nda", "intake"], "setup");
 
   const list = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value.join(", ") : text(value);
@@ -446,6 +445,7 @@ export async function submitMaterialsWithTestData(
   if (error) return { ok: false, error: setupTableError(error.message, error.code) };
   if (!data || data.length === 0) return { ok: true };
 
+  await advanceStage(supabase, clientId, ["nda", "intake"], "setup");
   await notifyAdmin(supabase, clientId, "materials_submitted", { email: false });
   return { ok: true };
 }

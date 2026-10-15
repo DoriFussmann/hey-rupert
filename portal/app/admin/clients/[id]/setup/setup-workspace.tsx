@@ -1,9 +1,7 @@
 import { EmailCopyPanel } from "@/app/admin/clients/[id]/setup/email-copy-panel";
 import { FeedbackWorkspace } from "@/app/admin/clients/[id]/setup/feedback-workspace";
 import { InvestorListPanel } from "@/app/admin/clients/[id]/setup/investor-list-panel";
-import { MaterialsPanel } from "@/app/admin/clients/[id]/setup/materials-panel";
 import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor";
-import type { MaterialField } from "@/lib/material-fields";
 import {
   SETUP_TOTAL,
   asFeedback,
@@ -21,15 +19,11 @@ import {
 export function SetupWorkspace({
   clientId,
   source,
-  materialFields,
-  materialLinks,
   feedbackLinks,
   claudeReady,
 }: {
   clientId: string;
   source: SetupSource;
-  materialFields: MaterialField[];
-  materialLinks: Record<string, string>;
   /** Signed links for files attached to the feedback. */
   feedbackLinks: Record<string, string>;
   claudeReady: boolean;
@@ -39,7 +33,6 @@ export function SetupWorkspace({
   const item = (id: SetupStepId) => items.find((entry) => entry.id === id)!;
   const row = (id: SetupStepId) => rows.find((entry) => entry.step === id) ?? null;
   const done = items.filter((entry) => entry.status === "done").length;
-  const framing = row("framing");
   const materialsSubmitted = row("materials")?.status === "submitted";
   const hasAnalysis = Boolean(asFeedback(row("deck_review")?.draft).analysis);
   const counts = tierCounts(asInvestorList(row("investor_list")?.published).rows);
@@ -49,10 +42,10 @@ export function SetupWorkspace({
       <div className="rounded-card border border-border bg-surface px-lg py-lg">
         <h2 className="text-h4">Setup</h2>
         <p className="mt-xs text-body-sm text-muted">
-          {done} of {SETUP_TOTAL} complete. Materials (client) → Analyze and
-          send feedback → outreach narrative, client confirms → investor list,
-          client confirms → email copy, client confirms. Every push emails the
-          client; every client answer emails you.
+          {done} of {SETUP_TOTAL} complete. Analyze and send feedback → outreach
+          narrative, client confirms → investor list, client confirms → email
+          copy, client confirms. Every push emails the client; every client
+          answer emails you.
         </p>
         <ol className="mt-md flex flex-wrap gap-sm text-body-sm">
           {items.map((entry, index) => (
@@ -81,14 +74,6 @@ export function SetupWorkspace({
         </ol>
       </div>
 
-      <MaterialsPanel
-        clientId={clientId}
-        item={item("materials")}
-        row={row("materials")}
-        fields={materialFields}
-        links={materialLinks}
-        canReopen={!framing || framing.version === 0}
-      />
       <FeedbackWorkspace
         clientId={clientId}
         item={item("deck_review")}
@@ -114,6 +99,7 @@ export function SetupWorkspace({
         item={item("email_copy")}
         row={row("email_copy")}
         tierCounts={counts}
+        claudeReady={claudeReady}
       />
     </section>
   );

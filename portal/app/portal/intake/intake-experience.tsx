@@ -175,12 +175,15 @@ export function IntakeExperience({
   completedAt,
   firstName,
   readOnly,
+  materialsSubmitted,
 }: {
   initialInterview: IntakeInterview | null;
   topics: IntakeTopic[];
   completedAt: string | null;
   firstName: string;
   readOnly: boolean;
+  /** Company Materials already submitted, so Setup has started. */
+  materialsSubmitted: boolean;
 }) {
   const router = useRouter();
   const [interview, setInterview] = useState<IntakeInterview | null>(
@@ -382,7 +385,9 @@ export function IntakeExperience({
           <p className="flex flex-wrap items-baseline justify-between gap-x-sm text-body-sm text-heading">
             <span>{topic.title}</span>
             <span className="text-label uppercase tracking-label text-muted">
-              {COVERAGE_LABEL[coverage]}
+              {!topic.required && coverage === "missing"
+                ? "Optional"
+                : COVERAGE_LABEL[coverage]}
             </span>
           </p>
           {note ? (
@@ -410,7 +415,9 @@ export function IntakeExperience({
           </p>
           <p className="mt-xs text-body-sm text-muted">
             {completed
-              ? "Thank you. Rupert is on it."
+              ? materialsSubmitted
+                ? "Thank you. Rupert is on it."
+                : "Last step: share your deck and materials."
               : essentialsDone && extras.total > 0
                 ? `Extras: ${extras.covered} of ${extras.total} covered`
                 : "Progress on the essentials."}
@@ -484,27 +491,31 @@ export function IntakeExperience({
               </h2>
               <p className="mt-xs text-body-sm text-muted">
                 Intake confirmed
-                {completedAt ? ` on ${formatDate(completedAt)}` : ""}. Rupert
-                has everything he needs to start Setup.
+                {completedAt ? ` on ${formatDate(completedAt)}` : ""}.
+                {materialsSubmitted
+                  ? " Rupert is on it."
+                  : " One step left in onboarding."}
               </p>
             </div>
           </div>
-          <div className="mt-lg flex flex-wrap items-center justify-between gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
-            <div>
-              <p className="text-label uppercase tracking-label text-primary">
-                Next: your turn
-              </p>
-              <p className="mt-xs text-body-sm text-heading">
-                Share your pitch deck and company materials.
-              </p>
+          {materialsSubmitted ? null : (
+            <div className="mt-lg flex flex-wrap items-center justify-between gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
+              <div>
+                <p className="text-label uppercase tracking-label text-primary">
+                  Your turn
+                </p>
+                <p className="mt-xs text-body-sm text-heading">
+                  Last step: share your deck and materials
+                </p>
+              </div>
+              <Link
+                href="/portal/materials"
+                className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
+              >
+                Share materials
+              </Link>
             </div>
-            <Link
-              href="/portal/setup/materials"
-              className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
-            >
-              Go to Setup
-            </Link>
-          </div>
+          )}
           {interview?.summary ? (
             <dl className="mt-lg divide-y divide-border border-t border-border">
               {interview.summary.map((item) => (
