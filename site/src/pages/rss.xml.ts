@@ -1,9 +1,7 @@
 import type { APIContext } from "astro";
 import { getCollection } from "astro:content";
 import { generateRss } from "seo-core";
-import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../config/site";
-
-const ARTICLES_BASE = "articles";
+import { ARTICLES_BASE, SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "../config/site";
 
 export async function GET(context: APIContext) {
   const articles = (await getCollection("articles", ({ data }) => data.draft !== true)).sort(

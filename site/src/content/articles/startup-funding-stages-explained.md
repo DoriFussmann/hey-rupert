@@ -74,7 +74,7 @@ The first thing to understand is what each stage is *for*. Pre-seed funds a thes
 
 The audit starts with a single, uncomfortable question: what is still unproven about your business? If the answer is "whether customers will pay for this at all," you are pre-seed. If the answer is "whether we can acquire customers repeatedly and efficiently," you are seed. If the answer is "whether we can turn a working GTM motion into a scalable one," you are approaching Series A territory. What you have already proven tells investors where to price your risk. What remains unproven tells them which investor type should be sitting across the table.
 
-According to Carta's 2025 pre-seed review, U.S. startups raised $10.4 billion across 50,316 SAFEs and convertible notes in 2025, a 13% decline in instrument count despite flat total dollars — fewer deals are getting done, but the deals that close are larger, meaning the bar at each stage has risen.
+According to [Carta's 2025 pre-seed review](https://carta.com/data/state-of-pre-seed-2025/), U.S. startups raised $10.4 billion across 50,316 SAFEs and convertible notes in 2025, a 13% decline in instrument count despite flat total dollars — fewer deals are getting done, but the deals that close are larger, meaning the bar at each stage has risen.
 
 Pre-seed investors now frequently require early revenue, seed investors want demonstrable product-market fit, and the minimum ARR for a competitive Series A pitch in 2026 is $1.5M, with top-performing companies showing $3M or more.
 

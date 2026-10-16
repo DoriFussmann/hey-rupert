@@ -1,16 +1,59 @@
 ---
-import ArticleLayout from "../../layouts/ArticleLayout.astro";
-import { getPublishedArticles } from "../../lib/articles";
+import { getCollection, getEntry, render, type CollectionEntry } from "astro:content";
+import ArticleLayout from "seo-core/layouts/ArticleLayout.astro";
+import ArticleHeader from "../../components/ArticleHeader.astro";
+import AuthorBio from "../../components/AuthorBio.astro";
+import FaqBlock from "../../components/FaqBlock.astro";
+import RelatedLinks from "../../components/RelatedLinks.astro";
+import Sources from "../../components/Sources.astro";
+import TableOfContents from "../../components/TableOfContents.astro";
+import ArticleShell from "../../layouts/ArticleShell.astro";
+import {
+  ARTICLES_BASE,
+  AUTHOR_PATH,
+  LOGO_PATH,
+  SAME_AS,
+  SITE_NAME,
+  SITE_URL,
+} from "../../config/site";
 
 export async function getStaticPaths() {
-  const articles = await getPublishedArticles();
+  const articles = await getCollection("articles", ({ data }) => data.draft !== true);
   return articles.map((article) => ({
-    params: { slug: article.data.slug },
+    params: { slug: article.id },
     props: { article },
   }));
 }
 
-const { article } = Astro.props;
+const { article } = Astro.props as { article: CollectionEntry<"articles"> };
+const { data } = article;
+const author = await getEntry("team", data.author);
+if (!author) {
+  throw new Error(`Article "${article.id}" references missing team member "${data.author}"`);
+}
+const { headings } = await render(article);
 ---
 
-<ArticleLayout article={article} />
+<ArticleLayout
+  article={article}
+  author={author}
+  Layout={ArticleShell}
+  siteUrl={SITE_URL}
+  siteName={SITE_NAME}
+  articlesBase={ARTICLES_BASE}
+  logo={LOGO_PATH}
+  sameAs={SAME_AS}
+  authorPath={AUTHOR_PATH}
+  ogImageSize={{ width: 1200, height: 630 }}
+  bodyClass="article-body"
+  defaultStyles={false}
+>
+  <ArticleHeader slot="header" article={article} />
+  <TableOfContents slot="toc" headings={headings} />
+  <Fragment slot="footer">
+    <AuthorBio author={author} />
+    {data.faqs.length > 0 && <FaqBlock faqs={data.faqs} />}
+    {data.internalLinks.length > 0 && <RelatedLinks links={data.internalLinks} />}
+    {data.externalLinks.length > 0 && <Sources links={data.externalLinks} />}
+  </Fragment>
+</ArticleLayout>

@@ -68,7 +68,7 @@ Seed rounds are still sized against an 18 to 24 month assumption, but the median
 There is also a sobering graduation rate behind the headline. 
 Round sizes and valuations are the highest on record according to Carta, but only 15–20% of seed-funded startups raise an institutional Series A within 24 months — less than half the graduation rate seen for cohorts through 2020.
 
-39% of startups now take three or more years to go from seed to Series A, according to Carta's 2025 data.
+39% of startups now take three or more years to go from seed to Series A, [according to Carta's 2025 data](https://www.saastr.com/your-seed-round-now-needs-to-last-3-years-what-3365-startups-tell-us-about-the-new-series-a-timeline).
  These figures are not reasons to despair; they are reasons to plan precisely.
 
 ## The Two Timelines You Are Conflating
@@ -154,7 +154,7 @@ When you are 4–6 months out from launching your formal Series A process, the i
 The seed-to-Series A landscape entering late September 2026 is showing modest but noteworthy movement. 
 Carta's median gap from seed close to Series A close was 1.9 years in Q4 2025, down from 2.1 years for rounds raised in 2024
  — a small compression that suggests the cohort of companies reaching Series A readiness is improving in quality, even as the overall graduation rate remains low. 
-Round sizes and valuations are the highest on record according to Carta, with a $4.1M median seed round and $24M median post-money, yet only 15–20% of seed-funded startups are converting to Series A within 24 months
+Round sizes and valuations are the highest on record according to Carta, with [a $4.1M median seed round](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) and $24M median post-money, yet only 15–20% of seed-funded startups are converting to Series A within 24 months
  — less than half the rate of earlier cohorts. The bridge round market continues to reflect the structural mismatch between seed sizing and Series A timelines: 
 Carta data shows that 16.6% of all startup cash raised on Carta in Q2 2025 came through bridge rounds, up from 11.8% one year earlier, with bridge financing representing 22.5% of all cash raised at the Series A stage specifically
  — a sign that many companies are using interim capital to extend their runway while they build toward the metrics threshold. Recent deal activity in September 2026 continues to reflect a bifurcated market where AI-category companies command faster closes and premium valuations, while companies outside that category face a longer and more deliberate path to institutional conviction.

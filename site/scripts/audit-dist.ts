@@ -1,9 +1,8 @@
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { runAudit } from "seo-core";
-import { SITE_NAME, SITE_URL } from "../src/config/site.ts";
+import { ARTICLES_BASE, SITE_NAME, SITE_URL } from "../src/config/site.ts";
 
-const ARTICLES_BASE = "articles";
 const siteRoot = dirname(fileURLToPath(import.meta.url)).replace(/scripts$/, "");
 
 runAudit({

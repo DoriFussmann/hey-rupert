@@ -1,0 +1,20 @@
+---
+/**
+ * Page frame for seo-core's ArticleLayout: Rupert's BaseLayout plus the
+ * article <main> wrapper, back-to-top button and closing CTA.
+ * Every prop is forwarded to BaseLayout unchanged.
+ */
+import BackToTop from "../components/BackToTop.astro";
+import CtaBanner from "../components/CtaBanner.astro";
+import BaseLayout from "./BaseLayout.astro";
+
+type Props = Parameters<typeof BaseLayout>[0];
+---
+
+<BaseLayout {...Astro.props}>
+  <main id="main-content" class="site-wrap flex-1 py-xl lg:py-2xl">
+    <slot />
+  </main>
+  <BackToTop />
+  <CtaBanner />
+</BaseLayout>

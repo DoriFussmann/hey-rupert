@@ -124,7 +124,7 @@ Median seed round size reached approximately $4 million in Q4 2025, up from $2.5
 
 In Q4 2025, the median seed post-money valuation reached $24 million, up from $18 million in Q4 2024.
  The upward pressure on valuations does not mean the market has loosened; it means the deals that do close are landing at higher prices. 
-According to Carta's 2025 pre-seed review, U.S. startups raised $10.4 billion across 50,316 SAFEs and convertible notes in 2025 — a 13% decline in instrument count despite flat total dollars. Fewer deals are getting done, but the deals that close are larger. For founders, this means the bar at each stage has risen.
+According to [Carta's 2025 pre-seed review](https://carta.com/data/state-of-pre-seed-2025/), U.S. startups raised $10.4 billion across 50,316 SAFEs and convertible notes in 2025 — a 13% decline in instrument count despite flat total dollars. Fewer deals are getting done, but the deals that close are larger. For founders, this means the bar at each stage has risen.
 
 ### What You Must Prove
 

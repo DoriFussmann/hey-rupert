@@ -4,55 +4,54 @@ import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-500.css";
 import "@fontsource/great-vibes";
 import "../styles/global.css";
-import {
-  DEFAULT_OG_IMAGE,
-  SAME_AS,
-  SITE_NAME,
-} from "../config/site";
-import {
-  ANALYTICS_ID,
-  SEARCH_CONSOLE_VERIFICATION,
-} from "../config/publicEnv";
-import { absoluteFileUrl, absoluteUrl, canonicalFrom } from "../lib/url";
+import { abs, orgNode, websiteNode } from "seo-core";
+import { DEFAULT_OG_IMAGE, SITE_IDENTITY, SITE_NAME, SITE_URL } from "../config/site";
+import { ANALYTICS_ID, SEARCH_CONSOLE_VERIFICATION } from "../config/publicEnv";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
+
+type JsonLdNode = Record<string, unknown>;
 
 interface Props {
   title: string;
   description: string;
   canonicalPath?: string;
-  canonical?: string;
   robots?: string;
+  /** BCP 47 ("en-US") or POSIX ("en_US") form; both are accepted. */
   locale?: string;
-  ogTitle?: string;
-  ogDescription?: string;
   ogImage?: string;
   twitterCard?: string;
   ogType?: "website" | "article";
-  jsonLd?: Record<string, unknown>[];
-  omitCanonical?: boolean;
+  /**
+   * Page JSON-LD: either extra nodes (merged with Organization and WebSite into
+   * one @graph) or a complete document with its own @graph (seo-core ArticleLayout).
+   */
+  jsonLd?: JsonLdNode[] | JsonLdNode;
+  /** Markdown mirror of the page (articles). */
+  alternateMarkdown?: string;
+  articleMeta?: {
+    publishedTime: string;
+    modifiedTime: string;
+    author: string;
+    tags: string[];
+    section?: string;
+  };
   preloadImage?: string;
-  hideHeader?: boolean;
-  hideFooter?: boolean;
 }
 
 const {
   title,
   description,
   canonicalPath = "/",
-  canonical,
   robots = "index, follow",
   locale = "en-US",
-  ogTitle,
-  ogDescription,
   ogImage,
   twitterCard = "summary_large_image",
   ogType = "website",
   jsonLd = [],
-  omitCanonical = false,
+  alternateMarkdown,
+  articleMeta,
   preloadImage,
-  hideHeader = false,
-  hideFooter = false,
 } = Astro.props;
 
 if (!title?.trim() || !description?.trim()) {
@@ -61,38 +60,25 @@ if (!title?.trim() || !description?.trim()) {
   );
 }
 
-const resolvedOgTitle = ogTitle || title;
-const resolvedOgDescription = ogDescription || description;
-const canonicalUrl = omitCanonical
-  ? canonicalFrom(undefined, "/404/")
-  : canonicalFrom(canonical, canonicalPath);
-const orgId = `${absoluteUrl("/")}#organization`;
-const websiteId = `${absoluteUrl("/")}#website`;
-const organization: Record<string, unknown> = {
-  "@context": "https://schema.org",
-  "@type": "Organization",
-  "@id": orgId,
-  name: SITE_NAME,
-  url: absoluteUrl("/"),
-  logo: absoluteFileUrl("/favicon.svg"),
-};
-if (SAME_AS.length > 0) {
-  organization.sameAs = SAME_AS;
+const htmlLang = locale.replace("_", "-");
+const ogLocale = locale.replace("-", "_");
+const canonicalUrl = abs(canonicalPath, SITE_URL);
+const ogImageUrl = abs(ogImage || DEFAULT_OG_IMAGE, SITE_URL);
+
+function withoutContext({ "@context": _context, ...node }: JsonLdNode): JsonLdNode {
+  return node;
 }
-const website: Record<string, unknown> = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  "@id": websiteId,
-  name: SITE_NAME,
-  url: absoluteUrl("/"),
-  publisher: { "@id": orgId },
-};
-const allJsonLd = [organization, website, ...jsonLd];
-const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
+
+const jsonLdDocument = Array.isArray(jsonLd)
+  ? {
+      "@context": "https://schema.org",
+      "@graph": [orgNode(SITE_IDENTITY), websiteNode(SITE_IDENTITY), ...jsonLd.map(withoutContext)],
+    }
+  : jsonLd;
 ---
 
 <!doctype html>
-<html lang={locale}>
+<html lang={htmlLang}>
   <head>
     {
       ANALYTICS_ID && (
@@ -115,7 +101,11 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="robots" content={robots} />
-    {canonicalUrl && <link rel="canonical" href={canonicalUrl} />}
+    <link rel="canonical" href={canonicalUrl} />
+    {alternateMarkdown && (
+      <link rel="alternate" type="text/markdown" href={abs(alternateMarkdown, SITE_URL)} />
+    )}
+    <link rel="alternate" type="application/rss+xml" title={SITE_NAME} href={abs("/rss.xml", SITE_URL)} />
     {
       SEARCH_CONSOLE_VERIFICATION && (
         <meta
@@ -129,28 +119,33 @@ const ogImageUrl = absoluteFileUrl(ogImage || DEFAULT_OG_IMAGE);
     )}
     <meta property="og:site_name" content={SITE_NAME} />
     <meta property="og:type" content={ogType} />
-    <meta property="og:title" content={resolvedOgTitle} />
-    <meta property="og:description" content={resolvedOgDescription} />
-    {canonicalUrl && <meta property="og:url" content={canonicalUrl} />}
-    <meta property="og:locale" content={locale.replace("-", "_")} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:locale" content={ogLocale} />
     <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    {articleMeta && (
+      <>
+        <meta property="article:published_time" content={articleMeta.publishedTime} />
+        <meta property="article:modified_time" content={articleMeta.modifiedTime} />
+        <meta property="article:author" content={articleMeta.author} />
+        {articleMeta.section && <meta property="article:section" content={articleMeta.section} />}
+        {articleMeta.tags.map((tag) => <meta property="article:tag" content={tag} />)}
+      </>
+    )}
     <meta name="twitter:card" content={twitterCard} />
-    <meta name="twitter:title" content={resolvedOgTitle} />
-    <meta name="twitter:description" content={resolvedOgDescription} />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
-    {
-      allJsonLd.map((node) => (
-        <script type="application/ld+json" set:html={JSON.stringify(node)} />
-      ))
-    }
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLdDocument)} />
   </head>
   <body class="bg-background font-sans text-foreground">
     <a class="skip-link" href="#main-content">Skip to content</a>
-    {!hideHeader && <Header />}
+    <Header />
     <slot />
-    {!hideFooter && <Footer />}
+    <Footer />
     <script>
       const reduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",

@@ -5,7 +5,8 @@ import CtaBanner from "../components/CtaBanner.astro";
 import CaseStack from "../components/CaseStack.astro";
 import FaqBlock from "../components/FaqBlock.astro";
 import LogoMarquee from "../components/LogoMarquee.astro";
-import { DORI_LINKEDIN } from "../config/site";
+import { orgId } from "seo-core";
+import { DORI_LINKEDIN, SITE_URL } from "../config/site";
 import { absoluteUrl, sitePath } from "../lib/url";
 import type { ImageMetadata } from "astro";
 import heroPhoto from "../assets/hero/hero-carousel-1.png";
@@ -151,13 +152,12 @@ const heroOptimized = await getImage({
   width: 1280,
 });
 
-const orgId = `${absoluteUrl("/")}#organization`;
 const jsonLd: Record<string, unknown>[] = [
   {
     "@context": "https://schema.org",
     "@type": "Service",
     name: "Expert-Managed Investor Outreach",
-    provider: { "@id": orgId },
+    provider: { "@id": orgId(SITE_URL) },
     serviceType: "Investor outreach",
     description,
     url: absoluteUrl("/"),
@@ -189,22 +189,18 @@ const jsonLd: Record<string, unknown>[] = [
     <section class="site-wrap pb-lg pt-xl lg:pb-xl lg:pt-2xl">
       <div class="grid gap-xl md:grid-cols-12 md:items-center md:gap-lg">
         <div class="hero-reveal md:col-span-6">
-          <h1 class="hero-headline">
-            <span aria-hidden="true">
-              Investor Matchmaking.<br />
-              Without the
-              <span class="hero-typewriter" data-typewriter>
-                <span class="hero-typewriter__sizer">AI Hallucinations</span>
-                <span class="hero-typewriter__live">
-                  <span data-typewriter-text>AI Slop</span><span
-                    class="hero-typewriter__cursor"></span>
-                </span>
+          <h1 class="visually-hidden">Investor Matchmaking. Without the AI Slop</h1>
+          <p class="hero-headline" aria-hidden="true">
+            Investor Matchmaking.<br />
+            Without the
+            <span class="hero-typewriter" data-typewriter>
+              <span class="hero-typewriter__sizer">AI Hallucinations</span>
+              <span class="hero-typewriter__live">
+                <span data-typewriter-text>AI Slop</span><span
+                  class="hero-typewriter__cursor"></span>
               </span>
             </span>
-            <span class="visually-hidden">
-              Investor Matchmaking. Without the AI Slop
-            </span>
-          </h1>
+          </p>
           <p class="type-body mt-lg max-w-prose">
             Rupert builds a tailor-made investor universe around your company
             and your raise — researched and selected with human judgment to find

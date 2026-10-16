@@ -88,7 +88,7 @@ Most advisors credit the retainer against the success fee.
 The tail provision alone can create fee exposure on capital that the founder raised independently, and the lack of a retainer credit means the founder pays twice if the engagement ends before closing.
  Run the math before signing: if you pay $10K per month for six months and no retainer credit applies, you have spent $60K toward a success fee that you will pay again in full at close. A retainer credit converts that $60K into a pre-payment of the success fee rather than an additional line item — materially changing your all-in cost.
 
-In Axial's 2026 survey, 71% of advisors charge an upfront fee, and most credit it against the success fee.
+In [Axial's 2026 survey](https://www.axial.net/forum/ma-fee-guide-2025-2026/), 71% of advisors charge an upfront fee, and most credit it against the success fee.
  If the proposal in front of you does not include a retainer credit, that is a negotiating point, not a fixed market norm. 
 Some terms are negotiable, including retainer amount, retainer crediting, minimum fee, success fee percentage, tier structure, expenses, tail duration, and treatment of contingent consideration — but the goal should be alignment, not simply lowering cost in a way that weakens process quality.
 
@@ -98,7 +98,7 @@ Some terms are negotiable, including retainer amount, retainer crediting, minimu
 
 A "finder's fee" is a specific and legally distinct concept from a success fee paid to a licensed advisory firm. Finders are individuals who make introductions — connecting a founder with a potential investor — without running a full advisory process, and they often propose to receive a small percentage of any capital that closes from those introductions. This arrangement is extremely common in early-stage startup circles, and it is also, under U.S. federal securities law, one of the most hazardous.
 
-Despite years of discussion and proposals, there has been no significant change in the regulation of finders. The SEC's 2020 proposal for a two-tier finder exemption was never finalized, and the traditional broker-registration analysis under Exchange Act Section 15(a) still applies — meaning a person who regularly solicits investors, participates in negotiations, recommends investments, handles funds or securities, or receives transaction-based compensation remains at significant risk of being treated as an unregistered broker.
+Despite years of discussion and proposals, there has been no significant change in the regulation of finders. [The SEC's 2020 proposal for a two-tier finder exemption](https://www.sec.gov/news/press-release/2020-248) was never finalized, and the traditional broker-registration analysis under Exchange Act Section 15(a) still applies — meaning a person who regularly solicits investors, participates in negotiations, recommends investments, handles funds or securities, or receives transaction-based compensation remains at significant risk of being treated as an unregistered broker.
 
 As of 2025, no general federal "finders exemption" exists. Outside of very narrow, fact-specific no-action letters, an unregistered finder who accepts a commission for sourcing investors is usually deemed an unregistered broker.
  The consequences are not theoretical. 
@@ -161,7 +161,7 @@ Most founders focus on the success fee percentage. The real risks are in the cla
 The capital raising fee landscape has seen meaningful activity in the past 45 days. 
 In 2026 year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, with multistage fund participation at Series A hitting record highs by both count and value — reshaping who gets funded in what analysts are describing as a barbell market.
  That competitive dynamic makes the quality of investor targeting more consequential than ever: founders who reach the right investors with a researched, personalized approach are competing in a different market from those whose advisors send bulk outreach. On the regulatory side, 
-in February 2026, the SEC Small Business Capital Formation Advisory Committee approved recommendations supporting a limited finder exemption, with an April 2026 submission urging the Commission to act — but these are recommendations only, not binding law.
+in February 2026, the SEC Small Business Capital Formation Advisory Committee approved recommendations supporting a limited finder exemption, with [an April 2026 submission](https://www.taftlaw.com/news-events/law-bulletins/sec-small-business-capital-formation-advisory-committee-recommendations-on-finder-regulations/) urging the Commission to act — but these are recommendations only, not binding law.
  Separately, recent data from the success-fee-only advisor market shows a growing founder appetite for alternatives to the traditional retainer-plus-success-fee structure, though the absence of a retainer does not eliminate tail-period and attribution risks that remain the most consequential terms in any engagement letter.
 <!-- WHERE-THINGS-STAND:END -->
 
