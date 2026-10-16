@@ -117,7 +117,7 @@ This is where many founders hit a structural problem. Running a disciplined outr
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
 The fundraising environment in October 2026 is clarifying quickly for founders preparing pitch decks. 
-Global venture funding reached a reported record of $510 billion in the first half of 2026, with AI companies taking more than 70% of startup capital in the second quarter and early-stage funding more than doubling year over year.
+Global venture funding reached [a reported record of $510 billion in the first half of 2026](https://news.crunchbase.com/?p=93740), with AI companies taking more than 70% of startup capital in the second quarter and early-stage funding more than doubling year over year.
  But concentration of capital does not mean easier access: 
 fewer startups are getting funded overall, while stronger startups are raising larger rounds, with reporting pointing to shrinking deal counts alongside growing deal values.
  For founders completing pitch deck templates right now, 

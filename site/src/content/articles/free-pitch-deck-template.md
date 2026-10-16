@@ -55,7 +55,7 @@ Founders raising at the seed and Series A stages often arrive at pitch deck temp
 
 ### The Sequoia Capital Outline
 
-The Sequoia Capital template as the firm publishes it today is 10 slides: company purpose, problem, solution, why now, market potential, competition and alternatives, business model, team, financials, and vision. It comes from Sequoia's own "Writing a Business Plan" guide, and it has outlived nearly every deck fad that arrived after it.
+The Sequoia Capital template as the firm publishes it today is 10 slides: company purpose, problem, solution, why now, market potential, competition and alternatives, business model, team, financials, and vision. It comes from [Sequoia's own "Writing a Business Plan" guide](https://www.sequoiacap.com/article/writing-a-business-plan/), and it has outlived nearly every deck fad that arrived after it.
  That longevity is not an accident. The framework reflects how experienced VCs move through a pitch mentally, and using it signals that you understand that logic.
 
 The template is not a design system. It is an argument in a fixed order: here is a broken thing, here is why it is breakable now, here is the size of the prize, here is why we are the ones who take it.
@@ -122,7 +122,7 @@ The challenge with self-managed platforms is that they require the founder to do
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
 The pitch deck template landscape in late 2026 is stable in structure but active in discussion. 
-Recent analysis published in October 2026 reflects a record $510 billion in global venture funding in the first half of the year, alongside seed valuation benchmarks of $16 million to $18.4 million pre-money
+Recent analysis published in October 2026 reflects [a record $510 billion in global venture funding in the first half of the year](https://news.crunchbase.com/?p=93740), alongside seed valuation benchmarks of $16 million to $18.4 million pre-money
  — a market context that makes the quality of a founder's narrative more important, not less, as investor selectivity rises with valuation expectations. 
 The Sequoia pitch deck template continues to be discussed and republished in its current 10-slide form as recently as September 2026, covering company purpose, problem, solution, why now, market potential, competition and alternatives, business model, team, financials, and vision — a structure that has outlasted numerous competing frameworks.
 

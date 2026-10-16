@@ -133,7 +133,7 @@ Every VC firm publishes a sector thesis. Most of those theses are broad enough t
 The mega-funds are not just larger than they were three years ago; they are allocating a much bigger share of their capital into a much narrower set of sectors. For founders, that concentration means category selection matters more than ever, because a company outside the current thesis of the largest firms will struggle to find a lead regardless of traction.
 
 The current deployment picture is worth understanding clearly. 
-Global venture capital funding reached a record $510 billion in the first half of 2026, according to Crunchbase data. That single half-year total already tops the $440 billion investors deployed across all of 2025.
+Global venture capital funding reached a record $510 billion in the first half of 2026, [according to Crunchbase data](https://news.crunchbase.com/?p=93740). That single half-year total already tops the $440 billion investors deployed across all of 2025.
  But that headline obscures a concentration dynamic that has profound implications for early-stage founders. 
 AI startups took $242 billion in the first quarter of 2026, about 80% of all global venture capital that quarter, a new record. AI is no longer one sector among many — it is the venture market.
 

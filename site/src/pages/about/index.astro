@@ -3,7 +3,8 @@ import { getImage, Image } from "astro:assets";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CaseStack from "../../components/CaseStack.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
-import { DORI_LINKEDIN, SITE_NAME } from "../../config/site";
+import { authorUrl, orgId } from "seo-core";
+import { AUTHOR_PATH, DORI_LINKEDIN, SITE_NAME, SITE_URL } from "../../config/site";
 import { absoluteFileUrl, absoluteUrl, sitePath } from "../../lib/url";
 import doriPortrait from "../../assets/founder/dori-fussmann/photo.jpg";
 import linkedinLogo from "../../assets/brand/linkedin.png";
@@ -37,8 +38,7 @@ const media = [
 ];
 
 const portrait = await getImage({ src: doriPortrait, width: 800 });
-const orgId = `${absoluteUrl("/")}#organization`;
-const personId = `${absoluteUrl("/about/")}#dori-fussmann`;
+const personId = authorUrl("dori-fussmann", SITE_URL, AUTHOR_PATH);
 const jsonLd: Record<string, unknown>[] = [
   {
     "@context": "https://schema.org",
@@ -50,7 +50,7 @@ const jsonLd: Record<string, unknown>[] = [
     url: absoluteUrl("/about/"),
     image: absoluteFileUrl(portrait.src),
     worksFor: {
-      "@id": orgId,
+      "@id": orgId(SITE_URL),
       name: SITE_NAME,
     },
     sameAs: [DORI_LINKEDIN],

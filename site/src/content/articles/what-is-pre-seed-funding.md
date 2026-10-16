@@ -61,7 +61,7 @@ Think of pre-seed as the "prove it's real" stage. You're not yet expected to sho
 ## How Big Is a Pre-Seed Round?
 
 Round sizes at this stage vary considerably depending on the sector, team, and geography, but the data gives a useful anchor. 
-In Q2 2025, the average pre-seed round size on Carta was about $217,000; by Q2 2026, that figure had climbed to about $276,000, a year-over-year increase of 27%.
+In Q2 2025, the average pre-seed round size on Carta was about $217,000; [by Q2 2026, that figure had climbed to about $276,000](https://carta.com/data/state-of-pre-seed-q2-2026/), a year-over-year increase of 27%.
  That said, the average single instrument tells only part of the story — founders often stack multiple instruments from different investors to reach their total raise target.
 
 One striking pattern is the growing polarization in round sizes. Average deal values for typical pre-seed financings are trending downward, yet the overall capital pool remains stable thanks to a handful of exceptionally large rounds. This creates a barbell-shaped distribution, with the mid-range ($1 million to $2.5 million) shrinking from 24% of rounds in Q1 2023 to just 18% in Q1 2026.
@@ -138,7 +138,7 @@ Most pre-seed rounds target 12–18 months of runway. Over-raising means unneces
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Across the U.S., startups on Carta combined to raise $3.19 billion in new pre-seed funding across 11,546 transactions in Q2 2026, continuing a recent trend of rising concentration in the pre-seed market — quarterly totals for cash raised remain similar, but that capital is now spread across a declining number of deals. The average instrument size reached $276,000 in Q2 2026, a 27% year-over-year increase and a record high over the past four-plus years.
+Across the U.S., [startups on Carta combined to raise $3.19 billion in new pre-seed funding across 11,546 transactions in Q2 2026](https://carta.com/data/pre-seed-funding-map-q2-2026/), continuing a recent trend of rising concentration in the pre-seed market — quarterly totals for cash raised remain similar, but that capital is now spread across a declining number of deals. The average instrument size reached $276,000 in Q2 2026, a 27% year-over-year increase and a record high over the past four-plus years.
 
 This trend is largely tied to investor enthusiasm for AI companies, which have captured half of all pre-seed dollars so far this year.
  The geographic picture is also shifting: California now accounts for more than half of pre-seed dollars raised nationally, while the Northeast has ceded meaningful market share to Texas and emerging Southern hubs. For founders outside the traditional coastal clusters, the data confirms that pre-seed capital is available beyond Silicon Valley — but that the competition for larger checks has intensified, making disciplined, targeted outreach more important than ever.

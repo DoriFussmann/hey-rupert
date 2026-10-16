@@ -37,19 +37,3 @@ export function absoluteFileUrl(path: string): string {
   const normalized = path.startsWith("/") ? path : `/${path}`;
   return `${origin()}${normalized}`;
 }
-
-/**
- * If `canonical` is already an absolute URL (starts with `http`), use it as-is;
- * otherwise treat it as a path and resolve it through this helper.
- */
-export function canonicalFrom(
-  canonical: string | undefined,
-  fallbackPath: string,
-): string {
-  if (canonical && canonical.trim()) {
-    return canonical.startsWith("http")
-      ? canonical
-      : absoluteUrl(canonical);
-  }
-  return absoluteUrl(fallbackPath);
-}

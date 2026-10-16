@@ -59,7 +59,7 @@ Pre-seed in 2026 is not what a 2021 fundraising playbook describes. The median c
 ## The 2026 Pre-Seed Market: What the Numbers Actually Show
 
 The data that matters most for founders raising right now comes directly from cap-table and instrument-level reporting. 
-In Q2 2026, the average pre-seed instrument size reached $276,000 — a 27% year-over-year increase from Q2 2025 and a record high over the past four-plus years.
+In Q2 2026, [the average pre-seed instrument size reached $276,000](https://carta.com/data/state-of-pre-seed-q2-2026/) — a 27% year-over-year increase from Q2 2025 and a record high over the past four-plus years.
  That figure understates actual round sizes, because 
 pre-seed rounds above $1M in H1 2026 numbered roughly 2,990, and rounds under $1M numbered about 5,060
  — meaning a substantial share of founders are assembling multiple instruments to reach their target.
@@ -158,11 +158,11 @@ Research, personalization, and pipeline management are the operational core of f
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
 The most recent data from Carta's State of Pre-Seed report, published in August 2026 and covering Q2 2026 activity, confirms that the pre-seed market has entered its most concentrated phase in at least four years. 
-U.S.-based startups on Carta raised $3.19 billion across more than 11,500 pre-seed instruments in Q2 2026, compared with $3.22 billion invested across 14,825 instruments in Q2 2025 — meaning roughly the same dollars are chasing far fewer deals.
+[U.S.-based startups on Carta raised $3.19 billion](https://carta.com/data/state-of-pre-seed-q2-2026/) across more than 11,500 pre-seed instruments in Q2 2026, compared with $3.22 billion invested across 14,825 instruments in Q2 2025 — meaning roughly the same dollars are chasing far fewer deals.
  That concentration dynamic is reshaping who gets funded: 
 investors are funneling familiar amounts of cash into noticeably fewer companies, driving average check sizes to unprecedented levels, with intense enthusiasm for artificial intelligence propelling the highest valuation caps on initial financing instruments to $100 million.
  Geographically, 
-California collected 52% of all pre-seed capital raised on Carta during Q2 2026, up from 42.9% during the previous Q2, consolidating its lead as the busiest state for pre-seed fundraising.
+[California collected 52% of all pre-seed capital raised on Carta](https://carta.com/data/pre-seed-funding-map-q2-2026/) during Q2 2026, up from 42.9% during the previous Q2, consolidating its lead as the busiest state for pre-seed fundraising.
  Meanwhile, 
 even with the increase in average check size, few pre-seed deals exceed $2.5 million, and the ones that do typically involve ten or more instruments stacked together.
  The overall market picture heading into Q4 2026 is stable in total dollar volume but increasingly selective in deal count — a dynamic that rewards founders who run a targeted, well-researched process over those relying on volume outreach.

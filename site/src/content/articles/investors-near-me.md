@@ -188,9 +188,9 @@ For the separate question of whether to anchor the round locally or go national 
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-Global startup funding reached $510 billion in the first half of 2026, up from $440 billion for all of 2025
+[Global startup funding reached $510 billion in the first half of 2026](https://news.crunchbase.com/?p=93740), up from $440 billion for all of 2025
 , but the headline figure masks a striking concentration dynamic that directly affects how local founders should think about their searches. 
-Crunchbase data shows that more than 70% of second-quarter startup capital flowed into AI-focused companies, while OpenAI and Anthropic alone accounted for 43% of H1 funding.
+[Crunchbase data shows](https://news.crunchbase.com/?p=93740) that more than 70% of second-quarter startup capital flowed into AI-focused companies, while OpenAI and Anthropic alone accounted for 43% of H1 funding.
  That mega-round concentration means deal count remains well below prior highs, and the practical capital available to most early-stage founders sits in the regional and angel layer rather than the institutional tier. 
 Angel capital in 2026 is consolidating around fewer, deeper, conviction-led bets
 , which reinforces the importance of local relationship-building over high-volume cold outreach. On the geographic side, 

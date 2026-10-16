@@ -4,19 +4,18 @@
   "private": true,
   "scripts": {
     "dev": "astro dev",
-    "build": "astro build",
+    "build": "astro build && npm run audit",
     "preview": "astro preview",
     "audit": "tsx scripts/audit-dist.ts"
   },
   "dependencies": {
     "@astrojs/rss": "^4.0.12",
-    "@astrojs/sitemap": "^3.4.2",
     "@fontsource/great-vibes": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/inter": "^5.3.0",
     "@tailwindcss/vite": "^4.3.3",
     "astro": "^5.12.9",
-    "seo-core": "github:DoriFussmann/seo-core#v0.9.0",
+    "seo-core": "github:DoriFussmann/seo-core#v1.0.0",
     "tailwindcss": "^4.3.3"
   },
   "devDependencies": {
