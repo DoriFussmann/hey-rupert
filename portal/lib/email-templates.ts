@@ -33,7 +33,7 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   portal_link: "Link to the right page in the client's portal",
   note: 'Your note, as "A note from Rupert: …" (blank when there is none)',
   message:
-    "The email text you drafted for this client (with Draft email). When there is none: a short default line",
+    "The text Draft with AI writes for this client in Draft Email & Send. Before that: a short default line",
   updated_line:
     '" This is an updated version based on your feedback." on revised versions, otherwise blank',
   signature: "Your sign-off (edited once, at the top of this page)",
@@ -138,6 +138,7 @@ export type AdminEmailType =
   | "intake_completed"
   | "materials_submitted"
   | "feedback_viewed"
+  | "deck_review_confirmed"
   | "framing_confirmed"
   | "framing_changes_requested"
   | "investor_list_confirmed"
@@ -200,9 +201,9 @@ export const FEEDBACK_TOKENS_LIST: readonly EmailToken[] = [
   "signature",
 ];
 
-/** Used for {message} when Rupert sends the feedback without drafting an email. */
+/** Fills {message} in the Feedback ready email until Rupert drafts his own. */
 export const FEEDBACK_DEFAULT_MESSAGE =
-  "Rupert has reviewed your pitch deck and materials, and his feedback is ready in your portal. Nothing to sign off: it is yours to apply as you see fit. Next, he follows up shortly with your outreach narrative, and is working on your investor matching in parallel.";
+  "Rupert has reviewed your pitch deck and materials, and his feedback is ready in your portal. Read it through, then confirm in your portal. The deck stays yours: apply what's useful. Once you've confirmed the feedback and the outreach narrative, Rupert sends your matched investor list.";
 
 export const REMINDER_TOKENS_LIST: readonly EmailToken[] = [
   "greeting",
@@ -291,8 +292,8 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     group: "client",
     title: "Feedback ready",
     trigger:
-      "When you send the Analysis & Feedback to the client. {message} is the message to the client; the subject you drafted replaces the one below.",
-    subject: "Rupert's feedback on your materials is ready",
+      "Fills Draft Email & Send under Analysis & Feedback, after you push the feedback. You review and edit it before it goes. {message} is a default line, or the text Draft with AI writes.",
+    subject: "Rupert's feedback on your materials is ready — you're up",
     body: [
       "{greeting}",
       "{message}",
@@ -306,7 +307,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   clientTemplate(
     "framing_ready",
     "Outreach narrative ready",
-    "When you publish the outreach narrative (or a revised version).",
+    "Fills Draft Email & Send under Outreach Narrative, after you push the narrative (or a revised version). You review and edit it before it goes.",
     "/portal/setup/framing",
     "Your outreach narrative is ready — you're up",
     "Rupert has written the outreach narrative for your investor campaign: the story, the key messages and how we'll approach investors.",
@@ -372,6 +373,11 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
       "The first time a client opens the feedback you sent (each version). You always get an in-app notification; this email is optional.",
     defaultEnabled: false,
   },
+  adminTemplate(
+    "deck_review_confirmed",
+    "Analysis & Feedback confirmed",
+    "confirmed the Analysis & Feedback",
+  ),
   adminTemplate(
     "framing_confirmed",
     "Outreach narrative confirmed",
@@ -473,6 +479,7 @@ export type ReminderTurnKey =
   | "nda"
   | "intake"
   | "setup:materials"
+  | "setup:deck_review"
   | "setup:framing"
   | "setup:investor_list"
   | "setup:email_copy";
@@ -498,6 +505,7 @@ export const REMINDER_STEPS: {
   { key: "nda", label: "NDA", defaults: timing(true) },
   { key: "intake", label: "Client Intake", defaults: timing(true) },
   { key: "setup:materials", label: "Company Materials (onboarding)", defaults: timing(true) },
+  { key: "setup:deck_review", label: "Analysis & Feedback", defaults: timing(true) },
   { key: "setup:framing", label: "Outreach Narrative", defaults: timing(true) },
   { key: "setup:investor_list", label: "Investor List", defaults: timing(true) },
   { key: "setup:email_copy", label: "Email Copy", defaults: timing(true) },

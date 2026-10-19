@@ -23,7 +23,8 @@ export const ADMIN_BLOCKED: Record<SetupStepId, string> = {
   materials: "Waiting for the client's materials",
   deck_review: "Push opens once the client submits their materials",
   framing: "Push opens once the client submits their materials",
-  investor_list: "Push opens once the client confirms the outreach narrative",
+  investor_list:
+    "Push opens once the client confirms the Analysis & Feedback and the outreach narrative",
   email_copy: "Push opens once the client confirms the investor list",
 };
 
@@ -42,10 +43,13 @@ export function adminStatus(item: SetupItem) {
 export function StepFrame({
   item,
   intro,
+  action,
   children,
 }: {
   item: SetupItem;
   intro: string;
+  /** The step's main button (Analyze, Build narrative), beside the status. */
+  action?: React.ReactNode;
   children: React.ReactNode;
 }) {
   const status = adminStatus(item);
@@ -61,11 +65,14 @@ export function StepFrame({
           <h3 className="text-h4">{item.title}</h3>
           <p className="mt-xs max-w-prose text-body-sm text-muted">{intro}</p>
         </div>
-        <span
-          className={`inline-flex shrink-0 rounded-full border border-border px-sm py-xs text-label uppercase tracking-label ${status.tone}`}
-        >
-          {status.label}
-        </span>
+        <div className="flex shrink-0 flex-wrap items-center gap-sm">
+          <span
+            className={`inline-flex rounded-full border border-border px-sm py-xs text-label uppercase tracking-label ${status.tone}`}
+          >
+            {status.label}
+          </span>
+          {action}
+        </div>
       </div>
       <div className={item.status === "open" ? "opacity-60" : undefined}>{children}</div>
     </section>

@@ -1,53 +1,44 @@
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
-import { MarkdownBody } from "@/components/markdown-body";
+import { NarrativeView } from "@/components/setup/narrative-view";
 import { ResponseHistory } from "@/components/setup/response-history";
 import { AdminReply } from "@/components/setup/admin-reply";
 import { ReviewActions } from "@/components/setup/review-actions";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { TurnBanner } from "@/components/setup/turn-banner";
+import { isServiceRoleConfigured } from "@/lib/env";
 import { getPortalSetup } from "@/lib/portal-setup";
-import { asNarrative, narrativeHasEarlierDraft } from "@/lib/setup";
-
-function MessageCard({
-  title,
-  detail,
-  subject,
-  body,
-}: {
-  title: string;
-  detail: string;
-  subject?: string;
-  body: string;
-}) {
-  if (!body.trim() && !subject?.trim()) return null;
-  return (
-    <section className="rounded-card border border-border bg-surface">
-      <div className="border-b border-border px-lg py-md">
-        <h2 className="text-h4">{title}</h2>
-        <p className="mt-xs text-body-sm text-muted">{detail}</p>
-      </div>
-      <div className="px-lg py-md">
-        {subject?.trim() ? (
-          <p className="text-body-sm">
-            <span className="text-label uppercase tracking-label text-muted">Subject </span>
-            <span className="text-heading">{subject}</span>
-          </p>
-        ) : null}
-        <p
-          className={`whitespace-pre-wrap text-body-sm text-body ${subject?.trim() ? "mt-sm" : ""}`}
-        >
-          {body}
-        </p>
-      </div>
-    </section>
-  );
-}
+import {
+  asFeedbackPublished,
+  asNarrative,
+  feedbackChecks,
+  isSharedWithClient,
+} from "@/lib/setup";
+import { markStepViewed } from "@/lib/step-views-server";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 export default async function FramingPage() {
-  const { item, row, viewAs } = await getPortalSetup("framing");
+  const { client, item, row, viewAs } = await getPortalSetup("framing");
   const visible = Boolean(row && row.version > 0);
   const narrative = asNarrative(row?.published);
+
+  if (visible && row && !viewAs && isServiceRoleConfigured()) {
+    await markStepViewed(createServiceClient(), row, "framing");
+  }
+
+  // The feedback the client received, shown beside the narrative it shaped.
+  const feedbackRow = client?.setup_steps?.find((entry) => entry.step === "deck_review") ?? null;
+  const feedbackItems = isSharedWithClient(feedbackRow)
+    ? asFeedbackPublished(feedbackRow?.published).items
+    : [];
+  const feedback =
+    feedbackRow && feedbackItems.length > 0
+      ? {
+          items: feedbackItems,
+          doneIds: feedbackChecks(feedbackRow.client_checks, feedbackItems),
+          href: "/portal/setup/deck-review",
+        }
+      : null;
 
   return (
     <>
@@ -75,70 +66,7 @@ export default async function FramingPage() {
               <AdminReply note={narrative.admin_note} />
             </div>
           ) : null}
-          <div className="grid gap-lg">
-            <section className="rounded-card border border-border bg-surface">
-              <div className="border-b border-border px-lg py-md">
-                <h2 className="text-h4">Core story</h2>
-              </div>
-              <div className="px-lg py-lg">
-                <MarkdownBody content={narrative.core} emptyLabel="Nothing here yet." />
-              </div>
-            </section>
-            <section className="rounded-card border border-border bg-surface">
-              <div className="border-b border-border px-lg py-md">
-                <h2 className="text-h4">Key messages</h2>
-              </div>
-              <div className="px-lg py-lg">
-                <MarkdownBody content={narrative.key_messages} emptyLabel="Nothing here yet." />
-              </div>
-            </section>
-            <section className="rounded-card border border-border bg-surface">
-              <div className="border-b border-border px-lg py-md">
-                <h2 className="text-h4">Approach</h2>
-              </div>
-              <div className="px-lg py-lg">
-                <MarkdownBody content={narrative.approach} emptyLabel="Nothing here yet." />
-              </div>
-            </section>
-            {narrativeHasEarlierDraft(narrative) ? (
-              <section className="rounded-card border border-border bg-surface">
-                <div className="border-b border-border px-lg py-md">
-                  <h2 className="text-h4">Earlier draft</h2>
-                  <p className="mt-xs text-body-sm text-muted">
-                    Email and LinkedIn copy from a previous version. The emails for each tier come after the investor list.
-                  </p>
-                </div>
-                <div className="grid gap-md px-lg py-md">
-                  <MessageCard
-                    title="First email"
-                    detail="From the earlier narrative."
-                    subject={narrative.email_subject}
-                    body={narrative.email_body ?? ""}
-                  />
-                  <MessageCard
-                    title="LinkedIn connection note"
-                    detail="From the earlier narrative."
-                    body={narrative.linkedin_note ?? ""}
-                  />
-                  <MessageCard
-                    title="LinkedIn message"
-                    detail="From the earlier narrative."
-                    body={narrative.linkedin_followup ?? ""}
-                  />
-                </div>
-              </section>
-            ) : null}
-            <section className="rounded-card border border-border bg-surface">
-              <div className="border-b border-border px-lg py-md">
-                <h2 className="text-h4">What happens next</h2>
-              </div>
-              <div className="px-lg py-lg">
-                <p className="whitespace-pre-wrap text-body-sm text-body">
-                  {narrative.next_steps}
-                </p>
-              </div>
-            </section>
-          </div>
+          <NarrativeView narrative={narrative} feedback={feedback} />
           {row.status === "with_client" ? (
             <>
               <AdminReply note={narrative.admin_note} />

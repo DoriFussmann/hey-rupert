@@ -71,7 +71,9 @@ export function MatchWorkspace({
   initialError,
   database,
   intakeComplete,
+  feedbackConfirmed,
   narrativeConfirmed,
+  sendBlocked,
   profileReady,
 }: {
   clientId: string;
@@ -81,7 +83,10 @@ export function MatchWorkspace({
   initialError: string | null;
   database: { firms: number; contacts: number } | null;
   intakeComplete: boolean;
+  feedbackConfirmed: boolean;
   narrativeConfirmed: boolean;
+  /** Why Send to client is not available yet, or null when it is. */
+  sendBlocked: string | null;
   profileReady: boolean;
 }) {
   const [state, setState] = useState(initialState);
@@ -256,10 +261,15 @@ export function MatchWorkspace({
           <li className={intakeComplete ? "text-success" : "text-secondary"}>
             {intakeComplete ? "Intake complete." : "Intake is not complete."}
           </li>
+          <li className={feedbackConfirmed ? "text-success" : "text-muted"}>
+            {feedbackConfirmed
+              ? "Analysis & Feedback confirmed."
+              : "Analysis & Feedback not confirmed. Needed before Send to client, not to run."}
+          </li>
           <li className={narrativeConfirmed ? "text-success" : "text-muted"}>
             {narrativeConfirmed
               ? "Outreach narrative confirmed."
-              : "Outreach narrative not confirmed. Recommended, not required to run."}
+              : "Outreach narrative not confirmed. Needed before Send to client, not to run."}
           </li>
           <li className={databaseLive ? "text-success" : "text-secondary"}>
             {databaseLive ? "Fund database live." : "Fund database is not live."}
@@ -280,6 +290,7 @@ export function MatchWorkspace({
           onNotice={setNotice}
           onCheckWebsites={checkWebsites}
           onSendToClient={sendToClient}
+          sendBlocked={sendBlocked}
         />
       ) : database ? (
         <p className="rounded-card border border-border bg-surface px-lg py-lg text-body-sm text-muted">

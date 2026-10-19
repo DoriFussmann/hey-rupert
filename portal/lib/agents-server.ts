@@ -41,7 +41,7 @@ import {
   LINKEDIN_NOTE_MAX,
   type EmailCopyPayload,
   type FeedbackDraft,
-  type FeedbackEmail,
+  type ClientEmailDraft,
   type FeedbackItem,
   type MaterialsAnalysis,
   type NarrativePayload,
@@ -547,11 +547,46 @@ const EMAIL_TOOL: ClaudeTool = {
   },
 };
 
+function founderLines(client: Record<string, unknown>, version: number) {
+  const firstName = text(client.first_name) || text(client.founder_name).split(/\s+/)[0];
+  return [
+    `Founder: ${firstName || "unknown"}`,
+    `Company: ${text(client.company_name)}`,
+    version > 1 ? `This is version ${version}: an update of what they saw before.` : "",
+  ];
+}
+
+/** Writes the middle of an email (subject and body) with one of the email agents. */
+async function draftEmailMiddle(
+  system: string,
+  context: string,
+): Promise<AgentResult<ClientEmailDraft>> {
+  const result = await callClaudeTool<Record<string, unknown>>({
+    system,
+    messages: [
+      {
+        role: "user",
+        content: `${context}\n\nWrite the email by calling the ${EMAIL_TOOL.name} tool.`,
+      },
+    ],
+    tool: EMAIL_TOOL,
+    maxTokens: 1500,
+  });
+  if (!result.ok) return { ok: false, error: result.reason };
+
+  const subject = text(result.input.subject).slice(0, 300);
+  const body = text(result.input.body).slice(0, 10000);
+  if (!body) return { ok: false, error: "Claude returned an empty email." };
+  return { ok: true, value: { subject, body } };
+}
+
+/** The email telling the founder their feedback is ready, from what they see. */
 export async function draftFeedbackEmail(
   supabase: ServiceClient,
   clientId: string,
   draft: FeedbackDraft,
-): Promise<AgentResult<FeedbackEmail>> {
+  version: number,
+): Promise<AgentResult<ClientEmailDraft>> {
   const [loaded, prompts] = await Promise.all([
     loadClient(supabase, clientId),
     loadAgentPrompts(supabase),
@@ -563,11 +598,8 @@ export async function draftFeedbackEmail(
     return { ok: false, error: "Add the feedback first: there is nothing to summarize." };
   }
 
-  const firstName =
-    text(loaded.client.first_name) || text(loaded.client.founder_name).split(/\s+/)[0];
   const feedback = [
-    `Founder: ${firstName || "unknown"}`,
-    `Company: ${text(loaded.client.company_name)}`,
+    ...founderLines(loaded.client, version),
     "## Opening message in the portal",
     visible.intro || "(none)",
     "## Recommendations the founder will see",
@@ -587,23 +619,39 @@ export async function draftFeedbackEmail(
     .filter(Boolean)
     .join("\n\n");
 
-  const result = await callClaudeTool<Record<string, unknown>>({
-    system: prompts.feedback_email,
-    messages: [
-      {
-        role: "user",
-        content: `${feedback}\n\nWrite the email by calling the ${EMAIL_TOOL.name} tool.`,
-      },
-    ],
-    tool: EMAIL_TOOL,
-    maxTokens: 1500,
-  });
-  if (!result.ok) return { ok: false, error: result.reason };
+  return draftEmailMiddle(prompts.feedback_email, feedback);
+}
 
-  const subject = text(result.input.subject).slice(0, 300);
-  const body = text(result.input.body).slice(0, 10000);
-  if (!body) return { ok: false, error: "Claude returned an empty email." };
-  return { ok: true, value: { subject, body } };
+/** The email telling the founder their outreach narrative is ready, from what they see. */
+export async function draftNarrativeEmail(
+  supabase: ServiceClient,
+  clientId: string,
+  narrative: NarrativePayload,
+  version: number,
+): Promise<AgentResult<ClientEmailDraft>> {
+  const [loaded, prompts] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadAgentPrompts(supabase),
+  ]);
+  if (!loaded.ok) return loaded;
+  if (!narrative.core.trim()) {
+    return { ok: false, error: "Push the narrative first: there is nothing to summarize." };
+  }
+
+  const context = [
+    ...founderLines(loaded.client, version),
+    "## Core story",
+    narrative.core,
+    "## Key messages",
+    narrative.key_messages || "(none)",
+    "## Approach",
+    narrative.approach || "(none)",
+    narrative.admin_note ? `## Rupert's reply on this version\n${narrative.admin_note}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return draftEmailMiddle(prompts.narrative_email, context);
 }
 
 // ---------------------------------------------------------------------------

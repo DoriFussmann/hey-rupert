@@ -37,7 +37,7 @@ export const MILESTONES: { id: MilestoneId; label: string; short: string }[] = [
   { id: "nda_signed", label: "NDA signed", short: "NDA signed" },
   { id: "intake_completed", label: "Intake completed", short: "Intake" },
   { id: "materials", label: "Materials submitted", short: "Materials" },
-  { id: "deck_review", label: "Feedback sent", short: "Feedback" },
+  { id: "deck_review", label: "Feedback confirmed", short: "Feedback" },
   { id: "framing", label: "Outreach narrative confirmed", short: "Narrative" },
   { id: "investor_list", label: "Investor list confirmed", short: "Investors" },
   { id: "email_copy", label: "Email copy confirmed", short: "Email copy" },

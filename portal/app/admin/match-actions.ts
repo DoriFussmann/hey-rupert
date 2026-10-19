@@ -46,7 +46,7 @@ import {
   type Tier,
 } from "@/lib/match/shared";
 import { notifyClient } from "@/lib/notify";
-import { asInvestorList } from "@/lib/setup";
+import { INVESTOR_LIST_BLOCKED, asInvestorList, canPublish } from "@/lib/setup";
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -564,7 +564,26 @@ export async function sendMatchToClient(
   const draft = asInvestorList(list.value);
   if (draft.rows.length === 0) return { ok: false, error: "No funds in the tiers to send." };
 
-  const rows = (await loadSetupSteps(access.supabase, [clientId])).get(clientId) ?? [];
+  const [{ data: client, error: clientError }, grouped] = await Promise.all([
+    access.supabase
+      .from("clients")
+      .select("stage, intake_completed_at")
+      .eq("id", clientId)
+      .maybeSingle(),
+    loadSetupSteps(access.supabase, [clientId]),
+  ]);
+  if (clientError) return { ok: false, error: clientError.message };
+  if (!client) return { ok: false, error: "Client not found." };
+  const rows = grouped.get(clientId) ?? [];
+  const source = {
+    stage: client.stage != null ? String(client.stage) : null,
+    intake_completed_at:
+      client.intake_completed_at != null ? String(client.intake_completed_at) : null,
+    setup_steps: rows,
+  };
+  if (!canPublish(source, "investor_list")) {
+    return { ok: false, error: INVESTOR_LIST_BLOCKED };
+  }
   const row = rows.find((item) => item.step === "investor_list") ?? null;
   const later = rows.some((item) => item.step === "email_copy" && item.version > 0);
   if (row?.status === "confirmed" && later) {

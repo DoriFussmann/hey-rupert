@@ -9,7 +9,6 @@ import { AGENTS, AGENT_PROMPT_MAX, agentPromptSlug } from "@/lib/agents";
 import {
   buildNarrative,
   draftEmailCopy,
-  draftFeedbackEmail,
   runMaterialsAnalysis,
   saveIntakeBrief,
   writeIntakeBrief,
@@ -30,7 +29,6 @@ import {
   formatBytes,
   type EmailCopyPayload,
   type FeedbackDraft,
-  type FeedbackEmail,
   type NarrativePayload,
 } from "@/lib/setup";
 import { loadSetupStep, nowIso, setupTableError } from "@/lib/setup-server";
@@ -123,8 +121,7 @@ async function saveFeedbackDraft(
 
 /**
  * Reads everything the client shared and replaces the summary, framing,
- * opening message and recommendations. Attachments, links and the email
- * draft are kept.
+ * opening message and recommendations. Attachments and links are kept.
  */
 export async function analyzeClientMaterials(
   clientId: string,
@@ -149,18 +146,6 @@ export async function analyzeClientMaterials(
   if (error) return { ok: false, error };
   revalidateClient(clientId);
   return { ok: true, draft };
-}
-
-export async function draftClientFeedbackEmail(
-  clientId: string,
-  draft: unknown,
-): Promise<Result<{ email: FeedbackEmail }>> {
-  const access = await requireAdminWithClaude();
-  if (!access.ok) return access;
-
-  const result = await draftFeedbackEmail(access.supabase, clientId, asFeedback(draft));
-  if (!result.ok) return result;
-  return { ok: true, email: result.value };
 }
 
 /**

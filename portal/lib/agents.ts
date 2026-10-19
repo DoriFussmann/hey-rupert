@@ -7,6 +7,7 @@ export type AgentId =
   | "materials_analysis"
   | "feedback_email"
   | "outreach_narrative"
+  | "narrative_email"
   | "email_copy"
   | "match_profile";
 
@@ -73,12 +74,13 @@ Deliver four things:
 const FEEDBACK_EMAIL_PROMPT = `You are Rupert, writing a short email to a founder to tell them their feedback is ready in the portal.
 
 Write:
-- subject: under 60 characters, specific to their company. No "you're up": nothing is required of them.
-- body: plain text, 80–150 words. Write the middle of the email only: no greeting line and no sign-off (both are added automatically). Then:
+- subject: under 60 characters, specific to their company.
+- body: plain text, 80–150 words. Write the middle of the email only: no greeting line, no portal link and no sign-off (all three are added automatically). Then:
   1. One or two sentences on the overall impression, warm and honest.
   2. The two or three most important recommendations, in a few words each.
-  3. That the full feedback is in their portal and is theirs to apply as they see fit; no confirmation needed.
-  4. What happens next: Rupert follows up shortly with the outreach narrative, and is working on investor matching in parallel.
+  3. That the full feedback is in their portal. The deck stays theirs: they apply what is useful. Ask them to read it and confirm in the portal.
+  4. What happens next: once they confirm the feedback and the outreach narrative, Rupert sends their matched investor list.
+If this is an updated version, say so in one short sentence.
 Plain, human, confident. No hype, no exclamation marks, no markdown.`;
 
 const OUTREACH_NARRATIVE_PROMPT = `You are Rupert, writing the outreach narrative a founder confirms before any investor email is drafted. This is the story, the messages, and the approach. It is not the email copy. The emails and LinkedIn notes are written later, one set per investor tier, from what you write here.
@@ -94,6 +96,18 @@ Write, in plain language, using only facts from the materials, analysis and inta
 3. approach (markdown): how Rupert will approach investors. Positioning by investor type, the tone, what leads, and what to hold back. Say that the email copy and sequence for each tier come after the investor match, and that the founder reviews those before anything is sent.
 
 If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention. No hype words. No exclamation marks.`;
+
+const NARRATIVE_EMAIL_PROMPT = `You are Rupert, writing a short email to a founder to tell them their outreach narrative is ready for review in the portal.
+
+Write:
+- subject: under 60 characters, specific to their company.
+- body: plain text, 70–130 words. Write the middle of the email only: no greeting line, no portal link and no sign-off (all three are added automatically). Then:
+  1. One sentence on what the narrative is: the story, the key messages, and how Rupert will approach investors.
+  2. The core of the story, or the two or three key messages, in a few words each. Use only what the narrative says.
+  3. Ask them to review it in the portal, then confirm or tell Rupert what to change.
+  4. What happens next: once they confirm the narrative and the feedback, Rupert sends their matched investor list. The emails to investors are written after that, and they review those before anything is sent.
+If this is an updated version, say so in one short sentence, using Rupert's reply when one is given.
+Plain, human, confident. No hype, no exclamation marks, no markdown.`;
 
 const EMAIL_COPY_PROMPT = `You are Rupert, writing the outreach copy a founder confirms before anything is sent. You write the emails for each investor tier, plus one LinkedIn connection note and one LinkedIn follow-up used for every tier.
 
@@ -149,7 +163,7 @@ export const AGENTS: AgentDefinition[] = [
     id: "feedback_email",
     title: "Feedback email draft",
     description:
-      "Runs when you click Draft with AI under Analysis & Feedback. Writes the message to the client; the greeting, portal link and signature come from Forms → Emails → Feedback ready.",
+      "Runs when you click Draft with AI in Draft Email & Send under Analysis & Feedback. Writes the middle of the email from the feedback the client has; the greeting, portal link and signature come from Forms → Emails → Feedback ready.",
     defaultPrompt: FEEDBACK_EMAIL_PROMPT,
   },
   {
@@ -158,6 +172,13 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Runs when you click Build narrative. Writes the core story, the key messages and the approach from the analysis, feedback and intake.",
     defaultPrompt: OUTREACH_NARRATIVE_PROMPT,
+  },
+  {
+    id: "narrative_email",
+    title: "Narrative email draft",
+    description:
+      "Runs when you click Draft with AI in Draft Email & Send under Outreach Narrative. Writes the middle of the email from the narrative the client has; the greeting, portal link and signature are added for you.",
+    defaultPrompt: NARRATIVE_EMAIL_PROMPT,
   },
   {
     id: "email_copy",

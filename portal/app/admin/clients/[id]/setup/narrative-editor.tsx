@@ -2,18 +2,20 @@
 
 import { useState } from "react";
 import { buildClientNarrative } from "@/app/admin/agent-actions";
+import { DocumentStep } from "@/app/admin/clients/[id]/setup/document-step";
 import { MarkdownField } from "@/app/admin/clients/[id]/setup/markdown-field";
 import {
-  ClientAnswer,
-  EarlierRounds,
-  PublishBar,
   StepFrame,
+  primaryButton,
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
+import { NarrativeView } from "@/components/setup/narrative-view";
 import {
   asNarrative,
+  isSharedWithClient,
   narrativeHasEarlierDraft,
   narrativeProblem,
+  type FeedbackItem,
   type NarrativePayload,
   type SetupItem,
   type SetupStepState,
@@ -21,18 +23,31 @@ import {
 
 const labelClass = "block text-label uppercase tracking-label text-muted";
 
+/** The parts of the narrative the client reads (Rupert's reply aside). */
+function readable(narrative: NarrativePayload) {
+  return JSON.stringify([
+    narrative.core,
+    narrative.key_messages,
+    narrative.approach,
+    narrative.next_steps,
+  ]);
+}
+
 export function NarrativeEditor({
   clientId,
   item,
   row,
   hasAnalysis,
   claudeReady,
+  feedback,
 }: {
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
   hasAnalysis: boolean;
   claudeReady: boolean;
+  /** The feedback the client has, shown beside the narrative on their page. */
+  feedback: { items: FeedbackItem[]; doneIds: string[] } | null;
 }) {
   const initial = asNarrative(row?.draft ?? row?.published);
   const [narrative, setNarrative] = useState<NarrativePayload>(initial);
@@ -41,16 +56,17 @@ export function NarrativeEditor({
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
 
   const changesRequested = row?.status === "changes_requested";
+  const shared = isSharedWithClient(row);
+  const unpushed = shared && readable(narrative) !== readable(asNarrative(row?.published));
+  const hasText = [narrative.core, narrative.key_messages, narrative.approach].some((value) =>
+    value.trim(),
+  );
 
   function update(patch: Partial<NarrativePayload>) {
     setNarrative((current) => ({ ...current, ...patch }));
   }
 
   async function onBuild() {
-    // `admin_note` is optional (undefined), so only the text fields are checked.
-    const hasText = [narrative.core, narrative.key_messages, narrative.approach].some(
-      (value) => value.trim(),
-    );
     if (
       hasText &&
       !window.confirm(
@@ -82,22 +98,77 @@ export function NarrativeEditor({
     }
   }
 
+  const editor = (
+    <div className="grid gap-lg">
+      <div>
+        <p className={labelClass}>Core story</p>
+        <div className="mt-sm">
+          <MarkdownField
+            label="Core story"
+            value={narrative.core}
+            onChange={(value) => update({ core: value })}
+            height={320}
+          />
+        </div>
+      </div>
+
+      <div>
+        <p className={labelClass}>Key messages</p>
+        <p className="mb-sm mt-xs text-body-sm text-muted">
+          3 to 6 messages Rupert will carry into outreach.
+        </p>
+        <MarkdownField
+          label="Key messages"
+          value={narrative.key_messages}
+          onChange={(value) => update({ key_messages: value })}
+          height={240}
+        />
+      </div>
+
+      <div>
+        <p className={labelClass}>Approach</p>
+        <p className="mb-sm mt-xs text-body-sm text-muted">
+          Positioning by investor type, tone, what leads, and what to hold back.
+        </p>
+        <MarkdownField
+          label="Approach"
+          value={narrative.approach}
+          onChange={(value) => update({ approach: value })}
+          height={240}
+        />
+      </div>
+
+      <div>
+        <p className={labelClass}>What happens next</p>
+        <p className="mb-sm mt-xs text-body-sm text-muted">
+          Shown to the client above Confirm. Edit it for this client if you need to.
+        </p>
+        <textarea
+          aria-label="What happens next"
+          className="min-h-[96px] w-full resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
+          value={narrative.next_steps}
+          maxLength={2000}
+          onChange={(event) => update({ next_steps: event.target.value })}
+        />
+      </div>
+
+      {narrativeHasEarlierDraft(narrative) ? (
+        <p className="text-body-sm text-muted">
+          This narrative also carries email and LinkedIn copy from before Email Copy became its own
+          step. It is read only, and the client sees it as Earlier draft.
+        </p>
+      ) : null}
+    </div>
+  );
+
   return (
     <StepFrame
       item={item}
-      intro="The story, the messages Rupert will carry, and how he'll approach investors. The client confirms this before any email copy is written."
-    >
-      <ClientAnswer row={row} />
-      {changesRequested ? (
-        <p className="px-lg pt-md text-body-sm text-secondary">
-          The narrative does not need to change. Write a reply when you push if you want.
-          The client sees that reply above Confirm.
-        </p>
-      ) : null}
-      <div className="flex flex-wrap items-center gap-sm border-b border-border px-lg py-md">
+      intro="Build the story, the messages and the approach, edit them beside the client's view, push to their portal, then email them. You can push this before the client confirms the feedback."
+      action={
         <button
           type="button"
-          className={secondaryButton}
+          className={hasText ? secondaryButton : primaryButton}
           disabled={building || !hasAnalysis || !claudeReady}
           onClick={onBuild}
         >
@@ -105,20 +176,23 @@ export function NarrativeEditor({
             ? "Building…"
             : changesRequested
               ? "Rebuild with client's changes"
-              : narrative.core.trim()
+              : hasText
                 ? "Rebuild narrative"
                 : "Build narrative"}
         </button>
-        <p className="text-body-sm text-muted" aria-live="polite">
-          {building
-            ? "Writing from the analysis, feedback and intake. Usually under a minute."
-            : !hasAnalysis
-              ? "Run Analyze under Analysis & Feedback first."
-              : !claudeReady
-                ? "Claude is not configured (ANTHROPIC_API_KEY)."
+      }
+    >
+      <p className="px-lg pt-md text-body-sm text-muted" aria-live="polite">
+        {building
+          ? "Writing from the analysis, feedback and intake. Usually under a minute."
+          : !hasAnalysis
+            ? "Run Analyze under Analysis & Feedback first."
+            : !claudeReady
+              ? "Claude is not configured (ANTHROPIC_API_KEY)."
+              : changesRequested
+                ? "The client asked for changes. Rebuild, or edit and push with a reply."
                 : "Uses the AI Agents → Outreach narrative instructions."}
-        </p>
-      </div>
+      </p>
       {message ? (
         <p
           role={message.kind === "error" ? "alert" : "status"}
@@ -127,113 +201,26 @@ export function NarrativeEditor({
           {message.text}
         </p>
       ) : null}
-
-      <div className="grid gap-lg px-lg py-md">
-        <div>
-          <p className={labelClass}>Core story</p>
-          <div className="mt-sm">
-            <MarkdownField
-              label="Core story"
-              value={narrative.core}
-              onChange={(value) => update({ core: value })}
-              height={320}
-            />
-          </div>
-        </div>
-
-        <div>
-          <p className={labelClass}>Key messages</p>
-          <p className="mb-sm mt-xs text-body-sm text-muted">
-            3 to 6 messages Rupert will carry into outreach.
-          </p>
-          <MarkdownField
-            label="Key messages"
-            value={narrative.key_messages}
-            onChange={(value) => update({ key_messages: value })}
-            height={240}
-          />
-        </div>
-
-        <div>
-          <p className={labelClass}>Approach</p>
-          <p className="mb-sm mt-xs text-body-sm text-muted">
-            Positioning by investor type, tone, what leads, and what to hold back.
-          </p>
-          <MarkdownField
-            label="Approach"
-            value={narrative.approach}
-            onChange={(value) => update({ approach: value })}
-            height={240}
-          />
-        </div>
-
-        <div>
-          <p className={labelClass}>What happens next</p>
-          <p className="mb-sm mt-xs text-body-sm text-muted">
-            Shown to the client above Confirm. Edit it for this client if you need to.
-          </p>
-          <textarea
-            className="min-h-[96px] w-full resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
-            value={narrative.next_steps}
-            maxLength={2000}
-            onChange={(event) => update({ next_steps: event.target.value })}
-          />
-        </div>
-
-        {narrativeHasEarlierDraft(narrative) ? (
-          <div className="rounded-md border border-border bg-background px-md py-md">
-            <p className={labelClass}>Earlier draft</p>
-            <p className="mt-xs text-body-sm text-muted">
-              Email and LinkedIn copy from before this step changed. Read only. It now lives in Email Copy.
-            </p>
-            {narrative.email_subject || narrative.email_body ? (
-              <div className="mt-md">
-                <p className="text-body-sm text-heading">First email</p>
-                {narrative.email_subject ? (
-                  <p className="mt-xs text-body-sm text-body">Subject: {narrative.email_subject}</p>
-                ) : null}
-                {narrative.email_body ? (
-                  <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
-                    {narrative.email_body}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
-            {narrative.linkedin_note ? (
-              <div className="mt-md">
-                <p className="text-body-sm text-heading">LinkedIn connection note</p>
-                <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
-                  {narrative.linkedin_note}
-                </p>
-              </div>
-            ) : null}
-            {narrative.linkedin_followup ? (
-              <div className="mt-md">
-                <p className="text-body-sm text-heading">LinkedIn follow-up</p>
-                <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
-                  {narrative.linkedin_followup}
-                </p>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+      <div className="mt-md">
+        <DocumentStep
+          clientId={clientId}
+          step="framing"
+          item={item}
+          row={row}
+          documentLabel="Outreach Narrative"
+          draft={narrative}
+          hasContent={hasText}
+          unpushed={unpushed}
+          dirty={JSON.stringify(narrative) !== saved}
+          onSaved={() => setSaved(JSON.stringify(narrative))}
+          problem={narrativeProblem(narrative)}
+          busy={building}
+          claudeReady={claudeReady}
+          replyEnabled
+          editor={editor}
+          preview={<NarrativeView narrative={narrative} feedback={feedback} stacked />}
+        />
       </div>
-
-      <EarlierRounds row={row} />
-      <PublishBar
-        clientId={clientId}
-        step="framing"
-        item={item}
-        row={row}
-        draft={narrative}
-        dirty={JSON.stringify(narrative) !== saved}
-        onSaved={() => setSaved(JSON.stringify(narrative))}
-        pushLabel="Push narrative for confirmation"
-        problem={narrativeProblem(narrative)}
-        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
-        notePlaceholder="For example: tightened the key messages."
-        noteOnPage
-      />
     </StepFrame>
   );
 }

@@ -31,6 +31,7 @@ import {
   signNdaAsClient,
   signServiceOrderAsClient,
   submitMaterialsWithTestData,
+  type ReviewStep,
   type StepResult,
 } from "@/lib/test-pilot-server";
 import type { MaterialFile } from "@/lib/setup";
@@ -161,22 +162,20 @@ async function nextStep(
       run: () => submitMaterialsWithTestData(supabase, client),
     };
   }
-  if (row("deck_review")?.status !== "published") {
-    return {
-      kind: "stop",
-      owner: "admin",
-      label: "Your turn: run Analyze and send the feedback (Setup → Analysis & Feedback).",
-    };
-  }
-
-  const reviews: { step: "framing" | "investor_list" | "email_copy"; label: string; yours: string }[] = [
+  const reviews: { step: ReviewStep; label: string; yours: string }[] = [
+    {
+      step: "deck_review",
+      label: "Confirmed the Analysis & Feedback",
+      yours: "run Analyze and push the feedback (Setup → Analysis & Feedback)",
+    },
     { step: "framing", label: "Confirmed the outreach narrative", yours: "build and push the outreach narrative" },
     { step: "investor_list", label: "Confirmed the investor list", yours: "run Rupert Match and send the investor list" },
     { step: "email_copy", label: "Confirmed the email copy", yours: "write and push the email copy" },
   ];
   for (const review of reviews) {
     const status = row(review.step)?.status;
-    if (status === "confirmed") continue;
+    // "published": feedback sent before the client confirmed it.
+    if (status === "confirmed" || status === "published") continue;
     if (status === "with_client") {
       return {
         kind: "client",

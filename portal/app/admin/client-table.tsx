@@ -7,6 +7,7 @@ import { ViewAsClientLink } from "@/components/eye-icon";
 import { ProgressBar } from "@/components/progress-bar";
 import { StagePill } from "@/components/stage-pill";
 import { nextActionText, overallProgress } from "@/lib/progress";
+import { readyForInvestorList } from "@/lib/setup";
 import type { Client, EngagementStage } from "@/lib/types";
 
 const STAGE_FILTERS: { value: "all" | EngagementStage; label: string }[] = [
@@ -172,6 +173,11 @@ export function ClientTable({ clients }: { clients: Client[] }) {
                       {client.is_test_pilot ? (
                         <span className="ml-sm inline-flex rounded-full border border-warning/40 px-sm py-px align-middle text-label uppercase tracking-label text-warning">
                           Test
+                        </span>
+                      ) : null}
+                      {readyForInvestorList(client) ? (
+                        <span className="ml-sm inline-flex rounded-full border border-primary/30 bg-primary-tint px-sm py-px align-middle text-label uppercase tracking-label text-primary">
+                          Ready for investors
                         </span>
                       ) : null}
                       {sub ? <p className="text-muted">{sub}</p> : null}

@@ -34,6 +34,7 @@ function asHistory(value: unknown): SetupHistoryEntry[] {
       version: Number(item.version) || 0,
       published_at: String(item.published_at ?? ""),
       response: asResponse(item.response),
+      emailed_at: typeof item.emailed_at === "string" ? item.emailed_at : null,
     }));
 }
 

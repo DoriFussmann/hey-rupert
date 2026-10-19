@@ -14,9 +14,10 @@ export type SetupStepId =
 /**
  * Stored status of a step row.
  * - materials:   "draft" (client filling in) → "submitted"
- * - deck_review: "draft" (Rupert writing)   → "published"
- * - framing / investor_list / email_copy:
+ * - deck_review / framing / investor_list / email_copy:
  *   "draft" → "with_client" → "confirmed" | "changes_requested" → (republish)
+ *   The feedback is only ever confirmed. "published" is the status of
+ *   feedback sent before the client confirmed it; it counts as confirmed.
  */
 export type SetupRowStatus =
   | "draft"
@@ -43,7 +44,16 @@ export type SetupHistoryEntry = {
   version: number;
   published_at: string;
   response: SetupResponse | null;
+  /** When Rupert last emailed the client about this version (Draft Email & Send). */
+  emailed_at?: string | null;
 };
+
+/** Steps Rupert pushes without an email; he emails separately with Draft Email & Send. */
+export type SetupDocumentStep = "deck_review" | "framing";
+
+export function isSetupDocumentStep(value: unknown): value is SetupDocumentStep {
+  return value === "deck_review" || value === "framing";
+}
 
 /** One row of `setup_steps`, as the app uses it. */
 export type SetupStepState = {
@@ -128,7 +138,8 @@ export type MaterialsAnalysis = {
   skipped: string[];
 };
 
-export type FeedbackEmail = { subject: string; body: string };
+/** An email to the client, written in Draft Email & Send. */
+export type ClientEmailDraft = { subject: string; body: string };
 
 export type FeedbackDraft = {
   analysis: MaterialsAnalysis | null;
@@ -137,7 +148,6 @@ export type FeedbackDraft = {
   items: FeedbackItem[];
   attachments: MaterialFile[];
   links: FeedbackLink[];
-  email: FeedbackEmail;
 };
 
 /** What the client sees. */
@@ -152,7 +162,7 @@ export type FeedbackPublished = {
 
 /** Shown under What happens next unless Rupert edits it for this client. */
 export const NARRATIVE_NEXT_STEPS =
-  "Once you confirm this and the investor list is matched, Rupert writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
+  "Once you confirm this and Rupert's feedback, he sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
 
 export type NarrativePayload = {
   /** The core story (markdown). */
@@ -266,8 +276,8 @@ export type SetupStepDefinition = {
   /** What Rupert has to do when it is his turn. */
   adminAction: string;
   /** "client" steps are filled in by the client; "review" steps need the
-   * client to confirm; "inform" steps are published for the client to read. */
-  kind: "client" | "inform" | "review";
+   * client to confirm. */
+  kind: "client" | "review";
 };
 
 /** Stored on `setup_steps`, shown as the last Onboarding step. */
@@ -287,9 +297,9 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
     title: "Analysis & Feedback",
     short: "Analysis & Feedback",
     href: "/portal/setup/deck-review",
-    clientTask: "read Rupert's feedback on your materials",
-    adminAction: "Analyze the materials and send feedback",
-    kind: "inform",
+    clientTask: "read Rupert's feedback on your materials and confirm",
+    adminAction: "Analyze the materials and push the feedback",
+    kind: "review",
   },
   {
     id: "framing",
@@ -373,6 +383,40 @@ function rowFor(rows: SetupStepState[] | null | undefined, id: SetupStepId) {
   return rows?.find((row) => row.step === id) ?? null;
 }
 
+/** The later of two timestamps, or null when neither is set. */
+function latest(a: string | null | undefined, b: string | null | undefined) {
+  if (!a || !b) return a || b || null;
+  return Date.parse(a) >= Date.parse(b) ? a : b;
+}
+
+/** Feedback the client confirmed, or feedback sent before confirming existed. */
+export function isFeedbackConfirmed(row: SetupStepState | null | undefined) {
+  return row?.status === "confirmed" || row?.status === "published";
+}
+
+/** True once Rupert has pushed this step: the client can open it. */
+export function isSharedWithClient(row: SetupStepState | null | undefined) {
+  return Boolean(row && row.version > 0 && row.status !== "draft");
+}
+
+/** Why the investor list cannot be sent yet, in Rupert's words. */
+export const INVESTOR_LIST_BLOCKED =
+  "Available once the client confirms the Analysis & Feedback and the outreach narrative.";
+
+/**
+ * Both the feedback and the narrative are confirmed and no investor list has
+ * been sent yet: Rupert's next move is the investor list.
+ */
+export function readyForInvestorList(source: SetupSource | null | undefined) {
+  const rows = source?.setup_steps ?? [];
+  const list = rowFor(rows, "investor_list");
+  return (
+    isFeedbackConfirmed(rowFor(rows, "deck_review")) &&
+    rowFor(rows, "framing")?.status === "confirmed" &&
+    (list?.version ?? 0) === 0
+  );
+}
+
 export function getSetupItems(source: SetupSource | null | undefined): SetupItem[] {
   const rows = source?.setup_steps ?? [];
 
@@ -383,31 +427,15 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
   const copy = rowFor(rows, "email_copy");
 
   const materialsDone = materials?.status === "submitted";
+  const feedbackDone = isFeedbackConfirmed(deck);
   const framingDone = framing?.status === "confirmed";
   const listDone = list?.status === "confirmed";
 
   const items: SetupItem[] = [];
 
-  // 1. Analysis & Feedback. Company Materials is the last Onboarding step.
-  // Feedback already sent stays visible if materials are sent back.
-  const deckDone = deck?.status === "published";
-  const deckReachable = materialsDone || deckDone;
-  items.push({
-    ...setupStep("deck_review"),
-    status: !deckReachable ? "open" : deckDone ? "done" : "waiting",
-    detail: !deckReachable
-      ? "After you share your materials"
-      : deckDone
-        ? "Feedback ready"
-        : "Rupert is reviewing your materials",
-    since: !materialsDone || deckDone ? null : materials?.completed_at ?? null,
-    completedAt: deck?.completed_at ?? null,
-    visible: deckDone,
-  });
-
-  // 3–5. Review steps: Rupert publishes, the client confirms or asks.
+  // Every Setup step: Rupert pushes, the client confirms (or asks for changes).
   const reviewItem = (
-    id: "framing" | "investor_list" | "email_copy",
+    id: Exclude<SetupStepId, "materials">,
     row: SetupStepState | null,
     reachable: boolean,
     blockedDetail: string,
@@ -425,7 +453,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
         visible: false,
       };
     }
-    if (row?.status === "confirmed") {
+    if (row?.status === "confirmed" || row?.status === "published") {
       return {
         ...step,
         status: "done",
@@ -466,30 +494,41 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
     };
   };
 
+  // 1–2. Analysis & Feedback, then the Outreach Narrative. Both open when
+  // the materials are submitted (the last Onboarding step); Rupert can push
+  // the narrative before the feedback is confirmed. Anything already pushed
+  // stays visible if the materials are sent back.
+  items.push(
+    reviewItem(
+      "deck_review",
+      deck,
+      materialsDone || (deck?.version ?? 0) > 0,
+      "After you share your materials",
+      "Rupert is reviewing your materials",
+      materials?.completed_at ?? null,
+    ),
+  );
   items.push(
     reviewItem(
       "framing",
       framing,
-      materialsDone,
+      materialsDone || (framing?.version ?? 0) > 0,
       "After you share your materials",
       "Rupert is writing your outreach narrative",
       materials?.completed_at ?? null,
     ),
   );
-  // A list Rupert already sent is the client's to review, even before the
-  // outreach narrative is confirmed. A saved draft can be pushed from Setup.
-  const listReady =
-    framingDone ||
-    (list?.version ?? 0) > 0 ||
-    asInvestorList(list?.draft).rows.length > 0;
+  // 3. The investor list opens once the client has confirmed both. A list
+  // Rupert already sent stays the client's to review.
+  const listReady = (feedbackDone && framingDone) || (list?.version ?? 0) > 0;
   items.push(
     reviewItem(
       "investor_list",
       list,
       listReady,
-      "After the outreach narrative is confirmed",
+      "After you confirm the feedback and the outreach narrative",
       "Rupert is matching investors",
-      framing?.completed_at ?? list?.updated_at ?? null,
+      latest(deck?.completed_at, framing?.completed_at) ?? list?.updated_at ?? null,
     ),
   );
   items.push(
@@ -640,33 +679,33 @@ function asAnalysis(value: unknown): MaterialsAnalysis | null {
   };
 }
 
-/** Rupert's feedback workspace. Older rows stored a single markdown `body`,
- * which becomes the intro. */
+/**
+ * Rupert's feedback workspace. Older rows stored a single markdown `body`,
+ * which becomes the intro. Rows saved while the page message doubled as the
+ * email kept it in `email.body`, which took precedence on the page.
+ */
 export function asFeedback(value: unknown): FeedbackDraft {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
     string,
     unknown
   >;
-  const email = (raw.email && typeof raw.email === "object"
+  const legacyEmail = (raw.email && typeof raw.email === "object"
     ? raw.email
     : {}) as Record<string, unknown>;
+  const legacyMessage = str(legacyEmail.body, 30000).trim();
   return {
     analysis: asAnalysis(raw.analysis),
-    intro: str(raw.intro ?? raw.body, 30000),
+    intro: legacyMessage || str(raw.intro ?? raw.body, 30000),
     items: asFeedbackItems(raw.items),
     attachments: asFiles(raw.attachments),
     links: asLinks(raw.links),
-    email: { subject: str(email.subject, 300), body: str(email.body, 10000) },
   };
 }
 
-/**
- * The part of the feedback the client sees. The message is stored as both
- * `email.body` and `intro`; older rows may have only one of them.
- */
+/** The part of the feedback the client sees. */
 export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
   return {
-    intro: draft.email.body.trim() || draft.intro,
+    intro: draft.intro,
     items: draft.items.filter((item) => item.visible && (item.title || item.body)),
     attachments: draft.attachments,
     links: draft.links,

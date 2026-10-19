@@ -24,6 +24,7 @@ import {
   fileExtension,
   formatBytes,
   isSetupComplete,
+  isSharedWithClient,
   type MaterialFile,
   type MaterialsPayload,
   type SetupDecision,
@@ -369,11 +370,16 @@ function excerpt(value: string, max = 1200) {
 }
 
 // ---------------------------------------------------------------------------
-// Reviews: framing, investor list, email copy
+// Reviews: feedback, framing, investor list, email copy
 
-type ReviewStep = "framing" | "investor_list" | "email_copy";
+type ReviewStep = "deck_review" | "framing" | "investor_list" | "email_copy";
 
-const REVIEW_STEPS = new Set<ReviewStep>(["framing", "investor_list", "email_copy"]);
+const REVIEW_STEPS = new Set<ReviewStep>([
+  "deck_review",
+  "framing",
+  "investor_list",
+  "email_copy",
+]);
 
 function itemLabel(
   step: ReviewStep,
@@ -406,6 +412,11 @@ export async function respondToSetupStep(input: {
   if (!REVIEW_STEPS.has(step)) return { ok: false, error: "Unknown step." };
   if (input.decision !== "confirmed" && input.decision !== "changes_requested") {
     return { ok: false, error: "Choose confirm or request changes." };
+  }
+  // The feedback is advice on the client's own materials: it is confirmed,
+  // with an optional note, not sent back.
+  if (step === "deck_review" && input.decision !== "confirmed") {
+    return { ok: false, error: "Confirm the feedback, and add a note for Rupert if you like." };
   }
 
   const loaded = await loadSetupStep(access.supabase, access.user.id, step);
@@ -522,11 +533,11 @@ export async function toggleFeedbackItem(
   const loaded = await loadSetupStep(access.supabase, access.user.id, "deck_review");
   if (!loaded.ok) return loaded;
   const row = loaded.row;
-  if (!row || row.status !== "published") {
+  if (!isSharedWithClient(row)) {
     return { ok: false, error: "There is no feedback to track yet." };
   }
   const id = String(itemId ?? "");
-  if (!asFeedbackPublished(row.published).items.some((item) => item.id === id)) {
+  if (!row || !asFeedbackPublished(row.published).items.some((item) => item.id === id)) {
     return { ok: false, error: "That recommendation is no longer in the feedback. Refresh to see the latest." };
   }
 

@@ -5,8 +5,12 @@ import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor
 import {
   SETUP_TOTAL,
   asFeedback,
+  asFeedbackPublished,
   asInvestorList,
+  feedbackChecks,
   getSetupItems,
+  isSharedWithClient,
+  readyForInvestorList,
   tierCounts,
   type SetupSource,
   type SetupStepId,
@@ -34,18 +38,38 @@ export function SetupWorkspace({
   const row = (id: SetupStepId) => rows.find((entry) => entry.step === id) ?? null;
   const done = items.filter((entry) => entry.status === "done").length;
   const materialsSubmitted = row("materials")?.status === "submitted";
-  const hasAnalysis = Boolean(asFeedback(row("deck_review")?.draft).analysis);
+  const feedbackRow = row("deck_review");
+  const hasAnalysis = Boolean(asFeedback(feedbackRow?.draft).analysis);
   const counts = tierCounts(asInvestorList(row("investor_list")?.published).rows);
+  const ready = readyForInvestorList(source);
+
+  // The feedback the client has, as it appears beside their narrative.
+  const sharedFeedback = isSharedWithClient(feedbackRow)
+    ? asFeedbackPublished(feedbackRow?.published).items
+    : [];
+  const narrativeFeedback =
+    feedbackRow && sharedFeedback.length > 0
+      ? { items: sharedFeedback, doneIds: feedbackChecks(feedbackRow.client_checks, sharedFeedback) }
+      : null;
 
   return (
     <section className="mt-lg">
       <div className="rounded-card border border-border bg-surface px-lg py-lg">
-        <h2 className="text-h4">Setup</h2>
+        <div className="flex flex-wrap items-center gap-sm">
+          <h2 className="text-h4">Setup</h2>
+          {ready ? (
+            <a
+              href="#setup-investor_list"
+              className="inline-flex rounded-full border border-primary/30 bg-primary-tint px-sm py-xs text-label uppercase tracking-label text-primary no-underline"
+            >
+              Ready for investor list
+            </a>
+          ) : null}
+        </div>
         <p className="mt-xs text-body-sm text-muted">
-          {done} of {SETUP_TOTAL} complete. Analyze and send feedback → outreach
-          narrative, client confirms → investor list, client confirms → email
-          copy, client confirms. Every push emails the client; every client
-          answer emails you.
+          {done} of {SETUP_TOTAL} complete. Analysis & Feedback and the outreach narrative run
+          side by side: push each one, email the client, and the client confirms. Once both are
+          confirmed → investor list, client confirms → email copy, client confirms.
         </p>
         <ol className="mt-md flex flex-wrap gap-sm text-body-sm">
           {items.map((entry, index) => (
@@ -77,7 +101,7 @@ export function SetupWorkspace({
       <FeedbackWorkspace
         clientId={clientId}
         item={item("deck_review")}
-        row={row("deck_review")}
+        row={feedbackRow}
         materialsSubmitted={materialsSubmitted}
         claudeReady={claudeReady}
         attachmentLinks={feedbackLinks}
@@ -88,6 +112,7 @@ export function SetupWorkspace({
         row={row("framing")}
         hasAnalysis={hasAnalysis}
         claudeReady={claudeReady}
+        feedback={narrativeFeedback}
       />
       <InvestorListPanel
         clientId={clientId}

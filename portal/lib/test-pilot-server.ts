@@ -34,6 +34,9 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 
 export type StepResult = { ok: true } | { ok: false; error: string };
 
+/** Setup steps the "client" confirms in a test run. */
+export type ReviewStep = "deck_review" | "framing" | "investor_list" | "email_copy";
+
 const TEST_IP = "test-pilot";
 
 function text(value: unknown) {
@@ -456,7 +459,7 @@ export async function submitMaterialsWithTestData(
 export async function confirmReviewAsClient(
   supabase: ServiceClient,
   clientId: string,
-  step: "framing" | "investor_list" | "email_copy",
+  step: ReviewStep,
 ): Promise<StepResult> {
   const loaded = await loadSetupStep(supabase, clientId, step);
   if (!loaded.ok) return loaded;

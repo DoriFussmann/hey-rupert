@@ -8,6 +8,12 @@ import { loadLiveDb } from "@/lib/match/db-server";
 import { buildProfile, canRun, loadProfileState } from "@/lib/match/profile-server";
 import { loadStoredMatch } from "@/lib/match/run-server";
 import type { MatchProfileState, MatchView } from "@/lib/match/shared";
+import {
+  INVESTOR_LIST_BLOCKED,
+  canPublish,
+  isFeedbackConfirmed,
+  type SetupStepId,
+} from "@/lib/setup";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 // Matching and website checks run in server actions here.
@@ -47,6 +53,8 @@ export default async function ClientMatchPage({ params }: { params: { id: string
   if (!client) notFound();
 
   const { state, view, stale, database, error } = await loadMatch(client.id);
+  const stepRow = (step: SetupStepId) =>
+    client.setup_steps?.find((row) => row.step === step) ?? null;
 
   return (
     <>
@@ -63,11 +71,9 @@ export default async function ClientMatchPage({ params }: { params: { id: string
         initialError={error}
         database={database}
         intakeComplete={Boolean(client.intake_completed_at)}
-        narrativeConfirmed={
-          client.setup_steps?.some(
-            (row) => row.step === "framing" && row.status === "confirmed",
-          ) ?? false
-        }
+        feedbackConfirmed={isFeedbackConfirmed(stepRow("deck_review"))}
+        narrativeConfirmed={stepRow("framing")?.status === "confirmed"}
+        sendBlocked={canPublish(client, "investor_list") ? null : INVESTOR_LIST_BLOCKED}
         profileReady={Boolean(
           state && canRun(buildProfile(state.answers, state.settings).profile),
         )}

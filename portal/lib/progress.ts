@@ -58,14 +58,14 @@ export function nextTurn(source: ProgressSource | null | undefined): NextTurn {
       : { owner: "admin", action: step.adminAction };
   }
 
-  const setupNext = getSetupItems(source).find(
-    (item) => item.status === "your_turn" || item.status === "waiting",
-  );
-  if (setupNext) {
-    return setupNext.status === "your_turn"
-      ? { owner: "client", step: setupNext.short }
-      : { owner: "admin", action: setupNext.adminAction };
-  }
+  // Several Setup steps can be open at once (the feedback and the narrative
+  // run side by side): Rupert's own work comes first, then what the client
+  // has to answer.
+  const setupItems = getSetupItems(source);
+  const adminNext = setupItems.find((item) => item.status === "waiting");
+  if (adminNext) return { owner: "admin", action: adminNext.adminAction };
+  const clientNext = setupItems.find((item) => item.status === "your_turn");
+  if (clientNext) return { owner: "client", step: clientNext.short };
 
   if (isSetupComplete(source) && source?.stage !== "live") {
     return { owner: "admin", action: FIRST_INVOICE_ACTION };

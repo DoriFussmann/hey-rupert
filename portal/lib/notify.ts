@@ -119,8 +119,6 @@ export const PAUSED_REASON = "Automatic emails are paused for this client.";
 /**
  * Emails the client when the turn passes to them. `note` is an optional
  * message from Rupert placed in the email (for example what changed).
- * `message` fills {message} (the drafted feedback email); `subject`, when
- * set, replaces the template's subject.
  * `updated` words the email as a revised version.
  * Skipped (with the reason) when the email is switched off in Forms → Emails
  * or automatic emails are paused for this client.
@@ -129,12 +127,7 @@ export async function notifyClient(
   supabase: ServiceClient,
   clientId: string,
   turn: ClientTurn,
-  {
-    note,
-    message,
-    subject,
-    updated,
-  }: { note?: string; message?: string; subject?: string; updated?: boolean } = {},
+  { note, updated }: { note?: string; updated?: boolean } = {},
 ): Promise<EmailResult> {
   const row = await loadClientRow(supabase, clientId);
   const address = clientAddress(row);
@@ -161,7 +154,6 @@ export async function notifyClient(
     company: text(row.company_name),
     portal_link: `${PORTAL_URL}${emailTemplate(key)?.path ?? "/portal"}`,
     note: note?.trim() ? `A note from Rupert:\n${note.trim()}` : "",
-    message: message?.trim() ?? "",
     updated_line: updated
       ? " This is an updated version based on your feedback."
       : "",
@@ -173,11 +165,7 @@ export async function notifyClient(
     kind: "automatic",
     templateKey: key,
     to: [address],
-    subject: subject?.trim()
-      ? subject.trim()
-      : updated
-        ? updatedSubject(rendered.subject)
-        : rendered.subject,
+    subject: updated ? updatedSubject(rendered.subject) : rendered.subject,
     text: rendered.body,
   });
 }

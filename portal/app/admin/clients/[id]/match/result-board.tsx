@@ -346,6 +346,7 @@ export function ResultBoard({
   onNotice,
   onCheckWebsites,
   onSendToClient,
+  sendBlocked,
 }: {
   clientId: string;
   view: MatchView;
@@ -356,6 +357,8 @@ export function ResultBoard({
   onNotice: (notice: Notice | null) => void;
   onCheckWebsites: () => void;
   onSendToClient: () => void;
+  /** Why Send to client is not available yet, or null when it is. */
+  sendBlocked: string | null;
 }) {
   const [tab, setTab] = useState<Tab>("bullseye");
   const [split, setSplit] = useState<SplitFilter>(null);
@@ -421,11 +424,20 @@ export function ResultBoard({
             <a href={`/admin/clients/${clientId}/match/export`} className={`${secondaryButton} no-underline`}>
               Export (internal)
             </a>
-            <button type="button" className={primaryButton} disabled={busy || inTier === 0} onClick={onSendToClient}>
+            <button
+              type="button"
+              className={primaryButton}
+              disabled={busy || inTier === 0 || Boolean(sendBlocked)}
+              title={sendBlocked ?? undefined}
+              onClick={onSendToClient}
+            >
               Send to client
             </button>
           </div>
         </div>
+        {sendBlocked ? (
+          <p className="mt-sm text-body-sm text-muted">{sendBlocked}</p>
+        ) : null}
 
         <div className="mt-md grid gap-sm md:grid-cols-3">
           {TIERS.map((tier) => {

@@ -13,6 +13,7 @@ const secondaryButton =
 /**
  * Confirm / request changes for a review step. Item notes (per fund, per
  * tier) are owned by the page and passed in, so they travel with the answer.
+ * `allowChanges={false}` leaves only Confirm, with the optional comment.
  */
 export function ReviewActions({
   step,
@@ -23,9 +24,10 @@ export function ReviewActions({
   notePlaceholder = "Anything Rupert should know, change, or answer",
   intro,
   readOnly,
+  allowChanges = true,
   stickyFooter = false,
 }: {
-  step: "framing" | "investor_list" | "email_copy";
+  step: "deck_review" | "framing" | "investor_list" | "email_copy";
   version: number;
   itemNotes?: Record<string, string>;
   confirmLabel: string;
@@ -33,6 +35,7 @@ export function ReviewActions({
   notePlaceholder?: string;
   intro?: string;
   readOnly: boolean;
+  allowChanges?: boolean;
   /** Pins Confirm to the bottom of the viewport (long lists). */
   stickyFooter?: boolean;
 }) {
@@ -112,14 +115,16 @@ export function ReviewActions({
           >
             {pending === "confirmed" ? "Confirming…" : confirmLabel}
           </button>
-          <button
-            type="button"
-            className={secondaryButton}
-            disabled={readOnly || pending !== null}
-            onClick={() => respond("changes_requested")}
-          >
-            {pending === "changes_requested" ? "Sending…" : changesLabel}
-          </button>
+          {allowChanges ? (
+            <button
+              type="button"
+              className={secondaryButton}
+              disabled={readOnly || pending !== null}
+              onClick={() => respond("changes_requested")}
+            >
+              {pending === "changes_requested" ? "Sending…" : changesLabel}
+            </button>
+          ) : null}
           {readOnly ? (
             <p className="text-body-sm text-muted">Preview only: actions are disabled.</p>
           ) : null}
