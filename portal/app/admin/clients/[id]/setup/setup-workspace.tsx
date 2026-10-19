@@ -5,11 +5,8 @@ import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor
 import {
   SETUP_TOTAL,
   asFeedback,
-  asFeedbackPublished,
   asInvestorList,
-  feedbackChecks,
   getSetupItems,
-  isSharedWithClient,
   readyForInvestorList,
   tierCounts,
   type SetupSource,
@@ -23,13 +20,16 @@ import {
 export function SetupWorkspace({
   clientId,
   source,
-  feedbackLinks,
+  fileLinks,
+  clientEmail,
   claudeReady,
 }: {
   clientId: string;
   source: SetupSource;
-  /** Signed links for files attached to the feedback. */
-  feedbackLinks: Record<string, string>;
+  /** Signed links for files saved on the feedback and narrative drafts. */
+  fileLinks: Record<string, string>;
+  /** The client's email address. */
+  clientEmail: string;
   claudeReady: boolean;
 }) {
   const items = getSetupItems(source);
@@ -42,15 +42,6 @@ export function SetupWorkspace({
   const hasAnalysis = Boolean(asFeedback(feedbackRow?.draft).analysis);
   const counts = tierCounts(asInvestorList(row("investor_list")?.published).rows);
   const ready = readyForInvestorList(source);
-
-  // The feedback the client has, as it appears beside their narrative.
-  const sharedFeedback = isSharedWithClient(feedbackRow)
-    ? asFeedbackPublished(feedbackRow?.published).items
-    : [];
-  const narrativeFeedback =
-    feedbackRow && sharedFeedback.length > 0
-      ? { items: sharedFeedback, doneIds: feedbackChecks(feedbackRow.client_checks, sharedFeedback) }
-      : null;
 
   return (
     <section className="mt-lg">
@@ -68,8 +59,9 @@ export function SetupWorkspace({
         </div>
         <p className="mt-xs text-body-sm text-muted">
           {done} of {SETUP_TOTAL} complete. Analysis & Feedback and the outreach narrative run
-          side by side: push each one, email the client, and the client confirms. Once both are
-          confirmed → investor list, client confirms → email copy, client confirms.
+          side by side: write each one, then Push to Client Portal & Send, and the client
+          confirms. Once both are confirmed → investor list, client confirms → email copy, client
+          confirms.
         </p>
         <ol className="mt-md flex flex-wrap gap-sm text-body-sm">
           {items.map((entry, index) => (
@@ -102,17 +94,19 @@ export function SetupWorkspace({
         clientId={clientId}
         item={item("deck_review")}
         row={feedbackRow}
+        to={clientEmail}
         materialsSubmitted={materialsSubmitted}
         claudeReady={claudeReady}
-        attachmentLinks={feedbackLinks}
+        fileLinks={fileLinks}
       />
       <NarrativeEditor
         clientId={clientId}
         item={item("framing")}
         row={row("framing")}
+        to={clientEmail}
         hasAnalysis={hasAnalysis}
         claudeReady={claudeReady}
-        feedback={narrativeFeedback}
+        fileLinks={fileLinks}
       />
       <InvestorListPanel
         clientId={clientId}

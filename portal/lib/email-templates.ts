@@ -33,7 +33,7 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   portal_link: "Link to the right page in the client's portal",
   note: 'Your note, as "A note from Rupert: …" (blank when there is none)',
   message:
-    "The text Draft with AI writes for this client in Draft Email & Send. Before that: a short default line",
+    "The text Claude writes for this client with Draft Email. Without Claude: a short default line",
   updated_line:
     '" This is an updated version based on your feedback." on revised versions, otherwise blank',
   signature: "Your sign-off (edited once, at the top of this page)",
@@ -203,7 +203,7 @@ export const FEEDBACK_TOKENS_LIST: readonly EmailToken[] = [
 
 /** Fills {message} in the Feedback ready email until Rupert drafts his own. */
 export const FEEDBACK_DEFAULT_MESSAGE =
-  "Rupert has reviewed your pitch deck and materials, and his feedback is ready in your portal. Read it through, then confirm in your portal. The deck stays yours: apply what's useful. Once you've confirmed the feedback and the outreach narrative, Rupert sends your matched investor list.";
+  "Rupert has reviewed your pitch deck and materials. His Company Summary and Investor Framing are ready in your portal. Read them through, then confirm in your portal. Once you've confirmed this and the outreach narrative, Rupert sends your matched investor list.";
 
 export const REMINDER_TOKENS_LIST: readonly EmailToken[] = [
   "greeting",
@@ -292,7 +292,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     group: "client",
     title: "Feedback ready",
     trigger:
-      "Fills Draft Email & Send under Analysis & Feedback, after you push the feedback. You review and edit it before it goes. {message} is a default line, or the text Draft with AI writes.",
+      "Fills Draft Email under Analysis & Feedback when Claude is not set up (otherwise Claude writes the middle into {message}). You review and edit it, then it goes with Push to Client Portal & Send.",
     subject: "Rupert's feedback on your materials is ready — you're up",
     body: [
       "{greeting}",
@@ -307,7 +307,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   clientTemplate(
     "framing_ready",
     "Outreach narrative ready",
-    "Fills Draft Email & Send under Outreach Narrative, after you push the narrative (or a revised version). You review and edit it before it goes.",
+    "Fills Draft Email under Outreach Narrative when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send.",
     "/portal/setup/framing",
     "Your outreach narrative is ready — you're up",
     "Rupert has written the outreach narrative for your investor campaign: the story, the key messages and how we'll approach investors.",

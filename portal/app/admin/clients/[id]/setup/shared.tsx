@@ -47,7 +47,8 @@ export function StepFrame({
   children,
 }: {
   item: SetupItem;
-  intro: string;
+  /** One line under the title. Left out for a one-line header. */
+  intro?: string;
   /** The step's main button (Analyze, Build narrative), beside the status. */
   action?: React.ReactNode;
   children: React.ReactNode;
@@ -60,10 +61,14 @@ export function StepFrame({
         item.status === "waiting" ? "border-primary/30" : "border-border"
       }`}
     >
-      <div className="flex flex-wrap items-start justify-between gap-md border-b border-border px-lg py-lg">
+      <div
+        className={`flex flex-wrap justify-between gap-md border-b border-border px-lg py-lg ${
+          intro ? "items-start" : "items-center"
+        }`}
+      >
         <div className="min-w-0">
           <h3 className="text-h4">{item.title}</h3>
-          <p className="mt-xs max-w-prose text-body-sm text-muted">{intro}</p>
+          {intro ? <p className="mt-xs max-w-prose text-body-sm text-muted">{intro}</p> : null}
         </div>
         <div className="flex shrink-0 flex-wrap items-center gap-sm">
           <span
@@ -82,15 +87,18 @@ export function StepFrame({
 /** The client's latest answer on the current version, for Rupert. */
 export function ClientAnswer({
   row,
+  hideWaiting = false,
 }: {
   row: SetupStepState | null;
+  /** Leave out the "waiting for the client" line (the panel says it already). */
+  hideWaiting?: boolean;
 }) {
   const response: SetupResponse | null =
     row?.response && row.response.version === row.version ? row.response : null;
   if (!row || row.version === 0) return null;
 
   if (!response) {
-    return row.status === "with_client" ? (
+    return row.status === "with_client" && !hideWaiting ? (
       <p className="px-lg pt-md text-body-sm text-muted">
         Version {row.version} pushed {row.published_at ? formatDateAtTime(row.published_at) : ""}.
         Waiting for the client to confirm or comment.

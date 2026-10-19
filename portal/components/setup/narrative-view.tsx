@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { FilesLinksView } from "@/components/setup/files-links-view";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
   FEEDBACK_PRIORITIES,
@@ -57,78 +58,85 @@ function priorityLabel(item: FeedbackItem) {
   return FEEDBACK_PRIORITIES.find((entry) => entry.value === item.priority)?.label ?? "";
 }
 
-/** The client's feedback, read-only, beside the narrative it shaped. */
-function FeedbackAside({
-  items,
-  doneIds,
-  href,
-}: {
-  items: FeedbackItem[];
-  doneIds: string[];
-  href?: string;
-}) {
-  const done = new Set(doneIds);
-  const completed = items.filter((item) => done.has(item.id)).length;
+/**
+ * Beside the narrative: Rupert's Investor Framing from the feedback, or the
+ * recommendations from feedback sent before the framing was shared.
+ */
+function FeedbackAside({ feedback }: { feedback: NarrativeFeedback }) {
+  const done = new Set(feedback.doneIds);
+  const completed = feedback.items.filter((item) => done.has(item.id)).length;
   return (
     <aside className="rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-md">
-        <h2 className="text-h4">Your feedback</h2>
+        <h2 className="text-h4">{feedback.framing ? "Investor framing" : "Your feedback"}</h2>
         <p className="mt-xs text-body-sm text-muted">
-          What Rupert recommended on your materials · {completed} of {items.length} done
+          {feedback.framing
+            ? "From Rupert's Analysis & Feedback."
+            : `What Rupert recommended on your materials · ${completed} of ${feedback.items.length} done`}
         </p>
       </div>
-      <ul className="divide-y divide-border">
-        {items.map((item) => {
-          const checked = done.has(item.id);
-          return (
-            <li key={item.id} className="flex gap-sm px-lg py-sm">
-              <span
-                aria-hidden
-                className={`mt-xs inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] leading-none ${
-                  checked ? "border-success bg-success text-white" : "border-border"
-                }`}
-              >
-                {checked ? "✓" : ""}
-              </span>
-              <div className="min-w-0">
-                <p className={`text-body-sm text-heading ${checked ? "line-through opacity-60" : ""}`}>
-                  {item.title || item.body}
-                </p>
-                <p className="text-label uppercase tracking-label text-muted">
-                  {priorityLabel(item)} priority
-                  <span className="sr-only">{checked ? ", done" : ", not done"}</span>
-                </p>
-              </div>
-            </li>
-          );
-        })}
-      </ul>
-      {href ? (
-        <div className="border-t border-border px-lg py-sm">
-          <Link href={href} className="text-body-sm text-primary hover:text-primary-hover">
-            Open Analysis & Feedback
-          </Link>
+      {feedback.framing ? (
+        <div className="px-lg py-md">
+          <MarkdownBody content={feedback.framing} emptyLabel="" className="sow-markdown text-body-sm" />
         </div>
-      ) : null}
+      ) : (
+        <ul className="divide-y divide-border">
+          {feedback.items.map((item) => {
+            const checked = done.has(item.id);
+            return (
+              <li key={item.id} className="flex gap-sm px-lg py-sm">
+                <span
+                  aria-hidden
+                  className={`mt-xs inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] leading-none ${
+                    checked ? "border-success bg-success text-white" : "border-border"
+                  }`}
+                >
+                  {checked ? "✓" : ""}
+                </span>
+                <div className="min-w-0">
+                  <p className={`text-body-sm text-heading ${checked ? "line-through opacity-60" : ""}`}>
+                    {item.title || item.body}
+                  </p>
+                  <p className="text-label uppercase tracking-label text-muted">
+                    {priorityLabel(item)} priority
+                    <span className="sr-only">{checked ? ", done" : ", not done"}</span>
+                  </p>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <div className="border-t border-border px-lg py-sm">
+        <Link href={feedback.href} className="text-body-sm text-primary hover:text-primary-hover">
+          Open Analysis & Feedback
+        </Link>
+      </div>
     </aside>
   );
 }
 
+export type NarrativeFeedback = {
+  framing: string;
+  items: FeedbackItem[];
+  doneIds: string[];
+  href: string;
+};
+
 /**
- * The Outreach Narrative as the client sees it, with their feedback beside
- * it on wide screens. Used by the client's page and by the live preview in
- * the admin. `stacked` puts the feedback under the narrative (the narrow
- * admin preview column).
+ * The Outreach Narrative as the client sees it, with Rupert's investor
+ * framing beside it on wide screens.
  */
 export function NarrativeView({
   narrative,
+  fileLinks,
   feedback,
-  stacked = false,
 }: {
   narrative: NarrativePayload;
+  /** Signed download links by file path. */
+  fileLinks: Record<string, string>;
   /** The feedback the client received, when it has been shared. */
-  feedback?: { items: FeedbackItem[]; doneIds: string[]; href?: string } | null;
-  stacked?: boolean;
+  feedback?: NarrativeFeedback | null;
 }) {
   const content = (
     <div className="grid min-w-0 gap-lg">
@@ -169,25 +177,24 @@ export function NarrativeView({
           </div>
         </section>
       ) : null}
+      <FilesLinksView
+        attachments={narrative.attachments}
+        links={narrative.links}
+        fileLinks={fileLinks}
+      />
       <Section title="What happens next">
         <p className="whitespace-pre-wrap text-body-sm text-body">{narrative.next_steps}</p>
       </Section>
     </div>
   );
 
-  if (!feedback || feedback.items.length === 0) return content;
+  if (!feedback || (!feedback.framing && feedback.items.length === 0)) return content;
 
   return (
-    <div
-      className={
-        stacked
-          ? "grid gap-lg"
-          : "grid gap-lg lg:grid-cols-[minmax(0,1fr)_300px] lg:items-start"
-      }
-    >
+    <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
       {content}
-      <div className={stacked ? "" : "lg:sticky lg:top-lg"}>
-        <FeedbackAside items={feedback.items} doneIds={feedback.doneIds} href={feedback.href} />
+      <div className="lg:sticky lg:top-lg">
+        <FeedbackAside feedback={feedback} />
       </div>
     </div>
   );

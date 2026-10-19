@@ -9,7 +9,7 @@ const MDEditor = dynamic(() => import("@uiw/react-md-editor"), {
   loading: () => <div className="min-h-[200px] rounded-md border border-border bg-background" />,
 });
 
-/** Markdown editor. Edit by default; Preview shows the rendered text. */
+/** Markdown editor without a formatting toolbar. Edit by default; Preview shows the rendered text. */
 export function MarkdownField({
   value,
   onChange,
@@ -42,6 +42,7 @@ export function MarkdownField({
         height={height}
         visibleDragbar={false}
         preview={preview ? "preview" : "edit"}
+        hideToolbar
         extraCommands={[]}
         textareaProps={{ "aria-label": label }}
       />

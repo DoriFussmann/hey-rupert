@@ -23,7 +23,7 @@ export async function GET(
   }
 
   const response = NextResponse.redirect(
-    new URL("/portal/onboarding", request.url),
+    new URL("/portal", request.url),
   );
   response.cookies.set(VIEW_AS_COOKIE, client.id, {
     httpOnly: true,

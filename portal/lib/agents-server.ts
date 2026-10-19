@@ -25,24 +25,19 @@ import { loadMaterialFields } from "@/lib/material-fields-server";
 import { profileText } from "@/lib/match/shared";
 import { OFFICE_TEXT_EXTENSIONS, extractOfficeText } from "@/lib/office-text";
 import {
-  FEEDBACK_AREAS,
-  FEEDBACK_PRIORITIES,
   MATERIALS_BUCKET,
   asEmailCopy,
   asFeedback,
-  asFeedbackItems,
   asInvestorList,
   asMaterials,
   asNarrative,
-  feedbackForClient,
   fileExtension,
   formatBytes,
   FIT_TIERS,
   LINKEDIN_NOTE_MAX,
   type EmailCopyPayload,
-  type FeedbackDraft,
   type ClientEmailDraft,
-  type FeedbackItem,
+  type FeedbackDraft,
   type MaterialsAnalysis,
   type NarrativePayload,
   type SetupHistoryEntry,
@@ -390,42 +385,20 @@ export async function prepareFiles(
   return prepared;
 }
 
-const AREA_VALUES = FEEDBACK_AREAS.map((area) => area.value);
-const PRIORITY_VALUES = FEEDBACK_PRIORITIES.map((priority) => priority.value);
-
 const ANALYSIS_TOOL: ClaudeTool = {
   name: "submit_analysis",
-  description: "Deliver the analysis of the company materials.",
+  description: "Deliver the Company Summary and the Investor Framing.",
   input_schema: {
     type: "object",
     properties: {
-      summary: { type: "string", description: "Internal company summary (markdown)." },
-      framing: { type: "string", description: "Internal investor framing (markdown)." },
-      intro: { type: "string", description: "Opening message to the founder (markdown)." },
-      feedback: {
-        type: "array",
-        items: {
-          type: "object",
-          properties: {
-            area: { type: "string", enum: AREA_VALUES },
-            priority: { type: "string", enum: PRIORITY_VALUES },
-            slide: { type: "string" },
-            title: { type: "string" },
-            body: { type: "string" },
-          },
-          required: ["area", "priority", "slide", "title", "body"],
-        },
-      },
+      summary: { type: "string", description: "Company summary for the founder (markdown)." },
+      framing: { type: "string", description: "Investor framing for the founder (markdown)." },
     },
-    required: ["summary", "framing", "intro", "feedback"],
+    required: ["summary", "framing"],
   },
 };
 
-export type AnalysisOutcome = {
-  analysis: MaterialsAnalysis;
-  intro: string;
-  items: FeedbackItem[];
-};
+export type AnalysisOutcome = { analysis: MaterialsAnalysis };
 
 export async function runMaterialsAnalysis(
   supabase: ServiceClient,
@@ -496,13 +469,9 @@ export async function runMaterialsAnalysis(
   if (!result.ok) return { ok: false, error: result.reason };
 
   const raw = result.input;
-  const items = asFeedbackItems(
-    (Array.isArray(raw.feedback) ? raw.feedback : []).map((item, index) => ({
-      ...(item && typeof item === "object" ? item : {}),
-      id: `f${index + 1}`,
-      visible: true,
-    })),
-  );
+  if (!text(raw.summary) || !text(raw.framing)) {
+    return { ok: false, error: "Claude returned an incomplete analysis. Nothing was saved." };
+  }
   const skipped = [...files.skipped];
   if (result.serverToolsSkipped && links.length > 0) {
     skipped.push(
@@ -525,8 +494,6 @@ export async function runMaterialsAnalysis(
         ],
         skipped,
       },
-      intro: text(raw.intro).slice(0, 30000),
-      items,
     },
   };
 }
@@ -580,63 +547,96 @@ async function draftEmailMiddle(
   return { ok: true, value: { subject, body } };
 }
 
-/** The email telling the founder their feedback is ready, from what they see. */
+/** Everything Rupert knows about the company, as context for an email. */
+async function companyContext(
+  supabase: ServiceClient,
+  clientId: string,
+  client: Record<string, unknown>,
+) {
+  const [interviewResult, fields, grouped, profile] = await Promise.all([
+    loadInterview(supabase, clientId),
+    loadMaterialFields(supabase),
+    loadSetupSteps(supabase, [clientId]),
+    profileContext(supabase, clientId),
+  ]);
+  const materialsRow = (grouped.get(clientId) ?? []).find((item) => item.step === "materials");
+  const materials = asMaterials(materialsRow?.published ?? materialsRow?.draft);
+  return {
+    rows: grouped.get(clientId) ?? [],
+    text: [
+      "## Company profile",
+      profile,
+      "## Client record",
+      buildClientContext(client),
+      "## Intake",
+      intakeContext(interviewResult.ok ? interviewResult.interview : null),
+      "## The founder's written answers",
+      answersBlock(fields, materials.fields),
+    ].join("\n\n"),
+  };
+}
+
+function sharedLine(attachments: { name: string }[], links: { label: string; url: string }[]) {
+  const shared = [
+    ...attachments.map((file) => file.name),
+    ...links.map((link) => link.label || link.url),
+  ];
+  return `## Files and links shared with it\n${shared.length > 0 ? shared.join(", ") : "None."}`;
+}
+
+/** The email that goes with the feedback, from Rupert's edited summary and framing. */
 export async function draftFeedbackEmail(
   supabase: ServiceClient,
   clientId: string,
   draft: FeedbackDraft,
   version: number,
 ): Promise<AgentResult<ClientEmailDraft>> {
+  if (!draft.analysis?.summary.trim() || !draft.analysis.framing.trim()) {
+    return {
+      ok: false,
+      error: "Write the Company Summary and Investor Framing first: the email is drafted from them.",
+    };
+  }
   const [loaded, prompts] = await Promise.all([
     loadClient(supabase, clientId),
     loadAgentPrompts(supabase),
   ]);
   if (!loaded.ok) return loaded;
+  const company = await companyContext(supabase, clientId, loaded.client);
 
-  const visible = feedbackForClient(draft);
-  if (!visible.intro.trim() && visible.items.length === 0) {
-    return { ok: false, error: "Add the feedback first: there is nothing to summarize." };
-  }
-
-  const feedback = [
+  const context = [
     ...founderLines(loaded.client, version),
-    "## Opening message in the portal",
-    visible.intro || "(none)",
-    "## Recommendations the founder will see",
-    visible.items
-      .map(
-        (item, index) =>
-          `${index + 1}. [${item.priority}${item.slide ? `, slide ${item.slide}` : ""}] ${item.title}: ${item.body}`,
-      )
-      .join("\n") || "(none)",
-    visible.attachments.length + visible.links.length > 0
-      ? `Also shared: ${[
-          ...visible.attachments.map((file) => file.name),
-          ...visible.links.map((link) => link.label || link.url),
-        ].join(", ")}`
-      : "",
+    "## Rupert's Company Summary (his edited version; the founder sees it)",
+    draft.analysis.summary,
+    "## Rupert's Investor Framing (his edited version; the founder sees it)",
+    draft.analysis.framing,
+    sharedLine(draft.attachments, draft.links),
+    "# Company information (context only)",
+    company.text,
   ]
     .filter(Boolean)
     .join("\n\n");
 
-  return draftEmailMiddle(prompts.feedback_email, feedback);
+  return draftEmailMiddle(prompts.feedback_email, context);
 }
 
-/** The email telling the founder their outreach narrative is ready, from what they see. */
+/** The email that goes with the narrative, from Rupert's edited narrative. */
 export async function draftNarrativeEmail(
   supabase: ServiceClient,
   clientId: string,
   narrative: NarrativePayload,
   version: number,
 ): Promise<AgentResult<ClientEmailDraft>> {
+  if (!narrative.core.trim()) {
+    return { ok: false, error: "Write the narrative first: the email is drafted from it." };
+  }
   const [loaded, prompts] = await Promise.all([
     loadClient(supabase, clientId),
     loadAgentPrompts(supabase),
   ]);
   if (!loaded.ok) return loaded;
-  if (!narrative.core.trim()) {
-    return { ok: false, error: "Push the narrative first: there is nothing to summarize." };
-  }
+  const company = await companyContext(supabase, clientId, loaded.client);
+  const feedback = asFeedback(company.rows.find((item) => item.step === "deck_review")?.draft);
 
   const context = [
     ...founderLines(loaded.client, version),
@@ -646,7 +646,12 @@ export async function draftNarrativeEmail(
     narrative.key_messages || "(none)",
     "## Approach",
     narrative.approach || "(none)",
-    narrative.admin_note ? `## Rupert's reply on this version\n${narrative.admin_note}` : "",
+    sharedLine(narrative.attachments, narrative.links),
+    "# Company information (context only)",
+    feedback.analysis
+      ? `## Rupert's Company Summary\n${feedback.analysis.summary}\n\n## Rupert's Investor Framing\n${feedback.analysis.framing}`
+      : "",
+    company.text,
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -725,11 +730,6 @@ export async function buildNarrative(
     feedback.analysis.summary,
     "## Rupert's investor framing",
     feedback.analysis.framing,
-    "## Feedback given to the founder",
-    feedback.items
-      .filter((item) => item.visible)
-      .map((item) => `- ${item.title}: ${item.body}`)
-      .join("\n") || "(none)",
     clientAsk && current.core
       ? `## The previous version the founder reviewed\n${JSON.stringify(current, null, 2)}\n\n## What the founder asked to change\n${clientAsk}`
       : "",

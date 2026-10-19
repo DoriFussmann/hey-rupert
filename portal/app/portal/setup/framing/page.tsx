@@ -14,6 +14,7 @@ import {
   feedbackChecks,
   isSharedWithClient,
 } from "@/lib/setup";
+import { signFileLinks } from "@/lib/setup-server";
 import { markStepViewed } from "@/lib/step-views-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -22,20 +23,24 @@ export default async function FramingPage() {
   const visible = Boolean(row && row.version > 0);
   const narrative = asNarrative(row?.published);
 
-  if (visible && row && !viewAs && isServiceRoleConfigured()) {
-    await markStepViewed(createServiceClient(), row, "framing");
-  }
+  const supabase = visible && isServiceRoleConfigured() ? createServiceClient() : null;
+  if (supabase && row && !viewAs) await markStepViewed(supabase, row, "framing");
+  const fileLinks =
+    supabase && narrative.attachments.length > 0
+      ? await signFileLinks(supabase, narrative.attachments)
+      : {};
 
-  // The feedback the client received, shown beside the narrative it shaped.
+  // Rupert's feedback, shown beside the narrative it shaped.
   const feedbackRow = client?.setup_steps?.find((entry) => entry.step === "deck_review") ?? null;
-  const feedbackItems = isSharedWithClient(feedbackRow)
-    ? asFeedbackPublished(feedbackRow?.published).items
-    : [];
+  const shared = feedbackRow && isSharedWithClient(feedbackRow)
+    ? asFeedbackPublished(feedbackRow.published)
+    : null;
   const feedback =
-    feedbackRow && feedbackItems.length > 0
+    feedbackRow && shared && (shared.framing.trim() || shared.items.length > 0)
       ? {
-          items: feedbackItems,
-          doneIds: feedbackChecks(feedbackRow.client_checks, feedbackItems),
+          framing: shared.framing,
+          items: shared.items,
+          doneIds: feedbackChecks(feedbackRow.client_checks, shared.items),
           href: "/portal/setup/deck-review",
         }
       : null;
@@ -66,7 +71,7 @@ export default async function FramingPage() {
               <AdminReply note={narrative.admin_note} />
             </div>
           ) : null}
-          <NarrativeView narrative={narrative} feedback={feedback} />
+          <NarrativeView narrative={narrative} fileLinks={fileLinks} feedback={feedback} />
           {row.status === "with_client" ? (
             <>
               <AdminReply note={narrative.admin_note} />

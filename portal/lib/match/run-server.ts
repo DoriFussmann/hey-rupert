@@ -600,7 +600,7 @@ export function exportRows(run: MatchRun) {
     ["Verticals", profile.verticals.join(", ")],
     ["Industries", profile.industries.join(", ")],
     ["HQ", [profile.city, profile.usRegion, profile.country].filter(Boolean).join(", ")],
-    ["Fund database", run.live.version.fileName],
+    ["Fund Database", run.live.version.fileName],
     ["Exported", new Date().toISOString().slice(0, 16).replace("T", " ")],
     [],
     ["Tier", "Funds", "Tightness", "Rules"],

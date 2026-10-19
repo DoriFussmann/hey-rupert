@@ -4,9 +4,7 @@ import type { EmailResult } from "@/lib/email";
 import { sendClientEmail } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
 import {
-  BODY_MAX,
   FEEDBACK_DEFAULT_MESSAGE,
-  SUBJECT_MAX,
   emailTemplate,
   renderEmail,
   tidyBody,
@@ -15,15 +13,11 @@ import {
 } from "@/lib/email-templates";
 import { clientAddress, firstNameOf, greetingFor } from "@/lib/notify";
 import { PORTAL_URL } from "@/lib/portal-url";
-import {
-  asNarrative,
-  type ClientEmailDraft,
-  type SetupDocumentStep,
-  type SetupStepState,
-} from "@/lib/setup";
+import type { ClientEmailDraft, SetupDocumentStep } from "@/lib/setup";
 
-// Draft Email & Send for the feedback and the narrative: the email is filled
-// from the step's template in Forms → Emails, Rupert edits it, then sends it.
+// The email that goes with Push to Client Portal & Send (feedback and
+// narrative): drafted by Claude or filled from Forms → Emails, edited by
+// Rupert, then sent as he wrote it.
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -87,20 +81,19 @@ function baseValues(
   };
 }
 
-/** The email for the version the client has, from Forms → Emails. */
+/** The email for a version, filled from Forms → Emails (when Claude is not set up). */
 export async function renderStepEmail(
   supabase: ServiceClient,
   clientId: string,
   step: SetupDocumentStep,
-  row: SetupStepState,
+  version: number,
 ): Promise<Prepared> {
   const context = await loadContext(supabase, clientId, step);
   if (!context.ok) return context;
 
-  const reply = step === "framing" ? asNarrative(row.published).admin_note ?? "" : "";
   const rendered = renderEmail(context.template, {
-    ...baseValues(context, row.version),
-    note: reply ? `A note from Rupert:\n${reply}` : "",
+    ...baseValues(context, version),
+    note: "",
     message: FEEDBACK_DEFAULT_MESSAGE,
   });
   return {
@@ -108,7 +101,7 @@ export async function renderStepEmail(
     to: context.to,
     paused: context.row.emails_paused === true,
     email: {
-      subject: row.version > 1 ? updatedSubject(rendered.subject) : rendered.subject,
+      subject: version > 1 ? updatedSubject(rendered.subject) : rendered.subject,
       body: rendered.body,
     },
   };
@@ -148,16 +141,6 @@ export async function composeAiEmail(
       body,
     },
   };
-}
-
-export function stepEmailProblem(subject: string, body: string) {
-  if (!subject) return "Add a subject.";
-  if (!body) return "Write the email.";
-  if (subject.length > SUBJECT_MAX) {
-    return `The subject is too long (max ${SUBJECT_MAX} characters).`;
-  }
-  if (body.length > BODY_MAX) return `The email is too long (max ${BODY_MAX} characters).`;
-  return null;
 }
 
 /** Sends the email as written and logs it in the client's email history. */

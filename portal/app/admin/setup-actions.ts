@@ -12,22 +12,23 @@ import { isHttpUrl } from "@/lib/material-fields";
 import {
   INVESTOR_LIST_BLOCKED,
   SETUP_STEPS,
+  asClientEmail,
   asEmailCopy,
   asFeedback,
-  asFeedbackPublished,
   asInvestorList,
   asMaterials,
   asNarrative,
   canPublish,
+  clientEmailProblem,
   emailCopyProblems,
-  feedbackFolder,
   feedbackForClient,
   feedbackProblem,
   isSetupDocumentStep,
-  isSharedWithClient,
   narrativeProblem,
+  setupFilesFolder,
   type ClientEmailDraft,
   type FeedbackDraft,
+  type MaterialFile,
   type NarrativePayload,
   type SetupDocumentStep,
   type SetupStepId,
@@ -38,7 +39,6 @@ import {
   composeAiEmail,
   renderStepEmail,
   sendStepEmail,
-  stepEmailProblem,
 } from "@/lib/setup-email-server";
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 
@@ -51,8 +51,11 @@ export type AdminPublishResult =
 export type AdminPushResult =
   | { ok: true; version: number }
   | { ok: false; error: string };
+export type SendDocumentResult =
+  | { ok: true; version: number; clientEmail: EmailResult }
+  | { ok: false; error: string };
 export type StepEmailResult =
-  | { ok: true; email: ClientEmailDraft; to: string; pausedNote: string | null }
+  | { ok: true; email: ClientEmailDraft; pausedNote: string | null }
   | { ok: false; error: string };
 
 type PublishableStep = "deck_review" | "framing" | "investor_list" | "email_copy";
@@ -133,17 +136,37 @@ async function loadState(supabase: ServiceClient, clientId: string) {
   };
 }
 
-/** Keeps only this client's feedback uploads and http(s) links. */
+/** Keeps only files uploaded to this client's Setup folder. */
+function ownFiles(clientId: string, files: MaterialFile[]) {
+  const folder = setupFilesFolder(clientId);
+  return files.filter((file) => file.path.startsWith(folder) && !file.path.includes(".."));
+}
+
+/** The feedback draft: this client's uploads and http(s) links only. */
 function cleanFeedback(clientId: string, draft: unknown): FeedbackDraft {
   const feedback = asFeedback(draft);
-  const folder = feedbackFolder(clientId);
   return {
     ...feedback,
-    intro: feedback.intro.trim(),
-    attachments: feedback.attachments.filter(
-      (file) => file.path.startsWith(folder) && !file.path.includes(".."),
-    ),
+    attachments: ownFiles(clientId, feedback.attachments),
     links: feedback.links.filter((link) => isHttpUrl(link.url)),
+  };
+}
+
+type NarrativeDraft = NarrativePayload & { client_email: ClientEmailDraft };
+
+/**
+ * The narrative draft, cleaned the same way, with its email. Rupert's reply
+ * from before the email went with each push is not carried forward.
+ */
+function cleanNarrative(clientId: string, draft: unknown): NarrativeDraft {
+  const narrative = asNarrative(draft);
+  const raw = (draft && typeof draft === "object" ? draft : {}) as Record<string, unknown>;
+  return {
+    ...narrative,
+    admin_note: undefined,
+    attachments: ownFiles(clientId, narrative.attachments),
+    links: narrative.links.filter((link) => isHttpUrl(link.url)),
+    client_email: asClientEmail(raw.client_email),
   };
 }
 
@@ -152,7 +175,14 @@ function normalizeDraft(clientId: string, step: PublishableStep, draft: unknown)
   if (step === "investor_list") return asInvestorList(draft);
   if (step === "email_copy") return asEmailCopy(draft);
   if (step === "deck_review") return cleanFeedback(clientId, draft);
-  return asNarrative(draft);
+  return cleanNarrative(clientId, draft);
+}
+
+/** What the client sees of a draft: never the analysis notes or the email. */
+function publishedPayload(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
+  if (step === "deck_review") return feedbackForClient(draft as FeedbackDraft);
+  if (step === "framing") return asNarrative(draft);
+  return draft;
 }
 
 function draftProblem(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
@@ -166,7 +196,7 @@ function draftProblem(step: PublishableStep, draft: ReturnType<typeof normalizeD
     return problems.length > 0 ? problems.join(" ") : null;
   }
   if (step === "deck_review") return feedbackProblem(draft as FeedbackDraft);
-  return narrativeProblem(draft as NarrativePayload);
+  return narrativeProblem(draft as NarrativeDraft);
 }
 
 /** Saves Rupert's work in progress. The client does not see drafts. */
@@ -205,7 +235,7 @@ function dependentsStarted(rows: SetupStepState[], step: PublishableStep) {
 
 /**
  * Writes a new version of a step for the client: it becomes their turn.
- * Shared by both kinds of push; neither the email nor revalidation happens here.
+ * Shared by every push; neither the email nor revalidation happens here.
  */
 async function writePush(
   supabase: ServiceClient,
@@ -219,7 +249,7 @@ async function writePush(
   if (!canPublish(state.source, step)) return { ok: false, error: BLOCKED[step] };
 
   let payload = normalizeDraft(clientId, step, draft);
-  if (step !== "deck_review") {
+  if (step === "investor_list" || step === "email_copy") {
     const reply = String(note ?? "").trim().slice(0, 4000);
     payload = { ...payload, admin_note: reply || undefined };
   }
@@ -242,8 +272,7 @@ async function writePush(
     step,
     status: "with_client",
     draft: payload,
-    // The client sees only the feedback meant for them, never the analysis.
-    published: step === "deck_review" ? feedbackForClient(payload as FeedbackDraft) : payload,
+    published: publishedPayload(step, payload),
     version,
     published_at: at,
     response: null,
@@ -285,7 +314,7 @@ async function writePush(
 
 /**
  * Pushes the investor list or the email copy to the client and emails them.
- * The feedback and the narrative use pushSetupDocument instead.
+ * The feedback and the narrative use sendSetupDocument instead.
  */
 export async function publishSetupStep(
   clientId: string,
@@ -312,100 +341,101 @@ export async function publishSetupStep(
 }
 
 /**
- * Pushes the Analysis & Feedback or the Outreach Narrative to the client's
- * portal. It becomes their turn to confirm. No email is sent: Rupert emails
- * the client with Draft Email & Send. `reply` (narrative only) is shown on
- * the client's page above Confirm.
+ * Push to Client Portal & Send, for the Analysis & Feedback and the Outreach
+ * Narrative: pushes a new version to the client's portal (their turn to
+ * confirm), then sends the email Rupert reviewed and records it on that
+ * version. The email goes even when automatic emails are paused: Rupert
+ * sends it himself. If the email fails, the push stands and the reason is
+ * returned.
  */
-export async function pushSetupDocument(
+export async function sendSetupDocument(
   clientId: string,
   step: SetupDocumentStep,
   draft: unknown,
-  reply = "",
-): Promise<AdminPushResult> {
+): Promise<SendDocumentResult> {
   const access = await requireAdmin();
   if (!access.ok) return access;
-  if (!isSetupDocumentStep(step)) return { ok: false, error: "This step cannot be pushed here." };
+  if (!isSetupDocumentStep(step)) return { ok: false, error: "This step cannot be sent here." };
 
-  const pushed = await writePush(access.supabase, clientId, step, draft, reply);
+  const email = normalizeDraft(clientId, step, draft) as FeedbackDraft | NarrativeDraft;
+  const emailProblem = clientEmailProblem(email.client_email);
+  if (emailProblem) return { ok: false, error: emailProblem };
+
+  const pushed = await writePush(access.supabase, clientId, step, draft, "");
   if (!pushed.ok) return pushed;
 
+  const clientEmail = await sendStepEmail(access.supabase, clientId, step, {
+    subject: email.client_email.subject.replace(/\s+/g, " ").trim(),
+    body: email.client_email.body.trim(),
+  });
+  if (clientEmail.ok) await recordEmailed(access.supabase, clientId, step, pushed.version);
+
   revalidateSetup(clientId);
-  return pushed;
+  return { ok: true, version: pushed.version, clientEmail };
 }
 
-// ---------------------------------------------------------------------------
-// Draft Email & Send (feedback and narrative)
-
-async function loadPushedStep(
+/** Marks a version as emailed. Best effort: the email is already out. */
+async function recordEmailed(
   supabase: ServiceClient,
   clientId: string,
   step: SetupDocumentStep,
+  version: number,
 ) {
-  const state = await loadState(supabase, clientId);
+  const loaded = await loadState(supabase, clientId);
+  if (!loaded.ok) return;
+  const row = loaded.rows.find((item) => item.step === step);
+  if (!row || row.version !== version) return;
+  const at = nowIso();
+  const { error } = await supabase
+    .from("setup_steps")
+    .update({
+      history: row.history.map((entry) =>
+        entry.version === version ? { ...entry, emailed_at: at } : entry,
+      ),
+    })
+    .eq("client_id", clientId)
+    .eq("step", step)
+    .eq("version", version);
+  if (error) console.error(`Setup email not recorded: ${error.message}`);
+}
+
+/**
+ * Drafts the email for the next send from the draft as it stands (unsaved
+ * edits included): written by Claude from Rupert's edited content and the
+ * company information, or filled from Forms → Emails when Claude is not set up.
+ */
+export async function draftSetupEmail(
+  clientId: string,
+  step: SetupDocumentStep,
+  draft: unknown,
+): Promise<StepEmailResult> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
+
+  const state = await loadState(access.supabase, clientId);
   if (!state.ok) return state;
   const row = state.rows.find((item) => item.step === step) ?? null;
-  if (!row || !isSharedWithClient(row)) {
-    return { ok: false as const, error: "Push it to the client portal first." };
-  }
-  return { ok: true as const, row };
-}
+  const version = (row?.version ?? 0) + 1;
 
-/** The email for the version the client has, filled from Forms → Emails. */
-export async function prepareSetupEmail(
-  clientId: string,
-  step: SetupDocumentStep,
-): Promise<StepEmailResult> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
-
-  const loaded = await loadPushedStep(access.supabase, clientId, step);
-  if (!loaded.ok) return loaded;
-
-  const rendered = await renderStepEmail(access.supabase, clientId, step, loaded.row);
-  if (!rendered.ok) return rendered;
-  return {
-    ok: true,
-    email: rendered.email,
-    to: rendered.to,
-    pausedNote: rendered.paused ? STEP_EMAIL_PAUSED_NOTE : null,
-  };
-}
-
-/** The same email, with the middle written by Claude from what the client has. */
-export async function draftSetupEmailWithAi(
-  clientId: string,
-  step: SetupDocumentStep,
-): Promise<StepEmailResult> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
   if (!isClaudeConfigured()) {
+    const rendered = await renderStepEmail(access.supabase, clientId, step, version);
+    if (!rendered.ok) return rendered;
     return {
-      ok: false,
-      error:
-        "Claude is not configured. Add ANTHROPIC_API_KEY in Vercel (see Forms → Intake Interviewer → Test Claude).",
+      ok: true,
+      email: rendered.email,
+      pausedNote: rendered.paused ? STEP_EMAIL_PAUSED_NOTE : null,
     };
   }
 
-  const loaded = await loadPushedStep(access.supabase, clientId, step);
-  if (!loaded.ok) return loaded;
-  const { row } = loaded;
-
   const drafted =
     step === "deck_review"
-      ? await draftFeedbackEmail(
-          access.supabase,
-          clientId,
-          { analysis: null, ...asFeedbackPublished(row.published) },
-          row.version,
-        )
+      ? await draftFeedbackEmail(access.supabase, clientId, cleanFeedback(clientId, draft), version)
       : await draftNarrativeEmail(
           access.supabase,
           clientId,
-          asNarrative(row.published),
-          row.version,
+          cleanNarrative(clientId, draft),
+          version,
         );
   if (!drafted.ok) return drafted;
 
@@ -414,59 +444,8 @@ export async function draftSetupEmailWithAi(
   return {
     ok: true,
     email: composed.email,
-    to: composed.to,
     pausedNote: composed.paused ? STEP_EMAIL_PAUSED_NOTE : null,
   };
-}
-
-/**
- * Sends the email Rupert reviewed for the version the client has, and
- * records it on that version. Sent even when automatic emails are paused:
- * Rupert sends it himself.
- */
-export async function sendSetupEmail(
-  clientId: string,
-  step: SetupDocumentStep,
-  version: number,
-  email: ClientEmailDraft,
-): Promise<AdminSetupResult> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
-
-  const subject = String(email?.subject ?? "").replace(/\s+/g, " ").trim();
-  const body = String(email?.body ?? "").trim();
-  const problem = stepEmailProblem(subject, body);
-  if (problem) return { ok: false, error: problem };
-
-  const loaded = await loadPushedStep(access.supabase, clientId, step);
-  if (!loaded.ok) return loaded;
-  const { row } = loaded;
-  if (Number(version) !== row.version) {
-    return {
-      ok: false,
-      error: "A newer version was pushed meanwhile. Refresh, then draft the email again.",
-    };
-  }
-
-  const sent = await sendStepEmail(access.supabase, clientId, step, { subject, body });
-  if (!sent.ok) return { ok: false, error: sent.reason };
-
-  // Best effort: the email is out, so a failed record never reports failure.
-  const at = nowIso();
-  const history = row.history.map((entry) =>
-    entry.version === row.version ? { ...entry, emailed_at: at } : entry,
-  );
-  const { error } = await access.supabase
-    .from("setup_steps")
-    .update({ history })
-    .eq("client_id", clientId)
-    .eq("step", step)
-    .eq("version", row.version);
-  if (error) console.error(`Setup email not recorded: ${error.message}`);
-
-  revalidatePath(`/admin/clients/${clientId}`);
-  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------

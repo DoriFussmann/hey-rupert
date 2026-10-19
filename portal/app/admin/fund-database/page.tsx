@@ -55,7 +55,7 @@ export default async function FundDatabasePage() {
   return (
     <>
       <PageHeader
-        title="Fund database"
+        title="Fund Database"
         description="The investor database Rupert Match runs on. It stays private on the server: clients only ever see fund names and counts. Upload a new workbook when the data provider sends one; you see what changes before it goes live."
       />
       {error ? (

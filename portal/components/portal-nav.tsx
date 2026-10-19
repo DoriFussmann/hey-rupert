@@ -13,8 +13,11 @@ import {
   onboardingProgress,
   type OnboardingSource,
 } from "@/lib/onboarding";
-
-type PhaseId = "onboarding" | "setup" | "live";
+import {
+  PORTAL_PHASE_HOME,
+  currentPortalPhase,
+  type PortalPhase as PhaseId,
+} from "@/lib/portal-phase";
 
 const PHASES: {
   id: PhaseId;
@@ -25,7 +28,7 @@ const PHASES: {
   {
     id: "onboarding",
     label: "Onboarding",
-    href: "/portal/onboarding",
+    href: PORTAL_PHASE_HOME.onboarding,
     prefixes: [
       "/portal/onboarding",
       "/portal/statement-of-work",
@@ -38,13 +41,13 @@ const PHASES: {
   {
     id: "setup",
     label: "Setup",
-    href: "/portal/setup",
+    href: PORTAL_PHASE_HOME.setup,
     prefixes: ["/portal/setup"],
   },
   {
     id: "live",
     label: "Live Campaign",
-    href: "/portal/live-campaign",
+    href: PORTAL_PHASE_HOME.live,
     prefixes: [
       "/portal/live-campaign",
       "/portal/campaigns",
@@ -58,12 +61,6 @@ function pathInPhase(pathname: string, prefixes: string[]) {
   return prefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
-}
-
-function currentPhase(stage: string | undefined, onboardingComplete: boolean): PhaseId {
-  if (isLiveUnlocked(stage)) return "live";
-  if (isSetupUnlocked(stage) && onboardingComplete) return "setup";
-  return "onboarding";
 }
 
 export function PortalNav({
@@ -92,10 +89,7 @@ export function PortalNav({
     setup: !isSetupUnlocked(stage),
     live: !isLiveUnlocked(stage),
   };
-  const activeStage = currentPhase(
-    stage,
-    counts.onboarding.complete === counts.onboarding.total,
-  );
+  const activeStage = currentPortalPhase(stage, onboarding);
 
   return (
     <nav className="flex flex-col gap-xs">
@@ -104,12 +98,8 @@ export function PortalNav({
         const isLocked = locked[phase.id];
         const isCurrent = activeStage === phase.id;
         const isActive = pathInPhase(pathname, phase.prefixes);
-        const progress =
-          complete === total
-            ? "Complete"
-            : isLocked
-              ? "Not open yet"
-              : `${complete} of ${total} complete`;
+        const done = total > 0 && complete === total;
+        const progress = isLocked ? "Not open yet" : `${complete} of ${total} complete`;
 
         return (
           <Link
@@ -129,19 +119,34 @@ export function PortalNav({
                 <span className="text-label uppercase tracking-label text-primary">
                   Your turn
                 </span>
+              ) : done ? (
+                <span className="flex items-center text-success">
+                  <svg viewBox="0 0 16 16" aria-hidden className="h-4 w-4" fill="none">
+                    <path
+                      d="M3.5 8.5l3 3 6-7"
+                      stroke="currentColor"
+                      strokeWidth="1.75"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span className="sr-only">Complete</span>
+                </span>
               ) : isCurrent ? (
                 <span className="text-label uppercase tracking-label text-primary">
                   Current
                 </span>
               ) : null}
             </span>
-            <span
-              className={`mt-xs block text-body-sm ${
-                isActive ? "text-primary" : "text-muted"
-              }`}
-            >
-              {progress}
-            </span>
+            {done ? null : (
+              <span
+                className={`mt-xs block text-body-sm ${
+                  isActive ? "text-primary" : "text-muted"
+                }`}
+              >
+                {progress}
+              </span>
+            )}
           </Link>
         );
       })}

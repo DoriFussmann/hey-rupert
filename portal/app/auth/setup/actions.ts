@@ -83,5 +83,5 @@ export async function completePasswordSetup(
     };
   }
 
-  return { ok: true, redirectTo: "/portal/onboarding" };
+  return { ok: true, redirectTo: "/portal" };
 }

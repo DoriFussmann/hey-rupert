@@ -32,6 +32,7 @@ import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 import {
   asFeedback,
+  asNarrative,
   asMaterials,
   isSetupComplete,
   isSetupOpen,
@@ -118,8 +119,14 @@ export default async function ClientDetailPage({
   const feedbackRow = setupSource.setup_steps.find(
     (row) => row.step === "deck_review",
   );
+  const narrativeRow = setupSource.setup_steps.find((row) => row.step === "framing");
+  // Files Rupert attached to the feedback and narrative drafts.
+  const setupFiles = [
+    ...(feedbackRow ? asFeedback(feedbackRow.draft).attachments : []),
+    ...(narrativeRow ? asNarrative(narrativeRow.draft).attachments : []),
+  ];
   const service = isServiceRoleConfigured() ? createServiceClient() : null;
-  const [materialLinks, feedbackLinks, materialFields] = await Promise.all([
+  const [materialLinks, setupFileLinks, materialFields] = await Promise.all([
     materialsRow && service
       ? signMaterialLinks(
           service,
@@ -130,8 +137,8 @@ export default async function ClientDetailPage({
           ),
         )
       : Promise.resolve({}),
-    feedbackRow && service
-      ? signFileLinks(service, asFeedback(feedbackRow.draft).attachments)
+    setupFiles.length > 0 && service
+      ? signFileLinks(service, setupFiles)
       : Promise.resolve({}),
     service
       ? loadMaterialFields(service)
@@ -192,7 +199,6 @@ export default async function ClientDetailPage({
   const materialsOnboarding = getOnboardingItems(client).find(
     (item) => item.id === "materials",
   );
-  const framingRow = setupSource.setup_steps.find((row) => row.step === "framing");
   const materialsItem: SetupItem = {
     ...setupStep("materials"),
     status: materialsOnboarding?.status ?? "open",
@@ -211,7 +217,7 @@ export default async function ClientDetailPage({
         row={materialsRow ?? null}
         fields={materialFields}
         links={materialLinks}
-        canReopen={!framingRow || framingRow.version === 0}
+        canReopen={!narrativeRow || narrativeRow.version === 0}
       />
     ),
   });
@@ -224,7 +230,8 @@ export default async function ClientDetailPage({
         <SetupWorkspace
           clientId={client.id}
           source={setupSource}
-          feedbackLinks={feedbackLinks}
+          fileLinks={setupFileLinks}
+          clientEmail={client.email ?? client.founder_email}
           claudeReady={claudeReady}
         />
       ),

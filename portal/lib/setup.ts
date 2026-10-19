@@ -44,11 +44,11 @@ export type SetupHistoryEntry = {
   version: number;
   published_at: string;
   response: SetupResponse | null;
-  /** When Rupert last emailed the client about this version (Draft Email & Send). */
+  /** When the client was emailed about this version. */
   emailed_at?: string | null;
 };
 
-/** Steps Rupert pushes without an email; he emails separately with Draft Email & Send. */
+/** Steps Rupert sends as a document: one action pushes it to the portal and emails the client. */
 export type SetupDocumentStep = "deck_review" | "framing";
 
 export function isSetupDocumentStep(value: unknown): value is SetupDocumentStep {
@@ -113,6 +113,7 @@ export const FEEDBACK_PRIORITIES: { value: FeedbackPriority; label: string }[] =
   { value: "low", label: "Low" },
 ];
 
+/** A recommendation from feedback sent before the summary and framing became the feedback. */
 export type FeedbackItem = {
   id: string;
   area: FeedbackArea;
@@ -121,37 +122,42 @@ export type FeedbackItem = {
   slide: string;
   title: string;
   body: string;
-  /** False keeps the item internal: the client never sees it. */
+  /** False kept the item internal: the client never saw it. */
   visible: boolean;
 };
 
 export type FeedbackLink = { id: string; label: string; url: string };
 
 export type MaterialsAnalysis = {
-  /** Internal company summary for Rupert. */
+  /** Company summary, written for the founder to read (markdown). */
   summary: string;
-  /** Internal investor framing: positioning, angles, weak spots. */
+  /** Investor framing, written for the founder to read (markdown). */
   framing: string;
   generated_at: string;
-  /** What the agent read, and what it could not. */
+  /** What the agent read, and what it could not (Rupert only). */
   read: string[];
   skipped: string[];
 };
 
-/** An email to the client, written in Draft Email & Send. */
+/** The email Rupert sends with a push. */
 export type ClientEmailDraft = { subject: string; body: string };
 
 export type FeedbackDraft = {
   analysis: MaterialsAnalysis | null;
-  /** Opening message to the client, above the recommendations (markdown). */
-  intro: string;
-  items: FeedbackItem[];
   attachments: MaterialFile[];
   links: FeedbackLink[];
+  /** The email that goes with the next push (saved with the draft). */
+  client_email: ClientEmailDraft;
 };
 
-/** What the client sees. */
+/**
+ * What the client sees: the summary and framing, files and links. `intro`
+ * and `items` exist only on feedback sent before that (a message and a list
+ * of recommendations); they stay visible to those clients.
+ */
 export type FeedbackPublished = {
+  summary: string;
+  framing: string;
   intro: string;
   items: FeedbackItem[];
   attachments: MaterialFile[];
@@ -173,7 +179,10 @@ export type NarrativePayload = {
   approach: string;
   /** What the client should expect after they confirm. */
   next_steps: string;
-  /** Rupert's reply when this version is sent back for confirmation. */
+  /** Files and links Rupert shares with the narrative. */
+  attachments: MaterialFile[];
+  links: FeedbackLink[];
+  /** Rupert's reply on versions pushed before the email went with each push. */
   admin_note?: string;
   /**
    * Outreach copy from narratives pushed before email copy moved to its own
@@ -298,7 +307,7 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
     short: "Analysis & Feedback",
     href: "/portal/setup/deck-review",
     clientTask: "read Rupert's feedback on your materials and confirm",
-    adminAction: "Analyze the materials and push the feedback",
+    adminAction: "Analyze the materials and send the feedback",
     kind: "review",
   },
   {
@@ -679,41 +688,58 @@ function asAnalysis(value: unknown): MaterialsAnalysis | null {
   };
 }
 
-/**
- * Rupert's feedback workspace. Older rows stored a single markdown `body`,
- * which becomes the intro. Rows saved while the page message doubled as the
- * email kept it in `email.body`, which took precedence on the page.
- */
+export const EMAIL_SUBJECT_MAX = 300;
+export const EMAIL_BODY_MAX = 10000;
+
+/** The email saved with a draft. */
+export function asClientEmail(value: unknown): ClientEmailDraft {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return {
+    subject: str(raw.subject, EMAIL_SUBJECT_MAX),
+    body: str(raw.body, EMAIL_BODY_MAX),
+  };
+}
+
+/** Rupert's feedback workspace: the summary and framing, files, links and the email. */
 export function asFeedback(value: unknown): FeedbackDraft {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
     string,
     unknown
   >;
-  const legacyEmail = (raw.email && typeof raw.email === "object"
-    ? raw.email
-    : {}) as Record<string, unknown>;
-  const legacyMessage = str(legacyEmail.body, 30000).trim();
   return {
     analysis: asAnalysis(raw.analysis),
-    intro: legacyMessage || str(raw.intro ?? raw.body, 30000),
-    items: asFeedbackItems(raw.items),
     attachments: asFiles(raw.attachments),
     links: asLinks(raw.links),
+    client_email: asClientEmail(raw.client_email),
   };
 }
 
-/** The part of the feedback the client sees. */
+/** The part of the feedback the client sees (never what the AI read). */
 export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
   return {
-    intro: draft.intro,
-    items: draft.items.filter((item) => item.visible && (item.title || item.body)),
+    summary: draft.analysis?.summary ?? "",
+    framing: draft.analysis?.framing ?? "",
+    intro: "",
+    items: [],
     attachments: draft.attachments,
     links: draft.links,
   };
 }
 
+/** Older feedback stored the message as `body`; recommendations hidden from the client are dropped. */
 export function asFeedbackPublished(value: unknown): FeedbackPublished {
-  return feedbackForClient(asFeedback(value));
+  const raw = (value && typeof value === "object" ? value : {}) as Record<
+    string,
+    unknown
+  >;
+  return {
+    summary: str(raw.summary, 30000),
+    framing: str(raw.framing, 30000),
+    intro: str(raw.intro ?? raw.body, 30000),
+    items: asFeedbackItems(raw.items).filter((item) => item.visible && (item.title || item.body)),
+    attachments: asFiles(raw.attachments),
+    links: asLinks(raw.links),
+  };
 }
 
 /** Ticked items, kept only if they still exist in the published feedback. */
@@ -726,15 +752,23 @@ export function feedbackChecks(
 }
 
 export function feedbackProblem(draft: FeedbackDraft) {
-  const published = feedbackForClient(draft);
-  if (!published.intro.trim() && published.items.length === 0) {
-    return "Add a message to the client or at least one recommendation the client can see.";
-  }
+  if (!draft.analysis?.summary.trim()) return "Write the Company Summary before sending.";
+  if (!draft.analysis.framing.trim()) return "Write the Investor Framing before sending.";
   return null;
 }
 
-/** Files Rupert attaches to the feedback live under this storage folder. */
-export function feedbackFolder(clientId: string) {
+/** Why the email cannot go yet, or null. */
+export function clientEmailProblem(email: ClientEmailDraft) {
+  if (!email.subject.trim()) return "Add a subject to the email.";
+  if (!email.body.trim()) return "Write the email (Draft Email writes one for you).";
+  return null;
+}
+
+/**
+ * Files Rupert shares in Setup (feedback and narrative) live under this
+ * storage folder. The name predates the narrative sharing it.
+ */
+export function setupFilesFolder(clientId: string) {
   return `${clientId}/feedback/`;
 }
 
@@ -755,6 +789,8 @@ export function asNarrative(value: unknown): NarrativePayload {
     key_messages: str(raw.key_messages, 20000),
     approach: str(raw.approach, 20000),
     next_steps: nextSteps || NARRATIVE_NEXT_STEPS,
+    attachments: asFiles(raw.attachments),
+    links: asLinks(raw.links),
     admin_note: str(raw.admin_note, NOTE_MAX).trim() || undefined,
     email_subject: optionalText(raw.email_subject, 300),
     email_body: optionalText(raw.email_body, 10000),
@@ -773,9 +809,9 @@ export function narrativeHasEarlierDraft(narrative: NarrativePayload) {
 }
 
 export function narrativeProblem(narrative: NarrativePayload) {
-  if (!narrative.core.trim()) return "Write the core story before pushing.";
-  if (!narrative.key_messages.trim()) return "Add the key messages before pushing.";
-  if (!narrative.approach.trim()) return "Describe how you'll approach investors before pushing.";
+  if (!narrative.core.trim()) return "Write the core story before sending.";
+  if (!narrative.key_messages.trim()) return "Add the key messages before sending.";
+  if (!narrative.approach.trim()) return "Describe how you'll approach investors before sending.";
   return null;
 }
 

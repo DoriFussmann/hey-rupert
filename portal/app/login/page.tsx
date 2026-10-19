@@ -55,7 +55,7 @@ export default function LoginPage() {
       }
 
       if (role === "client") {
-        router.replace("/portal/onboarding");
+        router.replace("/portal");
         router.refresh();
         return;
       }

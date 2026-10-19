@@ -196,14 +196,14 @@ export function MatchWorkspace({
     <div className="space-y-lg">
       {database ? (
         <p className="text-body-sm text-muted">
-          Fund database: {n(database.firms)} funds · {n(database.contacts)} contacts.{" "}
+          Fund Database: {n(database.firms)} funds · {n(database.contacts)} contacts.{" "}
           <Link href="/admin/fund-database" className="text-primary hover:text-primary-hover">
             Manage
           </Link>
         </p>
       ) : (
         <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-secondary">
-          No fund database yet.{" "}
+          No Fund Database yet.{" "}
           <Link href="/admin/fund-database" className="text-primary hover:text-primary-hover">
             Upload the workbook
           </Link>{" "}
@@ -272,7 +272,7 @@ export function MatchWorkspace({
               : "Outreach narrative not confirmed. Needed before Send to client, not to run."}
           </li>
           <li className={databaseLive ? "text-success" : "text-secondary"}>
-            {databaseLive ? "Fund database live." : "Fund database is not live."}
+            {databaseLive ? "Fund Database live." : "Fund Database is not live."}
           </li>
         </ul>
       </section>
@@ -294,7 +294,7 @@ export function MatchWorkspace({
         />
       ) : database ? (
         <p className="rounded-card border border-border bg-surface px-lg py-lg text-body-sm text-muted">
-          No saved match yet. Run match when the profile can run and the fund database is live.
+          No saved match yet. Run match when the profile can run and the Fund Database is live.
         </p>
       ) : null}
     </div>

@@ -36,7 +36,7 @@ export default async function DeckReviewPage() {
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Analysis & Feedback"
-        description="Rupert's feedback on your pitch deck and materials. Apply what's useful: the deck is yours."
+        description="How Rupert reads your company and how he'll position it to investors. Apply what's useful: the deck is yours."
       />
       {!shared || !row ? (
         <TurnBanner
@@ -54,7 +54,7 @@ export default async function DeckReviewPage() {
                   ? "Rupert updated his feedback. Read it through, then confirm."
                   : "Read Rupert's feedback, then confirm."
               }
-              detail="Confirming tells Rupert you've seen it. Once you've also confirmed the outreach narrative, he sends your matched investor list."
+              detail="Read the Company Summary and Investor Framing below. Confirming tells Rupert you've seen them. Once you've also confirmed the outreach narrative, he sends your matched investor list."
             />
           ) : (
             <TurnBanner
@@ -64,7 +64,11 @@ export default async function DeckReviewPage() {
                   ? `You confirmed this on ${formatDateAtTime(row.response.at)}.`
                   : "Feedback shared. Nothing more to do here."
               }
-              detail="Tick off the recommendations as you go: it helps you and Rupert track them."
+              detail={
+                feedback.items.length > 0
+                  ? "Tick off the recommendations as you go: it helps you and Rupert track them."
+                  : undefined
+              }
             />
           )}
           <FeedbackView
@@ -80,7 +84,7 @@ export default async function DeckReviewPage() {
               version={row.version}
               confirmLabel="Confirm feedback"
               allowChanges={false}
-              intro="Confirm that you've read the feedback. Add a note if there's anything Rupert should know."
+              intro="Confirm that you've read Rupert's summary and framing. Add a note if there's anything he should know."
               notePlaceholder="Anything Rupert should know (optional)"
               readOnly={viewAs}
             />

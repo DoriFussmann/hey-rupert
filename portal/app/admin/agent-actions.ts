@@ -24,7 +24,7 @@ import {
   MATERIAL_EXTENSIONS,
   MATERIAL_MAX_BYTES,
   asFeedback,
-  feedbackFolder,
+  setupFilesFolder,
   fileExtension,
   formatBytes,
   type EmailCopyPayload,
@@ -120,8 +120,8 @@ async function saveFeedbackDraft(
 }
 
 /**
- * Reads everything the client shared and replaces the summary, framing,
- * opening message and recommendations. Attachments and links are kept.
+ * Reads everything the client shared and replaces the Company Summary and
+ * Investor Framing. Files, links and the email draft are kept.
  */
 export async function analyzeClientMaterials(
   clientId: string,
@@ -135,12 +135,7 @@ export async function analyzeClientMaterials(
   const existing = await loadSetupStep(access.supabase, clientId, "deck_review");
   if (!existing.ok) return existing;
   const previous = asFeedback(existing.row?.draft);
-  const draft: FeedbackDraft = {
-    ...previous,
-    analysis: result.value.analysis,
-    intro: result.value.intro,
-    items: result.value.items,
-  };
+  const draft: FeedbackDraft = { ...previous, analysis: result.value.analysis };
 
   const error = await saveFeedbackDraft(access.supabase, clientId, draft);
   if (error) return { ok: false, error };
@@ -149,10 +144,11 @@ export async function analyzeClientMaterials(
 }
 
 /**
- * Step 1 of attaching a file to the feedback: a one-time signed upload URL
- * under the client's feedback folder (the browser uploads directly).
+ * Step 1 of attaching a file to the feedback or the narrative: a one-time
+ * signed upload URL under the client's Setup files folder (the browser
+ * uploads directly).
  */
-export async function createFeedbackUpload(
+export async function createSetupUpload(
   clientId: string,
   file: { name: string; size: number },
 ): Promise<Result<{ path: string; token: string }>> {
@@ -186,7 +182,7 @@ export async function createFeedbackUpload(
       .replace(/[^\w.\- ]+/g, "")
       .replace(/\s+/g, "-")
       .slice(-120) || "file";
-  const path = `${feedbackFolder(clientId)}${randomUUID()}/${safe}`;
+  const path = `${setupFilesFolder(clientId)}${randomUUID()}/${safe}`;
   const { data, error } = await access.supabase.storage
     .from(MATERIALS_BUCKET)
     .createSignedUploadUrl(path);

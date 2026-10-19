@@ -291,7 +291,7 @@ export function FundDatabaseManager({
         <div
           role="button"
           tabIndex={0}
-          aria-label="Upload the fund database workbook: drop it here or press Enter to browse"
+          aria-label="Upload the Fund Database workbook: drop it here or press Enter to browse"
           aria-disabled={Boolean(busy)}
           onClick={() => !busy && inputRef.current?.click()}
           onKeyDown={(event) => {

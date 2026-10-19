@@ -345,7 +345,7 @@ export function snapshotBytes(db: FundDb) {
 function parseSnapshot(bytes: Buffer): FundDb {
   const parsed = JSON.parse(gunzipSync(bytes).toString("utf8")) as FundDb;
   if (!Array.isArray(parsed.firms) || !Array.isArray(parsed.contacts)) {
-    throw new Error("The stored fund database snapshot is damaged.");
+    throw new Error("The stored Fund Database snapshot is damaged.");
   }
   return { firms: parsed.firms, contacts: parsed.contacts };
 }
@@ -361,7 +361,7 @@ let loading: { id: string; promise: Promise<FundDb> } | null = null;
 async function downloadSnapshot(supabase: ServiceClient, path: string) {
   const { data, error } = await supabase.storage.from(FUND_DB_BUCKET).download(path);
   if (error || !data) {
-    throw new Error(`The fund database could not be loaded: ${error?.message ?? "missing file"}.`);
+    throw new Error(`The Fund Database could not be loaded: ${error?.message ?? "missing file"}.`);
   }
   return parseSnapshot(Buffer.from(await data.arrayBuffer()));
 }
@@ -380,7 +380,7 @@ export async function loadLiveDb(
     return {
       ok: false,
       empty: true,
-      error: "No fund database yet. Upload the workbook under Fund database.",
+      error: "No Fund Database yet. Upload the workbook under Fund Database.",
     };
   }
 
@@ -402,7 +402,7 @@ export async function loadLiveDb(
     return { ok: true, value: cached };
   } catch (err) {
     loading = null;
-    return { ok: false, error: err instanceof Error ? err.message : "The fund database could not be loaded." };
+    return { ok: false, error: err instanceof Error ? err.message : "The Fund Database could not be loaded." };
   }
 }
 

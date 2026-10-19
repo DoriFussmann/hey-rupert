@@ -166,9 +166,9 @@ async function nextStep(
     {
       step: "deck_review",
       label: "Confirmed the Analysis & Feedback",
-      yours: "run Analyze and push the feedback (Setup → Analysis & Feedback)",
+      yours: "run Analyze, then Push to Client Portal & Send (Setup → Analysis & Feedback)",
     },
-    { step: "framing", label: "Confirmed the outreach narrative", yours: "build and push the outreach narrative" },
+    { step: "framing", label: "Confirmed the outreach narrative", yours: "build the outreach narrative, then Push to Client Portal & Send" },
     { step: "investor_list", label: "Confirmed the investor list", yours: "run Rupert Match and send the investor list" },
     { step: "email_copy", label: "Confirmed the email copy", yours: "write and push the email copy" },
   ];

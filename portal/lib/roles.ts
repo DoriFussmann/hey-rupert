@@ -54,7 +54,7 @@ export function roleFromUser(user: User | null): AppRole | null {
 
 export function homePathForRole(role: AppRole | null) {
   if (role === "admin") return "/admin";
-  if (role === "client") return "/portal/onboarding";
+  if (role === "client") return "/portal";
   return "/login";
 }
 
