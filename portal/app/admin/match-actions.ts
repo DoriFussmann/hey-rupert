@@ -32,7 +32,14 @@ import {
   siteCandidates,
   storeMatch,
 } from "@/lib/match/run-server";
+import {
+  applyContactImport,
+  discardContactImport,
+  reapplyImportedContacts,
+  stageContactImport,
+} from "@/lib/match/import-server";
 import { checkAndStoreSites, isStale, runSiteBatch } from "@/lib/match/sites-server";
+import { IMPORT_MAX_BYTES, type ContactImportView } from "@/lib/match/contact-import";
 import {
   DEFAULT_SETTINGS,
   FUND_DB_BUCKET,
@@ -222,8 +229,18 @@ export async function stageFundUpload(
       ...hidden.rows.map((row) => row.firm_id),
     ]);
 
-    const { db, offices, warnings } = built.value;
-    const diff = diffFundDb(live.ok ? live.value.db : null, db, reviewedIds, warnings);
+    // Contacts added by CSV go back on top of the provider's workbook.
+    const reapplied = await reapplyImportedContacts(supabase, built.value.db);
+    if (!reapplied.ok) {
+      await discardUpload();
+      return { ok: false, error: reapplied.error };
+    }
+    const { offices, warnings } = built.value;
+    const { db, counts } = reapplied.value;
+    const diff = {
+      ...diffFundDb(live.ok ? live.value.db : null, db, reviewedIds, warnings),
+      reapplied: counts,
+    };
 
     await removeStaged(supabase);
     const { id, snapshotPath } = newVersionPaths();
@@ -293,6 +310,54 @@ export async function discardFundVersion(id: string): Promise<Result<object>> {
     .eq("id", data.id)
     .eq("status", "staged");
   if (deleteError) return { ok: false, error: matchTableError(deleteError.message, deleteError.code) };
+  revalidatePath("/admin/fund-database");
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Adding contacts by CSV
+
+/** Reads a CSV of contacts and keeps it for the preview. Nothing changes until Apply. */
+export async function stageContacts(
+  fileName: string,
+  text: string,
+): Promise<Result<{ staged: ContactImportView }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const name = String(fileName ?? "");
+  const body = String(text ?? "");
+  if (!/\.(csv|tsv|txt)$/i.test(name)) return { ok: false, error: "Upload a .csv file." };
+  if (Buffer.byteLength(body, "utf8") > IMPORT_MAX_BYTES) {
+    return { ok: false, error: "The file must be under 3 MB. Split it into smaller files." };
+  }
+  try {
+    const staged = await stageContactImport(access.supabase, name, body, access.email);
+    if (!staged.ok) return { ok: false, error: staged.error };
+    revalidatePath("/admin/fund-database");
+    return { ok: true, staged: staged.value };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The CSV could not be read.") };
+  }
+}
+
+export async function applyContacts(id: string): Promise<Result<{ added: number }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  try {
+    const applied = await applyContactImport(access.supabase, String(id), access.email);
+    if (!applied.ok) return { ok: false, error: applied.error };
+    revalidatePath("/admin/fund-database");
+    return { ok: true, added: applied.value.added };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The contacts could not be added.") };
+  }
+}
+
+export async function discardContacts(id: string): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const error = await discardContactImport(access.supabase, String(id));
+  if (error) return { ok: false, error };
   revalidatePath("/admin/fund-database");
   return { ok: true };
 }

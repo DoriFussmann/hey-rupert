@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { inputClass, n, smallButton } from "@/app/admin/clients/[id]/match/ui";
+import { formatDate } from "@/lib/format";
 import { SITE_LABEL, isSectorFocusLine, type FirmRow, type SiteState } from "@/lib/match/shared";
 import { VERIFY_LABEL, VERIFY_TONE, type VerifyState } from "@/lib/match/verify";
 
@@ -28,9 +29,14 @@ const SORTS: { value: Sort; label: string }[] = [
 ];
 
 /** A match saved before Email Verification has no state: it reads as not verified. */
-function VerifyTag({ state }: { state: VerifyState | undefined }) {
+function VerifyTag({ state, at }: { state: VerifyState | undefined; at?: string | null }) {
   const value = state ?? "unverified";
-  return <p className={`text-label ${VERIFY_TONE[value]}`}>{VERIFY_LABEL[value]}</p>;
+  return (
+    <p className={`text-label ${VERIFY_TONE[value]}`}>
+      {VERIFY_LABEL[value]}
+      {value !== "unverified" && at ? ` · ${formatDate(at)}` : ""}
+    </p>
+  );
 }
 
 const BAD_SITES = new Set<SiteState>(["broken", "parked", "inactive", "offtopic"]);
@@ -237,7 +243,7 @@ export function LeadsTable({
                           <>
                             <p className="text-heading">{row.primary.name}</p>
                             <p className="text-muted">{row.primary.title}</p>
-                            <VerifyTag state={row.primary.verify} />
+                            <VerifyTag state={row.primary.verify} at={row.primary.verifiedAt} />
                           </>
                         ) : (
                           <p className="text-muted">No reachable contact</p>
@@ -248,7 +254,7 @@ export function LeadsTable({
                           <>
                             <p className="text-heading">{row.backup.name}</p>
                             <p className="text-muted">{row.backup.title}</p>
-                            <VerifyTag state={row.backup.verify} />
+                            <VerifyTag state={row.backup.verify} at={row.backup.verifiedAt} />
                           </>
                         ) : (
                           <p className="text-muted">—</p>

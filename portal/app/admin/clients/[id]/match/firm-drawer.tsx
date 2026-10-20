@@ -18,6 +18,7 @@ import {
   type FirmRow,
   type MatchView,
 } from "@/lib/match/shared";
+import { formatDate } from "@/lib/format";
 import { VERIFY_LABEL, VERIFY_TONE } from "@/lib/match/verify";
 
 const HIDE_BY_DEFAULT = "Not active / no recent deals";
@@ -344,7 +345,12 @@ export function FirmDrawer({
                         {contact.name}
                         {contact.seq ? <span className="ml-xs rounded bg-primary-tint px-xs text-label text-primary">{contact.seq}</span> : null}
                         {contact.email ? (
-                          <span className={`ml-xs text-label ${VERIFY_TONE[contact.verify]}`}>{VERIFY_LABEL[contact.verify]}</span>
+                          <span className={`ml-xs text-label ${VERIFY_TONE[contact.verify]}`}>
+                            {VERIFY_LABEL[contact.verify]}
+                            {contact.verify !== "unverified" && contact.verifiedAt
+                              ? ` · ${formatDate(contact.verifiedAt)}`
+                              : ""}
+                          </span>
                         ) : null}
                       </p>
                       <p className="text-secondary">

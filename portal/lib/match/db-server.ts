@@ -417,6 +417,7 @@ export function asFundDbVersion(row: Record<string, unknown>): FundDbVersion {
     id: String(row.id),
     fileName: String(row.file_name ?? ""),
     status,
+    source: row.source === "csv" ? "csv" : "workbook",
     firms: Number(row.firms ?? 0),
     contacts: Number(row.contacts ?? 0),
     offices: Number(row.offices ?? 0),

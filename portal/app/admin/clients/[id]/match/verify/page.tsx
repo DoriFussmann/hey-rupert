@@ -9,7 +9,7 @@ import { loadVerifyOverview } from "@/lib/match/verify-server";
 import type { VerifyOverview } from "@/lib/match/verify";
 import { createServiceClient } from "@/lib/supabase/admin";
 
-// Each step runs up to five web searches or mailbox checks in parallel.
+// Each step runs up to five contacts in parallel (web searches or mailbox checks).
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
@@ -29,7 +29,7 @@ export default async function VerifyEmailsPage({ params }: { params: { id: strin
       <BackLink href={matchPath(client.id)} label="Rupert Match" />
       <PageHeader
         title="Verify emails"
-        description={`Checks ${client.company_name}'s matched contacts 5 at a time: is the person at the firm, is the email public, and does the mailbox accept mail. Fixes apply to the Fund Database for every client.`}
+        description={`Checks ${client.company_name}'s matched contacts 5 at a time: is the person at the firm, and does the mailbox accept mail. Fixes apply to the Fund Database for every client.`}
       />
       {client.is_match_sandbox ? (
         <p className="mb-lg rounded-card border border-warning/40 bg-surface px-lg py-md text-body-sm text-warning">

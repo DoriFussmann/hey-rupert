@@ -14,16 +14,19 @@ import {
   setLeadStatus,
   startVerificationRun,
 } from "@/lib/match/verify-server";
-import type {
-  ActionInput,
-  BatchDone,
-  ContactResult,
-  FlaggedChoice,
-  LeadRow,
-  RunState,
-  StepNumber,
-  VerifyOverview,
-  VerifyScope,
+import {
+  VERIFY_STEPS,
+  cleanTierLimits,
+  type ActionInput,
+  type BatchDone,
+  type ContactResult,
+  type FlaggedChoice,
+  type LeadRow,
+  type RunState,
+  type StepNumber,
+  type TierLimits,
+  type VerifyMode,
+  type VerifyOverview,
 } from "@/lib/match/verify";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -63,19 +66,21 @@ export async function getVerifyOverview(clientId: string): Promise<Result<{ over
 
 export async function startVerification(
   clientId: string,
-  scope: VerifyScope,
+  mode: VerifyMode,
+  limits: TierLimits,
   choices: { id: string; choice: FlaggedChoice }[],
-  limit: number,
 ): Promise<Result<{ run: RunState }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
+  const cleanLimits = cleanTierLimits(limits);
+  if (!cleanLimits) return { ok: false, error: "Each tier needs a whole number, or blank for all." };
   try {
     const started = await startVerificationRun(
       access.supabase,
       String(clientId),
-      scope,
+      mode,
+      cleanLimits,
       Array.isArray(choices) ? choices.slice(0, 5000) : [],
-      Number(limit) || 0,
       access.email,
     );
     if (!started.ok) return { ok: false, error: started.error };
@@ -94,7 +99,7 @@ export async function runVerifyStep(
 ): Promise<Result<{ results: ContactResult[] }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
-  if (step !== 1 && step !== 2 && step !== 3) return { ok: false, error: "Unknown step." };
+  if (!VERIFY_STEPS.includes(step)) return { ok: false, error: "Unknown step." };
   try {
     const done = await runVerificationStep(access.supabase, String(clientId), String(runId), Number(batch), step);
     if (!done.ok) return { ok: false, error: done.error };

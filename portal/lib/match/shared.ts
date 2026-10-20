@@ -2,6 +2,7 @@
 // admin UI. Pure module (no engine import, no server code).
 
 import type { Flag, Level, SiteResult, Tier } from "@/lib/match/engine/index.mjs";
+import type { ReappliedContacts } from "@/lib/match/contact-import";
 import type { VerifyState } from "@/lib/match/verify";
 
 export type { Flag, Level, SiteResult, Tier };
@@ -387,7 +388,14 @@ export function dropSectorFocus(text: string) {
 /** Fields where "none" is a real answer. */
 export const NONE_OK_FIELDS = new Set(["existing_investors", "already_pitched", "competitors"]);
 
-export type ContactBrief = { name: string; title: string; role: string; verify: VerifyState };
+export type ContactBrief = {
+  name: string;
+  title: string;
+  role: string;
+  verify: VerifyState;
+  /** When the current email was checked. Missing on matches saved before dates were shown. */
+  verifiedAt?: string | null;
+};
 
 export type FirmRow = {
   id: string;
@@ -466,6 +474,8 @@ export type FirmContact = {
   seq: "Primary" | "Backup" | null;
   why: string[];
   verify: VerifyState;
+  /** When the current email was checked. */
+  verifiedAt?: string | null;
 };
 
 export type FirmDetail = {
@@ -504,12 +514,18 @@ export type FundDbDiff = {
   removedSample: string[];
   reviewsOnRemoved: number;
   warnings: string[];
+  /** CSV import: contacts it added. */
+  contactsAdded?: number;
+  /** Workbook: contacts added by CSV earlier, put back on top of it. */
+  reapplied?: ReappliedContacts;
 };
 
 export type FundDbVersion = {
   id: string;
   fileName: string;
   status: "staged" | "live" | "archived";
+  /** A provider workbook, or contacts added by CSV. */
+  source: "workbook" | "csv";
   firms: number;
   contacts: number;
   offices: number;

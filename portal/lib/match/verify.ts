@@ -7,17 +7,29 @@ import type { Tier } from "@/lib/match/shared";
 /** Contacts checked per batch. */
 export const VERIFY_BATCH_SIZE = 5;
 /** A finished check is reused this long while the email is unchanged. */
-export const VERIFY_FRESH_DAYS = 90;
+export const VERIFY_FRESH_DAYS = 45;
+
+/**
+ * The check process. 2: "At the firm?" (at most 3 searches), then Hunter's
+ * mailbox check. Checks from process 1 also searched for the email in public.
+ * Stored on each check's cost, so the estimate only learns from process 2.
+ */
+export const VERIFY_PIPELINE = 2;
+/** Web searches "At the firm?" may run per contact. */
+export const ROLE_MAX_SEARCHES = 3;
 
 // Cost estimate. Claude Sonnet 5.5 list prices (platform.claude.com pricing,
 // October 2026) and web search at $10 per 1,000 searches. Update if
-// ANTHROPIC_MODEL points at another model.
+// ANTHROPIC_MODEL points at another model. Hunter credits are not in dollars:
+// they come out of the Hunter plan.
 export const CLAUDE_USD_PER_MTOK_IN = 2;
 export const CLAUDE_USD_PER_MTOK_OUT = 10;
 export const USD_PER_SEARCH = 0.01;
-/** Used until real checks have been measured. */
-export const DEFAULT_USD_PER_CONTACT = 0.15;
-export const DEFAULT_MS_PER_BATCH = 100_000;
+/** Used until enough process-2 checks have been measured. */
+export const DEFAULT_USD_PER_CONTACT = 0.08;
+/** Process-2 checks needed before the estimate uses measured cost. */
+export const ESTIMATE_MIN_CHECKS = 10;
+export const DEFAULT_MS_PER_BATCH = 60_000;
 
 export type VerifyStatus =
   | "clean"
@@ -68,13 +80,19 @@ export const VERIFY_TONE: Record<VerifyState, string> = {
   unverified: "text-muted",
 };
 
+/** What a run covered. "wave1" is from runs made before per-tier limits. */
 export type VerifyScope = "all" | "sequence" | "wave1";
 
-export const VERIFY_SCOPES: { key: VerifyScope; label: string; description: string }[] = [
-  { key: "all", label: "All investing contacts", description: "Everyone with an email at every fund in the tiers." },
-  { key: "sequence", label: "Primary + Backup only", description: "The two people outreach goes to, at every fund." },
-  { key: "wave1", label: "Wave 1 only", description: "Primary + Backup of the first-wave Bullseye funds." },
-];
+/** Everyone with an email at each fund, or only Primary + Backup. */
+export type VerifyMode = "all" | "sequence";
+
+export const VERIFY_MODES: VerifyMode[] = ["all", "sequence"];
+
+/** Contacts to check per tier: null = all of the tier, 0 = skip it. */
+export type TierLimits = Record<Tier, number | null>;
+
+/** The largest number accepted in a tier box. */
+export const TIER_LIMIT_MAX = 100_000;
 
 // ---------------------------------------------------------------------------
 // Contact identity: FirmID + the original work email, lowercased.
@@ -159,18 +177,23 @@ export type CheckSteps = { role?: RoleStep; public?: PublicStep; mailbox?: Mailb
 
 export type StepNumber = 1 | 2 | 3;
 
+/** Step 2 ("Email public?") no longer runs; checks made before keep its result. */
 export const STEP_LABEL: Record<StepNumber, string> = {
   1: "At the firm?",
   2: "Email public?",
   3: "Mailbox check",
 };
 
+/** The steps a check runs, in order. */
+export const VERIFY_STEPS: StepNumber[] = [1, 3];
+
 /** Whether this step still has to run for a contact. */
 export function needsStep(steps: CheckSteps, step: StepNumber) {
   if (step === 1) return !steps.role;
+  if (step === 2) return false;
   if (!steps.role || steps.role.result === "left_firm") return false;
-  if (step === 2) return !steps.public;
-  return Boolean(steps.public) && steps.public!.result !== "found" && !steps.mailbox;
+  // An address an older check found published needs no mailbox check.
+  return steps.public?.result !== "found" && !steps.mailbox;
 }
 
 /** A step that could not run (API error, missing key). */
@@ -180,7 +203,7 @@ export function failedStep(steps: CheckSteps) {
 
 /** True when no step is left to run. */
 export function stepsComplete(steps: CheckSteps) {
-  return !needsStep(steps, 1) && !needsStep(steps, 2) && !needsStep(steps, 3);
+  return VERIFY_STEPS.every((step) => !needsStep(steps, step));
 }
 
 /** Step 2 or 3 confirmed the address. */
@@ -277,6 +300,8 @@ export type CheckCost = {
   inputTokens: number;
   outputTokens: number;
   hunter: number;
+  /** The check process that produced it (VERIFY_PIPELINE). Missing before process 2. */
+  pipeline?: number;
 };
 
 export const ZERO_COST: CheckCost = { usd: 0, searches: 0, inputTokens: 0, outputTokens: 0, hunter: 0 };
@@ -333,7 +358,7 @@ export type BatchDone = {
 };
 
 export type ScopeCount = {
-  /** Contacts with an email in this scope. */
+  /** Contacts with an email in this tier. */
   total: number;
   /**
    * One letter per contact, in outreach order: "c" to check, "r" reused
@@ -345,28 +370,61 @@ export type ScopeCount = {
   noEmail: number;
 };
 
-/** Counts for the first `limit` contacts of a scope (0 = all). */
-export function countScope(count: ScopeCount, limit: number) {
-  const order = limit > 0 ? count.order.slice(0, limit) : count.order;
+/** Counts for the first `limit` contacts of a tier (null = all, 0 = none). */
+export function countTier(count: ScopeCount, limit: number | null) {
+  const order = limit === null ? count.order : count.order.slice(0, Math.max(0, limit));
   const of = (letter: string) => order.split(letter).length - 1;
   return { contacts: order.length, toCheck: of("c"), reused: of("r"), flagged: of("f") };
 }
 
-/** How many contacts a run checks at most. 0 means all. */
-export const VERIFY_LIMITS = [0, 10, 25, 50, 100, 250] as const;
+/** A tier box's text as a limit: blank = all, otherwise a whole number. */
+export function parseTierLimit(value: string): number | null | "invalid" {
+  const text = value.trim();
+  if (!text) return null;
+  if (!/^\d+$/.test(text)) return "invalid";
+  const number = Number(text);
+  return number > TIER_LIMIT_MAX ? "invalid" : number;
+}
+
+/** Limits from untrusted input, or null when one is not valid. */
+export function cleanTierLimits(value: unknown): TierLimits | null {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const limits = {} as TierLimits;
+  for (const tier of ["bullseye", "match", "expansion"] as Tier[]) {
+    const item = raw[tier];
+    if (item === null || item === undefined) {
+      limits[tier] = null;
+      continue;
+    }
+    const number = Number(item);
+    if (!Number.isInteger(number) || number < 0 || number > TIER_LIMIT_MAX) return null;
+    limits[tier] = number;
+  }
+  return limits;
+}
 
 export type FlaggedContact = {
   contact: VerifyContact;
   reason: string;
   flaggedAt: string;
-  /** Position in each scope's outreach order (0-based), where it appears. */
-  positions: Partial<Record<VerifyScope, number>>;
+  /** Position in its tier's outreach order (0-based), per mode, where it appears. */
+  positions: Partial<Record<VerifyMode, number>>;
+};
+
+export type VerifyEstimate = {
+  msPerBatch: number;
+  usdPerContact: number;
+  /** True when the cost comes from at least ESTIMATE_MIN_CHECKS process-2 checks. */
+  measured: boolean;
+  /** Process-2 checks the cost is measured from. */
+  sample: number;
 };
 
 export type VerifyOverview = {
-  scopes: Record<VerifyScope, ScopeCount>;
+  /** Contacts per mode and tier, in outreach order. */
+  counts: Record<VerifyMode, Record<Tier, ScopeCount>>;
   flagged: FlaggedContact[];
-  estimate: { msPerBatch: number; usdPerContact: number; measured: boolean };
+  estimate: VerifyEstimate;
   claudeReady: boolean;
   hunterReady: boolean;
   /** An unfinished run that can be resumed. */

@@ -4,6 +4,7 @@ import { cardClass, labelClass, n } from "@/app/admin/clients/[id]/match/ui";
 import {
   STEP_LABEL,
   VERIFY_LABEL,
+  VERIFY_STEPS,
   VERIFY_STATUSES,
   VERIFY_TONE,
   formatDuration,
@@ -113,7 +114,7 @@ function stepOutcome(steps: CheckSteps, step: StepNumber): { text: string; tone:
 
 export type StepPhase = "waiting" | "running" | "done";
 
-/** A step that will not run: the person left (2, 3), or the email is public (3). */
+/** A step that will not run: the person left, or an older check found the email public. */
 function isSkipped(steps: CheckSteps, step: StepNumber) {
   if (step === 1) return false;
   if (steps.role?.result === "left_firm") return true;
@@ -162,7 +163,7 @@ export function LiveBatch({
         </h2>
         <span className="flex items-center gap-sm text-body-sm text-primary">
           <Spinner label="Checking" />
-          {step === 4 ? "Saving the batch…" : `Step ${step}: ${STEP_LABEL[step]}`}
+          {step === 4 ? "Saving the batch…" : `Step ${VERIFY_STEPS.indexOf(step) + 1}: ${STEP_LABEL[step]}`}
         </span>
       </div>
       <div className="overflow-x-auto">
@@ -170,9 +171,9 @@ export function LiveBatch({
           <thead className="bg-background">
             <tr className="text-label uppercase tracking-label text-muted">
               <th className="px-lg py-sm font-medium">Contact</th>
-              {([1, 2, 3] as StepNumber[]).map((item) => (
+              {VERIFY_STEPS.map((item, position) => (
                 <th key={item} className="px-md py-sm font-medium">
-                  {item}. {STEP_LABEL[item]}
+                  {position + 1}. {STEP_LABEL[item]}
                 </th>
               ))}
               <th className="px-md py-sm font-medium">Result</th>
@@ -190,7 +191,7 @@ export function LiveBatch({
                       {contact.firmName} · {contact.email}
                     </p>
                   </td>
-                  {([1, 2, 3] as StepNumber[]).map((item) => (
+                  {VERIFY_STEPS.map((item) => (
                     <td key={item} className="px-md py-sm">
                       <StepCell steps={steps} step={item} phase={phaseOf(item)} />
                     </td>

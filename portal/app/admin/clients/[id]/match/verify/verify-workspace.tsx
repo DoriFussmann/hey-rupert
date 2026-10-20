@@ -28,23 +28,25 @@ import {
   type BatchRecord,
 } from "@/app/admin/clients/[id]/match/verify/verify-parts";
 import { formatDateAtTime } from "@/lib/format";
-import { matchPath } from "@/lib/match/shared";
+import { TIERS, matchPath, type Tier } from "@/lib/match/shared";
 import {
+  ESTIMATE_MIN_CHECKS,
   VERIFY_BATCH_SIZE,
   VERIFY_FRESH_DAYS,
-  VERIFY_LIMITS,
-  VERIFY_SCOPES,
-  countScope,
+  VERIFY_STEPS,
+  countTier,
   formatDuration,
   formatUsd,
   needsStep,
+  parseTierLimit,
   type ContactResult,
   type FlaggedChoice,
   type RunState,
   type StepNumber,
+  type TierLimits,
   type VerifyContact,
+  type VerifyMode,
   type VerifyOverview,
-  type VerifyScope,
 } from "@/lib/match/verify";
 
 type Mode = "setup" | "running" | "paused" | "done";
@@ -90,6 +92,8 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
+const EMPTY_BOXES: Record<Tier, string> = { bullseye: "", match: "", expansion: "" };
+
 function SetupPanel({
   overview,
   busy,
@@ -97,96 +101,124 @@ function SetupPanel({
 }: {
   overview: VerifyOverview;
   busy: boolean;
-  onStart: (scope: VerifyScope, choices: { id: string; choice: FlaggedChoice }[], limit: number) => void;
+  onStart: (mode: VerifyMode, limits: TierLimits, choices: { id: string; choice: FlaggedChoice }[]) => void;
 }) {
-  const [scope, setScope] = useState<VerifyScope>("all");
-  const [limit, setLimit] = useState(0);
+  const [primaryBackup, setPrimaryBackup] = useState(true);
+  const [boxes, setBoxes] = useState<Record<Tier, string>>(EMPTY_BOXES);
   const [choices, setChoices] = useState<Record<string, FlaggedChoice>>({});
-  const count = overview.scopes[scope];
-  const counted = countScope(count, limit);
+  const mode: VerifyMode = primaryBackup ? "sequence" : "all";
+
+  const parsed = TIERS.map(({ key }) => ({ tier: key, limit: parseTierLimit(boxes[key]) }));
+  const invalid = parsed.filter((item) => item.limit === "invalid").map((item) => item.tier);
+  const limits = Object.fromEntries(
+    parsed.map((item) => [item.tier, item.limit === "invalid" ? 0 : item.limit]),
+  ) as TierLimits;
+  const perTier = TIERS.map(({ key }) => ({
+    tier: key,
+    count: overview.counts[mode][key],
+    counted: countTier(overview.counts[mode][key], limits[key]),
+  }));
+  const counted = perTier.reduce(
+    (sum, item) => ({
+      contacts: sum.contacts + item.counted.contacts,
+      toCheck: sum.toCheck + item.counted.toCheck,
+      reused: sum.reused + item.counted.reused,
+    }),
+    { contacts: 0, toCheck: 0, reused: 0 },
+  );
+  const noEmail = perTier.reduce((sum, item) => sum + item.count.noEmail, 0);
+
   const flagged = overview.flagged.filter((item) => {
-    const position = item.positions[scope];
-    return position !== undefined && (limit === 0 || position < limit);
+    const position = item.positions[mode];
+    const limit = limits[item.contact.tier];
+    return position !== undefined && (limit === null || position < limit);
   });
   const choiceOf = (id: string) => choices[id] ?? "remove";
   const checkAgain = flagged.filter((item) => choiceOf(item.contact.id) === "check").length;
   const toCheck = counted.toCheck + checkAgain;
   const batches = Math.ceil(toCheck / VERIFY_BATCH_SIZE);
   const { estimate } = overview;
-  const canStart = overview.claudeReady && toCheck + counted.reused > 0;
+  const canStart = overview.claudeReady && invalid.length === 0 && toCheck + counted.reused > 0;
 
   return (
     <section className={`${cardClass} px-lg py-md`}>
       <h2 className="text-h4 text-heading">What to check</h2>
-      <div className="mt-sm grid gap-sm md:grid-cols-3" role="radiogroup" aria-label="Contacts to check">
-        {VERIFY_SCOPES.map((item) => {
-          const active = item.key === scope;
-          const scopeCount = overview.scopes[item.key];
+      <p className="mt-xs text-body-sm text-muted">
+        How many contacts per tier, best fit first. Leave a box blank for the whole tier, or put 0 to skip it.
+      </p>
+
+      <label className="mt-md flex items-center gap-sm text-body-sm text-heading">
+        <input
+          type="checkbox"
+          className="h-4 w-4 accent-primary"
+          checked={primaryBackup}
+          onChange={(event) => setPrimaryBackup(event.target.checked)}
+        />
+        Primary + Backup only
+        <span className="text-muted">(the two people outreach goes to at each fund)</span>
+      </label>
+
+      <div className="mt-md grid gap-sm md:grid-cols-3">
+        {perTier.map(({ tier, count, counted: tierCount }) => {
+          const label = TIERS.find((item) => item.key === tier)?.label ?? tier;
+          const bad = invalid.includes(tier);
           return (
-            <button
-              key={item.key}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              className={`rounded-card border px-md py-md text-left transition-colors duration-hover ${
-                active ? "border-primary bg-primary-tint" : "border-border bg-surface hover:border-primary/40"
-              }`}
-              onClick={() => setScope(item.key)}
-            >
-              <span className="block text-body-sm text-heading">{item.label}</span>
-              <span className="block text-body-sm text-muted">{item.description}</span>
-              <span className="mt-xs block font-mono text-body-sm text-secondary">{n(scopeCount.total)} contacts</span>
-            </button>
+            <label key={tier} className="rounded-card border border-border bg-background px-md py-md">
+              <span className={labelClass}>{label}</span>
+              <input
+                inputMode="numeric"
+                className={`mt-sm w-full rounded-md border bg-surface px-sm py-sm font-mono text-body text-body outline-none focus:border-primary ${
+                  bad ? "border-error" : "border-border"
+                }`}
+                placeholder={`All (${n(count.total)})`}
+                value={boxes[tier]}
+                aria-invalid={bad}
+                aria-label={`${label}: how many contacts to check`}
+                onChange={(event) => setBoxes((current) => ({ ...current, [tier]: event.target.value }))}
+              />
+              <span className={`mt-xs block text-body-sm ${bad ? "text-error" : "text-muted"}`}>
+                {bad
+                  ? "A whole number, or blank for all."
+                  : `${n(tierCount.contacts)} of ${n(count.total)} · ${n(tierCount.toCheck)} to check · ${n(tierCount.reused)} reused`}
+              </span>
+            </label>
           );
         })}
       </div>
 
-      <label className="mt-md flex flex-wrap items-center gap-sm text-body-sm">
-        <span className={labelClass}>Limit</span>
-        <select
-          className="rounded-md border border-border bg-background px-sm py-xs text-body-sm text-body outline-none focus:border-primary"
-          value={limit}
-          onChange={(event) => setLimit(Number(event.target.value))}
-        >
-          {VERIFY_LIMITS.map((value) => (
-            <option key={value} value={value}>
-              {value === 0 ? "All contacts" : `First ${value} contacts`}
-            </option>
-          ))}
-        </select>
-        <span className="text-muted">In outreach order: best-fit funds first, Primary before Backup.</span>
-      </label>
-
       <div className="mt-md grid gap-sm sm:grid-cols-2 lg:grid-cols-4">
         <Fact label="To check" value={n(toCheck)} hint={`${n(batches)} batch${batches === 1 ? "" : "es"} of ${VERIFY_BATCH_SIZE}`} />
-        <Fact label="Reused" value={n(counted.reused)} hint={`Checked in the last ${VERIFY_FRESH_DAYS} days`} />
-        <Fact
-          label="Estimated time"
-          value={batches > 0 ? formatDuration(batches * estimate.msPerBatch) : "—"}
-          hint="Keep this tab open"
-        />
+        <Fact label="Reused" value={n(counted.reused)} hint={`Checked in the last ${VERIFY_FRESH_DAYS} days, no cost`} />
         <Fact
           label="Estimated cost"
           value={formatUsd(toCheck * estimate.usdPerContact)}
-          hint={`${estimate.measured ? "From past checks" : "First-run guess"} · up to ${n(toCheck)} Hunter credits`}
+          hint={
+            estimate.measured
+              ? `${formatUsd(estimate.usdPerContact)} per contact, average of ${n(estimate.sample)} recent checks`
+              : `${formatUsd(estimate.usdPerContact)} per contact, a starting estimate until ${ESTIMATE_MIN_CHECKS} checks are measured`
+          }
+        />
+        <Fact
+          label="Hunter credits"
+          value={`~${n(toCheck)}`}
+          hint="From your Hunter plan: 1 per contact, 2 when a replacement email is looked up"
         />
       </div>
       <p className="mt-sm text-body-sm text-muted">
-        {limit > 0 && counted.contacts < count.total
-          ? `First ${n(counted.contacts)} of ${n(count.total)} contacts with an email in this scope`
-          : `${n(count.total)} contacts with an email in this scope`}
-        {counted.flagged > 0 ? ` · ${n(counted.flagged)} removed before (decide below)` : ""}
-        {count.noEmail > 0 ? ` · ${n(count.noEmail)} investing contacts have no email and are left out` : ""}.
+        Estimated time {batches > 0 ? formatDuration(batches * estimate.msPerBatch) : "—"}; keep this tab open while it
+        runs.
+        {flagged.length > 0 ? ` ${n(flagged.length)} removed before: decide below.` : ""}
+        {!primaryBackup && noEmail > 0 ? ` ${n(noEmail)} investing contacts have no email and are left out.` : ""}
       </p>
 
       {!overview.claudeReady ? (
         <p role="alert" className="mt-sm text-body-sm text-error">
-          ANTHROPIC_API_KEY is not configured, so steps 1 and 2 can&apos;t run.
+          ANTHROPIC_API_KEY is not configured, so step 1 can&apos;t run.
         </p>
       ) : null}
       {!overview.hunterReady ? (
         <p className="mt-sm text-body-sm text-warning">
-          HUNTER_API_KEY is not configured: step 3 will mark contacts Unknown instead of checking the mailbox.
+          HUNTER_API_KEY is not configured: the mailbox check will mark contacts Unknown.
         </p>
       ) : null}
 
@@ -246,16 +278,16 @@ function SetupPanel({
           disabled={busy || !canStart}
           onClick={() =>
             onStart(
-              scope,
+              mode,
+              limits,
               flagged.map((item) => ({ id: item.contact.id, choice: choiceOf(item.contact.id) })),
-              limit,
             )
           }
         >
           {busy
             ? "Starting…"
             : toCheck > 0
-              ? `Start: ${n(toCheck)} contact${toCheck === 1 ? "" : "s"} in ${n(batches)} batch${batches === 1 ? "" : "es"}`
+              ? `Run: ${n(toCheck)} contact${toCheck === 1 ? "" : "s"}, about ${formatUsd(toCheck * estimate.usdPerContact)}`
               : "Show results"}
         </button>
       </div>
@@ -314,7 +346,7 @@ export function VerifyWorkspace({
       const contacts = start.contacts.slice(batch * start.batchSize, (batch + 1) * start.batchSize);
       const startedAt = Date.now();
       try {
-        for (const step of [1, 2, 3] as StepNumber[]) {
+        for (const step of VERIFY_STEPS) {
           setLive({ index: batch, contacts, step });
           const pending = contacts.filter((contact) => needsStep(merged.get(contact.id)?.steps ?? {}, step));
           if (pending.length === 0) continue;
@@ -355,7 +387,7 @@ export function VerifyWorkspace({
     setMode("done");
   }
 
-  async function start(scope: VerifyScope, choices: { id: string; choice: FlaggedChoice }[], limit: number) {
+  async function start(mode: VerifyMode, limits: TierLimits, choices: { id: string; choice: FlaggedChoice }[]) {
     if (
       overview?.activeRun &&
       !window.confirm("This cancels the unfinished run. Its finished checks are kept and reused. Start a new run?")
@@ -365,7 +397,7 @@ export function VerifyWorkspace({
     setBusy(true);
     setNotice(null);
     try {
-      const started = await startVerification(clientId, scope, choices, limit);
+      const started = await startVerification(clientId, mode, limits, choices);
       if (!started.ok) {
         setNotice({ kind: "error", text: started.error });
         return;
@@ -448,7 +480,7 @@ export function VerifyWorkspace({
         </p>
       ) : null}
 
-      {mode === "setup" && overview ? <SetupPanel overview={overview} busy={busy} onStart={(scope, choices, limit) => void start(scope, choices, limit)} /> : null}
+      {mode === "setup" && overview ? <SetupPanel overview={overview} busy={busy} onStart={(mode, limits, choices) => void start(mode, limits, choices)} /> : null}
 
       {run && (mode === "running" || mode === "paused") ? (
         <section className={`${cardClass} px-lg py-md`}>
@@ -498,9 +530,22 @@ export function VerifyWorkspace({
             <StatusCounts results={allResults.filter((result) => result.status)} />
           </div>
           {mode === "paused" ? (
-            <p className="mt-sm text-body-sm text-muted">Finished batches and steps are saved. Resume continues with the next one.</p>
+            <p className="mt-sm text-body-sm text-muted">
+              Finished batches and steps are saved. Act on the contacts below now, or leave and Resume later.
+            </p>
           ) : null}
         </section>
+      ) : null}
+
+      {mode === "paused" && run ? (
+        <FinalSummary
+          key={`paused-${run.id}`}
+          clientId={clientId}
+          title="Needs action so far · run paused"
+          results={allResults.filter((result) => result.status)}
+          stats={run.stats}
+          onUpdated={applyUpdates}
+        />
       ) : null}
 
       {live && mode === "running" && run ? (

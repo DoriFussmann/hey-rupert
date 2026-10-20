@@ -2,6 +2,8 @@ import { PageHeader } from "@/components/page-header";
 import { ClientMatch } from "@/app/admin/fund-database/client-match";
 import { ClientPicker } from "@/app/admin/fund-database/client-picker";
 import { ContactCorrections } from "@/app/admin/fund-database/contact-corrections";
+import { ContactImport } from "@/app/admin/fund-database/contact-import";
+import { DatabaseHistory } from "@/app/admin/fund-database/database-history";
 import { MatchSandbox } from "@/app/admin/fund-database/match-sandbox";
 import RME from "@/lib/match/engine/index.mjs";
 import type { SandboxPanel } from "@/lib/match/sandbox";
@@ -10,7 +12,9 @@ import { FundDatabaseManager } from "@/app/admin/fund-database/fund-database-man
 import { requireAdmin } from "@/lib/auth";
 import { getAdminClient, listClients } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
+import type { ContactImportView } from "@/lib/match/contact-import";
 import { asFundDbVersion, loadLiveDb, matchTableError } from "@/lib/match/db-server";
+import { loadStagedImport } from "@/lib/match/import-server";
 import { SITE_LABEL, type FundDbVersion, type SiteState } from "@/lib/match/shared";
 import { loadCheckIndex } from "@/lib/match/sites-server";
 import type { CorrectionRow, LeadRow } from "@/lib/match/verify";
@@ -80,6 +84,24 @@ async function loadSandbox(): Promise<{ panel: SandboxPanel | null; error: strin
   return loaded.ok ? { panel: loaded.value, error: null } : { panel: null, error: loaded.error };
 }
 
+/** Every version that went live, oldest first, for the Database history. */
+async function loadHistory(): Promise<FundDbVersion[]> {
+  if (!isServiceRoleConfigured()) return [];
+  const { data, error } = await createServiceClient()
+    .from("fund_db_versions")
+    .select("*")
+    .not("applied_at", "is", null)
+    .order("created_at", { ascending: true })
+    .limit(1000);
+  return error ? [] : (data ?? []).map(asFundDbVersion);
+}
+
+async function loadImport(): Promise<{ staged: ContactImportView | null; error: string | null }> {
+  if (!isServiceRoleConfigured()) return { staged: null, error: null };
+  const loaded = await loadStagedImport(createServiceClient());
+  return loaded.ok ? { staged: loaded.value, error: null } : { staged: null, error: loaded.error };
+}
+
 /** Active clients for the picker, and the picked one (the sandbox can be picked by link). */
 async function loadClients(clientId: string | null) {
   const [clients, picked] = await Promise.all([
@@ -102,12 +124,20 @@ export default async function FundDatabasePage({
 }) {
   const requested = typeof searchParams.client === "string" ? searchParams.client : null;
   const clientId = isClientId(requested) ? requested : null;
-  const [{ versions, sites, error }, fixes, sandbox, clients] = await Promise.all([
+  const [{ versions, sites, error }, fixes, sandbox, clients, history, contactImport] = await Promise.all([
     loadPage(),
     loadCorrections(),
     loadSandbox(),
     loadClients(clientId),
+    loadHistory(),
+    loadImport(),
   ]);
+  const live = versions.find((version) => version.status === "live") ?? null;
+  const verification = {
+    leftFirm: fixes.corrections.filter((row) => row.flag === "left_firm").length,
+    removed: fixes.corrections.filter((row) => row.flag === "removed").length,
+    corrected: fixes.corrections.filter((row) => row.email || row.firstName || row.lastName || row.title).length,
+  };
 
   return (
     <>
@@ -151,6 +181,8 @@ export default async function FundDatabasePage({
       ) : null}
       <ContactCorrections corrections={fixes.corrections} leads={fixes.leads} error={fixes.error} />
       <FundDatabaseManager versions={versions} sites={sites} />
+      <ContactImport staged={contactImport.staged} error={contactImport.error} hasLive={Boolean(live)} />
+      <DatabaseHistory versions={history} live={live} verification={verification} />
     </>
   );
 }

@@ -18,6 +18,7 @@ import {
   storeMatch,
   type MatchRun,
 } from "@/lib/match/run-server";
+import type { Tier } from "@/lib/match/shared";
 import {
   CLAUDE_USD_PER_MTOK_IN,
   CLAUDE_USD_PER_MTOK_OUT,
@@ -27,9 +28,11 @@ import {
   USD_PER_SEARCH,
   VERIFY_BATCH_SIZE,
   VERIFY_FRESH_DAYS,
+  ESTIMATE_MIN_CHECKS,
+  ROLE_MAX_SEARCHES,
   VERIFY_LABEL,
-  VERIFY_LIMITS,
-  VERIFY_SCOPES,
+  VERIFY_MODES,
+  VERIFY_PIPELINE,
   ZERO_COST,
   addCost,
   contactId,
@@ -53,15 +56,17 @@ import {
   type FlaggedContact,
   type LeadRow,
   type MailboxStep,
-  type PublicStep,
   type RoleStep,
   type RunState,
   type RunStats,
   type ScopeCount,
+  type TierLimits,
   type StepNumber,
   type Suggestion,
   type VerifyContact,
   type VerifyOverview,
+  type VerifyEstimate,
+  type VerifyMode,
   type VerifyScope,
   type VerifyStatus,
 } from "@/lib/match/verify";
@@ -115,21 +120,29 @@ function toVerifyContact(result: MatchResult, contact: RankedContact): VerifyCon
   };
 }
 
-type ScopeList = { contacts: VerifyContact[]; noEmail: number };
+type ScopeList = { contacts: VerifyContact[]; noEmail: Record<Tier, number> };
 
-/** Contacts per scope, in outreach order (tier, fit, then rank at the fund). */
-function collectScopes(run: MatchRun): Record<VerifyScope, ScopeList> {
-  const lists: Record<VerifyScope, ScopeList> = {
-    all: { contacts: [], noEmail: 0 },
-    sequence: { contacts: [], noEmail: 0 },
-    wave1: { contacts: [], noEmail: 0 },
+const TIER_ORDER: Tier[] = ["bullseye", "match", "expansion"];
+
+function noEmailCounts(): Record<Tier, number> {
+  return { bullseye: 0, match: 0, expansion: 0 };
+}
+
+/**
+ * Contacts per mode, in outreach order (tier, fit, then rank at the fund):
+ * everyone with an email, or only each fund's Primary and Backup.
+ */
+function collectScopes(run: MatchRun): Record<VerifyMode, ScopeList> {
+  const lists: Record<VerifyMode, ScopeList> = {
+    all: { contacts: [], noEmail: noEmailCounts() },
+    sequence: { contacts: [], noEmail: noEmailCounts() },
   };
-  const seen: Record<VerifyScope, Set<string>> = { all: new Set(), sequence: new Set(), wave1: new Set() };
-  const add = (scope: VerifyScope, result: MatchResult, contact: RankedContact) => {
+  const seen: Record<VerifyMode, Set<string>> = { all: new Set(), sequence: new Set() };
+  const add = (mode: VerifyMode, result: MatchResult, contact: RankedContact) => {
     const item = toVerifyContact(result, contact);
-    if (seen[scope].has(item.id)) return;
-    seen[scope].add(item.id);
-    lists[scope].contacts.push(item);
+    if (seen[mode].has(item.id)) return;
+    seen[mode].add(item.id);
+    lists[mode].contacts.push(item);
   };
 
   for (const result of run.out.results) {
@@ -138,13 +151,15 @@ function collectScopes(run: MatchRun): Record<VerifyScope, ScopeList> {
     // Primary and Backup first, then everyone else at the fund by rank.
     for (const contact of result.seq) add("all", result, contact);
     for (const contact of investing) if (contact.email) add("all", result, { ...contact, seq: undefined });
-    lists.all.noEmail += investing.filter((contact) => !contact.email).length;
+    lists.all.noEmail[result.tier] += investing.filter((contact) => !contact.email).length;
     for (const contact of result.seq) add("sequence", result, contact);
-    if (result.tier === "bullseye" && !result.overflow) {
-      for (const contact of result.seq) add("wave1", result, contact);
-    }
   }
   return lists;
+}
+
+/** One mode's contacts for one tier, in outreach order. */
+function tierContacts(list: ScopeList, tier: Tier) {
+  return list.contacts.filter((contact) => contact.tier === tier);
 }
 
 function isFresh(run: MatchRun, contact: VerifyContact) {
@@ -399,15 +414,21 @@ async function latestRun(
   return { ok: true, value: (data as RunRow | null) ?? null };
 }
 
-/** Average cost per check and time per batch, from earlier runs. */
-async function loadEstimate(supabase: ServiceClient): Promise<VerifyOverview["estimate"]> {
+/** Checks read to measure the average cost. */
+const ESTIMATE_SAMPLE = 300;
+
+/**
+ * Average cost per check (from process-2 checks only, once there are enough)
+ * and time per batch, from earlier runs.
+ */
+async function loadEstimate(supabase: ServiceClient): Promise<VerifyEstimate> {
   const [checks, runs] = await Promise.all([
     supabase
       .from("contact_checks")
       .select("cost")
       .not("checked_at", "is", null)
       .order("checked_at", { ascending: false })
-      .limit(200),
+      .limit(ESTIMATE_SAMPLE),
     supabase
       .from("verification_runs")
       .select("stats, next_batch")
@@ -416,17 +437,19 @@ async function loadEstimate(supabase: ServiceClient): Promise<VerifyOverview["es
       .limit(20),
   ]);
   const costs = ((checks.data ?? []) as { cost: Partial<CheckCost> | null }[])
+    .filter((row) => Number(row.cost?.pipeline) === VERIFY_PIPELINE)
     .map((row) => Number(row.cost?.usd ?? 0))
     .filter((value) => value > 0);
   const batches = ((runs.data ?? []) as { stats: Partial<RunStats> | null; next_batch: number }[]).reduce(
     (sum, row) => ({ ms: sum.ms + Number(row.stats?.ms ?? 0), n: sum.n + Number(row.next_batch ?? 0) }),
     { ms: 0, n: 0 },
   );
+  const measured = costs.length >= ESTIMATE_MIN_CHECKS;
   return {
-    usdPerContact:
-      costs.length > 0 ? costs.reduce((sum, value) => sum + value, 0) / costs.length : DEFAULT_USD_PER_CONTACT,
+    usdPerContact: measured ? costs.reduce((sum, value) => sum + value, 0) / costs.length : DEFAULT_USD_PER_CONTACT,
     msPerBatch: batches.n > 0 && batches.ms > 0 ? batches.ms / batches.n : DEFAULT_MS_PER_BATCH,
-    measured: costs.length > 0,
+    measured,
+    sample: costs.length,
   };
 }
 
@@ -447,27 +470,30 @@ export async function loadVerifyOverview(
   if (!done.ok) return done;
 
   const lists = collectScopes(run.value);
-  const scopes = {} as Record<VerifyScope, ScopeCount>;
+  const counts = {} as Record<VerifyMode, Record<Tier, ScopeCount>>;
   const flagged = new Map<string, FlaggedContact>();
-  for (const { key: scope } of VERIFY_SCOPES) {
-    let order = "";
-    lists[scope].contacts.forEach((contact, position) => {
-      const flag = flagOf(run.value, contact);
-      if (flag) {
-        order += "f";
-        const entry = flagged.get(contact.id) ?? {
-          contact,
-          reason: flag.flag_reason ?? "Removed",
-          flaggedAt: flag.updated_at,
-          positions: {},
-        };
-        entry.positions[scope] = position;
-        flagged.set(contact.id, entry);
-      } else {
-        order += isFresh(run.value, contact) ? "r" : "c";
-      }
-    });
-    scopes[scope] = { total: order.length, order, noEmail: lists[scope].noEmail };
+  for (const mode of VERIFY_MODES) {
+    counts[mode] = {} as Record<Tier, ScopeCount>;
+    for (const tier of TIER_ORDER) {
+      let order = "";
+      tierContacts(lists[mode], tier).forEach((contact, position) => {
+        const flag = flagOf(run.value, contact);
+        if (flag) {
+          order += "f";
+          const entry = flagged.get(contact.id) ?? {
+            contact,
+            reason: flag.flag_reason ?? "Removed",
+            flaggedAt: flag.updated_at,
+            positions: {},
+          };
+          entry.positions[mode] = position;
+          flagged.set(contact.id, entry);
+        } else {
+          order += isFresh(run.value, contact) ? "r" : "c";
+        }
+      });
+      counts[mode][tier] = { total: order.length, order, noEmail: lists[mode].noEmail[tier] };
+    }
   }
 
   const activeState = active.value ? await runState(supabase, active.value, run.value) : null;
@@ -478,7 +504,7 @@ export async function loadVerifyOverview(
   return {
     ok: true,
     value: {
-      scopes,
+      counts,
       flagged: Array.from(flagged.values()),
       estimate: await loadEstimate(supabase),
       claudeReady: isClaudeConfigured(),
@@ -529,13 +555,12 @@ async function refreshMatch(supabase: ServiceClient, clientId: string): Promise<
 export async function startVerificationRun(
   supabase: ServiceClient,
   clientId: string,
-  scope: VerifyScope,
+  mode: VerifyMode,
+  limits: TierLimits,
   choices: { id: string; choice: FlaggedChoice }[],
-  limit: number,
   by: string | null,
 ): Promise<Result<RunState>> {
-  if (!VERIFY_SCOPES.some((item) => item.key === scope)) return { ok: false, error: "Unknown scope." };
-  if (!(VERIFY_LIMITS as readonly number[]).includes(limit)) return { ok: false, error: "Unknown limit." };
+  if (!VERIFY_MODES.includes(mode)) return { ok: false, error: "Unknown choice of contacts." };
   let run = await runClientMatch(supabase, clientId);
   if (!run.ok) return run;
 
@@ -559,14 +584,18 @@ export async function startVerificationRun(
   const toCheck: VerifyContact[] = [];
   const reused: VerifyContact[] = [];
   // Flagged contacts still undecided ("Check again") are checked like the rest.
-  // A limit keeps the first contacts in outreach order.
-  const inScope = collectScopes(run.value)[scope].contacts;
-  for (const contact of limit > 0 ? inScope.slice(0, limit) : inScope) {
-    if (!flagOf(run.value, contact) && isFresh(run.value, contact)) reused.push(contact);
-    else toCheck.push(contact);
+  // Each tier's limit keeps its first contacts in outreach order.
+  const list = collectScopes(run.value)[mode];
+  for (const tier of TIER_ORDER) {
+    const limit = limits[tier];
+    const contacts = tierContacts(list, tier);
+    for (const contact of limit === null ? contacts : contacts.slice(0, limit)) {
+      if (!flagOf(run.value, contact) && isFresh(run.value, contact)) reused.push(contact);
+      else toCheck.push(contact);
+    }
   }
   if (toCheck.length === 0 && reused.length === 0) {
-    return { ok: false, error: "There are no contacts with an email to check in this scope." };
+    return { ok: false, error: "There are no contacts with an email to check in these tiers." };
   }
 
   const { error: cancelError } = await supabase
@@ -582,7 +611,7 @@ export async function startVerificationRun(
     .from("verification_runs")
     .insert({
       client_id: clientId,
-      scope,
+      scope: mode,
       contacts: toCheck,
       reused,
       batch_size: VERIFY_BATCH_SIZE,
@@ -614,7 +643,7 @@ export async function startVerificationRun(
 }
 
 // ---------------------------------------------------------------------------
-// The three steps
+// The steps: "At the firm?" (Claude with web search), then Hunter's mailbox check
 
 const EVIDENCE_SCHEMA = {
   type: "array",
@@ -700,7 +729,7 @@ async function stepRole(contact: VerifyContact): Promise<{ step: RoleStep; cost:
     system: ROLE_SYSTEM,
     content: [{ type: "text", text: personBlock(contact) }],
     tool: ROLE_TOOL,
-    serverTools: [webSearchTool(5)],
+    serverTools: [webSearchTool(ROLE_MAX_SEARCHES)],
     requireServerTools: true,
     maxTokens: 2000,
     timeoutMs: CLAUDE_STEP_TIMEOUT_MS,
@@ -726,52 +755,6 @@ async function stepRole(contact: VerifyContact): Promise<{ step: RoleStep; cost:
       summary: text(input.summary, 400),
       evidence: cleanEvidence(input.evidence),
     },
-    cost,
-  };
-}
-
-const PUBLIC_SYSTEM = `You check whether an exact email address is published on the web as belonging to a person. Use web search: search the exact address in quotes, and the address together with the person's name.
-
-Rules:
-- found: a page from your search results shows this exact address, every character the same, together with this person's name or clearly as their address (for example on the firm's team page, their own profile, a press release or a filing).
-- An address that only follows the same pattern as colleagues' addresses is NOT found. The address shown for a different person is NOT found. Pages that guess addresses or list "email formats" are NOT found.
-- Never invent a URL; cite only pages from your search results.
-
-Report through the report_email tool. The summary is one plain sentence.`;
-
-const PUBLIC_TOOL = {
-  name: "report_email",
-  description: "Report whether the exact address is published as this person's.",
-  input_schema: {
-    type: "object",
-    properties: {
-      found: { type: "boolean" },
-      summary: { type: "string" },
-      evidence: EVIDENCE_SCHEMA,
-    },
-    required: ["found", "summary", "evidence"],
-  },
-};
-
-async function stepPublic(contact: VerifyContact): Promise<{ step: PublicStep; cost: Partial<CheckCost> }> {
-  const result = await callClaudeAgent<Record<string, unknown>>({
-    system: PUBLIC_SYSTEM,
-    content: [{ type: "text", text: `${personBlock(contact)}\nEmail to check: ${contact.email}` }],
-    tool: PUBLIC_TOOL,
-    serverTools: [webSearchTool(3)],
-    requireServerTools: true,
-    maxTokens: 1500,
-    timeoutMs: CLAUDE_STEP_TIMEOUT_MS,
-  });
-  const cost = usageCost(result.usage);
-  if (!result.ok) {
-    return { step: { result: "error", summary: text(result.reason, 300), evidence: [] }, cost };
-  }
-  const evidence = cleanEvidence(result.input.evidence);
-  // A match needs a page to show for it.
-  const found = result.input.found === true && evidence.length > 0;
-  return {
-    step: { result: found ? "found" : "not_found", summary: text(result.input.summary, 400), evidence },
     cost,
   };
 }
@@ -834,7 +817,7 @@ async function saveCheck(
     status,
     steps,
     suggestion: status ? suggestFor(status, steps) : null,
-    cost,
+    cost: { ...cost, pipeline: VERIFY_PIPELINE },
     had_error: Boolean(failedStep(steps)),
     checked_at: finish ? nowIso() : null,
   };
@@ -881,10 +864,6 @@ export async function runVerificationStep(
         if (step === 1) {
           const done = await stepRole(contact);
           steps.role = done.step;
-          cost = addCost(cost, done.cost);
-        } else if (step === 2) {
-          const done = await stepPublic(contact);
-          steps.public = done.step;
           cost = addCost(cost, done.cost);
         } else {
           const done = await stepMailbox(contact);

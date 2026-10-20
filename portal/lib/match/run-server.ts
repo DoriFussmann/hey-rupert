@@ -89,6 +89,13 @@ export function verifyStateOf(run: MatchRun, contact: RankedContact): VerifyStat
   return emailKey(check.email) === emailKey(contact.email) ? check.status : "unverified";
 }
 
+/** When the contact's current email was checked, or null. */
+export function verifiedAtOf(run: MatchRun, contact: RankedContact): string | null {
+  return verifyStateOf(run, contact) === "unverified"
+    ? null
+    : run.checks.get(rankedContactId(contact))?.checkedAt ?? null;
+}
+
 /** Investing contacts with an email: what "contacts identified" counts. */
 function investingPeople(result: MatchResult) {
   return result.ranked.filter((contact) => contact.email && contact.role !== "ops").length;
@@ -310,6 +317,7 @@ function brief(run: MatchRun, contact: RankedContact | undefined): ContactBrief 
     title: contact.title,
     role: contact.roleLabel,
     verify: verifyStateOf(run, contact),
+    verifiedAt: verifiedAtOf(run, contact),
   };
 }
 
@@ -530,6 +538,7 @@ function contactOf(run: MatchRun, contact: RankedContact): FirmContact {
     seq: null,
     why: contact.why,
     verify: verifyStateOf(run, contact),
+    verifiedAt: verifiedAtOf(run, contact),
   };
 }
 

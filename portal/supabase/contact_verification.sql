@@ -6,7 +6,7 @@
 -- (lowercased), as it appears in the Fund Database workbook.
 
 -- ---------------------------------------------------------------------------
--- Latest verification per contact, shared by every client. Reused for 90
+-- Latest verification per contact, shared by every client. Reused for 45
 -- days while the email is unchanged. `checked_at` is null while in progress.
 create table if not exists public.contact_checks (
   firm_id text not null,

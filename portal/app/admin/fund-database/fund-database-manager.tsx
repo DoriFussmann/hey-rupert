@@ -102,6 +102,16 @@ function StagedPreview({
           This is the first database. Matching starts working as soon as you apply it.
         </p>
       )}
+      {diff?.reapplied && diff.reapplied.readded + diff.reapplied.dropped + diff.reapplied.inWorkbook > 0 ? (
+        <p className="px-lg pb-md text-body-sm text-secondary">
+          Contacts added by CSV: {n(diff.reapplied.readded)} put back on top of this workbook
+          {diff.reapplied.inWorkbook > 0 ? `, ${n(diff.reapplied.inWorkbook)} already in it` : ""}
+          {diff.reapplied.dropped > 0
+            ? `, ${n(diff.reapplied.dropped)} dropped because their fund is not in this workbook`
+            : ""}
+          .
+        </p>
+      ) : null}
       {diff && diff.warnings.length > 0 ? (
         <ul className="mx-lg mb-md list-disc rounded-md border border-warning/40 bg-background py-sm pl-xl pr-md text-body-sm text-warning">
           {diff.warnings.map((warning) => (
@@ -376,7 +386,10 @@ export function FundDatabaseManager({
             <tbody>
               {history.map((version) => (
                 <tr key={version.id} className="border-b border-border last:border-b-0">
-                  <td className="px-lg py-sm text-heading">{version.fileName}</td>
+                  <td className="px-lg py-sm text-heading">
+                    {version.fileName}
+                    {version.source === "csv" ? <span className="ml-xs text-muted">(CSV contacts)</span> : null}
+                  </td>
                   <td className="px-md py-sm text-muted">
                     {formatDateAtTime(version.createdAt)}
                     {version.createdBy ? ` · ${version.createdBy}` : ""}
@@ -392,7 +405,13 @@ export function FundDatabaseManager({
                         className="text-primary hover:text-primary-hover disabled:opacity-40"
                         disabled={Boolean(busy)}
                         onClick={() => {
-                          if (!window.confirm(`Make ${version.fileName} the live database again?`)) return;
+                          if (
+                            !window.confirm(
+                              `Make ${version.fileName} the live database again? Contacts added by CSV after it are not in it.`,
+                            )
+                          ) {
+                            return;
+                          }
                           void act(
                             "Switching versions…",
                             () => applyFundVersion(version.id),
