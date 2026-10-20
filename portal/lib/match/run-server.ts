@@ -644,14 +644,17 @@ export function buildClientList(run: MatchRun): Result<InvestorListPayload> {
 // ---------------------------------------------------------------------------
 // Internal export rows (admin only)
 
+/** Statuses the default export leaves out, unless kept for this client. */
+const KNOWN_PROBLEMS = new Set<VerifyState>(["email_bad", "left_firm", "role_changed", "not_found"]);
+
 /**
- * Contacts the default export keeps: Clean ones, and ones kept for this
- * client after a check. Everything else needs a check or a decision first.
+ * Contacts the default export keeps: everyone except known problems (Email
+ * bad, Left firm, Role changed, Not found) that weren't kept for this client.
+ * Not-yet-checked contacts stay in, marked "Not verified".
  */
 function exportable(run: MatchRun, contact: RankedContact) {
-  const state = verifyStateOf(run, contact);
-  if (state === "clean") return true;
-  return state !== "unverified" && run.decisions.get(rankedContactId(contact))?.decision === "keep";
+  if (!KNOWN_PROBLEMS.has(verifyStateOf(run, contact))) return true;
+  return run.decisions.get(rankedContactId(contact))?.decision === "keep";
 }
 
 function verifyText(run: MatchRun, contact: RankedContact) {
@@ -661,8 +664,8 @@ function verifyText(run: MatchRun, contact: RankedContact) {
 }
 
 /**
- * Internal workbook rows. By default only verified contacts (Clean, or kept
- * after a check) are listed; `includeAll` lists everyone.
+ * Internal workbook rows. By default contacts with a known problem are left
+ * out (see exportable); `includeAll` lists everyone.
  */
 export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?: boolean } = {}) {
   const { out, profile } = run;
@@ -675,7 +678,12 @@ export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?:
     ["HQ", [profile.city, profile.usRegion, profile.country].filter(Boolean).join(", ")],
     ["Fund Database", run.live.version.fileName],
     ["Exported", new Date().toISOString().slice(0, 16).replace("T", " ")],
-    ["Contacts", includeAll ? "Everyone (verified or not)" : "Verified only: Clean, or kept after a check"],
+    [
+      "Contacts",
+      includeAll
+        ? "Everyone (verified or not)"
+        : "Everyone except known problems (Email bad, Left firm, Role changed, Not found) not kept",
+    ],
     [],
     ["Tier", "Funds", "Tightness", "Rules"],
     ...TIERS.map(({ key, label }) => [
@@ -774,8 +782,8 @@ export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?:
       [],
       [
         leftOut > 0
-          ? `${n(leftOut)} Primary/Backup contacts left out: not verified, or a problem without a decision. Run Verify emails, or use Export everything.`
-          : "Every Primary/Backup contact is verified.",
+          ? `${n(leftOut)} Primary/Backup contacts left out: a known problem without a Keep decision. Use Export everything to include them.`
+          : "No Primary/Backup contact has a known problem.",
       ],
     );
   }

@@ -428,9 +428,9 @@ export function ResultBoard({
             <a
               href={`/admin/clients/${clientId}/match/export`}
               className={`${secondaryButton} no-underline`}
-              title="Internal workbook with verified contacts only: Clean, or kept after a check"
+              title="Internal workbook without contacts that have a known problem (Email bad, Left firm, Role changed, Not found) unless kept"
             >
-              Export (verified)
+              Export (no known problems)
             </a>
             <a
               href={`/admin/clients/${clientId}/match/export?all=1`}
