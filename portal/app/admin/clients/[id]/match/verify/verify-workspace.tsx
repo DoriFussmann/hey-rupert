@@ -31,7 +31,9 @@ import { formatDateAtTime } from "@/lib/format";
 import {
   VERIFY_BATCH_SIZE,
   VERIFY_FRESH_DAYS,
+  VERIFY_LIMITS,
   VERIFY_SCOPES,
+  countScope,
   formatDuration,
   formatUsd,
   needsStep,
@@ -94,18 +96,23 @@ function SetupPanel({
 }: {
   overview: VerifyOverview;
   busy: boolean;
-  onStart: (scope: VerifyScope, choices: { id: string; choice: FlaggedChoice }[]) => void;
+  onStart: (scope: VerifyScope, choices: { id: string; choice: FlaggedChoice }[], limit: number) => void;
 }) {
   const [scope, setScope] = useState<VerifyScope>("all");
+  const [limit, setLimit] = useState(0);
   const [choices, setChoices] = useState<Record<string, FlaggedChoice>>({});
   const count = overview.scopes[scope];
-  const flagged = overview.flagged.filter((item) => item.scopes.includes(scope));
+  const counted = countScope(count, limit);
+  const flagged = overview.flagged.filter((item) => {
+    const position = item.positions[scope];
+    return position !== undefined && (limit === 0 || position < limit);
+  });
   const choiceOf = (id: string) => choices[id] ?? "remove";
   const checkAgain = flagged.filter((item) => choiceOf(item.contact.id) === "check").length;
-  const toCheck = count.toCheck + checkAgain;
+  const toCheck = counted.toCheck + checkAgain;
   const batches = Math.ceil(toCheck / VERIFY_BATCH_SIZE);
   const { estimate } = overview;
-  const canStart = overview.claudeReady && toCheck + count.reused > 0;
+  const canStart = overview.claudeReady && toCheck + counted.reused > 0;
 
   return (
     <section className={`${cardClass} px-lg py-md`}>
@@ -133,9 +140,25 @@ function SetupPanel({
         })}
       </div>
 
+      <label className="mt-md flex flex-wrap items-center gap-sm text-body-sm">
+        <span className={labelClass}>Limit</span>
+        <select
+          className="rounded-md border border-border bg-background px-sm py-xs text-body-sm text-body outline-none focus:border-primary"
+          value={limit}
+          onChange={(event) => setLimit(Number(event.target.value))}
+        >
+          {VERIFY_LIMITS.map((value) => (
+            <option key={value} value={value}>
+              {value === 0 ? "All contacts" : `First ${value} contacts`}
+            </option>
+          ))}
+        </select>
+        <span className="text-muted">In outreach order: best-fit funds first, Primary before Backup.</span>
+      </label>
+
       <div className="mt-md grid gap-sm sm:grid-cols-2 lg:grid-cols-4">
         <Fact label="To check" value={n(toCheck)} hint={`${n(batches)} batch${batches === 1 ? "" : "es"} of ${VERIFY_BATCH_SIZE}`} />
-        <Fact label="Reused" value={n(count.reused)} hint={`Checked in the last ${VERIFY_FRESH_DAYS} days`} />
+        <Fact label="Reused" value={n(counted.reused)} hint={`Checked in the last ${VERIFY_FRESH_DAYS} days`} />
         <Fact
           label="Estimated time"
           value={batches > 0 ? formatDuration(batches * estimate.msPerBatch) : "—"}
@@ -148,8 +171,10 @@ function SetupPanel({
         />
       </div>
       <p className="mt-sm text-body-sm text-muted">
-        {n(count.total)} contacts with an email in this scope
-        {count.flagged > 0 ? ` · ${n(count.flagged)} removed before (decide below)` : ""}
+        {limit > 0 && counted.contacts < count.total
+          ? `First ${n(counted.contacts)} of ${n(count.total)} contacts with an email in this scope`
+          : `${n(count.total)} contacts with an email in this scope`}
+        {counted.flagged > 0 ? ` · ${n(counted.flagged)} removed before (decide below)` : ""}
         {count.noEmail > 0 ? ` · ${n(count.noEmail)} investing contacts have no email and are left out` : ""}.
       </p>
 
@@ -222,6 +247,7 @@ function SetupPanel({
             onStart(
               scope,
               flagged.map((item) => ({ id: item.contact.id, choice: choiceOf(item.contact.id) })),
+              limit,
             )
           }
         >
@@ -328,7 +354,7 @@ export function VerifyWorkspace({
     setMode("done");
   }
 
-  async function start(scope: VerifyScope, choices: { id: string; choice: FlaggedChoice }[]) {
+  async function start(scope: VerifyScope, choices: { id: string; choice: FlaggedChoice }[], limit: number) {
     if (
       overview?.activeRun &&
       !window.confirm("This cancels the unfinished run. Its finished checks are kept and reused. Start a new run?")
@@ -338,7 +364,7 @@ export function VerifyWorkspace({
     setBusy(true);
     setNotice(null);
     try {
-      const started = await startVerification(clientId, scope, choices);
+      const started = await startVerification(clientId, scope, choices, limit);
       if (!started.ok) {
         setNotice({ kind: "error", text: started.error });
         return;
@@ -421,7 +447,7 @@ export function VerifyWorkspace({
         </p>
       ) : null}
 
-      {mode === "setup" && overview ? <SetupPanel overview={overview} busy={busy} onStart={(scope, choices) => void start(scope, choices)} /> : null}
+      {mode === "setup" && overview ? <SetupPanel overview={overview} busy={busy} onStart={(scope, choices, limit) => void start(scope, choices, limit)} /> : null}
 
       {run && (mode === "running" || mode === "paused") ? (
         <section className={`${cardClass} px-lg py-md`}>

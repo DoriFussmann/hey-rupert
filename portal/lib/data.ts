@@ -172,6 +172,7 @@ function asClient(row: Record<string, unknown>): Client {
       row.archived_at != null ? String(row.archived_at) : null,
     emails_paused: row.emails_paused === true,
     is_test_pilot: row.is_test_pilot === true,
+    is_match_sandbox: row.is_match_sandbox === true,
     live_at: row.live_at != null ? String(row.live_at) : null,
     last_activity_at: String(row.last_activity_at ?? createdAt),
     created_at: createdAt,
@@ -201,6 +202,13 @@ async function withClientSetup(client: Client | null) {
   return withSteps;
 }
 
+/** Real clients only: the Match Sandbox is internal and never listed. */
+function listed(rows: unknown[]) {
+  return rows
+    .map((row) => asClient(row as Record<string, unknown>))
+    .filter((client) => !client.is_match_sandbox);
+}
+
 export async function listClients() {
   if (!isSupabaseConfigured()) return placeholderClients;
 
@@ -212,9 +220,7 @@ export async function listClients() {
         .select("*")
         .order("created_at", { ascending: false });
       if (!error && data) {
-        return withSetupSteps(
-          data.map((row) => asClient(row as Record<string, unknown>)),
-        );
+        return withSetupSteps(listed(data));
       }
     } catch {
       // Fall through to the cookie-scoped lookup.
@@ -228,9 +234,7 @@ export async function listClients() {
       .select("*")
       .order("created_at", { ascending: false });
     if (error || !data) return [];
-    return withSetupSteps(
-      data.map((row) => asClient(row as Record<string, unknown>)),
-    );
+    return withSetupSteps(listed(data));
   } catch {
     return [];
   }

@@ -182,6 +182,13 @@ export function MatchWorkspace({
       "Sending the investor list…",
       () => sendMatchToClient(clientId),
       (result) => {
+        if (result.sandbox) {
+          setNotice({
+            kind: "ok",
+            text: `${n(result.funds)} funds are on the Test Pilot's Investor List. Open "See Test Pilot view" to see it as the client does.`,
+          });
+          return;
+        }
         setNotice({
           kind: result.emailed ? "ok" : "error",
           text: result.emailed

@@ -1,5 +1,9 @@
 import { PageHeader } from "@/components/page-header";
 import { ContactCorrections } from "@/app/admin/fund-database/contact-corrections";
+import { MatchSandbox } from "@/app/admin/fund-database/match-sandbox";
+import RME from "@/lib/match/engine/index.mjs";
+import type { SandboxPanel } from "@/lib/match/sandbox";
+import { loadSandboxPanel } from "@/lib/match/sandbox-server";
 import { FundDatabaseManager } from "@/app/admin/fund-database/fund-database-manager";
 import { requireAdmin } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
@@ -65,8 +69,18 @@ async function loadCorrections(): Promise<{ corrections: CorrectionRow[]; leads:
   return { corrections: corrections.value, leads: leads.value, error: null };
 }
 
+async function loadSandbox(): Promise<{ panel: SandboxPanel | null; error: string | null }> {
+  if (!isServiceRoleConfigured()) return { panel: null, error: null };
+  const loaded = await loadSandboxPanel(createServiceClient());
+  return loaded.ok ? { panel: loaded.value, error: null } : { panel: null, error: loaded.error };
+}
+
 export default async function FundDatabasePage() {
-  const [{ versions, sites, error }, fixes] = await Promise.all([loadPage(), loadCorrections()]);
+  const [{ versions, sites, error }, fixes, sandbox] = await Promise.all([
+    loadPage(),
+    loadCorrections(),
+    loadSandbox(),
+  ]);
 
   return (
     <>
@@ -77,6 +91,21 @@ export default async function FundDatabasePage() {
       {error ? (
         <p role="alert" className="mb-lg rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">
           {error}
+        </p>
+      ) : null}
+      {sandbox.panel ? (
+        <MatchSandbox
+          panel={sandbox.panel}
+          taxonomy={{
+            stages: [...RME.VC_LADDER, ...RME.PE_STAGES],
+            verticals: RME.VERTICALS,
+            industries: RME.INDUSTRIES,
+            countries: RME.COUNTRIES,
+          }}
+        />
+      ) : sandbox.error ? (
+        <p role="alert" className="mb-lg rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">
+          {sandbox.error}
         </p>
       ) : null}
       <ContactCorrections corrections={fixes.corrections} leads={fixes.leads} error={fixes.error} />

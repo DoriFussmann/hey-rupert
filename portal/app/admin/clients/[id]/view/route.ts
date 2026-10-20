@@ -7,7 +7,8 @@ import {
   isClientId,
 } from "@/lib/view-as";
 
-// Starts a read-only "view as client" session and opens the client's portal.
+// Starts a read-only "view as client" session and opens the client's portal
+// (or ?next=/portal/..., a page inside it).
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } },
@@ -22,9 +23,10 @@ export async function GET(
     return NextResponse.redirect(new URL("/admin", request.url));
   }
 
-  const response = NextResponse.redirect(
-    new URL("/portal", request.url),
-  );
+  // Optional portal page to land on; only paths inside the portal.
+  const next = request.nextUrl.searchParams.get("next") ?? "";
+  const target = /^\/portal(\/[a-z0-9-]+)*$/.test(next) ? next : "/portal";
+  const response = NextResponse.redirect(new URL(target, request.url));
   response.cookies.set(VIEW_AS_COOKIE, client.id, {
     httpOnly: true,
     sameSite: "lax",

@@ -335,18 +335,32 @@ export type BatchDone = {
 export type ScopeCount = {
   /** Contacts with an email in this scope. */
   total: number;
-  toCheck: number;
-  reused: number;
-  flagged: number;
+  /**
+   * One letter per contact, in outreach order: "c" to check, "r" reused
+   * (checked recently), "f" removed before (decide first). A limit keeps the
+   * first N.
+   */
+  order: string;
   /** Investing contacts without an email (left out). */
   noEmail: number;
 };
+
+/** Counts for the first `limit` contacts of a scope (0 = all). */
+export function countScope(count: ScopeCount, limit: number) {
+  const order = limit > 0 ? count.order.slice(0, limit) : count.order;
+  const of = (letter: string) => order.split(letter).length - 1;
+  return { contacts: order.length, toCheck: of("c"), reused: of("r"), flagged: of("f") };
+}
+
+/** How many contacts a run checks at most. 0 means all. */
+export const VERIFY_LIMITS = [0, 10, 25, 50, 100, 250] as const;
 
 export type FlaggedContact = {
   contact: VerifyContact;
   reason: string;
   flaggedAt: string;
-  scopes: VerifyScope[];
+  /** Position in each scope's outreach order (0-based), where it appears. */
+  positions: Partial<Record<VerifyScope, number>>;
 };
 
 export type VerifyOverview = {

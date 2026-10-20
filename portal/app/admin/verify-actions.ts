@@ -66,6 +66,7 @@ export async function startVerification(
   clientId: string,
   scope: VerifyScope,
   choices: { id: string; choice: FlaggedChoice }[],
+  limit: number,
 ): Promise<Result<{ run: RunState }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
@@ -75,6 +76,7 @@ export async function startVerification(
       String(clientId),
       scope,
       Array.isArray(choices) ? choices.slice(0, 5000) : [],
+      Number(limit) || 0,
       access.email,
     );
     if (!started.ok) return { ok: false, error: started.error };

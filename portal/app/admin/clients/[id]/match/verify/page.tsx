@@ -30,6 +30,12 @@ export default async function VerifyEmailsPage({ params }: { params: { id: strin
         title="Verify emails"
         description={`Checks ${client.company_name}'s matched contacts 5 at a time: is the person at the firm, is the email public, and does the mailbox accept mail. Fixes apply to the Fund Database for every client.`}
       />
+      {client.is_match_sandbox ? (
+        <p className="mb-lg rounded-card border border-warning/40 bg-surface px-lg py-md text-body-sm text-warning">
+          Test Pilot sandbox: checks cost real money, and Remove, Update email, Update name and Update firm change the
+          Fund Database for every client.
+        </p>
+      ) : null}
       <VerifyWorkspace clientId={client.id} initialOverview={overview} initialError={error} />
     </>
   );

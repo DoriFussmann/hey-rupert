@@ -551,10 +551,11 @@ export async function checkClientWebsites(
 /**
  * Publishes the fund list (funds, tiers, websites and contact counts; never
  * people) on the client's Investor List. The client can open it immediately.
+ * The Match Sandbox skips the Setup gate and is never emailed.
  */
 export async function sendMatchToClient(
   clientId: string,
-): Promise<Result<{ funds: number; emailed: boolean; emailError: string | null }>> {
+): Promise<Result<{ funds: number; emailed: boolean; emailError: string | null; sandbox: boolean }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const run = await runClientMatch(access.supabase, clientId);
@@ -567,7 +568,7 @@ export async function sendMatchToClient(
   const [{ data: client, error: clientError }, grouped] = await Promise.all([
     access.supabase
       .from("clients")
-      .select("stage, intake_completed_at")
+      .select("*")
       .eq("id", clientId)
       .maybeSingle(),
     loadSetupSteps(access.supabase, [clientId]),
@@ -575,18 +576,19 @@ export async function sendMatchToClient(
   if (clientError) return { ok: false, error: clientError.message };
   if (!client) return { ok: false, error: "Client not found." };
   const rows = grouped.get(clientId) ?? [];
+  const sandbox = client.is_match_sandbox === true;
   const source = {
     stage: client.stage != null ? String(client.stage) : null,
     intake_completed_at:
       client.intake_completed_at != null ? String(client.intake_completed_at) : null,
     setup_steps: rows,
   };
-  if (!canPublish(source, "investor_list")) {
+  if (!sandbox && !canPublish(source, "investor_list")) {
     return { ok: false, error: INVESTOR_LIST_BLOCKED };
   }
   const row = rows.find((item) => item.step === "investor_list") ?? null;
   const later = rows.some((item) => item.step === "email_copy" && item.version > 0);
-  if (row?.status === "confirmed" && later) {
+  if (!sandbox && row?.status === "confirmed" && later) {
     return {
       ok: false,
       error:
@@ -637,16 +639,19 @@ export async function sendMatchToClient(
     }
   }
 
-  const clientEmail = await notifyClient(access.supabase, clientId, "investor_list_ready", {
-    updated: version > 1,
-  });
+  const clientEmail = sandbox
+    ? null
+    : await notifyClient(access.supabase, clientId, "investor_list_ready", {
+        updated: version > 1,
+      });
   revalidateMatch(clientId);
   revalidatePath("/portal", "layout");
   revalidatePath("/portal/setup", "layout");
   return {
     ok: true,
     funds: draft.rows.length,
-    emailed: clientEmail.ok,
-    emailError: clientEmail.ok ? null : clientEmail.reason,
+    emailed: Boolean(clientEmail?.ok),
+    emailError: clientEmail && !clientEmail.ok ? clientEmail.reason : null,
+    sandbox,
   };
 }

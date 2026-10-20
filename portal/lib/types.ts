@@ -78,6 +78,8 @@ export type Client = {
   emails_paused?: boolean;
   /** Internal test client: client steps can be completed from the admin page. */
   is_test_pilot?: boolean;
+  /** The hidden Match Sandbox company (Fund Database → Match Sandbox). */
+  is_match_sandbox?: boolean;
   /** When the client first moved to Live (null for clients live before it was recorded). */
   live_at?: string | null;
   last_activity_at: string;

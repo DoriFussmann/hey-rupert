@@ -28,6 +28,7 @@ import {
   VERIFY_BATCH_SIZE,
   VERIFY_FRESH_DAYS,
   VERIFY_LABEL,
+  VERIFY_LIMITS,
   VERIFY_SCOPES,
   ZERO_COST,
   addCost,
@@ -449,27 +450,24 @@ export async function loadVerifyOverview(
   const scopes = {} as Record<VerifyScope, ScopeCount>;
   const flagged = new Map<string, FlaggedContact>();
   for (const { key: scope } of VERIFY_SCOPES) {
-    const count: ScopeCount = { total: 0, toCheck: 0, reused: 0, flagged: 0, noEmail: lists[scope].noEmail };
-    for (const contact of lists[scope].contacts) {
-      count.total += 1;
+    let order = "";
+    lists[scope].contacts.forEach((contact, position) => {
       const flag = flagOf(run.value, contact);
       if (flag) {
-        count.flagged += 1;
+        order += "f";
         const entry = flagged.get(contact.id) ?? {
           contact,
           reason: flag.flag_reason ?? "Removed",
           flaggedAt: flag.updated_at,
-          scopes: [],
+          positions: {},
         };
-        entry.scopes.push(scope);
+        entry.positions[scope] = position;
         flagged.set(contact.id, entry);
-      } else if (isFresh(run.value, contact)) {
-        count.reused += 1;
       } else {
-        count.toCheck += 1;
+        order += isFresh(run.value, contact) ? "r" : "c";
       }
-    }
-    scopes[scope] = count;
+    });
+    scopes[scope] = { total: order.length, order, noEmail: lists[scope].noEmail };
   }
 
   const activeState = active.value ? await runState(supabase, active.value, run.value) : null;
@@ -533,9 +531,11 @@ export async function startVerificationRun(
   clientId: string,
   scope: VerifyScope,
   choices: { id: string; choice: FlaggedChoice }[],
+  limit: number,
   by: string | null,
 ): Promise<Result<RunState>> {
   if (!VERIFY_SCOPES.some((item) => item.key === scope)) return { ok: false, error: "Unknown scope." };
+  if (!(VERIFY_LIMITS as readonly number[]).includes(limit)) return { ok: false, error: "Unknown limit." };
   let run = await runClientMatch(supabase, clientId);
   if (!run.ok) return run;
 
@@ -559,7 +559,9 @@ export async function startVerificationRun(
   const toCheck: VerifyContact[] = [];
   const reused: VerifyContact[] = [];
   // Flagged contacts still undecided ("Check again") are checked like the rest.
-  for (const contact of collectScopes(run.value)[scope].contacts) {
+  // A limit keeps the first contacts in outreach order.
+  const inScope = collectScopes(run.value)[scope].contacts;
+  for (const contact of limit > 0 ? inScope.slice(0, limit) : inScope) {
     if (!flagOf(run.value, contact) && isFresh(run.value, contact)) reused.push(contact);
     else toCheck.push(contact);
   }
