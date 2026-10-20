@@ -49,10 +49,10 @@ export type SetupHistoryEntry = {
 };
 
 /** Steps Rupert sends as a document: one action pushes it to the portal and emails the client. */
-export type SetupDocumentStep = "deck_review" | "framing";
+export type SetupDocumentStep = "deck_review" | "framing" | "investor_list";
 
 export function isSetupDocumentStep(value: unknown): value is SetupDocumentStep {
-  return value === "deck_review" || value === "framing";
+  return value === "deck_review" || value === "framing" || value === "investor_list";
 }
 
 /** One row of `setup_steps`, as the app uses it. */
@@ -330,7 +330,7 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
     short: "Investor List",
     href: "/portal/setup/investor-list",
     clientTask: "review and confirm your matched investor list",
-    adminAction: "Upload the matched investor list",
+    adminAction: "Push the list from Rupert Match and send it",
     kind: "review",
   },
   {
@@ -844,12 +844,12 @@ export function asInvestorList(value: unknown): InvestorListPayload {
         )
         .map((item, index) => ({
           id: str(item.id, 40) || `r${index + 1}`,
-          fund_name: str(item.fund_name, CSV_FIELD_MAX),
-          contact: str(item.contact, CSV_FIELD_MAX),
-          details: str(item.details, CSV_FIELD_MAX),
+          fund_name: str(item.fund_name, INVESTOR_FIELD_MAX),
+          contact: str(item.contact, INVESTOR_FIELD_MAX),
+          details: str(item.details, INVESTOR_FIELD_MAX),
           tier: asTier(item.tier) ?? 3,
-          why: dropSectorFocus(str(item.why, CSV_FIELD_MAX)),
-          comments: str(item.comments, CSV_FIELD_MAX),
+          why: dropSectorFocus(str(item.why, INVESTOR_FIELD_MAX)),
+          comments: str(item.comments, INVESTOR_FIELD_MAX),
           website: websiteHref(str(item.website, 500)) || undefined,
         }))
     : [];
@@ -860,6 +860,29 @@ export function asInvestorList(value: unknown): InvestorListPayload {
     summary: asInvestorListSummary(raw.summary),
     admin_note: adminNote || undefined,
   };
+}
+
+/** Rupert's investor list draft: the list from Rupert Match and the email that goes with it. */
+export type InvestorListDraft = InvestorListPayload & { client_email: ClientEmailDraft };
+
+export function asInvestorListDraft(value: unknown): InvestorListDraft {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return { ...asInvestorList(value), client_email: asClientEmail(raw.client_email) };
+}
+
+/** What the client sees of the draft: never the email. */
+export function investorListForClient(draft: InvestorListPayload): InvestorListPayload {
+  return {
+    rows: draft.rows,
+    source_file: draft.source_file,
+    summary: draft.summary ?? null,
+    admin_note: draft.admin_note,
+  };
+}
+
+/** Why the investor list cannot be sent yet, or null. */
+export function investorListProblem(draft: InvestorListPayload) {
+  return draft.rows.length === 0 ? "Push the list from Rupert Match first." : null;
 }
 
 function count(value: unknown) {
@@ -994,253 +1017,9 @@ export function asResponse(value: unknown): SetupResponse | null {
 export const NOTE_MAX = 4000;
 
 // ---------------------------------------------------------------------------
-// Investor list CSV
+// Investor list
 
-export const CSV_FIELD_MAX = 4000;
-export const CSV_ROWS_MAX = 1000;
-
-/** Expected columns, in template order, with the header names we accept. */
-export const INVESTOR_CSV_COLUMNS: {
-  key: keyof Omit<InvestorRow, "id">;
-  header: string;
-  aliases: string[];
-  required: boolean;
-}[] = [
-  {
-    key: "fund_name",
-    header: "Fund Name",
-    aliases: ["fund name", "fund", "firm", "investor", "fund/firm"],
-    required: true,
-  },
-  {
-    key: "contact",
-    header: "Fund Point of Contact",
-    aliases: [
-      "fund point of contact",
-      "point of contact",
-      "contact",
-      "poc",
-      "partner",
-      "contact name",
-    ],
-    required: false,
-  },
-  {
-    key: "details",
-    header: "General Details",
-    aliases: ["general details", "details", "description", "about", "info"],
-    required: false,
-  },
-  {
-    key: "tier",
-    header: "Fit Level",
-    aliases: ["fit level", "fit", "tier", "fit tier", "level"],
-    required: true,
-  },
-  {
-    key: "why",
-    header: "Why It Works",
-    aliases: ["why it works", "why", "rationale", "reason", "why fit"],
-    required: false,
-  },
-  {
-    key: "comments",
-    header: "Comments",
-    aliases: ["comments", "comment", "notes", "note"],
-    required: false,
-  },
-];
-
-export const INVESTOR_CSV_TEMPLATE =
-  INVESTOR_CSV_COLUMNS.map((column) => column.header).join(",") +
-  "\n" +
-  [
-    "Example Ventures",
-    "Jane Smith (Partner)",
-    "Seed fund · $500k–$2M checks · NYC",
-    "Tier 1",
-    "Leads seed rounds in B2B health; portfolio overlap with your buyer",
-    "Warm intro possible via portfolio founder",
-  ]
-    .map(csvCell)
-    .join(",") +
-  "\n";
-
-function csvCell(value: string) {
-  return /[",\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
-}
-
-/** RFC 4180-style parser: quoted fields, escaped quotes, newlines in quotes. */
-export function parseCsv(input: string): string[][] {
-  const text = input.replace(/^﻿/, "");
-  const firstLine = text.split(/\r?\n/, 1)[0] ?? "";
-  const delimiter =
-    (firstLine.match(/;/g)?.length ?? 0) > (firstLine.match(/,/g)?.length ?? 0)
-      ? ";"
-      : (firstLine.match(/\t/g)?.length ?? 0) >
-          (firstLine.match(/,/g)?.length ?? 0)
-        ? "\t"
-        : ",";
-
-  const rows: string[][] = [];
-  let row: string[] = [];
-  let field = "";
-  let quoted = false;
-
-  for (let i = 0; i < text.length; i += 1) {
-    const char = text[i];
-    if (quoted) {
-      if (char === '"') {
-        if (text[i + 1] === '"') {
-          field += '"';
-          i += 1;
-        } else {
-          quoted = false;
-        }
-      } else {
-        field += char;
-      }
-      continue;
-    }
-    if (char === '"' && field === "") {
-      quoted = true;
-    } else if (char === delimiter) {
-      row.push(field);
-      field = "";
-    } else if (char === "\n" || char === "\r") {
-      if (char === "\r" && text[i + 1] === "\n") i += 1;
-      row.push(field);
-      rows.push(row);
-      row = [];
-      field = "";
-    } else {
-      field += char;
-    }
-  }
-  if (field !== "" || row.length > 0) {
-    row.push(field);
-    rows.push(row);
-  }
-
-  return rows.filter((cells) => cells.some((cell) => cell.trim() !== ""));
-}
-
-/** "Tier 1", "1", "T1", "High", "A", "Best" → 1, and so on. */
-export function parseFitLevel(value: string): FitTier | null {
-  const text = value.trim().toLowerCase();
-  if (!text) return null;
-  const digit = text.match(/[123]/);
-  if (digit) return Number(digit[0]) as FitTier;
-  if (["high", "a", "best", "best fit", "top", "strong"].includes(text)) return 1;
-  if (["medium", "med", "mid", "b", "good", "good fit"].includes(text)) return 2;
-  if (["low", "c", "possible", "possible fit", "stretch", "weak"].includes(text)) {
-    return 3;
-  }
-  return null;
-}
-
-function normalizeHeader(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[_\-]+/g, " ")
-    .replace(/\s+/g, " ");
-}
-
-export type InvestorCsvResult =
-  | { ok: true; rows: InvestorRow[]; warnings: string[] }
-  | { ok: false; errors: string[] };
-
-export function parseInvestorCsv(input: string): InvestorCsvResult {
-  const table = parseCsv(input);
-  if (table.length === 0) return { ok: false, errors: ["The file is empty."] };
-
-  const header = table[0].map(normalizeHeader);
-  const indexes = new Map<string, number>();
-  for (const column of INVESTOR_CSV_COLUMNS) {
-    const index = header.findIndex((cell) => column.aliases.includes(cell));
-    if (index >= 0) indexes.set(column.key, index);
-  }
-
-  const missing = INVESTOR_CSV_COLUMNS.filter(
-    (column) => column.required && !indexes.has(column.key),
-  ).map((column) => column.header);
-  if (missing.length > 0) {
-    return {
-      ok: false,
-      errors: [
-        `Missing column${missing.length > 1 ? "s" : ""}: ${missing.join(", ")}. Expected headers: ${INVESTOR_CSV_COLUMNS.map((column) => column.header).join(", ")}.`,
-      ],
-    };
-  }
-
-  const body = table.slice(1);
-  if (body.length === 0) {
-    return { ok: false, errors: ["The file has headers but no investors."] };
-  }
-  if (body.length > CSV_ROWS_MAX) {
-    return {
-      ok: false,
-      errors: [`Too many rows (${body.length}). The limit is ${CSV_ROWS_MAX}.`],
-    };
-  }
-
-  const errors: string[] = [];
-  const warnings: string[] = [];
-  const rows: InvestorRow[] = [];
-  const cell = (cells: string[], key: string) => {
-    const index = indexes.get(key);
-    return index == null ? "" : (cells[index] ?? "").trim();
-  };
-
-  body.forEach((cells, index) => {
-    const line = index + 2;
-    const fund = cell(cells, "fund_name");
-    const fitRaw = cell(cells, "tier");
-    if (!fund) {
-      errors.push(`Row ${line}: Fund Name is empty.`);
-      return;
-    }
-    const tier = parseFitLevel(fitRaw);
-    if (!tier) {
-      errors.push(
-        `Row ${line} (${fund}): Fit Level "${fitRaw}" is not Tier 1, Tier 2 or Tier 3.`,
-      );
-      return;
-    }
-    const long = INVESTOR_CSV_COLUMNS.some(
-      (column) => cell(cells, column.key).length > CSV_FIELD_MAX,
-    );
-    if (long) {
-      warnings.push(`Row ${line} (${fund}): a long field was shortened.`);
-    }
-    rows.push({
-      id: `r${rows.length + 1}`,
-      fund_name: fund.slice(0, CSV_FIELD_MAX),
-      contact: cell(cells, "contact").slice(0, CSV_FIELD_MAX),
-      details: cell(cells, "details").slice(0, CSV_FIELD_MAX),
-      tier,
-      why: cell(cells, "why").slice(0, CSV_FIELD_MAX),
-      comments: cell(cells, "comments").slice(0, CSV_FIELD_MAX),
-    });
-  });
-
-  const seen = new Map<string, number>();
-  for (const row of rows) {
-    const key = row.fund_name.toLowerCase();
-    seen.set(key, (seen.get(key) ?? 0) + 1);
-  }
-  const duplicates = Array.from(seen.entries())
-    .filter(([, count]) => count > 1)
-    .map(([name]) => name);
-  if (duplicates.length > 0) {
-    warnings.push(
-      `Listed more than once: ${duplicates.join(", ")}. Fine if they are different contacts.`,
-    );
-  }
-
-  return errors.length > 0 ? { ok: false, errors } : { ok: true, rows, warnings };
-}
+export const INVESTOR_FIELD_MAX = 4000;
 
 export function tierCounts(rows: InvestorRow[]) {
   return FIT_TIERS.map(({ tier }) => ({

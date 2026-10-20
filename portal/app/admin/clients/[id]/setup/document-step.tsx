@@ -62,9 +62,10 @@ function answerText(row: SetupStepState, version: number) {
 }
 
 /**
- * The bottom of the Analysis & Feedback and Outreach Narrative panels: the
- * email (drafted by AI, editable), Save draft, Push to Client Portal & Send,
- * and the send log. The panel owns the document; the email is saved with it.
+ * The bottom of the Analysis & Feedback, Outreach Narrative and Investor
+ * Matching panels: the email (drafted by AI, editable), Save draft, Push to
+ * Client Portal & Send, an optional preview, and the send log. The panel owns
+ * the document; the email is saved with it.
  */
 export function DocumentStep({
   clientId,
@@ -79,6 +80,7 @@ export function DocumentStep({
   problem,
   busy,
   pushSummary,
+  clientPreview,
 }: {
   clientId: string;
   step: SetupDocumentStep;
@@ -98,6 +100,8 @@ export function DocumentStep({
   busy: boolean;
   /** What Push to Client Portal & Send puts in the portal. */
   pushSummary: string;
+  /** The client's page as it will look after the push. Adds Preview as client. */
+  clientPreview?: React.ReactNode;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState<ClientEmailDraft>(initialEmail);
@@ -105,6 +109,7 @@ export function DocumentStep({
   const [pausedNote, setPausedNote] = useState<string | null>(null);
   const [pending, setPending] = useState<Pending>(null);
   const [message, setMessage] = useState<Message>(null);
+  const [previewing, setPreviewing] = useState(false);
 
   const reachable = item.status !== "open";
   const locked = busy || pending !== null;
@@ -260,6 +265,17 @@ export function DocumentStep({
           <button type="button" className={secondaryButton} disabled={locked} onClick={onSave}>
             {pending === "save" ? "Saving…" : "Save draft"}
           </button>
+          {clientPreview ? (
+            <button
+              type="button"
+              className={secondaryButton}
+              aria-expanded={previewing}
+              aria-controls={`${step}-client-preview`}
+              onClick={() => setPreviewing((current) => !current)}
+            >
+              {previewing ? "Close preview" : "Preview as client"}
+            </button>
+          ) : null}
           {unsaved ? <p className="text-body-sm text-warning">Unsaved changes</p> : null}
         </div>
         {!reachable ? (
@@ -274,6 +290,31 @@ export function DocumentStep({
           </p>
         ) : null}
       </section>
+
+      {clientPreview && previewing ? (
+        <section
+          id={`${step}-client-preview`}
+          aria-label="Preview as client"
+          className="border-t border-border bg-background px-lg py-md"
+        >
+          <p className={labelClass}>Preview · nothing is saved or sent</p>
+          <div className="mt-md rounded-card border border-border bg-surface px-lg py-md">
+            <p className="text-body-sm text-muted">Their portal, after you push version {nextVersion}</p>
+            <div className="mt-md">{clientPreview}</div>
+          </div>
+          <div className="mt-md rounded-card border border-border bg-surface px-lg py-md">
+            <p className="text-body-sm text-muted">The email{to ? ` to ${to}` : ""}</p>
+            {email.subject.trim() || email.body.trim() ? (
+              <>
+                <p className="mt-sm text-body text-heading">{email.subject.trim() || "(no subject)"}</p>
+                <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">{email.body}</p>
+              </>
+            ) : (
+              <p className="mt-sm text-body-sm text-muted">No email yet. Click Draft Email above.</p>
+            )}
+          </div>
+        </section>
+      ) : null}
 
       {row && history.length > 0 ? (
         <details className="border-t border-border px-lg py-md">

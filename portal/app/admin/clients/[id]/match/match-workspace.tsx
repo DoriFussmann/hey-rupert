@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   checkClientWebsites,
+  pushMatchToClient,
   runMatch,
-  sendMatchToClient,
   updateMatchSettings,
 } from "@/app/admin/match-actions";
 import { ResultBoard } from "@/app/admin/clients/[id]/match/result-board";
@@ -73,7 +73,7 @@ export function MatchWorkspace({
   intakeComplete,
   feedbackConfirmed,
   narrativeConfirmed,
-  sendBlocked,
+  sandbox,
   profileReady,
 }: {
   clientId: string;
@@ -85,8 +85,8 @@ export function MatchWorkspace({
   intakeComplete: boolean;
   feedbackConfirmed: boolean;
   narrativeConfirmed: boolean;
-  /** Why Send to client is not available yet, or null when it is. */
-  sendBlocked: string | null;
+  /** The Match Sandbox: Push to client publishes to the Test Pilot portal. */
+  sandbox: boolean;
   profileReady: boolean;
 }) {
   const [state, setState] = useState(initialState);
@@ -170,30 +170,20 @@ export function MatchWorkspace({
     );
   }
 
-  function sendToClient() {
-    if (
-      !window.confirm(
-        "Send these funds to the client's Investor List? They see fund names, tiers, websites and contact counts, never people. This replaces the list on their portal.",
-      )
-    ) {
-      return;
-    }
+  function pushToClient() {
+    const question = sandbox
+      ? "Publish these funds on the Test Pilot's Investor List? No email is sent."
+      : "Push these funds to the client's Investor Matching as a draft? The client sees nothing until you send it from the client page. This replaces the draft list there.";
+    if (!window.confirm(question)) return;
     void run(
-      "Sending the investor list…",
-      () => sendMatchToClient(clientId),
+      "Pushing the investor list…",
+      () => pushMatchToClient(clientId),
       (result) => {
-        if (result.sandbox) {
-          setNotice({
-            kind: "ok",
-            text: `${n(result.funds)} funds are on the Test Pilot's Investor List. Open "See Test Pilot view" to see it as the client does.`,
-          });
-          return;
-        }
         setNotice({
-          kind: result.emailed ? "ok" : "error",
-          text: result.emailed
-            ? `${n(result.funds)} funds are on the client's Investor List, and they were emailed.`
-            : `${n(result.funds)} funds are on the client's Investor List. The email was not sent: ${result.emailError ?? "unknown reason"}.`,
+          kind: "ok",
+          text: result.sandbox
+            ? `${n(result.funds)} funds are on the Test Pilot's Investor List. Open "See Test Pilot view" to see it as the client does.`
+            : `${n(result.funds)} funds saved as a draft in the client's Investor Matching. The client sees nothing yet: open it on the client page to review, preview, draft the email and send.`,
         });
       },
     );
@@ -204,17 +194,18 @@ export function MatchWorkspace({
       {database ? (
         <p className="text-body-sm text-muted">
           Fund Database: {n(database.firms)} funds · {n(database.contacts)} contacts.{" "}
-          <Link href="/admin/fund-database" className="text-primary hover:text-primary-hover">
-            Manage
-          </Link>
+          {sandbox ? null : (
+            <Link
+              href={`/admin/clients/${clientId}#setup-investor_list`}
+              className="text-primary hover:text-primary-hover"
+            >
+              Open the client&apos;s Investor Matching
+            </Link>
+          )}
         </p>
       ) : (
         <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-secondary">
-          No Fund Database yet.{" "}
-          <Link href="/admin/fund-database" className="text-primary hover:text-primary-hover">
-            Upload the workbook
-          </Link>{" "}
-          to start matching.
+          No Fund Database yet. Upload the workbook below to start matching.
         </p>
       )}
 
@@ -271,12 +262,12 @@ export function MatchWorkspace({
           <li className={feedbackConfirmed ? "text-success" : "text-muted"}>
             {feedbackConfirmed
               ? "Analysis & Feedback confirmed."
-              : "Analysis & Feedback not confirmed. Needed before Send to client, not to run."}
+              : "Analysis & Feedback not confirmed. Needed before sending the list to the client, not to run or push a draft."}
           </li>
           <li className={narrativeConfirmed ? "text-success" : "text-muted"}>
             {narrativeConfirmed
               ? "Outreach narrative confirmed."
-              : "Outreach narrative not confirmed. Needed before Send to client, not to run."}
+              : "Outreach narrative not confirmed. Needed before sending the list to the client, not to run or push a draft."}
           </li>
           <li className={databaseLive ? "text-success" : "text-secondary"}>
             {databaseLive ? "Fund Database live." : "Fund Database is not live."}
@@ -296,8 +287,7 @@ export function MatchWorkspace({
           onView={showFresh}
           onNotice={setNotice}
           onCheckWebsites={checkWebsites}
-          onSendToClient={sendToClient}
-          sendBlocked={sendBlocked}
+          onPushToClient={pushToClient}
         />
       ) : database ? (
         <p className="rounded-card border border-border bg-surface px-lg py-lg text-body-sm text-muted">

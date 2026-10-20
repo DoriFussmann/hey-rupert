@@ -45,8 +45,12 @@ import {
   type MatchView,
   type Tier,
 } from "@/lib/match/shared";
-import { notifyClient } from "@/lib/notify";
-import { INVESTOR_LIST_BLOCKED, asInvestorList, canPublish } from "@/lib/setup";
+import {
+  asInvestorList,
+  asInvestorListDraft,
+  type InvestorListPayload,
+  type SetupStepState,
+} from "@/lib/setup";
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -68,8 +72,8 @@ async function requireAdmin() {
 
 function revalidateMatch(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
-  revalidatePath(`/admin/clients/${clientId}/match`);
   revalidatePath(`/admin/clients/${clientId}/profile`);
+  revalidatePath("/admin/fund-database");
 }
 
 function errorText(err: unknown, fallback: string) {
@@ -549,26 +553,28 @@ export async function checkClientWebsites(
 }
 
 /**
- * Publishes the fund list (funds, tiers, websites and contact counts; never
- * people) on the client's Investor List. The client can open it immediately.
- * The Match Sandbox skips the Setup gate and is never emailed.
+ * Pushes the fund list (funds, tiers, websites and contact counts; never
+ * people) into the client's Investor Matching panel as a draft. The client
+ * sees nothing and is not emailed: Rupert sends it from the client page, with
+ * its email. The Match Sandbox has no client page, so its list is published
+ * straight to the Test Pilot portal (never emailed).
  */
-export async function sendMatchToClient(
+export async function pushMatchToClient(
   clientId: string,
-): Promise<Result<{ funds: number; emailed: boolean; emailError: string | null; sandbox: boolean }>> {
+): Promise<Result<{ funds: number; sandbox: boolean }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const run = await runClientMatch(access.supabase, clientId);
   if (!run.ok) return run;
   const list = buildClientList(run.value);
   if (!list.ok) return list;
-  const draft = asInvestorList(list.value);
-  if (draft.rows.length === 0) return { ok: false, error: "No funds in the tiers to send." };
+  const fresh = asInvestorList(list.value);
+  if (fresh.rows.length === 0) return { ok: false, error: "No funds in the tiers to push." };
 
   const [{ data: client, error: clientError }, grouped] = await Promise.all([
     access.supabase
       .from("clients")
-      .select("*")
+      .select("id, is_match_sandbox")
       .eq("id", clientId)
       .maybeSingle(),
     loadSetupSteps(access.supabase, [clientId]),
@@ -577,15 +583,6 @@ export async function sendMatchToClient(
   if (!client) return { ok: false, error: "Client not found." };
   const rows = grouped.get(clientId) ?? [];
   const sandbox = client.is_match_sandbox === true;
-  const source = {
-    stage: client.stage != null ? String(client.stage) : null,
-    intake_completed_at:
-      client.intake_completed_at != null ? String(client.intake_completed_at) : null,
-    setup_steps: rows,
-  };
-  if (!sandbox && !canPublish(source, "investor_list")) {
-    return { ok: false, error: INVESTOR_LIST_BLOCKED };
-  }
   const row = rows.find((item) => item.step === "investor_list") ?? null;
   const later = rows.some((item) => item.step === "email_copy" && item.version > 0);
   if (!sandbox && row?.status === "confirmed" && later) {
@@ -597,13 +594,43 @@ export async function sendMatchToClient(
   }
 
   const at = nowIso();
+  if (sandbox) {
+    const published = await publishSandboxList(access.supabase, clientId, row, fresh, at);
+    if (!published.ok) return published;
+    revalidateMatch(clientId);
+    revalidatePath("/portal", "layout");
+    revalidatePath("/portal/setup", "layout");
+    return { ok: true, funds: fresh.rows.length, sandbox };
+  }
+
+  // Keep the email and the note Rupert already wrote for the next send.
+  const current = asInvestorListDraft(row?.draft);
+  const draft = { ...fresh, admin_note: current.admin_note, client_email: current.client_email };
+  const { error } = await access.supabase.from("setup_steps").upsert(
+    { client_id: clientId, step: "investor_list", draft, updated_at: at },
+    { onConflict: "client_id,step", ignoreDuplicates: false },
+  );
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+
+  revalidateMatch(clientId);
+  return { ok: true, funds: fresh.rows.length, sandbox };
+}
+
+/** Publishes the Match Sandbox's list on the Test Pilot portal. No email. */
+async function publishSandboxList(
+  supabase: ReturnType<typeof createServiceClient>,
+  clientId: string,
+  row: SetupStepState | null,
+  list: InvestorListPayload,
+  at: string,
+): Promise<Result<object>> {
   const version = (row?.version ?? 0) + 1;
   const values = {
     client_id: clientId,
     step: "investor_list" as const,
     status: "with_client" as const,
-    draft,
-    published: draft,
+    draft: list,
+    published: list,
     version,
     published_at: at,
     response: null,
@@ -615,7 +642,7 @@ export async function sendMatchToClient(
   };
 
   if (row) {
-    const { data, error } = await access.supabase
+    const { data, error } = await supabase
       .from("setup_steps")
       .update(values)
       .eq("client_id", clientId)
@@ -626,32 +653,17 @@ export async function sendMatchToClient(
     if (!data || data.length === 0) {
       return { ok: false, error: "This step changed meanwhile. Refresh and try again." };
     }
-  } else {
-    const { error } = await access.supabase.from("setup_steps").insert(values);
-    if (error) {
-      return {
-        ok: false,
-        error:
-          error.code === "23505"
-            ? "This step changed meanwhile. Refresh and try again."
-            : setupTableError(error.message, error.code),
-      };
-    }
+    return { ok: true };
   }
-
-  const clientEmail = sandbox
-    ? null
-    : await notifyClient(access.supabase, clientId, "investor_list_ready", {
-        updated: version > 1,
-      });
-  revalidateMatch(clientId);
-  revalidatePath("/portal", "layout");
-  revalidatePath("/portal/setup", "layout");
-  return {
-    ok: true,
-    funds: draft.rows.length,
-    emailed: Boolean(clientEmail?.ok),
-    emailError: clientEmail && !clientEmail.ok ? clientEmail.reason : null,
-    sandbox,
-  };
+  const { error } = await supabase.from("setup_steps").insert(values);
+  if (error) {
+    return {
+      ok: false,
+      error:
+        error.code === "23505"
+          ? "This step changed meanwhile. Refresh and try again."
+          : setupTableError(error.message, error.code),
+    };
+  }
+  return { ok: true };
 }

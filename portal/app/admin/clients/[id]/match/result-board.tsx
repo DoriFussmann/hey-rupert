@@ -346,8 +346,7 @@ export function ResultBoard({
   onView,
   onNotice,
   onCheckWebsites,
-  onSendToClient,
-  sendBlocked,
+  onPushToClient,
 }: {
   clientId: string;
   view: MatchView;
@@ -357,9 +356,7 @@ export function ResultBoard({
   onView: (view: MatchView) => void;
   onNotice: (notice: Notice | null) => void;
   onCheckWebsites: () => void;
-  onSendToClient: () => void;
-  /** Why Send to client is not available yet, or null when it is. */
-  sendBlocked: string | null;
+  onPushToClient: () => void;
 }) {
   const [tab, setTab] = useState<Tab>("bullseye");
   const [split, setSplit] = useState<SplitFilter>(null);
@@ -442,17 +439,14 @@ export function ResultBoard({
             <button
               type="button"
               className={primaryButton}
-              disabled={busy || inTier === 0 || Boolean(sendBlocked)}
-              title={sendBlocked ?? undefined}
-              onClick={onSendToClient}
+              disabled={busy || inTier === 0}
+              title="Saves the list as a draft in the client's Investor Matching. Nothing is sent."
+              onClick={onPushToClient}
             >
-              Send to client
+              Push to client
             </button>
           </div>
         </div>
-        {sendBlocked ? (
-          <p className="mt-sm text-body-sm text-muted">{sendBlocked}</p>
-        ) : null}
 
         <div className="mt-md grid gap-sm md:grid-cols-3">
           {TIERS.map((tier) => {

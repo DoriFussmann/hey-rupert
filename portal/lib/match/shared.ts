@@ -14,6 +14,11 @@ export const FUND_UPLOAD_CHUNK_BYTES = 3 * 1024 * 1024;
 /** Funds the daily website job checks (the whole database refreshes about monthly). */
 export const DAILY_SITE_BATCH = 250;
 
+/** Where Rupert Match opens for a client: the Fund Database, with the client picked. */
+export function matchPath(clientId: string) {
+  return `/admin/fund-database?client=${encodeURIComponent(clientId)}#client-matching`;
+}
+
 export const TIERS: { key: Tier; label: string; description: string }[] = [
   {
     key: "bullseye",

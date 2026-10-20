@@ -18,6 +18,7 @@ export function InvestorListReview({
   sentNotes,
   adminNote,
   readOnly,
+  stickyFooter = true,
 }: {
   rows: InvestorRow[];
   version: number;
@@ -28,6 +29,8 @@ export function InvestorListReview({
   /** Rupert's reply, shown when the list is back for confirmation. */
   adminNote?: string;
   readOnly: boolean;
+  /** Pins Confirm to the bottom of the viewport. Off in Rupert's preview. */
+  stickyFooter?: boolean;
 }) {
   const [notes, setNotes] = useState<Record<string, string>>({});
   const [editing, setEditing] = useState<Record<string, boolean>>({});
@@ -179,7 +182,7 @@ export function InvestorListReview({
           notePlaceholder="A comment for Rupert. Confirming the list sends it."
           intro="Confirm the list, or send Rupert your notes. Outreach can't start until you confirm."
           readOnly={readOnly}
-          stickyFooter
+          stickyFooter={stickyFooter}
         />
       ) : null}
     </>

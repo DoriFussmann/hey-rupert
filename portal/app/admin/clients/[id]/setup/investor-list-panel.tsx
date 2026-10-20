@@ -1,220 +1,190 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import {
-  INVESTOR_CSV_TEMPLATE,
+  ClientAnswer,
+  EarlierRounds,
+  StepFrame,
+  inputClass,
+  secondaryButton,
+} from "@/app/admin/clients/[id]/setup/shared";
+import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
+import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
+import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
+import { TurnBanner } from "@/components/setup/turn-banner";
+import { matchPath } from "@/lib/match/shared";
+import {
+  NOTE_MAX,
   asInvestorList,
-  parseInvestorCsv,
+  asInvestorListDraft,
+  investorListForClient,
+  investorListProblem,
   tierCounts,
   type InvestorListPayload,
   type SetupItem,
   type SetupStepState,
 } from "@/lib/setup";
-import Link from "next/link";
-import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
-import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
-import {
-  ClientAnswer,
-  EarlierRounds,
-  PublishBar,
-  StepFrame,
-  secondaryButton,
-} from "@/app/admin/clients/[id]/setup/shared";
 
-const CSV_MAX_BYTES = 5 * 1024 * 1024;
+const labelClass = "block text-label uppercase tracking-label text-muted";
+
+/** The client's Investor Matching page as it will look after the push. */
+function ClientPreview({ list }: { list: InvestorListPayload }) {
+  return (
+    <>
+      <h3 className="text-h3 text-heading">Investor Matching</h3>
+      <p className="mb-md mt-xs text-body-sm text-muted">
+        The investors Rupert matched for this raise. Open a fund type to look through it. Add a comment if you want,
+        then confirm.
+      </p>
+      <TurnBanner
+        owner="client"
+        title="Review the list and confirm it, or send Rupert your notes. Outreach can't start until you confirm."
+      />
+      {list.summary ? (
+        <div className="mb-lg">
+          <InvestorListSummaryPanel summary={list.summary} />
+        </div>
+      ) : null}
+      <InvestorListReview
+        rows={list.rows}
+        version={0}
+        open
+        sentNotes={{}}
+        adminNote={list.admin_note}
+        readOnly
+        stickyFooter={false}
+      />
+    </>
+  );
+}
 
 export function InvestorListPanel({
   clientId,
   item,
   row,
+  to,
 }: {
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
+  /** The client's email address. */
+  to: string;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const initial = useMemo(() => {
-    const draft = asInvestorList(row?.draft);
-    return draft.rows.length > 0 ? draft : asInvestorList(row?.published);
+    const draft = asInvestorListDraft(row?.draft);
+    if (draft.rows.length > 0) return draft;
+    // Nothing pushed from Rupert Match yet: show what the client has, if anything.
+    const published = asInvestorList(row?.published);
+    return { ...published, admin_note: draft.admin_note, client_email: draft.client_email };
   }, [row]);
 
-  const [list, setList] = useState<InvestorListPayload>(initial);
-  const [savedKey, setSavedKey] = useState(JSON.stringify(initial));
-  const [errors, setErrors] = useState<string[]>([]);
-  const [warnings, setWarnings] = useState<string[]>([]);
-  const [dragging, setDragging] = useState(false);
+  const [note, setNote] = useState(initial.admin_note ?? "");
+  const [savedNote, setSavedNote] = useState(initial.admin_note ?? "");
 
+  const list: InvestorListPayload = investorListForClient({
+    ...initial,
+    admin_note: note.trim() || undefined,
+  });
   const counts = tierCounts(list.rows);
-  const templateHref = `data:text/csv;charset=utf-8,${encodeURIComponent(INVESTOR_CSV_TEMPLATE)}`;
-
-  async function loadFile(file: File) {
-    setErrors([]);
-    setWarnings([]);
-    if (!/\.(csv|tsv|txt)$/i.test(file.name)) {
-      setErrors(["Upload a .csv file. In Excel or Google Sheets: File → Download → CSV."]);
-      return;
-    }
-    if (file.size > CSV_MAX_BYTES) {
-      setErrors(["That file is over 5 MB. Is it the right one?"]);
-      return;
-    }
-    const parsed = parseInvestorCsv(await file.text());
-    if (!parsed.ok) {
-      setErrors(parsed.errors);
-      return;
-    }
-    setWarnings(parsed.warnings);
-    setList({ rows: parsed.rows, source_file: file.name });
-  }
+  const empty = list.rows.length === 0;
+  const changesRequested = row?.status === "changes_requested";
 
   return (
     <StepFrame
       item={item}
-      intro="Send the list from Rupert Match (fund names, tiers and contact counts; never people), or upload a CSV with: Fund Name, Fund Point of Contact, General Details, Fit Level (Tier 1, 2 or 3), Why It Works, Comments. Check the preview, then push. The client can add a note on any fund, ask questions, or confirm."
+      action={
+        <Link href={matchPath(clientId)} className={`${secondaryButton} no-underline`}>
+          Open Rupert Match
+        </Link>
+      }
     >
-      <ClientAnswer row={row} />
-      {row?.status === "changes_requested" ? (
-        <p className="px-lg pt-md text-body-sm text-secondary">
-          The list does not need to change. Write a reply below if you want, then push it. The
-          client sees that reply above Confirm.
-        </p>
-      ) : null}
+      <p className="px-lg pt-md text-body-sm text-muted">
+        The list comes from Rupert Match on the Fund Database page (fund names, tiers, websites and contact counts;
+        never people). Push to client there puts it here as a draft. Review it, preview it, draft the email, then Push
+        to Client Portal &amp; Send. {sendStatus(row)}
+      </p>
+      <ClientAnswer row={row} hideWaiting />
 
-      <PublishBar
+      {empty ? (
+        <p className="px-lg pt-md text-body-sm text-secondary">
+          No list yet. Open Rupert Match, run the match for this client, then click Push to client.
+        </p>
+      ) : (
+        <>
+          <p className="px-lg pt-md text-body-sm text-muted">
+            {list.source_file ? `${list.source_file} · ` : ""}
+            {list.rows.length} funds ·{" "}
+            {counts.map(({ tier, count }) => `Tier ${tier}: ${count}`).join(" · ")}
+          </p>
+          {list.summary ? (
+            <div className="px-lg pt-md">
+              <InvestorListSummaryPanel summary={list.summary} />
+            </div>
+          ) : null}
+          <div className="mt-md border-t border-border py-md">
+            <InvestorFundGroups
+              rows={list.rows}
+              renderRow={(entry) => (
+                <li key={entry.id} className="px-lg py-md text-body-sm">
+                  <p className="text-heading">
+                    {entry.fund_name}
+                    {entry.website ? (
+                      <a
+                        href={entry.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="ml-sm text-primary hover:text-primary-hover"
+                        aria-label={`Open ${entry.fund_name} website in a new tab`}
+                      >
+                        Website ↗
+                      </a>
+                    ) : null}
+                  </p>
+                  {entry.contact ? <p className="text-secondary">{entry.contact}</p> : null}
+                  {entry.details ? <p className="mt-xs text-muted">{entry.details}</p> : null}
+                  {entry.why ? <p className="mt-xs whitespace-pre-wrap text-body">{entry.why}</p> : null}
+                  {entry.comments ? <p className="mt-xs text-muted">{entry.comments}</p> : null}
+                </li>
+              )}
+            />
+          </div>
+        </>
+      )}
+
+      <div className="border-t border-border px-lg py-md">
+        <label className={labelClass}>
+          Note on their page (optional)
+          <textarea
+            className={`${inputClass} mt-sm min-h-[80px] resize-y normal-case tracking-normal`}
+            value={note}
+            maxLength={NOTE_MAX}
+            placeholder={
+              changesRequested
+                ? "Reply to their notes, for example: the list does not need to change, here is why."
+                : "Shown above Confirm on their page."
+            }
+            onChange={(event) => setNote(event.target.value)}
+          />
+        </label>
+      </div>
+
+      <DocumentStep
         clientId={clientId}
         step="investor_list"
         item={item}
         row={row}
+        to={to}
         draft={list}
-        dirty={JSON.stringify(list) !== savedKey}
-        onSaved={() => setSavedKey(JSON.stringify(list))}
-        pushLabel="Push list for confirmation"
-        problem={list.rows.length === 0 ? "Upload the investor CSV before pushing." : null}
-        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
-        notePlaceholder="For example: it's fine."
-        noteOnPage
+        initialEmail={initial.client_email}
+        dirty={note !== savedNote}
+        onSaved={() => setSavedNote(note)}
+        problem={investorListProblem(list)}
+        busy={false}
+        pushSummary="Pushes the fund list above (fund names, tiers, websites and contact counts) and your note to the client's portal as a new version, and sends them this email. They add notes, ask questions or confirm there."
+        clientPreview={empty ? undefined : <ClientPreview list={list} />}
       />
-
-      <div className="flex flex-wrap items-center gap-sm px-lg pt-md">
-        <Link href={`/admin/clients/${clientId}/match`} className={`${secondaryButton} no-underline`}>
-          Open Rupert Match
-        </Link>
-      </div>
-      {list.summary ? (
-        <div className="px-lg pt-md">
-          <InvestorListSummaryPanel summary={list.summary} />
-        </div>
-      ) : null}
-
-      <div className="px-lg py-md">
-        <div
-          role="button"
-          tabIndex={0}
-          aria-label="Upload the investor CSV: drop it here or press Enter to browse"
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          onDragOver={(event) => {
-            event.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(event) => {
-            event.preventDefault();
-            setDragging(false);
-            const file = event.dataTransfer.files[0];
-            if (file) void loadFile(file);
-          }}
-          className={`flex cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed px-lg py-lg text-center transition-colors duration-hover ${
-            dragging ? "border-primary bg-primary-tint" : "border-border bg-background hover:border-primary/50"
-          }`}
-        >
-          <p className="text-body-sm text-heading">
-            {list.rows.length > 0
-              ? `Replace the list: drop a new CSV or browse`
-              : "Drop the investor CSV here, or browse"}
-          </p>
-          <p className="mt-xs text-body-sm text-muted">
-            {list.source_file
-              ? `Current: ${list.source_file} · ${list.rows.length} funds`
-              : "No list uploaded yet"}
-          </p>
-        </div>
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv,text/csv,.tsv,.txt"
-          className="hidden"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) void loadFile(file);
-            event.target.value = "";
-          }}
-        />
-        <div className="mt-sm flex flex-wrap items-center gap-sm">
-          <a href={templateHref} download="investor-list-template.csv" className={secondaryButton}>
-            Download CSV template
-          </a>
-          {list.rows.length > 0 ? (
-            <p className="text-body-sm text-muted">
-              {counts.map(({ tier, count }) => `Tier ${tier}: ${count}`).join(" · ")}
-            </p>
-          ) : null}
-        </div>
-
-        {errors.length > 0 ? (
-          <div role="alert" className="mt-md rounded-md border border-error/40 bg-background px-md py-sm">
-            <p className="text-body-sm text-error">The CSV was not loaded:</p>
-            <ul className="mt-xs list-disc pl-md text-body-sm text-error">
-              {errors.slice(0, 12).map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-              {errors.length > 12 ? <li>…and {errors.length - 12} more.</li> : null}
-            </ul>
-          </div>
-        ) : null}
-        {warnings.length > 0 ? (
-          <ul className="mt-md list-disc pl-md text-body-sm text-warning">
-            {warnings.map((warning) => (
-              <li key={warning}>{warning}</li>
-            ))}
-          </ul>
-        ) : null}
-      </div>
-
-      {list.rows.length > 0 ? (
-        <div className="border-t border-border py-md">
-          <InvestorFundGroups
-            rows={list.rows}
-            renderRow={(entry) => (
-              <li key={entry.id} className="px-lg py-md text-body-sm">
-                <p className="text-heading">
-                  {entry.fund_name}
-                  {entry.website ? (
-                    <a
-                      href={entry.website}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-sm text-primary hover:text-primary-hover"
-                      aria-label={`Open ${entry.fund_name} website in a new tab`}
-                    >
-                      Website ↗
-                    </a>
-                  ) : null}
-                </p>
-                {entry.contact ? <p className="text-secondary">{entry.contact}</p> : null}
-                {entry.details ? <p className="mt-xs text-muted">{entry.details}</p> : null}
-                {entry.why ? <p className="mt-xs whitespace-pre-wrap text-body">{entry.why}</p> : null}
-                {entry.comments ? <p className="mt-xs text-muted">{entry.comments}</p> : null}
-              </li>
-            )}
-          />
-        </div>
-      ) : null}
 
       <EarlierRounds row={row} />
     </StepFrame>

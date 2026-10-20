@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { buildMatchProfile } from "@/app/admin/match-actions";
 import { formatDateAtTime } from "@/lib/format";
-import type { MatchAnswers, MatchProfileState } from "@/lib/match/shared";
+import { matchPath, type MatchAnswers, type MatchProfileState } from "@/lib/match/shared";
 
 /** The interview changed after the profile was built from it. */
 function isBehind(state: MatchProfileState, interviewUpdatedAt: string | null) {
@@ -98,7 +98,7 @@ export function CompanyProfileCard({
         </div>
         <div className="flex flex-wrap gap-sm">
           <Link
-            href={`/admin/clients/${clientId}/match`}
+            href={matchPath(clientId)}
             className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
           >
             Rupert Match

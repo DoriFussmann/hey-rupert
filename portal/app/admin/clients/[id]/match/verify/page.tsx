@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/page-header";
 import { VerifyWorkspace } from "@/app/admin/clients/[id]/match/verify/verify-workspace";
 import { getAdminClient } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
+import { matchPath } from "@/lib/match/shared";
 import { loadVerifyOverview } from "@/lib/match/verify-server";
 import type { VerifyOverview } from "@/lib/match/verify";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -25,7 +26,7 @@ export default async function VerifyEmailsPage({ params }: { params: { id: strin
 
   return (
     <>
-      <BackLink href={`/admin/clients/${client.id}/match`} label="Rupert Match" />
+      <BackLink href={matchPath(client.id)} label="Rupert Match" />
       <PageHeader
         title="Verify emails"
         description={`Checks ${client.company_name}'s matched contacts 5 at a time: is the person at the firm, is the email public, and does the mailbox accept mail. Fixes apply to the Fund Database for every client.`}

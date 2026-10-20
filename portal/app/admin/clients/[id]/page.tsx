@@ -27,7 +27,7 @@ import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { loadProfileState } from "@/lib/match/profile-server";
-import type { MatchProfileState } from "@/lib/match/shared";
+import { matchPath, type MatchProfileState } from "@/lib/match/shared";
 import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 import {
@@ -296,7 +296,7 @@ export default async function ClientDetailPage({
               Company profile
             </Link>
             <Link
-              href={`/admin/clients/${client.id}/match`}
+              href={matchPath(client.id)}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >
               Rupert Match

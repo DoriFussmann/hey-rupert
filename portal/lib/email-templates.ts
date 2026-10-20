@@ -316,7 +316,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   clientTemplate(
     "investor_list_ready",
     "Investor list ready",
-    "When you publish the matched investor list (or a revised version).",
+    "Fills Draft Email under Investor Matching when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send.",
     "/portal/setup/investor-list",
     "Your matched investor list is ready — you're up",
     "Rupert has matched investors for your raise, grouped into three fit tiers.",

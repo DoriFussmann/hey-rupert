@@ -18,6 +18,7 @@ import {
   NONE_OK_FIELDS,
   firmTypeLabel,
   isListField,
+  matchPath,
   type MatchAnswers,
   type MatchField,
   type MatchProfileState,
@@ -289,7 +290,7 @@ export function ProfileWorkspace({
               {building ? "Building…" : state?.builtAt ? "Rebuild from intake" : "Build from intake"}
             </button>
           ) : null}
-          <Link href={`/admin/clients/${clientId}/match`} className={`${primaryButton} no-underline`}>
+          <Link href={matchPath(clientId)} className={`${primaryButton} no-underline`}>
             Open Rupert Match
           </Link>
         </div>

@@ -27,7 +27,6 @@ function errorText(err: unknown, fallback: string) {
 function revalidateSandbox(clientId: string | null) {
   revalidatePath("/admin/fund-database");
   if (clientId) {
-    revalidatePath(`/admin/clients/${clientId}/match`);
     revalidatePath(`/admin/clients/${clientId}/match/verify`);
   }
 }

@@ -15,8 +15,8 @@ import { clientAddress, firstNameOf, greetingFor } from "@/lib/notify";
 import { PORTAL_URL } from "@/lib/portal-url";
 import type { ClientEmailDraft, SetupDocumentStep } from "@/lib/setup";
 
-// The email that goes with Push to Client Portal & Send (feedback and
-// narrative): drafted by Claude or filled from Forms → Emails, edited by
+// The email that goes with Push to Client Portal & Send (feedback, narrative
+// and investor list): drafted by Claude or filled from Forms → Emails, edited by
 // Rupert, then sent as he wrote it.
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -24,6 +24,7 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 const TEMPLATE_KEY = {
   deck_review: "client:feedback_ready",
   framing: "client:framing_ready",
+  investor_list: "client:investor_list_ready",
 } as const satisfies Record<SetupDocumentStep, string>;
 
 export const STEP_EMAIL_PAUSED_NOTE =

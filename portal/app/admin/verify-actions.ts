@@ -45,7 +45,6 @@ function errorText(err: unknown, fallback: string) {
 }
 
 function revalidateClient(clientId: string) {
-  revalidatePath(`/admin/clients/${clientId}/match`);
   revalidatePath(`/admin/clients/${clientId}/match/verify`);
   revalidatePath("/admin/fund-database");
 }

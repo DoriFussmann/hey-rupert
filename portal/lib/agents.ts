@@ -8,6 +8,7 @@ export type AgentId =
   | "feedback_email"
   | "outreach_narrative"
   | "narrative_email"
+  | "investor_list_email"
   | "email_copy"
   | "match_profile"
   | "nudge_email";
@@ -109,6 +110,20 @@ Write:
 If this is an updated version, say so in one short sentence. If the founder asked for changes, follow the instructions that come with their request instead: confirm each change, then ask for their go-ahead to start investor matching.
 Plain, human, confident. No hype, no exclamation marks, no markdown.`;
 
+const INVESTOR_LIST_EMAIL_PROMPT = `You are Rupert, writing the email a founder receives when their matched investor list is shared in their portal for review.
+
+You receive the list as tier counts and fund types, Rupert's note to the founder if he wrote one, and the company information for context.
+
+Write:
+- subject: under 60 characters, specific to their company.
+- body: plain text, 70–130 words. Write the middle of the email only: no greeting line, no portal link and no sign-off (all three are added automatically). Then:
+  1. One sentence: Rupert has matched investors for this raise, grouped into three fit tiers.
+  2. The size of each tier and the main fund types in it, in a few words. Use only the numbers and types you receive. Never name a fund or a person.
+  3. Ask them to review the list in the portal: they can add a note on any fund, ask questions, or confirm.
+  4. What happens next: once they confirm, Rupert writes the outreach emails for each tier, and they review those before anything is sent.
+If this is an updated version, say so in one short sentence. If the founder asked for changes, confirm what changed in a few words, using only Rupert's note and the list.
+Plain, human, confident. No hype, no exclamation marks, no markdown.`;
+
 const EMAIL_COPY_PROMPT = `You are Rupert, writing the outreach copy a founder confirms before anything is sent. You write the emails for each investor tier, plus one LinkedIn connection note and one LinkedIn follow-up used for every tier.
 
 Write from the confirmed narrative (the story, the key messages, the approach), the investor list (tier summary and fund types only — never name a contact), the intake and the materials analysis. Use only those facts. Never invent numbers, customers, traction or market sizes.
@@ -192,6 +207,13 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Runs when you click Draft Email under Outreach Narrative. Writes the middle of the email from your edited narrative and the company information; the greeting, portal link and signature are added for you.",
     defaultPrompt: NARRATIVE_EMAIL_PROMPT,
+  },
+  {
+    id: "investor_list_email",
+    title: "Investor list email draft",
+    description:
+      "Runs when you click Draft Email under Investor Matching. Writes the middle of the email from the list's tier counts and fund types, your note and the company information; the greeting, portal link and signature are added for you.",
+    defaultPrompt: INVESTOR_LIST_EMAIL_PROMPT,
   },
   {
     id: "email_copy",

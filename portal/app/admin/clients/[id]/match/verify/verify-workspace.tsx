@@ -28,6 +28,7 @@ import {
   type BatchRecord,
 } from "@/app/admin/clients/[id]/match/verify/verify-parts";
 import { formatDateAtTime } from "@/lib/format";
+import { matchPath } from "@/lib/match/shared";
 import {
   VERIFY_BATCH_SIZE,
   VERIFY_FRESH_DAYS,
@@ -441,7 +442,7 @@ export function VerifyWorkspace({
       {!overview && !run ? (
         <p className={`${cardClass} px-lg py-md text-body-sm text-muted`}>
           Verification is not available until the match can run.{" "}
-          <Link href={`/admin/clients/${clientId}/match`} className="text-primary hover:text-primary-hover">
+          <Link href={matchPath(clientId)} className="text-primary hover:text-primary-hover">
             Open Rupert Match
           </Link>
         </p>
@@ -520,7 +521,7 @@ export function VerifyWorkspace({
             <button type="button" className={secondaryButton} disabled={busy} onClick={() => void newRun()}>
               {busy ? "Loading…" : "Start a new run"}
             </button>
-            <Link href={`/admin/clients/${clientId}/match`} className={`${secondaryButton} no-underline`}>
+            <Link href={matchPath(clientId)} className={`${secondaryButton} no-underline`}>
               Back to the match
             </Link>
           </div>

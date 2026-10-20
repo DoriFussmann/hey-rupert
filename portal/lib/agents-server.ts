@@ -38,6 +38,7 @@ import {
   type EmailCopyPayload,
   type ClientEmailDraft,
   type FeedbackDraft,
+  type InvestorListPayload,
   type MaterialsAnalysis,
   type NarrativePayload,
   type SetupHistoryEntry,
@@ -693,6 +694,41 @@ export async function draftNarrativeEmail(
     .join("\n\n");
 
   return draftEmailMiddle(prompts.narrative_email, context);
+}
+
+/** The email that goes with the investor list: tier counts and fund types only, never names. */
+export async function draftInvestorListEmail(
+  supabase: ServiceClient,
+  clientId: string,
+  list: InvestorListPayload,
+  version: number,
+): Promise<AgentResult<ClientEmailDraft>> {
+  if (list.rows.length === 0) {
+    return { ok: false, error: "Push the list from Rupert Match first: the email is drafted from it." };
+  }
+  const [loaded, prompts] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadAgentPrompts(supabase),
+  ]);
+  if (!loaded.ok) return loaded;
+  const company = await companyContext(supabase, clientId, loaded.client);
+  const listRow = company.rows.find((item) => item.step === "investor_list");
+  const clientAsk =
+    listRow?.status === "changes_requested" ? earlierNotes([], listRow.response) : "";
+
+  const context = [
+    ...founderLines(loaded.client, version),
+    "## The investor list (tier counts and fund types)",
+    listBrief(list),
+    list.admin_note ? `## Rupert's note to the founder (shown on their page)\n${list.admin_note}` : "",
+    clientAsk ? `## What the founder asked about the previous version\n${clientAsk}` : "",
+    "# Company information (context only)",
+    company.text,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return draftEmailMiddle(prompts.investor_list_email, context);
 }
 
 // ---------------------------------------------------------------------------

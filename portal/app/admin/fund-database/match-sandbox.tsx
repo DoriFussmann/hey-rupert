@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { copyCompanyToSandbox, resetSandboxData, runSandbox } from "@/app/admin/sandbox-actions";
 import { FieldInput, type Taxonomy } from "@/app/admin/clients/[id]/profile/profile-fields";
 import { SANDBOX_FIELDS, type SandboxPanel } from "@/lib/match/sandbox";
-import type { MatchAnswers } from "@/lib/match/shared";
+import { matchPath, type MatchAnswers } from "@/lib/match/shared";
 
 const primaryButton =
   "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
@@ -70,7 +70,7 @@ export function MatchSandbox({ panel, taxonomy }: { panel: SandboxPanel; taxonom
         setNotice({ kind: "error", text: result.error });
         return;
       }
-      router.push(`/admin/clients/${result.clientId}/match`);
+      router.push(matchPath(result.clientId));
     });
 
   const copy = (clientId: string) =>
@@ -147,7 +147,7 @@ export function MatchSandbox({ panel, taxonomy }: { panel: SandboxPanel; taxonom
           </p>
           <div className="flex flex-wrap gap-sm">
             {company.ready ? (
-              <Link href={`/admin/clients/${company.id}/match`} className={primaryButton + " no-underline"}>
+              <Link href={matchPath(company.id)} className={primaryButton + " no-underline"}>
                 Open Match
               </Link>
             ) : (
@@ -186,7 +186,7 @@ export function MatchSandbox({ panel, taxonomy }: { panel: SandboxPanel; taxonom
             </button>
             {panel.sandboxId ? (
               <>
-                <Link href={`/admin/clients/${panel.sandboxId}/match`} className={secondaryButton}>
+                <Link href={matchPath(panel.sandboxId)} className={secondaryButton}>
                   Open last sandbox match
                 </Link>
                 <button type="button" className={secondaryButton} disabled={Boolean(pending)} onClick={reset}>

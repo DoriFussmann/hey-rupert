@@ -112,6 +112,7 @@ export function SetupWorkspace({
         clientId={clientId}
         item={item("investor_list")}
         row={row("investor_list")}
+        to={clientEmail}
       />
       <EmailCopyPanel
         clientId={clientId}
