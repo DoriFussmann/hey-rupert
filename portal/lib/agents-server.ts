@@ -547,6 +547,15 @@ async function draftEmailMiddle(
   return { ok: true, value: { subject, body } };
 }
 
+/** The middle of a nudge email (subject and body), from the Nudge page's context. */
+export async function draftNudgeMiddle(
+  supabase: ServiceClient,
+  context: string,
+): Promise<AgentResult<ClientEmailDraft>> {
+  const prompts = await loadAgentPrompts(supabase);
+  return draftEmailMiddle(prompts.nudge_email, context);
+}
+
 /** Everything Rupert knows about the company, as context for an email. */
 async function companyContext(
   supabase: ServiceClient,
@@ -620,6 +629,20 @@ export async function draftFeedbackEmail(
   return draftEmailMiddle(prompts.feedback_email, context);
 }
 
+/** What a revised narrative's email must do: confirm the changes, then ask for the go-ahead. */
+function revisionBrief(feedbackConfirmed: boolean) {
+  return [
+    "## This email answers the founder's requested changes",
+    "Write it as a reply to their notes:",
+    "1. Thank them briefly and confirm the changes they asked for, naming each one in a few words (use the list of changes above; never claim a change that is not listed there).",
+    "2. Say the updated narrative is in their portal.",
+    feedbackConfirmed
+      ? "3. Say Rupert would like to start investor matching: ask them to confirm the narrative in the portal so he can begin, or to reply with any further comments."
+      : "3. Say Rupert would like to start investor matching: ask them to confirm the narrative and the Analysis & Feedback in the portal so he can begin, or to reply with any further comments.",
+    "Keep it under 140 words. This replaces the usual structure for this email.",
+  ].join("\n");
+}
+
 /** The email that goes with the narrative, from Rupert's edited narrative. */
 export async function draftNarrativeEmail(
   supabase: ServiceClient,
@@ -636,7 +659,15 @@ export async function draftNarrativeEmail(
   ]);
   if (!loaded.ok) return loaded;
   const company = await companyContext(supabase, clientId, loaded.client);
-  const feedback = asFeedback(company.rows.find((item) => item.step === "deck_review")?.draft);
+  const feedbackRow = company.rows.find((item) => item.step === "deck_review");
+  const feedback = asFeedback(feedbackRow?.draft);
+  const framingRow = company.rows.find((item) => item.step === "framing");
+  const clientAsk =
+    framingRow?.status === "changes_requested"
+      ? earlierNotes([], framingRow.response)
+      : "";
+  const feedbackConfirmed =
+    feedbackRow?.status === "confirmed" || feedbackRow?.status === "published";
 
   const context = [
     ...founderLines(loaded.client, version),
@@ -647,6 +678,11 @@ export async function draftNarrativeEmail(
     "## Approach",
     narrative.approach || "(none)",
     sharedLine(narrative.attachments, narrative.links),
+    clientAsk ? `## What the founder asked to change\n${clientAsk}` : "",
+    clientAsk
+      ? `## What Rupert changed\n${narrative.change_summary?.trim() || "(no list: describe the changes only from what the founder asked and what the narrative now says)"}`
+      : "",
+    clientAsk ? revisionBrief(feedbackConfirmed) : "",
     "# Company information (context only)",
     feedback.analysis
       ? `## Rupert's Company Summary\n${feedback.analysis.summary}\n\n## Rupert's Investor Framing\n${feedback.analysis.framing}`
@@ -662,30 +698,75 @@ export async function draftNarrativeEmail(
 // ---------------------------------------------------------------------------
 // Outreach narrative
 
-const NARRATIVE_TOOL: ClaudeTool = {
-  name: "submit_narrative",
-  description: "Deliver the outreach narrative: story, key messages and approach.",
-  input_schema: {
-    type: "object",
-    properties: {
-      core: { type: "string", description: "Core story (markdown)." },
-      key_messages: {
-        type: "string",
-        description: "3 to 6 key messages as a markdown list.",
+const NARRATIVE_FIELDS = [
+  { key: "core", label: "Core Story" },
+  { key: "key_messages", label: "Key Messages" },
+  { key: "approach", label: "Approach" },
+] as const;
+
+type NarrativeField = (typeof NARRATIVE_FIELDS)[number]["key"];
+
+function narrativeTool(revising: boolean): ClaudeTool {
+  return {
+    name: "submit_narrative",
+    description: revising
+      ? "Deliver the full revised outreach narrative (all three sections, in full) and what changed."
+      : "Deliver the outreach narrative: story, key messages and approach.",
+    input_schema: {
+      type: "object",
+      properties: {
+        core: { type: "string", description: "Core story (markdown). Always the full text." },
+        key_messages: {
+          type: "string",
+          description: "3 to 6 key messages as one markdown bullet list. Always the full text.",
+        },
+        approach: {
+          type: "string",
+          description: "How Rupert will approach investors (markdown). Always the full text.",
+        },
+        ...(revising
+          ? {
+              changes: {
+                type: "string",
+                description:
+                  "For Rupert only: a markdown bullet list, one bullet per thing the founder asked for, saying what you changed (or why you did not).",
+              },
+            }
+          : {}),
       },
-      approach: {
-        type: "string",
-        description: "How Rupert will approach investors (markdown).",
-      },
+      required: ["core", "key_messages", "approach", ...(revising ? ["changes"] : [])],
     },
-    required: ["core", "key_messages", "approach"],
-  },
+  };
+}
+
+/** Tool text as markdown. A list (Claude sometimes sends one) becomes bullets. */
+function markdownText(value: unknown): string {
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => text(item).replace(/^[-*•]\s*/, ""))
+      .filter(Boolean)
+      .map((item) => `- ${item}`)
+      .join("\n");
+  }
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function narrativeSections(narrative: NarrativePayload) {
+  return NARRATIVE_FIELDS.map(
+    ({ key, label }) => `### ${label}\n${narrative[key].trim() || "(empty)"}`,
+  ).join("\n\n");
+}
+
+export type NarrativeBuild = {
+  narrative: NarrativePayload;
+  /** Sections Claude left out of a rebuild, kept from the version the founder reviewed. */
+  kept: string[];
 };
 
 export async function buildNarrative(
   supabase: ServiceClient,
   clientId: string,
-): Promise<AgentResult<NarrativePayload>> {
+): Promise<AgentResult<NarrativeBuild>> {
   const [loaded, interviewResult, prompts, fields, grouped, profile] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
@@ -706,16 +787,14 @@ export async function buildNarrative(
   }
 
   const materials = asMaterials(materialsRow?.published ?? materialsRow?.draft);
-  const current = asNarrative(framingRow?.published ?? framingRow?.draft);
+  // The version the founder reviewed and commented on.
+  const reviewed = asNarrative(framingRow?.published ?? framingRow?.draft);
   const clientAsk =
-    framingRow?.status === "changes_requested" && framingRow.response
-      ? [
-          framingRow.response.note,
-          ...Object.values(framingRow.response.item_notes),
-        ]
-          .filter(Boolean)
-          .join("\n")
+    framingRow?.status === "changes_requested"
+      ? earlierNotes([], framingRow.response)
       : "";
+  const revising = Boolean(clientAsk && reviewed.core.trim());
+  const tool = narrativeTool(revising);
 
   const context = [
     "## Company profile (Rupert's source of truth; prefer it where sources differ)",
@@ -730,40 +809,65 @@ export async function buildNarrative(
     feedback.analysis.summary,
     "## Rupert's investor framing",
     feedback.analysis.framing,
-    clientAsk && current.core
-      ? `## The previous version the founder reviewed\n${JSON.stringify(current, null, 2)}\n\n## What the founder asked to change\n${clientAsk}`
+    revising
+      ? `## The version the founder reviewed\n${narrativeSections(reviewed)}\n\n## What the founder asked to change\n${clientAsk}`
       : "",
   ]
     .filter(Boolean)
     .join("\n\n");
 
-  const result = await callClaudeAgent<Record<string, unknown>>({
-    system: prompts.outreach_narrative,
-    content: [
-      {
-        type: "text",
-        text: `${context}\n\nDeliver the narrative by calling the ${NARRATIVE_TOOL.name} tool.`,
-      },
-    ],
-    tool: NARRATIVE_TOOL,
-    maxTokens: 4000,
-  });
-  if (!result.ok) return { ok: false, error: result.reason };
+  const instruction = revising
+    ? `Revise the narrative to apply what the founder asked for, keeping everything they did not mention. Deliver it by calling the ${tool.name} tool with all three sections written out in full, including any section you did not change, plus the list of changes.`
+    : `Deliver the narrative by calling the ${tool.name} tool, with all three sections written out in full.`;
 
+  let raw: Record<string, unknown> = {};
+  let missing: NarrativeField[] = [];
+  // A first build has nothing to fall back on, so an incomplete answer is retried once.
+  for (let attempt = 0; attempt < (revising ? 1 : 2); attempt += 1) {
+    const result = await callClaudeAgent<Record<string, unknown>>({
+      system: prompts.outreach_narrative,
+      content: [{ type: "text", text: `${context}\n\n${instruction}` }],
+      tool,
+      maxTokens: 8000,
+    });
+    if (!result.ok) return { ok: false, error: result.reason };
+    raw = result.input;
+    missing = NARRATIVE_FIELDS.filter(({ key }) => !markdownText(raw[key])).map(({ key }) => key);
+    if (missing.length === 0) break;
+  }
+
+  const kept = revising ? missing.filter((key) => reviewed[key].trim()) : [];
+  const stillMissing = missing.filter((key) => !kept.includes(key));
+  if (stillMissing.length > 0) {
+    const names = NARRATIVE_FIELDS.filter(({ key }) => stillMissing.includes(key)).map(
+      ({ label }) => label,
+    );
+    return {
+      ok: false,
+      error: `Claude's answer had no ${names.join(", ")}. Nothing was saved. Try again.`,
+    };
+  }
+
+  const section = (key: NarrativeField) =>
+    kept.includes(key) ? reviewed[key] : markdownText(raw[key]);
+  // Rupert's working draft: files, links, next steps and earlier copy are kept.
   const working = asNarrative(framingRow?.draft ?? framingRow?.published);
   const narrative = asNarrative({
-    ...result.input,
-    // Keep copy from an earlier narrative so a rebuild does not drop it.
-    email_subject: working.email_subject,
-    email_body: working.email_body,
-    linkedin_note: working.linkedin_note,
-    linkedin_followup: working.linkedin_followup,
-    next_steps: working.next_steps,
+    ...working,
+    core: section("core"),
+    key_messages: section("key_messages"),
+    approach: section("approach"),
+    admin_note: undefined,
+    change_summary: revising ? markdownText(raw.changes) : undefined,
   });
-  if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
-    return { ok: false, error: "Claude returned an incomplete narrative. Nothing was saved." };
-  }
-  return { ok: true, value: narrative };
+
+  return {
+    ok: true,
+    value: {
+      narrative,
+      kept: NARRATIVE_FIELDS.filter(({ key }) => kept.includes(key)).map(({ label }) => label),
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

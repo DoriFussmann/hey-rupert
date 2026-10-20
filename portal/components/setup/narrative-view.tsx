@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CollapsiblePanel } from "@/components/setup/collapsible-panel";
 import { FilesLinksView } from "@/components/setup/files-links-view";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
@@ -7,17 +8,6 @@ import {
   type FeedbackItem,
   type NarrativePayload,
 } from "@/lib/setup";
-
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-card border border-border bg-surface">
-      <div className="border-b border-border px-lg py-md">
-        <h2 className="text-h4">{title}</h2>
-      </div>
-      <div className="px-lg py-lg">{children}</div>
-    </section>
-  );
-}
 
 function MessageCard({
   title,
@@ -59,32 +49,29 @@ function priorityLabel(item: FeedbackItem) {
 }
 
 /**
- * Beside the narrative: Rupert's Investor Framing from the feedback, or the
- * recommendations from feedback sent before the framing was shared.
+ * Rupert's Investor Framing from the feedback, or the recommendations from
+ * feedback sent before the framing was shared, as one panel in the stack.
  */
-function FeedbackAside({ feedback }: { feedback: NarrativeFeedback }) {
+function FeedbackPanel({ feedback }: { feedback: NarrativeFeedback }) {
   const done = new Set(feedback.doneIds);
   const completed = feedback.items.filter((item) => done.has(item.id)).length;
   return (
-    <aside className="rounded-card border border-border bg-surface">
-      <div className="border-b border-border px-lg py-md">
-        <h2 className="text-h4">{feedback.framing ? "Investor framing" : "Your feedback"}</h2>
-        <p className="mt-xs text-body-sm text-muted">
-          {feedback.framing
-            ? "From Rupert's Analysis & Feedback."
-            : `What Rupert recommended on your materials · ${completed} of ${feedback.items.length} done`}
-        </p>
-      </div>
+    <CollapsiblePanel
+      title={feedback.framing ? "Investor Framing" : "Your Feedback"}
+      meta={
+        feedback.framing
+          ? "From Rupert's Analysis & Feedback."
+          : `What Rupert recommended on your materials · ${completed} of ${feedback.items.length} done`
+      }
+    >
       {feedback.framing ? (
-        <div className="px-lg py-md">
-          <MarkdownBody content={feedback.framing} emptyLabel="" className="sow-markdown text-body-sm" />
-        </div>
+        <MarkdownBody content={feedback.framing} emptyLabel="" />
       ) : (
-        <ul className="divide-y divide-border">
+        <ul className="-my-sm divide-y divide-border">
           {feedback.items.map((item) => {
             const checked = done.has(item.id);
             return (
-              <li key={item.id} className="flex gap-sm px-lg py-sm">
+              <li key={item.id} className="flex gap-sm py-sm">
                 <span
                   aria-hidden
                   className={`mt-xs inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full border text-[10px] leading-none ${
@@ -107,12 +94,13 @@ function FeedbackAside({ feedback }: { feedback: NarrativeFeedback }) {
           })}
         </ul>
       )}
-      <div className="border-t border-border px-lg py-sm">
-        <Link href={feedback.href} className="text-body-sm text-primary hover:text-primary-hover">
-          Open Analysis & Feedback
-        </Link>
-      </div>
-    </aside>
+      <Link
+        href={feedback.href}
+        className="mt-md inline-block text-body-sm text-primary hover:text-primary-hover"
+      >
+        Open Analysis & Feedback
+      </Link>
+    </CollapsiblePanel>
   );
 }
 
@@ -124,8 +112,8 @@ export type NarrativeFeedback = {
 };
 
 /**
- * The Outreach Narrative as the client sees it, with Rupert's investor
- * framing beside it on wide screens.
+ * The Outreach Narrative as the client sees it: one column of panels, closed
+ * by default, then the files and links, then What Happens Next.
  */
 export function NarrativeView({
   narrative,
@@ -138,64 +126,59 @@ export function NarrativeView({
   /** The feedback the client received, when it has been shared. */
   feedback?: NarrativeFeedback | null;
 }) {
-  const content = (
-    <div className="grid min-w-0 gap-lg">
-      <Section title="Core story">
+  const showFeedback = Boolean(feedback && (feedback.framing || feedback.items.length > 0));
+
+  return (
+    <div className="grid min-w-0 gap-md">
+      <CollapsiblePanel title="Core Story">
         <MarkdownBody content={narrative.core} emptyLabel="Nothing here yet." />
-      </Section>
-      <Section title="Key messages">
+      </CollapsiblePanel>
+      <CollapsiblePanel title="Key Messages">
         <MarkdownBody content={narrative.key_messages} emptyLabel="Nothing here yet." />
-      </Section>
-      <Section title="Approach">
+      </CollapsiblePanel>
+      <CollapsiblePanel title="Approach">
         <MarkdownBody content={narrative.approach} emptyLabel="Nothing here yet." />
-      </Section>
+      </CollapsiblePanel>
+      {showFeedback && feedback ? <FeedbackPanel feedback={feedback} /> : null}
       {narrativeHasEarlierDraft(narrative) ? (
-        <section className="rounded-card border border-border bg-surface">
-          <div className="border-b border-border px-lg py-md">
-            <h2 className="text-h4">Earlier draft</h2>
-            <p className="mt-xs text-body-sm text-muted">
-              Email and LinkedIn copy from a previous version. The emails for each tier come after the investor list.
-            </p>
-          </div>
-          <div className="grid gap-md px-lg py-md">
+        <CollapsiblePanel
+          title="Earlier Draft"
+          meta="Email and LinkedIn copy from a previous version. The emails for each tier come after the investor list."
+        >
+          <div className="grid gap-md">
             <MessageCard
-              title="First email"
+              title="First Email"
               detail="From the earlier narrative."
               subject={narrative.email_subject}
               body={narrative.email_body ?? ""}
             />
             <MessageCard
-              title="LinkedIn connection note"
+              title="LinkedIn Connection Note"
               detail="From the earlier narrative."
               body={narrative.linkedin_note ?? ""}
             />
             <MessageCard
-              title="LinkedIn message"
+              title="LinkedIn Message"
               detail="From the earlier narrative."
               body={narrative.linkedin_followup ?? ""}
             />
           </div>
-        </section>
+        </CollapsiblePanel>
       ) : null}
       <FilesLinksView
         attachments={narrative.attachments}
         links={narrative.links}
         fileLinks={fileLinks}
       />
-      <Section title="What happens next">
-        <p className="whitespace-pre-wrap text-body-sm text-body">{narrative.next_steps}</p>
-      </Section>
-    </div>
-  );
-
-  if (!feedback || (!feedback.framing && feedback.items.length === 0)) return content;
-
-  return (
-    <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
-      {content}
-      <div className="lg:sticky lg:top-lg">
-        <FeedbackAside feedback={feedback} />
-      </div>
+      <section
+        aria-labelledby="narrative-next-steps"
+        className="mt-sm rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
+      >
+        <h2 id="narrative-next-steps" className="text-h4 text-heading">
+          What Happens Next
+        </h2>
+        <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{narrative.next_steps}</p>
+      </section>
     </div>
   );
 }

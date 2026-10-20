@@ -17,7 +17,7 @@ export function FilesLinksView({
 
   return (
     <section className="rounded-card border border-border bg-surface px-lg py-md">
-      <h2 className="text-h4">Files & links from Rupert</h2>
+      <h2 className="text-h4">Files & Links from Rupert</h2>
       <ul className="mt-sm divide-y divide-border">
         {attachments.map((file) => (
           <li key={file.path} className="flex flex-wrap items-center gap-md py-sm">

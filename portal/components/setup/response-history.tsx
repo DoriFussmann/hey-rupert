@@ -23,7 +23,7 @@ export function ResponseHistory({
   return (
     <details className="mt-lg rounded-card border border-border bg-surface px-lg py-md">
       <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-        Earlier rounds ({earlier.length})
+        Earlier Rounds ({earlier.length})
       </summary>
       <ol className="mt-md space-y-md">
         {earlier.map((entry) => {

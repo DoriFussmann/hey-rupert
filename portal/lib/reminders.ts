@@ -168,7 +168,7 @@ export type ReminderRun = {
 };
 
 /** Active (not archived) send dates per client, from one sends table. */
-async function activeSendDates(
+export async function activeSendDates(
   supabase: ServiceClient,
   table: "statement_of_work_sends" | "service_order_sends",
   ids: string[],

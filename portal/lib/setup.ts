@@ -192,6 +192,11 @@ export type NarrativePayload = {
   email_body?: string;
   linkedin_note?: string;
   linkedin_followup?: string;
+  /**
+   * Rupert only, never shown to the client: how the last rebuild handled the
+   * founder's requested changes (markdown list).
+   */
+  change_summary?: string;
 };
 
 export const LINKEDIN_NOTE_MAX = 300;
@@ -796,7 +801,13 @@ export function asNarrative(value: unknown): NarrativePayload {
     email_body: optionalText(raw.email_body, 10000),
     linkedin_note: optionalText(raw.linkedin_note, 2000),
     linkedin_followup: optionalText(raw.linkedin_followup, 5000),
+    change_summary: optionalText(raw.change_summary, 5000),
   };
+}
+
+/** What the client sees of a narrative: everything except Rupert's change summary. */
+export function narrativeForClient(value: unknown): NarrativePayload {
+  return { ...asNarrative(value), change_summary: undefined };
 }
 
 export function narrativeHasEarlierDraft(narrative: NarrativePayload) {

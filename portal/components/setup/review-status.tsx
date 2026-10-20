@@ -1,3 +1,4 @@
+import { CollapsiblePanel } from "@/components/setup/collapsible-panel";
 import { TurnBanner } from "@/components/setup/turn-banner";
 import { formatDateAtTime } from "@/lib/format";
 import type { SetupItem, SetupStepState } from "@/lib/setup";
@@ -53,14 +54,14 @@ export function ReviewStatus({
           detail={waitingDetail ?? "We'll email you when the updated version is ready."}
         />
         {row.response?.note ? (
-          <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
-            <p className="text-label uppercase tracking-label text-muted">
-              What you sent{row.response.at ? ` · ${formatDateAtTime(row.response.at)}` : ""}
-            </p>
-            <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">
-              {row.response.note}
-            </p>
-          </section>
+          <div className="mb-lg">
+            <CollapsiblePanel
+              title="What You Sent"
+              meta={row.response.at ? `Sent ${formatDateAtTime(row.response.at)}` : undefined}
+            >
+              <p className="whitespace-pre-wrap text-body-sm text-body">{row.response.note}</p>
+            </CollapsiblePanel>
+          </div>
         ) : null}
       </>
     );

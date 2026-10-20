@@ -23,6 +23,7 @@ import {
   MATERIALS_BUCKET,
   MATERIAL_EXTENSIONS,
   MATERIAL_MAX_BYTES,
+  asClientEmail,
   asFeedback,
   setupFilesFolder,
   fileExtension,
@@ -195,23 +196,40 @@ export async function createSetupUpload(
 // ---------------------------------------------------------------------------
 // Outreach narrative
 
+/**
+ * Builds the narrative, or rebuilds it with the client's requested changes,
+ * and saves it as Rupert's draft. The email saved with the draft is kept.
+ */
 export async function buildClientNarrative(
   clientId: string,
-): Promise<Result<{ narrative: NarrativePayload }>> {
+): Promise<Result<{ narrative: NarrativePayload; kept: string[] }>> {
   const access = await requireAdminWithClaude();
   if (!access.ok) return access;
 
   const result = await buildNarrative(access.supabase, clientId);
   if (!result.ok) return result;
 
+  const existing = await loadSetupStep(access.supabase, clientId, "framing");
+  if (!existing.ok) return existing;
+  const previous = existing.row?.draft;
+  const clientEmail =
+    previous && typeof previous === "object"
+      ? (previous as Record<string, unknown>).client_email
+      : undefined;
+
   const { error } = await access.supabase.from("setup_steps").upsert(
-    { client_id: clientId, step: "framing", draft: result.value, updated_at: nowIso() },
+    {
+      client_id: clientId,
+      step: "framing",
+      draft: { ...result.value.narrative, client_email: asClientEmail(clientEmail) },
+      updated_at: nowIso(),
+    },
     { onConflict: "client_id,step", ignoreDuplicates: false },
   );
   if (error) return { ok: false, error: setupTableError(error.message, error.code) };
 
   revalidateClient(clientId);
-  return { ok: true, narrative: result.value };
+  return { ok: true, narrative: result.value.narrative, kept: result.value.kept };
 }
 
 export async function draftClientEmailCopy(

@@ -9,7 +9,8 @@ export type AgentId =
   | "outreach_narrative"
   | "narrative_email"
   | "email_copy"
-  | "match_profile";
+  | "match_profile"
+  | "nudge_email";
 
 export type AgentDefinition = {
   id: AgentId;
@@ -91,7 +92,7 @@ Write, in plain language, using only facts from the materials, analysis and inta
 2. key_messages (markdown): 3 to 6 messages Rupert will carry into outreach, as a list. Each one is a single idea an investor should remember, with the proof that supports it. No slogans.
 3. approach (markdown): how Rupert will approach investors. Positioning by investor type, the tone, what leads, and what to hold back. Say that the email copy and sequence for each tier come after the investor match, and that the founder reviews those before anything is sent.
 
-If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention. No hype words. No exclamation marks.`;
+If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention, but always write all three sections out in full, and list what you changed for each request. No hype words. No exclamation marks.`;
 
 const NARRATIVE_EMAIL_PROMPT = `You are Rupert, writing the email a founder receives when their outreach narrative is shared in their portal for review.
 
@@ -105,7 +106,7 @@ Write:
   3. Mention any files or links he shared, if there are any.
   4. Ask them to review it in the portal, then confirm or tell Rupert what to change.
   5. What happens next: once they confirm the narrative and the feedback, Rupert sends their matched investor list. The emails to investors are written after that, and they review those before anything is sent.
-If this is an updated version, say so in one short sentence.
+If this is an updated version, say so in one short sentence. If the founder asked for changes, follow the instructions that come with their request instead: confirm each change, then ask for their go-ahead to start investor matching.
 Plain, human, confident. No hype, no exclamation marks, no markdown.`;
 
 const EMAIL_COPY_PROMPT = `You are Rupert, writing the outreach copy a founder confirms before anything is sent. You write the emails for each investor tier, plus one LinkedIn connection note and one LinkedIn follow-up used for every tier.
@@ -142,6 +143,19 @@ Rules:
 - Keep the founder's own wording for amounts ("$1.5M"), revenue ("$45k MRR", or "pre-revenue"), growth and timing.
 - Lead investor: "Yes" if they still need someone to lead the round, "No" if they have a lead or don't need one, empty if it never came up.
 - Existing investors, funds already pitched in the last 12 months, funds to avoid and competitors: one name per line.`;
+
+const NUDGE_EMAIL_PROMPT = `You are Rupert, writing a short personal nudge to a founder whose reply is holding up their investor campaign. Rupert reads and edits it before it goes.
+
+You receive what the founder needs to do, how long it has been waiting, whether they have opened it, and the nudges and reminders they already received (with the last one's text).
+
+Write:
+- subject: under 60 characters, plain and specific to the step. Not "Following up" or "Just checking in".
+- body: plain text, 40–110 words. Write the middle of the email only: no greeting line, no portal link and no sign-off (all three are added automatically). Then:
+  1. Name exactly what is waiting on them, in a few words, and why it matters now (what it unlocks next).
+  2. If they have not opened it, say where to find it. If they opened it but did not answer, offer the two options: confirm, or send notes.
+  3. One easy way out: reply with questions, or book a short call.
+Match the tone to the history: the first nudge is light; after several, be direct and offer help with whatever is in the way. Never repeat the previous nudge's wording. Never guilt-trip or invent deadlines.
+Plain, human, warm. No hype, no exclamation marks, no markdown.`;
 
 export const AGENTS: AgentDefinition[] = [
   {
@@ -192,6 +206,13 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Builds the company profile for Rupert Match from the intake interview: sector, stage, raise, geography, exclusions and the rest. Runs the first time the client page is opened after the intake completes, or when you click Rebuild from intake.",
     defaultPrompt: MATCH_PROFILE_PROMPT,
+  },
+  {
+    id: "nudge_email",
+    title: "Nudge email",
+    description:
+      "Runs when you click Draft nudge on the Nudge page. Writes the middle of a personal nudge for the step waiting on the client, from how long it has waited and the nudges and reminders already sent; the greeting, portal link and signature are added for you.",
+    defaultPrompt: NUDGE_EMAIL_PROMPT,
   },
 ];
 

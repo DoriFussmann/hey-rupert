@@ -24,6 +24,7 @@ import {
   feedbackForClient,
   feedbackProblem,
   isSetupDocumentStep,
+  narrativeForClient,
   narrativeProblem,
   setupFilesFolder,
   type ClientEmailDraft,
@@ -181,7 +182,7 @@ function normalizeDraft(clientId: string, step: PublishableStep, draft: unknown)
 /** What the client sees of a draft: never the analysis notes or the email. */
 function publishedPayload(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
   if (step === "deck_review") return feedbackForClient(draft as FeedbackDraft);
-  if (step === "framing") return asNarrative(draft);
+  if (step === "framing") return narrativeForClient(draft);
   return draft;
 }
 

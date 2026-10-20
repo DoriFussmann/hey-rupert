@@ -5,6 +5,7 @@ import { buildClientNarrative } from "@/app/admin/agent-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
 import { MarkdownField } from "@/app/admin/clients/[id]/setup/markdown-field";
+import { MarkdownBody } from "@/components/markdown-body";
 import {
   ClientAnswer,
   StepFrame,
@@ -84,7 +85,17 @@ export function NarrativeEditor({
       }
       setNarrative(result.narrative);
       setSaved(JSON.stringify(result.narrative));
-      setMessage({ kind: "ok", text: "Narrative ready and saved as a draft. Edit it, then draft the email." });
+      setMessage({
+        kind: "ok",
+        text: [
+          "Narrative ready and saved as a draft. Edit it, then draft the email.",
+          result.kept.length > 0
+            ? `Claude did not rewrite ${result.kept.join(", ")}: kept from the version the client reviewed.`
+            : "",
+        ]
+          .filter(Boolean)
+          .join(" "),
+      });
     } catch (err) {
       setMessage({
         kind: "error",
@@ -136,6 +147,19 @@ export function NarrativeEditor({
         </p>
       ) : null}
       <ClientAnswer row={row} hideWaiting />
+      {changesRequested && narrative.change_summary ? (
+        <section className="mx-lg mt-md rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
+          <p className={labelClass}>What Changed · only you see this</p>
+          <MarkdownBody
+            content={narrative.change_summary}
+            emptyLabel=""
+            className="sow-markdown mt-xs text-body-sm"
+          />
+          <p className="mt-xs text-body-sm text-muted">
+            Draft Email uses this list. If you change more by hand, edit the email to match.
+          </p>
+        </section>
+      ) : null}
 
       <div className="grid gap-lg px-lg py-md">
         <div>
