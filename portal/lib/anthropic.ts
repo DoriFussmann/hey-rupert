@@ -113,7 +113,7 @@ export async function callClaudeTool<T>({
 
 // ---------------------------------------------------------------------------
 // Agent calls: rich content (PDFs, images, text documents) and Anthropic's
-// server-side web fetch, with the answer delivered through one output tool.
+// server-side web tools, with the answer delivered through one output tool.
 
 /** A user content block, passed through to the Messages API as is. */
 export type ClaudeContentBlock = Record<string, unknown>;
@@ -123,6 +123,14 @@ export function webFetchTool(maxUses: number) {
   return { type: "web_fetch_20250910", name: "web_fetch", max_uses: maxUses };
 }
 
+/** Anthropic's server-side web search. */
+export function webSearchTool(maxUses: number) {
+  return { type: "web_search_20250305", name: "web_search", max_uses: maxUses };
+}
+
+/** Tokens and server-side searches used by one agent call, across all turns. */
+export type ClaudeUsage = { inputTokens: number; outputTokens: number; webSearches: number };
+
 type ApiBlock = {
   type?: string;
   name?: string;
@@ -130,7 +138,15 @@ type ApiBlock = {
   text?: string;
 };
 
-type ApiResponse = { content?: ApiBlock[]; stop_reason?: string };
+type ApiUsage = {
+  input_tokens?: number;
+  output_tokens?: number;
+  cache_creation_input_tokens?: number;
+  cache_read_input_tokens?: number;
+  server_tool_use?: { web_search_requests?: number };
+};
+
+type ApiResponse = { content?: ApiBlock[]; stop_reason?: string; usage?: ApiUsage };
 
 const AGENT_TIMEOUT_MS = 270_000;
 // Long server-tool turns come back as "pause_turn"; each one is resumed.
@@ -140,7 +156,8 @@ const MAX_CONTINUATIONS = 4;
  * Runs one agent task. Claude may use the server tools (e.g. web fetch) and
  * must finish by calling `tool`. When the account cannot use a server tool,
  * the call is retried once without server tools and `serverToolsSkipped` is
- * set, so the caller can say so.
+ * set, so the caller can say so, unless `requireServerTools` is set: then
+ * the call fails instead.
  */
 export async function callClaudeAgent<T>({
   system,
@@ -148,22 +165,37 @@ export async function callClaudeAgent<T>({
   tool,
   serverTools = [],
   maxTokens = 8000,
+  timeoutMs = AGENT_TIMEOUT_MS,
+  requireServerTools = false,
 }: {
   system: string;
   content: ClaudeContentBlock[];
   tool: ClaudeTool;
   serverTools?: Record<string, unknown>[];
   maxTokens?: number;
+  timeoutMs?: number;
+  requireServerTools?: boolean;
 }): Promise<
-  | { ok: true; input: T; serverToolsSkipped: boolean }
-  | { ok: false; reason: string }
+  | { ok: true; input: T; serverToolsSkipped: boolean; usage: ClaudeUsage }
+  | { ok: false; reason: string; usage: ClaudeUsage }
 > {
+  const usage: ClaudeUsage = { inputTokens: 0, outputTokens: 0, webSearches: 0 };
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    return { ok: false, reason: "ANTHROPIC_API_KEY is not configured." };
+    return { ok: false, reason: "ANTHROPIC_API_KEY is not configured.", usage };
   }
 
-  const deadline = Date.now() + AGENT_TIMEOUT_MS;
+  const deadline = Date.now() + timeoutMs;
+
+  function addUsage(value: ApiUsage | undefined) {
+    if (!value) return;
+    usage.inputTokens +=
+      (value.input_tokens ?? 0) +
+      (value.cache_creation_input_tokens ?? 0) +
+      (value.cache_read_input_tokens ?? 0);
+    usage.outputTokens += value.output_tokens ?? 0;
+    usage.webSearches += value.server_tool_use?.web_search_requests ?? 0;
+  }
 
   async function post(messages: unknown[], tools: Record<string, unknown>[]) {
     const remaining = deadline - Date.now();
@@ -195,7 +227,9 @@ export async function callClaudeAgent<T>({
         detail: (await response.text()).slice(0, 500),
       };
     }
-    return { ok: true as const, data: (await response.json()) as ApiResponse };
+    const data = (await response.json()) as ApiResponse;
+    addUsage(data.usage);
+    return { ok: true as const, data };
   }
 
   async function run(withServerTools: boolean) {
@@ -245,9 +279,10 @@ export async function callClaudeAgent<T>({
     let skipped = false;
     if (
       !result.ok &&
+      !requireServerTools &&
       serverTools.length > 0 &&
       result.status === 400 &&
-      /web_fetch|server tool|tool type/i.test(result.detail)
+      /web_fetch|web_search|server tool|tool type/i.test(result.detail)
     ) {
       skipped = true;
       result = await run(false);
@@ -257,14 +292,14 @@ export async function callClaudeAgent<T>({
         ? `Claude API error (${result.status}): ${result.detail}`
         : `Claude request failed: ${result.detail}.`;
       console.error(reason);
-      return { ok: false, reason };
+      return { ok: false, reason, usage };
     }
-    return { ok: true, input: result.input, serverToolsSkipped: skipped };
+    return { ok: true, input: result.input, serverToolsSkipped: skipped, usage };
   } catch (err) {
     const reason = `Claude request failed: ${
       err instanceof Error ? err.message : String(err)
     }`;
     console.error(reason);
-    return { ok: false, reason };
+    return { ok: false, reason, usage };
   }
 }

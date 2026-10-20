@@ -9,6 +9,15 @@ import RME, {
   type SiteResult,
   type Tier,
 } from "@/lib/match/engine/index.mjs";
+import {
+  applyCorrections,
+  loadChecksForFirms,
+  loadCorrections,
+  loadDecisions,
+  type CheckBrief,
+  type Correction,
+  type Decision,
+} from "@/lib/match/corrections-server";
 import { loadLiveDb, selectAll, type LiveDb } from "@/lib/match/db-server";
 import { buildProfile, canRun, loadProfileState, matchBasis } from "@/lib/match/profile-server";
 import { loadSites } from "@/lib/match/sites-server";
@@ -31,6 +40,14 @@ import {
   type TierSummary,
 } from "@/lib/match/shared";
 import {
+  VERIFY_LABEL,
+  contactId,
+  contactKeyOf,
+  emailKey,
+  personNameOf,
+  type VerifyState,
+} from "@/lib/match/verify";
+import {
   websiteHref,
   type InvestorListPayload,
   type InvestorListSummary,
@@ -51,7 +68,26 @@ export type MatchRun = {
   sites: Record<string, SiteResult>;
   /** When each loaded website result was checked. */
   checkedAt: Record<string, string>;
+  /** Fixes and flags applied on top of the Fund Database, by contact id. */
+  corrections: Map<string, Correction>;
+  /** This client's keep / remove decisions, by contact id. */
+  decisions: Map<string, Decision>;
+  /** Stored verification checks for the contacts at these funds, by contact id. */
+  checks: Map<string, CheckBrief>;
 };
+
+/** A contact's id: FirmID + original email key. */
+export function rankedContactId(contact: RankedContact) {
+  return contactId(contact.fid, contactKeyOf(contact));
+}
+
+/** The contact's verification state; a check of an older email does not count. */
+export function verifyStateOf(run: MatchRun, contact: RankedContact): VerifyState {
+  if (!contact.email) return "unverified";
+  const check = run.checks.get(rankedContactId(contact));
+  if (!check?.status || !check.checkedAt) return "unverified";
+  return emailKey(check.email) === emailKey(contact.email) ? check.status : "unverified";
+}
 
 /** Investing contacts with an email: what "contacts identified" counts. */
 function investingPeople(result: MatchResult) {
@@ -190,16 +226,21 @@ export async function runClientMatch(
   supabase: ServiceClient,
   clientId: string,
 ): Promise<Result<MatchRun>> {
-  const [live, loadedState, loadedReviews, loadedHidden] = await Promise.all([
-    loadLiveDb(supabase),
-    loadProfileState(supabase, clientId),
-    loadReviews(supabase, clientId),
-    loadHidden(supabase),
-  ]);
+  const [live, loadedState, loadedReviews, loadedHidden, loadedCorrections, loadedDecisions] =
+    await Promise.all([
+      loadLiveDb(supabase),
+      loadProfileState(supabase, clientId),
+      loadReviews(supabase, clientId),
+      loadHidden(supabase),
+      loadCorrections(supabase),
+      loadDecisions(supabase, clientId),
+    ]);
   if (!live.ok) return live;
   if (!loadedState.ok) return loadedState;
   if (!loadedReviews.ok) return loadedReviews;
   if (!loadedHidden.ok) return loadedHidden;
+  if (!loadedCorrections.ok) return loadedCorrections;
+  if (!loadedDecisions.ok) return loadedDecisions;
   const state = loadedState.value;
   if (!state) return { ok: false, error: "Fill the company profile, then run the match." };
 
@@ -220,7 +261,9 @@ export async function runClientMatch(
     suppressed[item.id] = item.reason || "Hidden for all clients";
   });
 
-  const db = live.value.db;
+  const corrections = loadedCorrections.value;
+  const decisions = loadedDecisions.value;
+  const db = applyCorrections(live.value.db, corrections, decisions);
   let out = RME.run(db, profile, { suppressed, rejected });
   let sites: Record<string, SiteResult> = {};
   let checkedAt: Record<string, string> = {};
@@ -233,6 +276,12 @@ export async function runClientMatch(
     out = RME.run(db, profile, { suppressed, rejected, sites });
   }
 
+  const loadedChecks = await loadChecksForFirms(
+    supabase,
+    out.results.map((result) => result.f.id),
+  );
+  if (!loadedChecks.ok) return loadedChecks;
+
   return {
     ok: true,
     value: {
@@ -244,6 +293,9 @@ export async function runClientMatch(
       hidden: loadedHidden.hidden,
       sites,
       checkedAt,
+      corrections,
+      decisions,
+      checks: loadedChecks.value,
     },
   };
 }
@@ -251,13 +303,14 @@ export async function runClientMatch(
 // ---------------------------------------------------------------------------
 // View for the Match page
 
-function personName(contact: RankedContact) {
-  return [contact.prefix, contact.first, contact.last].filter(Boolean).join(" ").trim() || "(no name)";
-}
-
-function brief(contact: RankedContact | undefined): ContactBrief | null {
+function brief(run: MatchRun, contact: RankedContact | undefined): ContactBrief | null {
   if (!contact) return null;
-  return { name: personName(contact), title: contact.title, role: contact.roleLabel };
+  return {
+    name: personNameOf(contact),
+    title: contact.title,
+    role: contact.roleLabel,
+    verify: verifyStateOf(run, contact),
+  };
 }
 
 function hqOf(result: MatchResult) {
@@ -281,7 +334,7 @@ function uniqueFlags(flags: Flag[]) {
   });
 }
 
-function toRow(result: MatchResult, reviews: Map<string, Review>): FirmRow {
+function toRow(run: MatchRun, result: MatchResult): FirmRow {
   const flags = uniqueFlags(result.A.flags);
   return {
     id: result.f.id,
@@ -306,10 +359,10 @@ function toRow(result: MatchResult, reviews: Map<string, Review>): FirmRow {
     flagCount: flags.length,
     site: siteState(result),
     near: result.nearPeople,
-    primary: brief(result.seq[0]),
-    backup: brief(result.seq[1]),
+    primary: brief(run, result.seq[0]),
+    backup: brief(run, result.seq[1]),
     rejected: Boolean(result.rejected),
-    review: reviews.get(result.f.id) ?? null,
+    review: run.reviews.get(result.f.id) ?? null,
   };
 }
 
@@ -404,7 +457,7 @@ function tierSummary(run: MatchRun, tier: Tier, rows: FirmRow[]): TierSummary {
 
 export function buildView(run: MatchRun): MatchView {
   const { out, profile, live } = run;
-  const rows = out.results.map((result) => toRow(result, run.reviews));
+  const rows = out.results.map((result) => toRow(run, result));
   const inTier = out.counts.bullseye + out.counts.match + out.counts.expansion;
   const core = coreSector(profile);
   const notes = [
@@ -465,9 +518,10 @@ const FIT_MAX: Record<string, number> = {
   "Vertical + industry": 6,
 };
 
-function contactOf(contact: RankedContact): FirmContact {
+function contactOf(run: MatchRun, contact: RankedContact): FirmContact {
   return {
-    name: personName(contact),
+    id: rankedContactId(contact),
+    name: personNameOf(contact),
     title: contact.title,
     role: contact.roleLabel,
     email: contact.email,
@@ -475,6 +529,7 @@ function contactOf(contact: RankedContact): FirmContact {
     location: [contact.city, contact.country].filter(Boolean).join(", "),
     seq: null,
     why: contact.why,
+    verify: verifyStateOf(run, contact),
   };
 }
 
@@ -482,12 +537,10 @@ export function buildDetail(run: MatchRun, firmId: string): FirmDetail | null {
   const result = run.out.results.find((item) => item.f.id === firmId);
   if (!result) return null;
   const firm = result.f;
-  const sequence = new Map(
-    result.seq.map((contact) => [`${contact.email}|${contact.first}|${contact.last}`, contact.seq ?? null]),
-  );
+  const sequence = new Map(result.seq.map((contact) => [rankedContactId(contact), contact.seq ?? null]));
   const site = run.sites[firm.id];
   return {
-    row: toRow(result, run.reviews),
+    row: toRow(run, result),
     why: result.why,
     pros: result.pros,
     cons: result.cons,
@@ -513,10 +566,10 @@ export function buildDetail(run: MatchRun, firmId: string): FirmDetail | null {
         [office.city, office.country].filter(Boolean).join(", ") + (office.type ? ` (${office.type})` : ""),
       ),
     },
-    contacts: result.ranked.map((contact) => ({
-      ...contactOf(contact),
-      seq: sequence.get(`${contact.email}|${contact.first}|${contact.last}`) ?? null,
-    })),
+    contacts: result.ranked.map((contact) => {
+      const item = contactOf(run, contact);
+      return { ...item, seq: sequence.get(item.id) ?? null };
+    }),
   };
 }
 
@@ -591,7 +644,27 @@ export function buildClientList(run: MatchRun): Result<InvestorListPayload> {
 // ---------------------------------------------------------------------------
 // Internal export rows (admin only)
 
-export function exportRows(run: MatchRun) {
+/**
+ * Contacts the default export keeps: Clean ones, and ones kept for this
+ * client after a check. Everything else needs a check or a decision first.
+ */
+function exportable(run: MatchRun, contact: RankedContact) {
+  const state = verifyStateOf(run, contact);
+  if (state === "clean") return true;
+  return state !== "unverified" && run.decisions.get(rankedContactId(contact))?.decision === "keep";
+}
+
+function verifyText(run: MatchRun, contact: RankedContact) {
+  const state = verifyStateOf(run, contact);
+  const kept = state !== "clean" && run.decisions.get(rankedContactId(contact))?.decision === "keep";
+  return VERIFY_LABEL[state] + (kept ? " (kept)" : "");
+}
+
+/**
+ * Internal workbook rows. By default only verified contacts (Clean, or kept
+ * after a check) are listed; `includeAll` lists everyone.
+ */
+export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?: boolean } = {}) {
   const { out, profile } = run;
   const summary: (string | number)[][] = [
     ["Client", profile.name],
@@ -602,6 +675,7 @@ export function exportRows(run: MatchRun) {
     ["HQ", [profile.city, profile.usRegion, profile.country].filter(Boolean).join(", ")],
     ["Fund Database", run.live.version.fileName],
     ["Exported", new Date().toISOString().slice(0, 16).replace("T", " ")],
+    ["Contacts", includeAll ? "Everyone (verified or not)" : "Verified only: Clean, or kept after a check"],
     [],
     ["Tier", "Funds", "Tightness", "Rules"],
     ...TIERS.map(({ key, label }) => [
@@ -617,16 +691,17 @@ export function exportRows(run: MatchRun) {
   const outreachHeader = [
     "Tier", "Rank", "Fit", "Data confidence", "Review", "Review note", "Firm",
     "Firm type", "Firm HQ", "Website", "Firm email", "Sequence", "Name", "Title",
-    "Role", "Email", "Phone", "Person city", "Why this tier", "Fit reasons",
+    "Role", "Email", "Phone", "Person city", "Verification", "Why this tier", "Fit reasons",
     "Watch-outs", "Verify", "Website check", "Website title", "Stated check size",
   ];
   const peopleHeader = [
     "Tier", "Firm", "Firm type", "Name", "Title", "Role", "Email", "Phone",
-    "City", "Country", "Score",
+    "City", "Country", "Score", "Verification",
   ];
   const outreach: (string | number)[][] = [outreachHeader];
   const people: (string | number)[][] = [peopleHeader];
   const rank: Record<Tier, number> = { bullseye: 0, match: 0, expansion: 0 };
+  let leftOut = 0;
 
   for (const result of out.results) {
     if (result.rejected) continue;
@@ -657,27 +732,31 @@ export function exportRows(run: MatchRun) {
       site?.title ?? "",
       site?.check ?? "",
     ];
-    const sequence = result.seq.length > 0 ? result.seq : [undefined];
+    const kept = result.seq.filter((contact) => includeAll || exportable(run, contact));
+    leftOut += result.seq.length - kept.length;
+    const sequence = kept.length > 0 ? kept : [undefined];
     for (const contact of sequence) {
       outreach.push([
         ...base,
         contact?.seq ?? "",
-        contact ? personName(contact) : "",
+        contact ? personNameOf(contact) : "",
         contact?.title ?? "",
         contact?.roleLabel ?? "",
         contact?.email ?? "",
         contact?.phone ?? "",
         contact?.city ?? "",
+        contact ? verifyText(run, contact) : result.seq.length > 0 ? "No verified contact" : "",
         ...tail,
       ]);
     }
     for (const contact of result.ranked) {
       if (contact.role === "ops") continue;
+      if (!includeAll && !exportable(run, contact)) continue;
       people.push([
         tierLabel,
         result.f.name,
         firmTypeLabel(result.f.type),
-        personName(contact),
+        personNameOf(contact),
         contact.title,
         contact.roleLabel,
         contact.email,
@@ -685,8 +764,20 @@ export function exportRows(run: MatchRun) {
         contact.city,
         contact.country,
         contact.score,
+        verifyText(run, contact),
       ]);
     }
+  }
+
+  if (!includeAll) {
+    summary.push(
+      [],
+      [
+        leftOut > 0
+          ? `${n(leftOut)} Primary/Backup contacts left out: not verified, or a problem without a decision. Run Verify emails, or use Export everything.`
+          : "Every Primary/Backup contact is verified.",
+      ],
+    );
   }
 
   return { summary, outreach, people };

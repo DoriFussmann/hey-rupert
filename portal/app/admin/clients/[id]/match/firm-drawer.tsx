@@ -18,6 +18,7 @@ import {
   type FirmRow,
   type MatchView,
 } from "@/lib/match/shared";
+import { VERIFY_LABEL, VERIFY_TONE } from "@/lib/match/verify";
 
 const HIDE_BY_DEFAULT = "Not active / no recent deals";
 
@@ -338,10 +339,13 @@ export function FirmDrawer({
               ) : (
                 <ul className="space-y-sm text-body-sm">
                   {detail.contacts.map((contact, index) => (
-                    <li key={`${contact.email}-${index}`}>
+                    <li key={`${contact.id}-${index}`}>
                       <p className="text-heading">
                         {contact.name}
                         {contact.seq ? <span className="ml-xs rounded bg-primary-tint px-xs text-label text-primary">{contact.seq}</span> : null}
+                        {contact.email ? (
+                          <span className={`ml-xs text-label ${VERIFY_TONE[contact.verify]}`}>{VERIFY_LABEL[contact.verify]}</span>
+                        ) : null}
                       </p>
                       <p className="text-secondary">
                         {contact.title || "No title"} · {contact.role}

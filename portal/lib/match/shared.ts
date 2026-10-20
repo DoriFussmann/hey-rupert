@@ -2,6 +2,7 @@
 // admin UI. Pure module (no engine import, no server code).
 
 import type { Flag, Level, SiteResult, Tier } from "@/lib/match/engine/index.mjs";
+import type { VerifyState } from "@/lib/match/verify";
 
 export type { Flag, Level, SiteResult, Tier };
 
@@ -381,7 +382,7 @@ export function dropSectorFocus(text: string) {
 /** Fields where "none" is a real answer. */
 export const NONE_OK_FIELDS = new Set(["existing_investors", "already_pitched", "competitors"]);
 
-export type ContactBrief = { name: string; title: string; role: string };
+export type ContactBrief = { name: string; title: string; role: string; verify: VerifyState };
 
 export type FirmRow = {
   id: string;
@@ -449,6 +450,8 @@ export type MatchView = {
 };
 
 export type FirmContact = {
+  /** FirmID + original email key (see lib/match/verify). */
+  id: string;
   name: string;
   title: string;
   role: string;
@@ -457,6 +460,7 @@ export type FirmContact = {
   location: string;
   seq: "Primary" | "Backup" | null;
   why: string[];
+  verify: VerifyState;
 };
 
 export type FirmDetail = {
