@@ -9,12 +9,12 @@ import { createServiceClient } from "@/lib/supabase/admin";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-function fileName(name: string) {
+function fileName(name: string, includeAll: boolean) {
   const safe = name.replace(/[^\w\- ]+/g, "").trim().replace(/\s+/g, "-") || "client";
-  return `rupert-match-${safe}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+  return `rupert-match-${safe}${includeAll ? "-everyone" : ""}-${new Date().toISOString().slice(0, 10)}.xlsx`;
 }
 
-export async function GET(_request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: Request, { params }: { params: { id: string } }) {
   const { user, role } = await getAuthContext();
   if (!user || role !== "admin") {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
@@ -26,7 +26,8 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const run = await runClientMatch(createServiceClient(), params.id);
   if (!run.ok) return NextResponse.json({ error: run.error }, { status: 400 });
 
-  const { summary, outreach, people } = exportRows(run.value);
+  const includeAll = new URL(request.url).searchParams.get("all") === "1";
+  const { summary, outreach, people } = exportRows(run.value, { includeAll });
   const workbook = new ExcelJS.Workbook();
   workbook.addWorksheet("Summary").addRows(summary);
   const outreachSheet = workbook.addWorksheet("Outreach", { views: [{ state: "frozen", ySplit: 1 }] });
@@ -42,7 +43,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   return new NextResponse(Buffer.from(buffer), {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      "Content-Disposition": `attachment; filename="${fileName(run.value.profile.name || "client")}"`,
+      "Content-Disposition": `attachment; filename="${fileName(run.value.profile.name || "client", includeAll)}"`,
       "Cache-Control": "no-store",
     },
   });

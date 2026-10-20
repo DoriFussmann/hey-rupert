@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { inputClass, n, smallButton } from "@/app/admin/clients/[id]/match/ui";
 import { SITE_LABEL, isSectorFocusLine, type FirmRow, type SiteState } from "@/lib/match/shared";
+import { VERIFY_LABEL, VERIFY_TONE, type VerifyState } from "@/lib/match/verify";
 
 export type SplitFilter = { kind: "type" | "loc"; value: string } | null;
 
@@ -25,6 +26,12 @@ const SORTS: { value: Sort; label: string }[] = [
   { value: "newest", label: "Newest funds" },
   { value: "name", label: "A–Z" },
 ];
+
+/** A match saved before Email Verification has no state: it reads as not verified. */
+function VerifyTag({ state }: { state: VerifyState | undefined }) {
+  const value = state ?? "unverified";
+  return <p className={`text-label ${VERIFY_TONE[value]}`}>{VERIFY_LABEL[value]}</p>;
+}
 
 const BAD_SITES = new Set<SiteState>(["broken", "parked", "inactive", "offtopic"]);
 
@@ -230,6 +237,7 @@ export function LeadsTable({
                           <>
                             <p className="text-heading">{row.primary.name}</p>
                             <p className="text-muted">{row.primary.title}</p>
+                            <VerifyTag state={row.primary.verify} />
                           </>
                         ) : (
                           <p className="text-muted">No reachable contact</p>
@@ -240,6 +248,7 @@ export function LeadsTable({
                           <>
                             <p className="text-heading">{row.backup.name}</p>
                             <p className="text-muted">{row.backup.title}</p>
+                            <VerifyTag state={row.backup.verify} />
                           </>
                         ) : (
                           <p className="text-muted">—</p>

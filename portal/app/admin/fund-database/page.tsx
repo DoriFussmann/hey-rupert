@@ -1,10 +1,13 @@
 import { PageHeader } from "@/components/page-header";
+import { ContactCorrections } from "@/app/admin/fund-database/contact-corrections";
 import { FundDatabaseManager } from "@/app/admin/fund-database/fund-database-manager";
 import { requireAdmin } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { asFundDbVersion, matchTableError } from "@/lib/match/db-server";
+import { asFundDbVersion, loadLiveDb, matchTableError } from "@/lib/match/db-server";
 import { SITE_LABEL, type FundDbVersion, type SiteState } from "@/lib/match/shared";
 import { loadCheckIndex } from "@/lib/match/sites-server";
+import type { CorrectionRow, LeadRow } from "@/lib/match/verify";
+import { loadCorrectionRows, loadLeadRows } from "@/lib/match/verify-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 // Importing a workbook and the website batch run in server actions on this page.
@@ -49,8 +52,21 @@ async function loadPage(): Promise<{
   };
 }
 
+async function loadCorrections(): Promise<{ corrections: CorrectionRow[]; leads: LeadRow[]; error: string | null }> {
+  if (!isServiceRoleConfigured()) return { corrections: [], leads: [], error: null };
+  const supabase = createServiceClient();
+  const live = await loadLiveDb(supabase);
+  const [corrections, leads] = await Promise.all([
+    loadCorrectionRows(supabase, live.ok ? live.value.db.contacts : null),
+    loadLeadRows(supabase),
+  ]);
+  if (!corrections.ok) return { corrections: [], leads: [], error: corrections.error };
+  if (!leads.ok) return { corrections: [], leads: [], error: leads.error };
+  return { corrections: corrections.value, leads: leads.value, error: null };
+}
+
 export default async function FundDatabasePage() {
-  const { versions, sites, error } = await loadPage();
+  const [{ versions, sites, error }, fixes] = await Promise.all([loadPage(), loadCorrections()]);
 
   return (
     <>
@@ -63,6 +79,7 @@ export default async function FundDatabasePage() {
           {error}
         </p>
       ) : null}
+      <ContactCorrections corrections={fixes.corrections} leads={fixes.leads} error={fixes.error} />
       <FundDatabaseManager versions={versions} sites={sites} />
     </>
   );

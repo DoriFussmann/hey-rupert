@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { restoreHiddenFund } from "@/app/admin/match-actions";
 import { FirmDrawer } from "@/app/admin/clients/[id]/match/firm-drawer";
 import { LeadsTable, type SplitFilter } from "@/app/admin/clients/[id]/match/leads-table";
@@ -421,8 +422,22 @@ export function ResultBoard({
             <button type="button" className={secondaryButton} disabled={busy} onClick={onCheckWebsites}>
               Check websites
             </button>
-            <a href={`/admin/clients/${clientId}/match/export`} className={`${secondaryButton} no-underline`}>
-              Export (internal)
+            <Link href={`/admin/clients/${clientId}/match/verify`} className={`${secondaryButton} no-underline`}>
+              Verify emails
+            </Link>
+            <a
+              href={`/admin/clients/${clientId}/match/export`}
+              className={`${secondaryButton} no-underline`}
+              title="Internal workbook with verified contacts only: Clean, or kept after a check"
+            >
+              Export (verified)
+            </a>
+            <a
+              href={`/admin/clients/${clientId}/match/export?all=1`}
+              className={`${secondaryButton} no-underline`}
+              title="Internal workbook with every contact, verified or not"
+            >
+              Export everything
             </a>
             <button
               type="button"
