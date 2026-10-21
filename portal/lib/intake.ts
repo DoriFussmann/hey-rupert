@@ -79,6 +79,12 @@ export type IntakeInterview = {
   admin_brief: IntakeBrief | null;
   status: IntakeInterviewStatus;
   client_message_count: number;
+  /**
+   * The interview uses the sector classification guide: new interviews and
+   * ones the founder hadn't answered yet when it shipped. Interviews already
+   * under way keep their original behavior.
+   */
+  classification_guide: boolean;
   completed_at: string | null;
   updated_at: string;
 };

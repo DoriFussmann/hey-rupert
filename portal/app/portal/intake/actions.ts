@@ -17,6 +17,7 @@ import {
   writeInterviewSummary,
   type SharedDocument,
 } from "@/lib/intake-server";
+import { loadInterviewGuide } from "@/lib/company-profile/server";
 import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
 import { MATERIALS_BUCKET, fileExtension, formatBytes } from "@/lib/setup";
 import { notifyAdmin } from "@/lib/notify";
@@ -132,7 +133,9 @@ export async function startIntake(): Promise<IntakeActionResult> {
   }
 
   const settings = await loadIntakeSettings(supabase);
-  const turn = await nextInterviewTurn(settings, opened.client, [], {});
+  // A new interview uses the classification guide (the column defaults to it).
+  const guide = await loadInterviewGuide(supabase);
+  const turn = await nextInterviewTurn(settings, opened.client, [], {}, undefined, guide);
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
 
   const messages: IntakeMessage[] = [
@@ -208,6 +211,7 @@ async function takeTurn(
     withUser,
     interview.topic_status,
     document,
+    interview.classification_guide ? await loadInterviewGuide(supabase) : null,
   );
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
 

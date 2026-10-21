@@ -65,7 +65,9 @@ import {
 } from "@/lib/setup";
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { previewNewValues, runCoverage } from "@/lib/taxonomy/server";
+import { answersBasis, founderTranscript } from "@/lib/company-profile/core";
+import { profileFromIntake, saveVersion, versionAfterEdit } from "@/lib/company-profile/server";
+import { loadTaxonomy, previewNewValues, runCoverage } from "@/lib/taxonomy/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -424,16 +426,45 @@ export async function buildMatchProfile(
     return { ok: false, error: "There is no intake interview to build from yet." };
   }
 
-  const extracted = await extractAnswers(supabase, client as Record<string, unknown>, interview);
+  // With the investor taxonomy, the AI also classifies the company, with
+  // founder evidence; without it, the profile is built as before.
+  const taxonomy = await loadTaxonomy(supabase);
+  const index = taxonomy.ok ? taxonomy.value : null;
+  const extracted = await extractAnswers(supabase, client as Record<string, unknown>, interview, index);
   if (!extracted.ok) return extracted;
 
+  const settings = current.value?.settings ?? DEFAULT_SETTINGS;
+  const built =
+    index && extracted.classification
+      ? profileFromIntake({
+          answers: extracted.answers,
+          settings,
+          index,
+          classification: extracted.classification,
+          transcript: founderTranscript(interview.messages),
+          interviewAt: interview.updated_at,
+        })
+      : null;
+
   const saved = await saveProfileState(supabase, clientId, {
-    answers: extracted.answers,
-    settings: current.value?.settings ?? DEFAULT_SETTINGS,
+    answers: built ? built.answers : extracted.answers,
+    settings,
     source: "intake",
     sourceInterviewAt: interview.updated_at,
   });
   if (!saved.ok) return saved;
+  if (built && index) {
+    // A version that can't be saved (e.g. the table isn't set up) never
+    // blocks the profile; the Classification panel says what is missing.
+    await saveVersion(supabase, clientId, {
+      profile: { ...built.profile, provenance: { ...built.profile.provenance, basis: answersBasis(saved.value.answers) } },
+      index,
+      source: "intake_ai",
+      actor: access.email,
+      problems: built.problems,
+      note: built.unusable.length > 0 ? `Not usable by the current engine: ${built.unusable.join(", ")}.` : "",
+    });
+  }
   revalidateMatch(clientId);
   return { ok: true, state: saved.value };
 }
@@ -464,6 +495,11 @@ export async function saveCompanyProfile(
     source: "edit",
   });
   if (!saved.ok) return saved;
+  const taxonomy = await loadTaxonomy(access.supabase);
+  if (taxonomy.ok) {
+    // As above: a version that can't be saved never blocks the edit.
+    await versionAfterEdit(access.supabase, clientId, current.value, saved.value, taxonomy.value, access.email);
+  }
   revalidateMatch(clientId);
   return { ok: true, state: saved.value };
 }

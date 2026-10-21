@@ -119,6 +119,7 @@ export function asIntakeInterview(row: Record<string, unknown>): IntakeInterview
       typeof row.client_message_count === "number"
         ? row.client_message_count
         : 0,
+    classification_guide: row.classification_guide === 1,
     completed_at: row.completed_at != null ? String(row.completed_at) : null,
     updated_at: String(row.updated_at ?? new Date().toISOString()),
   };
@@ -203,6 +204,7 @@ function systemPrompt(
   settings: IntakeSettings,
   context: string,
   topicStatus: Record<string, TopicStatus>,
+  guide: string | null,
 ) {
   return [
     settings.prompt,
@@ -210,6 +212,7 @@ function systemPrompt(
     context,
     "## Interview topics",
     topicsBlock(settings.topics, topicStatus),
+    ...(guide ? [guide] : []),
     "## When the essentials are done",
     "The intake is complete as soon as every required topic is covered: Rupert then has what he needs to start, and the founder is notified that the essentials are done. When your topic update marks the last required topic as covered (in this turn or earlier), make this clear in your reply, once: say warmly that the essentials are done and Rupert has what he needs to get started; then name the remaining optional topics, explain in one sentence that a few more minutes on them can make the campaign noticeably sharper, recommend continuing, and ask whether they would like to. If they prefer to stop, thank them and tell them they are all set. If every topic, required and optional, is covered, thank them and say they can review their summary anytime. This section overrides any earlier instruction about when to offer the summary.",
     "## How to respond",
@@ -315,6 +318,8 @@ export async function nextInterviewTurn(
   messages: IntakeMessage[],
   topicStatus: Record<string, TopicStatus>,
   document?: SharedDocument,
+  /** The sector classification guide, for interviews that use it. */
+  guide: string | null = null,
 ): Promise<{ ok: true; turn: InterviewTurn } | { ok: false; reason: string }> {
   const turns: ClaudeMessage[] = toClaudeMessages(messages);
   const last = turns[turns.length - 1];
@@ -334,7 +339,7 @@ export async function nextInterviewTurn(
   }
 
   const result = await callClaudeTool<unknown>({
-    system: systemPrompt(settings, buildClientContext(client), topicStatus),
+    system: systemPrompt(settings, buildClientContext(client), topicStatus, guide),
     messages: turns,
     tool: RESPOND_TOOL,
     maxTokens: document ? 3000 : 1024,

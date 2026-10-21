@@ -23,6 +23,9 @@ import {
 } from "@/lib/match/shared";
 import { matchTableError } from "@/lib/match/db-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
+import type { AiClassification } from "@/lib/company-profile/core";
+import { CLASSIFICATION_PROPERTY, classificationRules } from "@/lib/company-profile/prompt";
+import type { TaxIndex } from "@/lib/taxonomy/core";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -346,19 +349,36 @@ function interviewText(interview: IntakeInterview) {
     .join("\n\n");
 }
 
-/** Asks Claude to fill the profile fields from the intake. */
+/**
+ * Asks Claude to fill the profile fields from the intake. With the taxonomy,
+ * it also classifies the company against it, with founder evidence (checked
+ * by the caller).
+ */
 export async function extractAnswers(
   supabase: ServiceClient,
   client: Record<string, unknown>,
   interview: IntakeInterview,
-): Promise<{ ok: true; answers: MatchAnswers } | { ok: false; error: string }> {
+  taxonomy: TaxIndex | null = null,
+): Promise<
+  { ok: true; answers: MatchAnswers; classification: AiClassification | null } | { ok: false; error: string }
+> {
   const prompts = await loadAgentPrompts(supabase);
   const system = [
     prompts.match_profile,
     profileLabelsText(),
     "## What was already known",
     knownFacts(client),
+    ...(taxonomy ? [classificationRules(taxonomy)] : []),
   ].join("\n\n");
+  const tool = taxonomy
+    ? {
+        ...PROFILE_TOOL,
+        input_schema: {
+          type: "object",
+          properties: { ...PROFILE_PROPERTIES, classification: CLASSIFICATION_PROPERTY },
+        },
+      }
+    : PROFILE_TOOL;
 
   const result = await callClaudeTool<Record<string, unknown>>({
     system,
@@ -368,9 +388,17 @@ export async function extractAnswers(
         content: `${interviewText(interview)}\n\nFill the profile by calling the save_profile tool.`,
       },
     ],
-    tool: PROFILE_TOOL,
-    maxTokens: 3000,
+    tool,
+    maxTokens: taxonomy ? 6000 : 3000,
   });
   if (!result.ok) return { ok: false, error: result.reason };
-  return { ok: true, answers: cleanAnswers(result.input) };
+  const classification = result.input.classification;
+  return {
+    ok: true,
+    answers: cleanAnswers(result.input),
+    classification:
+      taxonomy && classification && typeof classification === "object"
+        ? (classification as AiClassification)
+        : null,
+  };
 }
