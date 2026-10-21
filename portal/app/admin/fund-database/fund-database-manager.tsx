@@ -112,6 +112,13 @@ function StagedPreview({
           .
         </p>
       ) : null}
+      {diff?.taxonomy && diff.taxonomy.newValues > 0 ? (
+        <p className="px-lg pb-md text-body-sm text-secondary">
+          Investor taxonomy: {n(diff.taxonomy.newValues)} value{diff.taxonomy.newValues === 1 ? "" : "s"} it has not seen
+          (e.g. {diff.taxonomy.sample.join("; ")}). They are added for review under Taxonomy when you apply. Nothing is
+          lost: firms keep their original values.
+        </p>
+      ) : null}
       {diff && diff.warnings.length > 0 ? (
         <ul className="mx-lg mb-md list-disc rounded-md border border-warning/40 bg-background py-sm pl-xl pr-md text-body-sm text-warning">
           {diff.warnings.map((warning) => (

@@ -520,6 +520,8 @@ export type FundDbDiff = {
   contactsAdded?: number;
   /** Workbook: contacts added by CSV earlier, put back on top of it. */
   reapplied?: ReappliedContacts;
+  /** Workbook: values the investor taxonomy has not seen (null: taxonomy not set up). */
+  taxonomy?: { newValues: number; sample: string[] } | null;
 };
 
 export type FundDbVersion = {

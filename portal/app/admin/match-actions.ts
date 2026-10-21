@@ -65,6 +65,7 @@ import {
 } from "@/lib/setup";
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { previewNewValues, runCoverage } from "@/lib/taxonomy/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -245,6 +246,7 @@ export async function stageFundUpload(
     const diff = {
       ...diffFundDb(live.ok ? live.value.db : null, db, reviewedIds, warnings),
       reapplied: counts,
+      taxonomy: await previewNewValues(supabase, db),
     };
 
     await removeStaged(supabase);
@@ -290,8 +292,22 @@ export async function applyFundVersion(id: string): Promise<Result<object>> {
   if (!access.ok) return access;
   const { error } = await access.supabase.rpc("apply_fund_db_version", { p_id: String(id) });
   if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+  await refreshTaxonomyCoverage(access.supabase, access.email);
   revalidatePath("/admin/fund-database");
   return { ok: true };
+}
+
+/**
+ * Maps the new live database to the investor taxonomy. A failure here never
+ * undoes the apply: the Taxonomy page shows the coverage as out of date.
+ */
+async function refreshTaxonomyCoverage(supabase: ReturnType<typeof createServiceClient>, actor: string | null) {
+  try {
+    await runCoverage(supabase, actor);
+  } catch {
+    // Reported on the Taxonomy page, where it can be recomputed.
+  }
+  revalidatePath("/admin/taxonomy");
 }
 
 export async function discardFundVersion(id: string): Promise<Result<object>> {
@@ -351,6 +367,7 @@ export async function applyContacts(id: string): Promise<Result<{ added: number 
   try {
     const applied = await applyContactImport(access.supabase, String(id), access.email);
     if (!applied.ok) return { ok: false, error: applied.error };
+    await refreshTaxonomyCoverage(access.supabase, access.email);
     revalidatePath("/admin/fund-database");
     return { ok: true, added: applied.value.added };
   } catch (err) {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { ClientMatch } from "@/app/admin/fund-database/client-match";
 import { ClientPicker } from "@/app/admin/fund-database/client-picker";
@@ -144,6 +145,11 @@ export default async function FundDatabasePage({
       <PageHeader
         title="Fund Database"
         description="The investor database Rupert Match runs on, and where you match each client. It stays private on the server: clients only ever see fund names and counts. Upload a new workbook when the data provider sends one; you see what changes before it goes live."
+        actions={
+          <Link href="/admin/taxonomy" className="text-body-sm text-secondary hover:text-heading">
+            Investor taxonomy →
+          </Link>
+        }
       />
       <section id="client-matching" className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
         <h2 className="text-h4">Client matching</h2>
