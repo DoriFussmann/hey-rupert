@@ -11,6 +11,7 @@ import {
   isTopicCoverage,
   parseIntakeTopics,
   topicCoverage,
+  withMatchingTopics,
   type IntakeInterview,
   type IntakeMessage,
   type IntakeSummaryItem,
@@ -47,7 +48,7 @@ export async function loadIntakeSettings(
     }
   }
 
-  return { prompt, topics };
+  return { prompt, topics: withMatchingTopics(topics) };
 }
 
 function asMessages(value: unknown): IntakeMessage[] {

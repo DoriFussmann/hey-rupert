@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { saveIntakeSettings } from "@/app/admin/actions";
 import { setAdminFlash, useAdminFlash } from "@/lib/admin-flash";
-import { topicIdFromTitle, type IntakeTopic } from "@/lib/intake";
+import { matchingUse, topicIdFromTitle, type IntakeTopic } from "@/lib/intake";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm font-sans text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary";
@@ -125,10 +125,17 @@ export function IntakeSettingsEditor({
             What Rupert must learn. The client&apos;s progress is measured on
             required topics; the summary covers all of them.
           </p>
+          <p className="mt-xs text-body-sm text-muted">
+            Topics marked &ldquo;Used by matching&rdquo; feed the company profile Rupert Match runs on. They stay
+            required and can&apos;t be removed; keep their wording asking for what they feed. The others are used for
+            outreach and writing only.
+          </p>
         </div>
 
         <ol>
-          {topics.map((topic, index) => (
+          {topics.map((topic, index) => {
+            const use = matchingUse(topic.id);
+            return (
             <li
               key={topic.id}
               className="border-b border-border px-lg py-md last:border-b-0"
@@ -138,6 +145,9 @@ export function IntakeSettingsEditor({
                   {index + 1}
                 </span>
                 <div className="grid min-w-0 flex-1 gap-sm">
+                  <p className={`text-body-sm ${use ? "text-primary" : "text-muted"}`}>
+                    {use ? `Used by matching: ${use}` : "Outreach and writing only"}
+                  </p>
                   <label className={labelClass}>
                     Title
                     <input
@@ -163,13 +173,14 @@ export function IntakeSettingsEditor({
                   <label className="inline-flex items-center gap-sm text-body-sm text-secondary">
                     <input
                       type="checkbox"
-                      checked={topic.required}
+                      checked={use ? true : topic.required}
+                      disabled={Boolean(use)}
                       onChange={(event) =>
                         updateTopic(index, { required: event.target.checked })
                       }
                       className="h-4 w-4 accent-primary"
                     />
-                    Required
+                    Required{use ? " (always, used by matching)" : ""}
                   </label>
                 </div>
                 <div className="flex shrink-0 flex-col gap-xs">
@@ -195,7 +206,8 @@ export function IntakeSettingsEditor({
                     type="button"
                     className={smallButton}
                     onClick={() => removeTopic(index)}
-                    disabled={topics.length <= 1}
+                    disabled={topics.length <= 1 || Boolean(use)}
+                    title={use ? "Used by matching: can't be removed" : undefined}
                     aria-label={`Remove ${topic.title || "topic"}`}
                   >
                     ✕
@@ -203,7 +215,8 @@ export function IntakeSettingsEditor({
                 </div>
               </div>
             </li>
-          ))}
+            );
+          })}
         </ol>
 
         <div className="border-t border-border px-lg py-md">

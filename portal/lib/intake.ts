@@ -295,6 +295,36 @@ export function asIntakeBrief(value: unknown): IntakeBrief | null {
   };
 }
 
+/**
+ * Topics the company profile for matching is built from, and what each one
+ * feeds. They can't be removed or made optional: without them a profile can't
+ * run, or matches on defaults. Their title and wording can still be edited.
+ */
+export const MATCHING_TOPICS: Record<string, string> = {
+  company: "HQ country and US state",
+  sector: "Primary and secondary sectors",
+  raise: "Stage",
+  round_terms: "Financing type",
+  investor_preferences: "Fund types wanted",
+  existing_and_exclusions: "Funds to exclude",
+};
+
+/** What matching uses a topic for, or null for topics used only in outreach and writing. */
+export function matchingUse(topicId: string): string | null {
+  return MATCHING_TOPICS[topicId] ?? null;
+}
+
+/**
+ * Every matching topic, required: one missing from a saved list comes back
+ * from the defaults, at the end. Other topics are kept as they are.
+ */
+export function withMatchingTopics(topics: IntakeTopic[]): IntakeTopic[] {
+  const kept = topics.map((topic) => (matchingUse(topic.id) ? { ...topic, required: true } : topic));
+  const present = new Set(kept.map((topic) => topic.id));
+  const missing = DEFAULT_INTAKE_TOPICS.filter((topic) => matchingUse(topic.id) && !present.has(topic.id));
+  return [...kept, ...missing.map((topic) => ({ ...topic, required: true }))];
+}
+
 const TOPIC_ID_PATTERN = /^[a-z0-9_]{1,40}$/;
 
 /**

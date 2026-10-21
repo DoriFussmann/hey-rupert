@@ -39,6 +39,7 @@ import {
   INTAKE_PROMPT_SLUG,
   INTAKE_TOPICS_SLUG,
   parseIntakeTopics,
+  withMatchingTopics,
   type IntakeTopic,
 } from "@/lib/intake";
 import { callClaudeTool } from "@/lib/anthropic";
@@ -1463,12 +1464,17 @@ export async function saveIntakeSettings(
     };
   }
 
-  const cleanTopics = parseIntakeTopics(topics);
-  if (!cleanTopics) {
+  const parsed = parseIntakeTopics(topics);
+  if (!parsed) {
     return {
       ok: false,
       error: "Each topic needs a title, and there must be between 1 and 20 topics.",
     };
+  }
+  // Topics used by matching always stay, required.
+  const cleanTopics = withMatchingTopics(parsed);
+  if (cleanTopics.length > 20) {
+    return { ok: false, error: "Keep to 20 topics, including the ones used by matching." };
   }
 
   const updatedAt = new Date().toISOString();
