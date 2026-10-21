@@ -66,7 +66,7 @@ import {
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { answersBasis, founderTranscript } from "@/lib/company-profile/core";
-import { profileFromIntake, saveVersion, versionAfterEdit } from "@/lib/company-profile/server";
+import { profileFromIntake, recordCurrent, saveVersion, versionAfterEdit } from "@/lib/company-profile/server";
 import { loadTaxonomy, previewNewValues, runCoverage } from "@/lib/taxonomy/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -446,6 +446,11 @@ export async function buildMatchProfile(
         })
       : null;
 
+  // Keep the profile as it was before the rebuild replaces it. Like the new
+  // version below, this never blocks the rebuild.
+  if (index && current.value) {
+    await recordCurrent(supabase, clientId, current.value, index, access.email);
+  }
   const saved = await saveProfileState(supabase, clientId, {
     answers: built ? built.answers : extracted.answers,
     settings,

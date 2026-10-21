@@ -254,3 +254,27 @@ export async function versionAfterEdit(
   const profile = reconcile(previous, derived, actor);
   return saveVersion(supabase, clientId, { profile, index, source: "admin_edit", actor, problems, note: "Profile fields edited." });
 }
+
+/**
+ * Saves the profile as it is now, if no version records it yet: before a
+ * rebuild replaces the profile fields, so the previous profile is never lost.
+ */
+export async function recordCurrent(
+  supabase: ServiceClient,
+  clientId: string,
+  state: MatchProfileState,
+  index: TaxIndex,
+  actor: string | null,
+): Promise<Result<ProfileVersion | null>> {
+  const current = await currentProfile(supabase, clientId, state, index, actor);
+  if (!current.ok) return current;
+  if (current.value.version && !current.value.outOfSync) return { ok: true, value: null };
+  return saveVersion(supabase, clientId, {
+    profile: current.value.profile,
+    index,
+    source: current.value.version ? "admin_edit" : "legacy",
+    actor,
+    problems: current.value.buildProblems,
+    note: "Saved before rebuild from intake.",
+  });
+}
