@@ -4,6 +4,7 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { NEW_PLACES, OLD_PLACES, newPlaceLabel, oldPlaceLabel, reasonLabel } from "@/lib/match/tiers/compare";
+import { outsideRows, fundRows } from "@/lib/match/tiers/export";
 import { loadComparison } from "@/lib/match/tiers/server";
 
 // A saved comparison, every fund, for offline review. Admin only.
@@ -20,7 +21,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
   const loaded = await loadComparison(createServiceClient(), params.id, comparisonId);
   if (!loaded.ok) return NextResponse.json({ error: loaded.error }, { status: 404 });
-  const { legacy, tiers, comparison, complete } = loaded.value;
+  const { legacy, tiers, comparison, complete, tierRows } = loaded.value;
 
   const book = new ExcelJS.Workbook();
   const summary = book.addWorksheet("Summary");
@@ -86,6 +87,17 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       duplicate: row.duplicate,
     });
   }
+
+  // Every fund of the four-tier run, including those neither engine listed.
+  const addRows = (name: string, data: (string | number)[][], widths: number[]) => {
+    const sheet = book.addWorksheet(name);
+    sheet.addRows(data);
+    sheet.getRow(1).font = { bold: true };
+    sheet.views = [{ state: "frozen", ySplit: 1 }];
+    widths.forEach((w, i) => (sheet.getColumn(i + 1).width = w));
+  };
+  addRows("Four-tier: in the tiers", fundRows(tierRows), [10, 6, 12, 32, 6, 20, 50, 70, 30, 40, 40, 40, 60, 14]);
+  addRows("Four-tier: outside the tiers", outsideRows(tierRows), [22, 36, 12, 32, 80, 40]);
 
   const buffer = await book.xlsx.writeBuffer();
   const name = `four-tier-comparison-${tiers.clientName.replace(/[^a-z0-9]+/gi, "-").toLowerCase()}-${tiers.ranAt.slice(0, 10)}.xlsx`;

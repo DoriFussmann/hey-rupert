@@ -25,16 +25,20 @@ export type StoredResult = {
 };
 
 /** Where a firm ended up in the four-tier run. */
-export type NewPlace = TierKey | "generalist" | "unresolved" | "excluded" | "rejected";
-export const NEW_PLACES: NewPlace[] = [...TIER_KEYS, "rejected", "generalist", "unresolved", "excluded"];
+export type NewPlace = TierKey | "generalist" | "unresolved" | "excluded" | "rejected" | "represented";
+export const NEW_PLACES: NewPlace[] = [...TIER_KEYS, "rejected", "generalist", "unresolved", "excluded", "represented"];
 export type OldPlace = LegacyTier | "rejected" | "not_listed";
 export const OLD_PLACES: OldPlace[] = [...LEGACY_TIERS, "rejected", "not_listed"];
 
 export function newPlaceLabel(place: NewPlace) {
   if ((TIER_KEYS as readonly string[]).includes(place)) return TIER_INFO[place as TierKey].label;
-  return { generalist: "Generalists", unresolved: "Unresolved", excluded: "Excluded", rejected: "Rejected for client" }[
-    place as "generalist" | "unresolved" | "excluded" | "rejected"
-  ];
+  return {
+    generalist: "Generalists",
+    unresolved: "Unresolved",
+    excluded: "Excluded",
+    rejected: "Rejected for client",
+    represented: "Shown as another record of the firm",
+  }[place as "generalist" | "unresolved" | "excluded" | "rejected" | "represented"];
 }
 
 export function oldPlaceLabel(place: OldPlace) {
@@ -84,6 +88,7 @@ function oldPlaceOf(row: StoredResult | undefined): OldPlace {
 }
 
 function newPlaceOf(row: StoredResult): NewPlace {
+  if (row.detail.representedBy) return "represented";
   if (row.status === "tiered") return row.detail.rejected ? "rejected" : ((row.tier ?? "excluded") as NewPlace);
   return row.status;
 }
@@ -94,6 +99,7 @@ function text(value: unknown) {
 
 /** The plain-language reason behind a four-tier result. */
 export function whyOf(row: StoredResult) {
+  if (row.detail.representedBy) return `Same firm as ${String(row.detail.representedBy)}, which is shown instead.`;
   const checks = (row.detail.checks ?? {}) as Record<string, { result: string; detail: string }>;
   if (row.status === "tiered") return text(checks.sector?.detail);
   const deciding = row.reasonCodes[row.reasonCodes.length - 1] ?? "";
@@ -119,14 +125,14 @@ export function compareRuns(legacy: StoredResult[], tiers: StoredResult[]): Comp
     if (old !== "not_listed") oldCounts[old] += 1;
     newCounts[next] += 1;
     matrix[old][next] += 1;
-    const reason = row.status === "tiered" ? "" : row.reasonCodes[row.reasonCodes.length - 1] ?? "";
+    const reason = row.status === "tiered" || row.detail.representedBy ? "" : row.reasonCodes[row.reasonCodes.length - 1] ?? "";
     if (reason) {
       const entry = reasonTotals.get(reason) ?? { funds: 0, wereListed: 0 };
       entry.funds += 1;
       if (old !== "not_listed") entry.wereListed += 1;
       reasonTotals.set(reason, entry);
     }
-    const listedNow = next !== "excluded";
+    const listedNow = next !== "excluded" && next !== "represented";
     if (old === "not_listed" && !listedNow) continue;
     const duplicate = row.detail.duplicate as { level?: string; otherIds?: string[] } | undefined;
     rows.push({
@@ -153,7 +159,7 @@ export function compareRuns(legacy: StoredResult[], tiers: StoredResult[]): Comp
   }
 
   const tierOrder = (place: OldPlace | NewPlace) =>
-    ([...TIER_KEYS, ...LEGACY_TIERS, "rejected", "generalist", "unresolved", "excluded", "not_listed"] as string[]).indexOf(place);
+    ([...TIER_KEYS, ...LEGACY_TIERS, "rejected", "generalist", "unresolved", "excluded", "represented", "not_listed"] as string[]).indexOf(place);
   rows.sort((a, b) => tierOrder(a.old) - tierOrder(b.old) || tierOrder(a.next) - tierOrder(b.next) || a.name.localeCompare(b.name));
 
   const inTier = (place: NewPlace) => (TIER_KEYS as readonly string[]).includes(place);

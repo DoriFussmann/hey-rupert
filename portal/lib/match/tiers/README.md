@@ -2,13 +2,14 @@
 
 A deterministic engine that places every eligible fund in exactly one of four tiers by sector proximity. It reads the Phase 1 taxonomy (`lib/taxonomy`) and the Phase 2 company profile (`lib/company-profile`).
 
-**Sprint 3A status: preview only.** The engine runs alongside the current one (`lib/match/engine`). The live Match page, the founder pages and the exports still use the current engine.
+**Status (Sprint 3B-1): admin preview only.** The engine runs alongside the current one (`lib/match/engine`). The live Match page, the founder pages and the current exports still use the current engine, and four-tier lists can't be pushed to a founder. The engine switch and the founder pages come in Sprint 3B-2.
 
 | What | Where |
 |---|---|
-| Admin preview | `/admin/matching` |
+| Four-tier admin page | `/admin/matching` |
+| Four-tier match for one client (preview) | `/admin/clients/[id]/match/four-tier` |
 | Comparison for one client | `/admin/clients/[id]/match/compare` |
-| Duplicate report | `/admin/matching/duplicates` |
+| Duplicate report and decisions | `/admin/matching/duplicates` |
 
 Rules version: `RULES_VERSION` in `core.ts`. It is recorded with every run. Change it whenever a rule changes.
 
@@ -29,13 +30,13 @@ Each status carries the deciding reason code (`REASONS` in `core.ts`) and a chec
 | 2 | Client exclusions | Exact name, website domain, or "name contains" for terms over 3 characters. Uses the same exclusion text as the current engine. → `client_exclusion` |
 | 3 | Hidden for all clients | → `hidden_all` |
 | 4 | Firm type | The client's chosen types, or the current engine's defaults for the stage. Read through approved firm-type mappings.<br>• No type → `firm_type_missing`<br>• A value with no approved mapping → `firm_type_unrecognized`<br>• A known type that isn't wanted → `firm_type_mismatch` |
-| 4a | Funds of funds | Financing maps to `financing.fund_of_funds` (provider value "Fund of Funds"). Excluded unless there is an approved exception in `match_fof_exceptions`. → `fof_no_exception` |
+| 4a | Funds of funds | Only when "Fund of funds" (`financing.fund_of_funds`) is the fund's only financing type. Excluded unless there is an approved exception in `match_fof_exceptions`. → `fof_no_exception`. Listed next to another financing type, the fund is checked like any other (counted as `fofWithOtherFinancing`). |
 | 5 | Financing | The client's instruments, default Equity.<br>• None stated → `financing_missing`<br>• Values with no approved mapping → `financing_unrecognized`<br>• Known values that don't match → `financing_mismatch` |
 | 6 | Stage | The fund must list the company's stage, using approved stage mappings (a value such as "Early Stage" can cover several stages).<br>• One rung away on the venture ladder → `stage_one_off` (excluded, counted)<br>• Any other stage → `stage_mismatch`<br>• No stage → `stage_not_stated` (unresolved)<br>• Values unmapped or under review → `stage_ambiguous` (unresolved) |
 | 7 | Geography | See below. |
 | 8 | Optional filters | No platforms (8+ stages), needs a decision maker, needs an email, founded after a year, minimum data confidence, team near you. Same rules as today, using the current engine's contact ranking. → `filter_*` |
 | 9 | Generalists | "Diversified", or 15 or more industries → `generalist`. Kept out of the tiers and saved for Phase 4. |
-| 10 | Duplicates | Flagged only (`possible_duplicate`). Nothing is merged in Sprint 3A. |
+| 10 | Identity groups | Records of one firm are shown once per list. See below. Records in groups that don't apply are flagged (`possible_duplicate`). |
 | 11 | Sector tier | See the table below. |
 | — | Website check | Runs after tiering, as today: each tier's top funds are checked (the current setting decides how many). A dead, parked or "not investing" site → `dead_website`. |
 | — | Client "no" reviews | The fund stays in its tier, marked rejected, and isn't counted. |
@@ -106,6 +107,7 @@ The only relationships used are those in `tax_edges` with `review = 'approved'`.
 
 - A Blocked profile can't run.
 - A Limited profile runs. Every unresolved or unconfirmed point is listed with the check it affects (`profileWarnings`).
+- An HQ state that needs confirmation makes the profile Limited and is listed as affecting the US regional geography check. An admin confirms it with the founder on the Company profile page.
 
 ## Saved runs
 
@@ -119,7 +121,38 @@ The only relationships used are those in `tax_edges` with `review = 'approved'`.
 
 The comparison page rebuilds everything from the stored results (`compare.ts`). A saved comparison shows exactly what was computed.
 
-## Duplicates (read-only)
+## Identity groups
+
+Each record is still checked on its own data first. Then each applied group shows once, as one record, and the other records are marked `representedBy` and not counted. They stay in the saved run with their own results.
+
+| Group | When it applies |
+|---|---|
+| Duplicate (same record twice) | Only after an admin confirms the group on the duplicate report page. |
+| Offices (same name and website, different HQ country) | Automatically, unless an admin keeps them separate. |
+| Sister funds, same-name firms | Only if an admin confirms the group as one firm. |
+
+- **The record shown** (`IDENTITY_RULE` in `core.ts`): the one with the strongest outcome (Core, Sphere, Tier 3, Tier 4, then generalist, unresolved, excluded; a client rejection ranks below the same tier). Ties go to the higher fit score, then more contacts, then the lower FirmID. The reason is recorded with the result (`identity.derivation`). The shown record is the firm's representation in this list only, not its definitive identity.
+- **The other records** are listed in the shown record's details, each with its own result, checks, contacts count and any client rejection.
+- **Contacts:** a confirmed duplicate shows the contacts of all its records, each keeping the FirmID it is stored under. Offices keep their own contacts.
+- **Reviews and verification** are never moved between FirmIDs: verification is looked up under each contact's own FirmID. A client rejection of another record is shown (`linked_record_rejected`), not applied.
+- **Decisions** (`supabase/match_identity.sql`): `match_identity_groups` stores each decision with the exact records it was made for and a snapshot of them. If the provider data later puts different records in the group, the decision stops applying until it is made again. Every change is logged in `match_identity_changes`, which is append-only.
+- **Each run records** the groups it applied and their decisions (`settings.identities`).
+
+## Exports
+
+An export never runs the engine. It reads one saved run's stored rows, and its first sheet names the run (ID, rules version, taxonomy revision, profile version, Fund Database version). The Match preview's **Run** button is what creates a run.
+
+- **Contacts:** contact verification and this client's keep/remove decisions are read as of the export and labeled so. As in today's export, contacts with a known problem (Email bad, Left firm, Role changed, Not found) are left out unless kept for this client, or unless "Export everything" is used. A person listed under two funds appears once.
+- **Near misses** (one stage off) have their own download. Every sheet and row is marked NOT AN ELIGIBLE MATCH LIST; it can't be pushed to a founder.
+- **Comparison download:** also has every four-tier fund, including those neither engine listed, with their sector tags.
+
+## Storage
+
+- **Listed and generalist funds:** each row keeps every check, the relationship used and the contacts.
+- **Funds outside the tiers:** each row keeps its reason codes, the deciding check and its sector tags.
+- **Measured** on the Vault Extracts data (7,672 funds): about 4.5 MB per run, including indexes. Nothing is ever deleted.
+
+## Duplicate detection
 
 `duplicates.ts` grades candidate groups:
 
@@ -130,4 +163,4 @@ The comparison page rebuilds everything from the stored results (`compare.ts`). 
 | Likely | Same domain and country, different names. |
 | Ambiguous | Same name, but a different or missing domain, or a different country. |
 
-The report is computed on request and never stored. In Sprint 3A, duplicates are only flagged in results.
+The report is computed on request; only admin decisions are stored.

@@ -590,6 +590,7 @@ export function validateProfile(profile: CompanyProfile, index: TaxIndex, extra:
     needsConfirming(profile.hq.country, "HQ country");
   }
   if (profile.hq.country?.nodeId === "geo.us" && !profile.hq.state) add("HQ state", "limited", "US company without a state: regional US investors can't be checked.");
+  if (profile.hq.state && profile.hq.state.source !== "legacy") needsConfirming(profile.hq.state, "HQ state");
 
   for (const sector of profile.sectors) {
     for (const e of sector.evidence) {

@@ -251,6 +251,11 @@ export default async function TierComparePage({
   return (
     <>
       {header}
+      <p className="mb-md text-body-sm">
+        <Link href={`/admin/clients/${client.id}/match/four-tier`} className="text-secondary underline hover:text-heading">
+          Open the four-tier preview
+        </Link>
+      </p>
       {runs.value.since ? (
         <p className="mb-md text-body-sm text-muted">Sandbox: showing runs since its last reset ({when(runs.value.since)}). Earlier runs are kept as history.</p>
       ) : null}
@@ -317,9 +322,13 @@ function ComparisonBody({ clientId, view }: { clientId: string; view: Comparison
       </Section>
       <Section title="Counts">
         <CountsTable view={view} />
-        {typeof counts.fofAlsoDirectFinancing === "number" && counts.fofAlsoDirectFinancing > 0 ? (
+        {typeof counts.fofWithOtherFinancing === "number" && counts.fofWithOtherFinancing > 0 ? (
           <p className="mt-sm text-body-sm text-muted">
-            {n(counts.fofAlsoDirectFinancing)} of the funds of funds excluded also list the company&apos;s financing type.
+            {n(counts.fofWithOtherFinancing)} funds list &quot;Fund of funds&quot; next to another financing type and were checked like any fund.
+          </p>
+        ) : typeof counts.fofAlsoDirectFinancing === "number" && counts.fofAlsoDirectFinancing > 0 ? (
+          <p className="mt-sm text-body-sm text-muted">
+            Rules before 2026-10.2: {n(counts.fofAlsoDirectFinancing)} of the funds of funds excluded also list the company&apos;s financing type.
           </p>
         ) : null}
       </Section>

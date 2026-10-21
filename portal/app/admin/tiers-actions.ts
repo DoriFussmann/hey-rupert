@@ -4,7 +4,9 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { proposeFofException, reviewFofException, runComparison } from "@/lib/match/tiers/server";
+import { loadLiveDb } from "@/lib/match/db-server";
+import { loadTaxonomy } from "@/lib/taxonomy/server";
+import { decideIdentity, proposeFofException, reviewFofException, runComparison, runFourTier } from "@/lib/match/tiers/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -86,5 +88,46 @@ export async function reviewFof(firmId: string, decision: string): Promise<Resul
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The review could not be saved.") };
+  }
+}
+
+/** A four-tier run for the admin preview, saved permanently. The live Match page is not touched. */
+export async function runFourTierPreview(clientId: string): Promise<Result<{ runId: string }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const id = asText(clientId, 64);
+  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, error: "Unknown client." };
+  try {
+    const done = await runFourTier(access.supabase, id, access.email);
+    if (!done.ok) return done;
+    revalidatePath(`/admin/clients/${id}/match/four-tier`);
+    return { ok: true, runId: done.value.runId };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The four-tier run failed.") };
+  }
+}
+
+/** Confirms a group as one firm, or keeps its records separate. Recorded with the exact records. */
+export async function decideIdentityGroup(groupKey: string, decision: string, note: string): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (decision !== "confirmed" && decision !== "rejected") return { ok: false, error: "Unknown decision." };
+  try {
+    const [taxonomy, live] = await Promise.all([loadTaxonomy(access.supabase), loadLiveDb(access.supabase)]);
+    if (!taxonomy.ok) return taxonomy;
+    if (!live.ok) return live;
+    const saved = await decideIdentity(
+      access.supabase,
+      { groupKey: asText(groupKey, 600), status: decision, note: asText(note, 1000) },
+      live.value.db,
+      taxonomy.value,
+      access.email,
+    );
+    if (!saved.ok) return saved;
+    revalidatePath("/admin/matching/duplicates");
+    revalidatePath("/admin/matching");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The decision could not be saved.") };
   }
 }

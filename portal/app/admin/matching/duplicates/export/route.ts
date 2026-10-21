@@ -5,8 +5,8 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { loadLiveDb } from "@/lib/match/db-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { DUPLICATE_LEVELS, DUPLICATE_LEVEL_INFO } from "@/lib/match/tiers/duplicates";
-import { duplicateReport } from "@/lib/match/tiers/server";
+import { DUPLICATE_LEVELS, DUPLICATE_LEVEL_INFO, identityProposals, resolveIdentities } from "@/lib/match/tiers/duplicates";
+import { duplicateReport, loadIdentityDecisions } from "@/lib/match/tiers/server";
 
 // The duplicate report, every group, for offline review. Admin only, read-only.
 export const dynamic = "force-dynamic";
@@ -20,8 +20,17 @@ export async function GET() {
   const [taxonomy, live] = await Promise.all([loadTaxonomy(supabase), loadLiveDb(supabase)]);
   if (!taxonomy.ok) return NextResponse.json({ error: taxonomy.error }, { status: 500 });
   if (!live.ok) return NextResponse.json({ error: live.error }, { status: 500 });
-  const report = await duplicateReport(supabase, live.value.db, taxonomy.value);
+  const [report, decisions] = await Promise.all([duplicateReport(supabase, live.value.db, taxonomy.value), loadIdentityDecisions(supabase)]);
   if (!report.ok) return NextResponse.json({ error: report.error }, { status: 500 });
+  if (!decisions.ok) return NextResponse.json({ error: decisions.error }, { status: 500 });
+  const resolved = new Map(resolveIdentities(identityProposals(report.value), decisions.value).map((r) => [r.key, r]));
+  const statusText = (key: string) => {
+    const r = resolved.get(key);
+    if (!r) return "";
+    if (r.stale) return "Changed since the decision: not applied";
+    if (r.decision) return `${r.decision.status === "confirmed" ? "Confirmed as one firm" : "Kept separate"} by ${r.decision.decidedBy ?? "admin"} (${r.decision.decidedAt ?? ""})`;
+    return r.applied ? "Offices: shown once automatically" : "Waiting for a decision: not merged";
+  };
 
   const book = new ExcelJS.Workbook();
   const summary = book.addWorksheet("Summary");
@@ -42,6 +51,8 @@ export async function GET() {
   const groups = book.addWorksheet("Groups");
   groups.columns = [
     { header: "Level", key: "level", width: 16 },
+    { header: "Kind", key: "kind", width: 12 },
+    { header: "Status", key: "status", width: 46 },
     { header: "Group", key: "group", width: 60 },
     { header: "FirmID", key: "id", width: 14 },
     { header: "Name", key: "name", width: 36 },
@@ -57,6 +68,8 @@ export async function GET() {
     for (const m of group.members) {
       groups.addRow({
         level: DUPLICATE_LEVEL_INFO[group.level].label,
+        kind: resolved.get(group.key)?.kind === "offices" ? "Offices" : "Duplicate",
+        status: statusText(group.key),
         group: group.shared,
         id: m.id,
         name: m.name,

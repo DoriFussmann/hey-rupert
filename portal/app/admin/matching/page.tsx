@@ -93,7 +93,7 @@ export default async function FourTierPage() {
         </ul>
       </Section>
 
-      <Section title="Compare a client">
+      <Section title="Clients">
         {clients.error ? (
           <p role="alert" className="text-body-sm text-error">{clients.error.message}</p>
         ) : clientRows.length === 0 ? (
@@ -101,10 +101,15 @@ export default async function FourTierPage() {
         ) : (
           <ul className="grid gap-xs text-body-sm sm:grid-cols-2 lg:grid-cols-3">
             {clientRows.map((client) => (
-              <li key={client.id}>
-                <Link href={`/admin/clients/${client.id}/match/compare`} className="text-secondary hover:text-heading">
-                  {client.company_name}
-                  {client.is_match_sandbox ? " (sandbox)" : ""}
+              <li key={client.id} className="text-secondary">
+                {client.company_name}
+                {client.is_match_sandbox ? " (sandbox)" : ""}:{" "}
+                <Link href={`/admin/clients/${client.id}/match/four-tier`} className="underline hover:text-heading">
+                  Preview
+                </Link>{" "}
+                ·{" "}
+                <Link href={`/admin/clients/${client.id}/match/compare`} className="underline hover:text-heading">
+                  Compare
                 </Link>
               </li>
             ))}

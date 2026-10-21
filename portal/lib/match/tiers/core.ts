@@ -40,7 +40,7 @@ import {
 } from "../../taxonomy/core.ts";
 
 /** Recorded with every run. Change it whenever a rule below changes. */
-export const RULES_VERSION = "tiers-2026-10.1";
+export const RULES_VERSION = "tiers-2026-10.2";
 
 export const TIER_KEYS = ["core", "sphere", "tier3", "tier4"] as const;
 export type TierKey = (typeof TIER_KEYS)[number];
@@ -115,7 +115,8 @@ export type NoteCode =
   | "stage_review_note"
   | "possible_duplicate"
   | "fof_exception"
-  | "client_rejected";
+  | "client_rejected"
+  | "linked_record_rejected";
 
 export const NOTE_LABEL: Record<NoteCode, string> = {
   geo_review_note: "Some geography values are unmapped or under review",
@@ -123,6 +124,7 @@ export const NOTE_LABEL: Record<NoteCode, string> = {
   possible_duplicate: "Possible duplicate",
   fof_exception: "Fund of funds with an approved direct-investment exception",
   client_rejected: "Rejected for this client",
+  linked_record_rejected: "A linked record of the same firm is rejected for this client: decide before outreach",
 };
 
 export type Check = { result: "pass" | "fail" | "unresolved"; detail: string };
@@ -155,6 +157,65 @@ export type FofException = {
 
 export type ContactBrief = { name: string; title: string; role: string; seq: string };
 
+/** An investing contact of a listed fund, as the export needs it. `fid` is the record it comes from. */
+export type PersonRecord = {
+  fid: string;
+  /** Original email key: verification results and keep/remove decisions are stored under fid + key. */
+  key: string;
+  name: string;
+  title: string;
+  role: string;
+  email: string;
+  phone: string;
+  city: string;
+  country: string;
+  score: number;
+  seq: string;
+};
+
+/**
+ * Records of one firm shown once per list. "duplicate": the same record twice
+ * in the provider data, applied only after an admin confirms it. "offices":
+ * one firm's offices in different countries, applied unless an admin rejects it.
+ */
+export type IdentityGroup = {
+  key: string;
+  kind: "duplicate" | "offices";
+  level: string;
+  memberIds: string[];
+  status: "confirmed" | "auto";
+  decidedBy: string | null;
+  decidedAt: string | null;
+};
+
+export type IdentityMember = {
+  firmId: string;
+  name: string;
+  country: string;
+  status: Status;
+  tier: TierKey | null;
+  reason: ReasonCode | null;
+  score: number | null;
+  contacts: number;
+  rejected: string | null;
+  checks: FirmOutcome["checks"];
+};
+
+export type IdentityDetail = {
+  key: string;
+  kind: IdentityGroup["kind"];
+  level: string;
+  status: IdentityGroup["status"];
+  decidedBy: string | null;
+  decidedAt: string | null;
+  /** How the shown record was chosen, in words. */
+  derivation: string;
+  members: IdentityMember[];
+};
+
+export const IDENTITY_RULE =
+  "The record with the strongest outcome is shown (Core, Sphere, Tier 3, Tier 4, then generalist, unresolved, excluded; a client rejection ranks below the same tier); ties go to the higher fit score, then more contacts, then the lower FirmID.";
+
 export type FirmOutcome = {
   firmId: string;
   /** 1 for the first row with this FirmID in the Fund Database, 2 for a repeat, and so on. */
@@ -167,8 +228,10 @@ export type FirmOutcome = {
   notes: NoteCode[];
   checks: Partial<Record<"firmType" | "financing" | "stage" | "geography" | "sector", Check>>;
   sector: SectorLink | null;
-  /** The firm's approved sectors. */
+  /** The firm's approved sectors (funds that reached the sector step). */
   firmSectors: { id: string; label: string; raw: string }[];
+  /** Labels of every approved sector the firm lists, for any status (reconciliation and audit). */
+  sectorTags: string[];
   generalistWhy: string | null;
   score: number | null;
   fitParts: Record<string, number> | null;
@@ -180,6 +243,12 @@ export type FirmOutcome = {
   rejected: string | null;
   duplicate: DuplicateFlag | null;
   fof: FofException | null;
+  /** Investing contacts (listed and generalist funds only). */
+  people: PersonRecord[];
+  /** The group this record belongs to, when it is the record shown for it. */
+  identity: IdentityDetail | null;
+  /** When another record of the same firm is shown instead: that record's FirmID. Not counted. */
+  representedBy: string | null;
 };
 
 export type TierCounts = {
@@ -191,8 +260,12 @@ export type TierCounts = {
   excluded: number;
   unresolved: number;
   reasons: Partial<Record<ReasonCode, number>>;
-  /** Funds of funds excluded that also list one of the company's financing types. */
-  fofAlsoDirectFinancing: number;
+  /** Funds listing "Fund of funds" next to another financing type: checked like any fund. */
+  fofWithOtherFinancing: number;
+  /** Records shown through another record of the same firm (not counted elsewhere). */
+  represented: number;
+  /** Identity groups applied: confirmed duplicates and office groups. */
+  identityGroups: number;
 };
 
 export type TierRun = {
@@ -213,6 +286,8 @@ export type TierRunInput = {
   sites?: Record<string, SiteResult> | null;
   fofExceptions?: Map<string, FofException>;
   duplicates?: Map<string, DuplicateFlag>;
+  /** Groups to show once per list (confirmed duplicates; office groups not rejected). */
+  identities?: IdentityGroup[];
 };
 
 export const FUND_OF_FUNDS = "financing.fund_of_funds";
@@ -618,6 +693,7 @@ function emptyOutcome(firm: Firm, occurrence: number): FirmOutcome {
     checks: {},
     sector: null,
     firmSectors: [],
+    sectorTags: [],
     generalistWhy: null,
     score: null,
     fitParts: null,
@@ -629,7 +705,49 @@ function emptyOutcome(firm: Firm, occurrence: number): FirmOutcome {
     rejected: null,
     duplicate: null,
     fof: null,
+    people: [],
+    identity: null,
+    representedBy: null,
   };
+}
+
+function personName(c: { prefix: string; first: string; last: string }) {
+  return [c.prefix, c.first, c.last].filter(Boolean).join(" ").trim() || "(no name)";
+}
+
+function peopleOf(ranked: RankedContact[]): PersonRecord[] {
+  return ranked
+    .filter((c) => c.role !== "ops")
+    .map((c) => ({
+      fid: c.fid,
+      key: (c as RankedContact & { key?: string }).key ?? c.email.trim().toLowerCase(),
+      name: personName(c),
+      title: c.title,
+      role: c.roleLabel,
+      email: c.email,
+      phone: c.phone,
+      city: c.city,
+      country: c.country,
+      score: c.score,
+      seq: c.seq ?? "",
+    }));
+}
+
+function briefsOf(seq: RankedContact[]): ContactBrief[] {
+  return seq.map((c) => ({ name: personName(c), title: c.title, role: c.roleLabel, seq: c.seq ?? "" }));
+}
+
+/** Lower is stronger. */
+function outcomeRank(o: FirmOutcome) {
+  if (o.status === "tiered") return TIER_KEYS.indexOf(o.tier!) + (o.rejected ? 0.5 : 0);
+  return o.status === "generalist" ? 10 : o.status === "unresolved" ? 11 : 12;
+}
+
+function placeText(o: FirmOutcome) {
+  if (o.status === "tiered") return TIER_INFO[o.tier!].label + (o.rejected ? " (rejected for this client)" : "");
+  return o.status === "excluded" || o.status === "unresolved"
+    ? `${STATUS_LABEL[o.status]}: ${REASONS[o.reasons[o.reasons.length - 1]]?.label ?? ""}`
+    : STATUS_LABEL[o.status];
 }
 
 function lc(value: string) {
@@ -674,7 +792,8 @@ export function runTiers(input: TierRunInput): TierRun {
   for (const firm of db.firms) nameCount.set(lc(firm.name), (nameCount.get(lc(firm.name)) ?? 0) + 1);
 
   const outcomes: FirmOutcome[] = [];
-  let fofAlsoDirectFinancing = 0;
+  let fofWithOtherFinancing = 0;
+  const sources = new Map<FirmOutcome, { firm: Firm; contacts: Contact[] }>();
 
   const occurrences = new Map<string, number>();
   for (const firm of db.firms) {
@@ -682,6 +801,7 @@ export function runTiers(input: TierRunInput): TierRun {
     occurrences.set(firm.id, occurrence);
     const out = emptyOutcome(firm, occurrence);
     outcomes.push(out);
+    sources.set(out, { firm, contacts: contactsByFirm.get(firm.id) ?? [] });
     const stop = (code: ReasonCode) => {
       out.status = REASONS[code].status;
       out.reasons.push(code);
@@ -702,6 +822,13 @@ export function runTiers(input: TierRunInput): TierRun {
     }
 
     const mapping = mapFirm(firm, index);
+    out.sectorTags = Array.from(
+      new Set(
+        mapping.tags
+          .filter((tag) => tag.dimension === "sector" && tag.review === "approved")
+          .map((tag) => label(index, tag.nodeId)),
+      ),
+    );
 
     // 4. Firm type.
     const type = firmTypeCheck(firm, mapping, allowedTypes, index);
@@ -711,18 +838,23 @@ export function runTiers(input: TierRunInput): TierRun {
       continue;
     }
 
-    // 4a. Funds of funds need an approved exception.
+    // 4a. A fund whose only financing is "Fund of funds" needs an approved
+    // exception. Listed next to another financing type, it is checked like any fund.
     const financingIds = approvedIds(tagsOf(mapping, "financing"));
-    if (financingIds.has(FUND_OF_FUNDS)) {
+    const fofOnly =
+      financingIds.has(FUND_OF_FUNDS) &&
+      Array.from(financingIds).every((id) => id === FUND_OF_FUNDS) &&
+      !unrecognized(mapping, ["financing"]);
+    if (financingIds.has(FUND_OF_FUNDS) && !fofOnly) fofWithOtherFinancing += 1;
+    if (fofOnly) {
       const exception = fofExceptions.get(firm.id) ?? null;
       out.fof = exception;
       if (exception?.status !== "approved") {
-        if (Array.from(financingIds).some((id) => wantedFinancing.has(id))) fofAlsoDirectFinancing += 1;
         out.checks.financing = {
           result: "fail",
           detail: exception
             ? `Fund of funds; its direct-investment exception is ${exception.status === "rejected" ? "rejected" : "awaiting review"}.`
-            : "Fund of funds with no direct-investment exception.",
+            : "Only financing is \"Fund of funds\", with no direct-investment exception.",
         };
         stop("fof_no_exception");
         continue;
@@ -765,12 +897,8 @@ export function runTiers(input: TierRunInput): TierRun {
     const localPeople = fc.filter((c) => sameCountry(index, c.country, country)).length;
     out.confidence = assessed.conf;
     out.flags = assessed.flags;
-    out.contacts = seq.map((c) => ({
-      name: [c.prefix, c.first, c.last].filter(Boolean).join(" ").trim() || "(no name)",
-      title: c.title,
-      role: c.roleLabel,
-      seq: c.seq ?? "",
-    }));
+    out.contacts = briefsOf(seq);
+    out.people = peopleOf(ranked);
     const filter: ReasonCode | null =
       filters.noPlatforms && firm.stages.length >= 8
         ? "filter_platform"
@@ -853,6 +981,75 @@ export function runTiers(input: TierRunInput): TierRun {
     }
   }
 
+  // Identity groups: each record was checked on its own; the firm is shown once.
+  let identityGroups = 0;
+  const byFirm = new Map(outcomes.filter((o) => o.occurrence === 1).map((o) => [o.firmId, o]));
+  for (const group of input.identities ?? []) {
+    const members = group.memberIds.map((id) => byFirm.get(id)).filter((o): o is FirmOutcome => !!o);
+    if (members.length < 2 || members.some((m) => m.representedBy || m.identity)) continue;
+    identityGroups += 1;
+    const contactCount = (o: FirmOutcome) => sources.get(o)?.contacts.length ?? 0;
+    const sorted = [...members].sort(
+      (a, b) =>
+        outcomeRank(a) - outcomeRank(b) ||
+        (b.score ?? -1) - (a.score ?? -1) ||
+        contactCount(b) - contactCount(a) ||
+        a.firmId.localeCompare(b.firmId),
+    );
+    const shown = sorted[0];
+    const runnerUp = sorted[1];
+    const why =
+      outcomeRank(shown) < outcomeRank(runnerUp)
+        ? `strongest outcome (${placeText(shown)}; next: ${runnerUp.firmId}, ${placeText(runnerUp)})`
+        : (shown.score ?? -1) > (runnerUp.score ?? -1)
+          ? `same outcome (${placeText(shown)}), higher fit score (${shown.score} vs ${runnerUp.score ?? "–"})`
+          : contactCount(shown) > contactCount(runnerUp)
+            ? `same outcome and score, more contacts (${contactCount(shown)} vs ${contactCount(runnerUp)})`
+            : "same outcome, score and contacts; lower FirmID";
+    const memberRows: IdentityMember[] = members.map((m) => ({
+      firmId: m.firmId,
+      name: m.name,
+      country: sources.get(m)?.firm.country ?? "",
+      status: m.status,
+      tier: m.tier,
+      reason: m.reasons[m.reasons.length - 1] ?? null,
+      score: m.score,
+      contacts: contactCount(m),
+      rejected: m.rejected ?? rejected[m.firmId] ?? null,
+      checks: m.checks,
+    }));
+    shown.identity = {
+      key: group.key,
+      kind: group.kind,
+      level: group.level,
+      status: group.status,
+      decidedBy: group.decidedBy,
+      decidedAt: group.decidedAt,
+      derivation: `Shown as ${shown.firmId}: ${why}. ${IDENTITY_RULE}`,
+      members: memberRows,
+    };
+    for (const m of members) if (m !== shown) m.representedBy = shown.firmId;
+    if (memberRows.some((m) => m.firmId !== shown.firmId && m.rejected)) shown.notes.push("linked_record_rejected");
+    // A confirmed duplicate is one record twice: its contacts come from every
+    // copy, each keeping the FirmID it is stored under. Offices keep their own.
+    if (group.kind === "duplicate" && (shown.status === "tiered" || shown.status === "generalist")) {
+      const source = sources.get(shown)!;
+      const seen = new Set<string>();
+      const union: Contact[] = [];
+      for (const m of [shown, ...members.filter((x) => x !== shown)]) {
+        for (const c of sources.get(m)?.contacts ?? []) {
+          const k = c.email ? c.email.trim().toLowerCase() : `${c.fid}|${c.first}|${c.last}|${c.title}`;
+          if (seen.has(k)) continue;
+          seen.add(k);
+          union.push(c);
+        }
+      }
+      const ranked = RME.rankContacts(source.firm, union, legacy);
+      shown.contacts = briefsOf(RME.pickSequence(ranked));
+      shown.people = peopleOf(ranked);
+    }
+  }
+
   const byId = new Map(db.firms.map((firm) => [firm.id, firm]));
   const rank = (a: FirmOutcome, b: FirmOutcome) =>
     (b.score ?? -1) - (a.score ?? -1) ||
@@ -865,7 +1062,7 @@ export function runTiers(input: TierRunInput): TierRun {
   const dropDead = legacy.dropDead !== false;
   if (input.sites && siteN !== 0) {
     for (const tier of TIER_KEYS) {
-      const inTier = outcomes.filter((o) => o.status === "tiered" && o.tier === tier && !o.rejected).sort(rank);
+      const inTier = outcomes.filter((o) => o.status === "tiered" && o.tier === tier && !o.rejected && !o.representedBy).sort(rank);
       const checked = siteN > 0 ? inTier.slice(0, siteN) : inTier;
       for (const out of checked) {
         const site = input.sites[out.firmId] ?? { st: "unscanned" as const };
@@ -891,9 +1088,15 @@ export function runTiers(input: TierRunInput): TierRun {
     excluded: 0,
     unresolved: 0,
     reasons: {},
-    fofAlsoDirectFinancing,
+    fofWithOtherFinancing,
+    represented: 0,
+    identityGroups,
   };
   for (const out of outcomes) {
+    if (out.representedBy) {
+      counts.represented += 1;
+      continue;
+    }
     if (out.status === "tiered") {
       if (out.rejected) counts.rejected += 1;
       else counts.tiers[out.tier!] += 1;

@@ -172,7 +172,11 @@ test("a sample intake becomes a profile Phase 3 can use without string matching"
   assert.equal(m.stage, "stage.seed");
   assert.equal(m.hqCountry, "geo.us");
   assert.equal(m.hqState, "geo.us.state.texas");
-  assert.equal(m.readiness, "ready");
+  // The state came from the answers, not the founder's words: it needs confirming first.
+  assert.equal(m.readiness, "limited");
+  assert.ok(m.issues.some((i) => i.field === "HQ state" && i.severity === "limited"));
+  const confirmed = confirmWithFounder(profile, "hq_state", "admin@x.com", "2026-10-21T00:00:00Z")!;
+  assert.equal(matchingProfile(confirmed, index).readiness, "ready");
 });
 
 test("an unverifiable 'founder' claim becomes an AI interpretation that needs confirmation", () => {

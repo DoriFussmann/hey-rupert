@@ -1,9 +1,9 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
 import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
-import { applyCorrections, loadChecksForFirms } from "@/lib/match/corrections-server";
-import { selectAll } from "@/lib/match/db-server";
-import { runClientMatch } from "@/lib/match/run-server";
+import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
+import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
+import { runClientMatch, type MatchRun } from "@/lib/match/run-server";
 import { loadSites } from "@/lib/match/sites-server";
 import { matchingProfile, validateProfile } from "@/lib/company-profile/core";
 import { loadCompanyProfile } from "@/lib/company-profile/server";
@@ -18,9 +18,19 @@ import {
   runTiers,
   type FofException,
   type TierRun,
+  type TierRunInput,
 } from "@/lib/match/tiers/core";
 import { compareRuns, type Comparison, type StoredResult } from "@/lib/match/tiers/compare";
-import { duplicateFlags, findDuplicates, type DuplicateReport } from "@/lib/match/tiers/duplicates";
+import {
+  appliedGroups,
+  duplicateFlags,
+  findDuplicates,
+  identityProposals,
+  resolveIdentities,
+  type DuplicateReport,
+  type IdentityDecision,
+} from "@/lib/match/tiers/duplicates";
+import type { ContactStates } from "@/lib/match/tiers/export";
 import { legacyRows, tierRows, type ResultRow } from "@/lib/match/tiers/record";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -28,8 +38,11 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 export const TIERS_MIGRATION_MISSING =
   "Four-tier matching is not set up in the database yet. Run portal/supabase/match_tiers.sql in Supabase.";
+export const IDENTITY_MIGRATION_MISSING =
+  "Identity decisions are not set up in the database yet. Run portal/supabase/match_identity.sql in Supabase.";
 
 function tiersError(message: string, code?: string) {
+  if (/match_identity/.test(message)) return IDENTITY_MIGRATION_MISSING;
   if (code === "42P01" || code === "PGRST205" || code === "PGRST202" || /match_(runs|run_results|fof_|begin_run|add_results|sandbox_resets)/.test(message)) {
     return TIERS_MIGRATION_MISSING;
   }
@@ -66,7 +79,7 @@ export async function loadFofExceptions(supabase: ServiceClient): Promise<Result
   const loaded = await selectAll<Record<string, unknown>>((from, to) =>
     supabase.from("match_fof_exceptions").select("*").order("firm_id").range(from, to),
   );
-  if (!loaded.ok) return { ok: false, error: tiersError(loaded.error) };
+  if (!loaded.ok) return { ok: false, error: loaded.error === MATCH_MIGRATION_MISSING ? TIERS_MIGRATION_MISSING : tiersError(loaded.error) };
   return { ok: true, value: new Map(loaded.rows.map((row) => [String(row.firm_id), asFof(row)])) };
 }
 
@@ -218,7 +231,7 @@ async function loadResults(supabase: ServiceClient, runId: string): Promise<Resu
       .order("position")
       .range(from, to),
   );
-  if (!loaded.ok) return { ok: false, error: tiersError(loaded.error) };
+  if (!loaded.ok) return { ok: false, error: loaded.error === MATCH_MIGRATION_MISSING ? TIERS_MIGRATION_MISSING : tiersError(loaded.error) };
   return {
     ok: true,
     value: loaded.rows.map((row) => ({
@@ -245,12 +258,93 @@ function edgeSummary(index: TaxIndex) {
   };
 }
 
+// ---------------------------------------------------------------------------
+// Identity decisions
+
+function asDecision(row: Record<string, unknown>): IdentityDecision {
+  return {
+    groupKey: String(row.group_key),
+    kind: row.kind === "offices" ? "offices" : "duplicate",
+    status: row.status === "rejected" ? "rejected" : "confirmed",
+    memberIds: Array.isArray(row.member_ids) ? (row.member_ids as string[]).map(String) : [],
+    note: String(row.note ?? ""),
+    decidedBy: row.decided_by != null ? String(row.decided_by) : null,
+    decidedAt: row.decided_at != null ? String(row.decided_at) : null,
+  };
+}
+
+export async function loadIdentityDecisions(supabase: ServiceClient): Promise<Result<IdentityDecision[]>> {
+  const loaded = await selectAll<Record<string, unknown>>((from, to) =>
+    supabase.from("match_identity_groups").select("*").order("group_key").range(from, to),
+  );
+  if (!loaded.ok) {
+    // selectAll reports any missing table as Rupert Match's own setup message.
+    return { ok: false, error: loaded.error === MATCH_MIGRATION_MISSING ? IDENTITY_MIGRATION_MISSING : tiersError(loaded.error) };
+  }
+  return { ok: true, value: loaded.rows.map(asDecision) };
+}
+
+/** The live database's identity groups with the admin decisions applied. */
+export async function resolvedIdentities(supabase: ServiceClient, db: FundDb, index: TaxIndex) {
+  const decisions = await loadIdentityDecisions(supabase);
+  if (!decisions.ok) return decisions;
+  const report = findDuplicates(db, index);
+  return { ok: true as const, value: { report, resolved: resolveIdentities(identityProposals(report), decisions.value) } };
+}
+
 /**
- * Runs both engines for a client on the same Fund Database version, profile
- * and settings, and saves both runs under one comparison id. Nothing on the
- * live Match page changes: the current engine's saved view is not touched.
+ * Records an admin decision for a group as the live database shows it now:
+ * the exact records, with their names, websites, countries and contacts.
  */
-export async function runComparison(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ comparisonId: string }>> {
+export async function decideIdentity(
+  supabase: ServiceClient,
+  input: { groupKey: string; status: "confirmed" | "rejected"; note: string },
+  db: FundDb,
+  index: TaxIndex,
+  actor: string | null,
+): Promise<Result<IdentityDecision>> {
+  const proposal = identityProposals(findDuplicates(db, index)).find((p) => p.key === input.groupKey);
+  if (!proposal) return { ok: false, error: "This group is no longer in the Fund Database. Reload the report." };
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("match_identity_groups")
+    .upsert(
+      {
+        group_key: proposal.key,
+        kind: proposal.kind,
+        level: proposal.level,
+        status: input.status,
+        member_ids: proposal.members.map((m) => m.id),
+        evidence: { shared: proposal.shared, members: proposal.members },
+        note: input.note.trim().slice(0, 1000),
+        decided_by: actor,
+        decided_at: now,
+        updated_by: actor,
+        updated_at: now,
+      },
+      { onConflict: "group_key" },
+    )
+    .select("*")
+    .single();
+  if (error || !data) return { ok: false, error: tiersError(error?.message ?? "The decision was not saved.", error?.code) };
+  return { ok: true, value: asDecision(data) };
+}
+
+// ---------------------------------------------------------------------------
+// Running
+
+type Prepared = {
+  run: MatchRun;
+  db: FundDb;
+  index: TaxIndex;
+  input: Omit<TierRunInput, "sites">;
+  common: Record<string, unknown>;
+  profileInputs: Record<string, unknown>;
+  settings: Record<string, unknown>;
+};
+
+/** Everything both engines need for a client, loaded once. */
+async function prepare(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<Prepared>> {
   const { data: client, error: clientError } = await supabase
     .from("clients")
     .select("id, company_name, is_match_sandbox")
@@ -282,19 +376,72 @@ export async function runComparison(supabase: ServiceClient, clientId: string, a
   });
   const fof = await loadFofExceptions(supabase);
   if (!fof.ok) return fof;
-  const dupes = findDuplicates(db, index);
+  const identity = await resolvedIdentities(supabase, db, index);
+  if (!identity.ok) return identity;
+  const groups = appliedGroups(identity.value.resolved);
+  const grouped = new Set(groups.flatMap((g) => g.memberIds));
+  // Groups not applied stay as flags; nothing is merged without a decision.
+  const flags = duplicateFlags(identity.value.report);
+  grouped.forEach((id) => flags.delete(id));
 
-  const input = { db, index, profile, legacy: run.profile, suppressed, rejected, fofExceptions: fof.value, duplicates: duplicateFlags(dupes) };
-  let tiers: TierRun;
+  const label = (id: string | null) => (id ? index.nodes.get(id)?.label ?? id : null);
+  return {
+    ok: true,
+    value: {
+      run,
+      db,
+      index,
+      input: { db, index, profile, legacy: run.profile, suppressed, rejected, fofExceptions: fof.value, duplicates: flags, identities: groups },
+      common: {
+        client_id: clientId,
+        client_name: String(client.company_name ?? ""),
+        is_sandbox: client.is_match_sandbox === true,
+        profile_version: version?.version ?? null,
+        taxonomy_revision: index.taxonomy.revision,
+        fund_db_version: run.live.version.id,
+        fund_db_file: run.live.version.fileName,
+        ran_by: actor,
+      },
+      profileInputs: {
+        primarySector: { id: profile.primarySector, label: label(profile.primarySector) },
+        secondarySectors: profile.secondarySectors.map((id) => ({ id, label: label(id) })),
+        stage: { id: profile.stage, label: label(profile.stage) },
+        hqCountry: { id: profile.hqCountry, label: label(profile.hqCountry) },
+        hqState: { id: profile.hqState, label: label(profile.hqState) },
+        firmTypes: profile.firmTypes.map((id) => ({ id, label: label(id) })),
+        financing: profile.financing.map((id) => ({ id, label: label(id) })),
+        readiness,
+        unconfirmed: profile.unconfirmed.map((id) => ({ id, label: label(id) })),
+        warnings: profileWarnings(issues),
+        relationships: edgeSummary(index),
+        legacyProfile: { stage: run.profile.stage, verticals: run.profile.verticals, industries: run.profile.industries, country: run.profile.country, usRegion: run.profile.usRegion },
+      },
+      settings: {
+        filters: run.profile.filters,
+        siteN: run.profile.siteN,
+        dropDead: run.profile.dropDead,
+        waveSize: run.profile.waveSize,
+        tune: run.profile.tune,
+        // The identity groups this run applied, with their decisions.
+        identities: groups,
+        fofExceptions: Array.from(fof.value.values()).filter((e) => e.status === "approved").map((e) => e.firmId),
+      },
+    },
+  };
+}
+
+/** The four-tier run, with each tier's top funds website-checked like the current engine's. */
+async function runFourTierEngine(supabase: ServiceClient, prepared: Prepared): Promise<Result<TierRun>> {
+  const { run, db, input } = prepared;
   try {
-    tiers = runTiers({ ...input, sites: null });
+    let tiers = runTiers({ ...input, sites: null });
     // Same condition as the current engine's run: websites are only checked when siteN > 0.
     if (run.profile.siteN > 0) {
       const take = run.profile.siteN + 20;
       const ids = new Set<string>();
       for (const tier of TIER_KEYS) {
         tiers.outcomes
-          .filter((o) => o.status === "tiered" && o.tier === tier && !o.rejected)
+          .filter((o) => o.status === "tiered" && o.tier === tier && !o.rejected && !o.representedBy)
           .slice(0, take)
           .forEach((o) => ids.add(o.firmId));
       }
@@ -307,53 +454,86 @@ export async function runComparison(supabase: ServiceClient, clientId: string, a
       }
       tiers = runTiers({ ...input, sites });
     }
+    return { ok: true, value: tiers };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "The four-tier run failed." };
   }
+}
 
+/**
+ * Runs both engines for a client on the same Fund Database version, profile
+ * and settings, and saves both runs under one comparison id. Nothing on the
+ * live Match page changes: the current engine's saved view is not touched.
+ */
+export async function runComparison(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ comparisonId: string }>> {
+  const prepared = await prepare(supabase, clientId, actor);
+  if (!prepared.ok) return prepared;
+  const tiers = await runFourTierEngine(supabase, prepared.value);
+  if (!tiers.ok) return tiers;
+  const { run, db, common, profileInputs, settings } = prepared.value;
   const comparisonId = randomUUID();
-  const label = (id: string | null) => (id ? index.nodes.get(id)?.label ?? id : null);
-  const common = {
-    client_id: clientId,
-    client_name: String(client.company_name ?? ""),
-    is_sandbox: client.is_match_sandbox === true,
-    comparison_id: comparisonId,
-    profile_version: version?.version ?? null,
-    taxonomy_revision: index.taxonomy.revision,
-    fund_db_version: run.live.version.id,
-    fund_db_file: run.live.version.fileName,
-    ran_by: actor,
-  };
-  const profileInputs = {
-    primarySector: { id: profile.primarySector, label: label(profile.primarySector) },
-    secondarySectors: profile.secondarySectors.map((id) => ({ id, label: label(id) })),
-    stage: { id: profile.stage, label: label(profile.stage) },
-    hqCountry: { id: profile.hqCountry, label: label(profile.hqCountry) },
-    hqState: { id: profile.hqState, label: label(profile.hqState) },
-    firmTypes: profile.firmTypes.map((id) => ({ id, label: label(id) })),
-    financing: profile.financing.map((id) => ({ id, label: label(id) })),
-    readiness,
-    unconfirmed: profile.unconfirmed.map((id) => ({ id, label: label(id) })),
-    warnings: profileWarnings(issues),
-    relationships: edgeSummary(index),
-    legacyProfile: { stage: run.profile.stage, verticals: run.profile.verticals, industries: run.profile.industries, country: run.profile.country, usRegion: run.profile.usRegion },
-  };
-  const settings = { filters: run.profile.filters, siteN: run.profile.siteN, dropDead: run.profile.dropDead, waveSize: run.profile.waveSize, tune: run.profile.tune };
-
   const legacyCounts = { ...run.out.counts, funnel: run.out.funnel, deadRemoved: run.out.deadRemoved.length, qualifiedBullseye: run.out.qualifiedBullseye, wave: run.out.wave };
   const savedLegacy = await saveRun(
     supabase,
-    { ...common, engine: "legacy", rules_version: "legacy", profile_inputs: profileInputs, settings, counts: legacyCounts },
+    { ...common, comparison_id: comparisonId, engine: "legacy", rules_version: "legacy", profile_inputs: profileInputs, settings, counts: legacyCounts },
     legacyRows(run.out, db),
   );
   if (!savedLegacy.ok) return savedLegacy;
   const savedTiers = await saveRun(
     supabase,
-    { ...common, engine: "tiers", rules_version: RULES_VERSION, profile_inputs: profileInputs, settings, counts: tiers.counts },
-    tierRows(tiers),
+    { ...common, comparison_id: comparisonId, engine: "tiers", rules_version: RULES_VERSION, profile_inputs: profileInputs, settings, counts: tiers.value.counts },
+    tierRows(tiers.value),
   );
   if (!savedTiers.ok) return savedTiers;
   return { ok: true, value: { comparisonId } };
+}
+
+/** A four-tier run for the admin preview. Saved permanently; exports read it back. */
+export async function runFourTier(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ runId: string }>> {
+  const prepared = await prepare(supabase, clientId, actor);
+  if (!prepared.ok) return prepared;
+  const tiers = await runFourTierEngine(supabase, prepared.value);
+  if (!tiers.ok) return tiers;
+  const { common, profileInputs, settings } = prepared.value;
+  const saved = await saveRun(
+    supabase,
+    { ...common, engine: "tiers", rules_version: RULES_VERSION, profile_inputs: profileInputs, settings, counts: tiers.value.counts },
+    tierRows(tiers.value),
+  );
+  if (!saved.ok) return saved;
+  return { ok: true, value: { runId: saved.value } };
+}
+
+/** One saved four-tier run of a client, from its stored rows only. */
+export async function loadTierRun(
+  supabase: ServiceClient,
+  clientId: string,
+  runId: string,
+): Promise<Result<{ header: RunHeader; rows: StoredResult[]; complete: boolean }>> {
+  const { data, error } = await supabase.from("match_runs").select("*").eq("id", runId).eq("client_id", clientId).maybeSingle();
+  if (error) return { ok: false, error: tiersError(error.message, error.code) };
+  if (!data) return { ok: false, error: "That run does not exist for this client." };
+  const header = asHeader(data);
+  if (header.engine !== "tiers") return { ok: false, error: "That run is not a four-tier run." };
+  const rows = await loadResults(supabase, header.id);
+  if (!rows.ok) return rows;
+  return { ok: true, value: { header, rows: rows.value, complete: rows.value.length === header.resultsExpected } };
+}
+
+/** Contact verification and this client's keep/remove decisions, for exporting a saved run. */
+export async function contactStates(supabase: ServiceClient, clientId: string, firmIds: string[]): Promise<Result<ContactStates>> {
+  const [checks, decisions] = await Promise.all([loadChecksForFirms(supabase, firmIds), loadDecisions(supabase, clientId)]);
+  if (!checks.ok) return { ok: false, error: checks.error };
+  if (!decisions.ok) return { ok: false, error: decisions.error };
+  const states: ContactStates = new Map();
+  checks.value.forEach((check, id) => {
+    states.set(id, { email: check.email, status: check.status && check.checkedAt ? check.status : null, checkedAt: check.checkedAt, decision: null });
+  });
+  decisions.value.forEach((decision, id) => {
+    const current = states.get(id) ?? { email: "", status: null, checkedAt: null, decision: null };
+    states.set(id, { ...current, decision: decision.decision });
+  });
+  return { ok: true, value: states };
 }
 
 export type ComparisonView = {
@@ -361,6 +541,8 @@ export type ComparisonView = {
   tiers: RunHeader;
   complete: boolean;
   comparison: Comparison;
+  /** Every stored four-tier row, for the full download. */
+  tierRows: StoredResult[];
 };
 
 export type RunListItem = RunHeader & { saved: number };
@@ -410,6 +592,7 @@ export async function loadComparison(supabase: ServiceClient, clientId: string, 
       tiers,
       complete: oldRows.value.length === legacy.resultsExpected && newRows.value.length === tiers.resultsExpected,
       comparison: compareRuns(oldRows.value, newRows.value),
+      tierRows: newRows.value,
     },
   };
 }

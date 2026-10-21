@@ -28,6 +28,12 @@ export function rowKey(firmId: string, occurrence: number) {
   return occurrence > 1 ? `${firmId}#${occurrence}` : firmId;
 }
 
+/** For a fund outside the tiers only the deciding check is kept: the audit needs why it failed, not what it passed. */
+function keptChecks(outcome: FirmOutcome, listed: boolean) {
+  if (listed) return outcome.checks;
+  return Object.fromEntries(Object.entries(outcome.checks).filter(([, check]) => check && check.result !== "pass"));
+}
+
 export function tierRow(outcome: FirmOutcome, position: number): ResultRow {
   const listed = outcome.status === "tiered" || outcome.status === "generalist";
   return {
@@ -38,7 +44,7 @@ export function tierRow(outcome: FirmOutcome, position: number): ResultRow {
     reason_codes: outcome.reasons,
     detail: compact({
       notes: outcome.notes,
-      checks: outcome.checks,
+      checks: keptChecks(outcome, listed),
       sector: outcome.sector,
       firmSectors: listed ? outcome.firmSectors : [],
       generalistWhy: outcome.generalistWhy,
@@ -53,6 +59,10 @@ export function tierRow(outcome: FirmOutcome, position: number): ResultRow {
       fof: outcome.fof
         ? { status: outcome.fof.status, evidenceUrl: outcome.fof.evidenceUrl, evidenceNote: outcome.fof.evidenceNote, rationale: outcome.fof.rationale, reviewedBy: outcome.fof.reviewedBy }
         : null,
+      sectorTags: outcome.sectorTags,
+      people: listed && !outcome.representedBy ? outcome.people : [],
+      identity: outcome.identity,
+      representedBy: outcome.representedBy,
     }),
     score: outcome.score ?? "",
     position,

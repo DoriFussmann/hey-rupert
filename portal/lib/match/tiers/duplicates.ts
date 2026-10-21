@@ -18,7 +18,7 @@ export const DUPLICATE_LEVEL_INFO: Record<DuplicateLevel, { label: string; rule:
   certain: {
     label: "Certain",
     rule: "Same normalized name, same website domain and same HQ country.",
-    proposal: "Proposed for automatic consolidation in Sprint 3B, after approval.",
+    proposal: "Shown once per list after an admin confirms the group.",
   },
   likely: {
     label: "Likely",
@@ -226,4 +226,108 @@ export function duplicateFlags(report: DuplicateReport) {
     }
   }
   return flags;
+}
+
+// ---------------------------------------------------------------------------
+// Identity proposals and decisions (Sprint 3B)
+
+export type IdentityKind = "duplicate" | "offices";
+
+export type IdentityProposal = {
+  key: string;
+  level: DuplicateLevel;
+  /** "offices": same name and website, different HQ country. Everything else is a possible duplicate. */
+  kind: IdentityKind;
+  /** Offices apply unless an admin rejects them; duplicates only once an admin confirms them. */
+  auto: boolean;
+  shared: string;
+  members: DuplicateMember[];
+};
+
+export type IdentityDecision = {
+  groupKey: string;
+  kind: IdentityKind;
+  status: "confirmed" | "rejected";
+  memberIds: string[];
+  note: string;
+  decidedBy: string | null;
+  decidedAt: string | null;
+};
+
+export type ResolvedIdentity = IdentityProposal & {
+  decision: IdentityDecision | null;
+  /** The decision was made for a different set of records: it needs a new decision. */
+  stale: boolean;
+  applied: boolean;
+};
+
+/** Same name, one website, more than one HQ country. */
+export function isOfficeGroup(group: DuplicateGroup) {
+  if (group.level !== "ambiguous") return false;
+  const domains = new Set(group.members.map((m) => m.domain));
+  const countries = new Set(group.members.map((m) => m.country));
+  return domains.size === 1 && !domains.has("") && countries.size > 1;
+}
+
+export function identityProposals(report: DuplicateReport): IdentityProposal[] {
+  return report.groups.map((group) => {
+    const offices = isOfficeGroup(group);
+    return {
+      key: group.key,
+      level: group.level,
+      kind: offices ? "offices" : "duplicate",
+      auto: offices,
+      shared: group.shared,
+      members: group.members,
+    };
+  });
+}
+
+function sameMembers(a: string[], b: string[]) {
+  return a.length === b.length && [...a].sort().join("|") === [...b].sort().join("|");
+}
+
+/** Which groups apply to a run, given the admin decisions. */
+export function resolveIdentities(proposals: IdentityProposal[], decisions: IdentityDecision[]): ResolvedIdentity[] {
+  const byKey = new Map(decisions.map((d) => [d.groupKey, d]));
+  return proposals.map((proposal) => {
+    const decision = byKey.get(proposal.key) ?? null;
+    const stale = !!decision && !sameMembers(decision.memberIds, proposal.members.map((m) => m.id));
+    const applied = stale
+      ? false
+      : decision
+        ? decision.status === "confirmed"
+        : proposal.auto;
+    return { ...proposal, decision, stale, applied };
+  });
+}
+
+/** The applied groups, as the engine takes them. A record joins at most one group: the first applied. */
+export function appliedGroups(resolved: ResolvedIdentity[]) {
+  const used = new Set<string>();
+  const groups: {
+    key: string;
+    kind: IdentityKind;
+    level: string;
+    memberIds: string[];
+    status: "confirmed" | "auto";
+    decidedBy: string | null;
+    decidedAt: string | null;
+  }[] = [];
+  for (const r of resolved) {
+    if (!r.applied) continue;
+    const ids = r.members.map((m) => m.id);
+    if (ids.some((id) => used.has(id))) continue;
+    ids.forEach((id) => used.add(id));
+    groups.push({
+      key: r.key,
+      kind: r.decision?.kind ?? r.kind,
+      level: DUPLICATE_LEVEL_INFO[r.level].label,
+      memberIds: ids,
+      status: r.decision ? "confirmed" : "auto",
+      decidedBy: r.decision?.decidedBy ?? null,
+      decidedAt: r.decision?.decidedAt ?? null,
+    });
+  }
+  return groups;
 }

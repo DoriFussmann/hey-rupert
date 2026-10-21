@@ -15,7 +15,8 @@ import {
   type TierRunInput,
 } from "./core.ts";
 import { compareRuns, type StoredResult } from "./compare.ts";
-import { duplicateFlags, findDuplicates, normalizedName } from "./duplicates.ts";
+import { appliedGroups, duplicateFlags, findDuplicates, identityProposals, normalizedName, resolveIdentities } from "./duplicates.ts";
+import { NEAR_MISS_BANNER, contactRows, fundRows, nearMissRows, outsideRows, runFacts, storedCounts, type ContactStates } from "./export.ts";
 import { legacyRows, tierRows } from "./record.ts";
 
 // ---------------------------------------------------------------------------
@@ -462,24 +463,35 @@ test("financing: default Equity, chosen instruments; missing, not mapped and mis
   assert.equal(result.counts.reasons.financing_mismatch, 1);
 });
 
-test("funds of funds: excluded without an approved exception; approved exception lets them in", () => {
-  const fof = firm({ fin: ["Fund of Funds", "Equity"] });
-  const pending: FofException = { firmId: fof.id, status: "needs_review", evidenceUrl: "", evidenceNote: "Portfolio lists direct deals.", rationale: "Direct seed deals on the website.", reviewedBy: null };
-  const result = run([fof]);
-  assert.equal(place(outcome(result, fof)), "excluded:fof_no_exception");
-  assert.equal(result.counts.fofAlsoDirectFinancing, 1);
-  assert.equal(place(outcome(run([fof], { fofExceptions: new Map([[fof.id, pending]]) }), fof)), "excluded:fof_no_exception");
-  const rejected = run([fof], { fofExceptions: new Map([[fof.id, { ...pending, status: "rejected" }]]) });
-  assert.match(outcome(rejected, fof).checks.financing!.detail, /rejected/);
-  const approved = run([fof], { fofExceptions: new Map([[fof.id, { ...pending, status: "approved", reviewedBy: "b@x.com" }]]) });
-  const o = outcome(approved, fof);
-  assert.equal(o.tier, "core");
+test("funds of funds: excluded only when it is their only financing; an approved exception lets them in", () => {
+  const fofOnly = firm({ fin: ["Fund of Funds"] });
+  const fofAndEquity = firm({ fin: ["Fund of Funds", "Equity"] });
+  const fofAndDebt = firm({ fin: ["Fund of Funds", "Debt"] });
+  const fofAndUnknown = firm({ fin: ["Fund of Funds", "Barter"] });
+  const result = run([fofOnly, fofAndEquity, fofAndDebt, fofAndUnknown]);
+  assert.equal(place(outcome(result, fofOnly)), "excluded:fof_no_exception");
+  assert.match(outcome(result, fofOnly).checks.financing!.detail, /Only financing is "Fund of funds"/);
+  assert.equal(outcome(result, fofAndEquity).tier, "core");
+  // Listed next to another financing type it is checked like any fund.
+  assert.equal(place(outcome(result, fofAndDebt)), "excluded:financing_mismatch");
+  assert.equal(place(outcome(result, fofAndUnknown)), "excluded:financing_unrecognized");
+  assert.equal(result.counts.fofWithOtherFinancing, 3);
+
+  const pending: FofException = { firmId: fofOnly.id, status: "needs_review", evidenceUrl: "", evidenceNote: "Portfolio lists direct deals.", rationale: "Direct seed deals on the website.", reviewedBy: null };
+  assert.equal(place(outcome(run([fofOnly], { fofExceptions: new Map([[fofOnly.id, pending]]) }), fofOnly)), "excluded:fof_no_exception");
+  const rejected = run([fofOnly], { fofExceptions: new Map([[fofOnly.id, { ...pending, status: "rejected" }]]) });
+  assert.match(outcome(rejected, fofOnly).checks.financing!.detail, /rejected/);
+  // An approved exception passes the fund-of-funds check; it still needs the financing the company wants.
+  const approved = run([fofOnly], { fofExceptions: new Map([[fofOnly.id, { ...pending, status: "approved", reviewedBy: "b@x.com" }]]) });
+  const o = outcome(approved, fofOnly);
   assert.ok(o.notes.includes("fof_exception"));
   assert.equal(o.fof?.evidenceNote, "Portfolio lists direct deals.");
-  // An approved fund of funds still needs the financing the company wants.
-  const onlyFof = firm({ fin: ["Fund of Funds"] });
-  const onlyResult = run([onlyFof], { fofExceptions: new Map([[onlyFof.id, { ...pending, firmId: onlyFof.id, status: "approved" }]]) });
-  assert.equal(place(outcome(onlyResult, onlyFof)), "excluded:financing_mismatch");
+  assert.equal(place(o), "excluded:financing_mismatch");
+  const approvedForFof = run([fofOnly], {
+    profile: profile({ financing: ["financing.fund_of_funds"] }),
+    fofExceptions: new Map([[fofOnly.id, { ...pending, status: "approved" }]]),
+  });
+  assert.equal(outcome(approvedForFof, fofOnly).tier, "core");
 });
 
 test("client exclusions (name, domain, name contains), hidden funds and client rejections", () => {
@@ -670,4 +682,138 @@ test("duplicate levels: same ID, certain, likely, ambiguous; Willow-style record
   const result = run([willowA, willowB], { duplicates: flags });
   assert.equal(result.outcomes.filter((o) => o.status === "tiered").length, 2);
   assert.ok(result.outcomes.every((o) => o.notes.includes("possible_duplicate")));
+});
+
+// ---------------------------------------------------------------------------
+// Identity groups (Sprint 3B-1)
+
+function asStored(rows: ReturnType<typeof tierRows>): StoredResult[] {
+  return rows.map((r) => ({ firmId: r.firm_id, firmName: r.firm_name, status: r.status, tier: r.tier || null, reasonCodes: r.reason_codes, detail: JSON.parse(JSON.stringify(r.detail)), score: r.score === "" ? null : r.score, position: r.position }));
+}
+
+function identityFixture() {
+  const keep = firm({ id: "W1", name: "Willow Growth Partners", web: "https://willowgrowth.com" });
+  const shell = firm({ id: "W2", name: "Willow Growth Partners", web: "http://www.willowgrowth.com/" });
+  const officeUs = firm({ id: "B1", name: "Bridge Group", web: "https://bridge.eu", country: "United States", geo: ["United States"] });
+  const officeUk = firm({ id: "B2", name: "Bridge Group", web: "https://bridge.eu", country: "United Kingdom", state: "", city: "London", geo: ["Europe"] });
+  const firms = [keep, shell, officeUs, officeUk];
+  const contacts = [
+    ...contactsFor([keep]),
+    { fid: "W2", first: "Cy", last: "Diaz", prefix: "", title: "Partner", email: "cy@willowgrowth.com", phone: "", city: "Austin", state: "Texas", country: "United States", officeType: "", principal: false, lead: false, matchQ: "Exact" },
+    { fid: "W2", first: "Ann", last: "Lee", prefix: "", title: "General Partner", email: "ann@W1.vc", phone: "", city: "Austin", state: "Texas", country: "United States", officeType: "", principal: true, lead: false, matchQ: "Exact" },
+    ...contactsFor([officeUs, officeUk]),
+  ];
+  return { keep, shell, officeUs, officeUk, db: { firms, contacts } as FundDb };
+}
+
+test("identity decisions: duplicates need a confirmation; offices apply unless rejected; a changed group needs a new decision", () => {
+  const { db } = identityFixture();
+  const proposals = identityProposals(findDuplicates(db, index));
+  const dup = proposals.find((p) => p.members.some((m) => m.id === "W1"))!;
+  const offices = proposals.find((p) => p.members.some((m) => m.id === "B1"))!;
+  assert.equal(dup.kind, "duplicate");
+  assert.equal(dup.auto, false);
+  assert.equal(offices.kind, "offices");
+  assert.equal(offices.auto, true);
+
+  const none = resolveIdentities(proposals, []);
+  assert.equal(none.find((r) => r.key === dup.key)!.applied, false);
+  assert.equal(none.find((r) => r.key === offices.key)!.applied, true);
+
+  const decision = (key: string, status: "confirmed" | "rejected", memberIds: string[]) =>
+    ({ groupKey: key, kind: "duplicate" as const, status, memberIds, note: "", decidedBy: "a@x.com", decidedAt: "2026-10-21" });
+  const confirmed = resolveIdentities(proposals, [decision(dup.key, "confirmed", ["W2", "W1"]), decision(offices.key, "rejected", ["B1", "B2"])]);
+  assert.equal(confirmed.find((r) => r.key === dup.key)!.applied, true);
+  assert.equal(confirmed.find((r) => r.key === offices.key)!.applied, false);
+  const stale = resolveIdentities(proposals, [decision(dup.key, "confirmed", ["W1", "W9"])]).find((r) => r.key === dup.key)!;
+  assert.equal(stale.stale, true);
+  assert.equal(stale.applied, false);
+  const groups = appliedGroups(confirmed);
+  assert.deepEqual(groups.map((g) => [g.kind, g.status, g.memberIds.sort().join(",")]), [["duplicate", "confirmed", "W1,W2"]]);
+});
+
+test("a confirmed duplicate shows once, keeps both records' contacts under their own FirmIDs and never moves a review", () => {
+  const { db, keep, shell } = identityFixture();
+  const proposals = identityProposals(findDuplicates(db, index));
+  const dup = proposals.find((p) => p.members.some((m) => m.id === "W1"))!;
+  const groups = appliedGroups(resolveIdentities(proposals, [{ groupKey: dup.key, kind: "duplicate", status: "confirmed", memberIds: ["W1", "W2"], note: "", decidedBy: "a@x.com", decidedAt: "2026-10-21" }]));
+  const result = runTiers({ db, index, profile: profile(), legacy: legacy(), identities: groups, rejected: { W2: "Client said no" } });
+  const shown = outcome(result, keep);
+  const hidden = outcome(result, shell);
+  assert.equal(shown.status, "tiered");
+  assert.equal(shown.identity?.kind, "duplicate");
+  assert.equal(shown.identity?.status, "confirmed");
+  assert.equal(shown.identity?.decidedBy, "a@x.com");
+  assert.match(shown.identity!.derivation, /^Shown as W1: /);
+  assert.equal(hidden.representedBy, "W1");
+  assert.equal(result.counts.represented, 2); // W2, and the UK office shown through B1
+  assert.equal(result.counts.tiers.core, 2); // W1 and B1
+  // Contacts: Ann (in both records, once), Bo (W1) and Cy (W2), each under its own FirmID.
+  assert.deepEqual(shown.people.map((p) => `${p.name}@${p.fid}`).sort(), ["Ann Lee@W1", "Bo Ng@W1", "Cy Diaz@W2"]);
+  // The rejection is W2's: shown, never applied to W1.
+  assert.equal(shown.rejected, null);
+  assert.ok(shown.notes.includes("linked_record_rejected"));
+  assert.equal(shown.identity!.members.find((m) => m.firmId === "W2")!.rejected, "Client said no");
+});
+
+test("offices: each office keeps its own checks; the firm shows once as its strongest office; the others stay in the details", () => {
+  const { db, officeUs, officeUk } = identityFixture();
+  const groups = appliedGroups(resolveIdentities(identityProposals(findDuplicates(db, index)), []));
+  const result = runTiers({ db, index, profile: profile(), legacy: legacy(), identities: groups });
+  const us = outcome(result, officeUs);
+  const uk = outcome(result, officeUk);
+  assert.equal(us.tier, "core");
+  assert.equal(us.identity?.kind, "offices");
+  assert.equal(us.identity?.status, "auto");
+  assert.match(us.identity!.derivation, /strongest outcome \(Core; next: B2, Unresolved: Office\/person location only\)/);
+  assert.equal(uk.representedBy, "B1");
+  assert.equal(uk.reasons.at(-1), "geo_office_only"); // its own result is kept
+  const ukMember = us.identity!.members.find((m) => m.firmId === "B2")!;
+  assert.equal(ukMember.reason, "geo_office_only");
+  assert.match(ukMember.checks.geography!.detail, /stated geography is "Europe"/);
+  // Offices keep their own contacts.
+  assert.ok(us.people.every((p) => p.fid === "B1"));
+});
+
+test("exports read only the saved rows: listed funds, contacts with verification, outside the tiers, near misses", () => {
+  const near = firm({ stages: ["Pre-Seed"], name: "Near Fund" });
+  const { db, keep } = identityFixture();
+  // Without the duplicate shell (W2): its own copy of Ann has no verification of its own.
+  const all: FundDb = { firms: [...db.firms.filter((f) => f.id !== "W2"), near], contacts: [...db.contacts.filter((c) => c.fid !== "W2"), ...contactsFor([near])] };
+  const groups = appliedGroups(resolveIdentities(identityProposals(findDuplicates(all, index)), []));
+  const result = runTiers({ db: all, index, profile: profile(), legacy: legacy(), identities: groups });
+  const rows = asStored(tierRows(result));
+  const counted = storedCounts(rows);
+  assert.deepEqual(counted.tiers, result.counts.tiers);
+  assert.equal(counted.represented, result.counts.represented);
+  assert.equal(counted.total, all.firms.length);
+
+  const funds = fundRows(rows);
+  assert.ok(funds.slice(1).every((r) => r[2] !== "B2")); // shown through B1
+  assert.ok(funds.some((r) => r[2] === "B1" && String(r[12]).includes("Offices")));
+
+  const states: ContactStates = new Map([
+    [`${keep.id}|ann@w1.vc`, { email: "ann@W1.vc", status: "email_bad", checkedAt: "2026-10-01", decision: null }],
+    [`${keep.id}|bo@w1.vc`, { email: "old@W1.vc", status: "clean", checkedAt: "2026-10-01", decision: null }],
+  ]);
+  const people = contactRows(rows, states);
+  const emails = people.rows.slice(1).map((r) => String(r[7]));
+  assert.ok(!emails.includes("ann@W1.vc")); // known problem, not kept
+  assert.equal(people.leftOut, 1);
+  assert.equal(people.rows.find((r) => r[7] === "bo@W1.vc")![12], "Not verified"); // checked an older email
+  const kept = contactRows(rows, new Map([[`${keep.id}|ann@w1.vc`, { email: "ann@W1.vc", status: "email_bad", checkedAt: "2026-10-01", decision: "keep" }]]));
+  assert.ok(kept.rows.some((r) => r[7] === "ann@W1.vc" && String(r[12]).includes("(kept)")));
+  assert.equal(contactRows(rows, states, true).leftOut, 0);
+
+  const outside = outsideRows(rows);
+  assert.ok(outside.some((r) => r[0] === "Shown as another record" && r[2] === "B2"));
+  assert.ok(outside.some((r) => r[1] === "One stage off" && r[2] === near.id));
+
+  const misses = nearMissRows(rows);
+  assert.deepEqual(misses.slice(1).map((r) => [r[0], r[1]]), [["NOT ELIGIBLE: one stage off", near.id]]);
+  assert.match(NEAR_MISS_BANNER[0], /NOT AN ELIGIBLE MATCH LIST/);
+
+  const facts = runFacts({ id: "RUN-1", clientName: "Co", rulesVersion: RULES_VERSION, taxonomyRevision: 700, profileVersion: 4, fundDbVersion: "v1", fundDbFile: "f.xlsx", ranAt: "2026-10-21", ranBy: "a@x.com", resultsExpected: rows.length, profileInputs: {}, settings: { identities: groups } }, true);
+  assert.deepEqual(facts[0], ["Saved run", "RUN-1"]);
+  assert.ok(facts.some((r) => r[0] === "Rules" && r[1] === RULES_VERSION));
 });

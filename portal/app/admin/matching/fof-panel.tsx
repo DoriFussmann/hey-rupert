@@ -27,7 +27,7 @@ export type FofItem = {
 };
 
 const STATUS_TEXT = { needs_review: "Awaiting review", approved: "Approved", rejected: "Rejected" } as const;
-type Filter = "all" | "exceptions" | "review" | "direct";
+type Filter = "all" | "exceptions" | "review" | "direct" | "only";
 
 function ExceptionForm({ item, onDone }: { item: FofItem; onDone: () => void }) {
   const { pending, error, run } = useAction();
@@ -133,6 +133,7 @@ export function FofPanel({ items }: { items: FofItem[] }) {
       if (filter === "exceptions" && !item.exception) return false;
       if (filter === "review" && item.exception?.status !== "needs_review") return false;
       if (filter === "direct" && !item.alsoDirect) return false;
+      if (filter === "only" && item.alsoDirect) return false;
       return !q || item.name.toLowerCase().includes(q) || item.id.toLowerCase().includes(q);
     });
   }, [items, filter, query]);
@@ -141,16 +142,18 @@ export function FofPanel({ items }: { items: FofItem[] }) {
   return (
     <div>
       <p className="text-body-sm text-muted">
-        {n(items.length)} funds list &quot;Fund of funds&quot; as financing. They are left out of the four tiers unless an
-        exception with evidence of direct investment is approved. Their classification is never changed.
+        {n(items.length)} funds list &quot;Fund of funds&quot; as financing. {n(items.filter((i) => !i.alsoDirect).length)} list nothing else:
+        those are left out of the four tiers unless an exception with evidence of direct investment is approved. The others also list a
+        direct financing type and are checked like any fund. Their classification is never changed.
       </p>
       <div className="mt-sm flex flex-wrap items-end gap-sm">
         <div>
           <label className={labelClass} htmlFor="fof-filter">Show</label>
           <select id="fof-filter" className={`${inputClass} mt-xs`} value={filter} onChange={(e) => setFilter(e.target.value as Filter)}>
             <option value="exceptions">With an exception ({n(withExceptions)})</option>
+            <option value="only">Only &quot;Fund of funds&quot; (excluded without an exception)</option>
             <option value="review">Awaiting review</option>
-            <option value="direct">Also list a direct financing type</option>
+            <option value="direct">Also list a direct financing type (checked like any fund)</option>
             <option value="all">All funds of funds</option>
           </select>
         </div>
