@@ -1,10 +1,10 @@
 # Campaign capacity (Phase 4)
 
-How many unique investor firms the sending inboxes can reach in a campaign, and how a target splits across one saved four-tier run. Planning only: it never changes a run, a match result, the engine switch or a list, and never pushes or sends anything.
+How many unique investor firms the sending inboxes can reach in a campaign, and how a target splits across one saved four-tier run. Planning only: it never changes a run, a match result or a list, and never pushes or sends anything.
 
 | What | Where |
 |---|---|
-| Calculator for one client | `/admin/clients/[id]/match/capacity` (links on the Match page and the four-tier runs page) |
+| Calculator for one client | The Capacity tab of `/admin/matching?client=…` |
 | Schedule (capacity) | `schedule.ts` |
 | Allocation | `allocate.ts` |
 | Plan = schedule + allocation | `plan.ts` |

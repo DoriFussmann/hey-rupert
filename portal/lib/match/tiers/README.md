@@ -2,15 +2,13 @@
 
 A deterministic engine that places every eligible fund in exactly one of four tiers by sector proximity. It reads the Phase 1 taxonomy (`lib/taxonomy`) and the Phase 2 company profile (`lib/company-profile`).
 
-**Status (Sprint 3B-2): behind a global engine switch.** The engine runs alongside the current one (`lib/match/engine`). The switch on `/admin/matching` (`supabase/match_engine.sql`, every change logged in `match_engine_changes`) decides, for every client, what the Match page shows, what verification checks and what Push to client sends. Without a saved setting, or before the migration, the current engine is used.
+**Status: the only matching engine.** The earlier three-tier engine's screens, actions, exports and comparison are removed. Its module (`lib/match/engine`) stays as a library of shared helpers this engine uses: contact ranking, the Primary/Backup sequence, data confidence, website flags and exclusion parsing. Lists sent with three tiers still display as they were sent (`tier_scheme` in `lib/setup.ts`). The engine switch table from `match_engine.sql` is no longer read.
 
 | What | Where |
 |---|---|
-| Engine switch, rules, duplicates, fund-of-funds | `/admin/matching` |
-| Match page (four-tier when switched) | `/admin/fund-database?client=…` |
-| Saved four-tier runs of one client | `/admin/clients/[id]/match/four-tier` |
-| Comparison for one client | `/admin/clients/[id]/match/compare` |
-| Duplicate report and decisions | `/admin/matching/duplicates` |
+| Matching for a client (tabs: Tiers, Outside the tiers, Near misses, Capacity, History) | `/admin/matching?client=…` |
+| Duplicate report and decisions | `/admin/taxonomy/duplicates` |
+| Fund-of-funds exceptions | `/admin/taxonomy` |
 
 Rules version: `RULES_VERSION` in `core.ts`. It is recorded with every run. Change it whenever a rule changes.
 
@@ -28,21 +26,21 @@ Each status carries the deciding reason code (`REASONS` in `core.ts`) and a chec
 | # | Rule | Behavior |
 |---|---|---|
 | 1 | Data corrections | Applied to the Fund Database first, as today. |
-| 2 | Client exclusions | Exact name, website domain, or "name contains" for terms over 3 characters. Uses the same exclusion text as the current engine. → `client_exclusion` |
+| 2 | Client exclusions | Exact name, website domain, or "name contains" for terms over 3 characters. Uses the profile's exclusion text. → `client_exclusion` |
 | 3 | Hidden for all clients | → `hidden_all` |
-| 4 | Firm type | The client's chosen types, or the current engine's defaults for the stage. Read through approved firm-type mappings.<br>• No type → `firm_type_missing`<br>• A value with no approved mapping → `firm_type_unrecognized`<br>• A known type that isn't wanted → `firm_type_mismatch` |
+| 4 | Firm type | The client's chosen types, or the engine module's defaults for the stage. Read through approved firm-type mappings.<br>• No type → `firm_type_missing`<br>• A value with no approved mapping → `firm_type_unrecognized`<br>• A known type that isn't wanted → `firm_type_mismatch` |
 | 4a | Funds of funds | Only when "Fund of funds" (`financing.fund_of_funds`) is the fund's only financing type. Excluded unless there is an approved exception in `match_fof_exceptions`. → `fof_no_exception`. Listed next to another financing type, the fund is checked like any other (counted as `fofWithOtherFinancing`). |
 | 5 | Financing | The client's instruments, default Equity.<br>• None stated → `financing_missing`<br>• Values with no approved mapping → `financing_unrecognized`<br>• Known values that don't match → `financing_mismatch` |
 | 6 | Stage | The fund must list the company's stage, using approved stage mappings (a value such as "Early Stage" can cover several stages).<br>• One rung away on the venture ladder → `stage_one_off` (excluded, counted)<br>• Any other stage → `stage_mismatch`<br>• No stage → `stage_not_stated` (unresolved)<br>• Values unmapped or under review → `stage_ambiguous` (unresolved) |
 | 7 | Geography | See below. |
-| 8 | Optional filters | No platforms (8+ stages), needs a decision maker, needs an email, founded after a year, minimum data confidence, team near you. Same rules as today, using the current engine's contact ranking. → `filter_*` |
+| 8 | Optional filters | No platforms (8+ stages), needs a decision maker, needs an email, founded after a year, minimum data confidence, team near you. Using the engine module's contact ranking. → `filter_*` |
 | 9 | Generalists | "Diversified", or 15 or more industries → `generalist`. Kept out of the tiers and saved for Phase 4. |
 | 10 | Identity groups | Records of one firm are shown once per list. See below. Records in groups that don't apply are flagged (`possible_duplicate`). |
 | 11 | Sector tier | See the table below. |
 | — | Website check | Runs after tiering, as today: each tier's top funds are checked (the current setting decides how many). A dead, parked or "not investing" site → `dead_website`. |
 | — | Client "no" reviews | The fund stays in its tier, marked rejected, and isn't counted. |
 
-The tightness controls and the 100-fund wave limit don't exist in this engine. The current engine keeps them.
+There are no tightness controls and no wave limit.
 
 ## Geography
 
@@ -97,7 +95,7 @@ The only relationships used are those in `tax_edges` with `review = 'approved'`.
   - Otherwise → `no_sector_link` (excluded).
 - No industry and no vertical at all → `sector_not_stated` (excluded).
 
-**Order within a tier:** the fit score, then data confidence, then founding year, then FirmID. The fit score uses the same parts and weights as the current engine, fed by the canonical checks:
+**Order within a tier:** the fit score, then data confidence, then founding year, then FirmID. The fit score uses the earlier engine's parts and weights, fed by the canonical checks:
 - Stage 20.
 - Sector 20 (×0.8 when the link comes from a secondary sector).
 - Geography 14 (×0.8 for regional coverage).
@@ -117,10 +115,10 @@ The only relationships used are those in `tax_edges` with `review = 'approved'`.
 - **`match_runs`:** one row per run. It records the engine and rules version, profile version and inputs, taxonomy revision, Fund Database version, settings, counts, and who ran it and when.
 - **`match_run_results`:** one row per fund per run. It records the status, tier, reason codes, the explanation, the score and the position. A repeated FirmID is stored as `id#2`.
 - **Permanent:** triggers reject every update, delete and truncate on both tables, for every role. The app's roles have no write privileges on them. Runs are saved only through `match_begin_run` and `match_add_results`, which add rows to a run during its first 30 minutes and never more than it announced.
-- **Clients:** runs aren't tied to the client by a foreign key, so they survive client deletion and sandbox resets. A sandbox reset records a marker in `match_sandbox_resets`, and the comparison page shows only runs since the last one.
+- **Clients:** runs aren't tied to the client by a foreign key, so they survive client deletion and sandbox resets. Starting the test client clean records a marker in `match_sandbox_resets`; its History tab shows only runs since then.
 - **Fund-of-funds exceptions:** `match_fof_exceptions`. Every change is logged in `match_fof_changes`, which is append-only.
 
-The comparison page rebuilds everything from the stored results (`compare.ts`). A saved comparison shows exactly what was computed.
+Every page about a run reads its stored rows (`stored.ts`), so it shows exactly what was computed.
 
 ## Identity groups
 
@@ -145,7 +143,6 @@ An export never runs the engine. It reads one saved run's stored rows, and its f
 
 - **Contacts:** contact verification and this client's keep/remove decisions are read as of the export and labeled so. As in today's export, contacts with a known problem (Email bad, Left firm, Role changed, Not found) are left out unless kept for this client, or unless "Export everything" is used. A person listed under two funds appears once.
 - **Near misses** (one stage off) have their own download. Every sheet and row is marked NOT AN ELIGIBLE MATCH LIST; it can't be pushed to a founder.
-- **Comparison download:** also has every four-tier fund, including those neither engine listed, with their sector tags.
 
 ## Storage
 
@@ -166,11 +163,10 @@ An export never runs the engine. It reads one saved run's stored rows, and its f
 
 The report is computed on request; only admin decisions are stored.
 
-## Engine switch and founder lists (Sprint 3B-2)
+## The Matching page and founder lists
 
-- **Match page on Four-tier:** the client's newest saved run, its four tiers side by side, the admin-only groups (generalists, unresolved, excluded) and the near misses. Every fund opens to its full explanation. No tightness controls and no wave limit; the quality filters and website rules stay. Reviews (approve / reject) apply from the next run.
+- **Matching:** pick a client; the profile's readiness (Ready, Limited, Blocked) shows first. Run match saves a run. The newest run shows its four tiers side by side, the admin-only groups and the near misses; every fund opens to its full explanation, and can be approved or rejected (from the next run). The quality filters and website rules stay.
 - **Push to client** sends one saved run (`fourTierPushList` in `server.ts`, `client-list.ts`): only the four tiers; never generalists, unresolved, excluded, near-miss, rejected or represented records. It is refused when the run isn't the client's newest, is incomplete, or no longer reflects the client's data (`staleReasons`: rules version, Fund Database version, profile answers and settings (`settings.basis`), profile version, reviews, funds hidden for all clients).
 - **Exports reference a run; they never create one.** Run match creates a run. Push and export read it, and the list carries `run_id` and `rules_version`.
-- **Tier schemes:** a list or email copy is three-tier unless it carries `tier_scheme: "four"` (`lib/setup.ts`). Founder pages, the admin panels, the investor-list email and the email-copy agent read the scheme from the list or copy itself, never from the switch. Lists and copy already pushed or sent keep their tiers after any switch.
-- **Verification** runs the engine in use, live and unsaved: one limit box per tier of that engine (blank = the whole tier). Contacts are checked under the FirmID they are stored under.
-- **Rollback:** switch back to Current. Saved runs are permanent; pushed and sent lists keep their scheme; the current engine's saved match is untouched by four-tier work.
+- **Tier schemes:** a list or email copy is three-tier unless it carries `tier_scheme: "four"` (`lib/setup.ts`). Founder pages, the admin panels, the investor-list email and the email-copy agent read the scheme from the list or copy itself. Lists and copy sent with three tiers keep them.
+- **Verification** runs the engine live, unsaved: one limit box per tier (blank = the whole tier). Contacts are checked under the FirmID they are stored under.

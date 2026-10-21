@@ -101,7 +101,7 @@ export function CompanyProfileCard({
             href={matchPath(clientId)}
             className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
           >
-            Rupert Match
+            Matching
           </Link>
           <Link
             href={`/admin/clients/${clientId}/profile`}

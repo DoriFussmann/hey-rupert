@@ -19,19 +19,10 @@ import {
 } from "@/lib/match/db-server";
 import {
   cleanAnswers,
-  cleanSettings,
   extractAnswers,
   loadProfileState,
   saveProfileState,
 } from "@/lib/match/profile-server";
-import {
-  buildClientList,
-  buildDetail,
-  buildView,
-  runClientMatch,
-  siteCandidates,
-  storeMatch,
-} from "@/lib/match/run-server";
 import {
   applyContactImport,
   discardContactImport,
@@ -39,23 +30,18 @@ import {
   stageContactImport,
 } from "@/lib/match/import-server";
 import { clientFacingList, visibleFundCount } from "@/lib/match/client-list-dedupe";
-import { currentEnginePeople, withVerificationSnapshot, type PeopleStates } from "@/lib/match/list-snapshot";
-import { matchEngine } from "@/lib/match/engine-setting";
+import { withVerificationSnapshot, type PeopleStates } from "@/lib/match/list-snapshot";
 import { fourTierPushList } from "@/lib/match/tiers/server";
 import { carryDuplicateFlags, listedContacts } from "@/lib/match/outreach-dedupe";
-import { checkAndStoreSites, isStale, runSiteBatch } from "@/lib/match/sites-server";
+import { runSiteBatch } from "@/lib/match/sites-server";
 import { IMPORT_MAX_BYTES, type ContactImportView } from "@/lib/match/contact-import";
 import {
   DEFAULT_SETTINGS,
   FUND_DB_BUCKET,
   FUND_DB_MAX_BYTES,
   FUND_UPLOAD_CHUNK_BYTES,
-  REJECT_REASONS,
-  type FirmDetail,
   type FundDbVersion,
   type MatchProfileState,
-  type MatchView,
-  type Tier,
 } from "@/lib/match/shared";
 import {
   asInvestorList,
@@ -91,6 +77,7 @@ function revalidateMatch(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath(`/admin/clients/${clientId}/profile`);
   revalidatePath("/admin/fund-database");
+  revalidatePath("/admin/matching");
 }
 
 function errorText(err: unknown, fallback: string) {
@@ -476,17 +463,6 @@ export async function buildMatchProfile(
   return { ok: true, state: saved.value };
 }
 
-async function viewFor(
-  supabase: ReturnType<typeof createServiceClient>,
-  clientId: string,
-): Promise<{ view: MatchView | null; error: string | null }> {
-  const run = await runClientMatch(supabase, clientId);
-  if (!run.ok) return { view: null, error: run.error };
-  const view = buildView(run.value);
-  await storeMatch(supabase, clientId, view);
-  return { view, error: null };
-}
-
 /** Saves the company profile as edited. Rupert Match re-runs on its next open. */
 export async function saveCompanyProfile(
   clientId: string,
@@ -511,132 +487,8 @@ export async function saveCompanyProfile(
   return { ok: true, state: saved.value };
 }
 
-/** Saves the operator settings (tightness, filters, rules) and re-runs. */
-export async function updateMatchSettings(
-  clientId: string,
-  settings: unknown,
-): Promise<Result<{ view: MatchView }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const current = await loadProfileState(access.supabase, clientId);
-  if (!current.ok) return current;
-  if (!current.value) return { ok: false, error: "Fill the company profile first." };
-  const saved = await saveProfileState(access.supabase, clientId, {
-    answers: current.value.answers,
-    settings: cleanSettings(settings),
-    source: "settings",
-  });
-  if (!saved.ok) return saved;
-  const { view, error } = await viewFor(access.supabase, clientId);
-  if (!view) return { ok: false, error: error ?? "The match could not run." };
-  return { ok: true, view };
-}
-
-export async function runMatch(clientId: string): Promise<Result<{ view: MatchView }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const { view, error } = await viewFor(access.supabase, clientId);
-  if (!view) return { ok: false, error: error ?? "The match could not run." };
-  return { ok: true, view };
-}
-
-export async function getFirmDetail(
-  clientId: string,
-  firmId: string,
-): Promise<Result<{ detail: FirmDetail }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const run = await runClientMatch(access.supabase, clientId);
-  if (!run.ok) return run;
-  const detail = buildDetail(run.value, String(firmId));
-  if (!detail) return { ok: false, error: "This fund is no longer in the results." };
-  return { ok: true, detail };
-}
-
-// ---------------------------------------------------------------------------
-// Reviews
-
-export async function reviewFirm(
-  clientId: string,
-  input: {
-    firmId: string;
-    firmName: string;
-    tier: Tier;
-    status: "ok" | "no";
-    reason?: string;
-    note?: string;
-    hideForAll?: boolean;
-  },
-): Promise<Result<{ view: MatchView }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const firmId = String(input?.firmId ?? "").slice(0, 40);
-  const firmName = String(input?.firmName ?? "").slice(0, 255);
-  if (!firmId) return { ok: false, error: "Unknown fund." };
-  const status = input.status === "no" ? "no" : "ok";
-  const reason = String(input.reason ?? "");
-  if (status === "no" && !REJECT_REASONS.includes(reason)) {
-    return { ok: false, error: "Choose a reason for rejecting." };
-  }
-  const note = String(input.note ?? "").trim().slice(0, 1000);
-
-  const { error } = await access.supabase.from("match_reviews").upsert(
-    {
-      client_id: clientId,
-      firm_id: firmId,
-      firm_name: firmName,
-      status,
-      reason: status === "no" ? reason : null,
-      note: note || null,
-      tier: ["bullseye", "match", "expansion"].includes(input.tier) ? input.tier : null,
-      reviewed_by: access.email,
-      reviewed_at: nowIso(),
-    },
-    { onConflict: "client_id,firm_id" },
-  );
-  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
-
-  if (status === "no" && input.hideForAll) {
-    const { error: hideError } = await access.supabase.from("match_suppressions").upsert(
-      {
-        firm_id: firmId,
-        firm_name: firmName,
-        reason: reason + (note ? `: ${note}` : ""),
-        from_client: clientId,
-        created_by: access.email,
-      },
-      { onConflict: "firm_id" },
-    );
-    if (hideError) return { ok: false, error: matchTableError(hideError.message, hideError.code) };
-  }
-
-  const { view, error: runError } = await viewFor(access.supabase, clientId);
-  if (!view) return { ok: false, error: runError ?? "The match could not run." };
-  return { ok: true, view };
-}
-
-export async function clearFirmReview(
-  clientId: string,
-  firmId: string,
-): Promise<Result<{ view: MatchView }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const { error } = await access.supabase
-    .from("match_reviews")
-    .delete()
-    .eq("client_id", clientId)
-    .eq("firm_id", String(firmId));
-  if (error) return { ok: false, error: matchTableError(error.message, error.code) };
-  const { view, error: runError } = await viewFor(access.supabase, clientId);
-  if (!view) return { ok: false, error: runError ?? "The match could not run." };
-  return { ok: true, view };
-}
-
 /** Shows a fund hidden for all clients again. */
-export async function restoreHiddenFund(
-  clientId: string,
-  firmId: string,
-): Promise<Result<{ view: MatchView }>> {
+export async function restoreHiddenFund(clientId: string, firmId: string): Promise<Result<object>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const { error } = await access.supabase
@@ -644,80 +496,27 @@ export async function restoreHiddenFund(
     .delete()
     .eq("firm_id", String(firmId));
   if (error) return { ok: false, error: matchTableError(error.message, error.code) };
-  const { view, error: runError } = await viewFor(access.supabase, clientId);
-  if (!view) return { ok: false, error: runError ?? "The match could not run." };
-  return { ok: true, view };
+  revalidateMatch(String(clientId));
+  return { ok: true };
 }
 
 // ---------------------------------------------------------------------------
-// Websites and sending to the client
-
-/** Re-checks this client's top funds per tier whose result is old or missing. */
-export async function checkClientWebsites(
-  clientId: string,
-): Promise<
-  Result<{ view: MatchView; checked: number; pending: number; summary: Record<string, number> }>
-> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const run = await runClientMatch(access.supabase, clientId);
-  if (!run.ok) return run;
-  const { out, profile, live, checkedAt } = run.value;
-  if (profile.siteN <= 0) {
-    return { ok: false, error: "The website check is off for this client. Turn it on under Rules." };
-  }
-  const due = siteCandidates(out, live.db, profile.siteN).filter(
-    (firm) => firm.web && isStale(checkedAt[firm.id]),
-  );
-  let checked = 0;
-  let summary: Record<string, number> = {};
-  if (due.length > 0) {
-    const result = await checkAndStoreSites(access.supabase, due, SITE_BUDGET_MS);
-    if (!result.ok) return result;
-    checked = result.checked;
-    summary = result.summary;
-  }
-  const { view, error } = await viewFor(access.supabase, clientId);
-  if (!view) return { ok: false, error: error ?? "The match could not run." };
-  return { ok: true, view, checked, pending: Math.max(0, due.length - checked), summary };
-}
+// Sending to the client
 
 /**
- * Pushes the fund list (funds, tiers, websites and contact counts; never
- * people) into the client's Investor Matching panel as a draft. The client
- * sees nothing and is not emailed: Rupert sends it from the client page, with
- * its email. The Match Sandbox has no client page, so its list is published
- * straight to the Test Pilot portal (never emailed).
+ * Pushes one saved run to the client's page as a draft, exactly as saved: the
+ * funds of its four tiers (never people), with the run id and rules version on
+ * the list. The client sees nothing and is not emailed until Rupert sends it
+ * from the client page. The test client has no client page: its list is
+ * published straight to its own test portal (never emailed). Refused when the
+ * run is not the client's newest or no longer reflects the client's data.
  */
-export async function pushMatchToClient(
-  clientId: string,
-): Promise<Result<{ funds: number; sandbox: boolean }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  if ((await matchEngine(access.supabase)) !== "current") {
-    return { ok: false, error: "The match engine is Four-tier. Reload the page: Push to client sends the four-tier run." };
-  }
-  const run = await runClientMatch(access.supabase, clientId);
-  if (!run.ok) return run;
-  const list = buildClientList(run.value);
-  if (!list.ok) return list;
-  return deliverList(access, clientId, list.value, currentEnginePeople(run.value));
-}
-
-/**
- * Pushes one saved four-tier run to the client, exactly as saved: the funds of
- * its four tiers, with the run id and rules version on the list. Refused when
- * the run is not the client's newest or no longer reflects the client's data.
- */
-export async function pushFourTierToClient(
+export async function pushRunToClient(
   clientId: string,
   runId: string,
 ): Promise<Result<{ funds: number; sandbox: boolean }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
-  if ((await matchEngine(access.supabase)) !== "four_tier") {
-    return { ok: false, error: "The match engine is Current. Reload the page: Push to client sends the current engine's match." };
-  }
   const id = String(runId ?? "");
   if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(String(clientId ?? ""))) {
     return { ok: false, error: "Unknown run." };

@@ -2,15 +2,14 @@
 
 import { useRouter } from "next/navigation";
 import { Select } from "@/components/select";
-import { matchPath } from "@/lib/match/shared";
 
-/** Picks the client Rupert Match runs for on the Fund Database page. */
+/** Picks the client the Matching page works on. */
 export function ClientPicker({
   clients,
   selectedId,
 }: {
   clients: { id: string; name: string }[];
-  /** The picked client, or null. May be a client not in the list (the sandbox). */
+  /** The picked client, or null. */
   selectedId: string | null;
 }) {
   const router = useRouter();
@@ -23,7 +22,7 @@ export function ClientPicker({
         value={listed && selectedId ? selectedId : ""}
         onChange={(event) => {
           const id = event.target.value;
-          router.push(id ? matchPath(id) : "/admin/fund-database");
+          router.push(id ? `/admin/matching?client=${encodeURIComponent(id)}` : "/admin/matching");
         }}
         className="normal-case tracking-normal"
       >

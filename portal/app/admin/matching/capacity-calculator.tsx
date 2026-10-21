@@ -54,7 +54,7 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
 const STATUS_TEXT = { under: "Under the benchmark", on: "On the benchmark (within 5%)", over: "Over the benchmark" } as const;
 
 /**
- * The capacity calculator for one saved four-tier run. Everything recalculates
+ * The capacity calculator for one saved run. Everything recalculates
  * in the browser as the inputs change; only Save plan writes anything.
  */
 export function CapacityCalculator({

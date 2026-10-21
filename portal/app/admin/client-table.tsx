@@ -9,6 +9,14 @@ import { StagePill } from "@/components/stage-pill";
 import { nextActionText, overallProgress } from "@/lib/progress";
 import { readyForInvestorList } from "@/lib/setup";
 import type { Client, EngagementStage } from "@/lib/types";
+import type { Readiness } from "@/lib/company-profile/core";
+import { matchPath } from "@/lib/match/shared";
+
+const MATCH_READY: Record<Readiness, { label: string; tone: string }> = {
+  ready: { label: "Ready", tone: "text-success" },
+  limited: { label: "Limited", tone: "text-warning" },
+  blocked: { label: "Blocked", tone: "text-error" },
+};
 
 const STAGE_FILTERS: { value: "all" | EngagementStage; label: string }[] = [
   { value: "all", label: "All" },
@@ -27,7 +35,14 @@ function clientName(client: Client) {
   );
 }
 
-export function ClientTable({ clients }: { clients: Client[] }) {
+export function ClientTable({
+  clients,
+  readiness = {},
+}: {
+  clients: Client[];
+  /** Whether each client's profile can be matched, by client id. */
+  readiness?: Record<string, Readiness>;
+}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [stage, setStage] = useState<"all" | EngagementStage>("all");
@@ -134,13 +149,14 @@ export function ClientTable({ clients }: { clients: Client[] }) {
         </p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[720px] text-left text-body-sm">
+          <table className="w-full min-w-[820px] text-left text-body-sm">
             <thead>
               <tr className="border-b border-border text-label uppercase tracking-label text-muted">
                 <th className="px-lg py-sm font-medium">Client</th>
                 <th className="px-lg py-sm font-medium">Stage</th>
                 <th className="px-lg py-sm font-medium">Progress</th>
                 <th className="px-lg py-sm font-medium">Next action</th>
+                <th className="px-lg py-sm font-medium">Ready to match</th>
                 <th className="px-lg py-sm font-medium">
                   <span className="sr-only">View as client</span>
                 </th>
@@ -196,6 +212,19 @@ export function ClientTable({ clients }: { clients: Client[] }) {
                     </td>
                     <td className="px-lg py-md text-muted">
                       {nextActionText(client)}
+                    </td>
+                    <td className="px-lg py-md">
+                      {readiness[client.id] ? (
+                        <Link
+                          href={matchPath(client.id)}
+                          onClick={(event) => event.stopPropagation()}
+                          className={`${MATCH_READY[readiness[client.id]].tone} no-underline hover:underline`}
+                        >
+                          {MATCH_READY[readiness[client.id]].label}
+                        </Link>
+                      ) : (
+                        <span className="text-muted">–</span>
+                      )}
                     </td>
                     <td className="px-sm py-md text-right">
                       <ViewAsClientLink clientId={client.id} label={heading} />

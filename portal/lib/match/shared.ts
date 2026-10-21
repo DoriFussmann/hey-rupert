@@ -3,7 +3,6 @@
 
 import type { Flag, Level, SiteResult, Tier } from "@/lib/match/engine/index.mjs";
 import type { ReappliedContacts } from "@/lib/match/contact-import";
-import type { VerifyState } from "@/lib/match/verify";
 
 export type { Flag, Level, SiteResult, Tier };
 
@@ -15,61 +14,25 @@ export const FUND_UPLOAD_CHUNK_BYTES = 3 * 1024 * 1024;
 /** Funds the daily website job checks (the whole database refreshes about monthly). */
 export const DAILY_SITE_BATCH = 250;
 
-/**
- * The engine the Match page, verification and Push to client use, for every
- * client. "current": three tiers (Bullseye, Match, Expansion). "four_tier":
- * Core, Sphere, Tier 3, Tier 4. Lists already pushed keep their own tiers.
- */
-export type MatchEngine = "current" | "four_tier";
-
-export const MATCH_ENGINE_LABEL: Record<MatchEngine, string> = {
-  current: "Current (three tiers)",
-  four_tier: "Four-tier",
-};
-
-/** Where Rupert Match opens for a client: the Fund Database, with the client picked. */
-export function matchPath(clientId: string) {
-  return `/admin/fund-database?client=${encodeURIComponent(clientId)}#client-matching`;
+/** The Matching page for a client; `tab` opens one of its tabs. */
+export function matchPath(clientId: string, tab?: MatchTab) {
+  return `/admin/matching?client=${encodeURIComponent(clientId)}${tab && tab !== "tiers" ? `&tab=${tab}` : ""}`;
 }
 
-export const TIERS: { key: Tier; label: string; description: string }[] = [
-  {
-    key: "bullseye",
-    label: "Bullseye",
-    description: "Right stage, core sector, your geography, focused thesis.",
-  },
-  {
-    key: "match",
-    label: "Match",
-    description: "Fits on all three with a broader or one-step-off link.",
-  },
-  {
-    key: "expansion",
-    label: "Expansion",
-    description: "One dimension stretched. Send after the core tiers.",
-  },
-];
+export const MATCH_TABS = ["tiers", "outside", "near", "capacity", "history"] as const;
+export type MatchTab = (typeof MATCH_TABS)[number];
 
-export const LEVEL_LABEL: Record<Level, string> = {
-  [-3]: "Widest",
-  [-2]: "Broadest",
-  [-1]: "Broader",
-  0: "Default",
-  1: "Tighter",
-  2: "Tightest",
-  3: "Strictest",
+export const MATCH_TAB_LABEL: Record<MatchTab, string> = {
+  tiers: "Tiers",
+  outside: "Outside the tiers",
+  near: "Near misses",
+  capacity: "Capacity",
+  history: "History",
 };
 
-/** Tuning steps per tier, widest to strictest. */
-export const LEVEL_MIN: Level = -3;
-export const LEVEL_MAX: Level = 3;
-
-/** Investor-list fit tier for each match tier (1 = best fit). */
-export const TIER_TO_FIT: Record<Tier, 1 | 2 | 3> = {
-  bullseye: 1,
-  match: 2,
-  expansion: 3,
-};
+export function asMatchTab(value: unknown): MatchTab {
+  return (MATCH_TABS as readonly string[]).includes(String(value)) ? (value as MatchTab) : "tiers";
+}
 
 const VC_LADDER = [
   "Pre-Seed",
@@ -422,122 +385,6 @@ export function dropSectorFocus(text: string) {
 
 /** Fields where "none" is a real answer. */
 export const NONE_OK_FIELDS = new Set(["existing_investors", "already_pitched", "competitors"]);
-
-export type ContactBrief = {
-  name: string;
-  title: string;
-  role: string;
-  verify: VerifyState;
-  /** When the current email was checked. Missing on matches saved before dates were shown. */
-  verifiedAt?: string | null;
-};
-
-export type FirmRow = {
-  id: string;
-  name: string;
-  type: string;
-  hq: string;
-  loc: string;
-  year: number | null;
-  /** Website as a full http(s) link, or "". */
-  web: string;
-  /** Investing contacts with an email at this fund. */
-  people: number;
-  tier: Tier;
-  overflow: boolean;
-  score: number;
-  stage: number;
-  sector: number;
-  geo: number;
-  conf: "High" | "Medium" | "Low";
-  confValue: number;
-  pros: string[];
-  con: string | null;
-  highFlags: string[];
-  flagCount: number;
-  site: SiteState | null;
-  near: number;
-  primary: ContactBrief | null;
-  backup: ContactBrief | null;
-  rejected: boolean;
-  review: Review | null;
-};
-
-export type Count = { label: string; count: number };
-
-export type TierSummary = {
-  key: Tier;
-  count: number;
-  level: Level;
-  rules: string[];
-  byType: Count[];
-  byHq: Count[];
-  fitBands: Count[];
-  confBands: Count[];
-  siteStats: Count[];
-  deadRemoved: { id: string; name: string; why: string }[];
-  audit: { total: number; approved: number; rejected: number };
-};
-
-export type MatchView = {
-  ranAt: string;
-  database: { label: string; firms: number; contacts: number };
-  header: string;
-  people: number;
-  counts: Record<Tier, number>;
-  qualifiedBullseye: number;
-  wave: number;
-  funnel: Count[];
-  funnelNotes: string[];
-  tiers: Record<Tier, TierSummary>;
-  rows: FirmRow[];
-  reply: string;
-  fewBullseye: boolean;
-  hidden: { id: string; name: string; reason: string }[];
-  siteN: number;
-  /** Exclusion lines that matched no fund on the last run. */
-  unmatchedExclusions?: string[];
-};
-
-export type FirmContact = {
-  /** FirmID + original email key (see lib/match/verify). */
-  id: string;
-  name: string;
-  title: string;
-  role: string;
-  email: string;
-  phone: string;
-  location: string;
-  seq: "Primary" | "Backup" | null;
-  why: string[];
-  verify: VerifyState;
-  /** When the current email was checked. */
-  verifiedAt?: string | null;
-};
-
-export type FirmDetail = {
-  row: FirmRow;
-  why: string;
-  pros: string[];
-  cons: string[];
-  verify: string[];
-  flags: Flag[];
-  fitParts: { label: string; value: number; max: number }[];
-  checks: { ok: boolean; text: string }[];
-  site: (SiteResult & { url: string }) | null;
-  siteState: SiteState | null;
-  firm: {
-    website: string;
-    email: string;
-    phone: string;
-    stages: string[];
-    verticals: string[];
-    industries: string[];
-    geography: string[];
-    offices: string[];
-  };
-  contacts: FirmContact[];
-};
 
 // ---------------------------------------------------------------------------
 // Fund database versions

@@ -5,9 +5,8 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { loadLiveDb, matchTableError } from "@/lib/match/db-server";
-import { loadEngineSetting, setEngineSetting } from "@/lib/match/engine-setting";
 import { cleanSettings, loadProfileState, saveProfileState } from "@/lib/match/profile-server";
-import { REJECT_REASONS, type MatchEngine } from "@/lib/match/shared";
+import { REJECT_REASONS } from "@/lib/match/shared";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
 import { checkAndStoreSites, isStale, loadSites } from "@/lib/match/sites-server";
 import { TIER_KEYS } from "@/lib/match/tiers/core";
@@ -16,7 +15,6 @@ import {
   liveFourTier,
   proposeFofException,
   reviewFofException,
-  runComparison,
   runFourTier,
 } from "@/lib/match/tiers/server";
 
@@ -41,25 +39,6 @@ function asText(value: unknown, max: number) {
   return typeof value === "string" ? value.slice(0, max) : "";
 }
 
-/**
- * Runs the current engine and the four-tier engine for a client and saves
- * both runs. The live Match page and its saved result are not touched.
- */
-export async function runTierComparison(clientId: string): Promise<Result<{ comparisonId: string }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const id = asText(clientId, 64);
-  if (!/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, error: "Unknown client." };
-  try {
-    const done = await runComparison(access.supabase, id, access.email);
-    if (!done.ok) return done;
-    revalidatePath(`/admin/clients/${id}/match/compare`);
-    return { ok: true, comparisonId: done.value.comparisonId };
-  } catch (err) {
-    return { ok: false, error: errorText(err, "The comparison could not run.") };
-  }
-}
-
 export async function proposeFof(input: {
   firmId: string;
   firmName: string;
@@ -82,7 +61,7 @@ export async function proposeFof(input: {
       access.email,
     );
     if (!saved.ok) return saved;
-    revalidatePath("/admin/matching");
+    revalidatePath("/admin/taxonomy");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The exception could not be saved.") };
@@ -96,7 +75,7 @@ export async function reviewFof(firmId: string, decision: string): Promise<Resul
   try {
     const saved = await reviewFofException(access.supabase, asText(firmId, 200), decision, access.email);
     if (!saved.ok) return saved;
-    revalidatePath("/admin/matching");
+    revalidatePath("/admin/taxonomy");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The review could not be saved.") };
@@ -106,15 +85,12 @@ export async function reviewFof(firmId: string, decision: string): Promise<Resul
 const CLIENT_ID = /^[0-9a-f-]{36}$/i;
 
 function revalidateFourTier(clientId: string) {
-  revalidatePath(`/admin/clients/${clientId}/match/four-tier`);
-  revalidatePath("/admin/fund-database");
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/admin/matching");
 }
 
-/**
- * Runs the four-tier engine for a client and saves the run permanently. The
- * Match page (on the four-tier engine) and the preview show the newest run.
- */
-export async function runFourTierPreview(clientId: string): Promise<Result<{ runId: string }>> {
+/** Runs the match for a client and saves the run permanently. The Matching page shows the newest run. */
+export async function runMatchForClient(clientId: string): Promise<Result<{ runId: string }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const id = asText(clientId, 64);
@@ -125,7 +101,7 @@ export async function runFourTierPreview(clientId: string): Promise<Result<{ run
     revalidateFourTier(id);
     return { ok: true, runId: done.value.runId };
   } catch (err) {
-    return { ok: false, error: errorText(err, "The four-tier run failed.") };
+    return { ok: false, error: errorText(err, "The match did not run.") };
   }
 }
 
@@ -146,32 +122,11 @@ export async function decideIdentityGroup(groupKey: string, decision: string, no
       access.email,
     );
     if (!saved.ok) return saved;
-    revalidatePath("/admin/matching/duplicates");
-    revalidatePath("/admin/matching");
+    revalidatePath("/admin/taxonomy/duplicates");
+    revalidatePath("/admin/taxonomy");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The decision could not be saved.") };
-  }
-}
-
-/** Switches the match engine for every client. Logged with who switched and why. */
-export async function switchMatchEngine(engine: string, note: string): Promise<Result<object>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  if (engine !== "current" && engine !== "four_tier") return { ok: false, error: "Unknown engine." };
-  try {
-    const current = await loadEngineSetting(access.supabase);
-    if (!current.ok) return current;
-    if (current.value.configured && current.value.engine === engine) {
-      return { ok: false, error: "That engine is already in use." };
-    }
-    const saved = await setEngineSetting(access.supabase, engine as MatchEngine, asText(note, 1000), access.email);
-    if (!saved.ok) return saved;
-    revalidatePath("/admin/matching");
-    revalidatePath("/admin/fund-database");
-    return { ok: true };
-  } catch (err) {
-    return { ok: false, error: errorText(err, "The switch was not saved.") };
   }
 }
 

@@ -1,22 +1,8 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { matchTableError, selectAll } from "@/lib/match/db-server";
-import {
-  buildProfile,
-  cleanAnswers,
-  loadProfileState,
-  saveProfileState,
-} from "@/lib/match/profile-server";
-import { buildView, runClientMatch, storeMatch } from "@/lib/match/run-server";
-import {
-  SANDBOX_COMPANY_NAME,
-  SANDBOX_MIGRATION_MISSING,
-  SANDBOX_FIELD_IDS,
-  sandboxAnswers,
-  type SandboxCompany,
-  type SandboxPanel,
-} from "@/lib/match/sandbox";
-import { DEFAULT_SETTINGS, type MatchAnswers } from "@/lib/match/shared";
+import { matchTableError } from "@/lib/match/db-server";
+import { loadProfileState, saveProfileState } from "@/lib/match/profile-server";
+import { SANDBOX_COMPANY_NAME, SANDBOX_MIGRATION_MISSING } from "@/lib/match/sandbox";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { testPilotEmail } from "@/lib/test-pilot";
 
@@ -46,7 +32,7 @@ export async function findSandboxId(supabase: ServiceClient): Promise<Result<str
  * paused, nobody signs in) with Setup open, so its portal can show the
  * Investor Matching page.
  */
-async function ensureSandbox(supabase: ServiceClient): Promise<Result<string>> {
+export async function ensureSandbox(supabase: ServiceClient): Promise<Result<string>> {
   const existing = await findSandboxId(supabase);
   if (!existing.ok) return existing;
   if (existing.value) return { ok: true, value: existing.value };
@@ -84,93 +70,25 @@ async function ensureSandbox(supabase: ServiceClient): Promise<Result<string>> {
   return { ok: true, value: id };
 }
 
-/** What the Match Sandbox panel needs: the sandbox's answers and every real company. */
-export async function loadSandboxPanel(supabase: ServiceClient): Promise<Result<SandboxPanel>> {
-  const sandbox = await findSandboxId(supabase);
-  if (!sandbox.ok) return sandbox;
-
-  const [clients, profiles] = await Promise.all([
-    supabase
-      .from("clients")
-      .select("id, company_name, archived_at, is_match_sandbox")
-      .order("company_name", { ascending: true }),
-    selectAll<{ client_id: string; answers: unknown; settings: unknown }>((from, to) =>
-      supabase
-        .from("match_profiles")
-        .select("client_id, answers, settings")
-        .order("client_id")
-        .range(from, to),
-    ),
-  ]);
-  if (clients.error) return { ok: false, error: sandboxError(clients.error.message, clients.error.code) };
-  if (!profiles.ok) return profiles;
-
-  const answersById = new Map(profiles.rows.map((row) => [row.client_id, cleanAnswers(row.answers)]));
-  const companies: SandboxCompany[] = ((clients.data ?? []) as Record<string, unknown>[])
-    .filter((row) => row.is_match_sandbox !== true)
-    .map((row) => {
-      const id = String(row.id);
-      const answers = answersById.get(id);
-      const built = answers ? buildProfile(answers, DEFAULT_SETTINGS) : null;
-      return {
-        id,
-        name: String(row.company_name ?? "") || "(no name)",
-        ready: Boolean(built?.ready),
-        missing: built ? built.gaps.map((gap) => gap.label) : ["Company profile"],
-        archived: row.archived_at != null,
-      };
-    });
-
-  return {
-    ok: true,
-    value: {
-      sandboxId: sandbox.value,
-      answers: sandbox.value ? sandboxAnswers(answersById.get(sandbox.value) ?? {}) : {},
-      companies,
-    },
-  };
-}
-
-/** Saves the sandbox answers, runs the match and stores it for the Match page. */
-export async function runSandboxMatch(
-  supabase: ServiceClient,
-  raw: unknown,
-): Promise<Result<{ clientId: string }>> {
-  const answers = sandboxAnswers(cleanAnswers(raw));
-  const built = buildProfile(answers, DEFAULT_SETTINGS);
-  if (!built.ready) {
-    return { ok: false, error: `Set ${built.gaps.map((gap) => gap.label).join(", ")} to run the match.` };
-  }
+/**
+ * Gives the test client a real client's company profile (answers and
+ * settings), so the whole flow can be tried on that company. The real
+ * client is not changed. The company name stays the test client's.
+ */
+export async function copyProfileToSandbox(supabase: ServiceClient, sourceId: string): Promise<Result<{ clientId: string }>> {
+  const source = await loadProfileState(supabase, sourceId);
+  if (!source.ok) return source;
+  if (!source.value) return { ok: false, error: "That client has no company profile yet." };
   const sandbox = await ensureSandbox(supabase);
   if (!sandbox.ok) return sandbox;
-  const clientId = sandbox.value;
-
-  const current = await loadProfileState(supabase, clientId);
-  if (!current.ok) return current;
-  const saved = await saveProfileState(supabase, clientId, {
-    answers,
-    settings: current.value?.settings ?? DEFAULT_SETTINGS,
+  if (sandbox.value === sourceId) return { ok: false, error: "Pick a real client to copy from." };
+  const saved = await saveProfileState(supabase, sandbox.value, {
+    answers: { ...source.value.answers, company_name: SANDBOX_COMPANY_NAME },
+    settings: source.value.settings,
     source: "edit",
   });
   if (!saved.ok) return saved;
-
-  const run = await runClientMatch(supabase, clientId);
-  if (!run.ok) return run;
-  await storeMatch(supabase, clientId, buildView(run.value));
-  return { ok: true, value: { clientId } };
-}
-
-/** A real company's answers for the sandbox fields, to fill the form. */
-export async function companyAnswers(supabase: ServiceClient, clientId: string): Promise<Result<MatchAnswers>> {
-  const loaded = await loadProfileState(supabase, clientId);
-  if (!loaded.ok) return loaded;
-  if (!loaded.value) return { ok: false, error: "This company has no company profile yet." };
-  const answers: MatchAnswers = {};
-  for (const id of SANDBOX_FIELD_IDS) {
-    const value = loaded.value.answers[id];
-    if (value !== undefined) answers[id] = value;
-  }
-  return { ok: true, value: answers };
+  return { ok: true, value: { clientId: sandbox.value } };
 }
 
 /**
@@ -192,14 +110,8 @@ export async function resetSandbox(supabase: ServiceClient): Promise<Result<{ cl
   ]);
   const failed = deletes.find((result) => result.error);
   if (failed?.error) return { ok: false, error: sandboxError(failed.error.message, failed.error.code) };
-  // Saved match runs are permanent; this marks where the sandbox starts again.
-  // Best effort: the reset itself doesn't depend on it.
+  // Saved match runs and capacity plans are permanent; this marks where the
+  // test client starts again. Best effort: the reset itself doesn't depend on it.
   await supabase.from("match_sandbox_resets").insert({ client_id: clientId });
-
-  const loaded = await loadProfileState(supabase, clientId);
-  if (loaded.ok && loaded.value && buildProfile(loaded.value.answers, loaded.value.settings).ready) {
-    const run = await runClientMatch(supabase, clientId);
-    if (run.ok) await storeMatch(supabase, clientId, buildView(run.value));
-  }
   return { ok: true, value: { clientId } };
 }

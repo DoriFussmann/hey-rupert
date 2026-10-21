@@ -3,8 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { companyAnswers, resetSandbox, runSandboxMatch } from "@/lib/match/sandbox-server";
-import type { MatchAnswers } from "@/lib/match/shared";
+import { copyProfileToSandbox, ensureSandbox, resetSandbox } from "@/lib/match/sandbox-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -24,50 +23,46 @@ function errorText(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
 }
 
-function revalidateSandbox(clientId: string | null) {
-  revalidatePath("/admin/fund-database");
-  if (clientId) {
-    revalidatePath(`/admin/clients/${clientId}/match/verify`);
-  }
-}
-
-/** Saves the sandbox profile and runs the match. Returns where to go next. */
-export async function runSandbox(answers: MatchAnswers): Promise<Result<{ clientId: string }>> {
+/** Creates the test client if it doesn't exist yet. */
+export async function createTestClient(): Promise<Result<{ clientId: string }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   try {
-    const done = await runSandboxMatch(access.supabase, answers);
+    const done = await ensureSandbox(access.supabase);
     if (!done.ok) return { ok: false, error: done.error };
-    revalidateSandbox(done.value.clientId);
+    revalidatePath("/admin/matching");
+    return { ok: true, clientId: done.value };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The test client could not be created.") };
+  }
+}
+
+/** Copies a real client's company profile into the test client. */
+export async function copyProfileToTestClient(sourceId: string): Promise<Result<{ clientId: string }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!/^[0-9a-f-]{36}$/i.test(String(sourceId ?? ""))) return { ok: false, error: "Pick a client to copy from." };
+  try {
+    const done = await copyProfileToSandbox(access.supabase, String(sourceId));
+    if (!done.ok) return { ok: false, error: done.error };
+    revalidatePath("/admin/matching");
     return { ok: true, clientId: done.value.clientId };
   } catch (err) {
-    return { ok: false, error: errorText(err, "The sandbox match did not run.") };
+    return { ok: false, error: errorText(err, "The profile could not be copied.") };
   }
 }
 
-/** A real company's matching inputs, to copy into the sandbox form. */
-export async function copyCompanyToSandbox(clientId: string): Promise<Result<{ answers: MatchAnswers }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  try {
-    const loaded = await companyAnswers(access.supabase, String(clientId));
-    if (!loaded.ok) return { ok: false, error: loaded.error };
-    return { ok: true, answers: loaded.value };
-  } catch (err) {
-    return { ok: false, error: errorText(err, "The company profile could not be loaded.") };
-  }
-}
-
-/** Clears the sandbox's reviews, decisions, verification runs and pushed list. */
-export async function resetSandboxData(): Promise<Result<object>> {
+/** Clears the test client's reviews, contact decisions, verification runs and pushed list. */
+export async function resetTestClient(): Promise<Result<object>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   try {
     const done = await resetSandbox(access.supabase);
     if (!done.ok) return { ok: false, error: done.error };
-    revalidateSandbox(done.value.clientId);
+    revalidatePath("/admin/matching");
+    if (done.value.clientId) revalidatePath(`/admin/clients/${done.value.clientId}/match/verify`);
     return { ok: true };
   } catch (err) {
-    return { ok: false, error: errorText(err, "The sandbox could not be reset.") };
+    return { ok: false, error: errorText(err, "The test client could not be reset.") };
   }
 }

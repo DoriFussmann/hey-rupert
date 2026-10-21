@@ -1,15 +1,16 @@
 import "server-only";
-import { createHash, randomUUID } from "node:crypto";
+import { createHash } from "node:crypto";
 import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
 import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
 import { MATCH_MIGRATION_MISSING, loadLiveDb, selectAll } from "@/lib/match/db-server";
 import type { PeopleStates } from "@/lib/match/list-snapshot";
-import { loadProfileState, matchBasis } from "@/lib/match/profile-server";
-import { runClientMatch, type MatchRun } from "@/lib/match/run-server";
+import { buildProfile, loadProfileState, matchBasis } from "@/lib/match/profile-server";
+import { loadMatchContext, type MatchContext } from "@/lib/match/run-server";
 import type { MatchProfileState } from "@/lib/match/shared";
 import { loadSites } from "@/lib/match/sites-server";
-import { matchingProfile, validateProfile } from "@/lib/company-profile/core";
-import { loadCompanyProfile, loadVersions } from "@/lib/company-profile/server";
+import { matchingProfile, validateProfile, type ProfileIssue, type Readiness } from "@/lib/company-profile/core";
+import { currentProfile, loadCompanyProfile, loadVersions } from "@/lib/company-profile/server";
+import { loadTaxonomy } from "@/lib/taxonomy/server";
 import type { InvestorListPayload } from "@/lib/setup";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { findAlias, mapFirm, type TaxIndex } from "@/lib/taxonomy/core";
@@ -24,7 +25,7 @@ import {
   type TierRun,
   type TierRunInput,
 } from "@/lib/match/tiers/core";
-import { compareRuns, type Comparison, type StoredResult } from "@/lib/match/tiers/compare";
+import type { StoredResult } from "@/lib/match/tiers/stored";
 import {
   appliedGroups,
   duplicateFlags,
@@ -35,7 +36,7 @@ import {
   type IdentityDecision,
 } from "@/lib/match/tiers/duplicates";
 import { verifyStateOf, type ContactStates } from "@/lib/match/tiers/export";
-import { legacyRows, tierRows, type ResultRow } from "@/lib/match/tiers/record";
+import { tierRows, type ResultRow } from "@/lib/match/tiers/record";
 import { firmsByRowKey, fourTierClientList, listable, reachablePeople } from "@/lib/match/tiers/client-list";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -336,6 +337,58 @@ export async function decideIdentity(
 }
 
 // ---------------------------------------------------------------------------
+// Readiness
+
+export type ProfileReadiness = {
+  readiness: Readiness;
+  /** Fields a run can't do without (stage, sector, HQ country). */
+  missing: string[];
+  /** Points that block the run or make it Limited, with the field they concern. */
+  issues: ProfileIssue[];
+};
+
+/**
+ * Whether a client's profile can be matched: Ready, Limited (runs, with
+ * warnings) or Blocked (can't run), and why. Reads the profile; changes nothing.
+ */
+export async function profileReadiness(supabase: ServiceClient, clientId: string): Promise<Result<ProfileReadiness>> {
+  const state = await loadProfileState(supabase, clientId);
+  if (!state.ok) return state;
+  if (!state.value) return { ok: true, value: { readiness: "blocked", missing: ["Company profile"], issues: [] } };
+  const loaded = await loadCompanyProfile(supabase, clientId, state.value);
+  if (!loaded.ok) return loaded;
+  return { ok: true, value: readinessOf(state.value, loaded.value.profile, loaded.value.index, loaded.value.buildProblems) };
+}
+
+function readinessOf(state: MatchProfileState, profile: Parameters<typeof validateProfile>[0], index: TaxIndex, problems: ProfileIssue[]): ProfileReadiness {
+  const missing = buildProfile(state.answers, state.settings).gaps.map((gap) => gap.label);
+  const { issues, readiness } = validateProfile(profile, index, problems);
+  const shown = issues.filter((issue) => issue.severity === "blocking" || issue.severity === "limited");
+  return { readiness: missing.length > 0 ? "blocked" : readiness, missing, issues: shown };
+}
+
+/** Readiness of several clients at once (the Clients list). A client that can't be read is left out. */
+export async function readinessFor(supabase: ServiceClient, clientIds: string[]): Promise<Map<string, Readiness>> {
+  const out = new Map<string, Readiness>();
+  const taxonomy = await loadTaxonomy(supabase);
+  if (!taxonomy.ok) return out;
+  await Promise.all(
+    clientIds.map(async (id) => {
+      const state = await loadProfileState(supabase, id);
+      if (!state.ok) return;
+      if (!state.value) {
+        out.set(id, "blocked");
+        return;
+      }
+      const current = await currentProfile(supabase, id, state.value, taxonomy.value);
+      if (!current.ok) return;
+      out.set(id, readinessOf(state.value, current.value.profile, taxonomy.value, current.value.buildProblems).readiness);
+    }),
+  );
+  return out;
+}
+
+// ---------------------------------------------------------------------------
 // Running
 
 /**
@@ -347,7 +400,7 @@ export function profileBasis(state: MatchProfileState) {
 }
 
 type Prepared = {
-  run: MatchRun;
+  run: MatchContext;
   db: FundDb;
   index: TaxIndex;
   input: Omit<TierRunInput, "sites">;
@@ -366,9 +419,9 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   if (clientError) return { ok: false, error: clientError.message };
   if (!client) return { ok: false, error: "Client not found." };
 
-  const legacy = await runClientMatch(supabase, clientId);
-  if (!legacy.ok) return legacy;
-  const run = legacy.value;
+  const context = await loadMatchContext(supabase, clientId);
+  if (!context.ok) return context;
+  const run = context.value;
 
   const loaded = await loadCompanyProfile(supabase, clientId, run.state);
   if (!loaded.ok) return loaded;
@@ -444,12 +497,12 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   };
 }
 
-/** The four-tier run, with each tier's top funds website-checked like the current engine's. */
+/** The four-tier run, with each tier's top funds checked against their stored website results. */
 async function runFourTierEngine(supabase: ServiceClient, prepared: Prepared): Promise<Result<TierRun>> {
   const { run, db, input } = prepared;
   try {
     let tiers = runTiers({ ...input, sites: null });
-    // Same condition as the current engine's run: websites are only checked when siteN > 0.
+    // Websites are only checked when the client's website check is on (siteN > 0).
     if (run.profile.siteN > 0) {
       const take = run.profile.siteN + 20;
       const ids = new Set<string>();
@@ -459,12 +512,12 @@ async function runFourTierEngine(supabase: ServiceClient, prepared: Prepared): P
           .slice(0, take)
           .forEach((o) => ids.add(o.firmId));
       }
-      const missing = db.firms.filter((firm) => ids.has(firm.id) && !run.sites[firm.id]);
-      let sites: Record<string, SiteResult> = { ...run.sites };
-      if (missing.length) {
-        const more = await loadSites(supabase, missing);
-        if (!more.ok) return more;
-        sites = { ...sites, ...more.sites };
+      let sites: Record<string, SiteResult> = {};
+      const candidates = db.firms.filter((firm) => ids.has(firm.id));
+      if (candidates.length) {
+        const stored = await loadSites(supabase, candidates);
+        if (!stored.ok) return stored;
+        sites = stored.sites;
       }
       tiers = runTiers({ ...input, sites });
     }
@@ -472,34 +525,6 @@ async function runFourTierEngine(supabase: ServiceClient, prepared: Prepared): P
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "The four-tier run failed." };
   }
-}
-
-/**
- * Runs both engines for a client on the same Fund Database version, profile
- * and settings, and saves both runs under one comparison id. Nothing on the
- * live Match page changes: the current engine's saved view is not touched.
- */
-export async function runComparison(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ comparisonId: string }>> {
-  const prepared = await prepare(supabase, clientId, actor);
-  if (!prepared.ok) return prepared;
-  const tiers = await runFourTierEngine(supabase, prepared.value);
-  if (!tiers.ok) return tiers;
-  const { run, db, common, profileInputs, settings } = prepared.value;
-  const comparisonId = randomUUID();
-  const legacyCounts = { ...run.out.counts, funnel: run.out.funnel, deadRemoved: run.out.deadRemoved.length, qualifiedBullseye: run.out.qualifiedBullseye, wave: run.out.wave };
-  const savedLegacy = await saveRun(
-    supabase,
-    { ...common, comparison_id: comparisonId, engine: "legacy", rules_version: "legacy", profile_inputs: profileInputs, settings, counts: legacyCounts },
-    legacyRows(run.out, db),
-  );
-  if (!savedLegacy.ok) return savedLegacy;
-  const savedTiers = await saveRun(
-    supabase,
-    { ...common, comparison_id: comparisonId, engine: "tiers", rules_version: RULES_VERSION, profile_inputs: profileInputs, settings, counts: tiers.value.counts },
-    tierRows(tiers.value),
-  );
-  if (!savedTiers.ok) return savedTiers;
-  return { ok: true, value: { comparisonId } };
 }
 
 /**
@@ -525,7 +550,7 @@ export async function runFourTier(supabase: ServiceClient, clientId: string, act
  * The four-tier engine for a client, run now and not saved: verification uses
  * it, as the current engine's verification runs the current engine.
  */
-export async function liveFourTier(supabase: ServiceClient, clientId: string): Promise<Result<{ run: MatchRun; tiers: TierRun }>> {
+export async function liveFourTier(supabase: ServiceClient, clientId: string): Promise<Result<{ run: MatchContext; tiers: TierRun }>> {
   const prepared = await prepare(supabase, clientId, null);
   if (!prepared.ok) return prepared;
   const tiers = await runFourTierEngine(supabase, prepared.value);
@@ -698,15 +723,6 @@ export async function contactStates(supabase: ServiceClient, clientId: string, f
   return { ok: true, value: states };
 }
 
-export type ComparisonView = {
-  legacy: RunHeader;
-  tiers: RunHeader;
-  complete: boolean;
-  comparison: Comparison;
-  /** Every stored four-tier row, for the full download. */
-  tierRows: StoredResult[];
-};
-
 export type RunListItem = RunHeader & { saved: number };
 
 /** The client's saved runs, newest first. For the sandbox: only since its last reset. */
@@ -727,29 +743,6 @@ export async function listRuns(supabase: ServiceClient, clientId: string, limit 
     runs.push({ ...header, saved: count ?? 0 });
   }
   return { ok: true, value: { runs, since } };
-}
-
-/** A saved comparison, rebuilt from its stored results only. */
-export async function loadComparison(supabase: ServiceClient, clientId: string, comparisonId: string): Promise<Result<ComparisonView>> {
-  const { data, error } = await supabase.from("match_runs").select("*").eq("client_id", clientId).eq("comparison_id", comparisonId);
-  if (error) return { ok: false, error: tiersError(error.message, error.code) };
-  const headers = (data ?? []).map(asHeader);
-  const legacy = headers.find((h) => h.engine === "legacy");
-  const tiers = headers.find((h) => h.engine === "tiers");
-  if (!legacy || !tiers) return { ok: false, error: "This comparison is incomplete: one of its runs was not saved." };
-  const [oldRows, newRows] = await Promise.all([loadResults(supabase, legacy.id), loadResults(supabase, tiers.id)]);
-  if (!oldRows.ok) return oldRows;
-  if (!newRows.ok) return newRows;
-  return {
-    ok: true,
-    value: {
-      legacy,
-      tiers,
-      complete: oldRows.value.length === legacy.resultsExpected && newRows.value.length === tiers.resultsExpected,
-      comparison: compareRuns(oldRows.value, newRows.value),
-      tierRows: newRows.value,
-    },
-  };
 }
 
 /** Funds of funds with their exception state, for the review panel. */

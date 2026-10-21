@@ -3,20 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { pushFourTierToClient, restoreHiddenFund } from "@/app/admin/match-actions";
-import { checkFourTierWebsites, runFourTierPreview, saveFourTierSettings } from "@/app/admin/tiers-actions";
-import { SettingsPanel } from "@/app/admin/clients/[id]/match/result-board";
+import { pushRunToClient, restoreHiddenFund } from "@/app/admin/match-actions";
+import { checkFourTierWebsites, runMatchForClient, saveFourTierSettings } from "@/app/admin/tiers-actions";
+import { SettingsPanel, type HiddenFund } from "@/app/admin/matching/settings-panel";
 import { errorText, n, primaryButton, secondaryButton, type Notice } from "@/app/admin/clients/[id]/match/ui";
-import { siteSummaryText, type MatchSettings, type MatchView } from "@/lib/match/shared";
+import { siteSummaryText, type MatchSettings } from "@/lib/match/shared";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
 /**
- * The four-tier Match page's actions: run (saved permanently), check
- * websites, verify, export and push the run shown. Push sends exactly the
- * saved run; it is off while the run no longer reflects the client's data.
+ * The Matching page's actions: run (saved permanently), check websites,
+ * verify and push the run shown. Push sends exactly the saved run; it is off
+ * while the run no longer reflects the client's data.
  */
-export function FourTierControls({
+export function MatchControls({
   clientId,
   runId,
   canRun,
@@ -33,7 +33,7 @@ export function FourTierControls({
   pushBlocked: string | null;
   sandbox: boolean;
   settings: MatchSettings | null;
-  hidden: MatchView["hidden"];
+  hidden: HiddenFund[];
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -60,13 +60,13 @@ export function FourTierControls({
   function push() {
     if (!runId) return;
     const question = sandbox
-      ? "Publish this saved four-tier run on the Test Pilot's Investor List? No email is sent."
-      : "Push this saved four-tier run to the client's Investor Matching as a draft? The client sees nothing until you send it from the client page. This replaces the draft list there.";
+      ? "Publish this run on the test client's own portal? No email is sent."
+      : "Put this run on the client's page as a draft? The client sees nothing until you send it from the client page. It replaces the draft list there.";
     if (!window.confirm(question)) return;
-    void act("Pushing the investor list…", () => pushFourTierToClient(clientId, runId), (result) =>
+    void act("Pushing the investor list…", () => pushRunToClient(clientId, runId), (result) =>
       result.sandbox
-        ? `${n(result.funds)} funds are on the Test Pilot's Investor List, in four tiers.`
-        : `${n(result.funds)} funds saved as a four-tier draft in the client's Investor Matching. The client sees nothing yet.`,
+        ? `${n(result.funds)} funds are on the test client's portal.`
+        : `${n(result.funds)} funds are on the client's page as a draft (Investor Matching). The client sees nothing yet.`,
     );
   }
 
@@ -79,7 +79,7 @@ export function FourTierControls({
             className={primaryButton}
             disabled={!canRun || Boolean(busy)}
             onClick={() =>
-              void act("Running the four-tier match. Up to a minute; the run is saved permanently…", () => runFourTierPreview(clientId), () => "Run saved.")
+              void act("Running the match. Up to a minute; the run is saved permanently…", () => runMatchForClient(clientId), () => "Run saved.")
             }
           >
             {runId ? "Re-run match" : "Run match"}
@@ -110,21 +110,9 @@ export function FourTierControls({
           </button>
         </div>
         <p className="mt-xs text-body-sm text-muted">
-          {pushBlocked ?? "Push sends the saved run below: its four tiers only. Generalists, unresolved, excluded and near-miss funds are never sent."}
+          {pushBlocked ?? "Push to client puts the run below on the client's page as a draft: its four tiers only, never the admin-only groups."}
         </p>
-        <p className="mt-xs text-body-sm">
-          <Link href={`/admin/clients/${clientId}/match/four-tier`} className="text-secondary underline hover:text-heading">
-            Saved four-tier runs
-          </Link>{" "}
-          ·{" "}
-          <Link href={`/admin/clients/${clientId}/match/compare`} className="text-secondary underline hover:text-heading">
-            Compare with the current engine
-          </Link>{" "}
-          ·{" "}
-          <Link href={`/admin/clients/${clientId}/match/capacity`} className="text-secondary underline hover:text-heading">
-            Campaign capacity
-          </Link>
-        </p>
+
       </section>
       {notice ? (
         <p
@@ -144,7 +132,6 @@ export function FourTierControls({
           settings={settings}
           busy={Boolean(busy)}
           hidden={hidden}
-          fourTier
           onApply={(next) => void act("Saving the rules…", () => saveFourTierSettings(clientId, next), () => "Saved. Re-run the match to apply them.")}
           onRestore={(firmId) => void act("Restoring the fund…", () => restoreHiddenFund(clientId, firmId), () => "Restored for all clients. Re-run the match to include it.")}
         />

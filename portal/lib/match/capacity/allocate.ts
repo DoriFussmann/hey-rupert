@@ -14,7 +14,7 @@
 // relaxed to meet a target.
 
 import { TIER_INFO, TIER_KEYS, type TierKey } from "../tiers/core.ts";
-import type { StoredResult } from "../tiers/compare.ts";
+import type { StoredResult } from "../tiers/stored.ts";
 
 export const CORE_CAP = 10;
 

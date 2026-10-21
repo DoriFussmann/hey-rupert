@@ -13,14 +13,7 @@ import {
   type Decision,
 } from "@/lib/match/corrections-server";
 import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
-import { matchEngine } from "@/lib/match/engine-setting";
-import {
-  buildView,
-  rankedContactId,
-  runClientMatch,
-  storeMatch,
-} from "@/lib/match/run-server";
-import { TIERS, type MatchEngine } from "@/lib/match/shared";
+import { rankedContactId } from "@/lib/match/run-server";
 import { TIER_INFO, TIER_KEYS } from "@/lib/match/tiers/core";
 import { liveFourTier } from "@/lib/match/tiers/server";
 import {
@@ -110,12 +103,11 @@ const WEBMAIL = new Set(["gmail.com", "googlemail.com", "outlook.com", "hotmail.
 type ScopeFund = { tier: string; firm: Firm; seq: RankedContact[]; ranked: RankedContact[] };
 
 /**
- * What verification checks for a client, from the engine in use: the funds
- * in its tiers (rejected ones left out), in outreach order, with stored checks,
+ * What verification checks for a client: the funds in the four tiers
+ * (rejected ones left out), in outreach order, with stored checks,
  * corrections and this client's decisions.
  */
 type ScopeSource = {
-  engine: MatchEngine;
   tiers: { key: string; label: string }[];
   funds: ScopeFund[];
   checks: Map<string, CheckBrief>;
@@ -123,48 +115,29 @@ type ScopeSource = {
   decisions: Map<string, Decision>;
 };
 
-/** Runs the engine in use for the client and lists what verification can check. */
+/** Runs the four-tier engine for the client (not saved) and lists what verification can check. */
 async function loadScope(supabase: ServiceClient, clientId: string): Promise<Result<ScopeSource>> {
-  const engine = await matchEngine(supabase);
-  if (engine === "four_tier") {
-    const live = await liveFourTier(supabase, clientId);
-    if (!live.ok) return live;
-    const { run, tiers } = live.value;
-    const funds: ScopeFund[] = [];
-    for (const outcome of tiers.outcomes) {
-      if (outcome.status !== "tiered" || outcome.rejected || outcome.representedBy || !outcome.tier) continue;
-      const source = tiers.live.get(outcome);
-      if (source) funds.push({ tier: outcome.tier, firm: source.firm, seq: source.seq, ranked: source.ranked });
-    }
-    // A confirmed duplicate's contacts can sit under another FirmID: load every record's checks.
-    const fids = Array.from(new Set(funds.flatMap((fund) => fund.ranked.map((contact) => contact.fid))));
-    const checks = await loadChecksForFirms(supabase, fids);
-    if (!checks.ok) return checks;
-    return {
-      ok: true,
-      value: {
-        engine,
-        tiers: TIER_KEYS.map((key) => ({ key, label: TIER_INFO[key].label })),
-        funds,
-        checks: checks.value,
-        corrections: run.corrections,
-        decisions: run.decisions,
-      },
-    };
+  const live = await liveFourTier(supabase, clientId);
+  if (!live.ok) return live;
+  const { run, tiers } = live.value;
+  const funds: ScopeFund[] = [];
+  for (const outcome of tiers.outcomes) {
+    if (outcome.status !== "tiered" || outcome.rejected || outcome.representedBy || !outcome.tier) continue;
+    const source = tiers.live.get(outcome);
+    if (source) funds.push({ tier: outcome.tier, firm: source.firm, seq: source.seq, ranked: source.ranked });
   }
-  const run = await runClientMatch(supabase, clientId);
-  if (!run.ok) return run;
+  // A confirmed duplicate's contacts can sit under another FirmID: load every record's checks.
+  const fids = Array.from(new Set(funds.flatMap((fund) => fund.ranked.map((contact) => contact.fid))));
+  const checks = await loadChecksForFirms(supabase, fids);
+  if (!checks.ok) return checks;
   return {
     ok: true,
     value: {
-      engine,
-      tiers: TIERS.map(({ key, label }) => ({ key, label })),
-      funds: run.value.out.results
-        .filter((result) => !result.rejected)
-        .map((result) => ({ tier: result.tier, firm: result.f, seq: result.seq, ranked: result.ranked })),
-      checks: run.value.checks,
-      corrections: run.value.corrections,
-      decisions: run.value.decisions,
+      tiers: TIER_KEYS.map((key) => ({ key, label: TIER_INFO[key].label })),
+      funds,
+      checks: checks.value,
+      corrections: run.corrections,
+      decisions: run.decisions,
     },
   };
 }
@@ -573,7 +546,6 @@ export async function loadVerifyOverview(
   return {
     ok: true,
     value: {
-      engine: run.value.engine,
       tiers: run.value.tiers,
       counts,
       flagged: Array.from(flagged.values()),
@@ -612,20 +584,6 @@ async function saveDecision(
   return error ? verifyTableError(error.message, error.code) : null;
 }
 
-/**
- * Re-runs the engine in use after contact decisions. On the current engine the
- * Match page's stored match is refreshed, so it shows who moved up. Four-tier
- * runs are permanent: the next saved run picks the decisions up.
- */
-async function refreshMatch(supabase: ServiceClient, clientId: string, engine: MatchEngine): Promise<Result<ScopeSource>> {
-  if (engine === "current") {
-    const run = await runClientMatch(supabase, clientId);
-    if (!run.ok) return run;
-    await storeMatch(supabase, clientId, buildView(run.value));
-  }
-  return loadScope(supabase, clientId);
-}
-
 // ---------------------------------------------------------------------------
 // Start a run
 
@@ -653,8 +611,9 @@ export async function startVerificationRun(
     if (error) return { ok: false, error };
     decided = true;
   }
+  // A removed contact moves the next person up: run the engine again.
   if (decided) {
-    run = await refreshMatch(supabase, clientId, run.value.engine);
+    run = await loadScope(supabase, clientId);
     if (!run.ok) return run;
   }
 
@@ -1178,11 +1137,6 @@ export async function applyVerificationActions(
     updated.push({ id: contact.id, decision, corrected });
   }
 
-  // The current engine's Match page shows who moved up; four-tier runs are permanent.
-  if (run.value.engine === "current") {
-    const refreshed = await refreshMatch(supabase, clientId, "current");
-    if (!refreshed.ok) return refreshed;
-  }
   return { ok: true, value: updated };
 }
 

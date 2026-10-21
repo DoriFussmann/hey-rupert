@@ -3,7 +3,7 @@ import { cardClass, n } from "@/app/admin/clients/[id]/match/ui";
 import { FundReview } from "@/app/admin/clients/[id]/match/four-tier/fund-review";
 import type { Review } from "@/lib/match/shared";
 import { distinctPeople } from "@/lib/match/tiers/client-list";
-import { reasonLabel, type StoredResult } from "@/lib/match/tiers/compare";
+import { reasonLabel, type StoredResult } from "@/lib/match/tiers/stored";
 import {
   NOTE_LABEL,
   TIER_INFO,
@@ -164,36 +164,25 @@ function FundList({ rows, narrow = false, review }: { rows: StoredResult[]; narr
   );
 }
 
-/**
- * One saved four-tier run, read from its stored rows only: the four tiers,
- * the groups outside them (admin only, never sent to the founder) and the
- * near misses. `columns` shows the tiers side by side (the Match page).
- */
-export function FourTierRunView({
-  clientId,
-  header,
-  rows,
-  complete,
-  columns = false,
-  review,
-  footnote,
-}: {
+type RunProps = {
   clientId: string;
   header: RunHeader;
   rows: StoredResult[];
   complete: boolean;
-  columns?: boolean;
   review?: ReviewContext;
-  /** A line under the run facts (what Push does, or why it is off). */
-  footnote?: ReactNode;
-}) {
+};
+
+const listed = (rows: StoredResult[], tier: TierKey) => rows.filter((r) => r.status === "tiered" && r.tier === tier && !r.detail.representedBy);
+const outside = (rows: StoredResult[], status: "generalist" | "unresolved" | "excluded") =>
+  rows.filter((r) => r.status === status && !r.detail.representedBy);
+const nearMissCount = (rows: StoredResult[]) => rows.filter((r) => r.reasonCodes[r.reasonCodes.length - 1] === "stage_one_off").length;
+const base = (clientId: string) => `/admin/clients/${clientId}/match/four-tier`;
+
+/** The run's facts, its downloads, its warnings and the counts per tier. */
+export function RunSummary({ clientId, header, rows, complete, footnote }: RunProps & { footnote?: ReactNode }) {
   const counts = storedCounts(rows);
   const facts = runFacts(header, complete);
   const warnings = Array.isArray(header.profileInputs.warnings) ? (header.profileInputs.warnings as string[]) : [];
-  const listed = (tier: TierKey) => rows.filter((r) => r.status === "tiered" && r.tier === tier && !r.detail.representedBy);
-  const outside = (status: "generalist" | "unresolved" | "excluded") => rows.filter((r) => r.status === status && !r.detail.representedBy);
-  const nearMisses = rows.filter((r) => r.reasonCodes[r.reasonCodes.length - 1] === "stage_one_off").length;
-  const base = `/admin/clients/${clientId}/match/four-tier`;
   return (
     <>
       {!complete ? <Alert tone="error">This run is incomplete: not every result was saved. Run it again.</Alert> : null}
@@ -207,25 +196,6 @@ export function FourTierRunView({
           </ul>
         </Alert>
       ) : null}
-      <Section title="Run">
-        <dl className="grid gap-x-lg gap-y-xs text-body-sm sm:grid-cols-[14rem_1fr]">
-          {facts.map(([term, value], i) => (
-            <div key={`${term}-${i}`} className="contents">
-              <dt className="text-muted">{term}</dt>
-              <dd className="break-words text-secondary">{String(value)}</dd>
-            </div>
-          ))}
-        </dl>
-        <div className="mt-sm flex flex-wrap gap-md text-body-sm">
-          <a href={`${base}/export?run=${header.id}`} className="text-secondary underline hover:text-heading">
-            Export this saved run (.xlsx)
-          </a>
-          <a href={`${base}/export?run=${header.id}&all=1`} className="text-secondary underline hover:text-heading">
-            Export everything, including contacts with known problems
-          </a>
-        </div>
-        {footnote ? <div className="mt-sm text-body-sm text-muted">{footnote}</div> : null}
-      </Section>
       <Section title="Counts">
         <div className="grid gap-sm text-body-sm sm:grid-cols-2 lg:grid-cols-4">
           {TIER_KEYS.map((key) => (
@@ -240,66 +210,114 @@ export function FourTierRunView({
           Rejected for this client {n(counts.rejected)} · Generalists {n(counts.generalists)} · Unresolved {n(counts.unresolved)} · Excluded{" "}
           {n(counts.excluded)} · Shown through another record {n(counts.represented)} · {n(counts.total)} funds in all
         </p>
-      </Section>
-      {columns ? (
-        <div className="mb-lg grid gap-md lg:grid-cols-2 2xl:grid-cols-4">
-          {TIER_KEYS.map((key) => (
-            <section key={key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${TIER_INFO[key].label} funds`}>
-              <h2 className="text-h4 text-heading">
-                {TIER_INFO[key].label} <span className="text-body-sm font-normal text-muted">{n(listed(key).length)}</span>
-              </h2>
-              <p className="mt-xs text-body-sm text-muted">{TIER_INFO[key].description}</p>
-              <div className="mt-sm">
-                <FundList rows={listed(key)} narrow review={review} />
+        <div className="mt-sm flex flex-wrap gap-md text-body-sm">
+          <a href={`${base(clientId)}/export?run=${header.id}`} className="text-secondary underline hover:text-heading">
+            Export this run (.xlsx)
+          </a>
+          <a href={`${base(clientId)}/export?run=${header.id}&all=1`} className="text-secondary underline hover:text-heading">
+            Export everything, including contacts with known problems
+          </a>
+        </div>
+        <details className="mt-sm">
+          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Run details</summary>
+          <dl className="mt-xs grid gap-x-lg gap-y-xs text-body-sm sm:grid-cols-[14rem_1fr]">
+            {facts.map(([term, value], i) => (
+              <div key={`${term}-${i}`} className="contents">
+                <dt className="text-muted">{term}</dt>
+                <dd className="break-words text-secondary">{String(value)}</dd>
               </div>
-            </section>
-          ))}
-        </div>
-      ) : (
-        TIER_KEYS.map((key) => (
-          <Section key={key} title={TIER_INFO[key].label} meta={n(listed(key).length)}>
-            <FundList rows={listed(key)} review={review} />
-          </Section>
-        ))
-      )}
-      <Section title="Outside the tiers" meta="admin only, never sent to the founder">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[320px] text-left text-body-sm">
-            <tbody>
-              {Object.entries(counts.reasons)
-                .sort((a, b) => b[1] - a[1])
-                .map(([code, count]) => (
-                  <tr key={code} className="border-b border-border">
-                    <td className="py-xs pr-md text-heading">{reasonLabel(code)}</td>
-                    <td className="py-xs text-right tabular-nums text-secondary">{n(count)}</td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-        {(["generalist", "unresolved", "excluded"] as const).map((status) => (
-          <details key={status} className="mt-sm">
-            <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">
-              {status === "generalist" ? "Generalists" : status === "unresolved" ? "Unresolved" : "Excluded"} ({n(outside(status).length)})
-            </summary>
-            <FundList rows={outside(status)} />
-          </details>
-        ))}
-        <p className="mt-sm text-body-sm text-muted">Every fund and its reason is in the export.</p>
+            ))}
+          </dl>
+        </details>
+        {footnote ? <div className="mt-sm text-body-sm text-muted">{footnote}</div> : null}
       </Section>
-      <Section title="Near misses: one stage off" meta={`${n(nearMisses)} · NOT eligible`}>
-        <p className="text-body-sm text-secondary">
-          Funds that list a stage next to the company&apos;s but not its own. They failed the stage check and are outside every tier. The download is
-          marked NOT AN ELIGIBLE MATCH LIST and can&apos;t be pushed to the founder.
+    </>
+  );
+}
+
+/** The four tiers side by side; stacked on smaller screens. */
+export function TierColumns({ rows, review }: Pick<RunProps, "rows" | "review">) {
+  return (
+    <div className="mb-lg grid gap-md lg:grid-cols-2 2xl:grid-cols-4">
+      {TIER_KEYS.map((key) => (
+        <section key={key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${TIER_INFO[key].label} funds`}>
+          <h2 className="text-h4 text-heading">
+            {TIER_INFO[key].label} <span className="text-body-sm font-normal text-muted">{n(listed(rows, key).length)}</span>
+          </h2>
+          <p className="mt-xs text-body-sm text-muted">{TIER_INFO[key].description}</p>
+          <div className="mt-sm">
+            <FundList rows={listed(rows, key)} narrow review={review} />
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** Generalists, unresolved and excluded funds, with the reasons. Admin only, never sent to the founder. */
+export function OutsideSection({ rows }: Pick<RunProps, "rows">) {
+  const counts = storedCounts(rows);
+  return (
+    <Section title="Outside the tiers" meta="admin only, never sent to the founder">
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[320px] text-left text-body-sm">
+          <tbody>
+            {Object.entries(counts.reasons)
+              .sort((a, b) => b[1] - a[1])
+              .map(([code, count]) => (
+                <tr key={code} className="border-b border-border">
+                  <td className="py-xs pr-md text-heading">{reasonLabel(code)}</td>
+                  <td className="py-xs text-right tabular-nums text-secondary">{n(count)}</td>
+                </tr>
+              ))}
+          </tbody>
+        </table>
+      </div>
+      {(["generalist", "unresolved", "excluded"] as const).map((status) => (
+        <details key={status} className="mt-sm">
+          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">
+            {status === "generalist" ? "Generalists" : status === "unresolved" ? "Unresolved" : "Excluded"} ({n(outside(rows, status).length)})
+          </summary>
+          <FundList rows={outside(rows, status)} />
+        </details>
+      ))}
+      <p className="mt-sm text-body-sm text-muted">Every fund and its reason is in the export.</p>
+    </Section>
+  );
+}
+
+/** One stage off: not eligible, never sent. */
+export function NearMissSection({ clientId, header, rows }: Pick<RunProps, "clientId" | "header" | "rows">) {
+  const nearMisses = nearMissCount(rows);
+  return (
+    <Section title="Near misses: one stage off" meta={`${n(nearMisses)} · NOT eligible`}>
+      <p className="text-body-sm text-secondary">
+        Funds that list a stage next to the company&apos;s but not its own. They failed the stage check and are outside every tier. The download is marked NOT
+        AN ELIGIBLE MATCH LIST and can&apos;t be pushed to the founder.
+      </p>
+      {nearMisses > 0 ? (
+        <p className="mt-xs text-body-sm">
+          <a href={`${base(clientId)}/near-miss?run=${header.id}`} className="text-secondary underline hover:text-heading">
+            Download near misses (NOT eligible, .xlsx)
+          </a>
         </p>
-        {nearMisses > 0 ? (
-          <p className="mt-xs text-body-sm">
-            <a href={`${base}/near-miss?run=${header.id}`} className="text-secondary underline hover:text-heading">
-              Download near misses (NOT eligible, .xlsx)
-            </a>
-          </p>
-        ) : null}
-      </Section>
+      ) : null}
+    </Section>
+  );
+}
+
+/** A whole saved run, stacked: for looking back at an earlier run. */
+export function FourTierRunView(props: RunProps & { footnote?: ReactNode }) {
+  return (
+    <>
+      <RunSummary {...props} />
+      {TIER_KEYS.map((key) => (
+        <Section key={key} title={TIER_INFO[key].label} meta={n(listed(props.rows, key).length)}>
+          <FundList rows={listed(props.rows, key)} review={props.review} />
+        </Section>
+      ))}
+      <OutsideSection rows={props.rows} />
+      <NearMissSection {...props} />
     </>
   );
 }

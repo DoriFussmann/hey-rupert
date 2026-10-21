@@ -26,7 +26,7 @@ export default async function VerifyEmailsPage({ params }: { params: { id: strin
 
   return (
     <>
-      <BackLink href={matchPath(client.id)} label="Rupert Match" />
+      <BackLink href={matchPath(client.id)} label="Matching" />
       <PageHeader
         title="Verify emails"
         description={`Checks ${client.company_name}'s matched contacts 5 at a time: is the person at the firm, and does the mailbox accept mail. Fixes apply to the Fund Database for every client.`}

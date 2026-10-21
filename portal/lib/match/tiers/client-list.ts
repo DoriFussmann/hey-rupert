@@ -10,7 +10,7 @@ import type { Firm } from "../engine/index.mjs";
 import { firmTypeLabel, stageRange } from "../shared.ts";
 import { websiteHref, type FitTier, type InvestorListPayload, type InvestorListSummary, type InvestorRow } from "../../setup.ts";
 import { TIER_KEYS, type PersonRecord, type SectorLink, type TierKey } from "./core.ts";
-import type { StoredResult } from "./compare.ts";
+import type { StoredResult } from "./stored.ts";
 import { rowKey } from "./record.ts";
 
 /** The investor-list tier of each four-tier tier (1 = best fit). */

@@ -126,7 +126,7 @@ export function IntakeSettingsEditor({
             required topics; the summary covers all of them.
           </p>
           <p className="mt-xs text-body-sm text-muted">
-            Topics marked &ldquo;Used by matching&rdquo; feed the company profile Rupert Match runs on. They stay
+            Topics marked &ldquo;Used by matching&rdquo; feed the company profile matching runs on. They stay
             required and can&apos;t be removed; keep their wording asking for what they feed. The others are used for
             outreach and writing only.
           </p>

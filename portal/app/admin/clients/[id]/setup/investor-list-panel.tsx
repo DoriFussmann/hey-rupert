@@ -114,20 +114,20 @@ export function InvestorListPanel({
       item={item}
       action={
         <Link href={matchPath(clientId)} className={`${secondaryButton} no-underline`}>
-          Open Rupert Match
+          Open Matching
         </Link>
       }
     >
       <p className="px-lg pt-md text-body-sm text-muted">
-        The list comes from Rupert Match on the Fund Database page (fund names, tiers, websites and contact counts;
-        never people). Push to client there puts it here as a draft. Review it, preview it, draft the email, then Push
-        to Client Portal &amp; Send. {sendStatus(row)}
+        The list comes from Matching (fund names, tiers, websites and contact counts; never people). Push to client
+        there puts it here as a draft. Review it, preview it, draft the email, then Push to Client Portal &amp; Send.{" "}
+        {sendStatus(row)}
       </p>
       <ClientAnswer row={row} hideWaiting />
 
       {empty ? (
         <p className="px-lg pt-md text-body-sm text-secondary">
-          No list yet. Open Rupert Match, run the match for this client, then click Push to client.
+          No list yet. Open Matching, run the match for this client, then click Push to client.
         </p>
       ) : (
         <>
@@ -142,8 +142,8 @@ export function InvestorListPanel({
           </p>
           <p className="px-lg pt-xs text-body-sm text-muted">
             {list.tier_scheme === "four"
-              ? `Four tiers (four-tier engine${list.rules_version ? `, rules ${list.rules_version}` : ""}${list.run_id ? `, saved run ${list.run_id.slice(0, 8)}` : ""}).`
-              : "Three tiers (current engine)."}
+              ? `Four tiers${list.rules_version ? ` · rules ${list.rules_version}` : ""}${list.run_id ? ` · saved run ${list.run_id.slice(0, 8)}` : ""}.`
+              : "Three tiers (a list made with the earlier engine)."}
           </p>
           <div className="px-lg pt-md text-body-sm text-secondary">
             <p className="text-heading">Quality check</p>

@@ -4,7 +4,7 @@ export const adminNav = [
   { href: "/admin/timeline", label: "Timeline" },
   { href: "/admin/fund-database", label: "Fund Database" },
   { href: "/admin/taxonomy", label: "Taxonomy" },
-  { href: "/admin/matching", label: "Four-tier matching" },
+  { href: "/admin/matching", label: "Matching" },
   { href: "/admin/notifications", label: "Notifications" },
 ] as const;
 

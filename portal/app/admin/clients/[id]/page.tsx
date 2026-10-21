@@ -307,7 +307,7 @@ export default async function ClientDetailPage({
               href={matchPath(client.id)}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >
-              Rupert Match
+              Matching
             </Link>
             <ViewAsClientLink
               clientId={client.id}

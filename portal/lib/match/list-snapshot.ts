@@ -1,8 +1,6 @@
 import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
-import type { MatchResult } from "@/lib/match/engine/index.mjs";
 import { selectAll } from "@/lib/match/db-server";
-import { verifyStateOf, type MatchRun } from "@/lib/match/run-server";
 import { contactId, type CheckSteps, type MailboxResult, type VerifyState } from "@/lib/match/verify";
 import {
   fitTiersFor,
@@ -15,15 +13,6 @@ import {
  * fund, by list row id. Undefined when the row's fund is not known.
  */
 export type PeopleStates = (rowId: string) => VerifyState[] | undefined;
-
-/** Contact states for a list built from the current engine's run. */
-export function currentEnginePeople(run: MatchRun): PeopleStates {
-  const resultFor = indexResults(run.out.results);
-  return (rowId) => {
-    const result = resultFor(rowId);
-    return result ? investingContacts(result).map((contact) => verifyStateOf(run, contact)) : undefined;
-  };
-}
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -180,26 +169,4 @@ export async function withVerificationSnapshot(
     : list.summary;
 
   return { ...list, rows, summary, verification };
-}
-
-/** Full FirmID, or the 40-character prefix stored by an older push when it is unique. */
-function indexResults(results: MatchResult[]) {
-  const byId = new Map(results.map((result) => [result.f.id, result]));
-  const byPrefix = new Map<string, MatchResult[]>();
-  for (const result of results) {
-    const prefix = result.f.id.slice(0, 40);
-    const group = byPrefix.get(prefix) ?? [];
-    group.push(result);
-    byPrefix.set(prefix, group);
-  }
-  return (id: string) => {
-    const exact = byId.get(id);
-    if (exact) return exact;
-    const group = byPrefix.get(id);
-    return group && group.length === 1 ? group[0] : undefined;
-  };
-}
-
-function investingContacts(result: MatchResult) {
-  return result.ranked.filter((contact) => contact.email && contact.role !== "ops");
 }

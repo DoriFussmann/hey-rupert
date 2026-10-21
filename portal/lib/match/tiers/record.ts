@@ -1,6 +1,5 @@
 // The rows a saved match run stores: one per fund. Pure module.
 
-import type { Firm, FundDb, MatchResult, RunOutput } from "../engine/index.mjs";
 import type { FirmOutcome, TierRun } from "./core.ts";
 
 export type ResultRow = {
@@ -71,59 +70,4 @@ export function tierRow(outcome: FirmOutcome, position: number): ResultRow {
 
 export function tierRows(run: TierRun) {
   return run.outcomes.map((outcome, i) => tierRow(outcome, i + 1));
-}
-
-function legacyDetail(result: MatchResult) {
-  return compact({
-    why: result.why,
-    stage: result.st.how,
-    sector: result.se.how,
-    geography: result.ge.how,
-    pros: result.pros,
-    cons: result.cons,
-    flags: result.A.flags.map((flag) => `${flag.sev}: ${flag.text}`),
-    confidence: result.A.conf,
-    site: result.site?.st,
-    rejected: result.rejected,
-    overflow: result.overflow ? true : null,
-  });
-}
-
-/** The current engine's run: every fund it listed, and those removed for a dead website. */
-export function legacyRows(out: RunOutput, db: FundDb): ResultRow[] {
-  const counts = new Map<string, number>();
-  const occurrence = new Map<Firm, number>();
-  for (const firm of db.firms) {
-    const n = (counts.get(firm.id) ?? 0) + 1;
-    counts.set(firm.id, n);
-    occurrence.set(firm, n);
-  }
-  const keyOf = (firm: Firm) => rowKey(firm.id, occurrence.get(firm) ?? 1);
-  const rows: ResultRow[] = out.results.map((result, i) => ({
-    firm_id: keyOf(result.f),
-    firm_name: result.f.name,
-    status: "tiered",
-    tier: result.tier,
-    reason_codes: [],
-    detail: legacyDetail(result),
-    score: result.score,
-    position: i + 1,
-  }));
-  const listed = new Set(rows.map((row) => row.firm_id));
-  for (const result of out.deadRemoved) {
-    const key = keyOf(result.f);
-    if (listed.has(key)) continue;
-    listed.add(key);
-    rows.push({
-      firm_id: key,
-      firm_name: result.f.name,
-      status: "excluded",
-      tier: result.tier,
-      reason_codes: ["dead_website"],
-      detail: legacyDetail(result),
-      score: result.score,
-      position: rows.length + 1,
-    });
-  }
-  return rows;
 }

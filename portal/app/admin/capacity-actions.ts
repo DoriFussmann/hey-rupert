@@ -31,7 +31,7 @@ export async function saveCapacityPlanAction(
   try {
     const saved = await saveCapacityPlan(createServiceClient(), client, run, cleaned.value, typeof note === "string" ? note : "", user.email ?? null);
     if (!saved.ok) return saved;
-    revalidatePath(`/admin/clients/${client}/match/capacity`);
+    revalidatePath("/admin/matching");
     return { ok: true, version: saved.value.version };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "The plan was not saved." };

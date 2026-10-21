@@ -2,7 +2,6 @@
 // and the admin UI. Pure module (no server code).
 
 import type { Contact } from "@/lib/match/engine/index.mjs";
-import type { MatchEngine } from "@/lib/match/shared";
 
 /** Contacts checked per batch. */
 export const VERIFY_BATCH_SIZE = 5;
@@ -133,7 +132,7 @@ export type VerifyContact = {
   title: string;
   email: string;
   seq: "Primary" | "Backup" | null;
-  /** The tier key of the engine the run was started on. */
+  /** The tier key ("core"…; "bullseye"… on runs made with the earlier engine). */
   tier: string;
 };
 
@@ -390,7 +389,7 @@ export function parseTierLimit(value: string): number | null | "invalid" {
   return number > TIER_LIMIT_MAX ? "invalid" : number;
 }
 
-const TIER_LIMIT_KEYS = ["bullseye", "match", "expansion", "core", "sphere", "tier3", "tier4"];
+const TIER_LIMIT_KEYS = ["core", "sphere", "tier3", "tier4"];
 
 /** Limits from untrusted input, or null when one is not valid. */
 export function cleanTierLimits(value: unknown): TierLimits | null {
@@ -427,9 +426,7 @@ export type VerifyEstimate = {
 };
 
 export type VerifyOverview = {
-  /** The engine the contacts come from. */
-  engine: MatchEngine;
-  /** That engine's tiers, in outreach order: one limit box each. */
+  /** The four tiers, in outreach order: one limit box each. */
   tiers: { key: string; label: string }[];
   /** Contacts per mode and tier key, in outreach order. */
   counts: Record<VerifyMode, Record<string, ScopeCount>>;

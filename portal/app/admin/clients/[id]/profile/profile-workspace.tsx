@@ -294,7 +294,7 @@ export function ProfileWorkspace({
             </button>
           ) : null}
           <Link href={matchPath(clientId)} className={`${primaryButton} no-underline`}>
-            Open Rupert Match
+            Open Matching
           </Link>
         </div>
       </section>

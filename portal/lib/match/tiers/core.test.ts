@@ -14,10 +14,10 @@ import {
   type FofException,
   type TierRunInput,
 } from "./core.ts";
-import { compareRuns, type StoredResult } from "./compare.ts";
+import type { StoredResult } from "./stored.ts";
 import { appliedGroups, duplicateFlags, findDuplicates, identityProposals, normalizedName, resolveIdentities } from "./duplicates.ts";
 import { NEAR_MISS_BANNER, contactRows, fundRows, nearMissRows, outsideRows, runFacts, storedCounts, type ContactStates } from "./export.ts";
-import { legacyRows, tierRows } from "./record.ts";
+import { tierRows } from "./record.ts";
 import { distinctPeople, firmsByRowKey, fourTierClientList, reachablePeople } from "./client-list.ts";
 import { clientFacingList } from "../client-list-dedupe.ts";
 import { asInvestorList, investorListForClient } from "../../setup.ts";
@@ -577,7 +577,7 @@ test("kept rules match the current engine: exclusions, hidden, firm type, financ
   assert.equal(newListed.size, 3);
 });
 
-test("the current engine still runs as before and shares its helpers", () => {
+test("the engine module still provides the helpers the four-tier engine uses", () => {
   const firms = [firm(), firm({ vert: ["Insurtech"] }), firm({ stages: ["Pre-Seed"] })];
   const db: FundDb = { firms, contacts: contactsFor(firms) };
   const p = legacy({ tune: { bullseye: 0, match: 0, expansion: 0 } });
@@ -628,29 +628,17 @@ test("profile readiness: Blocked refuses, Limited lists every point with the che
   assert.throws(() => runTiers({ db: { firms: [], contacts: [] }, index, profile: profile({ stage: null }), legacy: legacy() }));
 });
 
-test("stored rows keep repeated FirmIDs apart and the comparison reads them back", () => {
+test("stored rows keep repeated FirmIDs apart", () => {
   const a = firm({ id: "DUP", name: "Same Fund" });
   const b = firm({ id: "DUP", name: "Same Fund", web: "https://other.vc" });
   const c = firm({ vert: ["Insurtech"] });
   const d = firm({ stages: ["Pre-Seed"] });
   const db: FundDb = { firms: [a, b, c, d], contacts: contactsFor([a, c, d]) };
-  const oldOut = RME.run(db, legacy());
-  const newRun = runTiers({ db, index, profile: profile(), legacy: legacy() });
-  const oldRows = legacyRows(oldOut, db);
-  const newRows = tierRows(newRun);
+  const newRows = tierRows(runTiers({ db, index, profile: profile(), legacy: legacy() }));
   assert.deepEqual(newRows.map((r) => r.firm_id).sort(), ["DUP", "DUP#2", c.id, d.id].sort());
-  assert.equal(new Set(oldRows.map((r) => r.firm_id)).size, oldRows.length);
-  const asStored = (rows: typeof newRows): StoredResult[] =>
-    rows.map((r) => ({ firmId: r.firm_id, firmName: r.firm_name, status: r.status, tier: r.tier || null, reasonCodes: r.reason_codes, detail: r.detail, score: r.score === "" ? null : r.score, position: r.position }));
-  const cmp = compareRuns(asStored(oldRows), asStored(newRows));
-  const oneOff = cmp.rows.find((r) => r.firmId === d.id)!;
-  assert.equal(oneOff.next, "excluded");
-  assert.equal(oneOff.reason, "stage_one_off");
-  assert.match(oneOff.why, /Lists Pre-Seed, not Seed/);
-  assert.ok(cmp.dropped.some((r) => r.firmId === d.id));
-  assert.equal(cmp.newCounts.core, 2);
-  assert.equal(cmp.newCounts.sphere, 1);
-  assert.equal(cmp.reasons.find((r) => r.code === "stage_one_off")?.wereListed, 1);
+  const oneOff = newRows.find((r) => r.firm_id === d.id)!;
+  assert.equal(oneOff.status, "excluded");
+  assert.deepEqual(oneOff.reason_codes, ["stage_one_off"]);
 });
 
 // ---------------------------------------------------------------------------

@@ -28,7 +28,7 @@ import {
   type BatchRecord,
 } from "@/app/admin/clients/[id]/match/verify/verify-parts";
 import { formatDateAtTime } from "@/lib/format";
-import { MATCH_ENGINE_LABEL, matchPath } from "@/lib/match/shared";
+import { matchPath } from "@/lib/match/shared";
 import {
   ESTIMATE_MIN_CHECKS,
   VERIFY_BATCH_SIZE,
@@ -146,7 +146,6 @@ function SetupPanel({
       <h2 className="text-h4 text-heading">What to check</h2>
       <p className="mt-xs text-body-sm text-muted">
         How many contacts per tier, best fit first. Leave a box blank for the whole tier, or put 0 to skip it.
-        Contacts come from the {MATCH_ENGINE_LABEL[overview.engine]} engine.
       </p>
 
       <label className="mt-md flex items-center gap-sm text-body-sm text-heading">
@@ -476,7 +475,7 @@ export function VerifyWorkspace({
         <p className={`${cardClass} px-lg py-md text-body-sm text-muted`}>
           Verification is not available until the match can run.{" "}
           <Link href={matchPath(clientId)} className="text-primary hover:text-primary-hover">
-            Open Rupert Match
+            Open Matching
           </Link>
         </p>
       ) : null}

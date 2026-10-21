@@ -2,7 +2,7 @@
 // target across one saved four-tier run. Pure module: the same run rows and
 // inputs always give the same plan, so a saved plan can be rebuilt and checked.
 
-import type { StoredResult } from "../tiers/compare.ts";
+import type { StoredResult } from "../tiers/stored.ts";
 import { allocate, poolsOf, type Allocation, type PlanSource, type PoolFirm } from "./allocate.ts";
 import { benchmarkFor, compareToBenchmark, inboxesNeeded, inputProblems, schedule, type CapacityInputs, type CapacityResult } from "./schedule.ts";
 

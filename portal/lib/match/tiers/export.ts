@@ -4,7 +4,7 @@
 
 import { VERIFY_LABEL, type VerifyState } from "../verify.ts";
 import { NOTE_LABEL, REASONS, TIER_INFO, TIER_KEYS, type IdentityDetail, type NoteCode, type PersonRecord, type TierKey } from "./core.ts";
-import type { StoredResult } from "./compare.ts";
+import type { StoredResult } from "./stored.ts";
 
 export type RunHeaderLike = {
   id: string;

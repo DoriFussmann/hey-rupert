@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import type { StoredResult } from "../tiers/compare.ts";
+import type { StoredResult } from "../tiers/stored.ts";
 import { CORE_CAP, allocate, poolsOf } from "./allocate.ts";
 import { buildPlan } from "./plan.ts";
 import {
