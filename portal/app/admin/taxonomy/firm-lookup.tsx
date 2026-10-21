@@ -19,7 +19,7 @@ function FirmCard({ firm }: { firm: FirmLookupView }) {
         {firm.name} <span className="font-mono text-label text-muted">{firm.id}</span>
       </p>
       <p className="text-body-sm text-muted">
-        {firm.website || "No website"}
+        {firm.location || "No location"} · {firm.website || "No website"}
         {firm.generalistWhy ? ` · Generalist: ${firm.generalistWhy}` : ""}
       </p>
       <div className="mt-sm overflow-x-auto">

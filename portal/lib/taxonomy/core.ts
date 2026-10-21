@@ -79,7 +79,7 @@ export type TaxNode = {
   dimension: Dimension;
   label: string;
   parentId: string | null;
-  /** sector: group | sector | generalist | thesis; geography: region | subregion | country | us_region | us_state; stage: group | stage. */
+  /** sector: group | sector | generalist | thesis; geography: region | subregion | country | us_region | us_state | us_territory; stage: group | stage. */
   kind: string;
   description: string;
   synonyms: string[];
@@ -384,6 +384,8 @@ export type FirmLookupView = {
   id: string;
   name: string;
   website: string;
+  /** HQ city, state and country as the provider gives them. */
+  location: string;
   generalistWhy: string | null;
   fields: {
     field: FieldKey;
@@ -401,6 +403,7 @@ export function firmLookupView(firm: Firm, index: TaxIndex): FirmLookupView {
     id: firm.id,
     name: firm.name,
     website: firm.web,
+    location: [firm.city, firm.state, firm.country].filter(Boolean).join(", "),
     generalistWhy: mapping.generalistWhy,
     fields: FIELDS.map((field) => ({
       field: field.key,
@@ -594,7 +597,14 @@ function sameList(a: string[], b: string[]) {
 }
 
 export function buildCoverage(db: FundDb, index: TaxIndex, mappings: FirmMapping[]): CoverageReport {
-  const values = countRawValues(db);
+  // HQ state is only read for US firms, so only their states count as values.
+  const usStateFirms = new Set(mappings.filter((m) => m.status.hq_state !== "missing").map((m) => m.firmId));
+  const values = [
+    ...countRawValues(db).filter((value) => value.field !== "hq_state"),
+    ...countRawValues({ firms: db.firms.filter((firm) => usStateFirms.has(firm.id)), contacts: [] }).filter(
+      (value) => value.field === "hq_state",
+    ),
+  ];
   const fields: FieldCoverage[] = FIELDS.map((field) => {
     let populated = 0;
     let normalized = 0;

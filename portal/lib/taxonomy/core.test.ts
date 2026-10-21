@@ -4,6 +4,7 @@ import type { Firm, FundDb } from "../match/engine/index.mjs";
 import {
   buildCoverage,
   countRawValues,
+  firmLookupView,
   firmSectors,
   indexTaxonomy,
   mapFirm,
@@ -262,4 +263,21 @@ test("repeat processing: same input, same result; registered values are not new 
 test("raw value counts count each firm once per value", () => {
   const counts = countRawValues({ firms: [firm("x", { vert: ["Fintech", "fintech"] }), firm("y")], contacts: [] });
   assert.equal(counts.find((value) => value.field === "vertical" && value.rawKey === "fintech")?.firms, 2);
+});
+
+test("HQ state values are only counted for US firms", () => {
+  const states: FundDb = {
+    firms: [firm("s1", { state: "Texas" }), firm("s2", { country: "Canada", state: "Ontario" })],
+    contacts: [],
+  };
+  const report = buildCoverage(states, index, states.firms.map((item) => mapFirm(item, index)));
+  const hqState = report.fields.find((field) => field.field === "hq_state")!;
+  assert.equal(hqState.distinct, 1);
+  assert.equal(hqState.distinctUnmapped, 0);
+  assert.ok(!report.values.some((row) => row.rawValue === "Ontario"));
+});
+
+test("firm lookup shows the provider's HQ location", () => {
+  const view = firmLookupView(firm("l1", { city: "Seoul", state: "", country: "Korea" }), index);
+  assert.equal(view.location, "Seoul, Korea");
 });

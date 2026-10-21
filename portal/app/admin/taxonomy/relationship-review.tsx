@@ -224,7 +224,10 @@ export function RelationshipReview({ edges, nodes }: { edges: TaxEdge[]; nodes: 
       <p className="max-w-prose text-body-sm text-muted">
         How close two sectors are, closest first: equivalent, immediate, broader, weak. No relationship means none is
         established. Only approved relationships should be relied on; rejected ones stay recorded so they are not suggested
-        again.
+        again.{" "}
+        <a href="/admin/taxonomy/relationships" className="text-primary underline">
+          Export all relationships (.xlsx)
+        </a>
       </p>
       <div className="mt-md grid gap-sm sm:grid-cols-2">
         <div>

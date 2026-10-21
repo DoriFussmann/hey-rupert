@@ -588,7 +588,7 @@ const ID_PREFIX: Record<Dimension, string> = {
 export const NODE_KINDS: Record<Dimension, string[]> = {
   sector: ["sector", "thesis"],
   stage: ["stage"],
-  geography: ["region", "subregion", "country", "us_region", "us_state"],
+  geography: ["region", "subregion", "country", "us_region", "us_state", "us_territory"],
   financing: ["financing"],
   firm_type: ["firm_type"],
 };
