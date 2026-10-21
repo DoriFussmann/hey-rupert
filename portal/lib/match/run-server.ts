@@ -18,6 +18,8 @@ import {
   type Correction,
   type Decision,
 } from "@/lib/match/corrections-server";
+import { unmatchedExclusionEntries } from "@/lib/match/exclusion-warnings";
+import { emailKey as outreachEmailKey, firmsToKeep } from "@/lib/match/outreach-dedupe";
 import { loadLiveDb, selectAll, type LiveDb } from "@/lib/match/db-server";
 import { buildProfile, canRun, loadProfileState, matchBasis } from "@/lib/match/profile-server";
 import { loadSites } from "@/lib/match/sites-server";
@@ -508,6 +510,7 @@ export function buildView(run: MatchRun): MatchView {
     fewBullseye: out.counts.bullseye < 20,
     hidden: run.hidden,
     siteN: out.siteN,
+    unmatchedExclusions: unmatchedExclusionEntries(profile.exclusions, live.db.firms),
   };
 }
 
@@ -587,6 +590,48 @@ export function buildDetail(run: MatchRun, firmId: string): FirmDetail | null {
 
 export const CLIENT_LIST_MAX = 3000;
 
+const VC_LADDER = [
+  "Pre-Seed",
+  "Seed",
+  "Series A",
+  "Series B",
+  "Series C and Beyond",
+  "Growth Equity",
+];
+
+/** The stages a fund lists, as "Seed" or "Seed–Series A" when they sit next to each other. */
+function stageRange(stages: string[]) {
+  const listed = stages.map((stage) => stage.trim()).filter(Boolean);
+  const ordered = VC_LADDER.filter((stage) => listed.includes(stage));
+  const extra = listed.filter((stage) => !VC_LADDER.includes(stage));
+  if (ordered.length >= 2 && extra.length === 0) {
+    const indexes = ordered.map((stage) => VC_LADDER.indexOf(stage));
+    const contiguous = indexes.every((index, i) => i === 0 || index === indexes[i - 1] + 1);
+    if (contiguous) return `${ordered[0]}–${ordered[ordered.length - 1]}`;
+  }
+  const names = [...ordered, ...extra];
+  return names.slice(0, 4).join(", ");
+}
+
+/** Up to 4 chips naming the values that matched. Not the generic why sentence. */
+function fitReasons(result: MatchResult, stage: string) {
+  const chips: string[] = [];
+  if (result.st.s >= 1) {
+    const label = stageRange(result.f.stages) || stage;
+    if (label) chips.push(`Stage: ${label}`);
+  }
+  const sector = [...result.se.vMatch, ...result.se.iMatch].map((item) => item.trim()).filter(Boolean);
+  if (sector.length > 0) chips.push(`Sector: ${sector.join(", ")}`);
+  if (result.ge.s >= 0.8 && result.ge.how) {
+    const how = result.ge.how;
+    const geo = /across the US/i.test(how)
+      ? "US-wide"
+      : how.replace(/^invests in /i, "").replace(/^covers /i, "");
+    if (geo) chips.push(`Geo: ${geo}`);
+  }
+  return chips.slice(0, 4);
+}
+
 export function buildClientList(run: MatchRun): Result<InvestorListPayload> {
   const kept = run.out.results.filter((result) => !result.rejected);
   if (kept.length === 0) return { ok: false, error: "No funds in the tiers to send." };
@@ -600,19 +645,33 @@ export function buildClientList(run: MatchRun): Result<InvestorListPayload> {
   const rows: InvestorRow[] = kept.map((result) => {
     const people = investingPeople(result);
     const firm = result.f;
+    const location = [firm.city, firm.country === "United States" ? firm.state : firm.country]
+      .filter(Boolean)
+      .join(", ");
+    const checkSize =
+      result.site && "check" in result.site && result.site.check ? String(result.site.check).trim() : "";
+    const stages = firm.stages.filter(Boolean).slice(0, 4).join(", ");
+    const reasons = fitReasons(result, run.profile.stage);
+    const generic = /right stage, your core sector, your geography, and a focused thesis/i.test(result.why);
     return {
-      id: firm.id.slice(0, 40),
+      id: firm.id.trim().slice(0, 200),
       fund_name: firm.name,
       contact:
         people > 0
           ? `${people} investing contact${people === 1 ? "" : "s"} identified`
           : "Contacts being confirmed",
+      contact_count: people,
       details: [firmTypeLabel(firm.type), hqOf(result), firm.year ? `Founded ${firm.year}` : ""]
         .filter(Boolean)
         .join(" · "),
+      fund_type: firmTypeLabel(firm.type),
+      location: location || undefined,
+      check_size: checkSize || undefined,
+      stage_focus: stages || undefined,
       website: websiteHref(firm.web) || undefined,
       tier: TIER_TO_FIT[result.tier],
-      why: dropSectorFocus([result.why, ...result.pros.slice(0, 3)].join("\n")),
+      why: generic ? "" : dropSectorFocus(result.why),
+      reasons: reasons.length > 0 ? reasons : undefined,
       comments: result.overflow ? "Bullseye-grade; planned for the second wave." : "",
     };
   });
@@ -719,9 +778,24 @@ export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?:
   const people: (string | number)[][] = [peopleHeader];
   const rank: Record<Tier, number> = { bullseye: 0, match: 0, expansion: 0 };
   let leftOut = 0;
+  const listed = out.results.filter((result) => !result.rejected);
+  const keep = firmsToKeep(
+    listed.map((result) => ({
+      id: result.f.id,
+      web: result.f.web,
+      contacts: investingPeople(result),
+    })),
+  );
+  const seenOutreach = new Set<string>();
+  const seenPeople = new Set<string>();
+  let firmsRemoved = 0;
+  let emailsSkipped = 0;
 
-  for (const result of out.results) {
-    if (result.rejected) continue;
+  for (const result of listed) {
+    if (!keep.has(result.f.id)) {
+      firmsRemoved += 1;
+      continue;
+    }
     rank[result.tier] += 1;
     const review = run.reviews.get(result.f.id);
     const tierLabel = TIERS.find((tier) => tier.key === result.tier)?.label ?? result.tier;
@@ -753,6 +827,12 @@ export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?:
     leftOut += result.seq.length - kept.length;
     const sequence = kept.length > 0 ? kept : [undefined];
     for (const contact of sequence) {
+      const key = outreachEmailKey(contact?.email ?? "");
+      if (key && seenOutreach.has(key)) {
+        emailsSkipped += 1;
+        continue;
+      }
+      if (key) seenOutreach.add(key);
       outreach.push([
         ...base,
         contact?.seq ?? "",
@@ -769,6 +849,9 @@ export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?:
     for (const contact of result.ranked) {
       if (contact.role === "ops") continue;
       if (!includeAll && !exportable(run, contact)) continue;
+      const key = outreachEmailKey(contact.email);
+      if (key && seenPeople.has(key)) continue;
+      if (key) seenPeople.add(key);
       people.push([
         tierLabel,
         result.f.name,
@@ -793,6 +876,14 @@ export function exportRows(run: MatchRun, { includeAll = false }: { includeAll?:
         leftOut > 0
           ? `${n(leftOut)} Primary/Backup contacts left out: a known problem without a Keep decision. Use Export everything to include them.`
           : "No Primary/Backup contact has a known problem.",
+      ],
+    );
+  }
+  if (firmsRemoved > 0 || emailsSkipped > 0) {
+    summary.push(
+      [],
+      [
+        `${n(firmsRemoved)} fund${firmsRemoved === 1 ? "" : "s"} left out of outreach because ${firmsRemoved === 1 ? "it shares" : "they share"} a website with another fund on the list. ${n(emailsSkipped)} repeated email${emailsSkipped === 1 ? "" : "s"} left out.`,
       ],
     );
   }

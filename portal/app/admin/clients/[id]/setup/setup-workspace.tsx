@@ -22,6 +22,9 @@ export function SetupWorkspace({
   source,
   fileLinks,
   clientEmail,
+  clientFirstName,
+  companyName,
+  adminName,
   claudeReady,
 }: {
   clientId: string;
@@ -30,6 +33,9 @@ export function SetupWorkspace({
   fileLinks: Record<string, string>;
   /** The client's email address. */
   clientEmail: string;
+  clientFirstName: string;
+  companyName: string;
+  adminName: string;
   claudeReady: boolean;
 }) {
   const items = getSetupItems(source);
@@ -113,6 +119,9 @@ export function SetupWorkspace({
         item={item("investor_list")}
         row={row("investor_list")}
         to={clientEmail}
+        companyName={companyName}
+        clientFirstName={clientFirstName}
+        adminName={adminName}
       />
       <EmailCopyPanel
         clientId={clientId}

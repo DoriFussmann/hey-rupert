@@ -140,7 +140,12 @@ export type MaterialsAnalysis = {
 };
 
 /** The email Rupert sends with a push. */
-export type ClientEmailDraft = { subject: string; body: string };
+export type ClientEmailDraft = {
+  subject: string;
+  body: string;
+  /** Investor-list letter only. Inserted after the opening paragraph when the email is shown or sent. */
+  note?: string;
+};
 
 export type FeedbackDraft = {
   analysis: MaterialsAnalysis | null;
@@ -213,6 +218,54 @@ export type InvestorRow = {
   comments: string;
   /** The fund's website as a full http(s) link (lists sent from Rupert Match). */
   website?: string;
+  /** Short fund type, e.g. "VC". */
+  fund_type?: string;
+  /** City and state (or country), when the database has them. */
+  location?: string;
+  /** Stated check size, when a website check recorded one. */
+  check_size?: string;
+  /** Stage focus from the database, when it is filled in. */
+  stage_focus?: string;
+  /** Investing contacts shown to the client. Invalid emails are already left out. */
+  contact_count?: number;
+  /** 2–4 chips from the criteria this fund actually matched. Never the generic why sentence. */
+  reasons?: string[];
+  /** Same website domain as another fund that the client sees. Admin only. */
+  hidden_duplicate?: boolean;
+};
+
+/** Verification totals frozen onto the list when it is pushed. Absent on older lists. */
+export type InvestorVerification = {
+  verification_ran: boolean;
+  verified_at?: string;
+  sample_size?: number;
+  firms_checked?: number;
+  firms_confirmed_active?: number;
+  emails_checked?: number;
+  emails_valid?: number;
+  emails_accept_all?: number;
+  emails_invalid?: number;
+  emails_unknown?: number;
+  /** Whole percent: emails_valid / emails_checked. */
+  deliverable_rate?: number;
+  /** True when invalid contacts were removed from the contact counts. */
+  excludes_invalid?: boolean;
+};
+
+/** The client's marks on one fund. Stored with the list, per fund id. */
+export type InvestorFundFlag = {
+  excluded?: boolean;
+  known?: boolean;
+  note?: string;
+};
+
+/** FirmIDs from the fund database. Long enough that the id is not cut off. */
+export const FUND_ID_MAX = 200;
+
+/** A flag whose fund was on a previous list and is not on this one. */
+export type RemovedInvestorFlag = InvestorFundFlag & {
+  id: string;
+  fund_name: string;
 };
 
 /** A fund website as a safe http(s) link, or "" when it isn't one. */
@@ -244,6 +297,12 @@ export type InvestorListPayload = {
   summary?: InvestorListSummary | null;
   /** Rupert's note when the list is sent back for the client to confirm. */
   admin_note?: string;
+  /** Frozen at push. Missing on lists pushed before verification was snapshotted. */
+  verification?: InvestorVerification;
+  /** Exclude, "I know them", and notes, by FirmID. */
+  client_flags?: Record<string, InvestorFundFlag>;
+  /** Flags for funds the latest match no longer includes. */
+  removed_flags?: RemovedInvestorFlag[];
 };
 
 export type CopyEmail = { subject: string; body: string };
@@ -260,9 +319,13 @@ export type EmailCopyPayload = {
 };
 
 export const FIT_TIERS: { tier: FitTier; label: string; detail: string }[] = [
-  { tier: 1, label: "Tier 1", detail: "Best fit" },
-  { tier: 2, label: "Tier 2", detail: "Strong fit" },
-  { tier: 3, label: "Tier 3", detail: "Possible fit" },
+  {
+    tier: 1,
+    label: "Bullseye",
+    detail: "Strongest fit on stage, sector and geography. Highest-priority outreach.",
+  },
+  { tier: 2, label: "Match", detail: "Strong fit on most of your criteria." },
+  { tier: 3, label: "Expansion", detail: "Broader fit. Widens the funnel." },
 ];
 
 export const EMAIL_SEQUENCE_LABELS = [
@@ -272,8 +335,16 @@ export const EMAIL_SEQUENCE_LABELS = [
 ] as const;
 
 export function tierLabel(tier: FitTier) {
-  const entry = FIT_TIERS.find((item) => item.tier === tier);
-  return entry ? `${entry.label} · ${entry.detail}` : `Tier ${tier}`;
+  return FIT_TIERS.find((item) => item.tier === tier)?.label ?? `Tier ${tier}`;
+}
+
+const GENERIC_WHY =
+  /right stage, your core sector, your geography, and a focused thesis/i;
+
+/** Drops the matcher's generic bullseye sentence. Specific reasons stay. */
+export function withoutGenericWhy(why: string) {
+  const text = why.trim();
+  return GENERIC_WHY.test(text) ? "" : text;
 }
 
 // ---------------------------------------------------------------------------
@@ -699,9 +770,11 @@ export const EMAIL_BODY_MAX = 10000;
 /** The email saved with a draft. */
 export function asClientEmail(value: unknown): ClientEmailDraft {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const note = str(raw.note, NOTE_MAX).trim();
   return {
     subject: str(raw.subject, EMAIL_SUBJECT_MAX),
     body: str(raw.body, EMAIL_BODY_MAX),
+    note: note || undefined,
   };
 }
 
@@ -842,16 +915,32 @@ export function asInvestorList(value: unknown): InvestorListPayload {
           (item): item is Record<string, unknown> =>
             Boolean(item) && typeof item === "object",
         )
-        .map((item, index) => ({
-          id: str(item.id, 40) || `r${index + 1}`,
-          fund_name: str(item.fund_name, INVESTOR_FIELD_MAX),
-          contact: str(item.contact, INVESTOR_FIELD_MAX),
-          details: str(item.details, INVESTOR_FIELD_MAX),
-          tier: asTier(item.tier) ?? 3,
-          why: dropSectorFocus(str(item.why, INVESTOR_FIELD_MAX)),
-          comments: str(item.comments, INVESTOR_FIELD_MAX),
-          website: websiteHref(str(item.website, 500)) || undefined,
-        }))
+        .map((item, index) => {
+          const reasons = Array.isArray(item.reasons)
+            ? item.reasons
+                .map((reason) => str(reason, 120).trim())
+                .filter((reason) => reason && withoutGenericWhy(reason) === reason)
+                .slice(0, 4)
+            : [];
+          const count = Math.floor(Number(item.contact_count));
+          return {
+            id: str(item.id, FUND_ID_MAX) || `r${index + 1}`,
+            fund_name: str(item.fund_name, INVESTOR_FIELD_MAX),
+            contact: str(item.contact, INVESTOR_FIELD_MAX),
+            details: str(item.details, INVESTOR_FIELD_MAX),
+            tier: asTier(item.tier) ?? 3,
+            why: withoutGenericWhy(dropSectorFocus(str(item.why, INVESTOR_FIELD_MAX))),
+            comments: str(item.comments, INVESTOR_FIELD_MAX),
+            website: websiteHref(str(item.website, 500)) || undefined,
+            fund_type: str(item.fund_type, 80).trim() || undefined,
+            location: str(item.location, 120).trim() || undefined,
+            check_size: str(item.check_size, 80).trim() || undefined,
+            stage_focus: str(item.stage_focus, 160).trim() || undefined,
+            contact_count: Number.isFinite(count) && count >= 0 ? count : undefined,
+            reasons: reasons.length > 0 ? reasons : undefined,
+            hidden_duplicate: item.hidden_duplicate === true ? true : undefined,
+          };
+        })
     : [];
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
   return {
@@ -859,6 +948,9 @@ export function asInvestorList(value: unknown): InvestorListPayload {
     source_file: str(raw.source_file, 255),
     summary: asInvestorListSummary(raw.summary),
     admin_note: adminNote || undefined,
+    verification: asInvestorVerification(raw.verification),
+    client_flags: asInvestorFlags(raw.client_flags, rows.map((row) => row.id)),
+    removed_flags: asRemovedFlags(raw.removed_flags),
   };
 }
 
@@ -877,7 +969,145 @@ export function investorListForClient(draft: InvestorListPayload): InvestorListP
     source_file: draft.source_file,
     summary: draft.summary ?? null,
     admin_note: draft.admin_note,
+    verification: draft.verification,
+    client_flags: draft.client_flags,
+    removed_flags: draft.removed_flags,
   };
+}
+
+function whole(value: unknown) {
+  const n = Math.floor(Number(value));
+  return Number.isFinite(n) && n >= 0 ? n : 0;
+}
+
+function asInvestorVerification(value: unknown): InvestorVerification | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  if (raw.verification_ran !== true) return { verification_ran: false };
+  return {
+    verification_ran: true,
+    verified_at: str(raw.verified_at, 40).trim() || undefined,
+    sample_size: whole(raw.sample_size),
+    firms_checked: whole(raw.firms_checked),
+    firms_confirmed_active: whole(raw.firms_confirmed_active),
+    emails_checked: whole(raw.emails_checked),
+    emails_valid: whole(raw.emails_valid),
+    emails_accept_all: whole(raw.emails_accept_all),
+    emails_invalid: whole(raw.emails_invalid),
+    emails_unknown: whole(raw.emails_unknown),
+    deliverable_rate: Math.min(100, whole(raw.deliverable_rate)),
+    excludes_invalid: raw.excludes_invalid === true,
+  };
+}
+
+function flagFrom(raw: unknown): InvestorFundFlag | null {
+  if (!raw || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const note = str(item.note, NOTE_MAX).trim();
+  const flag: InvestorFundFlag = {};
+  if (item.excluded === true) flag.excluded = true;
+  if (item.known === true) flag.known = true;
+  if (note) flag.note = note;
+  return flag.excluded || flag.known || flag.note ? flag : null;
+}
+
+/** Every stored flag, including funds that are no longer on the list. */
+export function investorFlagsFrom(value: unknown): Record<string, InvestorFundFlag> {
+  const raw =
+    value && typeof value === "object"
+      ? (value as Record<string, unknown>).client_flags
+      : undefined;
+  if (!raw || typeof raw !== "object") return {};
+  const flags: Record<string, InvestorFundFlag> = {};
+  for (const [key, item] of Object.entries(raw as Record<string, unknown>)) {
+    const id = str(key, FUND_ID_MAX);
+    const flag = flagFrom(item);
+    if (id && flag) flags[id] = flag;
+  }
+  return flags;
+}
+
+function asInvestorFlags(value: unknown, ids: string[]) {
+  const allowed = new Set(ids);
+  const flags: Record<string, InvestorFundFlag> = {};
+  for (const [id, flag] of Object.entries(investorFlagsFrom({ client_flags: value }))) {
+    if (allowed.has(id)) flags[id] = flag;
+  }
+  return Object.keys(flags).length > 0 ? flags : undefined;
+}
+
+function asRemovedFlags(value: unknown): RemovedInvestorFlag[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const flags: RemovedInvestorFlag[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const raw = item as Record<string, unknown>;
+    const id = str(raw.id, FUND_ID_MAX);
+    const flag = flagFrom(raw);
+    if (!id || !flag) continue;
+    flags.push({
+      id,
+      fund_name: str(raw.fund_name, 300).trim() || id,
+      ...flag,
+    });
+  }
+  return flags.length > 0 ? flags : undefined;
+}
+
+/**
+ * Keeps flags for funds still on the list, keyed by FirmID. A flag whose fund
+ * dropped out is kept, with its name, instead of being deleted. A 40-character
+ * id from an older push is reattached when it is the start of exactly one FirmID.
+ */
+export function retainInvestorFlags(
+  flags: Record<string, InvestorFundFlag> | undefined,
+  removed: RemovedInvestorFlag[] | undefined,
+  names: Map<string, string>,
+  nextIds: Set<string>,
+): { client_flags?: Record<string, InvestorFundFlag>; removed_flags?: RemovedInvestorFlag[] } {
+  const kept: Record<string, InvestorFundFlag> = {};
+  const gone = new Map<string, RemovedInvestorFlag>();
+
+  function resolve(id: string) {
+    if (nextIds.has(id)) return id;
+    if (id.length !== 40) return null;
+    const matches = Array.from(nextIds).filter((next) => next.startsWith(id));
+    return matches.length === 1 ? matches[0] : null;
+  }
+
+  for (const item of removed ?? []) {
+    const id = resolve(item.id);
+    if (id) kept[id] = { ...(kept[id] ?? {}), ...flagFields(item) };
+    else gone.set(item.id, item);
+  }
+  for (const [rawId, flag] of Object.entries(flags ?? {})) {
+    const id = resolve(rawId);
+    if (id) {
+      kept[id] = { ...(kept[id] ?? {}), ...flag };
+      gone.delete(id);
+      if (rawId !== id) gone.delete(rawId);
+    } else {
+      gone.set(rawId, {
+        id: rawId,
+        fund_name: names.get(rawId) || gone.get(rawId)?.fund_name || rawId,
+        ...flag,
+      });
+    }
+  }
+
+  const removedFlags = Array.from(gone.values());
+  return {
+    client_flags: Object.keys(kept).length > 0 ? kept : undefined,
+    removed_flags: removedFlags.length > 0 ? removedFlags : undefined,
+  };
+}
+
+function flagFields(flag: InvestorFundFlag): InvestorFundFlag {
+  const next: InvestorFundFlag = {};
+  if (flag.excluded) next.excluded = true;
+  if (flag.known) next.known = true;
+  if (flag.note) next.note = flag.note;
+  return next;
 }
 
 /** Why the investor list cannot be sent yet, or null. */
@@ -1024,7 +1254,7 @@ export const INVESTOR_FIELD_MAX = 4000;
 export function tierCounts(rows: InvestorRow[]) {
   return FIT_TIERS.map(({ tier }) => ({
     tier,
-    count: rows.filter((row) => row.tier === tier).length,
+    count: rows.filter((row) => row.tier === tier && !row.hidden_duplicate).length,
   }));
 }
 

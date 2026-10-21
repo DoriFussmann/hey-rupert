@@ -193,6 +193,9 @@ function SectionPanel({
                 >
                   {shown ?? (blocking.has(field.id) ? "Needed for matching" : fallback ?? "Not provided")}
                 </dd>
+                {field.id === "no_go" && field.hint ? (
+                  <p className="mt-xs text-body-sm text-secondary sm:col-start-2">{field.hint}</p>
+                ) : null}
               </div>
             );
           })}

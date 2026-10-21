@@ -217,7 +217,7 @@ export const MATCH_FIELDS: MatchField[] = [
     label: "Funds to avoid",
     section: "Investors & conflicts",
     kind: "textarea",
-    hint: "One per line.",
+    hint: "Enter fund names or website domains, one per line. Sentences are not applied.",
   },
   {
     id: "investor_types",
@@ -460,6 +460,8 @@ export type MatchView = {
   fewBullseye: boolean;
   hidden: { id: string; name: string; reason: string }[];
   siteN: number;
+  /** Exclusion lines that matched no fund on the last run. */
+  unmatchedExclusions?: string[];
 };
 
 export type FirmContact = {

@@ -38,6 +38,9 @@ import {
   reapplyImportedContacts,
   stageContactImport,
 } from "@/lib/match/import-server";
+import { clientFacingList, visibleFundCount } from "@/lib/match/client-list-dedupe";
+import { withVerificationSnapshot } from "@/lib/match/list-snapshot";
+import { carryDuplicateFlags, listedContacts } from "@/lib/match/outreach-dedupe";
 import { checkAndStoreSites, isStale, runSiteBatch } from "@/lib/match/sites-server";
 import { IMPORT_MAX_BYTES, type ContactImportView } from "@/lib/match/contact-import";
 import {
@@ -55,6 +58,8 @@ import {
 import {
   asInvestorList,
   asInvestorListDraft,
+  investorFlagsFrom,
+  retainInvestorFlags,
   type InvestorListPayload,
   type SetupStepState,
 } from "@/lib/setup";
@@ -633,8 +638,15 @@ export async function pushMatchToClient(
   if (!run.ok) return run;
   const list = buildClientList(run.value);
   if (!list.ok) return list;
-  const fresh = asInvestorList(list.value);
-  if (fresh.rows.length === 0) return { ok: false, error: "No funds in the tiers to push." };
+  const snapshotted = await withVerificationSnapshot(
+    access.supabase,
+    clientId,
+    run.value,
+    clientFacingList(list.value),
+  );
+  const fresh = asInvestorList(snapshotted);
+  const shown = visibleFundCount(fresh.rows);
+  if (shown === 0) return { ok: false, error: "No funds in the tiers to push." };
 
   const [{ data: client, error: clientError }, grouped] = await Promise.all([
     access.supabase
@@ -659,18 +671,41 @@ export async function pushMatchToClient(
   }
 
   const at = nowIso();
+  const current = asInvestorListDraft(row?.draft);
+  const previous = asInvestorList(row?.published);
+  const names = new Map<string, string>();
+  for (const item of [...previous.rows, ...current.rows]) names.set(item.id, item.fund_name);
+  const retained = retainInvestorFlags(
+    { ...investorFlagsFrom(row?.published), ...investorFlagsFrom(row?.draft) },
+    [...(previous.removed_flags ?? []), ...(current.removed_flags ?? [])],
+    names,
+    new Set(fresh.rows.map((item) => item.id)),
+  );
+  const carried = carryDuplicateFlags(
+    fresh.rows.map((item) => ({
+      id: item.id,
+      web: item.website ?? "",
+        contacts: listedContacts(item.contact_count, item.contact),
+    })),
+    retained.client_flags,
+  );
+  const withFlags = { ...fresh, ...retained, ...(carried ? { client_flags: carried } : {}) };
+
   if (sandbox) {
-    const published = await publishSandboxList(access.supabase, clientId, row, fresh, at);
+    const published = await publishSandboxList(access.supabase, clientId, row, withFlags, at);
     if (!published.ok) return published;
     revalidateMatch(clientId);
     revalidatePath("/portal", "layout");
     revalidatePath("/portal/setup", "layout");
-    return { ok: true, funds: fresh.rows.length, sandbox };
+    return { ok: true, funds: shown, sandbox };
   }
 
-  // Keep the email and the note Rupert already wrote for the next send.
-  const current = asInvestorListDraft(row?.draft);
-  const draft = { ...fresh, admin_note: current.admin_note, client_email: current.client_email };
+  // Keep the email and the page note. Flags from a hidden duplicate sit on the fund the client sees.
+  const draft = {
+    ...withFlags,
+    admin_note: current.admin_note,
+    client_email: current.client_email,
+  };
   const { error } = await access.supabase.from("setup_steps").upsert(
     { client_id: clientId, step: "investor_list", draft, updated_at: at },
     { onConflict: "client_id,step", ignoreDuplicates: false },
@@ -678,7 +713,7 @@ export async function pushMatchToClient(
   if (error) return { ok: false, error: setupTableError(error.message, error.code) };
 
   revalidateMatch(clientId);
-  return { ok: true, funds: fresh.rows.length, sandbox };
+  return { ok: true, funds: shown, sandbox };
 }
 
 /** Publishes the Match Sandbox's list on the Test Pilot portal. No email. */

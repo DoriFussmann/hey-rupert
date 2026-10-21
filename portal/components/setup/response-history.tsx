@@ -22,7 +22,7 @@ export function ResponseHistory({
 
   return (
     <details className="mt-lg rounded-card border border-border bg-surface px-lg py-md">
-      <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
+      <summary className="cursor-pointer text-body text-secondary">
         Earlier Rounds ({earlier.length})
       </summary>
       <ol className="mt-md space-y-md">
@@ -31,7 +31,7 @@ export function ResponseHistory({
           const notes = Object.entries(response.item_notes);
           return (
             <li key={entry.version} className="text-body-sm">
-              <p className="text-label uppercase tracking-label text-muted">
+              <p className="text-body text-secondary">
                 Version {entry.version} · sent {formatDateAtTime(entry.published_at)}
               </p>
               <p className="mt-xs text-heading">

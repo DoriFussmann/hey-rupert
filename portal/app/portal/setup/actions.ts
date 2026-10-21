@@ -21,6 +21,8 @@ import {
   asFeedbackPublished,
   asInvestorList,
   asMaterials,
+  investorFlagsFrom,
+  type InvestorFundFlag,
   fileExtension,
   formatBytes,
   isSetupComplete,
@@ -31,6 +33,7 @@ import {
   type SetupResponse,
   type SetupStepState,
 } from "@/lib/setup";
+import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import { loadSetupStep, loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 
 export type SetupActionResult = { ok: true } | { ok: false; error: string };
@@ -514,6 +517,96 @@ export async function respondToSetupStep(input: {
     `${step}_${confirmed ? "confirmed" : "changes_requested"}`,
     { email: true, details },
   );
+
+  revalidateSetup(access.user.id);
+  return { ok: true };
+}
+
+/** Saves exclude, "I know them", or a note on one fund. Does not change the turn. */
+export async function saveInvestorFundFlag(input: {
+  version: number;
+  fundId: string;
+  excluded?: boolean;
+  known?: boolean;
+  note?: string;
+}): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+
+  const fundId = String(input.fundId ?? "").trim().slice(0, 200);
+  const version = Number(input.version);
+  const patch: FlagPatch = {};
+  if (input.excluded === true || input.excluded === false) patch.excluded = input.excluded;
+  if (input.known === true || input.known === false) patch.known = input.known;
+  if (input.note !== undefined) patch.note = String(input.note).slice(0, NOTE_MAX);
+
+  type Snap = {
+    flags: Record<string, InvestorFundFlag>;
+    stamp: string;
+    draft: unknown;
+    published: unknown;
+  };
+
+  function withFlags(value: unknown, flags: Record<string, InvestorFundFlag>) {
+    const base = value && typeof value === "object" ? { ...(value as Record<string, unknown>) } : {};
+    if (Object.keys(flags).length > 0) base.client_flags = flags;
+    else delete base.client_flags;
+    return base;
+  }
+
+  let saved: Record<string, InvestorFundFlag> | null;
+  try {
+    saved = await commitFundFlag<Snap>(
+      async () => {
+        const loaded = await loadSetupStep(access.supabase, access.user.id, "investor_list");
+        if (!loaded.ok) throw new Error(loaded.error);
+        const row = loaded.row;
+        if (!row || row.status !== "with_client") {
+          throw new Error("This list is not open for review.");
+        }
+        if (version !== row.version) {
+          throw new Error("Rupert has updated this since you opened it. Refresh to see the latest.");
+        }
+        const published = asInvestorList(row.published);
+        if (!published.rows.some((item) => item.id === fundId)) {
+          throw new Error("That fund is not on this list.");
+        }
+        return {
+          flags: { ...investorFlagsFrom(row.draft), ...investorFlagsFrom(row.published) },
+          stamp: row.updated_at,
+          draft: row.draft,
+          published: row.published,
+        };
+      },
+      async (snapshot, flags) => {
+        const { data, error } = await access.supabase
+          .from("setup_steps")
+          .update({
+            draft: withFlags(snapshot.draft, flags),
+            published: withFlags(snapshot.published, flags),
+            updated_at: nowIso(),
+          })
+          .eq("client_id", access.user.id)
+          .eq("step", "investor_list")
+          .eq("status", "with_client")
+          .eq("version", version)
+          .eq("updated_at", snapshot.stamp)
+          .select("client_id");
+        if (error) throw new Error(setupTableError(error.message, error.code));
+        return Boolean(data && data.length > 0);
+      },
+      fundId,
+      patch,
+    );
+  } catch (err) {
+    return {
+      ok: false,
+      error: err instanceof Error ? err.message : "Your change could not be saved.",
+    };
+  }
+  if (!saved) {
+    return { ok: false, error: "Couldn't save, try again" };
+  }
 
   revalidateSetup(access.user.id);
   return { ok: true };

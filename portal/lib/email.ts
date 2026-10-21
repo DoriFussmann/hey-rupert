@@ -34,12 +34,15 @@ export async function sendEmail({
   bcc = [],
   subject,
   text,
+  html,
 }: {
   to: string[];
   /** Blind copies, e.g. a copy to Rupert of an email to a client. */
   bcc?: string[];
   subject: string;
   text: string;
+  /** HTML part. The plain-text body is always sent as well. */
+  html?: string;
 }): Promise<EmailResult> {
   const notConfigured = missingConfiguration();
   if (notConfigured) return { ok: false, reason: notConfigured };
@@ -66,6 +69,7 @@ export async function sendEmail({
         reply_to: adminAddresses()[0],
         subject,
         text,
+        ...(html?.trim() ? { html } : {}),
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
       cache: "no-store",

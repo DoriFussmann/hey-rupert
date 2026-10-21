@@ -19,6 +19,7 @@ import {
   asClientEmail,
   asEmailCopy,
   asFeedback,
+  asInvestorList,
   asInvestorListDraft,
   asMaterials,
   asNarrative,
@@ -27,8 +28,10 @@ import {
   emailCopyProblems,
   feedbackForClient,
   feedbackProblem,
+  investorFlagsFrom,
   investorListForClient,
   investorListProblem,
+  retainInvestorFlags,
   isSetupDocumentStep,
   narrativeForClient,
   narrativeProblem,
@@ -45,9 +48,11 @@ import {
 import {
   STEP_EMAIL_PAUSED_NOTE,
   composeAiEmail,
+  renderInvestorListLetter,
   renderStepEmail,
   sendStepEmail,
 } from "@/lib/setup-email-server";
+import { carryDuplicateFlags, listedContacts } from "@/lib/match/outreach-dedupe";
 import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -251,6 +256,39 @@ async function writePush(
 
   let payload = normalizeDraft(clientId, step, draft);
   // Email Copy's reply comes with the push; the investor list keeps its own on the draft.
+  if (step === "investor_list") {
+    const next = payload as InvestorListDraft;
+    const stored = state.rows.find((item) => item.step === "investor_list");
+    const previous = asInvestorList(stored?.published);
+    const previousDraft = asInvestorList(stored?.draft);
+    const names = new Map<string, string>();
+    for (const item of [...previous.rows, ...previousDraft.rows, ...next.rows]) {
+      names.set(item.id, item.fund_name);
+    }
+    const retained = retainInvestorFlags(
+      {
+        ...investorFlagsFrom(stored?.published),
+        ...investorFlagsFrom(stored?.draft),
+        ...(next.client_flags ?? {}),
+      },
+      [
+        ...(previous.removed_flags ?? []),
+        ...(previousDraft.removed_flags ?? []),
+        ...(next.removed_flags ?? []),
+      ],
+      names,
+      new Set(next.rows.map((item) => item.id)),
+    );
+    const carried = carryDuplicateFlags(
+      next.rows.map((item) => ({
+        id: item.id,
+        web: item.website ?? "",
+        contacts: listedContacts(item.contact_count, item.contact),
+      })),
+      retained.client_flags,
+    );
+    payload = { ...next, ...retained, ...(carried ? { client_flags: carried } : {}) };
+  }
   if (step === "email_copy") {
     const reply = String(note ?? "").trim().slice(0, 4000);
     payload = { ...payload, admin_note: reply || undefined };
@@ -372,6 +410,7 @@ export async function sendSetupDocument(
   const clientEmail = await sendStepEmail(access.supabase, clientId, step, {
     subject: email.client_email.subject.replace(/\s+/g, " ").trim(),
     body: email.client_email.body.trim(),
+    note: email.client_email.note,
   });
   if (clientEmail.ok) await recordEmailed(access.supabase, clientId, step, pushed.version);
 
@@ -422,6 +461,16 @@ export async function draftSetupEmail(
   if (!state.ok) return state;
   const row = state.rows.find((item) => item.step === step) ?? null;
   const version = (row?.version ?? 0) + 1;
+
+  if (step === "investor_list") {
+    const rendered = await renderInvestorListLetter(access.supabase, clientId, asInvestorListDraft(draft));
+    if (!rendered.ok) return rendered;
+    return {
+      ok: true,
+      email: rendered.email,
+      pausedNote: rendered.paused ? STEP_EMAIL_PAUSED_NOTE : null,
+    };
+  }
 
   if (!isClaudeConfigured()) {
     const rendered = await renderStepEmail(access.supabase, clientId, step, version);

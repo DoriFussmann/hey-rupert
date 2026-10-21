@@ -23,6 +23,7 @@ import { Disclosure } from "@/components/disclosure";
 import { ViewAsClientLink } from "@/components/eye-icon";
 import { listEmailLog, type EmailLogResult } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
+import { adminFirstName } from "@/lib/investor-list-email";
 import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
@@ -232,6 +233,13 @@ export default async function ClientDetailPage({
           source={setupSource}
           fileLinks={setupFileLinks}
           clientEmail={client.email ?? client.founder_email}
+          clientFirstName={
+            client.first_name?.trim() ||
+            client.founder_name?.trim().split(/\s+/)[0] ||
+            ""
+          }
+          companyName={client.company_name?.trim() || "your company"}
+          adminName={adminFirstName(emailPanel.signature)}
           claudeReady={claudeReady}
         />
       ),

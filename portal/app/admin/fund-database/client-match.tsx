@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MatchWorkspace } from "@/app/admin/clients/[id]/match/match-workspace";
 import type { Client } from "@/lib/types";
 import { isServiceRoleConfigured } from "@/lib/env";
+import { unmatchedExclusionEntries } from "@/lib/match/exclusion-warnings";
 import { loadLiveDb } from "@/lib/match/db-server";
 import { buildProfile, canRun, loadProfileState } from "@/lib/match/profile-server";
 import { loadStoredMatch } from "@/lib/match/run-server";
@@ -58,6 +59,10 @@ async function loadMatch(clientId: string): Promise<{
     return { state, view, stale, database: null, error: live.empty ? null : live.error };
   }
   const database = { firms: live.value.db.firms.length, contacts: live.value.db.contacts.length };
+  if (view && state) {
+    const { profile } = buildProfile(state.answers, state.settings);
+    view.unmatchedExclusions = unmatchedExclusionEntries(profile.exclusions, live.value.db.firms);
+  }
   return { state, view, stale, database, error: null };
 }
 

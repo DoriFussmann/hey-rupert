@@ -35,6 +35,7 @@ export async function sendClientEmail(
     bcc,
     subject,
     text,
+    html,
   }: {
     clientId: string;
     kind: EmailLogKind;
@@ -43,9 +44,10 @@ export async function sendClientEmail(
     bcc?: string[];
     subject: string;
     text: string;
+    html?: string;
   },
 ): Promise<EmailResult> {
-  const result = await sendEmail({ to, bcc, subject, text });
+  const result = await sendEmail({ to, bcc, subject, text, html });
 
   const { error } = await supabase.from("email_log").insert({
     client_id: clientId,

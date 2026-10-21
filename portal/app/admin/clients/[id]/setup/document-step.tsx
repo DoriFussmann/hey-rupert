@@ -14,9 +14,12 @@ import {
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 import { formatDateAtTime } from "@/lib/format";
+import { investorListEmailHtml } from "@/lib/investor-list-email";
+import { withClientNote } from "@/lib/investor-list-note";
 import {
   EMAIL_BODY_MAX,
   EMAIL_SUBJECT_MAX,
+  NOTE_MAX,
   clientEmailProblem,
   isSharedWithClient,
   type ClientEmailDraft,
@@ -81,6 +84,7 @@ export function DocumentStep({
   busy,
   pushSummary,
   clientPreview,
+  sendHint,
 }: {
   clientId: string;
   step: SetupDocumentStep;
@@ -102,6 +106,8 @@ export function DocumentStep({
   pushSummary: string;
   /** The client's page as it will look after the push. Adds Preview as client. */
   clientPreview?: React.ReactNode;
+  /** Shown above Send. The investor list uses it to say sending makes the list visible. */
+  sendHint?: string;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState<ClientEmailDraft>(initialEmail);
@@ -155,7 +161,7 @@ export function DocumentStep({
         setMessage({ kind: "error", text: result.error });
         return;
       }
-      setEmail(result.email);
+      setEmail({ ...result.email, note: email.note });
       setPausedNote(result.pausedNote);
       setMessage({ kind: "ok", text: "Email drafted. Read it through, edit it, then save or send." });
     } catch (err) {
@@ -234,6 +240,18 @@ export function DocumentStep({
             onChange={(event) => setEmail({ ...email, subject: event.target.value })}
           />
         </label>
+        {step === "investor_list" ? (
+          <label className={`${labelClass} mt-md`}>
+            Note to client
+            <textarea
+              className={`${inputClass} mt-sm min-h-[80px] resize-y normal-case tracking-normal`}
+              value={email.note ?? ""}
+              maxLength={NOTE_MAX}
+              placeholder="Optional. Added after the opening paragraph, before the tier list."
+              onChange={(event) => setEmail({ ...email, note: event.target.value })}
+            />
+          </label>
+        ) : null}
         <label className={`${labelClass} mt-md`}>
           Email
           <textarea
@@ -244,10 +262,22 @@ export function DocumentStep({
             onChange={(event) => setEmail({ ...email, body: event.target.value })}
           />
         </label>
+        {step === "investor_list" && email.body.trim() ? (
+          <div className="mt-md">
+            <p className="text-body text-heading">Preview</p>
+            <p className="mt-sm text-body text-heading">{email.subject.trim() || "(no subject)"}</p>
+            <iframe
+              title="Email preview"
+              className="mt-sm h-[28rem] w-full rounded-card border border-border bg-surface"
+              srcDoc={investorListEmailHtml(withClientNote(email.body, email.note))}
+            />
+          </div>
+        ) : null}
       </section>
 
       <section className="border-t border-border bg-background px-lg py-md">
         <p className="max-w-prose text-body-sm text-secondary">{pushSummary}</p>
+        {sendHint ? <p className="mt-sm text-body text-secondary">{sendHint}</p> : null}
         <div className="mt-md flex flex-wrap items-center gap-sm">
           <button
             type="button"
@@ -307,7 +337,15 @@ export function DocumentStep({
             {email.subject.trim() || email.body.trim() ? (
               <>
                 <p className="mt-sm text-body text-heading">{email.subject.trim() || "(no subject)"}</p>
-                <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">{email.body}</p>
+                {step === "investor_list" ? (
+                  <iframe
+                    title="Email preview in the client preview"
+                    className="mt-sm h-[28rem] w-full rounded-card border border-border bg-background"
+                    srcDoc={investorListEmailHtml(withClientNote(email.body, email.note))}
+                  />
+                ) : (
+                  <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">{email.body}</p>
+                )}
               </>
             ) : (
               <p className="mt-sm text-body-sm text-muted">No email yet. Click Draft Email above.</p>

@@ -530,6 +530,11 @@ export function ResultBoard({
         {view.funnelNotes.length > 0 ? (
           <p className="mt-sm text-body-sm text-muted">Not counted: {view.funnelNotes.join(" · ")}.</p>
         ) : null}
+        {view.unmatchedExclusions && view.unmatchedExclusions.length > 0 ? (
+          <p role="status" className="mt-sm text-body-sm text-warning">
+            These exclusions matched no funds and had no effect: {view.unmatchedExclusions.join("; ")}.
+          </p>
+        ) : null}
       </section>
 
       <section className={cardClass}>

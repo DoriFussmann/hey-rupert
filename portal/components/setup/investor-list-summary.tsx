@@ -13,9 +13,8 @@ export function InvestorListSummaryPanel({ summary }: { summary: InvestorListSum
         if (!entry) return null;
         return (
           <div key={tier} className="rounded-card border border-border bg-surface px-md py-md">
-            <p className="text-label uppercase tracking-label text-muted">
-              {label} · {detail}
-            </p>
+            <p className="text-body text-heading">{label}</p>
+            <p className="mt-xs text-body-sm text-secondary">{detail}</p>
             <p className="mt-xs text-h4 text-heading">
               {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
             </p>
@@ -23,7 +22,7 @@ export function InvestorListSummaryPanel({ summary }: { summary: InvestorListSum
               {n(entry.contacts)} investing contact{entry.contacts === 1 ? "" : "s"} identified
             </p>
             {entry.by_type.length > 0 ? (
-              <ul className="mt-sm space-y-px text-body-sm text-muted">
+              <ul className="mt-sm space-y-px text-body-sm text-secondary">
                 {entry.by_type.map((type) => (
                   <li key={type.label}>
                     {type.label}: {n(type.funds)} fund{type.funds === 1 ? "" : "s"} · {n(type.contacts)} contact

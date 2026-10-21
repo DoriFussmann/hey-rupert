@@ -13,15 +13,18 @@ import {
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
 import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
 import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
-import { TurnBanner } from "@/components/setup/turn-banner";
+import { formatDate } from "@/lib/format";
 import { matchPath } from "@/lib/match/shared";
 import {
+  FIT_TIERS,
   NOTE_MAX,
   asInvestorList,
   asInvestorListDraft,
   investorListForClient,
   investorListProblem,
-  tierCounts,
+  tierLabel,
+  withoutGenericWhy,
+  type InvestorFundFlag,
   type InvestorListPayload,
   type SetupItem,
   type SetupStepState,
@@ -29,35 +32,35 @@ import {
 
 const labelClass = "block text-label uppercase tracking-label text-muted";
 
-/** The client's Investor Matching page as it will look after the push. */
-function ClientPreview({ list }: { list: InvestorListPayload }) {
+/** The client's investor list page as it will look after the send. */
+function ClientPreview({
+  list,
+  company,
+  adminName,
+}: {
+  list: InvestorListPayload;
+  company: string;
+  adminName: string;
+}) {
   return (
-    <>
-      <h3 className="text-h3 text-heading">Investor Matching</h3>
-      <p className="mb-md mt-xs text-body-sm text-muted">
-        The investors Rupert matched for this raise. Open a fund type to look through it. Add a comment if you want,
-        then confirm.
-      </p>
-      <TurnBanner
-        owner="client"
-        title="Review the list and confirm it, or send Rupert your notes. Outreach can't start until you confirm."
-      />
-      {list.summary ? (
-        <div className="mb-lg">
-          <InvestorListSummaryPanel summary={list.summary} />
-        </div>
-      ) : null}
-      <InvestorListReview
-        rows={list.rows}
-        version={0}
-        open
-        sentNotes={{}}
-        adminNote={list.admin_note}
-        readOnly
-        stickyFooter={false}
-      />
-    </>
+    <InvestorListReview
+      rows={list.rows}
+      summary={list.summary}
+      verification={list.verification}
+      flags={list.client_flags}
+      version={0}
+      open
+      company={company}
+      adminName={adminName}
+      adminNote={list.admin_note}
+      readOnly
+      heading="p"
+    />
   );
+}
+
+function flagOf(flags: Record<string, InvestorFundFlag> | undefined, id: string) {
+  return flags?.[id];
 }
 
 export function InvestorListPanel({
@@ -65,12 +68,18 @@ export function InvestorListPanel({
   item,
   row,
   to,
+  companyName,
+  clientFirstName,
+  adminName,
 }: {
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
   /** The client's email address. */
   to: string;
+  companyName: string;
+  clientFirstName: string;
+  adminName: string;
 }) {
   const initial = useMemo(() => {
     const draft = asInvestorListDraft(row?.draft);
@@ -82,13 +91,21 @@ export function InvestorListPanel({
 
   const [note, setNote] = useState(initial.admin_note ?? "");
   const [savedNote, setSavedNote] = useState(initial.admin_note ?? "");
+  const [flaggedOnly, setFlaggedOnly] = useState(false);
 
   const list: InvestorListPayload = investorListForClient({
     ...initial,
     admin_note: note.trim() || undefined,
   });
-  const counts = tierCounts(list.rows);
   const empty = list.rows.length === 0;
+  const verification = list.verification;
+  const visibleRows = list.rows.filter((entry) => !entry.hidden_duplicate);
+  const hiddenCount = list.rows.length - visibleRows.length;
+  const flaggedRows = list.rows.filter((entry) => {
+    const flag = flagOf(list.client_flags, entry.id);
+    return Boolean(flag?.excluded || flag?.known || flag?.note);
+  });
+  const adminRows = flaggedOnly ? flaggedRows : list.rows;
   const changesRequested = row?.status === "changes_requested";
 
   return (
@@ -113,41 +130,105 @@ export function InvestorListPanel({
         </p>
       ) : (
         <>
-          <p className="px-lg pt-md text-body-sm text-muted">
+          <p className="px-lg pt-md text-body-sm text-secondary">
             {list.source_file ? `${list.source_file} · ` : ""}
-            {list.rows.length} funds ·{" "}
-            {counts.map(({ tier, count }) => `Tier ${tier}: ${count}`).join(" · ")}
+            {visibleRows.length} funds on the client list ·{" "}
+            {FIT_TIERS.map(({ tier }) => {
+              const count = visibleRows.filter((entry) => entry.tier === tier).length;
+              return `${tierLabel(tier)}: ${count}`;
+            }).join(" · ")}
+            {hiddenCount > 0 ? ` · ${hiddenCount} hidden ${hiddenCount === 1 ? "duplicate" : "duplicates"}` : ""}
           </p>
+          <div className="px-lg pt-md text-body-sm text-secondary">
+            <p className="text-heading">Quality check</p>
+            {verification?.verification_ran ? (
+              <p className="mt-xs">
+                Sample {verification.sample_size ?? 0}. Firms confirmed active{" "}
+                {verification.firms_confirmed_active ?? 0} of {verification.firms_checked ?? 0}.
+                Emails checked {verification.emails_checked ?? 0}: valid {verification.emails_valid ?? 0},
+                accept-all {verification.emails_accept_all ?? 0}, invalid {verification.emails_invalid ?? 0},
+                unknown {verification.emails_unknown ?? 0}. Deliverable {verification.deliverable_rate ?? 0}%.
+                {verification.verified_at && !Number.isNaN(new Date(verification.verified_at).getTime())
+                  ? ` Checked ${formatDate(verification.verified_at)}.`
+                  : ""}
+              </p>
+            ) : (
+              <p className="mt-xs">Not run</p>
+            )}
+          </div>
+          {list.removed_flags && list.removed_flags.length > 0 ? (
+            <div className="px-lg pt-md text-body-sm text-secondary">
+              <p className="text-heading">Flagged by client, no longer in list</p>
+              <ul className="mt-xs space-y-xs">
+                {list.removed_flags.map((item) => (
+                  <li key={item.id}>
+                    {item.fund_name}: Flagged by client, no longer in list
+                    {item.excluded ? " · Excluded" : ""}
+                    {item.known ? " · I know them" : ""}
+                    {item.note ? ` · Note: ${item.note}` : ""}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           {list.summary ? (
             <div className="px-lg pt-md">
               <InvestorListSummaryPanel summary={list.summary} />
             </div>
           ) : null}
           <div className="mt-md border-t border-border py-md">
+            <div className="flex flex-wrap items-center gap-sm px-lg pb-md">
+              <button
+                type="button"
+                className={secondaryButton}
+                aria-pressed={flaggedOnly}
+                onClick={() => setFlaggedOnly((current) => !current)}
+              >
+                {flaggedOnly ? "✓ Flagged only" : "Flagged only"} ({flaggedRows.length})
+              </button>
+            </div>
             <InvestorFundGroups
-              rows={list.rows}
-              renderRow={(entry) => (
-                <li key={entry.id} className="px-lg py-md text-body-sm">
-                  <p className="text-heading">
-                    {entry.fund_name}
-                    {entry.website ? (
-                      <a
-                        href={entry.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="ml-sm text-primary hover:text-primary-hover"
-                        aria-label={`Open ${entry.fund_name} website in a new tab`}
-                      >
-                        Website ↗
-                      </a>
+              rows={adminRows}
+              renderRow={(entry) => {
+                const flag = flagOf(list.client_flags, entry.id);
+                const why = withoutGenericWhy(entry.why);
+                return (
+                  <li key={entry.id} className="px-lg py-md text-body-sm">
+                    <p className="text-heading">
+                      {entry.fund_name}
+                      {entry.website ? (
+                        <a
+                          href={entry.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="ml-sm text-primary hover:text-primary-hover"
+                          aria-label={`Open ${entry.fund_name} website in a new tab`}
+                        >
+                          Website ↗
+                        </a>
+                      ) : null}
+                    </p>
+                    {entry.hidden_duplicate ? (
+                      <p className="mt-xs text-body-sm text-warning">Hidden duplicate</p>
                     ) : null}
-                  </p>
-                  {entry.contact ? <p className="text-secondary">{entry.contact}</p> : null}
-                  {entry.details ? <p className="mt-xs text-muted">{entry.details}</p> : null}
-                  {entry.why ? <p className="mt-xs whitespace-pre-wrap text-body">{entry.why}</p> : null}
-                  {entry.comments ? <p className="mt-xs text-muted">{entry.comments}</p> : null}
-                </li>
-              )}
+                    {entry.contact ? <p className="text-secondary">{entry.contact}</p> : null}
+                    {entry.details ? <p className="mt-xs text-secondary">{entry.details}</p> : null}
+                    {entry.reasons && entry.reasons.length > 0 ? (
+                      <p className="mt-xs text-secondary">{entry.reasons.join(" · ")}</p>
+                    ) : null}
+                    {why ? <p className="mt-xs whitespace-pre-wrap text-body">{why}</p> : null}
+                    {entry.comments ? <p className="mt-xs text-secondary">{entry.comments}</p> : null}
+                    {flag?.excluded || flag?.known || flag?.note ? (
+                      <p className="mt-xs text-heading">
+                        {flag.excluded ? "Excluded" : ""}
+                        {flag.excluded && flag.known ? " · " : ""}
+                        {flag.known ? "I know them" : ""}
+                        {flag.note ? ` · Note: ${flag.note}` : ""}
+                      </p>
+                    ) : null}
+                  </li>
+                );
+              }}
             />
           </div>
         </>
@@ -183,7 +264,16 @@ export function InvestorListPanel({
         problem={investorListProblem(list)}
         busy={false}
         pushSummary="Pushes the fund list above (fund names, tiers, websites and contact counts) and your note to the client's portal as a new version, and sends them this email. They add notes, ask questions or confirm there."
-        clientPreview={empty ? undefined : <ClientPreview list={list} />}
+        sendHint={
+          clientFirstName
+            ? `Sending makes the list visible in ${clientFirstName}'s portal.`
+            : "Sending makes the list visible in the client's portal."
+        }
+        clientPreview={
+          empty ? undefined : (
+            <ClientPreview list={list} company={companyName} adminName={adminName} />
+          )
+        }
       />
 
       <EarlierRounds row={row} />

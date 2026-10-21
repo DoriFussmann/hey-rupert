@@ -11,9 +11,11 @@ import {
   updatedSubject,
   type EmailToken,
 } from "@/lib/email-templates";
+import { adminFirstName, investorListEmailHtml, investorListEmailText } from "@/lib/investor-list-email";
+import { withClientNote } from "@/lib/investor-list-note";
 import { clientAddress, firstNameOf, greetingFor } from "@/lib/notify";
 import { PORTAL_URL } from "@/lib/portal-url";
-import type { ClientEmailDraft, SetupDocumentStep } from "@/lib/setup";
+import type { ClientEmailDraft, InvestorListPayload, SetupDocumentStep } from "@/lib/setup";
 
 // The email that goes with Push to Client Portal & Send (feedback, narrative
 // and investor list): drafted by Claude or filled from Forms → Emails, edited by
@@ -79,6 +81,31 @@ function baseValues(
     portal_link: context.portalLink,
     updated_line: version > 1 ? " This is an updated version based on your feedback." : "",
     signature: context.signature,
+  };
+}
+
+/** The investor-list letter, filled from the pushed snapshot. Rupert edits it before sending. */
+export async function renderInvestorListLetter(
+  supabase: ServiceClient,
+  clientId: string,
+  list: InvestorListPayload,
+): Promise<Prepared> {
+  const context = await loadContext(supabase, clientId, "investor_list");
+  if (!context.ok) return context;
+  return {
+    ok: true,
+    to: context.to,
+    paused: context.row.emails_paused === true,
+    email: (() => {
+      const letter = investorListEmailText({
+        list,
+        company: text(context.row.company_name) || "your company",
+        clientFirstName: firstNameOf(context.row),
+        adminName: adminFirstName(context.signature),
+        portalUrl: context.portalLink,
+      });
+      return { subject: letter.subject, body: letter.text };
+    })(),
   };
 }
 
@@ -153,12 +180,14 @@ export async function sendStepEmail(
 ): Promise<EmailResult> {
   const context = await loadContext(supabase, clientId, step);
   if (!context.ok) return { ok: false, reason: context.error };
+  const text = step === "investor_list" ? withClientNote(email.body, email.note) : email.body;
   return sendClientEmail(supabase, {
     clientId,
     kind: "manual",
     templateKey: context.key,
     to: [context.to],
     subject: email.subject,
-    text: email.body,
+    text,
+    html: step === "investor_list" ? investorListEmailHtml(text) : undefined,
   });
 }

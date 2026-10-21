@@ -986,7 +986,7 @@ function listBrief(list: ReturnType<typeof asInvestorList>) {
       .join("\n");
   }
   return FIT_TIERS.map(({ tier, label }) => {
-    const funds = list.rows.filter((row) => row.tier === tier).length;
+    const funds = list.rows.filter((row) => row.tier === tier && !row.hidden_duplicate).length;
     return `${label}: ${funds} funds.`;
   }).join("\n");
 }

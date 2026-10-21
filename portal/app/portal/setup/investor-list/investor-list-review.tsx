@@ -1,190 +1,811 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { AdminReply } from "@/components/setup/admin-reply";
-import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
-import { ReviewActions } from "@/components/setup/review-actions";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+import { respondToSetupStep, saveInvestorFundFlag } from "@/app/portal/setup/actions";
+import { formatDate } from "@/lib/format";
+import { applyFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import {
   FIT_TIERS,
   NOTE_MAX,
-  tierCounts,
+  type FitTier,
+  type InvestorFundFlag,
+  type InvestorListSummary,
   type InvestorRow,
+  type InvestorVerification,
 } from "@/lib/setup";
 
+const PAGE_SIZE = 25;
+
+const primaryButton =
+  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-primary px-md text-body text-white hover:bg-primary-hover motion-reduce:transition-none";
+const secondaryButton =
+  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border bg-surface px-md text-body text-heading hover:bg-background motion-reduce:transition-none";
+
+function n(value: number) {
+  return value.toLocaleString("en-US");
+}
+
+function fundType(row: InvestorRow) {
+  return row.fund_type?.trim() || row.details.split("·")[0]?.trim() || "Other";
+}
+
+/** Type, place, check size and stage. Founded year only when nothing else exists. */
+function metaLine(row: InvestorRow) {
+  const structured = [fundType(row), row.location?.trim(), row.check_size?.trim(), row.stage_focus?.trim()]
+    .filter(Boolean);
+  if (row.fund_type || row.location || row.check_size || row.stage_focus) {
+    return structured.join(" · ");
+  }
+  const parts = row.details
+    .split("·")
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const withoutFounded = parts.filter((part) => !/^founded\b/i.test(part));
+  return (withoutFounded.length > 0 ? withoutFounded : parts).join(" · ");
+}
+
+function notesFromFlags(flags: Record<string, InvestorFundFlag>) {
+  const notes: Record<string, string> = {};
+  for (const [id, flag] of Object.entries(flags)) {
+    const note = flag.note?.trim();
+    if (note) notes[id] = note;
+  }
+  return notes;
+}
+
+function checkedLabel(value: string | undefined) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatDate(value);
+}
+
 export function InvestorListReview({
-  rows,
+  rows: allRows,
+  summary,
+  verification,
+  flags: initialFlags,
   version,
   open,
-  sentNotes,
+  company,
+  adminName,
+  publishedAt,
   adminNote,
   readOnly,
-  stickyFooter = true,
+  heading = "h1",
 }: {
   rows: InvestorRow[];
+  summary?: InvestorListSummary | null;
+  verification?: InvestorVerification;
+  flags?: Record<string, InvestorFundFlag>;
   version: number;
-  /** True while it is the client's turn to respond. */
+  /** True while it is the client's turn to confirm. */
   open: boolean;
-  /** Notes the client already sent on this version. */
-  sentNotes: Record<string, string>;
-  /** Rupert's reply, shown when the list is back for confirmation. */
+  company: string;
+  adminName: string;
+  publishedAt?: string | null;
   adminNote?: string;
+  /** Preview and view-as: controls stay visible and do not save. */
   readOnly: boolean;
-  /** Pins Confirm to the bottom of the viewport. Off in Rupert's preview. */
-  stickyFooter?: boolean;
+  heading?: "h1" | "p";
 }) {
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  const [editing, setEditing] = useState<Record<string, boolean>>({});
-  const [tierFilter, setTierFilter] = useState<0 | 1 | 2 | 3>(0);
-  const counts = useMemo(() => tierCounts(rows), [rows]);
+  const rows = useMemo(() => allRows.filter((row) => !row.hidden_duplicate), [allRows]);
+  const router = useRouter();
+  const confirmRef = useRef<HTMLDialogElement>(null);
+  const askRef = useRef<HTMLDialogElement>(null);
+  const searchId = useId();
+  const [flags, setFlags] = useState<Record<string, InvestorFundFlag>>(initialFlags ?? {});
+  const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
+  const [noteOpen, setNoteOpen] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, string>>({});
+  const [tier, setTier] = useState<FitTier>(1);
+  const [query, setQuery] = useState("");
+  const [types, setTypes] = useState<string[]>([]);
+  const [showExcluded, setShowExcluded] = useState(false);
+  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [shownMessage, setShownMessage] = useState("");
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [askOpen, setAskOpen] = useState(false);
+  const [askText, setAskText] = useState("");
+  const [pending, setPending] = useState<null | "confirmed" | "changes_requested">(null);
+  const [error, setError] = useState<string | null>(null);
+  const [saveFailed, setSaveFailed] = useState<Record<string, FlagPatch>>({});
 
-  const tabClass = (active: boolean) =>
-    `rounded-md px-md py-sm text-body-sm transition-colors duration-hover ${
-      active
-        ? "bg-primary text-white"
-        : "border border-border bg-surface text-secondary hover:text-heading"
-    }`;
+  const editable = open && !readOnly;
+  const blocked = readOnly || pending !== null;
+  const dateLabel = checkedLabel(publishedAt ?? undefined);
+
+  useEffect(() => {
+    setLimit(PAGE_SIZE);
+  }, [tier, query, types, showExcluded]);
+
+  useEffect(() => {
+    const dialog = confirmRef.current;
+    if (!dialog) return;
+    if (confirmOpen && !dialog.open) dialog.showModal();
+    if (!confirmOpen && dialog.open) dialog.close();
+  }, [confirmOpen]);
+
+  useEffect(() => {
+    const dialog = askRef.current;
+    if (!dialog) return;
+    if (askOpen && !dialog.open) dialog.showModal();
+    if (!askOpen && dialog.open) dialog.close();
+  }, [askOpen]);
+
+  const tierStats = useMemo(
+    () =>
+      FIT_TIERS.map((entry) => {
+        const inTier = rows.filter((row) => row.tier === entry.tier);
+        const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
+        const counted = inTier.some((row) => typeof row.contact_count === "number");
+        return {
+          ...entry,
+          funds: inTier.length,
+          contacts: fromSummary ? fromSummary.contacts : counted
+            ? inTier.reduce((sum, row) => sum + (row.contact_count ?? 0), 0)
+            : null,
+        };
+      }),
+    [rows, summary],
+  );
+
+  const inTab = useMemo(() => rows.filter((row) => row.tier === tier), [rows, tier]);
+  const typeCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const row of inTab) counts.set(fundType(row), (counts.get(fundType(row)) ?? 0) + 1);
+    return Array.from(counts.entries()).sort(
+      (a, b) => b[1] - a[1] || a[0].localeCompare(b[0]),
+    );
+  }, [inTab]);
+
+  const visible = useMemo(() => {
+    const selected = new Set(types);
+    const needle = query.trim().toLowerCase();
+    return inTab.filter((row) => {
+      if (!showExcluded && flags[row.id]?.excluded && !saveFailed[row.id]) return false;
+      if (needle && !row.fund_name.toLowerCase().includes(needle)) return false;
+      if (selected.size > 0 && !selected.has(fundType(row))) return false;
+      return true;
+    });
+  }, [inTab, flags, showExcluded, query, types, saveFailed]);
+
+  const shown = visible.slice(0, limit);
+  const confirming = rows.filter((row) => !flags[row.id]?.excluded).length;
+  const excluded = rows.filter((row) => flags[row.id]?.excluded).length;
+  const known = rows.filter((row) => flags[row.id]?.known).length;
+  const activeTab = FIT_TIERS.find((entry) => entry.tier === tier) ?? FIT_TIERS[0];
+
+  function noteValue(id: string) {
+    return noteDrafts[id] ?? flags[id]?.note ?? "";
+  }
+
+  async function commit(id: string, patch: FlagPatch) {
+    let previous: InvestorFundFlag | undefined;
+    setFlags((current) => {
+      previous = current[id];
+      return applyFundFlag(current, id, patch);
+    });
+    setSaved((current) => ({ ...current, [id]: "" }));
+    setSaveFailed((current) => {
+      if (!current[id]) return current;
+      const copy = { ...current };
+      delete copy[id];
+      return copy;
+    });
+    if (!editable) return;
+    const result = await saveInvestorFundFlag({ version, fundId: id, ...patch });
+    if (!result.ok) {
+      setFlags((current) => {
+        const copy = { ...current };
+        if (previous) copy[id] = previous;
+        else delete copy[id];
+        return copy;
+      });
+      setError(result.error);
+      if (result.error === "Couldn't save, try again") {
+        setSaveFailed((current) => ({ ...current, [id]: patch }));
+      }
+      return;
+    }
+    setError(null);
+    setSaved((current) => ({ ...current, [id]: "Saved" }));
+  }
+
+  function saveNote(id: string) {
+    const next = noteValue(id);
+    if (next.trim() === (flags[id]?.note ?? "")) {
+      setSaved((current) => ({ ...current, [id]: "Saved" }));
+      return;
+    }
+    void commit(id, { note: next });
+  }
+
+  async function respond(decision: "confirmed" | "changes_requested") {
+    if (blocked) return;
+    if (decision === "changes_requested" && !askText.trim()) {
+      setError("Write your question first.");
+      return;
+    }
+    setPending(decision);
+    setError(null);
+    try {
+      const result = await respondToSetupStep({
+        step: "investor_list",
+        version,
+        decision,
+        note: decision === "changes_requested" ? askText : "",
+        itemNotes: notesFromFlags(flags),
+      });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setConfirmOpen(false);
+      setAskOpen(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  function onTabsKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
+    if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
+    event.preventDefault();
+    const index = FIT_TIERS.findIndex((entry) => entry.tier === tier);
+    const nextIndex =
+      event.key === "Home"
+        ? 0
+        : event.key === "End"
+          ? FIT_TIERS.length - 1
+          : event.key === "ArrowRight"
+            ? (index + 1) % FIT_TIERS.length
+            : (index - 1 + FIT_TIERS.length) % FIT_TIERS.length;
+    const next = FIT_TIERS[nextIndex].tier;
+    setTier(next);
+    setTypes([]);
+    document.getElementById(`investor-tier-tab-${next}`)?.focus();
+  }
+
+  const Title = heading === "h1" ? "h1" : "p";
+  const ran = verification?.verification_ran === true;
 
   return (
-    <>
-      {open && adminNote ? <AdminReply note={adminNote} /> : null}
-      <div className="mb-md flex flex-wrap gap-sm" role="tablist" aria-label="Filter by tier">
-        <button
-          type="button"
-          role="tab"
-          aria-selected={tierFilter === 0}
-          className={tabClass(tierFilter === 0)}
-          onClick={() => setTierFilter(0)}
+    <div
+      className={
+        open
+          ? "pb-40 scroll-pb-40 md:scroll-pt-24 md:pb-0 md:scroll-pb-0 [&_a]:scroll-mb-40 [&_button]:scroll-mb-40 [&_input]:scroll-mb-40 [&_textarea]:scroll-mb-40 md:[&_a]:scroll-mb-0 md:[&_a]:scroll-mt-24 md:[&_button]:scroll-mb-0 md:[&_button]:scroll-mt-24 md:[&_input]:scroll-mb-0 md:[&_input]:scroll-mt-24 md:[&_textarea]:scroll-mb-0 md:[&_textarea]:scroll-mt-24"
+          : undefined
+      }
+    >
+      <header>
+        <Title className="text-h1 text-heading">Your investor list</Title>
+        <p className="mt-sm text-body text-secondary">
+          {company} · prepared by {adminName}
+          {dateLabel ? ` · ${dateLabel}` : ""}
+        </p>
+      </header>
+
+      {open ? (
+        <p
+          className="mt-lg rounded-card border border-border bg-primary-tint px-md py-md text-body text-heading"
+          role="status"
         >
-          All · {rows.length}
-        </button>
-        {FIT_TIERS.map(({ tier, label }) => (
-          <button
-            key={tier}
-            type="button"
-            role="tab"
-            aria-selected={tierFilter === tier}
-            className={tabClass(tierFilter === tier)}
-            onClick={() => setTierFilter(tier)}
-          >
-            {label} · {counts.find((entry) => entry.tier === tier)?.count ?? 0}
-          </button>
-        ))}
-      </div>
+          Review the list and confirm. Outreach starts only after you confirm, and you&apos;ll
+          approve every email before it&apos;s sent.
+        </p>
+      ) : null}
 
-      <InvestorFundGroups
-        rows={rows.filter((row) => tierFilter === 0 || row.tier === tierFilter)}
-        renderRow={(row) => {
-                const note = notes[row.id] ?? "";
-                const sent = sentNotes[row.id];
-                const isEditing = editing[row.id] || Boolean(note);
+      {open && adminNote?.trim() ? (
+        <section className="mt-lg rounded-card border border-border bg-surface px-md py-md">
+          <p className="text-body text-heading">From {adminName}</p>
+          <p className="mt-sm whitespace-pre-wrap text-body text-body">{adminNote}</p>
+        </section>
+      ) : null}
+
+      {open ? (
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-md py-sm shadow-[0_-8px_24px_rgba(0,0,0,0.08)] md:sticky md:inset-x-auto md:bottom-auto md:top-0 md:mt-lg md:rounded-card md:border md:shadow-none">
+          <div className="flex flex-wrap items-center gap-sm">
+            <p className="min-w-[12rem] flex-1 text-body text-heading" aria-live="polite">
+              Confirming {n(confirming)} funds · {n(excluded)} excluded
+            </p>
+            <button
+              type="button"
+              className={primaryButton}
+              aria-disabled={blocked || undefined}
+              onClick={() => {
+                if (blocked) return;
+                setConfirmOpen(true);
+              }}
+            >
+              {pending === "confirmed" ? "Confirming…" : "Confirm list"}
+            </button>
+            <button
+              type="button"
+              className={secondaryButton}
+              aria-disabled={blocked || undefined}
+              onClick={() => {
+                if (blocked) return;
+                setError(null);
+                setAskOpen(true);
+              }}
+            >
+              Ask {adminName} a question
+            </button>
+            {readOnly ? (
+              <p className="text-body text-secondary">Preview: actions disabled</p>
+            ) : null}
+          </div>
+          {error ? (
+            <p role="alert" className="mt-sm text-body text-error">
+              {error}
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
+      <section className="mt-lg" aria-labelledby="tier-summary-heading">
+        <h2 id="tier-summary-heading" className="text-h2 text-heading">
+          Tier summary
+        </h2>
+        <div className="mt-md grid gap-md md:grid-cols-3">
+          {tierStats.map((entry) => {
+            const pressed = tier === entry.tier;
+            return (
+              <button
+                key={entry.tier}
+                type="button"
+                aria-pressed={pressed}
+                className={`rounded-card border bg-surface px-md py-md text-left hover:bg-background motion-reduce:transition-none ${
+                  pressed ? "border-heading" : "border-border"
+                }`}
+                onClick={() => {
+                  setTier(entry.tier);
+                  setTypes([]);
+                }}
+              >
+                <span className="block text-h3 text-heading">{entry.label}</span>
+                {pressed ? <span className="mt-xs block text-body text-heading">Selected</span> : null}
+                <span className="mt-sm block text-body text-secondary">{entry.detail}</span>
+                <span className="mt-sm block text-body text-heading">
+                  {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
+                  {entry.contacts !== null
+                    ? ` · ${n(entry.contacts)} contact${entry.contacts === 1 ? "" : "s"}`
+                    : ""}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {ran && verification ? (
+        <section className="mt-lg rounded-card border border-border bg-surface px-md py-md" aria-labelledby="quality-check-heading">
+          <h2 id="quality-check-heading" className="text-h2 text-heading">
+            Quality check
+          </h2>
+          <p className="mt-sm text-body text-body">
+            Before sharing this list we checked a sample of {n(verification.sample_size ?? 0)}{" "}
+            contacts: {n(verification.firms_confirmed_active ?? 0)} of{" "}
+            {n(verification.firms_checked ?? 0)} firms confirmed active, and{" "}
+            {n(verification.deliverable_rate ?? 0)}% of emails verified deliverable.
+            {verification.excludes_invalid
+              ? " Contacts that failed are removed from outreach."
+              : ""}
+          </p>
+          {checkedLabel(verification.verified_at) ? (
+            <p className="mt-sm text-body text-secondary">
+              Checked {checkedLabel(verification.verified_at)}
+            </p>
+          ) : null}
+        </section>
+      ) : null}
+
+      <section className="mt-lg" aria-labelledby="investors-heading">
+        <h2 id="investors-heading" className="text-h2 text-heading">
+          Investors
+        </h2>
+        <div
+          className="mt-md flex flex-wrap gap-sm"
+          role="tablist"
+          aria-label="Fit tiers"
+          onKeyDown={onTabsKeyDown}
+        >
+          {tierStats.map((entry) => {
+            const selected = tier === entry.tier;
+            return (
+              <button
+                key={entry.tier}
+                type="button"
+                id={`investor-tier-tab-${entry.tier}`}
+                role="tab"
+                aria-selected={selected}
+                aria-controls="investor-tier-panel"
+                tabIndex={selected ? 0 : -1}
+                className={`min-h-[44px] rounded-md border px-md text-body motion-reduce:transition-none ${
+                  selected
+                    ? "border-heading bg-surface text-heading"
+                    : "border-border bg-surface text-secondary"
+                }`}
+                onClick={() => {
+                  setTier(entry.tier);
+                  setTypes([]);
+                }}
+              >
+                {entry.label} ({n(entry.funds)}){selected ? " · selected" : ""}
+              </button>
+            );
+          })}
+        </div>
+
+        <div
+          id="investor-tier-panel"
+          role="tabpanel"
+          aria-labelledby={`investor-tier-tab-${tier}`}
+          className="mt-md"
+        >
+          <div className="flex flex-wrap items-end gap-sm">
+            <label className="block min-w-[16rem] flex-1 text-body text-heading" htmlFor={searchId}>
+              Fund name
+              <input
+                id={searchId}
+                type="search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                className="mt-xs min-h-[44px] w-full rounded-md border border-border bg-surface px-md py-sm text-body text-body"
+              />
+            </label>
+            <button
+              type="button"
+              className={secondaryButton}
+              aria-pressed={showExcluded}
+              onClick={() => setShowExcluded((current) => !current)}
+            >
+              {showExcluded ? "✓ Show excluded" : "Show excluded"}
+            </button>
+          </div>
+          {typeCounts.length > 0 ? (
+            <div className="mt-md flex flex-wrap gap-sm" role="group" aria-label={`${activeTab.label} fund types`}>
+              {typeCounts.map(([type, count]) => {
+                const pressed = types.includes(type);
                 return (
-                  <li key={row.id} className="px-lg py-md">
-                    <div className="grid gap-sm md:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
-                      <div className="min-w-0">
-                        <p className="text-body-sm text-heading">
-                          {row.fund_name}
-                          {row.website ? (
-                            <a
-                              href={row.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="ml-sm text-primary hover:text-primary-hover"
-                              aria-label={`Open ${row.fund_name} website in a new tab`}
-                            >
-                              Website ↗
-                            </a>
-                          ) : null}
-                        </p>
-                        {row.contact ? (
-                          <p className="text-body-sm text-secondary">{row.contact}</p>
-                        ) : null}
-                        {row.details ? (
-                          <p className="mt-xs whitespace-pre-wrap text-body-sm text-muted">
-                            {row.details}
-                          </p>
-                        ) : null}
-                      </div>
-                      <div className="min-w-0 text-body-sm">
-                        {row.why ? (
-                          <>
-                            <p className="text-label uppercase tracking-label text-muted">
-                              Why it works
-                            </p>
-                            <p className="mt-xs whitespace-pre-wrap text-body">{row.why}</p>
-                          </>
-                        ) : null}
-                        {row.comments ? (
-                          <>
-                            <p className="mt-sm text-label uppercase tracking-label text-muted">
-                              Rupert&apos;s comments
-                            </p>
-                            <p className="mt-xs whitespace-pre-wrap text-body">
-                              {row.comments}
-                            </p>
-                          </>
-                        ) : null}
-                      </div>
-                    </div>
+                  <button
+                    key={type}
+                    type="button"
+                    className={`min-h-[44px] rounded-md border px-md text-body motion-reduce:transition-none ${
+                      pressed ? "border-heading bg-surface text-heading" : "border-border bg-surface text-secondary"
+                    }`}
+                    aria-pressed={pressed}
+                    onClick={() =>
+                      setTypes((current) =>
+                        current.includes(type)
+                          ? current.filter((item) => item !== type)
+                          : [...current, type],
+                      )
+                    }
+                  >
+                    {pressed ? "✓ " : ""}
+                    {type} {n(count)}
+                  </button>
+                );
+              })}
+            </div>
+          ) : null}
 
-                    {sent ? (
-                      <p className="mt-sm rounded-md bg-background px-sm py-xs text-body-sm text-secondary">
-                        <span className="text-heading">Your note:</span> {sent}
-                      </p>
-                    ) : null}
+          <p className="sr-only" aria-live="polite">
+            {shownMessage}
+          </p>
 
-                    {open ? (
-                      isEditing ? (
-                        <textarea
-                          aria-label={`Your note on ${row.fund_name}`}
-                          className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
-                          rows={2}
-                          maxLength={NOTE_MAX}
-                          value={note}
-                          disabled={readOnly}
-                          autoFocus={editing[row.id] && !note}
-                          placeholder="Already in touch? Not a fit? A question?"
-                          onChange={(event) =>
-                            setNotes((current) => ({
-                              ...current,
-                              [row.id]: event.target.value,
-                            }))
-                          }
-                          onBlur={() => {
-                            if (!note.trim()) {
-                              setEditing((current) => ({ ...current, [row.id]: false }));
-                            }
-                          }}
-                        />
-                      ) : (
+          {shown.length === 0 ? (
+            <p className="mt-md text-body text-secondary">No funds match.</p>
+          ) : (
+            <ul className="mt-md space-y-md">
+              {shown.map((row) => {
+                const flag = flags[row.id] ?? {};
+                const meta = metaLine(row);
+                const reasons = row.reasons ?? [];
+                if (flag.excluded) {
+                  return (
+                    <li key={row.id} className="rounded-card border border-border bg-surface px-md py-sm">
+                      <div className="flex flex-wrap items-center justify-between gap-sm">
+                        <h3 className="text-h3 text-heading">{row.fund_name}</h3>
+                        <span className="text-body text-heading">Excluded</span>
                         <button
                           type="button"
-                          disabled={readOnly}
-                          className="mt-sm text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
-                          onClick={() =>
-                            setEditing((current) => ({ ...current, [row.id]: true }))
-                          }
+                          className={secondaryButton}
+                          aria-disabled={blocked || undefined}
+                          onClick={() => {
+                            if (blocked) return;
+                            void commit(row.id, { excluded: false });
+                          }}
                         >
-                          + Add a note
+                          Undo
                         </button>
-                      )
+                      </div>
+                      {saveFailed[row.id] ? (
+                        <div className="mt-md flex flex-wrap items-center gap-sm">
+                          <p role="alert" className="text-body text-error">
+                            Couldn&apos;t save, try again
+                          </p>
+                          <button
+                            type="button"
+                            className={secondaryButton}
+                            onClick={() => {
+                              const patch = saveFailed[row.id];
+                              if (patch) void commit(row.id, patch);
+                            }}
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      ) : null}
+                    </li>
+                  );
+                }
+                const writing = noteOpen[row.id] || Boolean(noteValue(row.id));
+                return (
+                  <li key={row.id} className="rounded-card border border-border bg-surface p-md">
+                    <div className="grid gap-md md:grid-cols-2">
+                      <div className="min-w-0">
+                        <h3 className="text-h3 text-heading">{row.fund_name}</h3>
+                        {row.website ? (
+                          <a
+                            href={row.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-xs inline-flex min-h-[44px] items-center gap-xs text-body text-primary underline"
+                          >
+                            Website
+                            <span className="sr-only"> (opens in new tab)</span>
+                            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                              <path
+                                d="M8 5H5v10h10v-3M11 4h5v5M10 10l6-6"
+                                stroke="currentColor"
+                                strokeWidth="1.5"
+                              />
+                            </svg>
+                          </a>
+                        ) : null}
+                        {meta ? <p className="mt-xs text-body text-secondary">{meta}</p> : null}
+                        {typeof row.contact_count === "number" ? (
+                          <p className="mt-xs text-body text-heading">
+                            {n(row.contact_count)} contact{row.contact_count === 1 ? "" : "s"}
+                          </p>
+                        ) : null}
+                        {flag.known ? (
+                          <p className="mt-sm text-body text-heading">I know them</p>
+                        ) : null}
+                      </div>
+                      {reasons.length > 0 ? (
+                        <div>
+                          <p id={`why-${row.id}`} className="text-body text-heading">
+                            Why it fits
+                          </p>
+                          <ul className="mt-sm flex flex-wrap gap-sm" aria-labelledby={`why-${row.id}`}>
+                            {reasons.map((reason) => (
+                              <li
+                                key={reason}
+                                className="rounded-md border border-border bg-background px-sm py-xs text-body text-heading"
+                              >
+                                {reason}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : null}
+                    </div>
+                    {open ? (
+                      <div className="mt-md flex flex-wrap gap-sm">
+                        <button
+                          type="button"
+                          className={secondaryButton}
+                          aria-pressed={false}
+                          aria-disabled={blocked || undefined}
+                          onClick={() => {
+                            if (blocked) return;
+                            void commit(row.id, {
+                              excluded: true,
+                              ...(noteDrafts[row.id] !== undefined ? { note: noteDrafts[row.id] } : {}),
+                            });
+                          }}
+                        >
+                          Exclude
+                        </button>
+                        <button
+                          type="button"
+                          className={secondaryButton}
+                          aria-pressed={Boolean(flag.known)}
+                          aria-disabled={blocked || undefined}
+                          onClick={() => {
+                            if (blocked) return;
+                            void commit(row.id, {
+                              known: !flag.known,
+                              ...(noteDrafts[row.id] !== undefined ? { note: noteDrafts[row.id] } : {}),
+                            });
+                          }}
+                        >
+                          {flag.known ? "✓ I know them" : "I know them"}
+                        </button>
+                        {!writing ? (
+                          <button
+                            type="button"
+                            className={secondaryButton}
+                            aria-disabled={blocked || undefined}
+                            onClick={() => {
+                              if (blocked) return;
+                              setNoteOpen((current) => ({ ...current, [row.id]: true }));
+                            }}
+                          >
+                            Add note
+                          </button>
+                        ) : null}
+                      </div>
+                    ) : flag.note ? (
+                      <p className="mt-md text-body text-body">
+                        <span className="text-heading">Note: </span>
+                        {flag.note}
+                      </p>
+                    ) : null}
+                    {open && writing ? (
+                      <div className="mt-md">
+                        <label className="block text-body text-heading" htmlFor={`note-${row.id}`}>
+                          Note on {row.fund_name}
+                          <textarea
+                            id={`note-${row.id}`}
+                            className="mt-xs w-full rounded-md border border-border bg-background px-md py-sm text-body text-body"
+                            rows={3}
+                            maxLength={NOTE_MAX}
+                            value={noteValue(row.id)}
+                            readOnly={!editable}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setNoteDrafts((current) => ({ ...current, [row.id]: value }));
+                              setSaved((current) => ({ ...current, [row.id]: "" }));
+                            }}
+                            onBlur={(event) => {
+                              const next = event.relatedTarget;
+                              const rowEl = event.currentTarget.closest("li");
+                              if (
+                                next instanceof HTMLElement &&
+                                rowEl?.contains(next) &&
+                                next.tagName === "BUTTON"
+                              ) {
+                                return;
+                              }
+                              if (editable) saveNote(row.id);
+                            }}
+                          />
+                        </label>
+                        <div className="mt-sm flex flex-wrap items-center gap-sm">
+                          <button
+                            type="button"
+                            className={secondaryButton}
+                            aria-disabled={blocked || undefined}
+                            onClick={() => {
+                              if (!editable) return;
+                              saveNote(row.id);
+                            }}
+                          >
+                            Save
+                          </button>
+                          <p className="text-body text-secondary" aria-live="polite">
+                            {saved[row.id] ?? ""}
+                          </p>
+                        </div>
+                      </div>
+                    ) : null}
+                    {saveFailed[row.id] ? (
+                      <div className="mt-md flex flex-wrap items-center gap-sm">
+                        <p role="alert" className="text-body text-error">
+                          Couldn&apos;t save, try again
+                        </p>
+                        <button
+                          type="button"
+                          className={secondaryButton}
+                          onClick={() => {
+                            const patch = saveFailed[row.id];
+                            if (patch) void commit(row.id, patch);
+                          }}
+                        >
+                          Retry
+                        </button>
+                      </div>
                     ) : null}
                   </li>
                 );
-        }}
-      />
-      {open ? (
-        <ReviewActions
-          step="investor_list"
-          version={version}
-          itemNotes={notes}
-          confirmLabel="Confirm investor list"
-          changesLabel="Ask a question first"
-          notePlaceholder="A comment for Rupert. Confirming the list sends it."
-          intro="Confirm the list, or send Rupert your notes. Outreach can't start until you confirm."
-          readOnly={readOnly}
-          stickyFooter={stickyFooter}
-        />
-      ) : null}
-    </>
+              })}
+            </ul>
+          )}
+          {shown.length < visible.length ? (
+            <button
+              type="button"
+              className={`${secondaryButton} mt-md`}
+              onClick={() => {
+                const next = Math.min(visible.length, limit + PAGE_SIZE);
+                setLimit(next);
+                setShownMessage(`Showing ${n(next)} of ${n(visible.length)} funds`);
+              }}
+            >
+              Show 25 more
+            </button>
+          ) : null}
+        </div>
+      </section>
+
+      <dialog
+        ref={confirmRef}
+        aria-labelledby="confirm-list-title"
+        className="w-[min(100%,36rem)] rounded-card border border-border bg-surface p-lg text-body text-body"
+        onClose={() => setConfirmOpen(false)}
+      >
+        <h2 id="confirm-list-title" className="text-h2 text-heading">
+          Confirm this list?
+        </h2>
+        <ul className="mt-md list-disc space-y-xs pl-md text-body text-heading">
+          {tierStats.map((entry) => (
+            <li key={entry.tier}>
+              {entry.label}: {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
+            </li>
+          ))}
+          <li>Excluded: {n(excluded)}</li>
+          <li>I know them: {n(known)}</li>
+        </ul>
+        {error ? (
+          <p role="alert" className="mt-md text-body text-error">
+            {error}
+          </p>
+        ) : null}
+        <div className="mt-lg flex flex-wrap gap-sm">
+          <button type="button" className={primaryButton} onClick={() => void respond("confirmed")}>
+            {pending === "confirmed" ? "Confirming…" : "Confirm list"}
+          </button>
+          <button type="button" className={secondaryButton} onClick={() => setConfirmOpen(false)}>
+            Cancel
+          </button>
+        </div>
+      </dialog>
+
+      <dialog
+        ref={askRef}
+        aria-labelledby="ask-question-title"
+        className="w-[min(100%,36rem)] rounded-card border border-border bg-surface p-lg text-body text-body"
+        onClose={() => setAskOpen(false)}
+      >
+        <h2 id="ask-question-title" className="text-h2 text-heading">
+          Ask {adminName} a question
+        </h2>
+        <label className="mt-md block text-body text-heading" htmlFor="investor-question">
+          Your question
+          <textarea
+            id="investor-question"
+            className="mt-xs w-full rounded-md border border-border bg-background px-md py-sm text-body text-body"
+            rows={4}
+            maxLength={NOTE_MAX}
+            value={askText}
+            onChange={(event) => setAskText(event.target.value)}
+          />
+        </label>
+        {error ? (
+          <p role="alert" className="mt-md text-body text-error">
+            {error}
+          </p>
+        ) : null}
+        <div className="mt-lg flex flex-wrap gap-sm">
+          <button
+            type="button"
+            className={primaryButton}
+            onClick={() => void respond("changes_requested")}
+          >
+            {pending === "changes_requested" ? "Sending…" : "Send question"}
+          </button>
+          <button type="button" className={secondaryButton} onClick={() => setAskOpen(false)}>
+            Cancel
+          </button>
+        </div>
+      </dialog>
+    </div>
   );
 }

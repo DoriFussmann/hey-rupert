@@ -61,7 +61,7 @@ export function EmailCopyReview({
               className={tabClass(tier === entry.tier)}
               onClick={() => setTier(entry.tier)}
             >
-              {entry.label} · {entry.detail}
+              {entry.label}
               {count ? ` · ${count} funds` : ""}
               {hasNote ? " •" : ""}
             </button>
@@ -72,7 +72,7 @@ export function EmailCopyReview({
       <section className="rounded-card border border-border bg-surface">
         <div className="border-b border-border px-lg py-md">
           <h2 className="text-h4">
-            {current.label} <span className="text-muted">· {current.detail}</span>
+            {current.label} <span className="text-body text-secondary">· {current.detail}</span>
           </h2>
         </div>
         <ol className="divide-y divide-border">
