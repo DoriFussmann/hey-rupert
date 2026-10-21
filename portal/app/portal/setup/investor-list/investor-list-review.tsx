@@ -6,13 +6,14 @@ import { respondToSetupStep, saveInvestorFundFlag } from "@/app/portal/setup/act
 import { formatDate } from "@/lib/format";
 import { applyFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import {
-  FIT_TIERS,
   NOTE_MAX,
+  fitTiersFor,
   type FitTier,
   type InvestorFundFlag,
   type InvestorListSummary,
   type InvestorRow,
   type InvestorVerification,
+  type TierScheme,
 } from "@/lib/setup";
 
 const PAGE_SIZE = 25;
@@ -64,6 +65,7 @@ function checkedLabel(value: string | undefined) {
 export function InvestorListReview({
   rows: allRows,
   summary,
+  scheme,
   verification,
   flags: initialFlags,
   version,
@@ -77,6 +79,8 @@ export function InvestorListReview({
 }: {
   rows: InvestorRow[];
   summary?: InvestorListSummary | null;
+  /** The list's tier scheme: three tiers unless it was pushed from the four-tier engine. */
+  scheme?: TierScheme;
   verification?: InvestorVerification;
   flags?: Record<string, InvestorFundFlag>;
   version: number;
@@ -91,6 +95,7 @@ export function InvestorListReview({
   heading?: "h1" | "p";
 }) {
   const rows = useMemo(() => allRows.filter((row) => !row.hidden_duplicate), [allRows]);
+  const tiers = fitTiersFor(scheme);
   const router = useRouter();
   const confirmRef = useRef<HTMLDialogElement>(null);
   const askRef = useRef<HTMLDialogElement>(null);
@@ -136,7 +141,7 @@ export function InvestorListReview({
 
   const tierStats = useMemo(
     () =>
-      FIT_TIERS.map((entry) => {
+      tiers.map((entry) => {
         const inTier = rows.filter((row) => row.tier === entry.tier);
         const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
         const counted = inTier.some((row) => typeof row.contact_count === "number");
@@ -148,7 +153,7 @@ export function InvestorListReview({
             : null,
         };
       }),
-    [rows, summary],
+    [rows, summary, tiers],
   );
 
   const inTab = useMemo(() => rows.filter((row) => row.tier === tier), [rows, tier]);
@@ -175,7 +180,7 @@ export function InvestorListReview({
   const confirming = rows.filter((row) => !flags[row.id]?.excluded).length;
   const excluded = rows.filter((row) => flags[row.id]?.excluded).length;
   const known = rows.filter((row) => flags[row.id]?.known).length;
-  const activeTab = FIT_TIERS.find((entry) => entry.tier === tier) ?? FIT_TIERS[0];
+  const activeTab = tiers.find((entry) => entry.tier === tier) ?? tiers[0];
 
   function noteValue(id: string) {
     return noteDrafts[id] ?? flags[id]?.note ?? "";
@@ -255,16 +260,16 @@ export function InvestorListReview({
   function onTabsKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const index = FIT_TIERS.findIndex((entry) => entry.tier === tier);
+    const index = tiers.findIndex((entry) => entry.tier === tier);
     const nextIndex =
       event.key === "Home"
         ? 0
         : event.key === "End"
-          ? FIT_TIERS.length - 1
+          ? tiers.length - 1
           : event.key === "ArrowRight"
-            ? (index + 1) % FIT_TIERS.length
-            : (index - 1 + FIT_TIERS.length) % FIT_TIERS.length;
-    const next = FIT_TIERS[nextIndex].tier;
+            ? (index + 1) % tiers.length
+            : (index - 1 + tiers.length) % tiers.length;
+    const next = tiers[nextIndex].tier;
     setTier(next);
     setTypes([]);
     document.getElementById(`investor-tier-tab-${next}`)?.focus();
@@ -351,7 +356,7 @@ export function InvestorListReview({
         <h2 id="tier-summary-heading" className="text-h2 text-heading">
           Tier summary
         </h2>
-        <div className="mt-md grid gap-md md:grid-cols-3">
+        <div className={`mt-md grid gap-md ${tiers.length === 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
           {tierStats.map((entry) => {
             const pressed = tier === entry.tier;
             return (

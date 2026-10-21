@@ -268,11 +268,16 @@ export type TierCounts = {
   identityGroups: number;
 };
 
+/** A listed or generalist fund's Fund Database record and ranked contacts. In memory only; never stored. */
+export type LiveFirm = { firm: Firm; ranked: RankedContact[]; seq: RankedContact[] };
+
 export type TierRun = {
   rulesVersion: string;
   outcomes: FirmOutcome[];
   counts: TierCounts;
   warnings: string[];
+  /** For verification: each fund that reached the contact step. Not part of the saved run. */
+  live: Map<FirmOutcome, LiveFirm>;
 };
 
 export type TierRunInput = {
@@ -794,6 +799,7 @@ export function runTiers(input: TierRunInput): TierRun {
   const outcomes: FirmOutcome[] = [];
   let fofWithOtherFinancing = 0;
   const sources = new Map<FirmOutcome, { firm: Firm; contacts: Contact[] }>();
+  const live = new Map<FirmOutcome, LiveFirm>();
 
   const occurrences = new Map<string, number>();
   for (const firm of db.firms) {
@@ -899,6 +905,7 @@ export function runTiers(input: TierRunInput): TierRun {
     out.flags = assessed.flags;
     out.contacts = briefsOf(seq);
     out.people = peopleOf(ranked);
+    live.set(out, { firm, ranked, seq });
     const filter: ReasonCode | null =
       filters.noPlatforms && firm.stages.length >= 8
         ? "filter_platform"
@@ -1045,8 +1052,10 @@ export function runTiers(input: TierRunInput): TierRun {
         }
       }
       const ranked = RME.rankContacts(source.firm, union, legacy);
-      shown.contacts = briefsOf(RME.pickSequence(ranked));
+      const seq = RME.pickSequence(ranked);
+      shown.contacts = briefsOf(seq);
       shown.people = peopleOf(ranked);
+      live.set(shown, { firm: source.firm, ranked, seq });
     }
   }
 
@@ -1108,5 +1117,5 @@ export function runTiers(input: TierRunInput): TierRun {
     if (code) counts.reasons[code] = (counts.reasons[code] ?? 0) + 1;
   }
 
-  return { rulesVersion: RULES_VERSION, outcomes, counts, warnings: profileWarnings(profile.issues) };
+  return { rulesVersion: RULES_VERSION, outcomes, counts, warnings: profileWarnings(profile.issues), live };
 }

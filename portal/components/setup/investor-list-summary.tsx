@@ -1,14 +1,20 @@
-import { FIT_TIERS, type InvestorListSummary } from "@/lib/setup";
+import { fitTiersFor, type InvestorListSummary, type TierScheme } from "@/lib/setup";
 
 function n(value: number) {
   return value.toLocaleString("en-US");
 }
 
 /** Funds and contact counts per tier. Never names people. */
-export function InvestorListSummaryPanel({ summary }: { summary: InvestorListSummary }) {
+export function InvestorListSummaryPanel({
+  summary,
+  scheme,
+}: {
+  summary: InvestorListSummary;
+  scheme?: TierScheme;
+}) {
   return (
-    <div className="grid gap-sm md:grid-cols-3">
-      {FIT_TIERS.map(({ tier, label, detail }) => {
+    <div className={`grid gap-sm ${scheme === "four" ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
+      {fitTiersFor(scheme).map(({ tier, label, detail }) => {
         const entry = summary.tiers.find((item) => item.tier === tier);
         if (!entry) return null;
         return (

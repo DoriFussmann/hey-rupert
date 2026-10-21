@@ -16,10 +16,10 @@ import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summa
 import { formatDate } from "@/lib/format";
 import { matchPath } from "@/lib/match/shared";
 import {
-  FIT_TIERS,
   NOTE_MAX,
   asInvestorList,
   asInvestorListDraft,
+  fitTiersFor,
   investorListForClient,
   investorListProblem,
   tierLabel,
@@ -46,6 +46,7 @@ function ClientPreview({
     <InvestorListReview
       rows={list.rows}
       summary={list.summary}
+      scheme={list.tier_scheme}
       verification={list.verification}
       flags={list.client_flags}
       version={0}
@@ -133,11 +134,16 @@ export function InvestorListPanel({
           <p className="px-lg pt-md text-body-sm text-secondary">
             {list.source_file ? `${list.source_file} · ` : ""}
             {visibleRows.length} funds on the client list ·{" "}
-            {FIT_TIERS.map(({ tier }) => {
+            {fitTiersFor(list.tier_scheme).map(({ tier }) => {
               const count = visibleRows.filter((entry) => entry.tier === tier).length;
-              return `${tierLabel(tier)}: ${count}`;
+              return `${tierLabel(tier, list.tier_scheme)}: ${count}`;
             }).join(" · ")}
             {hiddenCount > 0 ? ` · ${hiddenCount} hidden ${hiddenCount === 1 ? "duplicate" : "duplicates"}` : ""}
+          </p>
+          <p className="px-lg pt-xs text-body-sm text-muted">
+            {list.tier_scheme === "four"
+              ? `Four tiers (four-tier engine${list.rules_version ? `, rules ${list.rules_version}` : ""}${list.run_id ? `, saved run ${list.run_id.slice(0, 8)}` : ""}).`
+              : "Three tiers (current engine)."}
           </p>
           <div className="px-lg pt-md text-body-sm text-secondary">
             <p className="text-heading">Quality check</p>
@@ -173,7 +179,7 @@ export function InvestorListPanel({
           ) : null}
           {list.summary ? (
             <div className="px-lg pt-md">
-              <InvestorListSummaryPanel summary={list.summary} />
+              <InvestorListSummaryPanel summary={list.summary} scheme={list.tier_scheme} />
             </div>
           ) : null}
           <div className="mt-md border-t border-border py-md">
@@ -189,6 +195,7 @@ export function InvestorListPanel({
             </div>
             <InvestorFundGroups
               rows={adminRows}
+              scheme={list.tier_scheme}
               renderRow={(entry) => {
                 const flag = flagOf(list.client_flags, entry.id);
                 const why = withoutGenericWhy(entry.why);

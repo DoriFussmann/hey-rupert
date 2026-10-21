@@ -28,7 +28,7 @@ import {
   type BatchRecord,
 } from "@/app/admin/clients/[id]/match/verify/verify-parts";
 import { formatDateAtTime } from "@/lib/format";
-import { TIERS, matchPath, type Tier } from "@/lib/match/shared";
+import { MATCH_ENGINE_LABEL, matchPath } from "@/lib/match/shared";
 import {
   ESTIMATE_MIN_CHECKS,
   VERIFY_BATCH_SIZE,
@@ -92,8 +92,6 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
-const EMPTY_BOXES: Record<Tier, string> = { bullseye: "", match: "", expansion: "" };
-
 function SetupPanel({
   overview,
   busy,
@@ -104,19 +102,22 @@ function SetupPanel({
   onStart: (mode: VerifyMode, limits: TierLimits, choices: { id: string; choice: FlaggedChoice }[]) => void;
 }) {
   const [primaryBackup, setPrimaryBackup] = useState(true);
-  const [boxes, setBoxes] = useState<Record<Tier, string>>(EMPTY_BOXES);
+  // Blank boxes: every tier checked in full, on either engine.
+  const [boxes, setBoxes] = useState<Record<string, string>>({});
   const [choices, setChoices] = useState<Record<string, FlaggedChoice>>({});
   const mode: VerifyMode = primaryBackup ? "sequence" : "all";
 
-  const parsed = TIERS.map(({ key }) => ({ tier: key, limit: parseTierLimit(boxes[key]) }));
+  const parsed = overview.tiers.map(({ key }) => ({ tier: key, limit: parseTierLimit(boxes[key] ?? "") }));
   const invalid = parsed.filter((item) => item.limit === "invalid").map((item) => item.tier);
   const limits = Object.fromEntries(
     parsed.map((item) => [item.tier, item.limit === "invalid" ? 0 : item.limit]),
   ) as TierLimits;
-  const perTier = TIERS.map(({ key }) => ({
+  const empty = { total: 0, order: "", noEmail: 0 };
+  const perTier = overview.tiers.map(({ key, label }) => ({
     tier: key,
-    count: overview.counts[mode][key],
-    counted: countTier(overview.counts[mode][key], limits[key]),
+    label,
+    count: overview.counts[mode][key] ?? empty,
+    counted: countTier(overview.counts[mode][key] ?? empty, limits[key] ?? null),
   }));
   const counted = perTier.reduce(
     (sum, item) => ({
@@ -130,7 +131,7 @@ function SetupPanel({
 
   const flagged = overview.flagged.filter((item) => {
     const position = item.positions[mode];
-    const limit = limits[item.contact.tier];
+    const limit = limits[item.contact.tier] ?? null;
     return position !== undefined && (limit === null || position < limit);
   });
   const choiceOf = (id: string) => choices[id] ?? "remove";
@@ -145,6 +146,7 @@ function SetupPanel({
       <h2 className="text-h4 text-heading">What to check</h2>
       <p className="mt-xs text-body-sm text-muted">
         How many contacts per tier, best fit first. Leave a box blank for the whole tier, or put 0 to skip it.
+        Contacts come from the {MATCH_ENGINE_LABEL[overview.engine]} engine.
       </p>
 
       <label className="mt-md flex items-center gap-sm text-body-sm text-heading">
@@ -158,9 +160,8 @@ function SetupPanel({
         <span className="text-muted">(the two people outreach goes to at each fund)</span>
       </label>
 
-      <div className="mt-md grid gap-sm md:grid-cols-3">
-        {perTier.map(({ tier, count, counted: tierCount }) => {
-          const label = TIERS.find((item) => item.key === tier)?.label ?? tier;
+      <div className={`mt-md grid gap-sm ${perTier.length === 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
+        {perTier.map(({ tier, label, count, counted: tierCount }) => {
           const bad = invalid.includes(tier);
           return (
             <label key={tier} className="rounded-card border border-border bg-background px-md py-md">
@@ -171,7 +172,7 @@ function SetupPanel({
                   bad ? "border-error" : "border-border"
                 }`}
                 placeholder={`All (${n(count.total)})`}
-                value={boxes[tier]}
+                value={boxes[tier] ?? ""}
                 aria-invalid={bad}
                 aria-label={`${label}: how many contacts to check`}
                 onChange={(event) => setBoxes((current) => ({ ...current, [tier]: event.target.value }))}

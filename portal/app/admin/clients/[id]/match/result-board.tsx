@@ -169,18 +169,21 @@ function Splits({
   );
 }
 
-function SettingsPanel({
+export function SettingsPanel({
   settings,
   busy,
   hidden,
   onApply,
   onRestore,
+  fourTier = false,
 }: {
   settings: MatchSettings;
   busy: boolean;
   hidden: MatchView["hidden"];
   onApply: (next: MatchSettings) => void;
   onRestore: (firmId: string) => void;
+  /** The four-tier engine has no first wave: its size is hidden. */
+  fourTier?: boolean;
 }) {
   const [draft, setDraft] = useState(settings);
   const filters = draft.filters;
@@ -263,19 +266,21 @@ function SettingsPanel({
               onChange={(event) => setFilter({ foundedAfter: Number(event.target.value) || 0 })}
             />
           </label>
-          <label className="text-body-sm">
-            <span className={labelClass}>First-wave size (Bullseye cap)</span>
-            <input
-              type="number"
-              min={10}
-              max={1000}
-              className={`${inputClass} mt-xs`}
-              value={draft.waveSize}
-              onChange={(event) =>
-                setDraft((current) => ({ ...current, waveSize: Number(event.target.value) || 0 }))
-              }
-            />
-          </label>
+          {fourTier ? null : (
+            <label className="text-body-sm">
+              <span className={labelClass}>First-wave size (Bullseye cap)</span>
+              <input
+                type="number"
+                min={10}
+                max={1000}
+                className={`${inputClass} mt-xs`}
+                value={draft.waveSize}
+                onChange={(event) =>
+                  setDraft((current) => ({ ...current, waveSize: Number(event.target.value) || 0 }))
+                }
+              />
+            </label>
+          )}
           <label className="text-body-sm">
             <span className={labelClass}>Websites checked per tier</span>
             <select
@@ -303,7 +308,7 @@ function SettingsPanel({
           className={secondaryButton}
           disabled={busy}
           onClick={() => {
-            const next = { ...DEFAULT_SETTINGS, tune: settings.tune };
+            const next = { ...DEFAULT_SETTINGS, tune: settings.tune, ...(fourTier ? { waveSize: settings.waveSize } : {}) };
             setDraft(next);
             onApply(next);
           }}

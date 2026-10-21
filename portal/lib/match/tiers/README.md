@@ -2,12 +2,13 @@
 
 A deterministic engine that places every eligible fund in exactly one of four tiers by sector proximity. It reads the Phase 1 taxonomy (`lib/taxonomy`) and the Phase 2 company profile (`lib/company-profile`).
 
-**Status (Sprint 3B-1): admin preview only.** The engine runs alongside the current one (`lib/match/engine`). The live Match page, the founder pages and the current exports still use the current engine, and four-tier lists can't be pushed to a founder. The engine switch and the founder pages come in Sprint 3B-2.
+**Status (Sprint 3B-2): behind a global engine switch.** The engine runs alongside the current one (`lib/match/engine`). The switch on `/admin/matching` (`supabase/match_engine.sql`, every change logged in `match_engine_changes`) decides, for every client, what the Match page shows, what verification checks and what Push to client sends. Without a saved setting, or before the migration, the current engine is used.
 
 | What | Where |
 |---|---|
-| Four-tier admin page | `/admin/matching` |
-| Four-tier match for one client (preview) | `/admin/clients/[id]/match/four-tier` |
+| Engine switch, rules, duplicates, fund-of-funds | `/admin/matching` |
+| Match page (four-tier when switched) | `/admin/fund-database?client=…` |
+| Saved four-tier runs of one client | `/admin/clients/[id]/match/four-tier` |
 | Comparison for one client | `/admin/clients/[id]/match/compare` |
 | Duplicate report and decisions | `/admin/matching/duplicates` |
 
@@ -164,3 +165,12 @@ An export never runs the engine. It reads one saved run's stored rows, and its f
 | Ambiguous | Same name, but a different or missing domain, or a different country. |
 
 The report is computed on request; only admin decisions are stored.
+
+## Engine switch and founder lists (Sprint 3B-2)
+
+- **Match page on Four-tier:** the client's newest saved run, its four tiers side by side, the admin-only groups (generalists, unresolved, excluded) and the near misses. Every fund opens to its full explanation. No tightness controls and no wave limit; the quality filters and website rules stay. Reviews (approve / reject) apply from the next run.
+- **Push to client** sends one saved run (`fourTierPushList` in `server.ts`, `client-list.ts`): only the four tiers; never generalists, unresolved, excluded, near-miss, rejected or represented records. It is refused when the run isn't the client's newest, is incomplete, or no longer reflects the client's data (`staleReasons`: rules version, Fund Database version, profile answers and settings (`settings.basis`), profile version, reviews, funds hidden for all clients).
+- **Exports reference a run; they never create one.** Run match creates a run. Push and export read it, and the list carries `run_id` and `rules_version`.
+- **Tier schemes:** a list or email copy is three-tier unless it carries `tier_scheme: "four"` (`lib/setup.ts`). Founder pages, the admin panels, the investor-list email and the email-copy agent read the scheme from the list or copy itself, never from the switch. Lists and copy already pushed or sent keep their tiers after any switch.
+- **Verification** runs the engine in use, live and unsaved: one limit box per tier of that engine (blank = the whole tier). Contacts are checked under the FirmID they are stored under.
+- **Rollback:** switch back to Current. Saved runs are permanent; pushed and sent lists keep their scheme; the current engine's saved match is untouched by four-tier work.

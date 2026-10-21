@@ -3,12 +3,27 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 import type { MatchResult } from "@/lib/match/engine/index.mjs";
 import { selectAll } from "@/lib/match/db-server";
 import { verifyStateOf, type MatchRun } from "@/lib/match/run-server";
-import { contactId, type CheckSteps, type MailboxResult } from "@/lib/match/verify";
+import { contactId, type CheckSteps, type MailboxResult, type VerifyState } from "@/lib/match/verify";
 import {
-  FIT_TIERS,
+  fitTiersFor,
   type InvestorListPayload,
   type InvestorVerification,
 } from "@/lib/setup";
+
+/**
+ * The verification state of each investing contact with an email at a listed
+ * fund, by list row id. Undefined when the row's fund is not known.
+ */
+export type PeopleStates = (rowId: string) => VerifyState[] | undefined;
+
+/** Contact states for a list built from the current engine's run. */
+export function currentEnginePeople(run: MatchRun): PeopleStates {
+  const resultFor = indexResults(run.out.results);
+  return (rowId) => {
+    const result = resultFor(rowId);
+    return result ? investingContacts(result).map((contact) => verifyStateOf(run, contact)) : undefined;
+  };
+}
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -47,7 +62,7 @@ function mailboxOf(steps: CheckSteps | null): MailboxResult | null {
 export async function withVerificationSnapshot(
   supabase: ServiceClient,
   clientId: string,
-  run: MatchRun,
+  peopleOf: PeopleStates,
   list: InvestorListPayload,
 ): Promise<InvestorListPayload> {
   const { data, error } = await supabase
@@ -116,13 +131,11 @@ export async function withVerificationSnapshot(
     else emailsUnknown += 1;
   }
 
-  const resultFor = indexResults(run.out.results);
   let removed = 0;
   const rows = list.rows.map((row) => {
-    const result = resultFor(row.id);
-    if (!result) return row;
-    const people = investingContacts(result);
-    const bad = people.filter((contact) => verifyStateOf(run, contact) === "email_bad").length;
+    const people = peopleOf(row.id);
+    if (!people) return row;
+    const bad = people.filter((state) => state === "email_bad").length;
     removed += bad;
     const count = Math.max(0, people.length - bad);
     return {
@@ -153,7 +166,7 @@ export async function withVerificationSnapshot(
   const summary = list.summary
     ? {
         ...list.summary,
-        tiers: FIT_TIERS.map(({ tier }) => {
+        tiers: fitTiersFor(list.tier_scheme).map(({ tier }) => {
           const existing = list.summary?.tiers.find((item) => item.tier === tier);
           const inTier = rows.filter((row) => row.tier === tier && !row.hidden_duplicate);
           return {

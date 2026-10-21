@@ -15,6 +15,18 @@ export const FUND_UPLOAD_CHUNK_BYTES = 3 * 1024 * 1024;
 /** Funds the daily website job checks (the whole database refreshes about monthly). */
 export const DAILY_SITE_BATCH = 250;
 
+/**
+ * The engine the Match page, verification and Push to client use, for every
+ * client. "current": three tiers (Bullseye, Match, Expansion). "four_tier":
+ * Core, Sphere, Tier 3, Tier 4. Lists already pushed keep their own tiers.
+ */
+export type MatchEngine = "current" | "four_tier";
+
+export const MATCH_ENGINE_LABEL: Record<MatchEngine, string> = {
+  current: "Current (three tiers)",
+  four_tier: "Four-tier",
+};
+
 /** Where Rupert Match opens for a client: the Fund Database, with the client picked. */
 export function matchPath(clientId: string) {
   return `/admin/fund-database?client=${encodeURIComponent(clientId)}#client-matching`;
@@ -58,6 +70,29 @@ export const TIER_TO_FIT: Record<Tier, 1 | 2 | 3> = {
   match: 2,
   expansion: 3,
 };
+
+const VC_LADDER = [
+  "Pre-Seed",
+  "Seed",
+  "Series A",
+  "Series B",
+  "Series C and Beyond",
+  "Growth Equity",
+];
+
+/** The stages a fund lists, as "Seed" or "Seed–Series A" when they sit next to each other. */
+export function stageRange(stages: string[]) {
+  const listed = stages.map((stage) => stage.trim()).filter(Boolean);
+  const ordered = VC_LADDER.filter((stage) => listed.includes(stage));
+  const extra = listed.filter((stage) => !VC_LADDER.includes(stage));
+  if (ordered.length >= 2 && extra.length === 0) {
+    const indexes = ordered.map((stage) => VC_LADDER.indexOf(stage));
+    const contiguous = indexes.every((index, i) => i === 0 || index === indexes[i - 1] + 1);
+    if (contiguous) return `${ordered[0]}–${ordered[ordered.length - 1]}`;
+  }
+  const names = [...ordered, ...extra];
+  return names.slice(0, 4).join(", ");
+}
 
 export const FIRM_TYPES = [
   "Venture Capital Investment Firm",

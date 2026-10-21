@@ -1,12 +1,16 @@
 import "server-only";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
 import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
-import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
+import { MATCH_MIGRATION_MISSING, loadLiveDb, selectAll } from "@/lib/match/db-server";
+import type { PeopleStates } from "@/lib/match/list-snapshot";
+import { loadProfileState, matchBasis } from "@/lib/match/profile-server";
 import { runClientMatch, type MatchRun } from "@/lib/match/run-server";
+import type { MatchProfileState } from "@/lib/match/shared";
 import { loadSites } from "@/lib/match/sites-server";
 import { matchingProfile, validateProfile } from "@/lib/company-profile/core";
-import { loadCompanyProfile } from "@/lib/company-profile/server";
+import { loadCompanyProfile, loadVersions } from "@/lib/company-profile/server";
+import type { InvestorListPayload } from "@/lib/setup";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { findAlias, mapFirm, type TaxIndex } from "@/lib/taxonomy/core";
 import {
@@ -30,8 +34,9 @@ import {
   type DuplicateReport,
   type IdentityDecision,
 } from "@/lib/match/tiers/duplicates";
-import type { ContactStates } from "@/lib/match/tiers/export";
+import { verifyStateOf, type ContactStates } from "@/lib/match/tiers/export";
 import { legacyRows, tierRows, type ResultRow } from "@/lib/match/tiers/record";
+import { firmsByRowKey, fourTierClientList, listable, reachablePeople } from "@/lib/match/tiers/client-list";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -333,6 +338,14 @@ export async function decideIdentity(
 // ---------------------------------------------------------------------------
 // Running
 
+/**
+ * A fingerprint of the profile answers and settings a run used. A run whose
+ * fingerprint no longer matches can't be pushed: run the match again.
+ */
+export function profileBasis(state: MatchProfileState) {
+  return createHash("sha256").update(matchBasis(state.answers, state.settings)).digest("hex").slice(0, 32);
+}
+
 type Prepared = {
   run: MatchRun;
   db: FundDb;
@@ -422,6 +435,7 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
         dropDead: run.profile.dropDead,
         waveSize: run.profile.waveSize,
         tune: run.profile.tune,
+        basis: profileBasis(run.state),
         // The identity groups this run applied, with their decisions.
         identities: groups,
         fofExceptions: Array.from(fof.value.values()).filter((e) => e.status === "approved").map((e) => e.firmId),
@@ -488,7 +502,10 @@ export async function runComparison(supabase: ServiceClient, clientId: string, a
   return { ok: true, value: { comparisonId } };
 }
 
-/** A four-tier run for the admin preview. Saved permanently; exports read it back. */
+/**
+ * A four-tier run, saved permanently: the Match page shows it, exports read it
+ * back and Push to client sends it. Used by the Match page and the admin preview.
+ */
 export async function runFourTier(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ runId: string }>> {
   const prepared = await prepare(supabase, clientId, actor);
   if (!prepared.ok) return prepared;
@@ -502,6 +519,151 @@ export async function runFourTier(supabase: ServiceClient, clientId: string, act
   );
   if (!saved.ok) return saved;
   return { ok: true, value: { runId: saved.value } };
+}
+
+/**
+ * The four-tier engine for a client, run now and not saved: verification uses
+ * it, as the current engine's verification runs the current engine.
+ */
+export async function liveFourTier(supabase: ServiceClient, clientId: string): Promise<Result<{ run: MatchRun; tiers: TierRun }>> {
+  const prepared = await prepare(supabase, clientId, null);
+  if (!prepared.ok) return prepared;
+  const tiers = await runFourTierEngine(supabase, prepared.value);
+  if (!tiers.ok) return tiers;
+  return { ok: true, value: { run: prepared.value.run, tiers: tiers.value } };
+}
+
+/** The sandbox's last reset, or null: runs before it are history only. */
+async function lastReset(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase
+    .from("match_sandbox_resets")
+    .select("reset_at")
+    .eq("client_id", clientId)
+    .order("reset_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data?.reset_at ? String(data.reset_at) : null;
+}
+
+/** The client's newest saved four-tier run (since the sandbox's last reset), or null. */
+export async function latestTierRun(supabase: ServiceClient, clientId: string): Promise<Result<RunHeader | null>> {
+  const since = await lastReset(supabase, clientId);
+  let query = supabase
+    .from("match_runs")
+    .select("*")
+    .eq("client_id", clientId)
+    .eq("engine", "tiers")
+    .order("ran_at", { ascending: false })
+    .limit(1);
+  if (since) query = query.gte("ran_at", since);
+  const { data, error } = await query.maybeSingle();
+  if (error) return { ok: false, error: tiersError(error.message, error.code) };
+  return { ok: true, value: data ? asHeader(data) : null };
+}
+
+/**
+ * Why a saved run no longer reflects the client's data, in words. Empty when
+ * it still does. A run with reasons can't be pushed: run the match again.
+ */
+export async function staleReasons(
+  supabase: ServiceClient,
+  clientId: string,
+  header: RunHeader,
+  rows: StoredResult[],
+): Promise<Result<string[]>> {
+  const [live, state, versions, reviews, hidden] = await Promise.all([
+    loadLiveDb(supabase),
+    loadProfileState(supabase, clientId),
+    loadVersions(supabase, clientId, 1),
+    selectAll<{ firm_id: string; status: string }>((from, to) =>
+      supabase.from("match_reviews").select("firm_id, status").eq("client_id", clientId).order("firm_id").range(from, to),
+    ),
+    selectAll<{ firm_id: string }>((from, to) =>
+      supabase.from("match_suppressions").select("firm_id").order("firm_id").range(from, to),
+    ),
+  ]);
+  if (!live.ok) return { ok: false, error: live.error };
+  if (!state.ok) return state;
+  if (!versions.ok) return versions;
+  if (!reviews.ok) return { ok: false, error: reviews.error };
+  if (!hidden.ok) return { ok: false, error: hidden.error };
+
+  const reasons: string[] = [];
+  if (header.rulesVersion !== RULES_VERSION) {
+    reasons.push(`This run used rules ${header.rulesVersion}; the engine now uses ${RULES_VERSION}.`);
+  }
+  if (live.value.version.id !== header.fundDbVersion) {
+    reasons.push(`The Fund Database changed since this run (now ${live.value.version.fileName}).`);
+  }
+  if (!header.settings.basis) {
+    reasons.push("This run was made before runs recorded the profile they used.");
+  } else if (!state.value || profileBasis(state.value) !== header.settings.basis) {
+    reasons.push("The company profile or the match settings changed since this run.");
+  }
+  const latestVersion = versions.value[0]?.version ?? null;
+  if (latestVersion !== header.profileVersion) {
+    reasons.push("A newer company profile version was saved since this run.");
+  }
+  const tiered = rows.filter((row) => row.status === "tiered" && !row.detail.representedBy);
+  const rejectedNow = new Set(reviews.rows.filter((row) => row.status === "no").map((row) => row.firm_id));
+  const hiddenNow = new Set(hidden.rows.map((row) => row.firm_id));
+  const baseId = (id: string) => id.replace(/#\d+$/, "");
+  const reviewChanges = tiered.filter((row) => Boolean(row.detail.rejected) !== rejectedNow.has(baseId(row.firmId))).length;
+  if (reviewChanges > 0) {
+    reasons.push(`${reviewChanges} fund${reviewChanges === 1 ? " was" : "s were"} rejected or un-rejected for this client since this run.`);
+  }
+  const hiddenChanges = tiered.filter((row) => hiddenNow.has(baseId(row.firmId))).length;
+  if (hiddenChanges > 0) {
+    reasons.push(`${hiddenChanges} fund${hiddenChanges === 1 ? " was" : "s were"} hidden for all clients since this run.`);
+  }
+  return { ok: true, value: reasons };
+}
+
+/**
+ * The founder's list from one saved four-tier run, with the verification
+ * state of its contacts. It refuses an incomplete run, a run that isn't the
+ * client's newest, and a run that no longer reflects the client's data.
+ */
+export async function fourTierPushList(
+  supabase: ServiceClient,
+  clientId: string,
+  runId: string,
+): Promise<Result<{ list: InvestorListPayload; people: PeopleStates }>> {
+  const loaded = await loadTierRun(supabase, clientId, runId);
+  if (!loaded.ok) return loaded;
+  const { header, rows, complete } = loaded.value;
+  if (!complete) return { ok: false, error: "This run is incomplete: not every result was saved. Run the match again." };
+  const latest = await latestTierRun(supabase, clientId);
+  if (!latest.ok) return latest;
+  if (latest.value?.id !== header.id) return { ok: false, error: "A newer four-tier run exists for this client. Reload the page and push that one." };
+  const stale = await staleReasons(supabase, clientId, header, rows);
+  if (!stale.ok) return stale;
+  if (stale.value.length > 0) return { ok: false, error: `${stale.value.join(" ")} Run the match again, then push.` };
+
+  const live = await loadLiveDb(supabase);
+  if (!live.ok) return { ok: false, error: live.error };
+  const firms = firmsByRowKey(live.value.db.firms);
+  const kept = rows.filter(listable);
+  const listedFirms = kept.map((row) => firms.get(row.firmId)).filter((firm): firm is NonNullable<typeof firm> => Boolean(firm));
+  const sites = await loadSites(supabase, listedFirms);
+  if (!sites.ok) return sites;
+  const checkSizes: Record<string, string> = {};
+  for (const [id, site] of Object.entries(sites.sites)) {
+    if ("check" in site && site.check) checkSizes[id] = String(site.check);
+  }
+  const stage = (header.profileInputs.stage as { label?: string } | undefined)?.label ?? "";
+  const list = fourTierClientList({ id: header.id, rulesVersion: header.rulesVersion, ranAt: header.ranAt }, rows, firms, stage, checkSizes);
+  if (!list.ok) return list;
+
+  const fids = Array.from(new Set(kept.flatMap((row) => reachablePeople(row).map((person) => person.fid))));
+  const states = await contactStates(supabase, clientId, fids);
+  if (!states.ok) return states;
+  const byRow = new Map(kept.map((row) => [row.firmId.trim().slice(0, 200), row]));
+  const people: PeopleStates = (rowId) => {
+    const row = byRow.get(rowId);
+    return row ? reachablePeople(row).map((person) => verifyStateOf(person, states.value)) : undefined;
+  };
+  return { ok: true, value: { list: list.value, people } };
 }
 
 /** One saved four-tier run of a client, from its stored rows only. */
@@ -549,14 +711,7 @@ export type RunListItem = RunHeader & { saved: number };
 
 /** The client's saved runs, newest first. For the sandbox: only since its last reset. */
 export async function listRuns(supabase: ServiceClient, clientId: string, limit = 40): Promise<Result<{ runs: RunListItem[]; since: string | null }>> {
-  const { data: reset } = await supabase
-    .from("match_sandbox_resets")
-    .select("reset_at")
-    .eq("client_id", clientId)
-    .order("reset_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const since = reset?.reset_at ? String(reset.reset_at) : null;
+  const since = await lastReset(supabase, clientId);
   let query = supabase.from("match_runs").select("*").eq("client_id", clientId).order("ran_at", { ascending: false }).limit(limit);
   if (since) query = query.gte("ran_at", since);
   const { data, error } = await query;

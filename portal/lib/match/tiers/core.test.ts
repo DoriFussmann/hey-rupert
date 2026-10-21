@@ -18,6 +18,9 @@ import { compareRuns, type StoredResult } from "./compare.ts";
 import { appliedGroups, duplicateFlags, findDuplicates, identityProposals, normalizedName, resolveIdentities } from "./duplicates.ts";
 import { NEAR_MISS_BANNER, contactRows, fundRows, nearMissRows, outsideRows, runFacts, storedCounts, type ContactStates } from "./export.ts";
 import { legacyRows, tierRows } from "./record.ts";
+import { distinctPeople, firmsByRowKey, fourTierClientList, reachablePeople } from "./client-list.ts";
+import { clientFacingList } from "../client-list-dedupe.ts";
+import { asInvestorList, investorListForClient } from "../../setup.ts";
 
 // ---------------------------------------------------------------------------
 // A small taxonomy shaped like the real one
@@ -816,4 +819,84 @@ test("exports read only the saved rows: listed funds, contacts with verification
   const facts = runFacts({ id: "RUN-1", clientName: "Co", rulesVersion: RULES_VERSION, taxonomyRevision: 700, profileVersion: 4, fundDbVersion: "v1", fundDbFile: "f.xlsx", ranAt: "2026-10-21", ranBy: "a@x.com", resultsExpected: rows.length, profileInputs: {}, settings: { identities: groups } }, true);
   assert.deepEqual(facts[0], ["Saved run", "RUN-1"]);
   assert.ok(facts.some((r) => r[0] === "Rules" && r[1] === RULES_VERSION));
+});
+
+// ---------------------------------------------------------------------------
+// Sprint 3B-2: the founder's list from a saved four-tier run
+
+test("four-tier push list: the four tiers only, exactly as saved, traced to the run", () => {
+  const core = firm({ vert: ["Fintech"] });
+  const sphere = firm({ vert: ["Insurtech"] });
+  const tier3 = firm({ vert: ["Blockchain"] });
+  const tier4 = firm({ vert: ["Proptech"] });
+  const generalist = firm({ vert: [], ind: ["Diversified"] });
+  const oneOff = firm({ stages: ["Series A"] });
+  const outside = firm({ geo: ["Europe"] });
+  const rejected = firm({ vert: ["Fintech"] });
+  const firms = [core, sphere, tier3, tier4, generalist, oneOff, outside, rejected];
+  const result = run(firms, { rejected: { [rejected.id]: "Client veto" } });
+  const rows = asStored(tierRows(result));
+  const runInfo = { id: "11111111-2222-3333-4444-555555555555", rulesVersion: RULES_VERSION, ranAt: "2026-10-21T10:00:00Z" };
+
+  const built = fourTierClientList(runInfo, rows, firmsByRowKey(firms), "Seed", { [core.id]: "$1M–$3M" });
+  assert.ok(built.ok);
+  const list = built.value;
+  assert.deepEqual(list.rows.map((r) => [r.id, r.tier]), [[core.id, 1], [sphere.id, 2], [tier3.id, 3], [tier4.id, 4]]);
+  assert.equal(list.tier_scheme, "four");
+  assert.equal(list.run_id, runInfo.id);
+  assert.equal(list.rules_version, RULES_VERSION);
+  assert.deepEqual(list.summary!.tiers.map((t) => [t.tier, t.funds, t.contacts]), [[1, 1, 2], [2, 1, 2], [3, 1, 2], [4, 1, 2]]);
+  const first = list.rows[0];
+  assert.equal(first.contact_count, 2);
+  assert.equal(first.check_size, "$1M–$3M");
+  assert.deepEqual(first.reasons, ["Stage: Seed", "Sector: Fintech", "Geo: United States"]);
+  assert.equal(first.why, "");
+  // Generalists, near misses, excluded and rejected funds are never on the list.
+  for (const left of [generalist, oneOff, outside, rejected]) assert.ok(!list.rows.some((r) => r.id === left.id));
+
+  // The markers survive every step a pushed list goes through.
+  const sent = asInvestorList(investorListForClient(asInvestorList(clientFacingList(list))));
+  assert.equal(sent.tier_scheme, "four");
+  assert.equal(sent.run_id, runInfo.id);
+  assert.equal(sent.rules_version, RULES_VERSION);
+  assert.deepEqual(sent.rows.map((r) => r.tier), [1, 2, 3, 4]);
+  assert.deepEqual(sent.summary!.tiers.map((t) => t.tier), [1, 2, 3, 4]);
+
+  // A Fund Database that no longer has the run's funds can't build the list.
+  const changed = fourTierClientList(runInfo, rows, firmsByRowKey(firms.filter((f) => f !== tier4)), "Seed");
+  assert.ok(!changed.ok);
+});
+
+test("four-tier push list: a confirmed duplicate counts each person once; offices stay separate", () => {
+  const { db } = identityFixture();
+  const proposals = identityProposals(findDuplicates(db, index));
+  const dup = proposals.find((p) => p.members.some((m) => m.id === "W1"))!;
+  const groups = appliedGroups(
+    resolveIdentities(proposals, [{ groupKey: dup.key, kind: "duplicate", status: "confirmed", memberIds: dup.members.map((m) => m.id), note: "", decidedBy: "a@x.com", decidedAt: "2026-10-21" }]),
+  );
+  const result = runTiers({ db, index, profile: profile(), legacy: legacy(), identities: groups });
+  const rows = asStored(tierRows(result));
+  const built = fourTierClientList({ id: "11111111-2222-3333-4444-555555555555", rulesVersion: RULES_VERSION, ranAt: "2026-10-21" }, rows, firmsByRowKey(db.firms), "Seed");
+  assert.ok(built.ok);
+  assert.deepEqual(built.value.rows.map((r) => r.id).sort(), ["B1", "W1"]);
+  const willow = built.value.rows.find((r) => r.id === "W1")!;
+  // W1: Ann and Bo; W2 adds Cy, and its copy of Ann has the same email.
+  assert.equal(willow.contact_count, 3);
+  const shown = rows.find((r) => r.firmId === "W1")!;
+  assert.deepEqual(reachablePeople(shown).map((p) => p.fid).sort(), ["W1", "W1", "W2"]);
+  // Verification for the live run: each contact keeps the FirmID it is stored under.
+  const live = result.live.get(result.outcomes.find((o) => o.firmId === "W1")!)!;
+  assert.ok(live.ranked.some((c) => c.fid === "W2"));
+});
+
+test("contacts once each: same email, or the same name without an honorific and title", () => {
+  const person = (name: string, email: string, title = "Partner") => ({ fid: "F1", key: email.toLowerCase(), name, title, role: "Decision maker", email, phone: "", city: "", country: "", score: 1, seq: "" });
+  const people = [
+    person("Mr John Smith", "john@fund.vc"),
+    person("John Smith", "JOHN@fund.vc"),
+    person("Ms Jane Roe", ""),
+    person("Jane Roe", ""),
+    person("Jane Roe", "", "Analyst"),
+  ];
+  assert.deepEqual(distinctPeople(people).map((p) => p.name), ["Mr John Smith", "Ms Jane Roe", "Jane Roe"]);
 });

@@ -2,7 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDown } from "@/components/chevron";
-import { FIT_TIERS, type InvestorRow } from "@/lib/setup";
+import { fitTiersFor, type InvestorRow, type TierScheme } from "@/lib/setup";
 
 /** Rows shown when a panel opens; "Show more" adds the same again. */
 const PAGE_SIZE = 25;
@@ -31,18 +31,20 @@ function groupsOf(rows: InvestorRow[]) {
  */
 export function InvestorFundGroups({
   rows,
+  scheme,
   renderRow,
 }: {
   rows: InvestorRow[];
+  scheme?: TierScheme;
   renderRow: (row: InvestorRow) => ReactNode;
 }) {
   const tiers = useMemo(
     () =>
-      FIT_TIERS.map((tier) => ({
+      fitTiersFor(scheme).map((tier) => ({
         ...tier,
         groups: groupsOf(rows.filter((row) => row.tier === tier.tier)),
       })).filter((tier) => tier.groups.length > 0),
-    [rows],
+    [rows, scheme],
   );
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [shown, setShown] = useState<Record<string, number>>({});

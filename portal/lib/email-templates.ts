@@ -319,7 +319,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "Fills Draft Email under Investor Matching when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send.",
     "/portal/setup/investor-list",
     "Your matched investor list is ready — you're up",
-    "Rupert has matched investors for your raise, grouped into three fit tiers.",
+    "Rupert has matched investors for your raise, grouped by fit tier.",
     "You're up: review the list in your portal. Add a note on any fund, ask questions, or confirm.",
   ),
   clientTemplate(
@@ -328,7 +328,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "When you publish the email copy (or a revised version).",
     "/portal/setup/email-copy",
     "Your outreach emails are ready — you're up",
-    "Rupert has written the outreach emails for each of the three investor tiers.",
+    "Rupert has written the outreach emails for each investor tier.",
     "You're up: review them in your portal, then confirm or tell us what to change.",
   ),
 ];

@@ -1,10 +1,10 @@
 import {
-  FIT_TIERS,
+  fitTiersFor,
   type InvestorListPayload,
   type InvestorListSummary,
   type InvestorRow,
-} from "@/lib/setup";
-import { firmsToKeep, listedContacts } from "@/lib/match/outreach-dedupe";
+} from "../setup.ts";
+import { firmsToKeep, listedContacts } from "./outreach-dedupe.ts";
 
 /** Marks same-domain duplicates and recounts tiers from the rows the client will see. */
 export function clientFacingList(list: InvestorListPayload): InvestorListPayload {
@@ -24,7 +24,7 @@ export function clientFacingList(list: InvestorListPayload): InvestorListPayload
     }
     return { ...row, hidden_duplicate: true };
   });
-  return { ...list, rows, summary: summaryForClient(rows, list.summary) };
+  return { ...list, rows, summary: summaryForClient(rows, list.summary, list.tier_scheme) };
 }
 
 export function visibleFundCount(rows: { hidden_duplicate?: boolean }[]) {
@@ -34,10 +34,11 @@ export function visibleFundCount(rows: { hidden_duplicate?: boolean }[]) {
 function summaryForClient(
   rows: InvestorRow[],
   previous: InvestorListSummary | null | undefined,
+  scheme: InvestorListPayload["tier_scheme"],
 ): InvestorListSummary {
   return {
     generated_at: previous?.generated_at || new Date().toISOString(),
-    tiers: FIT_TIERS.map(({ tier }) => {
+    tiers: fitTiersFor(scheme).map(({ tier }) => {
       const inTier = rows.filter((row) => row.tier === tier && !row.hidden_duplicate);
       const types = new Map<string, { funds: number; contacts: number }>();
       for (const row of inTier) {

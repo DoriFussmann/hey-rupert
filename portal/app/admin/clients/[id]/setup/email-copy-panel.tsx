@@ -4,14 +4,17 @@ import { useMemo, useState } from "react";
 import { draftClientEmailCopy } from "@/app/admin/agent-actions";
 import {
   EMAIL_SEQUENCE_LABELS,
-  FIT_TIERS,
   LINKEDIN_NOTE_MAX,
   asEmailCopy,
   emailCopyProblems,
+  emptyEmailCopy,
+  fitTiersFor,
+  tierEmails,
   type EmailCopyPayload,
   type FitTier,
   type SetupItem,
   type SetupStepState,
+  type TierScheme,
 } from "@/lib/setup";
 import {
   ClientAnswer,
@@ -25,8 +28,8 @@ import {
 function hasContent(copy: EmailCopyPayload) {
   return (
     Boolean(copy.linkedin_note?.trim() || copy.linkedin_followup?.trim()) ||
-    FIT_TIERS.some(({ tier }) =>
-      copy.tiers[`${tier}`].some((email) => email.subject.trim() || email.body.trim()),
+    fitTiersFor(copy.tier_scheme).some(({ tier }) =>
+      tierEmails(copy, tier).some((email) => email.subject.trim() || email.body.trim()),
     )
   );
 }
@@ -36,18 +39,24 @@ export function EmailCopyPanel({
   item,
   row,
   tierCounts,
+  listScheme,
   claudeReady,
 }: {
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
+  /** Funds per tier of the confirmed investor list, in its own scheme. */
   tierCounts: { tier: FitTier; count: number }[];
+  /** How the confirmed investor list groups its funds. New copy follows it. */
+  listScheme: TierScheme;
   claudeReady: boolean;
 }) {
   const initial = useMemo(() => {
     const draft = asEmailCopy(row?.draft);
-    return hasContent(draft) ? draft : asEmailCopy(row?.published);
-  }, [row]);
+    if (hasContent(draft)) return draft;
+    const published = asEmailCopy(row?.published);
+    return hasContent(published) ? published : emptyEmailCopy(listScheme);
+  }, [row, listScheme]);
 
   const [copy, setCopy] = useState<EmailCopyPayload>(initial);
   const [savedKey, setSavedKey] = useState(JSON.stringify(initial));
@@ -56,11 +65,36 @@ export function EmailCopyPanel({
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const problems = emailCopyProblems(copy);
   const changesRequested = row?.status === "changes_requested";
+  const copyScheme: TierScheme = copy.tier_scheme ?? "three";
+  const tiers = fitTiersFor(copyScheme);
+  const schemeMismatch = copyScheme !== listScheme;
+  const activeTier: FitTier = tiers.some((entry) => entry.tier === tier) ? tier : 1;
+
+  function tierName(value: FitTier) {
+    return tiers.find((entry) => entry.tier === value)?.label ?? `Tier ${value}`;
+  }
+
+  function startListScheme() {
+    const count = listScheme === "four" ? "four" : "three";
+    if (
+      !window.confirm(
+        `Start a new ${count}-tier copy to match the investor list? It replaces this draft (the copy already sent to the client is not changed).`,
+      )
+    ) {
+      return;
+    }
+    setCopy({
+      ...emptyEmailCopy(listScheme),
+      linkedin_note: copy.linkedin_note,
+      linkedin_followup: copy.linkedin_followup,
+    });
+    setTier(1);
+  }
 
   function update(index: number, field: "subject" | "body", value: string) {
     setCopy((current) => {
-      const key = `${tier}` as const;
-      const emails = current.tiers[key].map((email, position) =>
+      const key = `${activeTier}` as const;
+      const emails = tierEmails(current, activeTier).map((email, position) =>
         position === index ? { ...email, [field]: value } : email,
       );
       return { ...current, tiers: { ...current.tiers, [key]: emails } };
@@ -102,7 +136,7 @@ export function EmailCopyPanel({
   function copyFromTier(source: FitTier) {
     if (
       !window.confirm(
-        `Replace the Tier ${tier} emails with a copy of Tier ${source}?`,
+        `Replace the ${tierName(activeTier)} emails with a copy of ${tierName(source)}?`,
       )
     ) {
       return;
@@ -111,7 +145,7 @@ export function EmailCopyPanel({
       ...current,
       tiers: {
         ...current.tiers,
-        [`${tier}`]: current.tiers[`${source}`].map((email) => ({ ...email })),
+        [`${activeTier}`]: tierEmails(current, source).map((email) => ({ ...email })),
       },
     }));
   }
@@ -150,7 +184,7 @@ export function EmailCopyPanel({
         </button>
         <p className="text-body-sm text-muted" aria-live="polite">
           {drafting
-            ? "Writing the nine emails and the LinkedIn messages. Usually under a minute."
+            ? `Writing the ${tiers.length * 3} emails and the LinkedIn messages. Usually under a minute.`
             : !claudeReady
               ? "Claude is not configured (ANTHROPIC_API_KEY)."
               : "Uses the AI Agents → Email copy instructions."}
@@ -164,17 +198,26 @@ export function EmailCopyPanel({
           </p>
         ) : null}
       </div>
+      {schemeMismatch ? (
+        <div role="alert" className="mx-lg mt-md rounded-md border border-warning/40 px-md py-sm text-body-sm text-warning">
+          This copy has {copyScheme === "four" ? "four" : "three"} tiers; the confirmed investor list has{" "}
+          {listScheme === "four" ? "four" : "three"}.{" "}
+          <button type="button" className="text-primary underline hover:text-primary-hover" onClick={startListScheme}>
+            Start a {listScheme === "four" ? "four" : "three"}-tier copy
+          </button>
+        </div>
+      ) : null}
       <div className="px-lg py-md">
         <div className="flex flex-wrap items-center gap-sm" role="tablist" aria-label="Tier">
-          {FIT_TIERS.map((entry) => {
-            const count = tierCounts.find((item) => item.tier === entry.tier)?.count ?? 0;
+          {tiers.map((entry) => {
+            const count = schemeMismatch ? 0 : tierCounts.find((item) => item.tier === entry.tier)?.count ?? 0;
             return (
               <button
                 key={entry.tier}
                 type="button"
                 role="tab"
-                aria-selected={tier === entry.tier}
-                className={tabClass(tier === entry.tier)}
+                aria-selected={activeTier === entry.tier}
+                className={tabClass(activeTier === entry.tier)}
                 onClick={() => setTier(entry.tier)}
               >
                 {entry.label} · {entry.detail}
@@ -184,7 +227,7 @@ export function EmailCopyPanel({
           })}
           <span className="ml-auto flex flex-wrap gap-xs text-body-sm text-muted">
             Copy from:
-            {FIT_TIERS.filter((entry) => entry.tier !== tier).map((entry) => (
+            {tiers.filter((entry) => entry.tier !== activeTier).map((entry) => (
               <button
                 key={entry.tier}
                 type="button"
@@ -198,8 +241,8 @@ export function EmailCopyPanel({
         </div>
 
         <ol className="mt-md space-y-lg">
-          {copy.tiers[`${tier}`].map((email, index) => (
-            <li key={`${tier}-${index}`}>
+          {tierEmails(copy, activeTier).map((email, index) => (
+            <li key={`${activeTier}-${index}`}>
               <p className="text-label uppercase tracking-label text-muted">
                 {EMAIL_SEQUENCE_LABELS[index]}
               </p>
@@ -209,7 +252,7 @@ export function EmailCopyPanel({
                 maxLength={300}
                 onChange={(event) => update(index, "subject", event.target.value)}
                 placeholder={index === 0 ? "Subject" : "Subject (blank = same thread)"}
-                aria-label={`Tier ${tier} ${EMAIL_SEQUENCE_LABELS[index]} subject`}
+                aria-label={`${tierName(activeTier)} ${EMAIL_SEQUENCE_LABELS[index]} subject`}
               />
               <textarea
                 className={`${inputClass} mt-sm`}
@@ -218,7 +261,7 @@ export function EmailCopyPanel({
                 value={email.body}
                 onChange={(event) => update(index, "body", event.target.value)}
                 placeholder="Body"
-                aria-label={`Tier ${tier} ${EMAIL_SEQUENCE_LABELS[index]} body`}
+                aria-label={`${tierName(activeTier)} ${EMAIL_SEQUENCE_LABELS[index]} body`}
               />
             </li>
           ))}

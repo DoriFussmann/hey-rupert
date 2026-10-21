@@ -1,24 +1,28 @@
 import "server-only";
 import { callClaudeAgent, isClaudeConfigured, webSearchTool, type ClaudeUsage } from "@/lib/anthropic";
 import { findEmail, isHunterConfigured, verifyEmail } from "@/lib/hunter";
-import type { MatchResult, RankedContact } from "@/lib/match/engine/index.mjs";
+import type { Firm, RankedContact } from "@/lib/match/engine/index.mjs";
 import {
   VERIFY_MIGRATION_MISSING,
+  loadChecksForFirms,
   loadCorrections,
   loadDecisions,
   verifyTableError,
+  type CheckBrief,
   type Correction,
   type Decision,
 } from "@/lib/match/corrections-server";
 import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
+import { matchEngine } from "@/lib/match/engine-setting";
 import {
   buildView,
   rankedContactId,
   runClientMatch,
   storeMatch,
-  type MatchRun,
 } from "@/lib/match/run-server";
-import type { Tier } from "@/lib/match/shared";
+import { TIERS, type MatchEngine } from "@/lib/match/shared";
+import { TIER_INFO, TIER_KEYS } from "@/lib/match/tiers/core";
+import { liveFourTier } from "@/lib/match/tiers/server";
 import {
   CLAUDE_USD_PER_MTOK_IN,
   CLAUDE_USD_PER_MTOK_OUT,
@@ -102,78 +106,139 @@ const WEBMAIL = new Set(["gmail.com", "googlemail.com", "outlook.com", "hotmail.
 // ---------------------------------------------------------------------------
 // Contacts in each scope
 
-function toVerifyContact(result: MatchResult, contact: RankedContact): VerifyContact {
+/** One listed fund as verification sees it: its tier, record and ranked contacts. */
+type ScopeFund = { tier: string; firm: Firm; seq: RankedContact[]; ranked: RankedContact[] };
+
+/**
+ * What verification checks for a client, from the engine in use: the funds
+ * in its tiers (rejected ones left out), in outreach order, with stored checks,
+ * corrections and this client's decisions.
+ */
+type ScopeSource = {
+  engine: MatchEngine;
+  tiers: { key: string; label: string }[];
+  funds: ScopeFund[];
+  checks: Map<string, CheckBrief>;
+  corrections: Map<string, Correction>;
+  decisions: Map<string, Decision>;
+};
+
+/** Runs the engine in use for the client and lists what verification can check. */
+async function loadScope(supabase: ServiceClient, clientId: string): Promise<Result<ScopeSource>> {
+  const engine = await matchEngine(supabase);
+  if (engine === "four_tier") {
+    const live = await liveFourTier(supabase, clientId);
+    if (!live.ok) return live;
+    const { run, tiers } = live.value;
+    const funds: ScopeFund[] = [];
+    for (const outcome of tiers.outcomes) {
+      if (outcome.status !== "tiered" || outcome.rejected || outcome.representedBy || !outcome.tier) continue;
+      const source = tiers.live.get(outcome);
+      if (source) funds.push({ tier: outcome.tier, firm: source.firm, seq: source.seq, ranked: source.ranked });
+    }
+    // A confirmed duplicate's contacts can sit under another FirmID: load every record's checks.
+    const fids = Array.from(new Set(funds.flatMap((fund) => fund.ranked.map((contact) => contact.fid))));
+    const checks = await loadChecksForFirms(supabase, fids);
+    if (!checks.ok) return checks;
+    return {
+      ok: true,
+      value: {
+        engine,
+        tiers: TIER_KEYS.map((key) => ({ key, label: TIER_INFO[key].label })),
+        funds,
+        checks: checks.value,
+        corrections: run.corrections,
+        decisions: run.decisions,
+      },
+    };
+  }
+  const run = await runClientMatch(supabase, clientId);
+  if (!run.ok) return run;
+  return {
+    ok: true,
+    value: {
+      engine,
+      tiers: TIERS.map(({ key, label }) => ({ key, label })),
+      funds: run.value.out.results
+        .filter((result) => !result.rejected)
+        .map((result) => ({ tier: result.tier, firm: result.f, seq: result.seq, ranked: result.ranked })),
+      checks: run.value.checks,
+      corrections: run.value.corrections,
+      decisions: run.value.decisions,
+    },
+  };
+}
+
+function toVerifyContact(fund: ScopeFund, contact: RankedContact): VerifyContact {
   return {
     id: rankedContactId(contact),
-    firmId: result.f.id,
+    // The record the contact is stored under: checks and decisions are kept per FirmID.
+    firmId: contact.fid,
     key: contactKeyOf(contact),
-    firmName: result.f.name,
-    firmWebsite: result.f.web,
-    firmCity: [result.f.city, result.f.country].filter(Boolean).join(", "),
+    firmName: fund.firm.name,
+    firmWebsite: fund.firm.web,
+    firmCity: [fund.firm.city, fund.firm.country].filter(Boolean).join(", "),
     name: personNameOf(contact),
     first: contact.first,
     last: contact.last,
     title: contact.title,
     email: contact.email,
     seq: contact.seq ?? null,
-    tier: result.tier,
+    tier: fund.tier,
   };
 }
 
-type ScopeList = { contacts: VerifyContact[]; noEmail: Record<Tier, number> };
+type ScopeList = { contacts: VerifyContact[]; noEmail: Record<string, number> };
 
-const TIER_ORDER: Tier[] = ["bullseye", "match", "expansion"];
-
-function noEmailCounts(): Record<Tier, number> {
-  return { bullseye: 0, match: 0, expansion: 0 };
+function noEmailCounts(source: ScopeSource): Record<string, number> {
+  return Object.fromEntries(source.tiers.map(({ key }) => [key, 0]));
 }
 
 /**
  * Contacts per mode, in outreach order (tier, fit, then rank at the fund):
  * everyone with an email, or only each fund's Primary and Backup.
  */
-function collectScopes(run: MatchRun): Record<VerifyMode, ScopeList> {
+function collectScopes(source: ScopeSource): Record<VerifyMode, ScopeList> {
   const lists: Record<VerifyMode, ScopeList> = {
-    all: { contacts: [], noEmail: noEmailCounts() },
-    sequence: { contacts: [], noEmail: noEmailCounts() },
+    all: { contacts: [], noEmail: noEmailCounts(source) },
+    sequence: { contacts: [], noEmail: noEmailCounts(source) },
   };
   const seen: Record<VerifyMode, Set<string>> = { all: new Set(), sequence: new Set() };
-  const add = (mode: VerifyMode, result: MatchResult, contact: RankedContact) => {
-    const item = toVerifyContact(result, contact);
+  const add = (mode: VerifyMode, fund: ScopeFund, contact: RankedContact) => {
+    const item = toVerifyContact(fund, contact);
     if (seen[mode].has(item.id)) return;
     seen[mode].add(item.id);
     lists[mode].contacts.push(item);
   };
 
-  for (const result of run.out.results) {
-    if (result.rejected) continue;
-    const investing = result.ranked.filter((contact) => contact.role !== "ops");
+  for (const fund of source.funds) {
+    const investing = fund.ranked.filter((contact) => contact.role !== "ops");
     // Primary and Backup first, then everyone else at the fund by rank.
-    for (const contact of result.seq) add("all", result, contact);
-    for (const contact of investing) if (contact.email) add("all", result, { ...contact, seq: undefined });
-    lists.all.noEmail[result.tier] += investing.filter((contact) => !contact.email).length;
-    for (const contact of result.seq) add("sequence", result, contact);
+    for (const contact of fund.seq) add("all", fund, contact);
+    for (const contact of investing) if (contact.email) add("all", fund, { ...contact, seq: undefined });
+    lists.all.noEmail[fund.tier] = (lists.all.noEmail[fund.tier] ?? 0) + investing.filter((contact) => !contact.email).length;
+    for (const contact of fund.seq) add("sequence", fund, contact);
   }
   return lists;
 }
 
 /** One mode's contacts for one tier, in outreach order. */
-function tierContacts(list: ScopeList, tier: Tier) {
+function tierContacts(list: ScopeList, tier: string) {
   return list.contacts.filter((contact) => contact.tier === tier);
 }
 
-function isFresh(run: MatchRun, contact: VerifyContact) {
-  const check = run.checks.get(contact.id);
+function isFresh(source: ScopeSource, contact: VerifyContact) {
+  const check = source.checks.get(contact.id);
   if (!check?.status || !check.checkedAt || check.hadError) return false;
   if (emailKey(check.email) !== emailKey(contact.email)) return false;
   return Date.now() - Date.parse(check.checkedAt) < FRESH_MS;
 }
 
 /** Flagged as removed (for another client) and not decided for this one. */
-function flagOf(run: MatchRun, contact: VerifyContact): Correction | null {
-  const fix = run.corrections.get(contact.id);
+function flagOf(source: ScopeSource, contact: VerifyContact): Correction | null {
+  const fix = source.corrections.get(contact.id);
   if (fix?.flag !== "removed") return null;
-  return run.decisions.has(contact.id) ? null : fix;
+  return source.decisions.has(contact.id) ? null : fix;
 }
 
 // ---------------------------------------------------------------------------
@@ -347,7 +412,11 @@ async function storeRunResults(
   return error ? verifyTableError(error.message, error.code) : null;
 }
 
-async function runState(supabase: ServiceClient, row: RunRow, run?: MatchRun): Promise<Result<RunState>> {
+async function runState(
+  supabase: ServiceClient,
+  row: RunRow,
+  run?: Pick<ScopeSource, "decisions" | "corrections">,
+): Promise<Result<RunState>> {
   const contacts = Array.isArray(row.contacts) ? row.contacts : [];
   const reused = Array.isArray(row.reused) ? row.reused : [];
   const closed = contacts.slice(0, Math.min(contacts.length, row.next_batch * row.batch_size));
@@ -461,7 +530,7 @@ export async function loadVerifyOverview(
   clientId: string,
 ): Promise<Result<VerifyOverview>> {
   const [run, active, done] = await Promise.all([
-    runClientMatch(supabase, clientId),
+    loadScope(supabase, clientId),
     latestRun(supabase, clientId, "active"),
     latestRun(supabase, clientId, "done"),
   ]);
@@ -470,11 +539,11 @@ export async function loadVerifyOverview(
   if (!done.ok) return done;
 
   const lists = collectScopes(run.value);
-  const counts = {} as Record<VerifyMode, Record<Tier, ScopeCount>>;
+  const counts = {} as Record<VerifyMode, Record<string, ScopeCount>>;
   const flagged = new Map<string, FlaggedContact>();
   for (const mode of VERIFY_MODES) {
-    counts[mode] = {} as Record<Tier, ScopeCount>;
-    for (const tier of TIER_ORDER) {
+    counts[mode] = {};
+    for (const { key: tier } of run.value.tiers) {
       let order = "";
       tierContacts(lists[mode], tier).forEach((contact, position) => {
         const flag = flagOf(run.value, contact);
@@ -492,7 +561,7 @@ export async function loadVerifyOverview(
           order += isFresh(run.value, contact) ? "r" : "c";
         }
       });
-      counts[mode][tier] = { total: order.length, order, noEmail: lists[mode].noEmail[tier] };
+      counts[mode][tier] = { total: order.length, order, noEmail: lists[mode].noEmail[tier] ?? 0 };
     }
   }
 
@@ -504,6 +573,8 @@ export async function loadVerifyOverview(
   return {
     ok: true,
     value: {
+      engine: run.value.engine,
+      tiers: run.value.tiers,
       counts,
       flagged: Array.from(flagged.values()),
       estimate: await loadEstimate(supabase),
@@ -541,12 +612,18 @@ async function saveDecision(
   return error ? verifyTableError(error.message, error.code) : null;
 }
 
-/** Re-runs the match and stores it, so the Match page shows who moved up. */
-async function refreshMatch(supabase: ServiceClient, clientId: string): Promise<Result<MatchRun>> {
-  const run = await runClientMatch(supabase, clientId);
-  if (!run.ok) return run;
-  await storeMatch(supabase, clientId, buildView(run.value));
-  return run;
+/**
+ * Re-runs the engine in use after contact decisions. On the current engine the
+ * Match page's stored match is refreshed, so it shows who moved up. Four-tier
+ * runs are permanent: the next saved run picks the decisions up.
+ */
+async function refreshMatch(supabase: ServiceClient, clientId: string, engine: MatchEngine): Promise<Result<ScopeSource>> {
+  if (engine === "current") {
+    const run = await runClientMatch(supabase, clientId);
+    if (!run.ok) return run;
+    await storeMatch(supabase, clientId, buildView(run.value));
+  }
+  return loadScope(supabase, clientId);
 }
 
 // ---------------------------------------------------------------------------
@@ -561,7 +638,7 @@ export async function startVerificationRun(
   by: string | null,
 ): Promise<Result<RunState>> {
   if (!VERIFY_MODES.includes(mode)) return { ok: false, error: "Unknown choice of contacts." };
-  let run = await runClientMatch(supabase, clientId);
+  let run = await loadScope(supabase, clientId);
   if (!run.ok) return run;
 
   // Decide the flagged contacts first: removing one moves the next person up.
@@ -577,7 +654,7 @@ export async function startVerificationRun(
     decided = true;
   }
   if (decided) {
-    run = await refreshMatch(supabase, clientId);
+    run = await refreshMatch(supabase, clientId, run.value.engine);
     if (!run.ok) return run;
   }
 
@@ -586,8 +663,8 @@ export async function startVerificationRun(
   // Flagged contacts still undecided ("Check again") are checked like the rest.
   // Each tier's limit keeps its first contacts in outreach order.
   const list = collectScopes(run.value)[mode];
-  for (const tier of TIER_ORDER) {
-    const limit = limits[tier];
+  for (const { key: tier } of run.value.tiers) {
+    const limit = limits[tier] ?? null;
     const contacts = tierContacts(list, tier);
     for (const contact of limit === null ? contacts : contacts.slice(0, limit)) {
       if (!flagOf(run.value, contact) && isFresh(run.value, contact)) reused.push(contact);
@@ -985,7 +1062,7 @@ export async function applyVerificationActions(
   items: ActionInput[],
   by: string | null,
 ): Promise<Result<{ id: string; decision: "keep" | "remove" | null; corrected: boolean }[]>> {
-  const run = await runClientMatch(supabase, clientId);
+  const run = await loadScope(supabase, clientId);
   if (!run.ok) return run;
   const contacts = new Map(collectScopes(run.value).all.contacts.map((contact) => [contact.id, contact]));
   const wanted = items
@@ -1101,8 +1178,11 @@ export async function applyVerificationActions(
     updated.push({ id: contact.id, decision, corrected });
   }
 
-  const refreshed = await refreshMatch(supabase, clientId);
-  if (!refreshed.ok) return refreshed;
+  // The current engine's Match page shows who moved up; four-tier runs are permanent.
+  if (run.value.engine === "current") {
+    const refreshed = await refreshMatch(supabase, clientId, "current");
+    if (!refreshed.ok) return refreshed;
+  }
   return { ok: true, value: updated };
 }
 

@@ -39,7 +39,9 @@ import {
   stageContactImport,
 } from "@/lib/match/import-server";
 import { clientFacingList, visibleFundCount } from "@/lib/match/client-list-dedupe";
-import { withVerificationSnapshot } from "@/lib/match/list-snapshot";
+import { currentEnginePeople, withVerificationSnapshot, type PeopleStates } from "@/lib/match/list-snapshot";
+import { matchEngine } from "@/lib/match/engine-setting";
+import { fourTierPushList } from "@/lib/match/tiers/server";
 import { carryDuplicateFlags, listedContacts } from "@/lib/match/outreach-dedupe";
 import { checkAndStoreSites, isStale, runSiteBatch } from "@/lib/match/sites-server";
 import { IMPORT_MAX_BYTES, type ContactImportView } from "@/lib/match/contact-import";
@@ -692,15 +694,51 @@ export async function pushMatchToClient(
 ): Promise<Result<{ funds: number; sandbox: boolean }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
+  if ((await matchEngine(access.supabase)) !== "current") {
+    return { ok: false, error: "The match engine is Four-tier. Reload the page: Push to client sends the four-tier run." };
+  }
   const run = await runClientMatch(access.supabase, clientId);
   if (!run.ok) return run;
   const list = buildClientList(run.value);
   if (!list.ok) return list;
+  return deliverList(access, clientId, list.value, currentEnginePeople(run.value));
+}
+
+/**
+ * Pushes one saved four-tier run to the client, exactly as saved: the funds of
+ * its four tiers, with the run id and rules version on the list. Refused when
+ * the run is not the client's newest or no longer reflects the client's data.
+ */
+export async function pushFourTierToClient(
+  clientId: string,
+  runId: string,
+): Promise<Result<{ funds: number; sandbox: boolean }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if ((await matchEngine(access.supabase)) !== "four_tier") {
+    return { ok: false, error: "The match engine is Current. Reload the page: Push to client sends the current engine's match." };
+  }
+  const id = String(runId ?? "");
+  if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(String(clientId ?? ""))) {
+    return { ok: false, error: "Unknown run." };
+  }
+  const built = await fourTierPushList(access.supabase, clientId, id);
+  if (!built.ok) return built;
+  return deliverList(access, clientId, built.value.list, built.value.people);
+}
+
+/** Saves a built list as the client's draft (or publishes it on the Test Pilot portal). */
+async function deliverList(
+  access: { supabase: ReturnType<typeof createServiceClient> },
+  clientId: string,
+  built: InvestorListPayload,
+  people: PeopleStates,
+): Promise<Result<{ funds: number; sandbox: boolean }>> {
   const snapshotted = await withVerificationSnapshot(
     access.supabase,
     clientId,
-    run.value,
-    clientFacingList(list.value),
+    people,
+    clientFacingList(built),
   );
   const fresh = asInvestorList(snapshotted);
   const shown = visibleFundCount(fresh.rows);

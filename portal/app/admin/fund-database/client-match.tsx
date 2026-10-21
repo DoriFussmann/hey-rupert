@@ -1,9 +1,11 @@
 import Link from "next/link";
 import { MatchWorkspace } from "@/app/admin/clients/[id]/match/match-workspace";
+import { FourTierMatch } from "@/app/admin/fund-database/four-tier-match";
 import type { Client } from "@/lib/types";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { unmatchedExclusionEntries } from "@/lib/match/exclusion-warnings";
 import { loadLiveDb } from "@/lib/match/db-server";
+import { matchEngine } from "@/lib/match/engine-setting";
 import { buildProfile, canRun, loadProfileState } from "@/lib/match/profile-server";
 import { loadStoredMatch } from "@/lib/match/run-server";
 import type { MatchProfileState, MatchView } from "@/lib/match/shared";
@@ -68,6 +70,31 @@ async function loadMatch(clientId: string): Promise<{
 
 /** Rupert Match for the client picked on the Fund Database page. */
 export async function ClientMatch({ client }: { client: Client }) {
+  const engine = isServiceRoleConfigured() ? await matchEngine(createServiceClient()) : "current";
+  if (engine === "four_tier") {
+    const sandbox = client.is_match_sandbox === true;
+    return (
+      <section aria-labelledby="client-match-title" className="mb-xl">
+        <div className="mb-md">
+          <h2 id="client-match-title" className="text-h3 text-heading">
+            Rupert Match · {client.company_name}
+          </h2>
+          <p className="mt-xs max-w-prose text-body-sm text-muted">
+            Private to Rupert. Push to client saves the saved run&apos;s four tiers (fund names, tiers, websites and contact
+            counts; never people) as a draft in the client&apos;s Investor Matching. You review it, preview it and send it with
+            its email from the client page.{" "}
+            {sandbox ? null : (
+              <Link href={`/admin/clients/${client.id}`} className="text-primary hover:text-primary-hover">
+                Open the client page
+              </Link>
+            )}
+          </p>
+        </div>
+        {sandbox ? <SandboxBanner clientId={client.id} /> : null}
+        <FourTierMatch key={client.id} client={client} />
+      </section>
+    );
+  }
   const { state, view, stale, database, error } = await loadMatch(client.id);
   const stepRow = (step: SetupStepId) =>
     client.setup_steps?.find((row) => row.step === step) ?? null;
@@ -91,6 +118,12 @@ export async function ClientMatch({ client }: { client: Client }) {
         </p>
       </div>
       {sandbox ? <SandboxBanner clientId={client.id} /> : null}
+      <p className="mb-md text-body-sm text-muted">
+        Match engine: Current (three tiers).{" "}
+        <Link href="/admin/matching" className="text-primary hover:text-primary-hover">
+          Change the engine
+        </Link>
+      </p>
       <MatchWorkspace
         key={client.id}
         clientId={client.id}

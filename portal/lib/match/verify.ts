@@ -2,7 +2,7 @@
 // and the admin UI. Pure module (no server code).
 
 import type { Contact } from "@/lib/match/engine/index.mjs";
-import type { Tier } from "@/lib/match/shared";
+import type { MatchEngine } from "@/lib/match/shared";
 
 /** Contacts checked per batch. */
 export const VERIFY_BATCH_SIZE = 5;
@@ -88,8 +88,11 @@ export type VerifyMode = "all" | "sequence";
 
 export const VERIFY_MODES: VerifyMode[] = ["all", "sequence"];
 
-/** Contacts to check per tier: null = all of the tier, 0 = skip it. */
-export type TierLimits = Record<Tier, number | null>;
+/**
+ * Contacts to check per tier, by tier key ("bullseye"…, or "core"…): null =
+ * all of the tier, 0 = skip it. A tier left out counts as all.
+ */
+export type TierLimits = Record<string, number | null>;
 
 /** The largest number accepted in a tier box. */
 export const TIER_LIMIT_MAX = 100_000;
@@ -130,7 +133,8 @@ export type VerifyContact = {
   title: string;
   email: string;
   seq: "Primary" | "Backup" | null;
-  tier: Tier;
+  /** The tier key of the engine the run was started on. */
+  tier: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -386,11 +390,13 @@ export function parseTierLimit(value: string): number | null | "invalid" {
   return number > TIER_LIMIT_MAX ? "invalid" : number;
 }
 
+const TIER_LIMIT_KEYS = ["bullseye", "match", "expansion", "core", "sphere", "tier3", "tier4"];
+
 /** Limits from untrusted input, or null when one is not valid. */
 export function cleanTierLimits(value: unknown): TierLimits | null {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
-  const limits = {} as TierLimits;
-  for (const tier of ["bullseye", "match", "expansion"] as Tier[]) {
+  const limits: TierLimits = {};
+  for (const tier of TIER_LIMIT_KEYS) {
     const item = raw[tier];
     if (item === null || item === undefined) {
       limits[tier] = null;
@@ -421,8 +427,12 @@ export type VerifyEstimate = {
 };
 
 export type VerifyOverview = {
-  /** Contacts per mode and tier, in outreach order. */
-  counts: Record<VerifyMode, Record<Tier, ScopeCount>>;
+  /** The engine the contacts come from. */
+  engine: MatchEngine;
+  /** That engine's tiers, in outreach order: one limit box each. */
+  tiers: { key: string; label: string }[];
+  /** Contacts per mode and tier key, in outreach order. */
+  counts: Record<VerifyMode, Record<string, ScopeCount>>;
   flagged: FlaggedContact[];
   estimate: VerifyEstimate;
   claudeReady: boolean;

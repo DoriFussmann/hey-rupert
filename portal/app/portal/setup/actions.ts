@@ -12,15 +12,16 @@ import { advanceStage } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 import {
-  FIT_TIERS,
   MATERIALS_BUCKET,
   MATERIAL_EXTENSIONS,
   MATERIAL_MAX_BYTES,
   MATERIAL_MAX_FILES,
   NOTE_MAX,
+  asEmailCopy,
   asFeedbackPublished,
   asInvestorList,
   asMaterials,
+  fitTiersFor,
   investorFlagsFrom,
   type InvestorFundFlag,
   fileExtension,
@@ -393,8 +394,8 @@ function itemLabel(
     return (key) => rows.find((item) => item.id === key)?.fund_name ?? key;
   }
   if (step === "email_copy") {
-    return (key) =>
-      FIT_TIERS.find((tier) => `tier_${tier.tier}` === key)?.label ?? key;
+    const tiers = fitTiersFor(asEmailCopy(row.published).tier_scheme);
+    return (key) => tiers.find((tier) => `tier_${tier.tier}` === key)?.label ?? key;
   }
   return (key) => key;
 }

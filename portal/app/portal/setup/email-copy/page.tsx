@@ -12,7 +12,12 @@ export default async function EmailCopyPage() {
   const visible = Boolean(row && row.version > 0);
   const copy = asEmailCopy(row?.published);
   const list = client?.setup_steps?.find((entry) => entry.step === "investor_list");
-  const counts = tierCounts(asInvestorList(list?.published).rows);
+  const investors = asInvestorList(list?.published);
+  // Fund counts only when the list groups funds the same way as the copy.
+  const counts =
+    (investors.tier_scheme ?? "three") === (copy.tier_scheme ?? "three")
+      ? tierCounts(investors.rows, copy.tier_scheme)
+      : [];
   const sentNotes =
     row && row.response && row.response.version === row.version
       ? row.response.item_notes

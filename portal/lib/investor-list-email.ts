@@ -1,4 +1,4 @@
-import { FIT_TIERS, type InvestorListPayload } from "@/lib/setup";
+import { fitTiersFor, type FitTier, type InvestorListPayload } from "./setup.ts";
 
 const CTA_LABEL = "Review your investor list";
 
@@ -6,7 +6,7 @@ function n(value: number) {
   return value.toLocaleString("en-US");
 }
 
-function fundsIn(list: InvestorListPayload, tier: 1 | 2 | 3) {
+function fundsIn(list: InvestorListPayload, tier: FitTier) {
   const fromSummary = list.summary?.tiers.find((item) => item.tier === tier)?.funds;
   if (typeof fromSummary === "number") return fromSummary;
   return list.rows.filter((row) => row.tier === tier && !row.hidden_duplicate).length;
@@ -32,15 +32,27 @@ export function investorListEmailText({
   adminName: string;
   portalUrl: string;
 }) {
-  const total = FIT_TIERS.reduce((sum, { tier }) => sum + fundsIn(list, tier), 0);
+  const four = list.tier_scheme === "four";
+  const total = fitTiersFor(list.tier_scheme).reduce((sum, { tier }) => sum + fundsIn(list, tier), 0);
   const lines = [
     clientFirstName ? `Hi ${clientFirstName},` : "Hi,",
     "",
     `Your matched investor list for ${company} is ready. I ran what you shared about ${company} against our database of 10,000+ funds and narrowed it to ${n(total)} funds, sorted by fit:`,
     "",
-    `• Bullseye: ${n(fundsIn(list, 1))} funds. Your stage, sector and geography line up. These get the most personal outreach.`,
-    `• Match: ${n(fundsIn(list, 2))} funds. Strong fit on most of your criteria.`,
-    `• Expansion: ${n(fundsIn(list, 3))} funds. A broader fit that widens the funnel.`,
+    ...(four
+      ? [
+          `• Core: ${n(fundsIn(list, 1))} funds. They invest directly in your sector. These get the most personal outreach.`,
+          `• Sphere: ${n(fundsIn(list, 2))} funds. A sector right next to yours, or one of your other sectors.`,
+          `• Tier 3: ${n(fundsIn(list, 3))} funds. A broader link to your sector that widens the funnel.`,
+          `• Tier 4: ${n(fundsIn(list, 4))} funds. A weaker but real link, contacted last.`,
+          "",
+          "Every fund on the list invests at your stage and covers your location.",
+        ]
+      : [
+          `• Bullseye: ${n(fundsIn(list, 1))} funds. Your stage, sector and geography line up. These get the most personal outreach.`,
+          `• Match: ${n(fundsIn(list, 2))} funds. Strong fit on most of your criteria.`,
+          `• Expansion: ${n(fundsIn(list, 3))} funds. A broader fit that widens the funnel.`,
+        ]),
   ];
   const verification = list.verification;
   if (verification?.verification_ran) {
@@ -51,7 +63,7 @@ export function investorListEmailText({
   }
   lines.push(
     "",
-    "What I need from you (about 10 minutes): start with Bullseye. Exclude anyone you don't want contacted, mark anyone you already know, then confirm. Outreach starts only after you confirm, and you'll approve every email before anything is sent.",
+    `What I need from you (about 10 minutes): start with ${four ? "Core" : "Bullseye"}. Exclude anyone you don't want contacted, mark anyone you already know, then confirm. Outreach starts only after you confirm, and you'll approve every email before anything is sent.`,
     "",
     `[${CTA_LABEL}] → ${portalUrl}`,
     "",

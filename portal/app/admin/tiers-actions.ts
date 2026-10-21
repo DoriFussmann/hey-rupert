@@ -4,9 +4,21 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { loadLiveDb } from "@/lib/match/db-server";
+import { loadLiveDb, matchTableError } from "@/lib/match/db-server";
+import { loadEngineSetting, setEngineSetting } from "@/lib/match/engine-setting";
+import { cleanSettings, loadProfileState, saveProfileState } from "@/lib/match/profile-server";
+import { REJECT_REASONS, type MatchEngine } from "@/lib/match/shared";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { decideIdentity, proposeFofException, reviewFofException, runComparison, runFourTier } from "@/lib/match/tiers/server";
+import { checkAndStoreSites, isStale, loadSites } from "@/lib/match/sites-server";
+import { TIER_KEYS } from "@/lib/match/tiers/core";
+import {
+  decideIdentity,
+  liveFourTier,
+  proposeFofException,
+  reviewFofException,
+  runComparison,
+  runFourTier,
+} from "@/lib/match/tiers/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -91,7 +103,17 @@ export async function reviewFof(firmId: string, decision: string): Promise<Resul
   }
 }
 
-/** A four-tier run for the admin preview, saved permanently. The live Match page is not touched. */
+const CLIENT_ID = /^[0-9a-f-]{36}$/i;
+
+function revalidateFourTier(clientId: string) {
+  revalidatePath(`/admin/clients/${clientId}/match/four-tier`);
+  revalidatePath("/admin/fund-database");
+}
+
+/**
+ * Runs the four-tier engine for a client and saves the run permanently. The
+ * Match page (on the four-tier engine) and the preview show the newest run.
+ */
 export async function runFourTierPreview(clientId: string): Promise<Result<{ runId: string }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
@@ -100,7 +122,7 @@ export async function runFourTierPreview(clientId: string): Promise<Result<{ run
   try {
     const done = await runFourTier(access.supabase, id, access.email);
     if (!done.ok) return done;
-    revalidatePath(`/admin/clients/${id}/match/four-tier`);
+    revalidateFourTier(id);
     return { ok: true, runId: done.value.runId };
   } catch (err) {
     return { ok: false, error: errorText(err, "The four-tier run failed.") };
@@ -129,5 +151,156 @@ export async function decideIdentityGroup(groupKey: string, decision: string, no
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The decision could not be saved.") };
+  }
+}
+
+/** Switches the match engine for every client. Logged with who switched and why. */
+export async function switchMatchEngine(engine: string, note: string): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (engine !== "current" && engine !== "four_tier") return { ok: false, error: "Unknown engine." };
+  try {
+    const current = await loadEngineSetting(access.supabase);
+    if (!current.ok) return current;
+    if (current.value.configured && current.value.engine === engine) {
+      return { ok: false, error: "That engine is already in use." };
+    }
+    const saved = await setEngineSetting(access.supabase, engine as MatchEngine, asText(note, 1000), access.email);
+    if (!saved.ok) return saved;
+    revalidatePath("/admin/matching");
+    revalidatePath("/admin/fund-database");
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The switch was not saved.") };
+  }
+}
+
+/**
+ * Approves or rejects a fund for a client from the four-tier Match page.
+ * Saved runs never change: the review applies from the next run.
+ */
+export async function reviewFund(
+  clientId: string,
+  input: { firmId: string; firmName: string; tier: string; status: string; reason: string; note: string; hideForAll: boolean },
+): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const id = asText(clientId, 64);
+  if (!CLIENT_ID.test(id)) return { ok: false, error: "Unknown client." };
+  const firmId = asText(input?.firmId, 200).trim();
+  if (!firmId) return { ok: false, error: "Unknown fund." };
+  const status = input?.status === "no" ? "no" : "ok";
+  const reason = asText(input?.reason, 200);
+  if (status === "no" && !REJECT_REASONS.includes(reason)) return { ok: false, error: "Choose a reason for rejecting." };
+  const note = asText(input?.note, 1000).trim();
+  const firmName = asText(input?.firmName, 255);
+  try {
+    const { error } = await access.supabase.from("match_reviews").upsert(
+      {
+        client_id: id,
+        firm_id: firmId,
+        firm_name: firmName,
+        status,
+        reason: status === "no" ? reason : null,
+        note: note || null,
+        tier: asText(input?.tier, 20) || null,
+        reviewed_by: access.email,
+        reviewed_at: new Date().toISOString(),
+      },
+      { onConflict: "client_id,firm_id" },
+    );
+    if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+    if (status === "no" && input?.hideForAll === true) {
+      const { error: hideError } = await access.supabase.from("match_suppressions").upsert(
+        { firm_id: firmId, firm_name: firmName, reason: reason + (note ? `: ${note}` : ""), from_client: id, created_by: access.email },
+        { onConflict: "firm_id" },
+      );
+      if (hideError) return { ok: false, error: matchTableError(hideError.message, hideError.code) };
+    }
+    revalidateFourTier(id);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The review was not saved.") };
+  }
+}
+
+export async function clearFundReview(clientId: string, firmId: string): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const id = asText(clientId, 64);
+  if (!CLIENT_ID.test(id)) return { ok: false, error: "Unknown client." };
+  try {
+    const { error } = await access.supabase.from("match_reviews").delete().eq("client_id", id).eq("firm_id", asText(firmId, 200));
+    if (error) return { ok: false, error: matchTableError(error.message, error.code) };
+    revalidateFourTier(id);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The review was not cleared.") };
+  }
+}
+
+/** Saves the quality filters and website rules for the four-tier engine. They apply from the next run. */
+export async function saveFourTierSettings(clientId: string, settings: unknown): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const id = asText(clientId, 64);
+  if (!CLIENT_ID.test(id)) return { ok: false, error: "Unknown client." };
+  try {
+    const current = await loadProfileState(access.supabase, id);
+    if (!current.ok) return current;
+    if (!current.value) return { ok: false, error: "Fill the company profile first." };
+    const next = cleanSettings(settings);
+    // The four-tier engine has no tightness or wave limit: the current engine's stay as they are.
+    const saved = await saveProfileState(access.supabase, id, {
+      answers: current.value.answers,
+      settings: { ...next, tune: current.value.settings.tune, waveSize: current.value.settings.waveSize },
+      source: "settings",
+    });
+    if (!saved.ok) return saved;
+    revalidateFourTier(id);
+    return { ok: true };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The settings were not saved.") };
+  }
+}
+
+/** Website checks inside a request stop here, leaving time to reply. */
+const SITE_BUDGET_MS = 150_000;
+
+/**
+ * Re-checks the websites of each four-tier tier's top funds whose result is
+ * old or missing, as Check websites does on the current engine. The next run
+ * uses the new results.
+ */
+export async function checkFourTierWebsites(
+  clientId: string,
+): Promise<Result<{ checked: number; pending: number; summary: Record<string, number> }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const id = asText(clientId, 64);
+  if (!CLIENT_ID.test(id)) return { ok: false, error: "Unknown client." };
+  try {
+    const live = await liveFourTier(access.supabase, id);
+    if (!live.ok) return live;
+    const { run, tiers } = live.value;
+    if (run.profile.siteN <= 0) return { ok: false, error: "The website check is off for this client. Turn it on under Quality filters & rules." };
+    const take = run.profile.siteN + 20;
+    const firms = TIER_KEYS.flatMap((tier) =>
+      tiers.outcomes
+        .filter((o) => o.status === "tiered" && o.tier === tier && !o.rejected && !o.representedBy)
+        .slice(0, take)
+        .map((o) => tiers.live.get(o)?.firm)
+        .filter((firm): firm is NonNullable<typeof firm> => Boolean(firm?.web)),
+    );
+    const stored = await loadSites(access.supabase, firms);
+    if (!stored.ok) return stored;
+    const due = firms.filter((firm) => isStale(stored.checkedAt[firm.id]));
+    if (due.length === 0) return { ok: true, checked: 0, pending: 0, summary: {} };
+    const result = await checkAndStoreSites(access.supabase, due, SITE_BUDGET_MS);
+    if (!result.ok) return result;
+    revalidateFourTier(id);
+    return { ok: true, checked: result.checked, pending: Math.max(0, due.length - result.checked), summary: result.summary };
+  } catch (err) {
+    return { ok: false, error: errorText(err, "The website check failed.") };
   }
 }

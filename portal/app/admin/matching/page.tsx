@@ -6,7 +6,10 @@ import { loadLiveDb } from "@/lib/match/db-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
 import { cardClass, n } from "@/app/admin/clients/[id]/match/ui";
+import { EngineSwitch } from "@/app/admin/matching/engine-switch";
 import { FofPanel, type FofItem } from "@/app/admin/matching/fof-panel";
+import { ENGINE_MIGRATION_MISSING, loadEngineChanges, loadEngineSetting } from "@/lib/match/engine-setting";
+import { MATCH_ENGINE_LABEL } from "@/lib/match/shared";
 import { DUPLICATE_LEVELS, DUPLICATE_LEVEL_INFO, findDuplicates } from "@/lib/match/tiers/duplicates";
 import { RULES_VERSION, TIER_INFO, TIER_KEYS } from "@/lib/match/tiers/core";
 import { fofCandidates, loadFofExceptions } from "@/lib/match/tiers/server";
@@ -35,8 +38,8 @@ export default async function FourTierPage() {
   await requireAdmin();
   const header = (
     <PageHeader
-      title="Four-tier matching (preview)"
-      description="The four-tier engine runs alongside the current one. Compare both for a client, review possible duplicate firms (read-only) and fund-of-funds exceptions. The live Match page, founder pages and exports still use the current engine."
+      title="Four-tier matching"
+      description="Choose the match engine for every client, compare both engines for a client, and review duplicate firms and fund-of-funds exceptions."
     />
   );
   if (!isServiceRoleConfigured()) {
@@ -49,11 +52,13 @@ export default async function FourTierPage() {
   }
 
   const supabase = createServiceClient();
-  const [taxonomy, live, exceptions, clients] = await Promise.all([
+  const [taxonomy, live, exceptions, clients, engine, changes] = await Promise.all([
     loadTaxonomy(supabase),
     loadLiveDb(supabase),
     loadFofExceptions(supabase),
     supabase.from("clients").select("id, company_name, is_match_sandbox, archived_at").order("company_name"),
+    loadEngineSetting(supabase),
+    loadEngineChanges(supabase, 30),
   ]);
   if (!taxonomy.ok || !live.ok || !exceptions.ok) {
     return (
@@ -76,6 +81,42 @@ export default async function FourTierPage() {
   return (
     <>
       {header}
+      <Section title="Match engine">
+        {!engine.ok ? (
+          <p role="alert" className="text-body-sm text-error">{engine.error}</p>
+        ) : (
+          <>
+            <p className="text-body-sm text-secondary">
+              In use for every client: <span className="text-heading">{MATCH_ENGINE_LABEL[engine.value.engine]}</span>
+              {engine.value.updatedAt
+                ? ` · since ${new Date(engine.value.updatedAt).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })} by ${engine.value.updatedBy ?? "unknown"}`
+                : " · the default"}
+              .
+            </p>
+            <p className="mt-xs text-body-sm text-muted">
+              It decides what the Match page shows, what verification checks and what Push to client sends. Switching never changes a saved run, a
+              pushed list or a list already sent: each list keeps the tiers it was pushed with.
+            </p>
+            {!engine.value.configured ? <p role="alert" className="mt-xs text-body-sm text-warning">{ENGINE_MIGRATION_MISSING}</p> : null}
+            <EngineSwitch engine={engine.value.engine} configured={engine.value.configured} />
+            {changes.ok && changes.value.length > 0 ? (
+              <details className="mt-sm">
+                <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Change log ({changes.value.length})</summary>
+                <ul className="mt-xs space-y-xs text-body-sm text-secondary">
+                  {changes.value.map((change) => (
+                    <li key={change.id}>
+                      {new Date(change.at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })} · {change.actor ?? "unknown"} ·{" "}
+                      {change.from ? MATCH_ENGINE_LABEL[change.from] : "Default (current)"} → {change.to ? MATCH_ENGINE_LABEL[change.to] : "–"}
+                      {change.note ? ` · ${change.note}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            ) : null}
+            {!changes.ok ? <p role="alert" className="mt-xs text-body-sm text-error">{changes.error}</p> : null}
+          </>
+        )}
+      </Section>
       <Section title="Rules">
         <p className="text-body-sm text-secondary">
           Rules {RULES_VERSION}. Taxonomy revision {index.taxonomy.revision}. Fund Database: {live.value.version.fileName} ({n(live.value.db.firms.length)} firms).
@@ -105,7 +146,7 @@ export default async function FourTierPage() {
                 {client.company_name}
                 {client.is_match_sandbox ? " (sandbox)" : ""}:{" "}
                 <Link href={`/admin/clients/${client.id}/match/four-tier`} className="underline hover:text-heading">
-                  Preview
+                  Runs
                 </Link>{" "}
                 ·{" "}
                 <Link href={`/admin/clients/${client.id}/match/compare`} className="underline hover:text-heading">

@@ -47,6 +47,7 @@ export default async function InvestorListPage() {
         <InvestorListReview
           rows={list.rows}
           summary={list.summary}
+          scheme={list.tier_scheme}
           verification={list.verification}
           flags={list.client_flags}
           version={row.version}

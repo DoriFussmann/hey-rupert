@@ -30,6 +30,7 @@ import {
   TIER_TO_FIT,
   dropSectorFocus,
   firmTypeLabel,
+  stageRange,
   type ContactBrief,
   type Count,
   type FirmContact,
@@ -126,7 +127,8 @@ export function siteCandidates(out: RunOutput, db: FundDb, siteN: number) {
   return db.firms.filter((firm) => ids.has(firm.id));
 }
 
-async function loadReviews(supabase: ServiceClient, clientId: string) {
+/** This client's fund reviews, by FirmID. */
+export async function loadReviews(supabase: ServiceClient, clientId: string) {
   const loaded = await selectAll<{ firm_id: string; status: string; reason: string | null; note: string | null }>(
     (from, to) =>
       supabase
@@ -148,7 +150,8 @@ async function loadReviews(supabase: ServiceClient, clientId: string) {
   return { ok: true as const, reviews };
 }
 
-async function loadHidden(supabase: ServiceClient) {
+/** Funds hidden for all clients, newest first. */
+export async function loadHidden(supabase: ServiceClient) {
   const loaded = await selectAll<{ firm_id: string; firm_name: string; reason: string | null }>(
     (from, to) =>
       supabase
@@ -589,29 +592,6 @@ export function buildDetail(run: MatchRun, firmId: string): FirmDetail | null {
 // What goes to the client: funds and counts, never people
 
 export const CLIENT_LIST_MAX = 3000;
-
-const VC_LADDER = [
-  "Pre-Seed",
-  "Seed",
-  "Series A",
-  "Series B",
-  "Series C and Beyond",
-  "Growth Equity",
-];
-
-/** The stages a fund lists, as "Seed" or "Seed–Series A" when they sit next to each other. */
-function stageRange(stages: string[]) {
-  const listed = stages.map((stage) => stage.trim()).filter(Boolean);
-  const ordered = VC_LADDER.filter((stage) => listed.includes(stage));
-  const extra = listed.filter((stage) => !VC_LADDER.includes(stage));
-  if (ordered.length >= 2 && extra.length === 0) {
-    const indexes = ordered.map((stage) => VC_LADDER.indexOf(stage));
-    const contiguous = indexes.every((index, i) => i === 0 || index === indexes[i - 1] + 1);
-    if (contiguous) return `${ordered[0]}–${ordered[ordered.length - 1]}`;
-  }
-  const names = [...ordered, ...extra];
-  return names.slice(0, 4).join(", ");
-}
 
 /** Up to 4 chips naming the values that matched. Not the generic why sentence. */
 function fitReasons(result: MatchResult, stage: string) {

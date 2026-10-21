@@ -33,9 +33,11 @@ import {
   asNarrative,
   fileExtension,
   formatBytes,
-  FIT_TIERS,
+  fitTiersFor,
+  tierEmails,
   LINKEDIN_NOTE_MAX,
   type EmailCopyPayload,
+  type TierScheme,
   type ClientEmailDraft,
   type FeedbackDraft,
   type InvestorListPayload,
@@ -924,33 +926,33 @@ const tierEmailSchema = {
   },
 };
 
-const EMAIL_COPY_TOOL: ClaudeTool = {
-  name: "submit_email_copy",
-  description: "Deliver the tier emails and the LinkedIn messages.",
-  input_schema: {
-    type: "object",
-    properties: {
-      tiers: {
-        type: "object",
-        properties: {
-          "1": tierEmailSchema,
-          "2": tierEmailSchema,
-          "3": tierEmailSchema,
+/** The copy tool for the list's scheme: a sequence for each of its tiers. */
+function emailCopyTool(scheme: TierScheme): ClaudeTool {
+  const keys = fitTiersFor(scheme).map(({ tier }) => String(tier));
+  return {
+    name: "submit_email_copy",
+    description: "Deliver the tier emails and the LinkedIn messages.",
+    input_schema: {
+      type: "object",
+      properties: {
+        tiers: {
+          type: "object",
+          properties: Object.fromEntries(keys.map((key) => [key, tierEmailSchema])),
+          required: keys,
         },
-        required: ["1", "2", "3"],
+        linkedin_note: {
+          type: "string",
+          description: "LinkedIn connection note, 300 characters or fewer.",
+        },
+        linkedin_followup: {
+          type: "string",
+          description: "LinkedIn message after they connect.",
+        },
       },
-      linkedin_note: {
-        type: "string",
-        description: "LinkedIn connection note, 300 characters or fewer.",
-      },
-      linkedin_followup: {
-        type: "string",
-        description: "LinkedIn message after they connect.",
-      },
+      required: ["tiers", "linkedin_note", "linkedin_followup"],
     },
-    required: ["tiers", "linkedin_note", "linkedin_followup"],
-  },
-};
+  };
+}
 
 function responseNotes(response: SetupResponse | null) {
   if (!response) return "";
@@ -975,20 +977,33 @@ function earlierNotes(history: SetupHistoryEntry[], current: SetupResponse | nul
 
 /** Tier counts and fund types only. Never fund names, contact names, or emails. */
 function listBrief(list: ReturnType<typeof asInvestorList>) {
+  const tiers = fitTiersFor(list.tier_scheme);
+  const name = (tier: number) => {
+    const entry = tiers.find((item) => item.tier === tier);
+    return entry ? `Tier ${tier} (${entry.label}: ${entry.detail})` : `Tier ${tier}`;
+  };
+  const scheme =
+    list.tier_scheme === "four"
+      ? "The list has four tiers. Every fund invests at the company's stage and covers its location; the tiers differ by how closely the fund's sectors relate to the company's."
+      : "The list has three tiers.";
   if (list.summary && list.summary.tiers.length > 0) {
-    return list.summary.tiers
-      .map((tier) => {
+    return [
+      scheme,
+      ...list.summary.tiers.map((tier) => {
         const types =
           tier.by_type.map((entry) => `${entry.label} (${entry.funds} funds)`).join(", ") ||
           "types not grouped";
-        return `Tier ${tier.tier}: ${tier.funds} funds. ${types}.`;
-      })
-      .join("\n");
+        return `${name(tier.tier)}: ${tier.funds} funds. ${types}.`;
+      }),
+    ].join("\n");
   }
-  return FIT_TIERS.map(({ tier, label }) => {
-    const funds = list.rows.filter((row) => row.tier === tier && !row.hidden_duplicate).length;
-    return `${label}: ${funds} funds.`;
-  }).join("\n");
+  return [
+    scheme,
+    ...tiers.map(({ tier }) => {
+      const funds = list.rows.filter((row) => row.tier === tier && !row.hidden_duplicate).length;
+      return `${name(tier)}: ${funds} funds.`;
+    }),
+  ].join("\n");
 }
 
 function intakeSummaryText(interview: { admin_brief?: { summary?: string } | null; summary?: { title: string; answer: string }[] | null } | null) {
@@ -1034,6 +1049,9 @@ export async function draftEmailCopy(
     return { ok: false, error: "Confirm the investor list first." };
   }
   const list = asInvestorList(listRow.published);
+  const scheme: TierScheme = list.tier_scheme ?? "three";
+  const tool = emailCopyTool(scheme);
+  const tierKeys = fitTiersFor(scheme).map(({ tier }) => tier).join(", ");
 
   const feedback = asFeedback(feedbackRow?.draft ?? feedbackRow?.published);
   const firstName =
@@ -1068,10 +1086,10 @@ export async function draftEmailCopy(
     content: [
       {
         type: "text",
-        text: `${context}\n\nDeliver the copy by calling the ${EMAIL_COPY_TOOL.name} tool.`,
+        text: `${context}\n\nWrite the three emails for each of the list's ${fitTiersFor(scheme).length} tiers (${tierKeys}). Deliver the copy by calling the ${tool.name} tool.`,
       },
     ],
-    tool: EMAIL_COPY_TOOL,
+    tool,
     maxTokens: 8000,
   });
   if (!result.ok) return { ok: false, error: result.reason };
@@ -1079,10 +1097,11 @@ export async function draftEmailCopy(
   const working = asEmailCopy(emailRow?.draft ?? emailRow?.published);
   const copy = asEmailCopy({
     ...result.input,
+    tier_scheme: scheme,
     admin_note: working.admin_note,
   });
-  const missingTier = FIT_TIERS.find(({ tier }) =>
-    copy.tiers[`${tier}`].some((email) => !email.body.trim()),
+  const missingTier = fitTiersFor(scheme).find(({ tier }) =>
+    tierEmails(copy, tier).some((email) => !email.body.trim()),
   );
   if (missingTier) {
     return {

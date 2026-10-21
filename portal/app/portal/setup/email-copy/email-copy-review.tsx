@@ -5,8 +5,9 @@ import { AdminReply } from "@/components/setup/admin-reply";
 import { ReviewActions } from "@/components/setup/review-actions";
 import {
   EMAIL_SEQUENCE_LABELS,
-  FIT_TIERS,
   NOTE_MAX,
+  fitTiersFor,
+  tierEmails,
   type EmailCopyPayload,
   type FitTier,
 } from "@/lib/setup";
@@ -31,8 +32,9 @@ export function EmailCopyReview({
   const [tier, setTier] = useState<FitTier>(1);
   const [notes, setNotes] = useState<Record<string, string>>({});
   const key = `tier_${tier}`;
-  const emails = copy.tiers[`${tier}`];
-  const current = FIT_TIERS.find((entry) => entry.tier === tier)!;
+  const tiers = fitTiersFor(copy.tier_scheme);
+  const emails = tierEmails(copy, tier);
+  const current = tiers.find((entry) => entry.tier === tier) ?? tiers[0];
 
   const tabClass = (active: boolean) =>
     `rounded-md px-md py-sm text-body-sm transition-colors duration-hover ${
@@ -49,7 +51,7 @@ export function EmailCopyReview({
         </div>
       ) : null}
       <div className="mb-md flex flex-wrap gap-sm" role="tablist" aria-label="Investor tier">
-        {FIT_TIERS.map((entry) => {
+        {tiers.map((entry) => {
           const count = counts.find((item) => item.tier === entry.tier)?.count ?? 0;
           const hasNote = Boolean(notes[`tier_${entry.tier}`]?.trim());
           return (

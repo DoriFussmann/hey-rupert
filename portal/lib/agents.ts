@@ -117,7 +117,7 @@ You receive the list as tier counts and fund types, Rupert's note to the founder
 Write:
 - subject: under 60 characters, specific to their company.
 - body: plain text, 70–130 words. Write the middle of the email only: no greeting line, no portal link and no sign-off (all three are added automatically). Then:
-  1. One sentence: Rupert has matched investors for this raise, grouped into three fit tiers.
+  1. One sentence: Rupert has matched investors for this raise, grouped by fit tier (the list says whether it has three or four tiers).
   2. The size of each tier and the main fund types in it, in a few words. Use only the numbers and types you receive. Never name a fund or a person.
   3. Ask them to review the list in the portal: they can add a note on any fund, ask questions, or confirm.
   4. What happens next: once they confirm, Rupert writes the outreach emails for each tier, and they review those before anything is sent.
@@ -128,12 +128,12 @@ const EMAIL_COPY_PROMPT = `You are Rupert, writing the outreach copy a founder c
 
 Write from the confirmed narrative (the story, the key messages, the approach), the investor list (tier summary and fund types only — never name a contact), the intake and the materials analysis. Use only those facts. Never invent numbers, customers, traction or market sizes.
 
-For each tier (1, 2 and 3), three emails:
+For each tier of the list (1, 2 and 3; or 1, 2, 3 and 4 when the list has four tiers), three emails:
 1. First email. A plain subject line. A short body: why this kind of investor, one proof point, a small ask (a short call). Sign off with the founder's first name only.
 2. Follow-up 1. Adds one new fact that was not in the first email. The subject may be blank, which means the same thread.
 3. Follow-up 2. Adds one different new fact. The subject may be blank.
 
-Tier 1 is the most tailored. Tier 2 and Tier 3 stay specific to the fund types in that tier, and shorter.
+Tier 1 is the most tailored. The other tiers stay specific to the fund types in that tier, and shorter.
 
 Also write:
 - linkedin_note: the connection note, 300 characters or fewer. One line on why you're connecting and one proof point. No pitch, no link dump.
@@ -219,7 +219,7 @@ export const AGENTS: AgentDefinition[] = [
     id: "email_copy",
     title: "Email copy",
     description:
-      "Runs when you click Draft with AI under Email Copy. Writes the first email and two follow-ups for each tier, plus the LinkedIn note and follow-up, from the narrative, the investor list, the intake and the analysis.",
+      "Runs when you click Draft with AI under Email Copy. Writes the first email and two follow-ups for each tier of the investor list (three or four), plus the LinkedIn note and follow-up, from the narrative, the investor list, the intake and the analysis.",
     defaultPrompt: EMAIL_COPY_PROMPT,
   },
   {

@@ -2,7 +2,7 @@
 // decide whose turn each step is. Pure module: safe on the server and in the
 // browser. Every screen, email and reminder reads from here.
 
-import { dropSectorFocus } from "@/lib/match/shared";
+import { dropSectorFocus } from "./match/shared.ts";
 
 export type SetupStepId =
   | "materials"
@@ -206,7 +206,19 @@ export type NarrativePayload = {
 
 export const LINKEDIN_NOTE_MAX = 300;
 
-export type FitTier = 1 | 2 | 3;
+export type FitTier = 1 | 2 | 3 | 4;
+
+/**
+ * How a list or an email copy groups its funds. "three": Bullseye, Match,
+ * Expansion (every list and copy made before four-tier matching). "four":
+ * Core, Sphere, Tier 3, Tier 4. Stored only as "four"; absent means "three",
+ * so lists and copy already sent read exactly as before.
+ */
+export type TierScheme = "three" | "four";
+
+export function asTierScheme(value: unknown): TierScheme {
+  return value === "four" ? "four" : "three";
+}
 
 export type InvestorRow = {
   id: string;
@@ -303,13 +315,24 @@ export type InvestorListPayload = {
   client_flags?: Record<string, InvestorFundFlag>;
   /** Flags for funds the latest match no longer includes. */
   removed_flags?: RemovedInvestorFlag[];
+  /** "four" for lists pushed from the four-tier engine. Absent: three tiers. */
+  tier_scheme?: "four";
+  /** Four-tier lists: the saved match run the list was built from. */
+  run_id?: string;
+  /** Four-tier lists: the rules version of that run. */
+  rules_version?: string;
 };
 
 export type CopyEmail = { subject: string; body: string };
 
-/** Three emails per tier: the first email and two follow-ups. */
+/**
+ * Three emails per tier: the first email and two follow-ups. `tiers` has a
+ * sequence for each tier of the copy's scheme: "1"–"3", or "1"–"4".
+ */
 export type EmailCopyPayload = {
-  tiers: Record<`${FitTier}`, CopyEmail[]>;
+  tiers: Partial<Record<`${FitTier}`, CopyEmail[]>>;
+  /** "four" for copy written for a four-tier list. Absent: three tiers. */
+  tier_scheme?: "four";
   /** One LinkedIn connection note for every tier. 300 characters or fewer. */
   linkedin_note?: string;
   /** One LinkedIn follow-up for every tier. */
@@ -318,7 +341,10 @@ export type EmailCopyPayload = {
   admin_note?: string;
 };
 
-export const FIT_TIERS: { tier: FitTier; label: string; detail: string }[] = [
+export type FitTierInfo = { tier: FitTier; label: string; detail: string };
+
+/** The three-tier scheme: lists and copy made before four-tier matching. */
+export const THREE_FIT_TIERS: FitTierInfo[] = [
   {
     tier: 1,
     label: "Bullseye",
@@ -328,14 +354,47 @@ export const FIT_TIERS: { tier: FitTier; label: string; detail: string }[] = [
   { tier: 3, label: "Expansion", detail: "Broader fit. Widens the funnel." },
 ];
 
+/** The four-tier scheme. Every fund here invests at your stage and covers your location. */
+export const FOUR_FIT_TIERS: FitTierInfo[] = [
+  {
+    tier: 1,
+    label: "Core",
+    detail: "Invests directly in your sector. Highest-priority outreach.",
+  },
+  {
+    tier: 2,
+    label: "Sphere",
+    detail: "Invests in a sector right next to yours, or directly in one of your other sectors.",
+  },
+  {
+    tier: 3,
+    label: "Tier 3",
+    detail: "A broader link to your sector. Widens the funnel.",
+  },
+  {
+    tier: 4,
+    label: "Tier 4",
+    detail: "A weaker but real link to your sector. Contacted last.",
+  },
+];
+
+export function fitTiersFor(scheme: TierScheme | null | undefined): FitTierInfo[] {
+  return scheme === "four" ? FOUR_FIT_TIERS : THREE_FIT_TIERS;
+}
+
+/** The scheme marker to store: "four", or nothing for three tiers. */
+function schemeMarker(scheme: TierScheme): { tier_scheme?: "four" } {
+  return scheme === "four" ? { tier_scheme: "four" } : {};
+}
+
 export const EMAIL_SEQUENCE_LABELS = [
   "First email",
   "Follow-up 1",
   "Follow-up 2",
 ] as const;
 
-export function tierLabel(tier: FitTier) {
-  return FIT_TIERS.find((item) => item.tier === tier)?.label ?? `Tier ${tier}`;
+export function tierLabel(tier: FitTier, scheme?: TierScheme | null) {
+  return fitTiersFor(scheme).find((item) => item.tier === tier)?.label ?? `Tier ${tier}`;
 }
 
 const GENERIC_WHY =
@@ -410,7 +469,7 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
     short: "Email Copy",
     href: "/portal/setup/email-copy",
     clientTask: "review and confirm the outreach emails",
-    adminAction: "Write the email copy for the 3 tiers",
+    adminAction: "Write the email copy for each tier",
     kind: "review",
   },
 ];
@@ -899,16 +958,22 @@ export function narrativeProblem(narrative: NarrativePayload) {
   return null;
 }
 
-function asTier(value: unknown): FitTier | null {
+/** A tier of the scheme: 1–3, or 1–4 for a four-tier list. */
+function asTier(value: unknown, scheme: TierScheme): FitTier | null {
   const n = Number(value);
-  return n === 1 || n === 2 || n === 3 ? n : null;
+  if (n === 1 || n === 2 || n === 3) return n;
+  return n === 4 && scheme === "four" ? 4 : null;
 }
+
+const ID_PATTERN = /^[0-9a-f-]{36}$/i;
 
 export function asInvestorList(value: unknown): InvestorListPayload {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
     string,
     unknown
   >;
+  const scheme = asTierScheme(raw.tier_scheme);
+  const lastTier = fitTiersFor(scheme)[fitTiersFor(scheme).length - 1].tier;
   const rows = Array.isArray(raw.rows)
     ? raw.rows
         .filter(
@@ -928,7 +993,7 @@ export function asInvestorList(value: unknown): InvestorListPayload {
             fund_name: str(item.fund_name, INVESTOR_FIELD_MAX),
             contact: str(item.contact, INVESTOR_FIELD_MAX),
             details: str(item.details, INVESTOR_FIELD_MAX),
-            tier: asTier(item.tier) ?? 3,
+            tier: asTier(item.tier, scheme) ?? lastTier,
             why: withoutGenericWhy(dropSectorFocus(str(item.why, INVESTOR_FIELD_MAX))),
             comments: str(item.comments, INVESTOR_FIELD_MAX),
             website: websiteHref(str(item.website, 500)) || undefined,
@@ -943,14 +1008,23 @@ export function asInvestorList(value: unknown): InvestorListPayload {
         })
     : [];
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
+  const runId = str(raw.run_id, 36).trim();
+  const rulesVersion = str(raw.rules_version, 60).trim();
   return {
     rows,
     source_file: str(raw.source_file, 255),
-    summary: asInvestorListSummary(raw.summary),
+    summary: asInvestorListSummary(raw.summary, scheme),
     admin_note: adminNote || undefined,
     verification: asInvestorVerification(raw.verification),
     client_flags: asInvestorFlags(raw.client_flags, rows.map((row) => row.id)),
     removed_flags: asRemovedFlags(raw.removed_flags),
+    ...(scheme === "four"
+      ? {
+          tier_scheme: "four" as const,
+          ...(ID_PATTERN.test(runId) ? { run_id: runId } : {}),
+          ...(rulesVersion ? { rules_version: rulesVersion } : {}),
+        }
+      : {}),
   };
 }
 
@@ -962,7 +1036,7 @@ export function asInvestorListDraft(value: unknown): InvestorListDraft {
   return { ...asInvestorList(value), client_email: asClientEmail(raw.client_email) };
 }
 
-/** What the client sees of the draft: never the email. */
+/** What the client sees of the draft: never the email. The run id stays, so a sent list traces to its run. */
 export function investorListForClient(draft: InvestorListPayload): InvestorListPayload {
   return {
     rows: draft.rows,
@@ -972,6 +1046,13 @@ export function investorListForClient(draft: InvestorListPayload): InvestorListP
     verification: draft.verification,
     client_flags: draft.client_flags,
     removed_flags: draft.removed_flags,
+    ...(draft.tier_scheme === "four"
+      ? {
+          tier_scheme: "four" as const,
+          ...(draft.run_id ? { run_id: draft.run_id } : {}),
+          ...(draft.rules_version ? { rules_version: draft.rules_version } : {}),
+        }
+      : {}),
   };
 }
 
@@ -1120,7 +1201,7 @@ function count(value: unknown) {
   return Number.isFinite(n) && n > 0 ? n : 0;
 }
 
-function asInvestorListSummary(value: unknown): InvestorListSummary | null {
+function asInvestorListSummary(value: unknown, scheme: TierScheme): InvestorListSummary | null {
   if (!value || typeof value !== "object") return null;
   const raw = value as Record<string, unknown>;
   if (!Array.isArray(raw.tiers)) return null;
@@ -1130,7 +1211,7 @@ function asInvestorListSummary(value: unknown): InvestorListSummary | null {
         Boolean(item) && typeof item === "object",
     )
     .map((item) => ({
-      tier: asTier(item.tier),
+      tier: asTier(item.tier, scheme),
       funds: count(item.funds),
       contacts: count(item.contacts),
       by_type: (Array.isArray(item.by_type) ? item.by_type : [])
@@ -1153,10 +1234,19 @@ function asInvestorListSummary(value: unknown): InvestorListSummary | null {
     : null;
 }
 
-export function emptyEmailCopy(): EmailCopyPayload {
-  const sequence = () =>
-    EMAIL_SEQUENCE_LABELS.map(() => ({ subject: "", body: "" }));
-  return { tiers: { "1": sequence(), "2": sequence(), "3": sequence() } };
+function emptySequence(): CopyEmail[] {
+  return EMAIL_SEQUENCE_LABELS.map(() => ({ subject: "", body: "" }));
+}
+
+export function emptyEmailCopy(scheme: TierScheme = "three"): EmailCopyPayload {
+  const tiers: EmailCopyPayload["tiers"] = {};
+  for (const { tier } of fitTiersFor(scheme)) tiers[`${tier}`] = emptySequence();
+  return { tiers, ...schemeMarker(scheme) };
+}
+
+/** One tier's three emails; empty ones when the copy has none for it. */
+export function tierEmails(copy: EmailCopyPayload, tier: FitTier): CopyEmail[] {
+  return copy.tiers[`${tier}`] ?? emptySequence();
 }
 
 export function asEmailCopy(value: unknown): EmailCopyPayload {
@@ -1167,8 +1257,9 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
   const tiers = (raw.tiers && typeof raw.tiers === "object"
     ? raw.tiers
     : {}) as Record<string, unknown>;
-  const result = emptyEmailCopy();
-  for (const { tier } of FIT_TIERS) {
+  const scheme = asTierScheme(raw.tier_scheme);
+  const result = emptyEmailCopy(scheme);
+  for (const { tier } of fitTiersFor(scheme)) {
     const list = Array.isArray(tiers[String(tier)]) ? (tiers[String(tier)] as unknown[]) : [];
     result.tiers[`${tier}`] = EMAIL_SEQUENCE_LABELS.map((_, index) => {
       const item = (list[index] && typeof list[index] === "object"
@@ -1191,8 +1282,8 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
 /** Problems that stop the email copy from being pushed. */
 export function emailCopyProblems(copy: EmailCopyPayload) {
   const problems: string[] = [];
-  for (const { tier, label } of FIT_TIERS) {
-    const emails = copy.tiers[`${tier}`];
+  for (const { tier, label } of fitTiersFor(copy.tier_scheme)) {
+    const emails = tierEmails(copy, tier);
     if (!emails[0]?.subject.trim()) {
       problems.push(`${label}: the first email needs a subject.`);
     }
@@ -1251,8 +1342,8 @@ export const NOTE_MAX = 4000;
 
 export const INVESTOR_FIELD_MAX = 4000;
 
-export function tierCounts(rows: InvestorRow[]) {
-  return FIT_TIERS.map(({ tier }) => ({
+export function tierCounts(rows: InvestorRow[], scheme?: TierScheme | null) {
+  return fitTiersFor(scheme).map(({ tier }) => ({
     tier,
     count: rows.filter((row) => row.tier === tier && !row.hidden_duplicate).length,
   }));

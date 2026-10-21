@@ -46,7 +46,9 @@ export function SetupWorkspace({
   const materialsSubmitted = row("materials")?.status === "submitted";
   const feedbackRow = row("deck_review");
   const hasAnalysis = Boolean(asFeedback(feedbackRow?.draft).analysis);
-  const counts = tierCounts(asInvestorList(row("investor_list")?.published).rows);
+  const investors = asInvestorList(row("investor_list")?.published);
+  const listScheme = investors.tier_scheme ?? "three";
+  const counts = tierCounts(investors.rows, listScheme);
   const ready = readyForInvestorList(source);
 
   return (
@@ -128,6 +130,7 @@ export function SetupWorkspace({
         item={item("email_copy")}
         row={row("email_copy")}
         tierCounts={counts}
+        listScheme={listScheme}
         claudeReady={claudeReady}
       />
     </section>
