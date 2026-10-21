@@ -119,6 +119,10 @@ export function FourTierControls({
           ·{" "}
           <Link href={`/admin/clients/${clientId}/match/compare`} className="text-secondary underline hover:text-heading">
             Compare with the current engine
+          </Link>{" "}
+          ·{" "}
+          <Link href={`/admin/clients/${clientId}/match/capacity`} className="text-secondary underline hover:text-heading">
+            Campaign capacity
           </Link>
         </p>
       </section>

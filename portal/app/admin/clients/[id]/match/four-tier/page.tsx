@@ -72,6 +72,10 @@ export default async function FourTierPreviewPage({
         ·{" "}
         <Link href={`/admin/clients/${client.id}/match/compare`} className="text-secondary underline hover:text-heading">
           Compare with the current engine
+        </Link>{" "}
+        ·{" "}
+        <Link href={`/admin/clients/${client.id}/match/capacity`} className="text-secondary underline hover:text-heading">
+          Campaign capacity
         </Link>
       </p>
       {runs.value.since ? (
