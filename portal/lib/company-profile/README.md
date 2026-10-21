@@ -83,5 +83,5 @@ const m = matchingProfile(loaded.value.profile, loaded.value.index);
 Do not assume:
 - that a `needs_confirmation` classification is true;
 - that a legacy profile has evidence;
-- that sector relationships are approved (they are not in Phase 1);
+- that every sector relationship is approved: use approved ones only (see `lib/match/tiers`);
 - that the Korea mapping is confirmed.

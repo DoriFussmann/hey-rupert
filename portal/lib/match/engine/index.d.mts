@@ -210,6 +210,20 @@ type Engine = {
     opts?: RunOptions,
   ): Record<Tier, number>;
   rulesText(tier: Tier, level: Level, profile: MatchProfile): string[];
+  /** The firm's contacts, best first (shared with the four-tier engine). */
+  rankContacts(firm: Firm, contacts: Contact[], profile: MatchProfile): RankedContact[];
+  /** Primary and backup contact from ranked contacts. */
+  pickSequence(ranked: RankedContact[]): RankedContact[];
+  /** Data confidence and red flags. */
+  assess(firm: Firm, contacts: Contact[], sequence: RankedContact[], nameDuplicate: boolean): MatchResult["A"];
+  /** Applies a website check to a result: flags and pros. */
+  applySite(result: { site: SiteResult | { st: "unscanned" }; A: { flags: Flag[] }; pros: string[] }, profile: MatchProfile): void;
+  /** A contact near the company (same city, US region, or country). */
+  isNear(contact: Contact, profile: MatchProfile): boolean;
+  /** The exclusion terms the engine compares, from the profile's exclusion text. */
+  parseExclusions(text: string): string[];
+  /** A website's bare domain. */
+  domainOf(website: string): string;
   roleOf(title: string): Role;
   defaultTypes(stage: string): string[];
   bucketsFor(country: string): string[];

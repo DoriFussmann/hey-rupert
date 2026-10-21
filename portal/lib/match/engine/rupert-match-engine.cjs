@@ -529,6 +529,8 @@ const RME = (() => {
     return run(db, q, opts).counts;
   }
 
-  return { normalize, run, preview, rulesText, SITE_LABEL, roleOf, ROLE_LABEL, VC_LADDER, PE_STAGES, INDUSTRIES, VERTICALS, V2I, US_REGIONS, COUNTRIES, STATE_REGION, LEVELS, TUNE, defaultTypes, bucketsFor };
+  return { normalize, run, preview, rulesText, SITE_LABEL, roleOf, ROLE_LABEL, VC_LADDER, PE_STAGES, INDUSTRIES, VERTICALS, V2I, US_REGIONS, COUNTRIES, STATE_REGION, LEVELS, TUNE, defaultTypes, bucketsFor,
+    // Shared with the four-tier engine (lib/match/tiers), unchanged.
+    rankContacts, pickSequence, assess, applySite, isNear, parseExclusions, domainOf };
 })();
 if (typeof module !== 'undefined') module.exports = RME;

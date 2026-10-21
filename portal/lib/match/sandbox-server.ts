@@ -192,6 +192,9 @@ export async function resetSandbox(supabase: ServiceClient): Promise<Result<{ cl
   ]);
   const failed = deletes.find((result) => result.error);
   if (failed?.error) return { ok: false, error: sandboxError(failed.error.message, failed.error.code) };
+  // Saved match runs are permanent; this marks where the sandbox starts again.
+  // Best effort: the reset itself doesn't depend on it.
+  await supabase.from("match_sandbox_resets").insert({ client_id: clientId });
 
   const loaded = await loadProfileState(supabase, clientId);
   if (loaded.ok && loaded.value && buildProfile(loaded.value.answers, loaded.value.settings).ready) {
