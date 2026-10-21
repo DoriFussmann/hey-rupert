@@ -7,9 +7,11 @@ import {
   createFundUpload,
   discardFundVersion,
   runWebsiteBatchNow,
+  stageContacts,
   stageFundUpload,
   uploadFundChunk,
 } from "@/app/admin/match-actions";
+import { IMPORT_MAX_BYTES } from "@/lib/match/contact-import";
 import { formatDateAtTime } from "@/lib/format";
 import {
   DAILY_SITE_BATCH,
@@ -156,10 +158,15 @@ export function FundDatabaseManager({
   const history = versions.filter((version) => version.status !== "staged");
   const liveFirms = live?.firms ?? 0;
 
+  /** A .csv adds contacts to funds already in the database; an .xlsx is a new version of the database. */
   async function upload(file: File) {
     setMessage(null);
+    if (/\.(csv|tsv|txt)$/i.test(file.name)) {
+      await readContacts(file);
+      return;
+    }
     if (!/\.xlsx$/i.test(file.name)) {
-      setMessage({ kind: "error", text: "Upload the workbook as an .xlsx file." });
+      setMessage({ kind: "error", text: "Drop the provider workbook (.xlsx) or a contacts file (.csv)." });
       return;
     }
     if (file.size > FUND_DB_MAX_BYTES) {
@@ -204,6 +211,31 @@ export function FundDatabaseManager({
     }
   }
 
+  async function readContacts(file: File) {
+    if (!live) {
+      setMessage({ kind: "error", text: "Upload the workbook first: contacts are added to funds already in the database." });
+      return;
+    }
+    if (file.size > IMPORT_MAX_BYTES) {
+      setMessage({ kind: "error", text: "The contacts file must be under 3 MB. Split it into smaller files." });
+      return;
+    }
+    setBusy("Reading the contacts file…");
+    try {
+      const result = await stageContacts(file.name, await file.text());
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      setMessage({ kind: "ok", text: "Read. Check what it adds below, then apply." });
+      router.refresh();
+    } catch (err) {
+      setMessage({ kind: "error", text: errorText(err, "The contacts file could not be read.") });
+    } finally {
+      setBusy(null);
+    }
+  }
+
   async function act(label: string, run: () => Promise<{ ok: true } | { ok: false; error: string }>, done: string) {
     setBusy(label);
     setMessage(null);
@@ -242,25 +274,6 @@ export function FundDatabaseManager({
 
   return (
     <>
-      <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
-        <p className="text-label uppercase tracking-label text-muted">Live database</p>
-        {live ? (
-          <>
-            <p className="mt-xs text-h4 text-heading">
-              {n(live.firms)} funds · {n(live.contacts)} contacts
-            </p>
-            <p className="text-body-sm text-muted">
-              {live.fileName}
-              {live.appliedAt ? `, live since ${formatDateAtTime(live.appliedAt)}` : ""}
-            </p>
-          </>
-        ) : (
-          <p className="mt-xs text-body-sm text-secondary">
-            None yet. Upload the workbook (Funds_Merged_Criteria.xlsx) to start matching.
-          </p>
-        )}
-      </section>
-
       {message ? (
         <div
           role={message.kind === "error" ? "alert" : "status"}
@@ -299,16 +312,15 @@ export function FundDatabaseManager({
       ) : null}
 
       <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
-        <h2 className="text-h4 text-heading">{live ? "Upload a new version" : "Upload the database"}</h2>
+        <h2 className="text-h4 text-heading">Upload</h2>
         <p className="mt-xs text-body-sm text-muted">
-          The workbook needs the sheets Firms and All Contacts (Offices is optional) with the usual
-          column names. If the provider changed the format, the upload is refused with the exact
-          columns that are missing, and the live database stays as it is.
+          The provider&apos;s workbook (.xlsx) becomes a new version once you apply it. A contacts file (.csv) adds people to funds
+          already in the database. Either way you see what changes first.
         </p>
         <div
           role="button"
           tabIndex={0}
-          aria-label="Upload the Fund Database workbook: drop it here or press Enter to browse"
+          aria-label="Upload the provider workbook or a contacts file: drop it here or press Enter to browse"
           aria-disabled={Boolean(busy)}
           onClick={() => !busy && inputRef.current?.click()}
           onKeyDown={(event) => {
@@ -332,13 +344,13 @@ export function FundDatabaseManager({
             dragging ? "border-primary bg-primary-tint" : "border-border bg-background hover:border-primary/50"
           } ${busy ? "pointer-events-none opacity-50" : ""}`}
         >
-          <p className="text-body-sm text-heading">Drop the .xlsx here, or browse</p>
-          <p className="mt-xs text-body-sm text-muted">Up to 50 MB</p>
+          <p className="text-body-sm text-heading">Drop the workbook (.xlsx) or a contacts file (.csv) here, or browse</p>
+          <p className="mt-xs text-body-sm text-muted">Workbook up to 50 MB · contacts file up to 3 MB</p>
         </div>
         <input
           ref={inputRef}
           type="file"
-          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+          accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,.csv,text/csv,.tsv,.txt"
           className="hidden"
           onChange={(event) => {
             const file = event.target.files?.[0];
@@ -348,10 +360,15 @@ export function FundDatabaseManager({
         />
       </section>
 
-      <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
-        <div className="flex flex-wrap items-start justify-between gap-md">
+      <details className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
+        <summary className="cursor-pointer text-h4 text-heading">
+          Website checks{" "}
+          <span className="text-body-sm font-normal text-muted">
+            {n(sites.checked)} of {n(liveFirms)} funds checked · {n(sites.recent)} in the last 30 days
+          </span>
+        </summary>
+        <div className="mt-sm flex flex-wrap items-start justify-between gap-md">
           <div>
-            <h2 className="text-h4 text-heading">Website checks</h2>
             <p className="mt-xs max-w-prose text-body-sm text-muted">
               Every day the {n(DAILY_SITE_BATCH)} fund websites checked longest ago are re-checked, so the whole
               database refreshes about once a month. Dead, parked and not-investing funds drop out
@@ -367,19 +384,18 @@ export function FundDatabaseManager({
             Check the next {n(DAILY_SITE_BATCH)} now
           </button>
         </div>
-        <p className="mt-md text-body-sm text-secondary">
-          {n(sites.checked)} of {n(liveFirms)} funds checked · {n(sites.recent)} in the last 30 days
-        </p>
         {sites.byStatus.length > 0 ? (
-          <p className="mt-xs text-body-sm text-muted">
+          <p className="mt-sm text-body-sm text-muted">
             {sites.byStatus.map((item) => `${item.label} ${n(item.count)}`).join(" · ")}
           </p>
         ) : null}
-      </section>
+      </details>
 
       {history.length > 0 ? (
-        <section className="overflow-x-auto rounded-card border border-border bg-surface">
-          <h2 className="border-b border-border px-lg py-md text-h4 text-heading">Versions</h2>
+        <details className="mb-lg overflow-x-auto rounded-card border border-border bg-surface">
+          <summary className="cursor-pointer px-lg py-md text-h4 text-heading">
+            Versions <span className="text-body-sm font-normal text-muted">{n(history.length)}</span>
+          </summary>
           <table className="w-full min-w-[640px] text-left text-body-sm">
             <thead>
               <tr className="border-b border-border text-label uppercase tracking-label text-muted">
@@ -434,7 +450,7 @@ export function FundDatabaseManager({
               ))}
             </tbody>
           </table>
-        </section>
+        </details>
       ) : null}
     </>
   );

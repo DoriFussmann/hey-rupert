@@ -6,17 +6,16 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { loadLiveDb } from "@/lib/match/db-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { proposeRelationships, proposeValueMappings } from "@/lib/taxonomy/ai-server";
+import { isClaudeConfigured } from "@/lib/anthropic";
 import {
   DIMENSIONS,
   FIELD_KEYS,
   RELATIONS,
-  firmLookupView,
-  rawKey,
   type Dimension,
   type FieldKey,
-  type FirmLookupView,
   type Relation,
 } from "@/lib/taxonomy/core";
+import { lookupFirmsIn, type LookupFirm } from "@/lib/taxonomy/lookup";
 import {
   approveAlias,
   createEdges,
@@ -65,16 +64,43 @@ function done<T extends object>(value: T): Result<T> {
   return { ok: true, ...value };
 }
 
-/** Maps every firm of the live database and stores the coverage report. */
-export async function recomputeCoverage(): Promise<Result<{ registered: number; revision: number }>> {
+/** AI suggestions in one Classify run stop here, leaving time to reply. */
+const CLASSIFY_BUDGET_MS = 200_000;
+
+/**
+ * Classify new data: finds every provider value the taxonomy hasn't seen
+ * (and recounts coverage), then asks the AI to suggest a category for every
+ * unmapped value, field by field. Suggestions never apply on their own: each
+ * waits under Value mappings for an admin to accept or reject it.
+ */
+export async function classifyNewData(): Promise<
+  Result<{ registered: number; suggested: number; remaining: number; aiReady: boolean }>
+> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   try {
     const run = await runCoverage(access.supabase, access.email);
     if (!run.ok) return run;
-    return done({ registered: run.value.registered, revision: run.value.revision });
+    if (!isClaudeConfigured()) {
+      return done({ registered: run.value.registered, suggested: 0, remaining: 0, aiReady: false });
+    }
+    const deadline = Date.now() + CLASSIFY_BUDGET_MS;
+    let suggested = 0;
+    let remaining = 0;
+    for (const field of FIELD_KEYS) {
+      let left = 1;
+      while (left > 0 && Date.now() < deadline) {
+        const proposed = await proposeValueMappings(access.supabase, field, access.email);
+        if (!proposed.ok) return proposed;
+        suggested += proposed.value.proposed;
+        left = proposed.value.remaining;
+        if (proposed.value.proposed === 0) break;
+      }
+      remaining += left;
+    }
+    return done({ registered: run.value.registered, suggested, remaining, aiReady: true });
   } catch (err) {
-    return { ok: false, error: errorText(err, "Coverage could not be computed.") };
+    return { ok: false, error: errorText(err, "Classifying the new data failed.") };
   }
 }
 
@@ -235,25 +261,26 @@ export async function editCategory(input: {
   return saved.ok ? done({}) : saved;
 }
 
-const LOOKUP_MAX = 20;
-
-/** Firms of the live database by exact FirmID or by name. */
-export async function lookupFirms(query: string): Promise<Result<{ firms: FirmLookupView[]; more: boolean }>> {
+/**
+ * Firm lookup: by name or FirmID, and by classified sector, geography and
+ * stage (a category includes everything inside it).
+ */
+export async function lookupFirms(input: {
+  query: string;
+  sector: string | null;
+  geography: string | null;
+  stage: string | null;
+}): Promise<Result<{ firms: LookupFirm[]; more: boolean }>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
-  const text = asText(query, 120).trim();
-  if (text.length < 2) return { ok: false, error: "Type at least 2 characters." };
+  const query = asText(input?.query, 120).trim();
+  const pick = (value: unknown) => (typeof value === "string" && value.trim() ? value.trim().slice(0, 200) : null);
+  const filters = { query, sector: pick(input?.sector), geography: pick(input?.geography), stage: pick(input?.stage) };
+  if (query.length < 2 && !filters.sector && !filters.geography && !filters.stage) {
+    return { ok: false, error: "Type at least 2 characters, or pick a filter." };
+  }
   const [live, taxonomy] = await Promise.all([loadLiveDb(access.supabase), loadTaxonomy(access.supabase)]);
   if (!live.ok) return { ok: false, error: live.error };
   if (!taxonomy.ok) return taxonomy;
-  const key = rawKey(text);
-  const firms = live.value.db.firms;
-  const exact = firms.filter((firm) => firm.id === text);
-  const byName = firms.filter((firm) => firm.id !== text && rawKey(firm.name).includes(key));
-  const found = [...exact, ...byName];
-  return {
-    ok: true,
-    firms: found.slice(0, LOOKUP_MAX).map((firm) => firmLookupView(firm, taxonomy.value)),
-    more: found.length > LOOKUP_MAX,
-  };
+  return { ok: true, ...lookupFirmsIn(live.value.db.firms, taxonomy.value, filters) };
 }

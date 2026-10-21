@@ -43,7 +43,7 @@ Seed: the 103 relationships come from the current match engine (`V_ADJ` → imme
 
 - **Upload preview**: a staged workbook lists values the taxonomy has not seen.
 - **Apply** (workbook or CSV): runs a coverage run for the new live version.
-- **Coverage run** (`runCoverage`, also "Recompute coverage"): registers unseen values
+- **Coverage run** (`runCoverage`, run by "Classify new data", which then asks the AI for a suggestion on every unmapped value): registers unseen values
   as `unmapped` (existing rows are never touched), maps every firm, stores the report.
 - **Generalists**: a firm listing "Diversified" or 15+ industries is flagged as a
   generalist; "Diversified" is not a sector and has no relationships.
