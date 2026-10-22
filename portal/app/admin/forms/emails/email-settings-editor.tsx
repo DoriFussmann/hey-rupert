@@ -498,7 +498,7 @@ export function EmailSettingsEditor({ settings }: { settings: EmailSettings }) {
         saved={settings.signature}
       />
       {GROUPS.map(({ group, title, description }) => (
-        <section key={group}>
+        <section key={group} id={`emails-${group}`} className="scroll-mt-lg">
           <h2 className="text-h3">{title}</h2>
           <p className="mt-xs text-body-sm text-muted">{description}</p>
           <div className="mt-md space-y-sm">
