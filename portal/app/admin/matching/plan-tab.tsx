@@ -4,7 +4,7 @@ import { Alert, Section } from "@/app/admin/clients/[id]/match/four-tier/run-vie
 import { PlanBuilder } from "@/app/admin/matching/plan-builder";
 import { SOURCE_LABEL, poolsOf, sizesOf } from "@/lib/match/capacity/allocate";
 import { CAPACITY_MODEL_VERSION } from "@/lib/match/capacity/schedule";
-import { planForRun, rebuildsExactly, type SavedPlan } from "@/lib/match/capacity/server";
+import { latestCampaignPlan, planForRun, rebuildsExactly, removalsFor, type SavedPlan } from "@/lib/match/capacity/server";
 import { matchPath } from "@/lib/match/shared";
 import type { StoredResult } from "@/lib/match/tiers/stored";
 import type { RunHeader } from "@/lib/match/tiers/server";
@@ -112,6 +112,9 @@ export function PlanTab({
 }) {
   const runId = run?.header.id ?? null;
   const confirmed = runId ? planForRun(plans, runId) : null;
+  // A new run starts from the newest plan: same months, setup and split, to confirm again.
+  const carried = confirmed ? null : latestCampaignPlan(plans);
+  const start = confirmed ?? carried;
   return (
     <>
       {plansError ? <Alert tone="error">{plansError}</Alert> : null}
@@ -124,20 +127,23 @@ export function PlanTab({
           {confirmed ? (
             <ConfirmedPlan clientId={clientId} plan={confirmed} rebuilds={rebuildsExactly(confirmed, run.rows, CAPACITY_MODEL_VERSION)} />
           ) : (
-            <Alert tone="warning">No plan confirmed for the newest run yet. Push to client stays off until one is.</Alert>
+            <Alert tone="warning">
+              {carried
+                ? `The match was re-run, so this run has no confirmed plan yet. Below is plan version ${carried.version} from the previous run (same months and split): check it and confirm. Push to client stays off until you do.`
+                : "No plan confirmed for the newest run yet. Push to client stays off until one is."}
+            </Alert>
           )}
           <h2 className="mb-sm text-h4 text-heading">{confirmed ? "Change the plan" : "Build the plan"}</h2>
           <p className="mb-md text-body-sm text-muted">
             From the run of {when(run.header.ranAt)}. Only funds in the four tiers are used, and generalists when you approve them; rejected funds never are.
           </p>
           <PlanBuilder
-            key={confirmed?.id ?? "new"}
+            key={`${run.header.id}:${start?.id ?? "new"}`}
             clientId={clientId}
             runId={run.header.id}
-            sizes={sizesOf(poolsOf(run.rows), confirmed?.allocation?.removed ?? [])}
-            initial={
-              confirmed?.allocation ? { inputs: confirmed.inputs, counts: confirmed.allocation.counts, useGeneralists: confirmed.generalistsApproved } : null
-            }
+            sizes={sizesOf(poolsOf(run.rows), removalsFor(plans, run.header.id, run.rows))}
+            initial={start?.allocation ? { inputs: start.inputs, counts: start.allocation.counts, useGeneralists: start.generalistsApproved } : null}
+            initialLabel={confirmed ? "Back to the confirmed split" : "Back to the previous plan's split"}
             nextVersion={(plans[0]?.version ?? 0) + 1}
           />
         </>

@@ -196,7 +196,7 @@ const nearMissCount = (rows: StoredResult[]) => rows.filter((r) => r.reasonCodes
 const base = (clientId: string) => `/admin/clients/${clientId}/match/four-tier`;
 
 /** The run's facts, its downloads, its warnings and the counts per tier. */
-export function RunSummary({ clientId, header, rows, complete, footnote }: RunProps & { footnote?: ReactNode }) {
+export function RunSummary({ clientId, header, rows, complete, footnote, title = "Counts" }: RunProps & { footnote?: ReactNode; title?: string }) {
   const counts = storedCounts(rows);
   const facts = runFacts(header, complete);
   const warnings = Array.isArray(header.profileInputs.warnings) ? (header.profileInputs.warnings as string[]) : [];
@@ -213,7 +213,7 @@ export function RunSummary({ clientId, header, rows, complete, footnote }: RunPr
           </ul>
         </Alert>
       ) : null}
-      <Section title="Counts">
+      <Section title={title}>
         <div className="grid gap-sm text-body-sm sm:grid-cols-2 lg:grid-cols-4">
           {TIER_KEYS.map((key) => (
             <div key={key} className="rounded-md border border-border px-sm py-xs">
@@ -281,12 +281,15 @@ export function CampaignColumns({
   planned,
   review,
   campaign,
+  heading,
 }: {
   rows: StoredResult[];
   /** The plan's run row keys. */
   planned: Set<string>;
   review: ReviewContext;
   campaign: CampaignContext;
+  /** Shown above the columns: which plan this is. */
+  heading?: ReactNode;
 }) {
   const generalists = rows.filter((r) => r.status === "generalist" && planned.has(r.firmId));
   const columns = [
@@ -302,27 +305,30 @@ export function CampaignColumns({
       : []),
   ];
   return (
-    <div className={`mb-lg grid gap-md lg:grid-cols-2 ${columns.length > 4 ? "2xl:grid-cols-5" : "2xl:grid-cols-4"}`}>
-      {columns.map((column) => (
-        <section key={column.key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${column.label} funds in the campaign`}>
-          <h2 className="text-h4 text-heading">
-            {column.label} <span className="text-body-sm font-normal text-muted">{n(column.inPlan.length)} in the campaign</span>
-          </h2>
-          <p className="mt-xs text-body-sm text-muted">{column.description}</p>
-          <div className="mt-sm">
-            <FundList rows={column.inPlan} narrow campaign={campaign} />
-          </div>
-          {column.others.length > 0 ? (
-            <details className="mt-sm border-t border-border pt-sm">
-              <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in this campaign ({n(column.others.length)})</summary>
-              <div className="mt-xs">
-                <FundList rows={column.others} narrow review={review} />
-              </div>
-            </details>
-          ) : null}
-        </section>
-      ))}
-    </div>
+    <>
+      {heading ? <div className="mb-sm">{heading}</div> : null}
+      <div className={`mb-lg grid gap-md lg:grid-cols-2 ${columns.length > 4 ? "2xl:grid-cols-5" : "2xl:grid-cols-4"}`}>
+        {columns.map((column) => (
+          <section key={column.key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${column.label} funds in the campaign`}>
+            <h2 className="text-h4 text-heading">
+              {column.label} <span className="text-body-sm font-normal text-muted">{n(column.inPlan.length)} in the campaign</span>
+            </h2>
+            <p className="mt-xs text-body-sm text-muted">{column.description}</p>
+            <div className="mt-sm">
+              <FundList rows={column.inPlan} narrow campaign={campaign} />
+            </div>
+            {column.others.length > 0 ? (
+              <details className="mt-sm border-t border-border pt-sm">
+                <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in this campaign ({n(column.others.length)})</summary>
+                <div className="mt-xs">
+                  <FundList rows={column.others} narrow review={review} />
+                </div>
+              </details>
+            ) : null}
+          </section>
+        ))}
+      </div>
+    </>
   );
 }
 

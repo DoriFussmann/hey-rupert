@@ -138,6 +138,23 @@ export function planForRun(plans: SavedPlan[], runId: string): SavedPlan | null 
   return plans.find((plan) => plan.runId === runId && plan.allocation !== null) ?? null;
 }
 
+/** The newest campaign plan of any run: a new run's Plan tab starts from it. */
+export function latestCampaignPlan(plans: SavedPlan[]): SavedPlan | null {
+  return plans.find((plan) => plan.allocation !== null) ?? null;
+}
+
+/**
+ * Funds removed from a campaign stay removed: the plan for `runId` keeps its
+ * own removals, and a run's first plan takes the newest plan's removals that
+ * are in this run.
+ */
+export function removalsFor(plans: SavedPlan[], runId: string, rows: StoredResult[]): RemovedFirm[] {
+  const own = planForRun(plans, runId);
+  if (own) return own.allocation!.removed;
+  const inRun = new Set(rows.map((row) => row.firmId));
+  return (latestCampaignPlan(plans)?.allocation?.removed ?? []).filter((firm) => inRun.has(firm.firmId));
+}
+
 export async function loadPlanForRun(supabase: ServiceClient, clientId: string, runId: string): Promise<Result<SavedPlan | null>> {
   const plans = await listCapacityPlans(supabase, clientId);
   if (!plans.ok) return plans;
@@ -196,7 +213,8 @@ async function latestRunRows(supabase: ServiceClient, clientId: string, runId: s
 /**
  * Confirms a campaign plan for the client's newest run, as its next version.
  * The plan is rebuilt here from the saved run's rows, never taken from the
- * browser. Funds already removed from this run's plan stay removed.
+ * browser. Funds already removed from the campaign stay removed, also
+ * across a re-run.
  */
 export async function confirmPlan(
   supabase: ServiceClient,
@@ -209,9 +227,9 @@ export async function confirmPlan(
   if (!request.counts) return { ok: false, error: "Calculate the split before confirming." };
   const rows = await latestRunRows(supabase, clientId, runId);
   if (!rows.ok) return rows;
-  const previous = await loadPlanForRun(supabase, clientId, runId);
-  if (!previous.ok) return previous;
-  const removed = previous.value?.allocation?.removed ?? [];
+  const plans = await listCapacityPlans(supabase, clientId);
+  if (!plans.ok) return plans;
+  const removed = removalsFor(plans.value, runId, rows.value);
   let plan: CampaignPlan;
   try {
     plan = buildPlan(rows.value, { ...request, removed });

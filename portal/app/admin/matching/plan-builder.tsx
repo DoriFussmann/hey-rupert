@@ -64,14 +64,17 @@ export function PlanBuilder({
   runId,
   sizes,
   initial,
+  initialLabel,
   nextVersion,
 }: {
   clientId: string;
   runId: string;
   /** Eligible funds per tier, after any removed from this run's campaign. */
   sizes: Sizes;
-  /** The confirmed plan's settings, when this run has one. */
+  /** Where the builder starts: this run's confirmed plan, or the previous run's. */
   initial: { inputs: CapacityInputs; counts: Counts; useGeneralists: boolean } | null;
+  /** The button that puts the starting split back. */
+  initialLabel: string;
   nextVersion: number;
 }) {
   const router = useRouter();
@@ -313,7 +316,7 @@ export function PlanBuilder({
               </button>
               {initial ? (
                 <button type="button" className={secondaryButton} disabled={saving} onClick={() => setCountBoxes(toCountBoxes(initial.counts))}>
-                  Back to the confirmed split
+                  {initialLabel}
                 </button>
               ) : null}
             </div>

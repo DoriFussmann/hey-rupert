@@ -186,32 +186,41 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
         <NearMissSection clientId={client.id} header={run.header} rows={run.rows} />
       ) : (
         <>
-          <RunSummary
-            clientId={client.id}
-            header={run.header}
-            rows={run.rows}
-            complete={run.complete}
-            footnote={`Ran ${when(run.header.ranAt)} by ${run.header.ranBy ?? "unknown"}. Saved permanently: exports read it; Push to client sends its confirmed campaign plan.`}
-          />
-          {planned ? (
+          {plan && planned ? (
             <CampaignColumns
               rows={run.rows}
               planned={planned}
               review={{ clientId: client.id, reviews: reviewMap }}
               campaign={{ clientId: client.id, runId: run.header.id }}
+              heading={
+                <p className="text-body-sm text-secondary">
+                  <span className="text-heading">Campaign: {planned.size.toLocaleString("en-US")} funds</span> · plan version {plan.version},{" "}
+                  {plan.inputs.months} month{plan.inputs.months === 1 ? "" : "s"}. Each tier lists its campaign funds; the rest are under &quot;Not in this
+                  campaign&quot;.{" "}
+                  <Link href={matchPath(client.id, "plan")} className="text-primary underline hover:text-primary-hover">
+                    Change the plan
+                  </Link>
+                </p>
+              }
             />
           ) : (
-            <>
-              <Alert tone="warning">
-                No campaign plan for this run yet: every fund in the tiers is shown.{" "}
-                <Link href={matchPath(client.id, "plan")} className="underline">
-                  Build the plan
-                </Link>{" "}
-                to pick the campaign&apos;s funds.
-              </Alert>
-              <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} />
-            </>
+            <Alert tone="warning">
+              No campaign plan for this run yet: every fund in the tiers is shown.{" "}
+              <Link href={matchPath(client.id, "plan")} className="underline">
+                Build the plan
+              </Link>{" "}
+              to pick the campaign&apos;s funds.
+            </Alert>
           )}
+          <RunSummary
+            clientId={client.id}
+            header={run.header}
+            rows={run.rows}
+            complete={run.complete}
+            title={planned ? "Whole run" : "Counts"}
+            footnote={`Ran ${when(run.header.ranAt)} by ${run.header.ranBy ?? "unknown"}. Saved permanently: exports read it; Push to client sends its confirmed campaign plan.`}
+          />
+          {planned ? null : <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} />}
         </>
       )}
     </>

@@ -82,9 +82,19 @@ export function MatchControls({
             type="button"
             className={primaryButton}
             disabled={!canRun || Boolean(busy)}
-            onClick={() =>
-              void act("Running the match. Up to a minute; the run is saved permanently…", () => runMatchForClient(clientId), () => "Run saved.")
-            }
+            onClick={() => {
+              if (
+                planFunds !== null &&
+                !window.confirm(
+                  "Re-running makes a new run. The confirmed campaign plan belongs to the current run, so you'll confirm it again on the Plan tab (it opens prefilled with the same months and split). Continue?",
+                )
+              ) {
+                return;
+              }
+              void act("Running the match. Up to a minute; the run is saved permanently…", () => runMatchForClient(clientId), () =>
+                planFunds !== null ? "Run saved. Open the Plan tab and confirm the plan for this run." : "Run saved.",
+              );
+            }}
           >
             {runId ? "Re-run match" : "Run match"}
           </button>
