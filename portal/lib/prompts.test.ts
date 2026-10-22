@@ -6,7 +6,8 @@ import { fileURLToPath } from "node:url";
 import { PROMPTS, PROMPT_MAX, promptDefinition, promptSystem, promptTextProblems, resolvePrompts, type PromptRow } from "./prompts.ts";
 
 const portal = fileURLToPath(new URL("..", import.meta.url));
-const read = (path: string) => readFileSync(join(portal, path), "utf8");
+// Line endings normalised: Windows checkouts turn them into CRLF.
+const read = (path: string) => readFileSync(join(portal, path), "utf8").replace(/\r\n/g, "\n");
 
 const row = (slug: string, content: string | null, version: number | null): PromptRow => ({ slug, content, active_version: version });
 const slug = (key: Parameters<typeof promptDefinition>[0]) => promptDefinition(key).slug;
