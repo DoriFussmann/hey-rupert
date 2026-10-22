@@ -37,7 +37,7 @@ import {
 } from "@/lib/match/tiers/duplicates";
 import { verifyStateOf, type ContactStates } from "@/lib/match/tiers/export";
 import { tierRows, type ResultRow } from "@/lib/match/tiers/record";
-import { firmsByRowKey, fourTierClientList, listable, reachablePeople } from "@/lib/match/tiers/client-list";
+import { firmsByRowKey, fourTierClientList, pushable, reachablePeople } from "@/lib/match/tiers/client-list";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -595,6 +595,8 @@ export async function staleReasons(
   clientId: string,
   header: RunHeader,
   rows: StoredResult[],
+  /** The run row keys of a confirmed plan: only their reviews and hiding count. All tiered funds when absent. */
+  planned?: Set<string>,
 ): Promise<Result<string[]>> {
   const [live, state, versions, reviews, hidden] = await Promise.all([
     loadLiveDb(supabase),
@@ -629,7 +631,9 @@ export async function staleReasons(
   if (latestVersion !== header.profileVersion) {
     reasons.push("A newer company profile version was saved since this run.");
   }
-  const tiered = rows.filter((row) => row.status === "tiered" && !row.detail.representedBy);
+  const tiered = planned
+    ? rows.filter((row) => planned.has(row.firmId))
+    : rows.filter((row) => row.status === "tiered" && !row.detail.representedBy);
   const rejectedNow = new Set(reviews.rows.filter((row) => row.status === "no").map((row) => row.firm_id));
   const hiddenNow = new Set(hidden.rows.map((row) => row.firm_id));
   const baseId = (id: string) => id.replace(/#\d+$/, "");
@@ -645,14 +649,16 @@ export async function staleReasons(
 }
 
 /**
- * The founder's list from one saved four-tier run, with the verification
- * state of its contacts. It refuses an incomplete run, a run that isn't the
- * client's newest, and a run that no longer reflects the client's data.
+ * The founder's list from one saved four-tier run's confirmed campaign plan,
+ * with the verification state of its contacts. `planned` is the plan's run
+ * row keys. It refuses an incomplete run, a run that isn't the client's
+ * newest, and a run that no longer reflects the client's data.
  */
 export async function fourTierPushList(
   supabase: ServiceClient,
   clientId: string,
   runId: string,
+  planned: Set<string>,
 ): Promise<Result<{ list: InvestorListPayload; people: PeopleStates }>> {
   const loaded = await loadTierRun(supabase, clientId, runId);
   if (!loaded.ok) return loaded;
@@ -661,14 +667,15 @@ export async function fourTierPushList(
   const latest = await latestTierRun(supabase, clientId);
   if (!latest.ok) return latest;
   if (latest.value?.id !== header.id) return { ok: false, error: "A newer four-tier run exists for this client. Reload the page and push that one." };
-  const stale = await staleReasons(supabase, clientId, header, rows);
+  if (planned.size === 0) return { ok: false, error: "The campaign plan has no funds. Confirm a plan on the Plan tab." };
+  const stale = await staleReasons(supabase, clientId, header, rows, planned);
   if (!stale.ok) return stale;
   if (stale.value.length > 0) return { ok: false, error: `${stale.value.join(" ")} Run the match again, then push.` };
 
   const live = await loadLiveDb(supabase);
   if (!live.ok) return { ok: false, error: live.error };
   const firms = firmsByRowKey(live.value.db.firms);
-  const kept = rows.filter(listable);
+  const kept = rows.filter((row) => planned.has(row.firmId) && pushable(row));
   const listedFirms = kept.map((row) => firms.get(row.firmId)).filter((firm): firm is NonNullable<typeof firm> => Boolean(firm));
   const sites = await loadSites(supabase, listedFirms);
   if (!sites.ok) return sites;
@@ -677,7 +684,7 @@ export async function fourTierPushList(
     if ("check" in site && site.check) checkSizes[id] = String(site.check);
   }
   const stage = (header.profileInputs.stage as { label?: string } | undefined)?.label ?? "";
-  const list = fourTierClientList({ id: header.id, rulesVersion: header.rulesVersion, ranAt: header.ranAt }, rows, firms, stage, checkSizes);
+  const list = fourTierClientList({ id: header.id, rulesVersion: header.rulesVersion, ranAt: header.ranAt }, kept, firms, stage, checkSizes);
   if (!list.ok) return list;
 
   const fids = Array.from(new Set(kept.flatMap((row) => reachablePeople(row).map((person) => person.fid))));

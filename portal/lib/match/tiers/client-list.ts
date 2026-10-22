@@ -1,10 +1,12 @@
 // The investor list a four-tier run sends to the founder. Pure module.
 //
-// A list never runs the engine: it is built from one saved run's stored rows,
-// and records the run's id and rules version, so every list sent traces back
-// to the exact results and rules behind it. Only funds in the four tiers go
-// out. Generalists, unresolved and excluded funds, near misses, funds
-// rejected for the client and records shown through another record never do.
+// A list never runs the engine: it is built from the stored rows of one
+// saved run's confirmed campaign plan, and records the run's id and rules
+// version, so every list sent traces back to the exact results and rules
+// behind it. Funds in the four tiers go out, and generalists only when the
+// plan approved them (marked `broad`, never as a tier of their own). Unresolved
+// and excluded funds, near misses, funds rejected for the client and records
+// shown through another record never do.
 
 import type { Firm } from "../engine/index.mjs";
 import { firmTypeLabel, stageRange } from "../shared.ts";
@@ -18,9 +20,14 @@ export const FOUR_TIER_FIT: Record<TierKey, FitTier> = { core: 1, sphere: 2, tie
 
 export const CLIENT_LIST_MAX = 3000;
 
-/** Rows a list can include: in a tier, not rejected for the client, not shown through another record. */
+/** Rows in a tier, not rejected for the client, not shown through another record. */
 export function listable(row: StoredResult) {
   return row.status === "tiered" && TIER_KEYS.includes(row.tier as TierKey) && !row.detail.representedBy && !row.detail.rejected;
+}
+
+/** Rows a list can include: listable ones, and generalists (a plan includes them only when approved). */
+export function pushable(row: StoredResult) {
+  return listable(row) || (row.status === "generalist" && !row.detail.representedBy && !row.detail.rejected);
 }
 
 const emailKey = (email: string) => email.trim().toLowerCase();
@@ -96,8 +103,8 @@ export type ListRun = { id: string; rulesVersion: string; ranAt: string };
 export type ListResult = { ok: true; value: InvestorListPayload } | { ok: false; error: string };
 
 /**
- * The founder's list from a saved four-tier run: funds, tiers, websites and
- * contact counts, never people. `firms` is the Fund Database version the run
+ * The founder's list from the rows of a saved four-tier run (the push passes
+ * the plan's rows only): funds, tiers, websites and contact counts, never people. `firms` is the Fund Database version the run
  * used; `checkSizes` the stated check size per FirmID, when a website check found one.
  */
 export function fourTierClientList(
@@ -107,7 +114,7 @@ export function fourTierClientList(
   stageLabel: string,
   checkSizes: Record<string, string> = {},
 ): ListResult {
-  const kept = rows.filter(listable);
+  const kept = rows.filter(pushable);
   if (kept.length === 0) return { ok: false, error: "No funds in the four tiers to send." };
   if (kept.length > CLIENT_LIST_MAX) {
     return { ok: false, error: `${kept.length.toLocaleString("en-US")} funds is more than the investor list holds (${CLIENT_LIST_MAX.toLocaleString("en-US")}).` };
@@ -135,7 +142,9 @@ export function fourTierClientList(
       check_size: checkSize || undefined,
       stage_focus: stages || undefined,
       website: websiteHref(firm.web) || undefined,
-      tier: FOUR_TIER_FIT[row.tier as TierKey],
+      // Generalists use Tier 4's email copy; marked broad, they are counted apart from every tier.
+      tier: row.status === "generalist" ? FOUR_TIER_FIT.tier4 : FOUR_TIER_FIT[row.tier as TierKey],
+      broad: row.status === "generalist" ? true : undefined,
       why: "",
       reasons: reasons.length > 0 ? reasons : undefined,
       comments: "",
@@ -147,7 +156,7 @@ export function fourTierClientList(
     generated_at: new Date().toISOString(),
     tiers: TIER_KEYS.map((key) => {
       const tier = FOUR_TIER_FIT[key];
-      const inTier = listed.filter((item) => item.tier === tier);
+      const inTier = listed.filter((item) => item.tier === tier && !item.broad);
       const types = new Map<string, { funds: number; contacts: number }>();
       for (const item of inTier) {
         const label = item.fund_type || "Other";

@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { cardClass, n } from "@/app/admin/clients/[id]/match/ui";
 import { FundReview } from "@/app/admin/clients/[id]/match/four-tier/fund-review";
+import { RemoveFromCampaign } from "@/app/admin/matching/remove-from-campaign";
+import { SOURCE_LABEL } from "@/lib/match/capacity/allocate";
 import type { Review } from "@/lib/match/shared";
 import { distinctPeople } from "@/lib/match/tiers/client-list";
 import { reasonLabel, type StoredResult } from "@/lib/match/tiers/stored";
@@ -46,6 +48,9 @@ type Check = { result: string; detail: string };
 /** Reviews this client has now, and where to save new ones. Only on the Match page. */
 export type ReviewContext = { clientId: string; reviews: Record<string, Review> };
 
+/** The confirmed campaign a fund is in: it can be removed from it. */
+export type CampaignContext = { clientId: string; runId: string };
+
 const CHECK_ORDER: [string, string][] = [
   ["firmType", "Firm type"],
   ["financing", "Financing"],
@@ -55,7 +60,7 @@ const CHECK_ORDER: [string, string][] = [
 ];
 
 /** Everything the run recorded about one fund: each check, the relationship used, identity and contacts. */
-function FundDetails({ row, narrow, review }: { row: StoredResult; narrow: boolean; review?: ReviewContext }) {
+function FundDetails({ row, narrow, review, campaign }: { row: StoredResult; narrow: boolean; review?: ReviewContext; campaign?: CampaignContext }) {
   const checks = (row.detail.checks ?? {}) as Record<string, Check>;
   const people = distinctPeople((row.detail.people ?? []) as PersonRecord[]);
   const identity = row.detail.identity as IdentityDetail | undefined;
@@ -115,7 +120,9 @@ function FundDetails({ row, narrow, review }: { row: StoredResult; narrow: boole
           {people.length > 8 ? <li className="text-muted">and {people.length - 8} more in the export</li> : null}
         </ul>
       ) : null}
-      {review && row.status === "tiered" ? (
+      {campaign ? (
+        <RemoveFromCampaign clientId={campaign.clientId} runId={campaign.runId} firmId={row.firmId} firmName={row.firmName} />
+      ) : review && row.status === "tiered" ? (
         <FundReview
           clientId={review.clientId}
           firmId={baseId}
@@ -128,7 +135,17 @@ function FundDetails({ row, narrow, review }: { row: StoredResult; narrow: boole
   );
 }
 
-function FundList({ rows, narrow = false, review }: { rows: StoredResult[]; narrow?: boolean; review?: ReviewContext }) {
+function FundList({
+  rows,
+  narrow = false,
+  review,
+  campaign,
+}: {
+  rows: StoredResult[];
+  narrow?: boolean;
+  review?: ReviewContext;
+  campaign?: CampaignContext;
+}) {
   if (rows.length === 0) return <p className="text-body-sm text-muted">None.</p>;
   return (
     <>
@@ -153,7 +170,7 @@ function FundList({ rows, narrow = false, review }: { rows: StoredResult[]; narr
                     {row.score != null ? `Fit ${row.score}` : reasonLabel(row.reasonCodes[row.reasonCodes.length - 1] ?? "")}
                   </span>
                 </summary>
-                <FundDetails row={row} narrow={narrow} review={review} />
+                <FundDetails row={row} narrow={narrow} review={review} campaign={campaign} />
               </details>
             </li>
           );
@@ -254,11 +271,66 @@ export function TierColumns({ rows, review }: Pick<RunProps, "rows" | "review">)
   );
 }
 
-/** Generalists, unresolved and excluded funds, with the reasons. Admin only, never sent to the founder. */
+/**
+ * The confirmed campaign, tier by tier: the plan's funds (each can be removed
+ * from the campaign), then the tier's other funds, collapsed. Approved
+ * generalists get their own column, never a tier's.
+ */
+export function CampaignColumns({
+  rows,
+  planned,
+  review,
+  campaign,
+}: {
+  rows: StoredResult[];
+  /** The plan's run row keys. */
+  planned: Set<string>;
+  review: ReviewContext;
+  campaign: CampaignContext;
+}) {
+  const generalists = rows.filter((r) => r.status === "generalist" && planned.has(r.firmId));
+  const columns = [
+    ...TIER_KEYS.map((key) => ({
+      key,
+      label: TIER_INFO[key].label,
+      description: TIER_INFO[key].description,
+      inPlan: listed(rows, key).filter((r) => planned.has(r.firmId)),
+      others: listed(rows, key).filter((r) => !planned.has(r.firmId)),
+    })),
+    ...(generalists.length > 0
+      ? [{ key: "generalist", label: SOURCE_LABEL.generalist, description: "Broad investors, approved for this campaign. Never shown as a tier.", inPlan: generalists, others: [] }]
+      : []),
+  ];
+  return (
+    <div className={`mb-lg grid gap-md lg:grid-cols-2 ${columns.length > 4 ? "2xl:grid-cols-5" : "2xl:grid-cols-4"}`}>
+      {columns.map((column) => (
+        <section key={column.key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${column.label} funds in the campaign`}>
+          <h2 className="text-h4 text-heading">
+            {column.label} <span className="text-body-sm font-normal text-muted">{n(column.inPlan.length)} in the campaign</span>
+          </h2>
+          <p className="mt-xs text-body-sm text-muted">{column.description}</p>
+          <div className="mt-sm">
+            <FundList rows={column.inPlan} narrow campaign={campaign} />
+          </div>
+          {column.others.length > 0 ? (
+            <details className="mt-sm border-t border-border pt-sm">
+              <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in this campaign ({n(column.others.length)})</summary>
+              <div className="mt-xs">
+                <FundList rows={column.others} narrow review={review} />
+              </div>
+            </details>
+          ) : null}
+        </section>
+      ))}
+    </div>
+  );
+}
+
+/** Generalists, unresolved and excluded funds, with the reasons. Admin only; generalists reach the founder only when a campaign plan approves them. */
 export function OutsideSection({ rows }: Pick<RunProps, "rows">) {
   const counts = storedCounts(rows);
   return (
-    <Section title="Outside the tiers" meta="admin only, never sent to the founder">
+    <Section title="Outside the tiers" meta="admin only; generalists go out only when a campaign plan approves them">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-body-sm">
           <tbody>

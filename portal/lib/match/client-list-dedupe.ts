@@ -39,7 +39,7 @@ function summaryForClient(
   return {
     generated_at: previous?.generated_at || new Date().toISOString(),
     tiers: fitTiersFor(scheme).map(({ tier }) => {
-      const inTier = rows.filter((row) => row.tier === tier && !row.hidden_duplicate);
+      const inTier = rows.filter((row) => row.tier === tier && !row.hidden_duplicate && !row.broad);
       const types = new Map<string, { funds: number; contacts: number }>();
       for (const row of inTier) {
         const label = row.fund_type?.trim() || "Other";

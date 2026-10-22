@@ -8,11 +8,8 @@ import { loadLiveDb, matchTableError } from "@/lib/match/db-server";
 import { cleanSettings, loadProfileState, saveProfileState } from "@/lib/match/profile-server";
 import { REJECT_REASONS } from "@/lib/match/shared";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { checkAndStoreSites, isStale, loadSites } from "@/lib/match/sites-server";
-import { TIER_KEYS } from "@/lib/match/tiers/core";
 import {
   decideIdentity,
-  liveFourTier,
   proposeFofException,
   reviewFofException,
   runFourTier,
@@ -216,46 +213,5 @@ export async function saveFourTierSettings(clientId: string, settings: unknown):
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The settings were not saved.") };
-  }
-}
-
-/** Website checks inside a request stop here, leaving time to reply. */
-const SITE_BUDGET_MS = 150_000;
-
-/**
- * Re-checks the websites of each four-tier tier's top funds whose result is
- * old or missing, as Check websites does on the current engine. The next run
- * uses the new results.
- */
-export async function checkFourTierWebsites(
-  clientId: string,
-): Promise<Result<{ checked: number; pending: number; summary: Record<string, number> }>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  const id = asText(clientId, 64);
-  if (!CLIENT_ID.test(id)) return { ok: false, error: "Unknown client." };
-  try {
-    const live = await liveFourTier(access.supabase, id);
-    if (!live.ok) return live;
-    const { run, tiers } = live.value;
-    if (run.profile.siteN <= 0) return { ok: false, error: "The website check is off for this client. Turn it on under Quality filters & rules." };
-    const take = run.profile.siteN + 20;
-    const firms = TIER_KEYS.flatMap((tier) =>
-      tiers.outcomes
-        .filter((o) => o.status === "tiered" && o.tier === tier && !o.rejected && !o.representedBy)
-        .slice(0, take)
-        .map((o) => tiers.live.get(o)?.firm)
-        .filter((firm): firm is NonNullable<typeof firm> => Boolean(firm?.web)),
-    );
-    const stored = await loadSites(access.supabase, firms);
-    if (!stored.ok) return stored;
-    const due = firms.filter((firm) => isStale(stored.checkedAt[firm.id]));
-    if (due.length === 0) return { ok: true, checked: 0, pending: 0, summary: {} };
-    const result = await checkAndStoreSites(access.supabase, due, SITE_BUDGET_MS);
-    if (!result.ok) return result;
-    revalidateFourTier(id);
-    return { ok: true, checked: result.checked, pending: Math.max(0, due.length - result.checked), summary: result.summary };
-  } catch (err) {
-    return { ok: false, error: errorText(err, "The website check failed.") };
   }
 }

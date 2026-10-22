@@ -15,7 +15,9 @@ import {
 import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
 import { rankedContactId } from "@/lib/match/run-server";
 import { TIER_INFO, TIER_KEYS } from "@/lib/match/tiers/core";
-import { liveFourTier } from "@/lib/match/tiers/server";
+import { latestTierRun, liveFourTier } from "@/lib/match/tiers/server";
+import { rowKey } from "@/lib/match/tiers/record";
+import { loadPlanForRun, plannedIds } from "@/lib/match/capacity/server";
 import {
   CLAUDE_USD_PER_MTOK_IN,
   CLAUDE_USD_PER_MTOK_OUT,
@@ -109,22 +111,46 @@ type ScopeFund = { tier: string; firm: Firm; seq: RankedContact[]; ranked: Ranke
  */
 type ScopeSource = {
   tiers: { key: string; label: string }[];
+  /** Funds of the confirmed campaign plan, or null when there is none. */
+  planFunds: number | null;
   funds: ScopeFund[];
   checks: Map<string, CheckBrief>;
   corrections: Map<string, Correction>;
   decisions: Map<string, Decision>;
 };
 
-/** Runs the four-tier engine for the client (not saved) and lists what verification can check. */
+/** The run row keys of the confirmed plan for the client's newest run, or null when there is none. */
+async function planScope(supabase: ServiceClient, clientId: string): Promise<Result<Set<string> | null>> {
+  const latest = await latestTierRun(supabase, clientId);
+  if (!latest.ok) return latest;
+  if (!latest.value) return { ok: true, value: null };
+  const plan = await loadPlanForRun(supabase, clientId, latest.value.id);
+  if (!plan.ok) return plan;
+  return { ok: true, value: plan.value ? plannedIds(plan.value) : null };
+}
+
+/**
+ * Runs the four-tier engine for the client (not saved) and lists what
+ * verification can check: the confirmed campaign plan's funds (approved
+ * generalists with Tier 4), or every tiered fund when there is no plan.
+ */
 async function loadScope(supabase: ServiceClient, clientId: string): Promise<Result<ScopeSource>> {
-  const live = await liveFourTier(supabase, clientId);
+  const [live, planned] = await Promise.all([liveFourTier(supabase, clientId), planScope(supabase, clientId)]);
   if (!live.ok) return live;
+  if (!planned.ok) return planned;
   const { run, tiers } = live.value;
+  const plan = planned.value;
   const funds: ScopeFund[] = [];
   for (const outcome of tiers.outcomes) {
-    if (outcome.status !== "tiered" || outcome.rejected || outcome.representedBy || !outcome.tier) continue;
+    if (outcome.rejected || outcome.representedBy) continue;
+    let tier: string | null = outcome.status === "tiered" ? outcome.tier : null;
+    if (plan) {
+      if (!plan.has(rowKey(outcome.firmId, outcome.occurrence))) continue;
+      if (outcome.status === "generalist") tier = "tier4";
+    }
+    if (!tier) continue;
     const source = tiers.live.get(outcome);
-    if (source) funds.push({ tier: outcome.tier, firm: source.firm, seq: source.seq, ranked: source.ranked });
+    if (source) funds.push({ tier, firm: source.firm, seq: source.seq, ranked: source.ranked });
   }
   // A confirmed duplicate's contacts can sit under another FirmID: load every record's checks.
   const fids = Array.from(new Set(funds.flatMap((fund) => fund.ranked.map((contact) => contact.fid))));
@@ -134,6 +160,7 @@ async function loadScope(supabase: ServiceClient, clientId: string): Promise<Res
     ok: true,
     value: {
       tiers: TIER_KEYS.map((key) => ({ key, label: TIER_INFO[key].label })),
+      planFunds: plan ? plan.size : null,
       funds,
       checks: checks.value,
       corrections: run.corrections,
@@ -547,6 +574,7 @@ export async function loadVerifyOverview(
     ok: true,
     value: {
       tiers: run.value.tiers,
+      planFunds: run.value.planFunds,
       counts,
       flagged: Array.from(flagged.values()),
       estimate: await loadEstimate(supabase),

@@ -1,13 +1,12 @@
-// Allocating a campaign target across the four tiers of one saved four-tier
-// run. Pure module.
+// Splitting a campaign across the four tiers of one saved run. Pure module.
 //
-// Order (a pyramid, best fit first):
-//   1. Core, capped at CORE_CAP firms.
-//   2. Sphere, then Tier 3, then Tier 4: each is used in full before the next.
-//      No fixed ratio: how deep the plan goes depends on the target and the pool.
-//   3. Generalists, only for what the four tiers can't fill, and only when an
-//      admin approves using them. They stay labelled as generalists.
-// Within each source, firms keep the run's saved order (fit score first).
+// The suggested split: Core first, capped at CORE_CAP firms; what's left goes
+// 40% Sphere, 35% Tier 3, 25% Tier 4 (DEFAULT_SPLIT). A tier that has fewer
+// firms than its share passes the rest on to the next tiers that have room.
+// Generalists fill what the four tiers can't, only when an admin approves
+// them, and stay labelled as generalists. The admin can then change any number.
+// Within each source the plan takes the run's best-fit firms first (saved
+// order), skipping firms removed from the campaign.
 // Only eligible firms are used: in a tier (or a generalist), not rejected for
 // the client, not shown through another record, each FirmID once. Excluded,
 // unresolved and near-miss firms never enter a plan. No eligibility check is
@@ -57,74 +56,102 @@ export function poolsOf(rows: StoredResult[]): Record<PlanSource, PoolFirm[]> {
   return pools;
 }
 
-export type AllocationRow = { source: PlanSource; available: number; planned: number; remaining: number; note: string };
+/** How what's left after Core is shared out, in percent. */
+export const DEFAULT_SPLIT: Record<"sphere" | "tier3" | "tier4", number> = { sphere: 40, tier3: 35, tier4: 25 };
 
-export type Allocation = {
-  target: number;
-  rows: AllocationRow[];
-  /** Firms the four tiers supply toward the target. */
-  fromTiers: number;
-  /** Generalists the shortfall would need (whether or not approved). */
-  generalistsProposed: number;
-  generalistsApproved: boolean;
-  /** Firms planned: the four tiers, plus generalists when approved. */
+/** Firms wanted from each source. */
+export type Counts = Record<PlanSource, number>;
+
+export const ZERO_COUNTS: Counts = { core: 0, sphere: 0, tier3: 0, tier4: 0, generalist: 0 };
+
+/** A firm taken out of the campaign after the plan was confirmed. */
+export type RemovedFirm = { firmId: string; name: string; source: PlanSource; reason: string; by: string | null; at: string };
+
+const REST: ("sphere" | "tier3" | "tier4")[] = ["sphere", "tier3", "tier4"];
+
+/** Eligible firms per source. */
+export type Sizes = Record<PlanSource, number>;
+
+export function sizesOf(pools: Record<PlanSource, PoolFirm[]>, removed: RemovedFirm[] = []): Sizes {
+  const out = new Set(removed.map((firm) => firm.firmId));
+  return Object.fromEntries(SOURCES.map((source) => [source, pools[source].filter((firm) => !out.has(firm.firmId)).length])) as Sizes;
+}
+
+/**
+ * The suggested split of `total` firms across sources of the given sizes.
+ * Pure arithmetic: never more than a source has; generalists only when approved.
+ */
+export function suggestCounts(sizes: Sizes, total: number, useGeneralists: boolean): Counts {
+  const counts: Counts = { ...ZERO_COUNTS };
+  const wanted = Math.max(0, Math.floor(total));
+  counts.core = Math.min(CORE_CAP, sizes.core, wanted);
+  const rest = wanted - counts.core;
+  const sphere = Math.round((rest * DEFAULT_SPLIT.sphere) / 100);
+  const tier3 = Math.round((rest * DEFAULT_SPLIT.tier3) / 100);
+  const share = { sphere, tier3, tier4: rest - sphere - tier3 };
+  let overflow = 0;
+  for (const tier of REST) {
+    counts[tier] = Math.min(share[tier], sizes[tier]);
+    overflow += share[tier] - counts[tier];
+  }
+  for (const tier of REST) {
+    const add = Math.min(sizes[tier] - counts[tier], overflow);
+    counts[tier] += add;
+    overflow -= add;
+  }
+  if (useGeneralists) counts.generalist = Math.min(overflow, sizes.generalist);
+  return counts;
+}
+
+export type AllocationRow = {
+  source: PlanSource;
+  /** Eligible firms left in the source (removed ones not counted). */
+  available: number;
+  /** Firms the plan asks for. */
+  requested: number;
   planned: number;
-  /** Target − planned (0 when met). */
-  shortfall: number;
-  /** The most firms this run can supply: Core up to the cap, the other tiers in full, and every generalist. */
-  maxAchievable: number;
-  firms: PoolFirm[];
+  /** Requested − available, when the source can't supply it. */
+  short: number;
+  remaining: number;
 };
 
-export function allocate(pools: Record<PlanSource, PoolFirm[]>, target: number, useGeneralists: boolean): Allocation {
-  if (!Number.isInteger(target) || target < 0) throw new Error("The target must be a whole number, 0 or more.");
-  const planned: Record<PlanSource, PoolFirm[]> = { core: [], sphere: [], tier3: [], tier4: [], generalist: [] };
-  let left = target;
-  const take = (source: PlanSource, limit: number) => {
-    planned[source] = pools[source].slice(0, Math.max(0, Math.min(limit, left)));
-    left -= planned[source].length;
-  };
-  take("core", CORE_CAP);
-  take("sphere", Number.POSITIVE_INFINITY);
-  take("tier3", Number.POSITIVE_INFINITY);
-  take("tier4", Number.POSITIVE_INFINITY);
-  const fromTiers = target - left;
-  const generalistsProposed = Math.min(left, pools.generalist.length);
-  if (useGeneralists) take("generalist", Number.POSITIVE_INFINITY);
+export type Allocation = {
+  counts: Counts;
+  rows: AllocationRow[];
+  requested: number;
+  planned: number;
+  shortfall: number;
+  firms: PoolFirm[];
+  removed: RemovedFirm[];
+};
 
-  const note = (source: PlanSource): string => {
-    const available = pools[source].length;
-    const used = planned[source].length;
-    if (source === "core") {
-      if (available < Math.min(CORE_CAP, target)) return `Only ${available} eligible Core firm${available === 1 ? "" : "s"}: short of ${Math.min(CORE_CAP, target) - available} for the cap.`;
-      if (available > CORE_CAP && used === CORE_CAP) return `Capped at ${CORE_CAP}.`;
-      return "";
-    }
-    if (source === "generalist") {
-      if (generalistsProposed === 0) return fromTiers >= target ? "Not needed: the four tiers meet the target." : "None available.";
-      return useGeneralists ? `Used for a shortfall of ${generalistsProposed + left}.` : `${generalistsProposed} proposed for the shortfall; not approved.`;
-    }
-    return used === available && available > 0 && fromTiers < target ? "Used in full." : "";
-  };
-
-  const rows = SOURCES.map((source) => ({
-    source,
-    available: pools[source].length,
-    planned: planned[source].length,
-    remaining: pools[source].length - planned[source].length,
-    note: note(source),
-  }));
-  const total = SOURCES.reduce((sum, source) => sum + planned[source].length, 0);
+/** Takes each source's best `counts` firms, skipping removed ones. */
+export function allocateCounts(pools: Record<PlanSource, PoolFirm[]>, counts: Counts, removed: RemovedFirm[] = []): Allocation {
+  const out = new Set(removed.map((firm) => firm.firmId));
+  const rows: AllocationRow[] = [];
+  const firms: PoolFirm[] = [];
+  for (const source of SOURCES) {
+    const eligible = pools[source].filter((firm) => !out.has(firm.firmId));
+    const requested = Math.max(0, Math.floor(counts[source] ?? 0));
+    const taken = eligible.slice(0, requested);
+    firms.push(...taken);
+    rows.push({
+      source,
+      available: eligible.length,
+      requested,
+      planned: taken.length,
+      short: Math.max(0, requested - eligible.length),
+      remaining: eligible.length - taken.length,
+    });
+  }
+  const requested = rows.reduce((sum, row) => sum + row.requested, 0);
   return {
-    target,
+    counts: { ...counts },
     rows,
-    fromTiers,
-    generalistsProposed,
-    generalistsApproved: useGeneralists,
-    planned: total,
-    shortfall: Math.max(0, target - total),
-    maxAchievable:
-      Math.min(CORE_CAP, pools.core.length) + pools.sphere.length + pools.tier3.length + pools.tier4.length + pools.generalist.length,
-    firms: SOURCES.flatMap((source) => planned[source]),
+    requested,
+    planned: firms.length,
+    shortfall: rows.reduce((sum, row) => sum + row.short, 0),
+    firms,
+    removed,
   };
 }

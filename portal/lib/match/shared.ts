@@ -16,22 +16,24 @@ export const DAILY_SITE_BATCH = 250;
 
 /** The Matching page for a client; `tab` opens one of its tabs. */
 export function matchPath(clientId: string, tab?: MatchTab) {
-  return `/admin/matching?client=${encodeURIComponent(clientId)}${tab && tab !== "tiers" ? `&tab=${tab}` : ""}`;
+  return `/admin/matching?client=${encodeURIComponent(clientId)}${tab && tab !== "plan" ? `&tab=${tab}` : ""}`;
 }
 
-export const MATCH_TABS = ["tiers", "outside", "near", "capacity", "history"] as const;
+export const MATCH_TABS = ["plan", "tiers", "outside", "near", "history"] as const;
 export type MatchTab = (typeof MATCH_TABS)[number];
 
 export const MATCH_TAB_LABEL: Record<MatchTab, string> = {
+  plan: "Plan",
   tiers: "Tiers",
   outside: "Outside the tiers",
   near: "Near misses",
-  capacity: "Capacity",
   history: "History",
 };
 
+/** The tab asked for; the Plan tab when none (or an unknown one). "capacity" is the Plan tab's old name. */
 export function asMatchTab(value: unknown): MatchTab {
-  return (MATCH_TABS as readonly string[]).includes(String(value)) ? (value as MatchTab) : "tiers";
+  if (value === "capacity") return "plan";
+  return (MATCH_TABS as readonly string[]).includes(String(value)) ? (value as MatchTab) : "plan";
 }
 
 const VC_LADDER = [

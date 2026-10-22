@@ -37,6 +37,13 @@ export default async function VerifyEmailsPage({ params }: { params: { id: strin
           Fund Database for every client.
         </p>
       ) : null}
+      {overview ? (
+        <p className="mb-lg text-body-sm text-muted">
+          {overview.planFunds === null
+            ? "No campaign plan is confirmed for the newest run, so every fund in the four tiers is in scope. Confirm a plan on the Plan tab to check only its funds."
+            : `Checking the confirmed campaign plan: ${overview.planFunds.toLocaleString("en-US")} funds.`}
+        </p>
+      ) : null}
       <VerifyWorkspace clientId={client.id} initialOverview={overview} initialError={error} />
     </>
   );

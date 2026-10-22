@@ -812,7 +812,7 @@ test("exports read only the saved rows: listed funds, contacts with verification
 // ---------------------------------------------------------------------------
 // Sprint 3B-2: the founder's list from a saved four-tier run
 
-test("four-tier push list: the four tiers only, exactly as saved, traced to the run", () => {
+test("four-tier push list: the plan's funds only, exactly as saved, traced to the run", () => {
   const core = firm({ vert: ["Fintech"] });
   const sphere = firm({ vert: ["Insurtech"] });
   const tier3 = firm({ vert: ["Blockchain"] });
@@ -826,7 +826,9 @@ test("four-tier push list: the four tiers only, exactly as saved, traced to the 
   const rows = asStored(tierRows(result));
   const runInfo = { id: "11111111-2222-3333-4444-555555555555", rulesVersion: RULES_VERSION, ranAt: "2026-10-21T10:00:00Z" };
 
-  const built = fourTierClientList(runInfo, rows, firmsByRowKey(firms), "Seed", { [core.id]: "$1M–$3M" });
+  // The push passes the confirmed plan's rows; this plan has no generalists.
+  const planRows = rows.filter((r) => r.firmId !== generalist.id);
+  const built = fourTierClientList(runInfo, planRows, firmsByRowKey(firms), "Seed", { [core.id]: "$1M–$3M" });
   assert.ok(built.ok);
   const list = built.value;
   assert.deepEqual(list.rows.map((r) => [r.id, r.tier]), [[core.id, 1], [sphere.id, 2], [tier3.id, 3], [tier4.id, 4]]);
@@ -849,6 +851,16 @@ test("four-tier push list: the four tiers only, exactly as saved, traced to the 
   assert.equal(sent.rules_version, RULES_VERSION);
   assert.deepEqual(sent.rows.map((r) => r.tier), [1, 2, 3, 4]);
   assert.deepEqual(sent.summary!.tiers.map((t) => t.tier), [1, 2, 3, 4]);
+
+  // A plan that approved the generalist: it goes with Tier 4's copy, marked broad, counted in no tier.
+  const withBroad = fourTierClientList(runInfo, rows, firmsByRowKey(firms), "Seed");
+  assert.ok(withBroad.ok);
+  const broad = withBroad.value.rows.find((r) => r.id === generalist.id)!;
+  assert.equal(broad.tier, 4);
+  assert.equal(broad.broad, true);
+  assert.deepEqual(withBroad.value.summary!.tiers.map((t) => t.funds), [1, 1, 1, 1]);
+  assert.equal(asInvestorList(clientFacingList(withBroad.value)).rows.find((r) => r.id === generalist.id)!.broad, true);
+  for (const left of [oneOff, outside, rejected]) assert.ok(!withBroad.value.rows.some((r) => r.id === left.id));
 
   // A Fund Database that no longer has the run's funds can't build the list.
   const changed = fourTierClientList(runInfo, rows, firmsByRowKey(firms.filter((f) => f !== tier4)), "Seed");

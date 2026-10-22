@@ -428,6 +428,8 @@ export type VerifyEstimate = {
 export type VerifyOverview = {
   /** The four tiers, in outreach order: one limit box each. */
   tiers: { key: string; label: string }[];
+  /** Funds of the confirmed campaign plan the checks are limited to; null without a plan (every tiered fund). */
+  planFunds: number | null;
   /** Contacts per mode and tier key, in outreach order. */
   counts: Record<VerifyMode, Record<string, ScopeCount>>;
   flagged: FlaggedContact[];

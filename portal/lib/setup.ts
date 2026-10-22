@@ -244,6 +244,8 @@ export type InvestorRow = {
   reasons?: string[];
   /** Same website domain as another fund that the client sees. Admin only. */
   hidden_duplicate?: boolean;
+  /** A generalist the campaign plan approved: broad, not a tier. Grouped with the last tier for email copy. */
+  broad?: boolean;
 };
 
 /** Verification totals frozen onto the list when it is pushed. Absent on older lists. */
@@ -1004,6 +1006,7 @@ export function asInvestorList(value: unknown): InvestorListPayload {
             contact_count: Number.isFinite(count) && count >= 0 ? count : undefined,
             reasons: reasons.length > 0 ? reasons : undefined,
             hidden_duplicate: item.hidden_duplicate === true ? true : undefined,
+            broad: item.broad === true && scheme === "four" ? true : undefined,
           };
         })
     : [];

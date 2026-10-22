@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { MatchControls } from "@/app/admin/matching/match-controls";
-import { CapacityTab } from "@/app/admin/matching/capacity-tab";
+import { PlanTab } from "@/app/admin/matching/plan-tab";
 import type { HiddenFund } from "@/app/admin/matching/settings-panel";
 import {
   Alert,
+  CampaignColumns,
   FourTierRunView,
   NearMissSection,
   OutsideSection,
@@ -19,6 +20,7 @@ import { loadHidden, loadReviews } from "@/lib/match/run-server";
 import { MATCH_TABS, MATCH_TAB_LABEL, matchPath, type MatchTab, type Review } from "@/lib/match/shared";
 import { latestTierRun, listRuns, loadTierRun, profileReadiness, staleReasons, type ProfileReadiness } from "@/lib/match/tiers/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { listCapacityPlans, planForRun, plannedIds } from "@/lib/match/capacity/server";
 import type { Client } from "@/lib/types";
 
 function when(iso: string) {
@@ -114,23 +116,29 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
   if (!isServiceRoleConfigured()) return <Alert tone="error">Service role key is not configured.</Alert>;
   const supabase = createServiceClient();
   const sandbox = client.is_match_sandbox === true;
-  const [state, readiness, latest, reviews, hidden] = await Promise.all([
+  const [state, readiness, latest, reviews, hidden, plans] = await Promise.all([
     loadProfileState(supabase, client.id),
     profileReadiness(supabase, client.id),
     latestTierRun(supabase, client.id),
     loadReviews(supabase, client.id),
     loadHidden(supabase),
+    listCapacityPlans(supabase, client.id),
   ]);
   if (!state.ok) return <Alert tone="error">{state.error}</Alert>;
   if (!latest.ok) return <Alert tone="error">{latest.error}</Alert>;
   const runnable = readiness.ok && readiness.value.readiness !== "blocked";
   const loaded = latest.value ? await loadTierRun(supabase, client.id, latest.value.id) : null;
   const run = loaded && loaded.ok ? loaded.value : null;
-  const stale = run ? await staleReasons(supabase, client.id, run.header, run.rows) : null;
+  const savedPlans = plans.ok ? plans.value : [];
+  const plan = run ? planForRun(savedPlans, run.header.id) : null;
+  const planned = plan ? plannedIds(plan) : null;
+  const stale = run ? await staleReasons(supabase, client.id, run.header, run.rows, planned ?? undefined) : null;
 
   let pushBlocked: string | null = null;
   if (!run) pushBlocked = "Run the match first.";
   else if (!run.complete) pushBlocked = "This run is incomplete. Run the match again.";
+  else if (!plans.ok) pushBlocked = plans.error;
+  else if (!plan) pushBlocked = "Push is off until you confirm a campaign plan on the Plan tab.";
   else if (stale && !stale.ok) pushBlocked = stale.error;
   else if (stale && stale.value.length > 0) pushBlocked = "Push is off until you run the match again (see why below).";
 
@@ -146,6 +154,7 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
         runId={run?.header.id ?? null}
         canRun={runnable}
         pushBlocked={pushBlocked}
+        planFunds={planned ? planned.size : null}
         sandbox={sandbox}
         settings={state.value?.settings ?? null}
         hidden={hiddenList}
@@ -163,8 +172,8 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
         </Alert>
       ) : null}
       <Tabs clientId={client.id} tab={tab} />
-      {tab === "capacity" ? (
-        <CapacityTab clientId={client.id} runId={runId} />
+      {tab === "plan" ? (
+        <PlanTab clientId={client.id} run={run} plans={savedPlans} plansError={plans.ok ? null : plans.error} />
       ) : tab === "history" ? (
         <HistoryTab clientId={client.id} runId={runId} />
       ) : !run ? (
@@ -182,9 +191,27 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
             header={run.header}
             rows={run.rows}
             complete={run.complete}
-            footnote={`Ran ${when(run.header.ranAt)} by ${run.header.ranBy ?? "unknown"}. Saved permanently: exports read it, Push to client sends it.`}
+            footnote={`Ran ${when(run.header.ranAt)} by ${run.header.ranBy ?? "unknown"}. Saved permanently: exports read it; Push to client sends its confirmed campaign plan.`}
           />
-          <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} />
+          {planned ? (
+            <CampaignColumns
+              rows={run.rows}
+              planned={planned}
+              review={{ clientId: client.id, reviews: reviewMap }}
+              campaign={{ clientId: client.id, runId: run.header.id }}
+            />
+          ) : (
+            <>
+              <Alert tone="warning">
+                No campaign plan for this run yet: every fund in the tiers is shown.{" "}
+                <Link href={matchPath(client.id, "plan")} className="underline">
+                  Build the plan
+                </Link>{" "}
+                to pick the campaign&apos;s funds.
+              </Alert>
+              <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} />
+            </>
+          )}
         </>
       )}
     </>

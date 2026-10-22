@@ -5,15 +5,16 @@ import { cleanTierLimits } from "./match/verify.ts";
 
 const id = "11111111-2222-3333-4444-555555555555";
 
-test("every matching link opens the Matching page, on the tab asked for", () => {
+test("every matching link opens the Matching page, on the tab asked for (Plan by default)", () => {
   assert.equal(matchPath(id), `/admin/matching?client=${id}`);
-  assert.equal(matchPath(id, "tiers"), `/admin/matching?client=${id}`);
-  assert.equal(matchPath(id, "capacity"), `/admin/matching?client=${id}&tab=capacity`);
+  assert.equal(matchPath(id, "plan"), `/admin/matching?client=${id}`);
+  assert.equal(matchPath(id, "tiers"), `/admin/matching?client=${id}&tab=tiers`);
   assert.equal(matchPath(id, "history"), `/admin/matching?client=${id}&tab=history`);
-  assert.deepEqual([...MATCH_TABS], ["tiers", "outside", "near", "capacity", "history"]);
+  assert.deepEqual([...MATCH_TABS], ["plan", "tiers", "outside", "near", "history"]);
   assert.equal(asMatchTab("near"), "near");
-  assert.equal(asMatchTab("compare"), "tiers");
-  assert.equal(asMatchTab(undefined), "tiers");
+  assert.equal(asMatchTab("capacity"), "plan");
+  assert.equal(asMatchTab("compare"), "plan");
+  assert.equal(asMatchTab(undefined), "plan");
 });
 
 test("verification limits are the four tiers only", () => {

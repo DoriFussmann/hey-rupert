@@ -32,6 +32,7 @@ import {
 import { clientFacingList, visibleFundCount } from "@/lib/match/client-list-dedupe";
 import { withVerificationSnapshot, type PeopleStates } from "@/lib/match/list-snapshot";
 import { fourTierPushList } from "@/lib/match/tiers/server";
+import { loadPlanForRun, plannedIds } from "@/lib/match/capacity/server";
 import { carryDuplicateFlags, listedContacts } from "@/lib/match/outreach-dedupe";
 import { runSiteBatch } from "@/lib/match/sites-server";
 import { IMPORT_MAX_BYTES, type ContactImportView } from "@/lib/match/contact-import";
@@ -504,9 +505,10 @@ export async function restoreHiddenFund(clientId: string, firmId: string): Promi
 // Sending to the client
 
 /**
- * Pushes one saved run to the client's page as a draft, exactly as saved: the
- * funds of its four tiers (never people), with the run id and rules version on
- * the list. The client sees nothing and is not emailed until Rupert sends it
+ * Pushes one saved run's confirmed campaign plan to the client's page as a
+ * draft, exactly as saved: the plan's funds (never people), with the run id
+ * and rules version on the list. Refused without a confirmed plan for the
+ * run. The client sees nothing and is not emailed until Rupert sends it
  * from the client page. The test client has no client page: its list is
  * published straight to its own test portal (never emailed). Refused when the
  * run is not the client's newest or no longer reflects the client's data.
@@ -521,7 +523,10 @@ export async function pushRunToClient(
   if (!/^[0-9a-f-]{36}$/i.test(id) || !/^[0-9a-f-]{36}$/i.test(String(clientId ?? ""))) {
     return { ok: false, error: "Unknown run." };
   }
-  const built = await fourTierPushList(access.supabase, clientId, id);
+  const plan = await loadPlanForRun(access.supabase, clientId, id);
+  if (!plan.ok) return plan;
+  if (!plan.value) return { ok: false, error: "Confirm a campaign plan for this run on the Plan tab, then push." };
+  const built = await fourTierPushList(access.supabase, clientId, id, plannedIds(plan.value));
   if (!built.ok) return built;
   return deliverList(access, clientId, built.value.list, built.value.people);
 }

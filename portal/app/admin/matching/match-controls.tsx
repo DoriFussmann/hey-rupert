@@ -4,23 +4,25 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { pushRunToClient, restoreHiddenFund } from "@/app/admin/match-actions";
-import { checkFourTierWebsites, runMatchForClient, saveFourTierSettings } from "@/app/admin/tiers-actions";
+import { runMatchForClient, saveFourTierSettings } from "@/app/admin/tiers-actions";
 import { SettingsPanel, type HiddenFund } from "@/app/admin/matching/settings-panel";
 import { errorText, n, primaryButton, secondaryButton, type Notice } from "@/app/admin/clients/[id]/match/ui";
-import { siteSummaryText, type MatchSettings } from "@/lib/match/shared";
+import type { MatchSettings } from "@/lib/match/shared";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
 /**
- * The Matching page's actions: run (saved permanently), check websites,
- * verify and push the run shown. Push sends exactly the saved run; it is off
- * while the run no longer reflects the client's data.
+ * The Matching page's actions: run (saved permanently), verify, and push the
+ * confirmed campaign plan of the run shown. Push sends exactly the plan's
+ * funds; it is off without a plan, and while the run no longer reflects the
+ * client's data. Websites are checked by the daily background job.
  */
 export function MatchControls({
   clientId,
   runId,
   canRun,
   pushBlocked,
+  planFunds,
   sandbox,
   settings,
   hidden,
@@ -31,6 +33,8 @@ export function MatchControls({
   canRun: boolean;
   /** Why Push is off, or null. */
   pushBlocked: string | null;
+  /** Funds in the confirmed campaign plan, or null without one. */
+  planFunds: number | null;
   sandbox: boolean;
   settings: MatchSettings | null;
   hidden: HiddenFund[];
@@ -60,8 +64,8 @@ export function MatchControls({
   function push() {
     if (!runId) return;
     const question = sandbox
-      ? "Publish this run on the test client's own portal? No email is sent."
-      : "Put this run on the client's page as a draft? The client sees nothing until you send it from the client page. It replaces the draft list there.";
+      ? "Publish the campaign plan on the test client's own portal? No email is sent."
+      : "Put the campaign plan's funds on the client's page as a draft? The client sees nothing until you send it from the client page. It replaces the draft list there.";
     if (!window.confirm(question)) return;
     void act("Pushing the investor list…", () => pushRunToClient(clientId, runId), (result) =>
       result.sandbox
@@ -84,24 +88,6 @@ export function MatchControls({
           >
             {runId ? "Re-run match" : "Run match"}
           </button>
-          <button
-            type="button"
-            className={secondaryButton}
-            disabled={!canRun || Boolean(busy)}
-            onClick={() =>
-              void act("Checking this client's top funds' websites. This can take a few minutes…", () => checkFourTierWebsites(clientId), (result) => {
-                const parts =
-                  result.checked === 0
-                    ? ["Every top fund's website was already checked in the last 14 days."]
-                    : [`Checked ${n(result.checked)} websites: ${siteSummaryText(result.summary)}.`];
-                if (result.pending > 0) parts.push(`${n(result.pending)} still to check: click Check websites again.`);
-                parts.push("Re-run the match to use the new results.");
-                return parts.join(" ");
-              })
-            }
-          >
-            Check websites
-          </button>
           <Link href={`/admin/clients/${clientId}/match/verify`} className={`${secondaryButton} no-underline`}>
             Verify emails
           </Link>
@@ -110,7 +96,8 @@ export function MatchControls({
           </button>
         </div>
         <p className="mt-xs text-body-sm text-muted">
-          {pushBlocked ?? "Push to client puts the run below on the client's page as a draft: its four tiers only, never the admin-only groups."}
+          {pushBlocked ??
+            `Push to client puts the confirmed campaign plan (${n(planFunds ?? 0)} funds) on the client's page as a draft. Nothing outside the plan is sent.`}
         </p>
 
       </section>

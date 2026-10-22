@@ -157,7 +157,7 @@ export async function withVerificationSnapshot(
         ...list.summary,
         tiers: fitTiersFor(list.tier_scheme).map(({ tier }) => {
           const existing = list.summary?.tiers.find((item) => item.tier === tier);
-          const inTier = rows.filter((row) => row.tier === tier && !row.hidden_duplicate);
+          const inTier = rows.filter((row) => row.tier === tier && !row.hidden_duplicate && !row.broad);
           return {
             tier,
             funds: inTier.length,

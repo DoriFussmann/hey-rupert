@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { StoredResult } from "../tiers/stored.ts";
-import { CORE_CAP, allocate, poolsOf } from "./allocate.ts";
-import { buildPlan } from "./plan.ts";
+import { CORE_CAP, ZERO_COUNTS, allocateCounts, poolsOf, sizesOf, suggestCounts, type Counts, type RemovedFirm } from "./allocate.ts";
+import { buildPlan, confirmProblems, monthsNeeded, planProblems, type PlanRequest } from "./plan.ts";
 import {
   BENCHMARKS,
   DEFAULT_INPUTS,
@@ -112,7 +112,7 @@ test("13. invalid inputs and boundaries", () => {
   assert.ok(schedule(inputs({ inboxes: needed }), 1000).firms >= 1000);
   assert.ok(schedule(inputs({ inboxes: needed - 1 }), 1000).firms < 1000);
   assert.equal(inboxesNeeded(inputs({ months: 1 }), 1_000_000), null);
-  assert.throws(() => buildPlan([], { inputs: inputs(), target: 0, useGeneralists: false }));
+  assert.throws(() => buildPlan([], { inputs: inputs(), counts: { ...ZERO_COUNTS }, useGeneralists: false, removed: [] }));
 });
 
 // ---------------------------------------------------------------------------
@@ -143,73 +143,101 @@ function fixture({ core = 14, sphere = 30, tier3 = 40, tier4 = 50, generalists =
   ];
 }
 
-test("6. Core is capped at 10; the rest flows Sphere, Tier 3, Tier 4 by the target", () => {
-  const pools = poolsOf(fixture());
-  const small = allocate(pools, 25, false);
-  assert.deepEqual(small.rows.map((r) => [r.source, r.planned]), [["core", CORE_CAP], ["sphere", 15], ["tier3", 0], ["tier4", 0], ["generalist", 0]]);
-  assert.equal(small.rows[0].remaining, 4);
-  assert.match(small.rows[0].note, /Capped at 10/);
-  const larger = allocate(pools, 100, false);
-  assert.deepEqual(larger.rows.map((r) => r.planned), [10, 30, 40, 20, 0]);
-  assert.equal(larger.shortfall, 0);
-  // Firms keep the run's order: the best fit of each tier first.
-  assert.deepEqual(small.firms.slice(0, 2).map((f) => f.firmId), ["C1", "C2"]);
+const counts = (values: Partial<Counts>): Counts => ({ ...ZERO_COUNTS, ...values });
+const request = (extra: Partial<PlanRequest> = {}): PlanRequest => ({ inputs: inputs(), counts: null, useGeneralists: false, removed: [], ...extra });
+
+test("6. suggested split: Core first, capped at 10; the rest 40 / 35 / 25", () => {
+  const sizes = sizesOf(poolsOf(fixture()));
+  assert.deepEqual(sizes, { core: 14, sphere: 30, tier3: 40, tier4: 50, generalist: 25 });
+  assert.deepEqual(suggestCounts(sizes, 110, false), counts({ core: CORE_CAP, sphere: 30, tier3: 40, tier4: 30 }));
+  // With room everywhere, 100 after Core splits exactly 40 / 35 / 25.
+  const plenty = { core: 20, sphere: 500, tier3: 500, tier4: 500, generalist: 0 };
+  assert.deepEqual(suggestCounts(plenty, 110, false), counts({ core: 10, sphere: 40, tier3: 35, tier4: 25 }));
+  assert.deepEqual(suggestCounts(plenty, 5, false), counts({ core: 5 }));
+  assert.deepEqual(suggestCounts(plenty, 0, false), counts({}));
+  // Every suggestion adds up to the total while the tiers have room.
+  for (const total of [11, 37, 99, 333, 1000]) {
+    const suggested = suggestCounts(plenty, total, false);
+    assert.equal(Object.values(suggested).reduce((a, b) => a + b, 0), total, String(total));
+  }
 });
 
-test("7. short pools: each tier gives what it has, nothing is manufactured", () => {
-  const pools = poolsOf(fixture({ core: 3, sphere: 2, tier3: 1, tier4: 4, generalists: 0 }));
-  const plan = allocate(pools, 50, false);
-  assert.deepEqual(plan.rows.map((r) => [r.planned, r.remaining]), [[3, 0], [2, 0], [1, 0], [4, 0], [0, 0]]);
-  assert.match(plan.rows[0].note, /Only 3 eligible Core firms/);
-  assert.equal(plan.planned, 10);
-  assert.equal(plan.shortfall, 40);
-  assert.equal(plan.maxAchievable, 10);
+test("7. short tiers pass the rest on; generalists only when approved; nothing is manufactured", () => {
+  const sizes = { core: 3, sphere: 2, tier3: 1, tier4: 4, generalist: 25 };
+  assert.deepEqual(suggestCounts(sizes, 50, false), counts({ core: 3, sphere: 2, tier3: 1, tier4: 4 }));
+  assert.deepEqual(suggestCounts(sizes, 50, true), counts({ core: 3, sphere: 2, tier3: 1, tier4: 4, generalist: 25 }));
+  assert.deepEqual(suggestCounts(sizes, 20, true), counts({ core: 3, sphere: 2, tier3: 1, tier4: 4, generalist: 10 }));
+  // No shortage: no generalists, even when approved.
+  assert.equal(suggestCounts({ core: 20, sphere: 500, tier3: 500, tier4: 500, generalist: 25 }, 200, true).generalist, 0);
 });
 
-test("8. generalists top up a real shortfall, only when approved, and stay labelled", () => {
-  const pools = poolsOf(fixture({ core: 5, sphere: 5, tier3: 5, tier4: 5, generalists: 25 }));
-  const without = allocate(pools, 40, false);
-  assert.equal(without.generalistsProposed, 20);
-  assert.equal(without.rows[4].planned, 0);
-  assert.equal(without.shortfall, 20);
-  const approved = allocate(pools, 40, true);
-  assert.equal(approved.rows[4].planned, 20);
-  assert.equal(approved.shortfall, 0);
-  assert.ok(approved.firms.filter((f) => f.firmId.startsWith("G")).every((f) => f.source === "generalist"));
-  const beyond = allocate(pools, 60, true);
-  assert.equal(beyond.rows[4].planned, 25);
-  assert.equal(beyond.shortfall, 15);
-  assert.equal(beyond.maxAchievable, 45);
-  // No shortfall, no generalists, even when approved.
-  assert.equal(allocate(pools, 15, true).rows[4].planned, 0);
+test("8. allocation takes each tier's best funds and reports Available, Planned and Short", () => {
+  const pools = poolsOf(fixture({ core: 14, sphere: 30, tier3: 5, tier4: 50 }));
+  const plan = allocateCounts(pools, counts({ core: 10, sphere: 12, tier3: 8, tier4: 20 }));
+  assert.deepEqual(
+    plan.rows.map((r) => [r.source, r.available, r.planned, r.short]),
+    [["core", 14, 10, 0], ["sphere", 30, 12, 0], ["tier3", 5, 5, 3], ["tier4", 50, 20, 0], ["generalist", 25, 0, 0]],
+  );
+  assert.equal(plan.shortfall, 3);
+  assert.equal(plan.planned, 47);
+  assert.deepEqual(plan.firms.slice(0, 2).map((f) => f.firmId), ["C1", "C2"]);
+  assert.ok(plan.firms.filter((f) => f.firmId.startsWith("G")).length === 0);
 });
 
 test("9–10. each firm once; excluded, unresolved, near-miss, rejected and represented firms never enter", () => {
   const pools = poolsOf(fixture());
-  const all = allocate(pools, 10_000, true);
+  const all = allocateCounts(pools, counts({ core: 100, sphere: 100, tier3: 100, tier4: 100, generalist: 100 }));
   const ids = all.firms.map((f) => f.firmId.replace(/#\d+$/, ""));
   assert.equal(new Set(ids).size, ids.length);
   for (const id of ["X1", "N1", "U1", "R1", "O2", "C1#2"]) assert.ok(!all.firms.some((f) => f.firmId === id), id);
-  assert.equal(all.planned, 10 + 30 + 40 + 50 + 25);
+  assert.equal(all.planned, 14 + 30 + 40 + 50 + 25);
+  assert.ok(all.firms.filter((f) => f.firmId.startsWith("G")).every((f) => f.source === "generalist"));
 });
 
-test("11–12. the same run and inputs give the same plan; a new plan leaves earlier ones and the run untouched", () => {
+test("11. removing a fund: the next one in its tier moves in, and it stays out", () => {
+  const pools = poolsOf(fixture());
+  const before = allocateCounts(pools, counts({ core: 10, sphere: 5 }));
+  const removed: RemovedFirm[] = [{ firmId: "S2", name: "Fund S2", source: "sphere", reason: "Founder knows them", by: "a@b.c", at: "2026-10-21T00:00:00Z" }];
+  const after = allocateCounts(pools, counts({ core: 10, sphere: 5 }), removed);
+  assert.deepEqual(after.firms.filter((f) => f.source === "sphere").map((f) => f.firmId), ["S1", "S3", "S4", "S5", "S6"]);
+  assert.equal(after.planned, before.planned);
+  assert.equal(after.rows[1].available, 29);
+  assert.deepEqual(after.removed, removed);
+  // A tier with nothing left to replace it comes up short.
+  const small = poolsOf(fixture({ core: 2 }));
+  const out: RemovedFirm[] = [{ ...removed[0], firmId: "C1", source: "core" }];
+  assert.equal(allocateCounts(small, counts({ core: 2 }), out).rows[0].short, 1);
+  // The suggested split leaves removed funds out of the sizes too.
+  assert.equal(sizesOf(pools, removed).sphere, 29);
+});
+
+test("12. plans: the same run and request give the same plan; checks; months needed", () => {
   const rows = fixture();
   const frozen = JSON.stringify(rows);
-  const request = { inputs: inputs(), target: 120, useGeneralists: true };
-  const first = buildPlan(rows, request);
+  const first = buildPlan(rows, request({ counts: counts({ core: 10, sphere: 20, tier3: 20, tier4: 20 }) }));
   const kept = JSON.stringify(first);
-  const second = buildPlan(rows, request);
-  assert.deepEqual(second, first);
-  buildPlan(rows, { inputs: inputs({ inboxes: 4 }), target: null, useGeneralists: false });
+  assert.deepEqual(buildPlan(rows, request({ counts: counts({ core: 10, sphere: 20, tier3: 20, tier4: 20 }) })), first);
+  buildPlan(rows, request({ inputs: inputs({ inboxes: 4 }) }));
   assert.equal(JSON.stringify(first), kept);
   assert.equal(JSON.stringify(rows), frozen);
-  // A target the inboxes can't reach in time is reported, with the inboxes that would.
-  const big = buildPlan(rows, { inputs: inputs({ months: 1 }), target: 150, useGeneralists: false });
-  assert.equal(big.reach!.fits, false);
-  assert.ok(big.reach!.inboxesNeeded! > 1);
-  // Blank target: plan for what the inboxes reach.
-  const forward = buildPlan(rows, { inputs: inputs({ months: 1 }), target: null, useGeneralists: false });
-  assert.equal(forward.target, forward.capacity.firms);
-  assert.equal(forward.targetSource, "capacity");
+  assert.equal(first.total, 70);
+  assert.equal(first.fundsRequired, first.capacity.firms);
+  assert.deepEqual(confirmProblems(first), []);
+  // No counts: the suggested split of what the inboxes reach.
+  const suggested = buildPlan(rows, request());
+  assert.deepEqual(suggested.counts, suggestCounts(sizesOf(poolsOf(rows)), suggested.fundsRequired, false));
+  // A shortage blocks confirming; Core over 10 and unapproved generalists are refused.
+  const short = buildPlan(rows, request({ counts: counts({ tier3: 60 }) }));
+  assert.ok(confirmProblems(short).some((p) => p.includes("short by 20")));
+  assert.ok(planProblems(request({ counts: counts({ core: 11 }) })).some((p) => p.includes("capped at 10")));
+  assert.ok(planProblems(request({ counts: counts({ generalist: 3 }) })).some((p) => p.includes("Approve generalists")));
+  assert.ok(planProblems(request({ counts: counts({ core: 1.5 }) })).some((p) => p.includes("whole number")));
+  // Months needed: the fewest months whose schedule fits the total.
+  const oneMonth = schedule(inputs({ months: 1 })).firms;
+  assert.equal(monthsNeeded(inputs(), oneMonth), 1);
+  assert.equal(monthsNeeded(inputs(), oneMonth + 1), 2);
+  const months = monthsNeeded(inputs(), 500)!;
+  assert.ok(schedule(inputs({ months }), 500).firms >= 500);
+  assert.ok(schedule(inputs({ months: months - 1 }), 500).firms < 500);
+  assert.equal(monthsNeeded(inputs(), 1_000_000), null);
 });
