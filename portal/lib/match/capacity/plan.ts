@@ -6,17 +6,21 @@
 import type { StoredResult } from "../tiers/stored.ts";
 import {
   CORE_CAP,
+  DEFAULT_SPLIT,
   SOURCES,
   SOURCE_LABEL,
+  actualSplit,
   allocateCounts,
   poolsOf,
   sizesOf,
   suggestCounts,
+  weightProblems,
   type Allocation,
   type Counts,
   type PlanSource,
   type PoolFirm,
   type RemovedFirm,
+  type Weights,
 } from "./allocate.ts";
 import { INPUT_LIMITS, benchmarkFor, compareToBenchmark, inputProblems, schedule, type CapacityInputs, type CapacityResult } from "./schedule.ts";
 
@@ -26,6 +30,8 @@ export type PlanRequest = {
   counts: Counts | null;
   /** The admin approves topping up with generalists. */
   useGeneralists: boolean;
+  /** How what's left after Core is shared, for the suggestion. Saved with the plan. */
+  weights: Weights;
   /** Firms taken out of the campaign after it was confirmed. */
   removed: RemovedFirm[];
 };
@@ -41,6 +47,12 @@ export type CampaignPlan = {
   /** Fewest months that fit `total`, or null when not even the longest campaign does. */
   monthsNeeded: number | null;
   benchmark: { firms: number; status: "under" | "on" | "over"; difference: number } | null;
+  /** The weights the suggestion used. */
+  weights: Weights;
+  /** The real share of each tier after Core, in percent. */
+  split: Weights;
+  /** Funds the inboxes can work through that the plan doesn't fill. */
+  unfilled: number;
   allocation: Allocation;
 };
 
@@ -51,7 +63,7 @@ export function countsTotal(counts: Counts) {
 }
 
 export function planProblems(request: PlanRequest): string[] {
-  const problems = inputProblems(request.inputs);
+  const problems = [...inputProblems(request.inputs), ...weightProblems(request.weights ?? DEFAULT_SPLIT)];
   const { counts } = request;
   if (counts) {
     for (const source of SOURCES) {
@@ -98,7 +110,8 @@ export function buildPlanFromPools(pools: Record<PlanSource, PoolFirm[]>, reques
   const problems = planProblems(request);
   if (problems.length > 0) throw new Error(problems.join(" "));
   const capacity = schedule(request.inputs);
-  const counts = request.counts ?? suggestCounts(sizesOf(pools, request.removed), capacity.firms, request.useGeneralists);
+  const weights = request.weights ?? DEFAULT_SPLIT;
+  const counts = request.counts ?? suggestCounts(sizesOf(pools, request.removed), capacity.firms, request.useGeneralists, weights);
   const total = countsTotal(counts);
   const reference = benchmarkFor(request.inputs.months);
   return {
@@ -109,6 +122,9 @@ export function buildPlanFromPools(pools: Record<PlanSource, PoolFirm[]>, reques
     total,
     monthsNeeded: monthsNeeded(request.inputs, total),
     benchmark: reference === null ? null : { firms: reference, ...compareToBenchmark(capacity.firms, reference) },
+    weights,
+    split: actualSplit(counts),
+    unfilled: Math.max(0, capacity.firms - total),
     allocation: allocateCounts(pools, counts, request.removed),
   };
 }

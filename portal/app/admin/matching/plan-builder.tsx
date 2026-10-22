@@ -4,12 +4,28 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { confirmPlanAction } from "@/app/admin/capacity-actions";
 import { cardClass, errorText, inputClass, labelClass, n, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/ui";
-import { CORE_CAP, SOURCES, SOURCE_LABEL, suggestCounts, type Counts, type PlanSource, type Sizes } from "@/lib/match/capacity/allocate";
+import {
+  CORE_CAP,
+  DEFAULT_SPLIT,
+  SOURCES,
+  SOURCE_LABEL,
+  TIER_CEILING,
+  suggestCounts,
+  weightProblems,
+  type Counts,
+  type PlanSource,
+  type Sizes,
+  type SplitTier,
+  type Weights,
+} from "@/lib/match/capacity/allocate";
 import { countsTotal, monthsNeeded } from "@/lib/match/capacity/plan";
 import { DEFAULT_INPUTS, INPUT_LIMITS, benchmarkFor, compareToBenchmark, inputProblems, schedule, type CapacityInputs } from "@/lib/match/capacity/schedule";
 
 type Boxes = Record<keyof CapacityInputs, string>;
 type CountBoxes = Record<PlanSource, string>;
+type WeightBoxes = Record<SplitTier, string>;
+
+const SPLIT_TIERS: SplitTier[] = ["sphere", "tier3", "tier4"];
 
 /** Everything but the campaign length, under "Sending setup". */
 const SETUP: (keyof CapacityInputs)[] = [
@@ -49,15 +65,25 @@ function toCounts(boxes: CountBoxes): Counts {
   return Object.fromEntries(SOURCES.map((source) => [source, boxes[source].trim() === "" ? 0 : Number(boxes[source])])) as Counts;
 }
 
+function toWeightBoxes(weights: Weights): WeightBoxes {
+  return { sphere: String(weights.sphere), tier3: String(weights.tier3), tier4: String(weights.tier4) };
+}
+
+function toWeights(boxes: WeightBoxes): Weights {
+  const value = (text: string) => (text.trim() === "" ? Number.NaN : Number(text));
+  return { sphere: value(boxes.sphere), tier3: value(boxes.tier3), tier4: value(boxes.tier4) };
+}
+
 function percentOf(count: number, base: number) {
-  return base > 0 ? Math.round((count / base) * 1000) / 10 : 0;
+  return base > 0 ? Math.round((count / base) * 100) : 0;
 }
 
 /**
  * Builds the campaign plan for the newest run: campaign months first, then
  * Calculate gives the funds the inboxes can work through and a suggested
- * split across the tiers, which the admin can change (in funds or %). Only
- * Confirm plan saves anything, and only a plan with no shortage.
+ * split across the tiers, by weights the admin can change. Any number can
+ * then be edited. Only Confirm plan saves anything (with the weights), and
+ * only a plan no tier is short for.
  */
 export function PlanBuilder({
   clientId,
@@ -72,7 +98,7 @@ export function PlanBuilder({
   /** Eligible funds per tier, after any removed from this run's campaign. */
   sizes: Sizes;
   /** Where the builder starts: this run's confirmed plan, or the previous run's. */
-  initial: { inputs: CapacityInputs; counts: Counts; useGeneralists: boolean } | null;
+  initial: { inputs: CapacityInputs; counts: Counts; useGeneralists: boolean; weights: Weights } | null;
   /** The button that puts the starting split back. */
   initialLabel: string;
   nextVersion: number;
@@ -81,6 +107,7 @@ export function PlanBuilder({
   const [boxes, setBoxes] = useState<Boxes>(toBoxes(initial?.inputs ?? DEFAULT_INPUTS));
   const [useGeneralists, setUseGeneralists] = useState(initial?.useGeneralists ?? false);
   const [countBoxes, setCountBoxes] = useState<CountBoxes | null>(initial ? toCountBoxes(initial.counts) : null);
+  const [weightBoxes, setWeightBoxes] = useState<WeightBoxes>(toWeightBoxes(initial?.weights ?? DEFAULT_SPLIT));
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -96,6 +123,8 @@ export function PlanBuilder({
     [inputs, problems.length, total],
   );
   const benchmark = benchmarkFor(inputs.months);
+  const weights = toWeights(weightBoxes);
+  const weightIssues = weightProblems(weights);
 
   const rows = SOURCES.filter((source) => source !== "generalist" || useGeneralists).map((source) => {
     const planned = counts ? counts[source] : 0;
@@ -111,23 +140,17 @@ export function PlanBuilder({
     for (const row of rows) if (row.short > 0) countProblems.push(`${SOURCE_LABEL[row.source]} is short by ${n(row.short)}: lower it, or move funds to a tier that has them.`);
     if (total < 1) countProblems.push("Plan at least one fund.");
   }
-  const canConfirm = Boolean(counts) && problems.length === 0 && countProblems.length === 0 && !saving;
+  const canConfirm = Boolean(counts) && problems.length === 0 && weightIssues.length === 0 && countProblems.length === 0 && !saving;
+  const unfilled = fundsRequired !== null && Number.isFinite(total) ? Math.max(0, fundsRequired - total) : 0;
 
   function calculate() {
-    if (fundsRequired === null) return;
-    setCountBoxes(toCountBoxes(suggestCounts(sizes, fundsRequired, useGeneralists)));
+    if (fundsRequired === null || weightIssues.length > 0) return;
+    setCountBoxes(toCountBoxes(suggestCounts(sizes, fundsRequired, useGeneralists, weights)));
     setMessage(null);
   }
 
   function setCount(source: PlanSource, value: string) {
     setCountBoxes((current) => (current ? { ...current, [source]: value.replace(/[^\d]/g, "") } : current));
-  }
-
-  function setPercent(source: PlanSource, value: string) {
-    if (fundsRequired === null) return;
-    const pct = Number(value);
-    if (!Number.isFinite(pct) || pct < 0) return;
-    setCount(source, String(Math.round((pct * fundsRequired) / 100)));
   }
 
   function toggleGeneralists(next: boolean) {
@@ -140,7 +163,7 @@ export function PlanBuilder({
     setSaving(true);
     setMessage(null);
     try {
-      const result = await confirmPlanAction(clientId, runId, { inputs, counts, useGeneralists }, note);
+      const result = await confirmPlanAction(clientId, runId, { inputs, counts, useGeneralists, weights }, note);
       if (!result.ok) {
         setMessage({ kind: "error", text: result.error });
         return;
@@ -189,7 +212,7 @@ export function PlanBuilder({
               onChange={(event) => setBoxes((current) => ({ ...current, months: event.target.value }))}
             />
           </label>
-          <button type="button" className={primaryButton} disabled={fundsRequired === null} onClick={calculate}>
+          <button type="button" className={primaryButton} disabled={fundsRequired === null || weightIssues.length > 0} onClick={calculate}>
             {countBoxes ? "Recalculate" : "Calculate"}
           </button>
           <p id="months-hint" className="text-body-sm text-secondary">
@@ -222,7 +245,7 @@ export function PlanBuilder({
         <label className="mt-md flex items-start gap-sm text-body-sm text-secondary">
           <input type="checkbox" className="mt-xs h-4 w-4 accent-primary" checked={useGeneralists} onChange={(event) => toggleGeneralists(event.target.checked)} />
           <span>
-            Approve generalists to fill a shortage ({n(sizes.generalist)} available). The founder sees them as &quot;Also a fit: broad investors&quot;, never as a tier.
+            Approve generalists to fill a shortfall ({n(sizes.generalist)} available). The founder sees them apart, as &quot;Also worth considering: broad investors&quot;, never as a tier.
           </span>
         </label>
         {problems.length > 0 ? (
@@ -238,9 +261,30 @@ export function PlanBuilder({
         <section className={`${cardClass} px-lg py-md`}>
           <h2 className="text-h4 text-heading">Split across the tiers</h2>
           <p className="mt-xs text-body-sm text-muted">
-            Suggested: Core first (up to {CORE_CAP}), the rest 40% Sphere, 35% Tier 3, 25% Tier 4; a tier that runs out passes the rest on. Change any number, in funds or
-            in % of the {fundsRequired !== null ? n(fundsRequired) : "–"} the inboxes can work through.
+            Core first (up to {CORE_CAP}). The rest is shared by these weights, as targets: a tier that runs out passes its share to the others by weight, but no tier
+            takes more than {TIER_CEILING}× its target. What no tier can take is shown as a shortfall. Then change any number below.
           </p>
+          <div className="mt-sm flex flex-wrap items-end gap-sm">
+            {SPLIT_TIERS.map((tier) => (
+              <label key={tier} className="text-body-sm">
+                <span className={labelClass}>{SOURCE_LABEL[tier]} weight (%)</span>
+                <input
+                  inputMode="numeric"
+                  className={`${inputClass} mt-xs w-24 text-right font-mono`}
+                  value={weightBoxes[tier]}
+                  onChange={(event) => setWeightBoxes((current) => ({ ...current, [tier]: event.target.value.replace(/[^\d]/g, "") }))}
+                />
+              </label>
+            ))}
+            <button type="button" className={secondaryButton} disabled={fundsRequired === null || weightIssues.length > 0} onClick={calculate}>
+              Apply weights
+            </button>
+          </div>
+          {weightIssues.length > 0 ? (
+            <p role="alert" className="mt-xs text-body-sm text-error">
+              {weightIssues.join(" ")}
+            </p>
+          ) : null}
           <div className="mt-sm overflow-x-auto">
             <table className="w-full min-w-[560px] text-left text-body-sm">
               <thead>
@@ -248,7 +292,7 @@ export function PlanBuilder({
                   <th className="py-xs pr-md font-normal">Tier</th>
                   <th className="py-xs pr-md text-right font-normal">Available</th>
                   <th className="py-xs pr-md text-right font-normal">Planned</th>
-                  <th className="py-xs pr-md text-right font-normal">%</th>
+                  <th className="py-xs pr-md text-right font-normal">Share</th>
                   <th className="py-xs font-normal">Status</th>
                 </tr>
               </thead>
@@ -266,16 +310,7 @@ export function PlanBuilder({
                         onChange={(event) => setCount(row.source, event.target.value)}
                       />
                     </td>
-                    <td className="py-xs pr-md text-right">
-                      <input
-                        inputMode="decimal"
-                        aria-label={`${SOURCE_LABEL[row.source]}: % of the funds the inboxes can work through`}
-                        className={`${inputClass} ml-auto w-20 text-right font-mono`}
-                        value={fundsRequired ? String(percentOf(row.planned, fundsRequired)) : "0"}
-                        disabled={!fundsRequired}
-                        onChange={(event) => setPercent(row.source, event.target.value)}
-                      />
-                    </td>
+                    <td className="py-xs pr-md text-right tabular-nums">{Number.isFinite(total) ? `${percentOf(row.planned, total)}%` : "–"}</td>
                     <td className={`py-xs ${row.short > 0 ? "text-error" : "text-secondary"}`}>
                       {row.short > 0 ? `Short by ${n(row.short)}` : row.source === "core" && row.planned > CORE_CAP ? `Over the cap of ${CORE_CAP}` : "OK"}
                     </td>
@@ -285,7 +320,7 @@ export function PlanBuilder({
                   <td className="py-xs pr-md text-heading">Total</td>
                   <td className="py-xs pr-md text-right tabular-nums">{n(rows.reduce((sum, row) => sum + row.available, 0))}</td>
                   <td className="py-xs pr-md text-right tabular-nums text-heading">{Number.isFinite(total) ? n(total) : "–"}</td>
-                  <td className="py-xs pr-md text-right tabular-nums">{fundsRequired ? `${percentOf(total, fundsRequired)}` : "–"}</td>
+                  <td className="py-xs pr-md text-right tabular-nums">{total > 0 ? "100%" : "–"}</td>
                   <td className="py-xs text-secondary" />
                 </tr>
               </tbody>
@@ -298,6 +333,12 @@ export function PlanBuilder({
                 ? `${n(total)} funds don't fit in ${INPUT_LIMITS.months.max} months with this sending setup.`
                 : `${n(total)} funds need ${needed} month${needed === 1 ? "" : "s"} with this sending setup${needed > inputs.months ? `: more than the ${inputs.months} chosen` : ""}.`}
           </p>
+          {unfilled > 0 && fundsRequired !== null ? (
+            <p className="mt-xs text-body-sm text-warning">
+              The plan fills {n(total)} of the {n(fundsRequired)} funds the inboxes can work through: {n(unfilled)} short.
+              {!useGeneralists && sizes.generalist > 0 ? " Approve generalists above to offer them as a separate top-up, then Apply weights." : ""}
+            </p>
+          ) : null}
           {countProblems.length > 0 ? (
             <ul role="alert" className="mt-sm list-disc pl-lg text-body-sm text-error">
               {countProblems.map((problem) => (
@@ -315,7 +356,15 @@ export function PlanBuilder({
                 {saving ? "Confirming…" : `Confirm plan (version ${nextVersion})`}
               </button>
               {initial ? (
-                <button type="button" className={secondaryButton} disabled={saving} onClick={() => setCountBoxes(toCountBoxes(initial.counts))}>
+                <button
+                  type="button"
+                  className={secondaryButton}
+                  disabled={saving}
+                  onClick={() => {
+                    setCountBoxes(toCountBoxes(initial.counts));
+                    setWeightBoxes(toWeightBoxes(initial.weights));
+                  }}
+                >
                   {initialLabel}
                 </button>
               ) : null}

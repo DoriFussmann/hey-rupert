@@ -143,7 +143,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     testable: false,
     defaultText: NARRATIVE_EMAIL_REVISION_PROMPT,
   },
-  investor_list_email: agentDetails("investor_list_email", `The list's tier counts and fund types, Rupert's note and company information. ${EMAIL_FIXED}`, true),
+  investor_list_email: agentDetails(
+    "investor_list_email",
+    `Facts the code prepares from this founder's list only: the confirmed plan, funds and share per tier, up to five Core funds that may be named with their matched criteria, and the verification results with a fixed definition; Rupert's note and company information. ${EMAIL_FIXED}`,
+    true,
+  ),
   nudge_email: agentDetails("nudge_email", `The waiting step, how long it has waited and the nudges already sent. ${EMAIL_FIXED}`, true),
   verify_role_check: {
     slug: agentPromptSlug("verify_role_check"),

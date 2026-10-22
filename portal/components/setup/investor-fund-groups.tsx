@@ -2,6 +2,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { ChevronDown } from "@/components/chevron";
+import { BROAD_LABEL } from "@/lib/founder-list-facts";
 import { fitTiersFor, type InvestorRow, type TierScheme } from "@/lib/setup";
 
 /** Rows shown when a panel opens; "Show more" adds the same again. */
@@ -38,18 +39,29 @@ export function InvestorFundGroups({
   scheme?: TierScheme;
   renderRow: (row: InvestorRow) => ReactNode;
 }) {
+  // The tiers, then approved broad investors apart from them.
   const tiers = useMemo(
     () =>
-      fitTiersFor(scheme).map((tier) => ({
-        ...tier,
-        groups: groupsOf(rows.filter((row) => row.tier === tier.tier)),
-      })).filter((tier) => tier.groups.length > 0),
+      [
+        ...fitTiersFor(scheme).map((tier) => ({
+          key: String(tier.tier),
+          label: tier.label,
+          detail: tier.detail,
+          groups: groupsOf(rows.filter((row) => row.tier === tier.tier && !row.broad)),
+        })),
+        {
+          key: "broad",
+          label: BROAD_LABEL,
+          detail: "Broader mandates, not sector-specific matches.",
+          groups: groupsOf(rows.filter((row) => row.broad)),
+        },
+      ].filter((tier) => tier.groups.length > 0),
     [rows, scheme],
   );
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [shown, setShown] = useState<Record<string, number>>({});
   const keys = tiers.flatMap((tier) =>
-    tier.groups.map(([type]) => `${tier.tier}:${type}`),
+    tier.groups.map(([type]) => `${tier.key}:${type}`),
   );
   const anyOpen = keys.some((key) => open[key]);
 
@@ -79,7 +91,7 @@ export function InvestorFundGroups({
         </button>
       </div>
       {tiers.map((tier) => (
-        <section key={tier.tier} className="overflow-hidden rounded-card border border-border bg-surface">
+        <section key={tier.key} className="overflow-hidden rounded-card border border-border bg-surface">
           <div className="border-b border-border px-lg py-md">
             <h2 className="text-h4">
               {tier.label} <span className="text-muted">· {tier.detail}</span>
@@ -91,7 +103,7 @@ export function InvestorFundGroups({
           </div>
           <div className="divide-y divide-border">
             {tier.groups.map(([type, list]) => {
-              const key = `${tier.tier}:${type}`;
+              const key = `${tier.key}:${type}`;
               const expanded = Boolean(open[key]);
               const limit = shown[key] ?? PAGE_SIZE;
               const remaining = list.length - limit;

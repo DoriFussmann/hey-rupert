@@ -1,7 +1,19 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { StoredResult } from "../tiers/stored.ts";
-import { CORE_CAP, ZERO_COUNTS, allocateCounts, poolsOf, sizesOf, suggestCounts, type Counts, type RemovedFirm } from "./allocate.ts";
+import {
+  CORE_CAP,
+  DEFAULT_SPLIT,
+  ZERO_COUNTS,
+  actualSplit,
+  allocateCounts,
+  poolsOf,
+  sizesOf,
+  suggestCounts,
+  weightProblems,
+  type Counts,
+  type RemovedFirm,
+} from "./allocate.ts";
 import { buildPlan, confirmProblems, monthsNeeded, planProblems, type PlanRequest } from "./plan.ts";
 import {
   BENCHMARKS,
@@ -144,7 +156,14 @@ function fixture({ core = 14, sphere = 30, tier3 = 40, tier4 = 50, generalists =
 }
 
 const counts = (values: Partial<Counts>): Counts => ({ ...ZERO_COUNTS, ...values });
-const request = (extra: Partial<PlanRequest> = {}): PlanRequest => ({ inputs: inputs(), counts: null, useGeneralists: false, removed: [], ...extra });
+const request = (extra: Partial<PlanRequest> = {}): PlanRequest => ({
+  inputs: inputs(),
+  counts: null,
+  useGeneralists: false,
+  weights: DEFAULT_SPLIT,
+  removed: [],
+  ...extra,
+});
 
 test("6. suggested split: Core first, capped at 10; the rest 40 / 35 / 25", () => {
   const sizes = sizesOf(poolsOf(fixture()));
@@ -241,3 +260,43 @@ test("12. plans: the same run and request give the same plan; checks; months nee
   assert.ok(schedule(inputs({ months: months - 1 }), 500).firms < 500);
   assert.equal(monthsNeeded(inputs(), 1_000_000), null);
 });
+
+test("14. exhausted tiers: the rest is shared by weight, no tier over 1.5× its target, the remainder is a shortfall", () => {
+  // The Test Pilot run: Tier 3 and Tier 4 run out; Sphere stops at 1.5 × 132 = 198, not 249.
+  const pilot = { core: 721, sphere: 994, tier3: 13, tier4: 68, generalist: 133 };
+  const suggested = suggestCounts(pilot, 340, false);
+  assert.deepEqual(suggested, counts({ core: 10, sphere: 198, tier3: 13, tier4: 68 }));
+  assert.equal(340 - Object.values(suggested).reduce((a, b) => a + b, 0), 51);
+  // The real split is reported, not the weights.
+  assert.deepEqual(actualSplit(suggested), { sphere: 71, tier3: 5, tier4: 24 });
+  // One tier short: its share goes to the others by weight (40 : 25), within their ceilings.
+  assert.deepEqual(suggestCounts({ core: 20, sphere: 500, tier3: 10, tier4: 500, generalist: 0 }, 110, false), counts({ core: 10, sphere: 55, tier3: 10, tier4: 35 }));
+  // Small plans still add up.
+  for (const total of [11, 12, 13, 17]) {
+    const small = suggestCounts({ core: 20, sphere: 500, tier3: 500, tier4: 500, generalist: 0 }, total, false);
+    assert.equal(Object.values(small).reduce((a, b) => a + b, 0), total, String(total));
+  }
+});
+
+test("15. generalists top up a real shortfall only, and only when approved", () => {
+  const pilot = { core: 721, sphere: 994, tier3: 13, tier4: 68, generalist: 133 };
+  assert.equal(suggestCounts(pilot, 340, false).generalist, 0);
+  assert.equal(suggestCounts(pilot, 340, true).generalist, 51);
+  assert.equal(suggestCounts({ ...pilot, generalist: 20 }, 340, true).generalist, 20);
+  assert.equal(suggestCounts({ core: 20, sphere: 500, tier3: 500, tier4: 500, generalist: 50 }, 110, true).generalist, 0);
+});
+
+test("16. weights: the admin's weights drive the suggestion, are checked, and are saved with the plan", () => {
+  const plenty = { core: 20, sphere: 500, tier3: 500, tier4: 500, generalist: 0 };
+  assert.deepEqual(suggestCounts(plenty, 110, false, { sphere: 50, tier3: 30, tier4: 20 }), counts({ core: 10, sphere: 50, tier3: 30, tier4: 20 }));
+  assert.deepEqual(suggestCounts(plenty, 110, false, { sphere: 100, tier3: 0, tier4: 0 }), counts({ core: 10, sphere: 100 }));
+  assert.deepEqual(weightProblems(DEFAULT_SPLIT), []);
+  assert.ok(weightProblems({ sphere: 50, tier3: 30, tier4: 30 }).some((p) => p.includes("add up to 100")));
+  assert.ok(weightProblems({ sphere: 50.5, tier3: 29.5, tier4: 20 }).some((p) => p.includes("whole number")));
+  assert.throws(() => buildPlan([], request({ weights: { sphere: 90, tier3: 30, tier4: 0 } })));
+  const plan = buildPlan(fixture(), request({ weights: { sphere: 50, tier3: 30, tier4: 20 } }));
+  assert.deepEqual(plan.weights, { sphere: 50, tier3: 30, tier4: 20 });
+  assert.deepEqual(plan.split, actualSplit(plan.counts));
+  assert.equal(plan.unfilled, Math.max(0, plan.fundsRequired - plan.total));
+});
+

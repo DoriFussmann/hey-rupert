@@ -3,7 +3,16 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
 import { latestTierRun, loadTierRun } from "@/lib/match/tiers/server";
 import type { StoredResult } from "@/lib/match/tiers/stored";
-import { SOURCES, SOURCE_LABEL, type AllocationRow, type Counts, type PlanSource, type RemovedFirm } from "@/lib/match/capacity/allocate";
+import {
+  DEFAULT_SPLIT,
+  SOURCES,
+  SOURCE_LABEL,
+  type AllocationRow,
+  type Counts,
+  type PlanSource,
+  type RemovedFirm,
+  type Weights,
+} from "@/lib/match/capacity/allocate";
 import { buildPlan, confirmProblems, planProblems, type CampaignPlan, type PlanRequest } from "@/lib/match/capacity/plan";
 import { INPUT_LIMITS, type CapacityInputs } from "@/lib/match/capacity/schedule";
 
@@ -33,7 +42,9 @@ export function cleanRequest(raw: unknown): Result<PlanRequest> {
     const rawCounts = value.counts as Record<string, unknown>;
     counts = Object.fromEntries(SOURCES.map((source) => [source, Number(rawCounts[source] ?? 0)])) as Counts;
   }
-  const request: PlanRequest = { inputs, counts, useGeneralists: value.useGeneralists === true, removed: [] };
+  const rawWeights = (value.weights && typeof value.weights === "object" ? value.weights : DEFAULT_SPLIT) as Record<string, unknown>;
+  const weights: Weights = { sphere: Number(rawWeights.sphere), tier3: Number(rawWeights.tier3), tier4: Number(rawWeights.tier4) };
+  const request: PlanRequest = { inputs, counts, useGeneralists: value.useGeneralists === true, weights, removed: [] };
   const problems = planProblems(request);
   return problems.length > 0 ? { ok: false, error: problems.join(" ") } : { ok: true, value: request };
 }
@@ -47,6 +58,10 @@ export type StoredAllocation = {
   total: number;
   fundsRequired: number;
   monthsNeeded: number | null;
+  /** The weights the split was suggested with (absent on plans saved before weights). */
+  weights?: Weights;
+  /** The real share of each tier after Core, in percent. */
+  split?: Weights;
   rows: AllocationRow[];
   requested: number;
   planned: number;
@@ -69,6 +84,8 @@ function storedAllocation(plan: CampaignPlan): StoredAllocation {
     total: plan.total,
     fundsRequired: plan.fundsRequired,
     monthsNeeded: plan.monthsNeeded,
+    weights: plan.weights,
+    split: plan.split,
     rows: allocation.rows,
     requested: allocation.requested,
     planned: allocation.planned,
@@ -167,7 +184,13 @@ export function plannedIds(plan: SavedPlan): Set<string> {
 }
 
 function requestOf(plan: SavedPlan, removed: RemovedFirm[]): PlanRequest {
-  return { inputs: plan.inputs, counts: plan.allocation?.counts ?? null, useGeneralists: plan.generalistsApproved, removed };
+  return {
+    inputs: plan.inputs,
+    counts: plan.allocation?.counts ?? null,
+    useGeneralists: plan.generalistsApproved,
+    weights: plan.allocation?.weights ?? DEFAULT_SPLIT,
+    removed,
+  };
 }
 
 async function savePlan(

@@ -1,10 +1,13 @@
 // Splitting a campaign across the four tiers of one saved run. Pure module.
 //
-// The suggested split: Core first, capped at CORE_CAP firms; what's left goes
-// 40% Sphere, 35% Tier 3, 25% Tier 4 (DEFAULT_SPLIT). A tier that has fewer
-// firms than its share passes the rest on to the next tiers that have room.
-// Generalists fill what the four tiers can't, only when an admin approves
-// them, and stay labelled as generalists. The admin can then change any number.
+// The suggested split: Core first, capped at CORE_CAP firms. What's left is
+// shared by weight (40% Sphere, 35% Tier 3, 25% Tier 4 unless the admin sets
+// others). The weights are targets, not quotas: a tier that runs out passes
+// its remaining share to the tiers that still have firms, in proportion to
+// their weights, but no tier takes more than TIER_CEILING times its own
+// target. What no tier can take is a shortfall. Generalists fill a shortfall
+// only when an admin approves them, and stay labelled as generalists. The
+// admin can then change any number.
 // Within each source the plan takes the run's best-fit firms first (saved
 // order), skipping firms removed from the campaign.
 // Only eligible firms are used: in a tier (or a generalist), not rejected for
@@ -28,6 +31,8 @@ export const SOURCE_LABEL: Record<PlanSource, string> = {
 };
 
 export const SOURCES: PlanSource[] = [...TIER_KEYS, "generalist"];
+
+const REST: SplitTier[] = ["sphere", "tier3", "tier4"];
 
 /** One firm a plan can use, as the saved run stored it. */
 export type PoolFirm = { firmId: string; name: string; source: PlanSource; score: number | null; position: number };
@@ -57,7 +62,26 @@ export function poolsOf(rows: StoredResult[]): Record<PlanSource, PoolFirm[]> {
 }
 
 /** How what's left after Core is shared out, in percent. */
-export const DEFAULT_SPLIT: Record<"sphere" | "tier3" | "tier4", number> = { sphere: 40, tier3: 35, tier4: 25 };
+export type SplitTier = "sphere" | "tier3" | "tier4";
+
+/** How what's left after Core is shared out, in whole percent adding up to 100. */
+export type Weights = Record<SplitTier, number>;
+
+export const DEFAULT_SPLIT: Weights = { sphere: 40, tier3: 35, tier4: 25 };
+
+/** No tier takes more than this times its own target when others run out. */
+export const TIER_CEILING = 1.5;
+
+/** Problems with weights, in words. Empty when they can be used. */
+export function weightProblems(weights: Weights): string[] {
+  const problems: string[] = [];
+  for (const tier of REST) {
+    const value = weights[tier];
+    if (!Number.isInteger(value) || value < 0 || value > 100) problems.push(`${SOURCE_LABEL[tier]} weight: a whole number from 0 to 100.`);
+  }
+  if (problems.length === 0 && REST.reduce((sum, tier) => sum + weights[tier], 0) !== 100) problems.push("The weights must add up to 100.");
+  return problems;
+}
 
 /** Firms wanted from each source. */
 export type Counts = Record<PlanSource, number>;
@@ -67,7 +91,6 @@ export const ZERO_COUNTS: Counts = { core: 0, sphere: 0, tier3: 0, tier4: 0, gen
 /** A firm taken out of the campaign after the plan was confirmed. */
 export type RemovedFirm = { firmId: string; name: string; source: PlanSource; reason: string; by: string | null; at: string };
 
-const REST: ("sphere" | "tier3" | "tier4")[] = ["sphere", "tier3", "tier4"];
 
 /** Eligible firms per source. */
 export type Sizes = Record<PlanSource, number>;
@@ -79,28 +102,63 @@ export function sizesOf(pools: Record<PlanSource, PoolFirm[]>, removed: RemovedF
 
 /**
  * The suggested split of `total` firms across sources of the given sizes.
- * Pure arithmetic: never more than a source has; generalists only when approved.
+ * Pure arithmetic: never more than a source has, never more than the
+ * ceiling over a tier's target; generalists only when approved.
  */
-export function suggestCounts(sizes: Sizes, total: number, useGeneralists: boolean): Counts {
+export function suggestCounts(sizes: Sizes, total: number, useGeneralists: boolean, weights: Weights = DEFAULT_SPLIT): Counts {
   const counts: Counts = { ...ZERO_COUNTS };
   const wanted = Math.max(0, Math.floor(total));
   counts.core = Math.min(CORE_CAP, sizes.core, wanted);
   const rest = wanted - counts.core;
-  const sphere = Math.round((rest * DEFAULT_SPLIT.sphere) / 100);
-  const tier3 = Math.round((rest * DEFAULT_SPLIT.tier3) / 100);
-  const share = { sphere, tier3, tier4: rest - sphere - tier3 };
-  let overflow = 0;
-  for (const tier of REST) {
-    counts[tier] = Math.min(share[tier], sizes[tier]);
-    overflow += share[tier] - counts[tier];
+
+  // Each tier's target and the most it may take: the ceiling over its target
+  // (never below the target rounded up, so small plans still add up), within what it has.
+  const target = Object.fromEntries(REST.map((tier) => [tier, (rest * weights[tier]) / 100])) as Record<SplitTier, number>;
+  const limit = Object.fromEntries(
+    REST.map((tier) => [tier, Math.min(sizes[tier], Math.max(Math.ceil(target[tier] - 1e-9), Math.floor(target[tier] * TIER_CEILING + 1e-9)))]),
+  ) as Record<SplitTier, number>;
+
+  // Share by weight among the tiers with room; a tier that hits its limit is
+  // filled and the rest is shared again among the others.
+  const share: Record<SplitTier, number> = { sphere: 0, tier3: 0, tier4: 0 };
+  let open = REST.filter((tier) => weights[tier] > 0 && limit[tier] > 0);
+  let left = rest;
+  while (left > 1e-9 && open.length > 0) {
+    const weight = open.reduce((sum, tier) => sum + weights[tier], 0);
+    const full = open.filter((tier) => share[tier] + (left * weights[tier]) / weight >= limit[tier] - 1e-9);
+    if (full.length === 0) {
+      for (const tier of open) share[tier] += (left * weights[tier]) / weight;
+      left = 0;
+      break;
+    }
+    for (const tier of full) {
+      left -= limit[tier] - share[tier];
+      share[tier] = limit[tier];
+    }
+    open = open.filter((tier) => !full.includes(tier));
   }
-  for (const tier of REST) {
-    const add = Math.min(sizes[tier] - counts[tier], overflow);
-    counts[tier] += add;
-    overflow -= add;
+
+  // Whole firms: round down, then hand out what's left by the largest remainders, within the limits.
+  for (const tier of REST) counts[tier] = Math.floor(share[tier] + 1e-9);
+  let spare = Math.round(REST.reduce((sum, tier) => sum + share[tier], 0)) - REST.reduce((sum, tier) => sum + counts[tier], 0);
+  const byRemainder = [...REST].sort((a, b) => share[b] - Math.floor(share[b] + 1e-9) - (share[a] - Math.floor(share[a] + 1e-9)) || REST.indexOf(a) - REST.indexOf(b));
+  for (const tier of byRemainder) {
+    if (spare <= 0) break;
+    if (counts[tier] < limit[tier]) {
+      counts[tier] += 1;
+      spare -= 1;
+    }
   }
-  if (useGeneralists) counts.generalist = Math.min(overflow, sizes.generalist);
+
+  const shortfall = rest - REST.reduce((sum, tier) => sum + counts[tier], 0);
+  if (useGeneralists && shortfall > 0) counts.generalist = Math.min(shortfall, sizes.generalist);
   return counts;
+}
+
+/** Each split tier's share of what was planned after Core, in whole percent (the real split, not the weights). */
+export function actualSplit(counts: Counts): Weights {
+  const rest = REST.reduce((sum, tier) => sum + counts[tier], 0);
+  return Object.fromEntries(REST.map((tier) => [tier, rest > 0 ? Math.round((counts[tier] / rest) * 100) : 0])) as Weights;
 }
 
 export type AllocationRow = {

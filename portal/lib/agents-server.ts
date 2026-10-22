@@ -7,6 +7,8 @@ import {
   type ClaudeContentBlock,
   type ClaudeTool,
 } from "@/lib/anthropic";
+import { listFacts, listFactsText } from "@/lib/founder-list-facts";
+import { loadPlanForRun } from "@/lib/match/capacity/server";
 import { promptSystem, type PromptOverride } from "@/lib/prompts";
 import { loadPrompt, loadPrompts } from "@/lib/prompts-server";
 import {
@@ -687,7 +689,11 @@ export async function draftNarrativeEmail(
   );
 }
 
-/** The email that goes with the investor list: tier counts and fund types only, never names. */
+/**
+ * The email that goes with the investor list, from facts the code decides:
+ * the plan, funds and share per tier, up to five Core funds on this list that
+ * may be named, and the verification results with their definition.
+ */
 export async function draftInvestorListEmail(
   supabase: ServiceClient,
   clientId: string,
@@ -708,11 +714,18 @@ export async function draftInvestorListEmail(
   const listRow = company.rows.find((item) => item.step === "investor_list");
   const clientAsk =
     listRow?.status === "changes_requested" ? earlierNotes([], listRow.response) : "";
+  const saved = list.run_id ? await loadPlanForRun(supabase, clientId, list.run_id) : null;
+  if (saved && !saved.ok) return saved;
+  const allocation = saved?.value?.allocation ?? null;
+  const plan =
+    saved?.value && allocation
+      ? { months: saved.value.inputs.months, fundsRequired: allocation.fundsRequired, planned: allocation.planned }
+      : null;
 
   const context = [
     ...founderLines(loaded.client, version),
-    "## The investor list (tier counts and fund types)",
-    listBrief(list),
+    "# Facts about the list (use only these)",
+    listFactsText(listFacts(list), plan),
     list.admin_note ? `## Rupert's note to the founder (shown on their page)\n${list.admin_note}` : "",
     clientAsk ? `## What the founder asked about the previous version\n${clientAsk}` : "",
     "# Company information (context only)",

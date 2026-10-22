@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { respondToSetupStep, saveInvestorFundFlag } from "@/app/portal/setup/actions";
 import { formatDate } from "@/lib/format";
+import { BROAD_LABEL } from "@/lib/founder-list-facts";
 import { applyFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import {
   NOTE_MAX,
@@ -18,10 +19,17 @@ import {
 
 const PAGE_SIZE = 25;
 
+/** A tab of the list: a fit tier, or the broad investors shown apart from the tiers. */
+type TabKey = FitTier | "broad";
+
+const BROAD_DETAIL = "Investors with broader mandates. They fit your stage and location, but they are not sector-specific matches.";
+
 const primaryButton =
   "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-primary px-md text-body text-white hover:bg-primary-hover motion-reduce:transition-none";
 const secondaryButton =
   "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border bg-surface px-md text-body text-heading hover:bg-background motion-reduce:transition-none";
+const smallButton =
+  "inline-flex min-h-[44px] items-center justify-center rounded-md border border-border bg-surface px-sm text-body-sm text-secondary hover:bg-background hover:text-heading motion-reduce:transition-none";
 
 function n(value: number) {
   return value.toLocaleString("en-US");
@@ -31,19 +39,15 @@ function fundType(row: InvestorRow) {
   return row.fund_type?.trim() || row.details.split("·")[0]?.trim() || "Other";
 }
 
-/** Type, place, check size and stage. Founded year only when nothing else exists. */
+/** Type and place, for the card's second line. Older lists without a location use their details line. */
 function metaLine(row: InvestorRow) {
-  const structured = [fundType(row), row.location?.trim(), row.check_size?.trim(), row.stage_focus?.trim()]
-    .filter(Boolean);
-  if (row.fund_type || row.location || row.check_size || row.stage_focus) {
-    return structured.join(" · ");
-  }
+  if (row.fund_type || row.location) return [fundType(row), row.location?.trim()].filter(Boolean).join(" · ");
   const parts = row.details
     .split("·")
     .map((part) => part.trim())
     .filter(Boolean);
   const withoutFounded = parts.filter((part) => !/^founded\b/i.test(part));
-  return (withoutFounded.length > 0 ? withoutFounded : parts).join(" · ");
+  return (withoutFounded.length > 0 ? withoutFounded : parts).slice(0, 2).join(" · ");
 }
 
 function notesFromFlags(flags: Record<string, InvestorFundFlag>) {
@@ -104,7 +108,7 @@ export function InvestorListReview({
   const [noteDrafts, setNoteDrafts] = useState<Record<string, string>>({});
   const [noteOpen, setNoteOpen] = useState<Record<string, boolean>>({});
   const [saved, setSaved] = useState<Record<string, string>>({});
-  const [tier, setTier] = useState<FitTier>(1);
+  const [tier, setTier] = useState<TabKey>(1);
   const [query, setQuery] = useState("");
   const [types, setTypes] = useState<string[]>([]);
   const [showExcluded, setShowExcluded] = useState(false);
@@ -139,24 +143,25 @@ export function InvestorListReview({
     if (!askOpen && dialog.open) dialog.close();
   }, [askOpen]);
 
-  const tierStats = useMemo(
-    () =>
-      tiers.map((entry) => {
-        const inTier = rows.filter((row) => row.tier === entry.tier);
-        const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
-        const counted = inTier.some((row) => typeof row.contact_count === "number");
-        return {
-          ...entry,
-          funds: inTier.length,
-          contacts: fromSummary ? fromSummary.contacts : counted
-            ? inTier.reduce((sum, row) => sum + (row.contact_count ?? 0), 0)
-            : null,
-        };
-      }),
-    [rows, summary, tiers],
-  );
+  const tierStats = useMemo(() => {
+    const contactsOf = (list: InvestorRow[]) =>
+      list.some((row) => typeof row.contact_count === "number") ? list.reduce((sum, row) => sum + (row.contact_count ?? 0), 0) : null;
+    const stats: { tier: TabKey; label: string; detail: string; funds: number; contacts: number | null }[] = tiers.map((entry) => {
+      const inTier = rows.filter((row) => row.tier === entry.tier && !row.broad);
+      const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
+      return { ...entry, funds: inTier.length, contacts: fromSummary ? fromSummary.contacts : contactsOf(inTier) };
+    });
+    const broad = rows.filter((row) => row.broad);
+    if (broad.length > 0) {
+      stats.push({ tier: "broad", label: BROAD_LABEL, detail: BROAD_DETAIL, funds: broad.length, contacts: contactsOf(broad) });
+    }
+    return stats;
+  }, [rows, summary, tiers]);
 
-  const inTab = useMemo(() => rows.filter((row) => row.tier === tier), [rows, tier]);
+  const inTab = useMemo(
+    () => rows.filter((row) => (tier === "broad" ? row.broad : row.tier === tier && !row.broad)),
+    [rows, tier],
+  );
   const typeCounts = useMemo(() => {
     const counts = new Map<string, number>();
     for (const row of inTab) counts.set(fundType(row), (counts.get(fundType(row)) ?? 0) + 1);
@@ -180,7 +185,7 @@ export function InvestorListReview({
   const confirming = rows.filter((row) => !flags[row.id]?.excluded).length;
   const excluded = rows.filter((row) => flags[row.id]?.excluded).length;
   const known = rows.filter((row) => flags[row.id]?.known).length;
-  const activeTab = tiers.find((entry) => entry.tier === tier) ?? tiers[0];
+  const activeTab = tierStats.find((entry) => entry.tier === tier) ?? tierStats[0];
 
   function noteValue(id: string) {
     return noteDrafts[id] ?? flags[id]?.note ?? "";
@@ -260,16 +265,16 @@ export function InvestorListReview({
   function onTabsKeyDown(event: React.KeyboardEvent<HTMLDivElement>) {
     if (!["ArrowRight", "ArrowLeft", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const index = tiers.findIndex((entry) => entry.tier === tier);
+    const index = tierStats.findIndex((entry) => entry.tier === tier);
     const nextIndex =
       event.key === "Home"
         ? 0
         : event.key === "End"
-          ? tiers.length - 1
+          ? tierStats.length - 1
           : event.key === "ArrowRight"
-            ? (index + 1) % tiers.length
-            : (index - 1 + tiers.length) % tiers.length;
-    const next = tiers[nextIndex].tier;
+            ? (index + 1) % tierStats.length
+            : (index - 1 + tierStats.length) % tierStats.length;
+    const next = tierStats[nextIndex].tier;
     setTier(next);
     setTypes([]);
     document.getElementById(`investor-tier-tab-${next}`)?.focus();
@@ -356,7 +361,7 @@ export function InvestorListReview({
         <h2 id="tier-summary-heading" className="text-h2 text-heading">
           Tier summary
         </h2>
-        <div className={`mt-md grid gap-md ${tiers.length === 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
+        <div className={`mt-md grid gap-md ${tierStats.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
           {tierStats.map((entry) => {
             const pressed = tier === entry.tier;
             return (
@@ -364,7 +369,7 @@ export function InvestorListReview({
                 key={entry.tier}
                 type="button"
                 aria-pressed={pressed}
-                className={`rounded-card border bg-surface px-md py-md text-left hover:bg-background motion-reduce:transition-none ${
+                className={`flex flex-col items-start justify-start rounded-card border bg-surface px-md py-md text-left hover:bg-background motion-reduce:transition-none ${
                   pressed ? "border-heading" : "border-border"
                 }`}
                 onClick={() => {
@@ -511,7 +516,6 @@ export function InvestorListReview({
               {shown.map((row) => {
                 const flag = flags[row.id] ?? {};
                 const meta = metaLine(row);
-                const reasons = row.reasons ?? [];
                 if (flag.excluded) {
                   return (
                     <li key={row.id} className="rounded-card border border-border bg-surface px-md py-sm">
@@ -552,104 +556,78 @@ export function InvestorListReview({
                 }
                 const writing = noteOpen[row.id] || Boolean(noteValue(row.id));
                 return (
-                  <li key={row.id} className="rounded-card border border-border bg-surface p-md">
-                    <div className="grid gap-md md:grid-cols-2">
-                      <div className="min-w-0">
-                        <h3 className="text-h3 text-heading">{row.fund_name}</h3>
-                        {row.website ? (
-                          <a
-                            href={row.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="mt-xs inline-flex min-h-[44px] items-center gap-xs text-body text-primary underline"
-                          >
-                            Website
-                            <span className="sr-only"> (opens in new tab)</span>
-                            <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
-                              <path
-                                d="M8 5H5v10h10v-3M11 4h5v5M10 10l6-6"
-                                stroke="currentColor"
-                                strokeWidth="1.5"
-                              />
-                            </svg>
-                          </a>
-                        ) : null}
-                        {meta ? <p className="mt-xs text-body text-secondary">{meta}</p> : null}
-                        {typeof row.contact_count === "number" ? (
-                          <p className="mt-xs text-body text-heading">
-                            {n(row.contact_count)} contact{row.contact_count === 1 ? "" : "s"}
-                          </p>
-                        ) : null}
-                        {flag.known ? (
-                          <p className="mt-sm text-body text-heading">I know them</p>
-                        ) : null}
+                  <li key={row.id} className="rounded-card border border-border bg-surface px-md py-sm">
+                    <div className="flex flex-wrap items-center justify-between gap-x-md gap-y-xs">
+                      <div className="min-w-[14rem] flex-1">
+                        <h3 className="flex flex-wrap items-center gap-x-sm text-body text-heading">
+                          <span className="font-medium">{row.fund_name}</span>
+                          {row.website ? (
+                            <a
+                              href={row.website}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center text-primary"
+                            >
+                              <span className="sr-only">{row.fund_name} website (opens in new tab)</span>
+                              <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+                                <path d="M8 5H5v10h10v-3M11 4h5v5M10 10l6-6" stroke="currentColor" strokeWidth="1.5" />
+                              </svg>
+                            </a>
+                          ) : null}
+                        </h3>
+                        {meta ? <p className="text-body-sm text-secondary">{meta}</p> : null}
                       </div>
-                      {reasons.length > 0 ? (
-                        <div>
-                          <p id={`why-${row.id}`} className="text-body text-heading">
-                            Why it fits
-                          </p>
-                          <ul className="mt-sm flex flex-wrap gap-sm" aria-labelledby={`why-${row.id}`}>
-                            {reasons.map((reason) => (
-                              <li
-                                key={reason}
-                                className="rounded-md border border-border bg-background px-sm py-xs text-body text-heading"
-                              >
-                                {reason}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : null}
-                    </div>
-                    {open ? (
-                      <div className="mt-md flex flex-wrap gap-sm">
-                        <button
-                          type="button"
-                          className={secondaryButton}
-                          aria-pressed={false}
-                          aria-disabled={blocked || undefined}
-                          onClick={() => {
-                            if (blocked) return;
-                            void commit(row.id, {
-                              excluded: true,
-                              ...(noteDrafts[row.id] !== undefined ? { note: noteDrafts[row.id] } : {}),
-                            });
-                          }}
-                        >
-                          Exclude
-                        </button>
-                        <button
-                          type="button"
-                          className={secondaryButton}
-                          aria-pressed={Boolean(flag.known)}
-                          aria-disabled={blocked || undefined}
-                          onClick={() => {
-                            if (blocked) return;
-                            void commit(row.id, {
-                              known: !flag.known,
-                              ...(noteDrafts[row.id] !== undefined ? { note: noteDrafts[row.id] } : {}),
-                            });
-                          }}
-                        >
-                          {flag.known ? "✓ I know them" : "I know them"}
-                        </button>
-                        {!writing ? (
+                      {open ? (
+                        <div className="flex flex-wrap gap-xs">
                           <button
                             type="button"
-                            className={secondaryButton}
+                            className={smallButton}
                             aria-disabled={blocked || undefined}
                             onClick={() => {
                               if (blocked) return;
-                              setNoteOpen((current) => ({ ...current, [row.id]: true }));
+                              void commit(row.id, {
+                                excluded: true,
+                                ...(noteDrafts[row.id] !== undefined ? { note: noteDrafts[row.id] } : {}),
+                              });
                             }}
                           >
-                            Add note
+                            Exclude
                           </button>
-                        ) : null}
-                      </div>
-                    ) : flag.note ? (
-                      <p className="mt-md text-body text-body">
+                          <button
+                            type="button"
+                            className={`${smallButton} ${flag.known ? "border-heading text-heading" : ""}`}
+                            aria-pressed={Boolean(flag.known)}
+                            aria-disabled={blocked || undefined}
+                            onClick={() => {
+                              if (blocked) return;
+                              void commit(row.id, {
+                                known: !flag.known,
+                                ...(noteDrafts[row.id] !== undefined ? { note: noteDrafts[row.id] } : {}),
+                              });
+                            }}
+                          >
+                            {flag.known ? "✓ I know them" : "I know them"}
+                          </button>
+                          {!writing ? (
+                            <button
+                              type="button"
+                              className={smallButton}
+                              aria-disabled={blocked || undefined}
+                              onClick={() => {
+                                if (blocked) return;
+                                setNoteOpen((current) => ({ ...current, [row.id]: true }));
+                              }}
+                            >
+                              Add note
+                            </button>
+                          ) : null}
+                        </div>
+                      ) : flag.known ? (
+                        <p className="text-body-sm text-heading">I know them</p>
+                      ) : null}
+                    </div>
+                    {open ? null : flag.note ? (
+                      <p className="mt-sm text-body-sm text-body">
                         <span className="text-heading">Note: </span>
                         {flag.note}
                       </p>

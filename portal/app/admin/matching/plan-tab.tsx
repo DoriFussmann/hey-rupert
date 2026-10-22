@@ -2,7 +2,7 @@ import Link from "next/link";
 import { n } from "@/app/admin/clients/[id]/match/ui";
 import { Alert, Section } from "@/app/admin/clients/[id]/match/four-tier/run-view";
 import { PlanBuilder } from "@/app/admin/matching/plan-builder";
-import { SOURCE_LABEL, poolsOf, sizesOf } from "@/lib/match/capacity/allocate";
+import { DEFAULT_SPLIT, SOURCE_LABEL, poolsOf, sizesOf } from "@/lib/match/capacity/allocate";
 import { CAPACITY_MODEL_VERSION } from "@/lib/match/capacity/schedule";
 import { latestCampaignPlan, planForRun, rebuildsExactly, removalsFor, type SavedPlan } from "@/lib/match/capacity/server";
 import { matchPath } from "@/lib/match/shared";
@@ -26,6 +26,12 @@ function ConfirmedPlan({ clientId, plan, rebuilds }: { clientId: string; plan: S
         </Link>
         .
       </p>
+      {allocation.weights && allocation.split ? (
+        <p className="mt-xs text-body-sm text-muted">
+          After Core: weights {allocation.weights.sphere} / {allocation.weights.tier3} / {allocation.weights.tier4}; actual split {allocation.split.sphere}% /{" "}
+          {allocation.split.tier3}% / {allocation.split.tier4}% (Sphere / Tier 3 / Tier 4).
+        </p>
+      ) : null}
       <div className="mt-sm overflow-x-auto">
         <table className="w-full min-w-[420px] text-left text-body-sm">
           <thead>
@@ -142,7 +148,11 @@ export function PlanTab({
             clientId={clientId}
             runId={run.header.id}
             sizes={sizesOf(poolsOf(run.rows), removalsFor(plans, run.header.id, run.rows))}
-            initial={start?.allocation ? { inputs: start.inputs, counts: start.allocation.counts, useGeneralists: start.generalistsApproved } : null}
+            initial={
+              start?.allocation
+                ? { inputs: start.inputs, counts: start.allocation.counts, useGeneralists: start.generalistsApproved, weights: start.allocation.weights ?? DEFAULT_SPLIT }
+                : null
+            }
             initialLabel={confirmed ? "Back to the confirmed split" : "Back to the previous plan's split"}
             nextVersion={(plans[0]?.version ?? 0) + 1}
           />

@@ -135,9 +135,10 @@ export function InvestorListPanel({
             {list.source_file ? `${list.source_file} · ` : ""}
             {visibleRows.length} funds on the client list ·{" "}
             {fitTiersFor(list.tier_scheme).map(({ tier }) => {
-              const count = visibleRows.filter((entry) => entry.tier === tier).length;
+              const count = visibleRows.filter((entry) => entry.tier === tier && !entry.broad).length;
               return `${tierLabel(tier, list.tier_scheme)}: ${count}`;
             }).join(" · ")}
+            {visibleRows.some((entry) => entry.broad) ? ` · Broad investors: ${visibleRows.filter((entry) => entry.broad).length}` : ""}
             {hiddenCount > 0 ? ` · ${hiddenCount} hidden ${hiddenCount === 1 ? "duplicate" : "duplicates"}` : ""}
           </p>
           <p className="px-lg pt-xs text-body-sm text-muted">
