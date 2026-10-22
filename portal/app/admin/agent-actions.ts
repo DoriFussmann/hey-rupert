@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
-import { AGENTS, AGENT_PROMPT_MAX, agentPromptSlug } from "@/lib/agents";
 import {
   buildNarrative,
   draftEmailCopy,
@@ -252,40 +251,7 @@ export async function draftClientEmailCopy(
 }
 
 // ---------------------------------------------------------------------------
-// Settings: AI Agents and Company Materials fields
-
-export async function saveAgentPrompts(
-  input: Record<string, string>,
-): Promise<Result<object>> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-
-  const at = nowIso();
-  const rows = [];
-  for (const agent of AGENTS) {
-    const prompt = String(input?.[agent.id] ?? "").trim();
-    if (!prompt) return { ok: false, error: `${agent.title}: the instructions cannot be empty.` };
-    if (prompt.length > AGENT_PROMPT_MAX) {
-      return {
-        ok: false,
-        error: `${agent.title}: keep the instructions under ${AGENT_PROMPT_MAX} characters.`,
-      };
-    }
-    rows.push({
-      slug: agentPromptSlug(agent.id),
-      title: `AI agent: ${agent.title}`,
-      // Text equal to the default is stored empty, so it follows future defaults.
-      content: prompt === agent.defaultPrompt ? "" : prompt,
-      updated_at: at,
-    });
-  }
-
-  const { error } = await access.supabase.from("form_templates").upsert(rows);
-  if (error) return { ok: false, error: error.message };
-
-  revalidatePath("/admin/forms/agents");
-  return { ok: true };
-}
+// Settings: Company Materials fields
 
 export async function saveMaterialFields(fields: unknown): Promise<Result<object>> {
   const access = await requireAdmin();

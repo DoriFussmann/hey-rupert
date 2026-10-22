@@ -135,7 +135,7 @@ export async function startIntake(): Promise<IntakeActionResult> {
   const settings = await loadIntakeSettings(supabase);
   // A new interview uses the classification guide (the column defaults to it).
   const guide = await loadInterviewGuide(supabase);
-  const turn = await nextInterviewTurn(settings, opened.client, [], {}, undefined, guide);
+  const turn = await nextInterviewTurn(supabase, settings, opened.client, [], {}, undefined, guide);
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
 
   const messages: IntakeMessage[] = [
@@ -206,6 +206,7 @@ async function takeTurn(
   const withUser: IntakeMessage[] = [...interview.messages, message];
 
   const turn = await nextInterviewTurn(
+    supabase,
     settings,
     client,
     withUser,
@@ -412,6 +413,7 @@ export async function requestIntakeSummary(): Promise<IntakeActionResult> {
   }
 
   const summary = await writeInterviewSummary(
+    supabase,
     settings,
     opened.client,
     interview.messages,

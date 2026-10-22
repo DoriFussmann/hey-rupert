@@ -2,6 +2,7 @@ import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { draftNudgeMiddle } from "@/lib/agents-server";
+import type { PromptOverride } from "@/lib/prompts";
 import type { EmailResult } from "@/lib/email";
 import { listEmailLog, sendClientEmail, type EmailLogEntry } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
@@ -256,6 +257,7 @@ export async function draftNudge(
   supabase: ServiceClient,
   clientId: string,
   key: string,
+  override?: PromptOverride | null,
 ): Promise<NudgeResult<{ email: ClientEmailDraft; pausedNote: string | null }>> {
   const found = await waitingTurn(supabase, clientId, key);
   if (!found.ok) return found;
@@ -298,7 +300,7 @@ export async function draftNudge(
     .filter(Boolean)
     .join("\n\n");
 
-  const drafted = await draftNudgeMiddle(supabase, context);
+  const drafted = await draftNudgeMiddle(supabase, clientId, context, override);
   if (!drafted.ok) return drafted;
 
   return {

@@ -151,6 +151,8 @@ export type RoleStep = {
   newTitle: string;
   summary: string;
   evidence: Evidence[];
+  /** The version of the managed role-check prompt used (absent on checks made before prompts were versioned). */
+  promptVersion?: number;
 };
 
 export type PublicStep = {

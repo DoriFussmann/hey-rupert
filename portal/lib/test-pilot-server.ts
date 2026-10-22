@@ -2,6 +2,8 @@ import "server-only";
 import { randomUUID } from "crypto";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeAgent, callClaudeTool, webFetchTool } from "@/lib/anthropic";
+import { promptSystem } from "@/lib/prompts";
+import { loadPrompt } from "@/lib/prompts-server";
 import { prepareFiles, saveIntakeBrief } from "@/lib/agents-server";
 import type { IntakeBrief, IntakeMessage, TopicStatus } from "@/lib/intake";
 import { buildClientContext, loadIntakeSettings } from "@/lib/intake-server";
@@ -166,9 +168,6 @@ export async function signNdaAsClient(
 // ---------------------------------------------------------------------------
 // Intake, written by Claude from the website and the test deck
 
-const TEST_DATA_RULES =
-  "This is TEST data for an internal test of Hey Rupert's client portal; no real founder sees it. Use the website and any attached deck first. Where something is still unknown, choose realistic, plausible details consistent with the company, so the test exercises every step. Keep answers concise and factual in tone.";
-
 const INTAKE_TOOL = {
   name: "submit_test_intake",
   description: "Deliver the test intake: the per-topic answers and the company profile.",
@@ -215,6 +214,8 @@ export async function completeIntakeWithTestData(
 ): Promise<StepResult> {
   const clientId = String(client.id);
   const settings = await loadIntakeSettings(supabase);
+  const prompt = await loadPrompt(supabase, "test_pilot_intake", { clientId, purpose: "Test Pilot: intake answers" });
+  if (!prompt.ok) return { ok: false, error: prompt.error };
   const website = websiteUrl(text(client.company_website));
   const files = await prepareFiles(supabase, await materialsFiles(supabase, clientId));
 
@@ -222,11 +223,7 @@ export async function completeIntakeWithTestData(
     .map((topic) => `- [${topic.id}] ${topic.title}: ${topic.guidance}`)
     .join("\n");
   const result = await callClaudeAgent<{ summary?: unknown; profile?: unknown }>({
-    system: [
-      "You write a founder's intake answers for Hey Rupert, an investor outreach service.",
-      TEST_DATA_RULES,
-      profileLabelsText(),
-    ].join("\n\n"),
+    system: promptSystem(prompt.value, profileLabelsText()),
     content: [
       ...files.blocks,
       {
@@ -381,12 +378,11 @@ export async function submitMaterialsWithTestData(
         .map((item) => `${text(item.title)}: ${text(item.answer)}`)
         .join("\n")
     : "";
+  const prompt = await loadPrompt(supabase, "test_pilot_materials", { clientId, purpose: "Test Pilot: materials form" });
+  if (!prompt.ok) return { ok: false, error: prompt.error };
 
   const result = await callClaudeTool<Record<string, unknown>>({
-    system: [
-      "You fill in a founder's Company Materials form for Hey Rupert.",
-      TEST_DATA_RULES,
-    ].join("\n\n"),
+    system: promptSystem(prompt.value),
     messages: [
       {
         role: "user",

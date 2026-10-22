@@ -1,6 +1,7 @@
-// AI agents used in the admin: their ids, labels and default instructions.
-// The admin edits the instructions in Forms → AI Agents; edits are stored in
-// `form_templates` and override these defaults. Pure module.
+// AI agents used in the admin: their ids, labels and starting instructions.
+// The instructions are managed prompts (lib/prompts.ts): stored with every
+// version in the database and edited under Agents. The texts here are only
+// the starting versions and what "Reset to default" puts back. Pure module.
 
 export type AgentId =
   | "intake_brief"
@@ -15,16 +16,14 @@ export type AgentId =
 
 export type AgentDefinition = {
   id: AgentId;
-  title: string;
   /** Where and when it runs, for the admin. */
   description: string;
   defaultPrompt: string;
 };
 
 export const AGENT_PROMPT_PREFIX = "agent_prompt:";
-export const AGENT_PROMPT_MAX = 12000;
 
-export function agentPromptSlug(id: AgentId) {
+export function agentPromptSlug(id: string) {
   return `${AGENT_PROMPT_PREFIX}${id}`;
 }
 
@@ -175,81 +174,56 @@ Plain, human, warm. No hype, no exclamation marks, no markdown.`;
 export const AGENTS: AgentDefinition[] = [
   {
     id: "intake_brief",
-    title: "Intake summary",
     description:
       "Writes the Intake Summary on the client page when the intake completes (or when you click Regenerate), and identifies industry, geography, stage and raise amount.",
     defaultPrompt: INTAKE_BRIEF_PROMPT,
   },
   {
     id: "materials_analysis",
-    title: "Materials analysis",
     description:
       "Runs when you click Analyze in Setup. Reads the deck, files, the client's answers and links, and the intake. Writes the Company Summary and the Investor Framing, which you edit and then share with the client.",
     defaultPrompt: MATERIALS_ANALYSIS_PROMPT,
   },
   {
     id: "feedback_email",
-    title: "Feedback email draft",
     description:
       "Runs when you click Draft Email under Analysis & Feedback. Writes the middle of the email from your edited Company Summary and Investor Framing and the company information; the greeting, portal link and signature come from Forms → Emails → Feedback ready.",
     defaultPrompt: FEEDBACK_EMAIL_PROMPT,
   },
   {
     id: "outreach_narrative",
-    title: "Outreach narrative",
     description:
       "Runs when you click Build narrative. Writes the core story, the key messages and the approach from the analysis, feedback and intake.",
     defaultPrompt: OUTREACH_NARRATIVE_PROMPT,
   },
   {
     id: "narrative_email",
-    title: "Narrative email draft",
     description:
       "Runs when you click Draft Email under Outreach Narrative. Writes the middle of the email from your edited narrative and the company information; the greeting, portal link and signature are added for you.",
     defaultPrompt: NARRATIVE_EMAIL_PROMPT,
   },
   {
     id: "investor_list_email",
-    title: "Investor list email draft",
     description:
       "Runs when you click Draft Email under Investor Matching. Writes the middle of the email from the list's tier counts and fund types, your note and the company information; the greeting, portal link and signature are added for you.",
     defaultPrompt: INVESTOR_LIST_EMAIL_PROMPT,
   },
   {
     id: "email_copy",
-    title: "Email copy",
     description:
       "Runs when you click Draft with AI under Email Copy. Writes the first email and two follow-ups for each tier of the investor list (three or four), plus the LinkedIn note and follow-up, from the narrative, the investor list, the intake and the analysis.",
     defaultPrompt: EMAIL_COPY_PROMPT,
   },
   {
     id: "match_profile",
-    title: "Match profile",
     description:
       "Builds the company profile for Rupert Match from the intake interview: sector, stage, raise, geography, exclusions and the rest. Runs the first time the client page is opened after the intake completes, or when you click Rebuild from intake.",
     defaultPrompt: MATCH_PROFILE_PROMPT,
   },
   {
     id: "nudge_email",
-    title: "Nudge email",
     description:
       "Runs when you click Draft nudge on the Nudge page. Writes the middle of a personal nudge for the step waiting on the client, from how long it has waited and the nudges and reminders already sent; the greeting, portal link and signature are added for you.",
     defaultPrompt: NUDGE_EMAIL_PROMPT,
   },
 ];
-
-export function isAgentId(value: unknown): value is AgentId {
-  return AGENTS.some((agent) => agent.id === value);
-}
-
-export function agentDefinition(id: AgentId) {
-  return AGENTS.find((agent) => agent.id === id)!;
-}
-
-export type AgentPrompts = Record<AgentId, string>;
-
-export function defaultAgentPrompts(): AgentPrompts {
-  const prompts = {} as AgentPrompts;
-  for (const agent of AGENTS) prompts[agent.id] = agent.defaultPrompt;
-  return prompts;
-}

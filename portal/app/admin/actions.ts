@@ -34,9 +34,7 @@ import { sendAdminEmail, type EmailResult } from "@/lib/email";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { DEFAULT_NDA } from "@/lib/nda";
 import {
-  DEFAULT_INTAKE_PROMPT,
   DEFAULT_INTAKE_TOPICS,
-  INTAKE_PROMPT_SLUG,
   INTAKE_TOPICS_SLUG,
   parseIntakeTopics,
   withMatchingTopics,
@@ -1434,11 +1432,10 @@ export async function archiveNda(
 // Intake Interviewer settings (stored in form_templates)
 
 export async function getIntakeSettings(): Promise<{
-  prompt: string;
   topics: IntakeTopic[];
-  defaults: { prompt: string; topics: IntakeTopic[] };
+  defaults: { topics: IntakeTopic[] };
 }> {
-  const defaults = { prompt: DEFAULT_INTAKE_PROMPT, topics: DEFAULT_INTAKE_TOPICS };
+  const defaults = { topics: DEFAULT_INTAKE_TOPICS };
   const access = await requireAdminService();
   if (!access.ok) return { ...defaults, defaults };
 
@@ -1446,23 +1443,10 @@ export async function getIntakeSettings(): Promise<{
   return { ...settings, defaults };
 }
 
-const INTAKE_PROMPT_MAX_CHARS = 8000;
-
-export async function saveIntakeSettings(
-  prompt: string,
-  topics: IntakeTopic[],
-): Promise<ActionResult> {
+/** Saves the intake topics. The interviewer's instructions are a managed prompt (Agents). */
+export async function saveIntakeSettings(topics: IntakeTopic[]): Promise<ActionResult> {
   const access = await requireAdminService();
   if (!access.ok) return access;
-
-  const cleanPrompt = String(prompt ?? "").trim();
-  if (!cleanPrompt) return { ok: false, error: "The instructions cannot be empty." };
-  if (cleanPrompt.length > INTAKE_PROMPT_MAX_CHARS) {
-    return {
-      ok: false,
-      error: `Keep the instructions under ${INTAKE_PROMPT_MAX_CHARS} characters.`,
-    };
-  }
 
   const parsed = parseIntakeTopics(topics);
   if (!parsed) {
@@ -1478,20 +1462,12 @@ export async function saveIntakeSettings(
   }
 
   const updatedAt = new Date().toISOString();
-  const { error } = await access.supabase.from("form_templates").upsert([
-    {
-      slug: INTAKE_PROMPT_SLUG,
-      title: "Intake Interviewer instructions",
-      content: cleanPrompt,
-      updated_at: updatedAt,
-    },
-    {
-      slug: INTAKE_TOPICS_SLUG,
-      title: "Intake Interviewer topics",
-      content: JSON.stringify(cleanTopics),
-      updated_at: updatedAt,
-    },
-  ]);
+  const { error } = await access.supabase.from("form_templates").upsert({
+    slug: INTAKE_TOPICS_SLUG,
+    title: "Intake Interviewer topics",
+    content: JSON.stringify(cleanTopics),
+    updated_at: updatedAt,
+  });
 
   if (error) return { ok: false, error: error.message };
 

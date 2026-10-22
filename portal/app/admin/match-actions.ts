@@ -457,7 +457,12 @@ export async function buildMatchProfile(
       source: "intake_ai",
       actor: access.email,
       problems: built.problems,
-      note: built.unusable.length > 0 ? `Not usable by the current engine: ${built.unusable.join(", ")}.` : "",
+      note: [
+        `Built from the intake with the Match profile prompt v${extracted.promptVersion}.`,
+        built.unusable.length > 0 ? `Not usable by the current engine: ${built.unusable.join(", ")}.` : "",
+      ]
+        .filter(Boolean)
+        .join(" "),
     });
   }
   revalidateMatch(clientId);

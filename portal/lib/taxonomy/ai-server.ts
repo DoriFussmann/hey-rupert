@@ -1,6 +1,8 @@
 import "server-only";
 import { callClaudeTool, isClaudeConfigured } from "@/lib/anthropic";
 import type { createServiceClient } from "@/lib/supabase/admin";
+import { promptSystem } from "@/lib/prompts";
+import { loadPrompt } from "@/lib/prompts-server";
 import {
   GENERALIST_KIND,
   RELATIONS,
@@ -52,15 +54,11 @@ export async function proposeValueMappings(
   const candidates = index.taxonomy.nodes.filter(
     (node) => node.dimension === info.dimension && node.status === "active" && node.kind !== "group",
   );
+  const prompt = await loadPrompt(supabase, "taxonomy_mapping", { purpose: `Taxonomy: map ${info.label} labels`, actor });
+  if (!prompt.ok) return prompt;
 
   const result = await callClaudeTool<{ proposals?: unknown }>({
-    system: [
-      "You map raw labels from an investor database to a fixed taxonomy of canonical categories.",
-      "Use only category ids from the list. Never invent ids or categories.",
-      "Use more than one id only when the label genuinely spans several categories.",
-      "When no category fits, return an empty list and say why. A wrong mapping is worse than none.",
-      "Give a short, factual rationale and an honest confidence from 0 to 1.",
-    ].join(" "),
+    system: promptSystem(prompt.value),
     messages: [
       {
         role: "user",
@@ -121,6 +119,7 @@ export async function proposeValueMappings(
         confidence: clamp01(raw.confidence),
         rationale: String(raw.rationale ?? "").trim().slice(0, 400),
         at,
+        promptVersion: prompt.value.version,
       },
     });
   }
@@ -159,16 +158,16 @@ export async function proposeRelationships(
       const other = index.nodes.get(edge.fromId === node.id ? edge.toId : edge.fromId);
       return `${other?.label ?? "?"} (${edge.relation}, ${edge.review})`;
     });
+  const prompt = await loadPrompt(supabase, "taxonomy_relationships", { purpose: `Taxonomy: relationships for ${node.label}`, actor });
+  if (!prompt.ok) return prompt;
 
   const result = await callClaudeTool<{ relationships?: unknown }>({
-    system: [
-      "You help maintain a sector relationship graph used to decide which venture investors are relevant to a startup.",
-      "Propose only relationships an experienced venture investor would defend. Do not add links just to widen matches.",
-      "Relationship types, closest first:",
-      ...RELATIONS.map((relation) => `${relation}: ${RELATION_HELP[relation]}`),
+    // The relationship types and the limit are fixed: the code drops anything outside them.
+    system: promptSystem(
+      prompt.value,
+      ["Relationship types, closest first:", ...RELATIONS.map((relation) => `${relation}: ${RELATION_HELP[relation]}`)].join("\n"),
       `Propose at most ${EDGES_PER_CALL}. Proposing none is a valid answer.`,
-      "Each rationale must state the concrete reason (shared customers, technology, business model or investor practice).",
-    ].join("\n"),
+    ),
     messages: [
       {
         role: "user",
@@ -222,7 +221,7 @@ export async function proposeRelationships(
   const created = await createEdges(
     supabase,
     edges,
-    { origin: "ai", review: "needs_review", source: "AI suggestion" },
+    { origin: "ai", review: "needs_review", source: `AI suggestion (relationships prompt v${prompt.value.version})` },
     actor,
   );
   if (!created.ok) return created;

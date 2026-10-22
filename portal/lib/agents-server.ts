@@ -7,12 +7,8 @@ import {
   type ClaudeContentBlock,
   type ClaudeTool,
 } from "@/lib/anthropic";
-import {
-  AGENTS,
-  agentPromptSlug,
-  defaultAgentPrompts,
-  type AgentPrompts,
-} from "@/lib/agents";
+import { promptSystem, type PromptOverride } from "@/lib/prompts";
+import { loadPrompt, loadPrompts } from "@/lib/prompts-server";
 import {
   INTAKE_BRIEF_FIELDS,
   intakeMessageText,
@@ -55,26 +51,6 @@ import {
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
 export type AgentResult<T> = { ok: true; value: T } | { ok: false; error: string };
-
-// ---------------------------------------------------------------------------
-// Settings
-
-export async function loadAgentPrompts(supabase: ServiceClient): Promise<AgentPrompts> {
-  const prompts = defaultAgentPrompts();
-  const { data } = await supabase
-    .from("form_templates")
-    .select("slug, content")
-    .in(
-      "slug",
-      AGENTS.map((agent) => agentPromptSlug(agent.id)),
-    );
-  for (const row of data ?? []) {
-    const agent = AGENTS.find((item) => agentPromptSlug(item.id) === row.slug);
-    const content = row.content != null ? String(row.content).trim() : "";
-    if (agent && content) prompts[agent.id] = content;
-  }
-  return prompts;
-}
 
 // ---------------------------------------------------------------------------
 // Shared context
@@ -216,16 +192,29 @@ export async function saveIntakeBrief(
   return { ok: true, value: brief };
 }
 
+/** Writes the intake brief and saves it on the interview. */
 export async function writeIntakeBrief(
   supabase: ServiceClient,
   clientId: string,
 ): Promise<AgentResult<IntakeBrief>> {
-  const [loaded, interviewResult, prompts] = await Promise.all([
+  const generated = await draftIntakeBrief(supabase, clientId);
+  if (!generated.ok) return generated;
+  return saveIntakeBrief(supabase, clientId, generated.value);
+}
+
+/** Writes the intake brief without saving it (the Agents page tests prompts with this). */
+export async function draftIntakeBrief(
+  supabase: ServiceClient,
+  clientId: string,
+  override?: PromptOverride | null,
+): Promise<AgentResult<IntakeBrief>> {
+  const [loaded, interviewResult, prompt] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
-    loadAgentPrompts(supabase),
+    loadPrompt(supabase, "intake_brief", { clientId, purpose: "Intake brief", override }),
   ]);
   if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
   if (!interviewResult.ok) return { ok: false, error: interviewResult.error };
   const interview = interviewResult.interview;
   if (!interview || interview.messages.length === 0) {
@@ -243,14 +232,12 @@ export async function writeIntakeBrief(
       : "";
 
   const result = await callClaudeAgent<Record<string, unknown>>({
-    system: [
-      prompts.intake_brief,
+    system: promptSystem(
+      prompt.value,
       "## What was already known",
       buildClientContext(loaded.client),
       confirmed ? `## Summary the founder reviewed and confirmed\n${confirmed}` : "",
-    ]
-      .filter(Boolean)
-      .join("\n\n"),
+    ),
     content: [
       {
         type: "text",
@@ -276,7 +263,7 @@ export async function writeIntakeBrief(
     based_on: interview.updated_at,
     edited_at: null,
   };
-  return saveIntakeBrief(supabase, clientId, brief);
+  return { ok: true, value: brief };
 }
 
 // ---------------------------------------------------------------------------
@@ -406,16 +393,18 @@ export type AnalysisOutcome = { analysis: MaterialsAnalysis };
 export async function runMaterialsAnalysis(
   supabase: ServiceClient,
   clientId: string,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<AnalysisOutcome>> {
-  const [loaded, interviewResult, prompts, fields, grouped, profile] = await Promise.all([
+  const [loaded, interviewResult, prompt, fields, grouped, profile] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
-    loadAgentPrompts(supabase),
+    loadPrompt(supabase, "materials_analysis", { clientId, purpose: "Materials analysis", override }),
     loadMaterialFields(supabase),
     loadSetupSteps(supabase, [clientId]),
     profileContext(supabase, clientId),
   ]);
   if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
 
   const row = (grouped.get(clientId) ?? []).find((item) => item.step === "materials");
   if (!row || row.status !== "submitted") {
@@ -456,7 +445,7 @@ export async function runMaterialsAnalysis(
     .join("\n\n");
 
   const result = await callClaudeAgent<Record<string, unknown>>({
-    system: prompts.materials_analysis,
+    system: promptSystem(prompt.value),
     content: [
       { type: "text", text: context },
       ...files.blocks,
@@ -553,10 +542,13 @@ async function draftEmailMiddle(
 /** The middle of a nudge email (subject and body), from the Nudge page's context. */
 export async function draftNudgeMiddle(
   supabase: ServiceClient,
+  clientId: string,
   context: string,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
-  const prompts = await loadAgentPrompts(supabase);
-  return draftEmailMiddle(prompts.nudge_email, context);
+  const prompt = await loadPrompt(supabase, "nudge_email", { clientId, purpose: "Nudge email draft", override });
+  if (!prompt.ok) return prompt;
+  return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
 /** Everything Rupert knows about the company, as context for an email. */
@@ -602,6 +594,7 @@ export async function draftFeedbackEmail(
   clientId: string,
   draft: FeedbackDraft,
   version: number,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
   if (!draft.analysis?.summary.trim() || !draft.analysis.framing.trim()) {
     return {
@@ -609,11 +602,12 @@ export async function draftFeedbackEmail(
       error: "Write the Company Summary and Investor Framing first: the email is drafted from them.",
     };
   }
-  const [loaded, prompts] = await Promise.all([
+  const [loaded, prompt] = await Promise.all([
     loadClient(supabase, clientId),
-    loadAgentPrompts(supabase),
+    loadPrompt(supabase, "feedback_email", { clientId, purpose: "Feedback email draft", override }),
   ]);
   if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
   const company = await companyContext(supabase, clientId, loaded.client);
 
   const context = [
@@ -629,21 +623,7 @@ export async function draftFeedbackEmail(
     .filter(Boolean)
     .join("\n\n");
 
-  return draftEmailMiddle(prompts.feedback_email, context);
-}
-
-/** What a revised narrative's email must do: confirm the changes, then ask for the go-ahead. */
-function revisionBrief(feedbackConfirmed: boolean) {
-  return [
-    "## This email answers the founder's requested changes",
-    "Write it as a reply to their notes:",
-    "1. Thank them briefly and confirm the changes they asked for, naming each one in a few words (use the list of changes above; never claim a change that is not listed there).",
-    "2. Say the updated narrative is in their portal.",
-    feedbackConfirmed
-      ? "3. Say Rupert would like to start investor matching: ask them to confirm the narrative in the portal so he can begin, or to reply with any further comments."
-      : "3. Say Rupert would like to start investor matching: ask them to confirm the narrative and the Analysis & Feedback in the portal so he can begin, or to reply with any further comments.",
-    "Keep it under 140 words. This replaces the usual structure for this email.",
-  ].join("\n");
+  return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
 /** The email that goes with the narrative, from Rupert's edited narrative. */
@@ -652,14 +632,12 @@ export async function draftNarrativeEmail(
   clientId: string,
   narrative: NarrativePayload,
   version: number,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
   if (!narrative.core.trim()) {
     return { ok: false, error: "Write the narrative first: the email is drafted from it." };
   }
-  const [loaded, prompts] = await Promise.all([
-    loadClient(supabase, clientId),
-    loadAgentPrompts(supabase),
-  ]);
+  const loaded = await loadClient(supabase, clientId);
   if (!loaded.ok) return loaded;
   const company = await companyContext(supabase, clientId, loaded.client);
   const feedbackRow = company.rows.find((item) => item.step === "deck_review");
@@ -671,6 +649,14 @@ export async function draftNarrativeEmail(
       : "";
   const feedbackConfirmed =
     feedbackRow?.status === "confirmed" || feedbackRow?.status === "published";
+  // A reply to the founder's change requests adds its own managed instructions.
+  const prompts = await loadPrompts(
+    supabase,
+    clientAsk ? ["narrative_email", "narrative_email_revision"] : ["narrative_email"],
+    { clientId, purpose: clientAsk ? "Narrative email draft (reply to changes)" : "Narrative email draft", override },
+  );
+  if (!prompts.ok) return prompts;
+  const revision = clientAsk ? prompts.value.narrative_email_revision : null;
 
   const context = [
     ...founderLines(loaded.client, version),
@@ -685,7 +671,7 @@ export async function draftNarrativeEmail(
     clientAsk
       ? `## What Rupert changed\n${narrative.change_summary?.trim() || "(no list: describe the changes only from what the founder asked and what the narrative now says)"}`
       : "",
-    clientAsk ? revisionBrief(feedbackConfirmed) : "",
+    clientAsk ? `## Analysis & Feedback\n${feedbackConfirmed ? "Confirmed by the founder." : "Not confirmed yet."}` : "",
     "# Company information (context only)",
     feedback.analysis
       ? `## Rupert's Company Summary\n${feedback.analysis.summary}\n\n## Rupert's Investor Framing\n${feedback.analysis.framing}`
@@ -695,7 +681,10 @@ export async function draftNarrativeEmail(
     .filter(Boolean)
     .join("\n\n");
 
-  return draftEmailMiddle(prompts.narrative_email, context);
+  return draftEmailMiddle(
+    promptSystem(prompts.value.narrative_email, revision ? `## This email answers the founder's requested changes\n${revision.text}` : null),
+    context,
+  );
 }
 
 /** The email that goes with the investor list: tier counts and fund types only, never names. */
@@ -704,15 +693,17 @@ export async function draftInvestorListEmail(
   clientId: string,
   list: InvestorListPayload,
   version: number,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
   if (list.rows.length === 0) {
     return { ok: false, error: "Push the list from Rupert Match first: the email is drafted from it." };
   }
-  const [loaded, prompts] = await Promise.all([
+  const [loaded, prompt] = await Promise.all([
     loadClient(supabase, clientId),
-    loadAgentPrompts(supabase),
+    loadPrompt(supabase, "investor_list_email", { clientId, purpose: "Investor list email draft", override }),
   ]);
   if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
   const company = await companyContext(supabase, clientId, loaded.client);
   const listRow = company.rows.find((item) => item.step === "investor_list");
   const clientAsk =
@@ -730,7 +721,7 @@ export async function draftInvestorListEmail(
     .filter(Boolean)
     .join("\n\n");
 
-  return draftEmailMiddle(prompts.investor_list_email, context);
+  return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
 // ---------------------------------------------------------------------------
@@ -804,16 +795,18 @@ export type NarrativeBuild = {
 export async function buildNarrative(
   supabase: ServiceClient,
   clientId: string,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<NarrativeBuild>> {
-  const [loaded, interviewResult, prompts, fields, grouped, profile] = await Promise.all([
+  const [loaded, interviewResult, prompt, fields, grouped, profile] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
-    loadAgentPrompts(supabase),
+    loadPrompt(supabase, "outreach_narrative", { clientId, purpose: "Outreach narrative", override }),
     loadMaterialFields(supabase),
     loadSetupSteps(supabase, [clientId]),
     profileContext(supabase, clientId),
   ]);
   if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
 
   const rows = grouped.get(clientId) ?? [];
   const materialsRow = rows.find((item) => item.step === "materials");
@@ -863,7 +856,7 @@ export async function buildNarrative(
   // A first build has nothing to fall back on, so an incomplete answer is retried once.
   for (let attempt = 0; attempt < (revising ? 1 : 2); attempt += 1) {
     const result = await callClaudeAgent<Record<string, unknown>>({
-      system: prompts.outreach_narrative,
+      system: promptSystem(prompt.value),
       content: [{ type: "text", text: `${context}\n\n${instruction}` }],
       tool,
       maxTokens: 8000,
@@ -1019,14 +1012,16 @@ function intakeSummaryText(interview: { admin_brief?: { summary?: string } | nul
 export async function draftEmailCopy(
   supabase: ServiceClient,
   clientId: string,
+  override?: PromptOverride | null,
 ): Promise<AgentResult<EmailCopyPayload>> {
-  const [loaded, interviewResult, prompts, grouped] = await Promise.all([
+  const [loaded, interviewResult, prompt, grouped] = await Promise.all([
     loadClient(supabase, clientId),
     loadInterview(supabase, clientId),
-    loadAgentPrompts(supabase),
+    loadPrompt(supabase, "email_copy", { clientId, purpose: "Email copy", override }),
     loadSetupSteps(supabase, [clientId]),
   ]);
   if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
 
   const rows = grouped.get(clientId) ?? [];
   const framingRow = rows.find((item) => item.step === "framing");
@@ -1082,7 +1077,7 @@ export async function draftEmailCopy(
     .join("\n\n");
 
   const result = await callClaudeAgent<Record<string, unknown>>({
-    system: prompts.email_copy,
+    system: promptSystem(prompt.value),
     content: [
       {
         type: "text",

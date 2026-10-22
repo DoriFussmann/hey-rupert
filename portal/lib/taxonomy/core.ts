@@ -95,6 +95,8 @@ export type AiProposal = {
   confidence: number;
   rationale: string;
   at: string;
+  /** The version of the managed mapping prompt used (absent on older suggestions). */
+  promptVersion?: number;
 };
 
 export type TaxAlias = {

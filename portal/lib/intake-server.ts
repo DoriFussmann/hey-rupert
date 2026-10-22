@@ -1,11 +1,11 @@
 import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeTool, type ClaudeMessage } from "@/lib/anthropic";
+import { promptSystem, type ActivePrompt, type PromptOverride } from "@/lib/prompts";
+import { loadPrompt } from "@/lib/prompts-server";
 import {
   asIntakeBrief,
-  DEFAULT_INTAKE_PROMPT,
   DEFAULT_INTAKE_TOPICS,
-  INTAKE_PROMPT_SLUG,
   intakeMessageText,
   INTAKE_TOPICS_SLUG,
   isTopicCoverage,
@@ -22,7 +22,8 @@ import {
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
-export type IntakeSettings = { prompt: string; topics: IntakeTopic[] };
+/** The interview topics. The interviewer's instructions are a managed prompt (Agents → Intake interviewer). */
+export type IntakeSettings = { topics: IntakeTopic[] };
 
 export async function loadIntakeSettings(
   supabase: ServiceClient,
@@ -30,16 +31,10 @@ export async function loadIntakeSettings(
   const { data } = await supabase
     .from("form_templates")
     .select("slug, content")
-    .in("slug", [INTAKE_PROMPT_SLUG, INTAKE_TOPICS_SLUG]);
-
-  const rows = new Map(
-    (data ?? []).map((row) => [String(row.slug), String(row.content ?? "")]),
-  );
-
-  const prompt = rows.get(INTAKE_PROMPT_SLUG)?.trim() || DEFAULT_INTAKE_PROMPT;
+    .eq("slug", INTAKE_TOPICS_SLUG);
 
   let topics = DEFAULT_INTAKE_TOPICS;
-  const rawTopics = rows.get(INTAKE_TOPICS_SLUG);
+  const rawTopics = data?.[0]?.content != null ? String(data[0].content) : "";
   if (rawTopics) {
     try {
       topics = parseIntakeTopics(JSON.parse(rawTopics)) ?? DEFAULT_INTAKE_TOPICS;
@@ -48,7 +43,7 @@ export async function loadIntakeSettings(
     }
   }
 
-  return { prompt, topics: withMatchingTopics(topics) };
+  return { topics: withMatchingTopics(topics) };
 }
 
 function asMessages(value: unknown): IntakeMessage[] {
@@ -201,29 +196,28 @@ function topicsBlock(
     .join("\n");
 }
 
+/** The managed interviewer prompt, then what the code adds: the facts, the topics and the reply format. */
 function systemPrompt(
+  prompt: ActivePrompt,
   settings: IntakeSettings,
   context: string,
   topicStatus: Record<string, TopicStatus>,
   guide: string | null,
 ) {
-  return [
-    settings.prompt,
+  return promptSystem(
+    prompt,
     "## What you already know about the company",
     context,
     "## Interview topics",
     topicsBlock(settings.topics, topicStatus),
-    ...(guide ? [guide] : []),
-    "## When the essentials are done",
-    "The intake is complete as soon as every required topic is covered: Rupert then has what he needs to start, and the founder is notified that the essentials are done. When your topic update marks the last required topic as covered (in this turn or earlier), make this clear in your reply, once: say warmly that the essentials are done and Rupert has what he needs to get started; then name the remaining optional topics, explain in one sentence that a few more minutes on them can make the campaign noticeably sharper, recommend continuing, and ask whether they would like to. If they prefer to stop, thank them and tell them they are all set. If every topic, required and optional, is covered, thank them and say they can review their summary anytime. This section overrides any earlier instruction about when to offer the summary.",
+    guide,
     "## How to respond",
     "Always respond by calling the `respond` tool. `reply` is the message the founder sees. `topics` reports the coverage of EVERY topic after this turn: `covered` when you have what the topic needs, `partial` when you have some of it, `missing` otherwise. `note` is a short factual summary of what you have learned for that topic so far (empty if nothing). Count information you already knew from the company details as known.",
-  ].join("\n\n");
+  );
 }
 
-// The API requires the conversation to start with a user turn.
-const OPENING_USER_TURN =
-  "[The founder has just opened the intake interview. Greet them by first name if you know it, explain in one sentence what this is for and roughly how long it takes, then ask your first question.]";
+// The API requires the conversation to start with a user turn. How to open is in the managed prompt.
+const OPENING_USER_TURN = "[The founder has just opened the intake interview.]";
 
 function toClaudeMessages(messages: IntakeMessage[]): { role: "user" | "assistant"; content: string }[] {
   const turns: { role: "user" | "assistant"; content: string }[] = [
@@ -314,6 +308,7 @@ const DOCUMENT_TURN_TIMEOUT_MS = 100_000;
 
 /** Asks Claude for Rupert's next message, given the conversation so far. */
 export async function nextInterviewTurn(
+  supabase: ServiceClient,
   settings: IntakeSettings,
   client: Record<string, unknown>,
   messages: IntakeMessage[],
@@ -321,7 +316,14 @@ export async function nextInterviewTurn(
   document?: SharedDocument,
   /** The sector classification guide, for interviews that use it. */
   guide: string | null = null,
+  override?: PromptOverride | null,
 ): Promise<{ ok: true; turn: InterviewTurn } | { ok: false; reason: string }> {
+  const prompt = await loadPrompt(supabase, "intake_interviewer", {
+    clientId: String(client.id ?? ""),
+    purpose: "Intake interview reply",
+    override,
+  });
+  if (!prompt.ok) return { ok: false, reason: prompt.error };
   const turns: ClaudeMessage[] = toClaudeMessages(messages);
   const last = turns[turns.length - 1];
   if (document && last.role === "user" && typeof last.content === "string") {
@@ -340,7 +342,7 @@ export async function nextInterviewTurn(
   }
 
   const result = await callClaudeTool<unknown>({
-    system: systemPrompt(settings, buildClientContext(client), topicStatus, guide),
+    system: systemPrompt(prompt.value, settings, buildClientContext(client), topicStatus, guide),
     messages: turns,
     tool: RESPOND_TOOL,
     maxTokens: document ? 3000 : 1024,
@@ -381,28 +383,33 @@ const SUMMARY_TOOL = {
 
 /** Asks Claude for a concise, factual summary per topic. */
 export async function writeInterviewSummary(
+  supabase: ServiceClient,
   settings: IntakeSettings,
   client: Record<string, unknown>,
   messages: IntakeMessage[],
   topicStatus: Record<string, TopicStatus>,
+  override?: PromptOverride | null,
 ): Promise<{ ok: true; items: IntakeSummaryItem[] } | { ok: false; reason: string }> {
+  const prompt = await loadPrompt(supabase, "intake_summary", {
+    clientId: String(client.id ?? ""),
+    purpose: "Intake summary",
+    override,
+  });
+  if (!prompt.ok) return { ok: false, reason: prompt.error };
   const transcript = messages
     .map((message) =>
       `${message.role === "assistant" ? "Rupert" : "Founder"}: ${intakeMessageText(message)}`,
     )
     .join("\n\n");
 
-  const system = [
-    "You write the intake summary for Hey Rupert's team from an interview with a founder.",
-    "For each topic, write a concise, factual answer in plain sentences or short lists, using only what the founder said or what was already known. If nothing was learned for a topic, answer exactly \"Not provided.\" Do not add opinions or advice.",
-    "## What was already known",
-    buildClientContext(client),
-    "## Topics",
-    topicsBlock(settings.topics, topicStatus),
-  ].join("\n\n");
-
   const result = await callClaudeTool<{ items?: unknown }>({
-    system,
+    system: promptSystem(
+      prompt.value,
+      "## What was already known",
+      buildClientContext(client),
+      "## Topics",
+      topicsBlock(settings.topics, topicStatus),
+    ),
     messages: [
       {
         role: "user",

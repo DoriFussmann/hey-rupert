@@ -18,7 +18,7 @@ export default async function IntakePage() {
     client && open ? getIntakeInterview(client.id) : Promise.resolve(null),
     isServiceRoleConfigured()
       ? loadIntakeSettings(createServiceClient())
-      : Promise.resolve({ prompt: "", topics: DEFAULT_INTAKE_TOPICS }),
+      : Promise.resolve({ topics: DEFAULT_INTAKE_TOPICS }),
   ]);
 
   const firstName =

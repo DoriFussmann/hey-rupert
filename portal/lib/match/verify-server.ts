@@ -16,6 +16,8 @@ import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
 import { rankedContactId } from "@/lib/match/run-server";
 import { TIER_INFO, TIER_KEYS } from "@/lib/match/tiers/core";
 import { latestTierRun, liveFourTier } from "@/lib/match/tiers/server";
+import { promptSystem, type ActivePrompt } from "@/lib/prompts";
+import { loadPrompt } from "@/lib/prompts-server";
 import { rowKey } from "@/lib/match/tiers/record";
 import { loadPlanForRun, plannedIds } from "@/lib/match/capacity/server";
 import {
@@ -755,19 +757,6 @@ function personBlock(contact: VerifyContact) {
   ].join("\n");
 }
 
-const ROLE_SYSTEM = `You check whether a person in an investor database still works at the firm listed for them, and in what role. Use web search. The firm's own team page and public LinkedIn profiles are the best sources; recent press, portfolio announcements and conference bios also help.
-
-Rules:
-- Rely only on pages you actually found in search results. Never guess or invent a URL.
-- Make sure a page is about this person: the same name AND this firm, or a clearly matching career. A person with the same name elsewhere is not evidence.
-- Prefer the most recent source. When sources disagree, trust the most recent dated one.
-- confirmed: a source shows them at this firm in an investing role (for example general partner, managing partner, partner, managing director, principal, vice president, director, associate, analyst, venture partner, investment manager, scout, or a founder of the fund).
-- role_changed: they are at this firm but in a non-investing role (for example operations, finance, legal, marketing, investor relations, platform, talent, office or admin).
-- left_firm: a source shows they left this firm or now work elsewhere. Give the new firm, its website and their new title when a source shows them.
-- not_found: no reliable source either way.
-
-Report through the report_role tool. The summary is one plain sentence.`;
-
 const ROLE_TOOL = {
   name: "report_role",
   description: "Report whether the person is at the firm, and in what role.",
@@ -788,9 +777,9 @@ const ROLE_TOOL = {
 
 const ROLE_RESULTS = new Set(["confirmed", "role_changed", "left_firm", "not_found"]);
 
-async function stepRole(contact: VerifyContact): Promise<{ step: RoleStep; cost: Partial<CheckCost> }> {
+async function stepRole(contact: VerifyContact, prompt: ActivePrompt): Promise<{ step: RoleStep; cost: Partial<CheckCost> }> {
   const result = await callClaudeAgent<Record<string, unknown>>({
-    system: ROLE_SYSTEM,
+    system: promptSystem(prompt),
     content: [{ type: "text", text: personBlock(contact) }],
     tool: ROLE_TOOL,
     serverTools: [webSearchTool(ROLE_MAX_SEARCHES)],
@@ -818,6 +807,7 @@ async function stepRole(contact: VerifyContact): Promise<{ step: RoleStep; cost:
       newTitle: left ? text(input.new_title, 200) : "",
       summary: text(input.summary, 400),
       evidence: cleanEvidence(input.evidence),
+      promptVersion: prompt.version,
     },
     cost,
   };
@@ -910,6 +900,13 @@ export async function runVerificationStep(
   const contacts = batchContacts(row, batch);
   const rows = await loadCheckRows(supabase, contacts);
   if (!rows.ok) return rows;
+  // The role check's managed prompt, read once for the batch.
+  let rolePrompt: ActivePrompt | null = null;
+  if (step === 1) {
+    const loadedPrompt = await loadPrompt(supabase, "verify_role_check", { clientId, purpose: `Verify emails: role check, batch ${batch + 1}` });
+    if (!loadedPrompt.ok) return loadedPrompt;
+    rolePrompt = loadedPrompt.value;
+  }
 
   const saved = new Map<string, CheckRow>();
   const errors: string[] = [];
@@ -926,9 +923,11 @@ export async function runVerificationStep(
       let cost = resuming ? costOf(current) : { ...ZERO_COST };
       if (needsStep(steps, step)) {
         if (step === 1) {
-          const done = await stepRole(contact);
-          steps.role = done.step;
-          cost = addCost(cost, done.cost);
+          if (rolePrompt) {
+            const done = await stepRole(contact, rolePrompt);
+            steps.role = done.step;
+            cost = addCost(cost, done.cost);
+          }
         } else {
           const done = await stepMailbox(contact);
           steps.mailbox = done.step;

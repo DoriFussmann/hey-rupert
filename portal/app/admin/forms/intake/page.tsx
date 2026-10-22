@@ -10,15 +10,10 @@ export default async function IntakeInterviewerPage() {
     <>
       <PageHeader
         title="Intake Interviewer"
-        description="How Rupert runs the client intake interview: his instructions, and the topics he must cover. Changes apply to interviews from the next message on."
+        description="The topics Rupert must cover in the client intake interview. Changes apply to interviews from the next message on."
         actions={<TestClaudeButton />}
       />
-      <IntakeSettingsEditor
-        initialPrompt={settings.prompt}
-        initialTopics={settings.topics}
-        defaultPrompt={settings.defaults.prompt}
-        defaultTopics={settings.defaults.topics}
-      />
+      <IntakeSettingsEditor initialTopics={settings.topics} defaultTopics={settings.defaults.topics} />
     </>
   );
 }

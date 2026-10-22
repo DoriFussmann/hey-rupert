@@ -3,7 +3,8 @@ import RME, { type Level, type MatchProfile, type Tier } from "@/lib/match/engin
 import { intakeToProfile } from "@/lib/match/intake/to-profile.mjs";
 import questionBank from "@/lib/match/intake/intake-questions.json";
 import { callClaudeTool } from "@/lib/anthropic";
-import { loadAgentPrompts } from "@/lib/agents-server";
+import { promptSystem, type PromptOverride } from "@/lib/prompts";
+import { loadPrompt } from "@/lib/prompts-server";
 import { intakeMessageText, type IntakeInterview } from "@/lib/intake";
 import {
   BUSINESS_MODELS,
@@ -359,17 +360,18 @@ export async function extractAnswers(
   client: Record<string, unknown>,
   interview: IntakeInterview,
   taxonomy: TaxIndex | null = null,
+  override?: PromptOverride | null,
 ): Promise<
-  { ok: true; answers: MatchAnswers; classification: AiClassification | null } | { ok: false; error: string }
+  | { ok: true; answers: MatchAnswers; classification: AiClassification | null; promptVersion: number }
+  | { ok: false; error: string }
 > {
-  const prompts = await loadAgentPrompts(supabase);
-  const system = [
-    prompts.match_profile,
-    profileLabelsText(),
-    "## What was already known",
-    knownFacts(client),
-    ...(taxonomy ? [classificationRules(taxonomy)] : []),
-  ].join("\n\n");
+  const prompt = await loadPrompt(supabase, "match_profile", {
+    clientId: String(client.id ?? ""),
+    purpose: "Company profile from the intake",
+    override,
+  });
+  if (!prompt.ok) return prompt;
+
   const tool = taxonomy
     ? {
         ...PROFILE_TOOL,
@@ -381,7 +383,14 @@ export async function extractAnswers(
     : PROFILE_TOOL;
 
   const result = await callClaudeTool<Record<string, unknown>>({
-    system,
+    // The allowed labels and the classification rules are fixed: the code checks the answer against them.
+    system: promptSystem(
+      prompt.value,
+      profileLabelsText(),
+      "## What was already known",
+      knownFacts(client),
+      taxonomy ? classificationRules(taxonomy) : null,
+    ),
     messages: [
       {
         role: "user",
@@ -395,6 +404,7 @@ export async function extractAnswers(
   const classification = result.input.classification;
   return {
     ok: true,
+    promptVersion: prompt.value.version,
     answers: cleanAnswers(result.input),
     classification:
       taxonomy && classification && typeof classification === "object"

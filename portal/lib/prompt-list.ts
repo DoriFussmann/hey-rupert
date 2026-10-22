@@ -1,0 +1,33 @@
+// The AI prompts Rupert uses, by name and area only: small enough for the
+// admin nav. Their texts and details are in lib/prompts.ts. Pure module.
+
+export type PromptGroup = "Intake" | "Company and narrative" | "Emails to founders" | "Matching" | "Taxonomy" | "Test Pilot";
+
+export const PROMPT_GROUPS: PromptGroup[] = ["Intake", "Company and narrative", "Emails to founders", "Matching", "Taxonomy", "Test Pilot"];
+
+export const PROMPT_LIST = [
+  { key: "intake_interviewer", title: "Intake interviewer", group: "Intake" },
+  { key: "intake_summary", title: "Intake summary (founder reviews)", group: "Intake" },
+  { key: "intake_brief", title: "Intake brief (for Rupert)", group: "Intake" },
+  { key: "materials_analysis", title: "Materials analysis", group: "Company and narrative" },
+  { key: "outreach_narrative", title: "Outreach narrative", group: "Company and narrative" },
+  { key: "email_copy", title: "Email copy", group: "Company and narrative" },
+  { key: "match_profile", title: "Match profile", group: "Company and narrative" },
+  { key: "feedback_email", title: "Feedback email", group: "Emails to founders" },
+  { key: "narrative_email", title: "Narrative email", group: "Emails to founders" },
+  { key: "narrative_email_revision", title: "Narrative email: reply to changes", group: "Emails to founders" },
+  { key: "investor_list_email", title: "Investor list email", group: "Emails to founders" },
+  { key: "nudge_email", title: "Nudge email", group: "Emails to founders" },
+  { key: "verify_role_check", title: "Verify emails: role check", group: "Matching" },
+  { key: "taxonomy_mapping", title: "Taxonomy: map raw labels", group: "Taxonomy" },
+  { key: "taxonomy_relationships", title: "Taxonomy: suggest relationships", group: "Taxonomy" },
+  { key: "test_pilot_intake", title: "Test Pilot: intake answers", group: "Test Pilot" },
+  { key: "test_pilot_materials", title: "Test Pilot: materials form", group: "Test Pilot" },
+] as const satisfies readonly { key: string; title: string; group: PromptGroup }[];
+
+export type PromptKey = (typeof PROMPT_LIST)[number]["key"];
+
+/** The admin page of one prompt. */
+export function promptPath(key: PromptKey) {
+  return `/admin/forms/agents/${key}`;
+}

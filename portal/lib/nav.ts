@@ -1,5 +1,7 @@
-/** One link in the admin nav. `hash` links jump to a section of the page. */
-export type AdminNavItem = { href: string; label: string; hash?: string };
+import { PROMPT_LIST, promptPath } from "./prompt-list.ts";
+
+/** One link in the admin nav. `hash` links jump to a section of the page; `exact` links don't cover the pages below them. */
+export type AdminNavItem = { href: string; label: string; hash?: string; exact?: boolean };
 
 export type AdminNavGroup = { id: string; label: string; items: readonly AdminNavItem[] };
 
@@ -37,8 +39,9 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
     id: "agents",
     label: "Agents",
     items: [
-      { href: "/admin/forms/intake", label: "Intake Interviewer" },
-      { href: "/admin/forms/agents", label: "AI Agents" },
+      { href: "/admin/forms/agents", label: "All prompts", exact: true },
+      { href: "/admin/forms/intake", label: "Intake topics" },
+      ...PROMPT_LIST.map((prompt) => ({ href: promptPath(prompt.key), label: prompt.title })),
     ],
   },
   {
@@ -61,7 +64,7 @@ export function navPathMatches(pathname: string, href: string) {
 
 /** Whether a link is the current page. On a page with section links, the first section counts when there is no hash. */
 export function navItemActive(pathname: string, hash: string, item: AdminNavItem, group: AdminNavGroup) {
-  if (!navPathMatches(pathname, item.href)) return false;
+  if (item.exact ? pathname !== item.href : !navPathMatches(pathname, item.href)) return false;
   if (!item.hash) return true;
   const sections = group.items.filter((other) => other.href === item.href && other.hash);
   const current = sections.some((other) => other.hash === hash) ? hash : sections[0]?.hash;

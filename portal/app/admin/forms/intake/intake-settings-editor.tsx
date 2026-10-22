@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { saveIntakeSettings } from "@/app/admin/actions";
 import { setAdminFlash, useAdminFlash } from "@/lib/admin-flash";
 import { matchingUse, topicIdFromTitle, type IntakeTopic } from "@/lib/intake";
@@ -14,17 +15,12 @@ const smallButton =
 const FLASH_KEY = "intake-settings";
 
 export function IntakeSettingsEditor({
-  initialPrompt,
   initialTopics,
-  defaultPrompt,
   defaultTopics,
 }: {
-  initialPrompt: string;
   initialTopics: IntakeTopic[];
-  defaultPrompt: string;
   defaultTopics: IntakeTopic[];
 }) {
-  const [prompt, setPrompt] = useState(initialPrompt);
   const [topics, setTopics] = useState<IntakeTopic[]>(initialTopics);
   const [pending, setPending] = useState(false);
   const flash = useAdminFlash(FLASH_KEY);
@@ -66,10 +62,9 @@ export function IntakeSettingsEditor({
 
   function restoreDefaults() {
     const confirmed = window.confirm(
-      "Replace the instructions and topics with the defaults? Nothing is saved until you click Save.",
+      "Replace the topics with the defaults? Nothing is saved until you click Save.",
     );
     if (!confirmed) return;
-    setPrompt(defaultPrompt);
     setTopics(defaultTopics);
     setAdminFlash(FLASH_KEY, {
       kind: "ok",
@@ -82,7 +77,7 @@ export function IntakeSettingsEditor({
     setAdminFlash(FLASH_KEY, null);
 
     try {
-      const result = await saveIntakeSettings(prompt, topics);
+      const result = await saveIntakeSettings(topics);
       setAdminFlash(
         FLASH_KEY,
         result.ok
@@ -104,18 +99,12 @@ export function IntakeSettingsEditor({
       <section className="rounded-card border border-border bg-surface p-lg">
         <h2 className="text-h4">Rupert&apos;s instructions</h2>
         <p className="mt-xs text-body-sm text-muted">
-          Persona and interview style. Rupert also receives the company details
-          you entered, the Statement of Work and the topics below.
+          Persona, interview style, and how to open and close are a managed prompt, with every version kept.{" "}
+          <Link href="/admin/forms/agents/intake_interviewer" className="text-primary underline hover:text-primary-hover">
+            Edit the Intake interviewer prompt
+          </Link>
+          . Rupert also receives the company details you entered and the topics below.
         </p>
-        <label className={`${labelClass} mt-md`}>
-          Instructions
-          <textarea
-            className={`${fieldClass} min-h-[320px] resize-y`}
-            value={prompt}
-            onChange={(event) => setPrompt(event.target.value)}
-            spellCheck
-          />
-        </label>
       </section>
 
       <section className="rounded-card border border-border bg-surface">

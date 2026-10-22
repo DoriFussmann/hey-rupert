@@ -88,6 +88,7 @@ function asProposal(value: unknown): AiProposal | null {
     confidence: Number(raw.confidence ?? 0),
     rationale: text(raw.rationale),
     at: text(raw.at),
+    ...(Number.isInteger(raw.promptVersion) ? { promptVersion: Number(raw.promptVersion) } : {}),
   };
 }
 

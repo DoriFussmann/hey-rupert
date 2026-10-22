@@ -39,6 +39,7 @@ test("the current page opens its group and highlights its link", () => {
   assert.equal(activeNavGroup("/admin/forms/emails"), "emails");
   assert.equal(activeNavGroup("/admin/nudge"), "emails");
   assert.equal(activeNavGroup("/admin/forms/agents"), "agents");
+  assert.equal(activeNavGroup("/admin/forms/agents/feedback_email"), "agents");
   assert.equal(activeNavGroup("/nowhere"), null);
   assert.ok(navItemActive("/admin/clients/x", "", item("clients", "Clients"), group("clients")));
   assert.ok(!navItemActive("/admin/timeline", "", item("clients", "Clients"), group("clients")));
@@ -53,4 +54,15 @@ test("section links: the one in the hash is current, the first one when there is
   assert.ok(navItemActive("/admin/forms/emails", "emails-reminder", reminders, emails));
   assert.ok(!navItemActive("/admin/forms/emails", "emails-reminder", client, emails));
   assert.ok(!navItemActive("/admin/nudge", "", client, emails));
+});
+
+test("Agents: one link per managed prompt; All prompts is current only on the list itself", () => {
+  const agents = group("agents");
+  const all = item("agents", "All prompts");
+  const feedback = item("agents", "Feedback email");
+  assert.equal(feedback.href, "/admin/forms/agents/feedback_email");
+  assert.equal(agents.items.length, 2 + 17);
+  assert.ok(navItemActive("/admin/forms/agents", "", all, agents));
+  assert.ok(!navItemActive("/admin/forms/agents/feedback_email", "", all, agents));
+  assert.ok(navItemActive("/admin/forms/agents/feedback_email", "", feedback, agents));
 });
