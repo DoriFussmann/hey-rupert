@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { buildMatchProfile } from "@/app/admin/match-actions";
 import { formatDateAtTime } from "@/lib/format";
-import { matchPath, type MatchAnswers, type MatchProfileState } from "@/lib/match/shared";
+import type { MatchAnswers, MatchProfileState } from "@/lib/match/shared";
 
 /** The interview changed after the profile was built from it. */
 function isBehind(state: MatchProfileState, interviewUpdatedAt: string | null) {
@@ -18,52 +18,54 @@ function value(answers: MatchAnswers, id: string) {
 }
 
 /**
- * The company profile at a glance on the client page. The profile is built
- * from the intake automatically the first time the page is opened after the
- * intake (and again when the intake changed, unless it was edited by hand).
+ * The company profile at a glance on the client page. It is built only when
+ * Rupert clicks Analyze, once the intake and the materials are in; new
+ * intake information is flagged so he can analyze again.
  */
 export function CompanyProfileCard({
   clientId,
   initialState,
   interviewUpdatedAt,
-  hasInterview,
+  blockedReason,
   claudeReady,
 }: {
   clientId: string;
   initialState: MatchProfileState | null;
   interviewUpdatedAt: string | null;
-  hasInterview: boolean;
+  /** Why Analyze can't run yet (intake or materials not in), or null. */
+  blockedReason: string | null;
   claudeReady: boolean;
 }) {
   const [state, setState] = useState(initialState);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const started = useRef(false);
 
-  useEffect(() => {
-    if (started.current || !hasInterview || !claudeReady) return;
-    const due =
-      !initialState ||
-      (!initialState.editedAt && isBehind(initialState, interviewUpdatedAt));
-    if (!due) return;
-    started.current = true;
+  const behind = state ? isBehind(state, interviewUpdatedAt) : false;
+
+  async function onAnalyze() {
+    if (
+      state?.editedAt &&
+      !window.confirm("Analyze again from the intake? Your edits to the profile will be replaced.")
+    ) {
+      return;
+    }
     setPending(true);
-    buildMatchProfile(clientId)
-      .then((result) => {
-        if (result.ok) setState(result.state);
-        else setError(result.error);
-      })
-      .catch((err) =>
-        setError(err instanceof Error ? err.message : "The company profile could not be built."),
-      )
-      .finally(() => setPending(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount
-  }, []);
+    setError(null);
+    try {
+      const result = await buildMatchProfile(clientId);
+      if (result.ok) setState(result.state);
+      else setError(result.error);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "The company profile could not be built.");
+    } finally {
+      setPending(false);
+    }
+  }
 
   const status = pending
-    ? { label: "Building from the intake…", tone: "text-muted border-border" }
+    ? { label: "Analyzing…", tone: "text-muted border-border" }
     : !state
-      ? { label: "Not built yet", tone: "text-muted border-border" }
+      ? { label: "Not analyzed yet", tone: "text-muted border-border" }
       : state.status === "ready"
         ? { label: "Ready to match", tone: "text-success border-success/40" }
         : { label: "Needs info", tone: "text-warning border-warning/40" };
@@ -73,18 +75,15 @@ export function CompanyProfileCard({
     { label: "Stage", value: value(answers, "stage") },
     { label: "Raising", value: value(answers, "raise_amount") },
     { label: "Sector", value: value(answers, "core_vertical") || value(answers, "core_industry") },
-    {
-      label: "HQ",
-      value: [value(answers, "hq_city"), value(answers, "hq_country")].filter(Boolean).join(", "),
-    },
   ];
+  const unavailable = !claudeReady ? "ANTHROPIC_API_KEY is not configured." : blockedReason;
 
   return (
     <section className="mb-lg rounded-card border border-border bg-surface">
       <div className="flex flex-wrap items-start justify-between gap-md px-lg py-md">
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-sm">
-            <h2 className="text-h4 text-heading">Company profile</h2>
+            <h2 className="text-h4 text-heading">Company Profile</h2>
             <span className={`rounded-full border px-sm py-px text-label uppercase tracking-label ${status.tone}`}>
               {status.label}
             </span>
@@ -92,27 +91,34 @@ export function CompanyProfileCard({
           <p className="mt-xs text-body-sm text-muted">
             {value(answers, "one_liner") ||
               (state?.builtAt
-                ? `Built from the intake ${formatDateAtTime(state.builtAt)}.`
-                : "The source of truth for matching, the analysis and the narrative.")}
+                ? `Analyzed from the intake ${formatDateAtTime(state.builtAt)}.`
+                : "Analyze builds the profile from the intake and the materials. Matching, the narrative and the emails read from it.")}
           </p>
         </div>
         <div className="flex flex-wrap gap-sm">
-          <Link
-            href={matchPath(clientId)}
-            className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+          <button
+            type="button"
+            onClick={() => void onAnalyze()}
+            disabled={pending || Boolean(unavailable)}
+            title={unavailable ?? undefined}
+            className={`rounded-md px-md py-sm text-body-sm transition-colors duration-hover disabled:opacity-40 ${
+              !state || behind
+                ? "bg-primary text-white hover:bg-primary-hover"
+                : "border border-border bg-surface text-secondary hover:text-heading"
+            }`}
           >
-            Matching
-          </Link>
+            {pending ? "Analyzing…" : state ? "Re-analyze" : "Analyze"}
+          </button>
           <Link
             href={`/admin/clients/${clientId}/profile`}
-            className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
+            className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
           >
-            Open company profile
+            Open Company Profile
           </Link>
         </div>
       </div>
       {state ? (
-        <dl className="grid gap-px border-t border-border bg-border sm:grid-cols-4">
+        <dl className="grid gap-px border-t border-border bg-border sm:grid-cols-3">
           {facts.map((fact) => (
             <div key={fact.label} className="bg-surface px-lg py-sm">
               <dt className="text-label uppercase tracking-label text-muted">{fact.label}</dt>
@@ -123,15 +129,18 @@ export function CompanyProfileCard({
           ))}
         </dl>
       ) : null}
+      {unavailable && !pending ? (
+        <p className="border-t border-border px-lg py-sm text-body-sm text-muted">{unavailable}</p>
+      ) : null}
       {state && state.gaps.length > 0 ? (
         <p className="border-t border-border px-lg py-sm text-body-sm text-warning">
           Matching needs: {state.gaps.map((gap) => gap.label).join(", ")}. Add it in the company profile.
         </p>
       ) : null}
-      {state?.editedAt && isBehind(state, interviewUpdatedAt) ? (
+      {behind && !pending ? (
         <p className="border-t border-border px-lg py-sm text-body-sm text-secondary">
-          The intake changed since the profile was built. Your edits are kept; rebuild it from the
-          company profile to pick up the new answers.
+          New intake info since last analysis. Re-analyze to use it
+          {state?.editedAt ? " (your edits to the profile will be replaced)" : ""}.
         </p>
       ) : null}
       {error ? (

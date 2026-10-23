@@ -462,7 +462,10 @@ export function IntakeExperience({
     }
   }
 
-  const chatOpen = !readOnly && !limitReached && !completed && !reviewing;
+  // Closed by Rupert's team before the founder started: nothing to continue.
+  const closedWithoutChat = completed && messages.length === 0;
+  // A confirmed intake stays open, so the founder can come back and add more.
+  const chatOpen = !readOnly && !limitReached && !reviewing && !closedWithoutChat;
   const canWrite = chatOpen && pending === null;
 
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
@@ -685,7 +688,7 @@ export function IntakeExperience({
             {completed
               ? "Intake complete"
               : intakeDone
-                ? "Essentials done"
+                ? "You're done"
                 : essentialsDone
                   ? "Almost there"
                   : "Your intake"}
@@ -725,15 +728,15 @@ export function IntakeExperience({
         <div className="border-t border-border px-lg py-md">
           <button
             type="button"
-            className={`${intakeDone ? secondaryButton : primaryButton} w-full`}
+            className={`${intakeDone ? primaryButton : secondaryButton} w-full`}
             disabled={!intakeDone || pending !== null || readOnly}
             onClick={() => void run("summary", requestIntakeSummary)}
           >
-            {pending === "summary" ? "Writing your summary…" : "Review summary"}
+            {pending === "summary" ? "Writing your summary…" : "Review Summary"}
           </button>
           <p className="mt-sm text-center text-body-sm text-muted">
             {intakeDone
-              ? "Optional. Rupert already has what he needs."
+              ? "Check what Rupert gathered and confirm it. The extras are optional."
               : "Opens once the essentials and your materials are in."}
           </p>
         </div>
@@ -778,7 +781,7 @@ export function IntakeExperience({
     </div>
   ) : null;
 
-  if (completed) {
+  if (closedWithoutChat) {
     return (
       <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px]">
         <section className="rounded-card border border-border bg-surface">
@@ -900,7 +903,53 @@ export function IntakeExperience({
     );
   }
 
-  const essentialsBanner = essentialsDone ? (
+  const summaryDetails = interview?.summary ? (
+    <details className="mt-md rounded-card border border-border bg-surface">
+      <summary className="cursor-pointer px-md py-sm text-body-sm text-primary hover:text-primary-hover">
+        View Your Summary
+      </summary>
+      <dl className="divide-y divide-border border-t border-border px-md">
+        {interview.summary.map((item) => (
+          <div key={item.topic_id} className="py-sm">
+            <dt className="text-label uppercase tracking-label text-muted">{item.title}</dt>
+            <dd className="mt-xs whitespace-pre-wrap text-body-sm text-body">{item.answer}</dd>
+          </div>
+        ))}
+      </dl>
+    </details>
+  ) : null;
+
+  const comeBackLine =
+    "You can come back any time to add a comment here or share new materials. Rupert's team sees everything you add.";
+
+  const essentialsBanner = completed ? (
+    <section
+      role="status"
+      className="mb-lg rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
+    >
+      <div className="flex flex-wrap items-start gap-md">
+        <CoverageIcon coverage="covered" />
+        <div className="min-w-0 flex-1">
+          <p className="text-body-sm text-heading">
+            <span className="font-medium">
+              Your intake is complete{firstName ? `, ${firstName}` : ""}. Thank you.
+            </span>{" "}
+            Confirmed{completedAt ? ` on ${formatDate(completedAt)}` : ""}. {comeBackLine}
+          </p>
+          {materials.submitted ? null : (
+            <Link
+              href="/portal/materials"
+              className={`${primaryButton} mt-sm no-underline`}
+            >
+              Share Materials
+            </Link>
+          )}
+        </div>
+      </div>
+      {summaryDetails}
+      <ConflictList conflicts={conflicts} />
+    </section>
+  ) : essentialsDone ? (
     <section
       role="status"
       className="mb-lg flex flex-wrap items-start gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
@@ -914,39 +963,37 @@ export function IntakeExperience({
               One thing left: share your deck in the materials panel, or tell
               Rupert you don&apos;t have one yet.
             </>
-          ) : extras.done ? (
-            <>
-              <span className="font-medium">Everything is covered. Thank you.</span>{" "}
-              Rupert has everything he needs. You can review your summary anytime.
-            </>
           ) : (
             <>
-              <span className="font-medium">Your intake is complete.</span>{" "}
-              Rupert has what he needs to start. A few more minutes on the
-              extras can make your campaign noticeably sharper. We recommend it.
+              <span className="font-medium">You&apos;re done. Your intake is 100% complete.</span>{" "}
+              Rupert has everything he needs. Review your summary and confirm it.
+              {extras.done
+                ? ""
+                : " The extras are optional: a few more minutes on them can make your campaign sharper."}{" "}
+              {comeBackLine}
             </>
           )}
         </p>
         {intakeDone ? (
           <div className="mt-sm flex flex-wrap items-center gap-md">
-            {!extras.done ? (
-              <button
-                type="button"
-                className={primaryButton}
-                disabled={readOnly || limitReached}
-                onClick={() => inputRef.current?.focus()}
-              >
-                Continue with Rupert
-              </button>
-            ) : null}
             <button
               type="button"
-              className="text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
+              className={primaryButton}
               disabled={readOnly || pending !== null}
               onClick={() => void run("summary", requestIntakeSummary)}
             >
-              Review summary
+              {pending === "summary" ? "Writing your summary…" : "Review Summary"}
             </button>
+            {!extras.done ? (
+              <button
+                type="button"
+                className="text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
+                disabled={readOnly || limitReached}
+                onClick={() => inputRef.current?.focus()}
+              >
+                Add the extras
+              </button>
+            ) : null}
           </div>
         ) : null}
       </div>

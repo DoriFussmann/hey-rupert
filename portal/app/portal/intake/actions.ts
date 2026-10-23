@@ -40,7 +40,7 @@ import {
   type MaterialFile,
   type MaterialsView,
 } from "@/lib/setup";
-import { notifyAdmin } from "@/lib/notify";
+import { notifyAdmin, notifyAdminOnce } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 
 export type IntakeActionResult =
@@ -240,10 +240,8 @@ async function loadOpenInterview(access: PortalAccess) {
   if (!loaded.ok) return { ok: false as const, error: TABLE_MISSING };
   const interview = loaded.interview;
   if (!interview) return { ok: false as const, error: "The interview has not started yet." };
-  if (interview.status === "completed") {
-    return { ok: false as const, error: CONFIRMED_ERROR };
-  }
-  if (interview.status !== "in_progress") {
+  // A confirmed intake stays open: the founder can come back to add more.
+  if (interview.status === "review") {
     return { ok: false as const, error: "Go back to the conversation to add more." };
   }
   if (interview.client_message_count >= INTAKE_LIMITS.clientMessagesMax) {
@@ -268,6 +266,8 @@ async function takeTurn(
   const settings = await loadIntakeSettings(supabase);
   const view = await currentMaterials(access);
   const withUser: IntakeMessage[] = [...interview.messages, message];
+  // The intake was already complete before this message: the founder is adding more.
+  const followUp = Boolean(client.intake_completed_at) || interview.status === "completed";
 
   const turn = await nextInterviewTurn(
     supabase,
@@ -280,6 +280,7 @@ async function takeTurn(
       conflicts: interview.conflicts,
       files,
       guide: interview.classification_guide ? await loadInterviewGuide(supabase) : null,
+      followUp,
     },
   );
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
@@ -332,6 +333,10 @@ async function takeTurn(
   }
 
   await completeIfReady(access, client, settings.topics, topicStatus, conflicts);
+  // Files added after the intake already notify as materials_added.
+  if (followUp && !message.attachments?.length) {
+    await notifyAdminOnce(supabase, user.id, "intake_updated");
+  }
 
   revalidatePath(`/admin/clients/${user.id}`);
   return success(access, asIntakeInterview(data[0]));

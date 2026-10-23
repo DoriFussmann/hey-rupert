@@ -7,7 +7,6 @@ import { createClientRecord } from "@/app/admin/actions";
 import { Select } from "@/components/select";
 import {
   SetupLinkResult,
-  buildWelcomeEmail,
   type SetupLinkDetails,
 } from "@/app/admin/setup-link-result";
 
@@ -29,7 +28,6 @@ const emptyForm = {
   raise_stage: "",
   vertical: "",
   geography: "",
-  fund_match_count: "",
   admin_notes: "",
 };
 
@@ -42,6 +40,7 @@ type Created = {
   email: string;
   /** Set-password details; none for a test pilot client. */
   setup: SetupLinkDetails | null;
+  subject: string;
   sow: { ok: true } | { ok: false; error: string } | null;
 };
 
@@ -164,7 +163,7 @@ export function AddClientButton() {
       }
 
       const setup =
-        result.setupUrl && result.expiresAt
+        result.setupUrl && result.expiresAt && result.welcome
           ? {
               firstName: form.first_name.trim(),
               email: result.email,
@@ -178,9 +177,10 @@ export function AddClientButton() {
         linked: result.linked,
         email: result.email,
         setup,
+        subject: result.welcome?.subject ?? "",
         sow: result.sow ?? null,
       });
-      setEmailDraft(setup ? buildWelcomeEmail(setup) : "");
+      setEmailDraft(result.welcome?.body ?? "");
       setPending(false);
     } catch {
       setError("Unable to add the client. Please try again.");
@@ -201,23 +201,23 @@ export function AddClientButton() {
           }}
           className={primaryButton}
         >
-          Add client
+          Add Client
         </button>
       </div>
 
       {open ? (
-        <div className="fixed inset-0 z-50">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md">
           <button
             type="button"
             aria-label="Close"
             className="absolute inset-0 bg-heading/20"
             onClick={close}
           />
-          <aside
+          <div
             role="dialog"
             aria-modal="true"
             aria-labelledby={titleId}
-            className="absolute right-0 top-0 flex h-full w-full max-w-md flex-col border-l border-border bg-surface"
+            className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card border border-border bg-surface shadow-lg"
           >
             <div className="flex items-start justify-between gap-md border-b border-border px-lg py-lg">
               <div>
@@ -229,7 +229,7 @@ export function AddClientButton() {
                     ? created.testPilot
                       ? "Test Pilot Client Created"
                       : "New Client & Portal Created"
-                    : "Add client"}
+                    : "Add Client"}
                 </h2>
               </div>
               <button
@@ -257,6 +257,7 @@ export function AddClientButton() {
                   {created.setup ? (
                     <SetupLinkResult
                       details={created.setup}
+                      subject={created.subject}
                       emailDraft={emailDraft}
                       setEmailDraft={setEmailDraft}
                     />
@@ -289,8 +290,8 @@ export function AddClientButton() {
                 onSubmit={onSubmit}
                 className="flex flex-1 flex-col overflow-hidden"
               >
-                <div className="grid flex-1 content-start gap-lg overflow-y-auto px-lg py-lg">
-                  <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md">
+                <div className="grid flex-1 content-start gap-lg overflow-y-auto px-lg py-lg sm:grid-cols-2">
+                  <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md sm:col-span-2">
                     <input
                       type="checkbox"
                       className="mt-xs h-4 w-4 shrink-0 accent-primary"
@@ -307,7 +308,7 @@ export function AddClientButton() {
                       </span>
                     </span>
                   </label>
-                  <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md">
+                  <label className="flex items-start gap-sm rounded-card border border-border bg-background px-md py-md sm:col-span-2">
                     <input
                       type="checkbox"
                       className="mt-xs h-4 w-4 shrink-0 accent-primary"
@@ -323,7 +324,7 @@ export function AddClientButton() {
                       </span>
                     </span>
                   </label>
-                  <p className="text-body-sm text-muted">
+                  <p className="text-body-sm text-muted sm:col-span-2">
                     <span className="text-error">*</span> Required.
                     {testPilot
                       ? " Name and email are optional for a test pilot."
@@ -436,18 +437,7 @@ export function AddClientButton() {
                       placeholder="US + Europe"
                     />
                   </label>
-                  <label className={labelClass}>
-                    Fund match count
-                    <input
-                      className={fieldClass}
-                      name="fund_match_count"
-                      type="number"
-                      min={0}
-                      value={form.fund_match_count}
-                      onChange={update("fund_match_count")}
-                    />
-                  </label>
-                  <label className={labelClass}>
+                  <label className={`${labelClass} sm:col-span-2`}>
                     Admin notes
                     <textarea
                       className={fieldClass}
@@ -474,12 +464,12 @@ export function AddClientButton() {
                     Cancel
                   </button>
                   <button type="submit" disabled={pending} className={primaryButton}>
-                    {pending ? "Adding..." : testPilot ? "Add test pilot" : "Add client"}
+                    {pending ? "Adding..." : testPilot ? "Add Test Pilot" : "Add Client"}
                   </button>
                 </div>
               </form>
             )}
-          </aside>
+          </div>
         </div>
       ) : null}
     </>

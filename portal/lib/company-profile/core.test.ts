@@ -172,11 +172,56 @@ test("a sample intake becomes a profile Phase 3 can use without string matching"
   assert.equal(m.stage, "stage.seed");
   assert.equal(m.hqCountry, "geo.us");
   assert.equal(m.hqState, "geo.us.state.texas");
-  // The state came from the answers, not the founder's words: it needs confirming first.
+  // The founder named the state ("Austin, Texas, USA"), so it needs no confirming.
+  assert.equal(profile.hq.state?.status, "accepted");
+  assert.equal(m.readiness, "ready");
+});
+
+test("a state the founder never named needs confirming, and confirming it settles it", () => {
+  const silent = founderTranscript([
+    ...messages.slice(0, 3),
+    { role: "user", content: "Yes, a $2M seed round. We're based in the United States." },
+  ]);
+  const base = fromEngineProfile(engine(), lists, index, { ...meta, source: "ai" });
+  const { profile } = applyAiClassification(base, {
+    ...aiOutput,
+    hq_country: { ...aiOutput.hq_country, evidence: ["We're based in the United States"] },
+  }, index, silent);
+  const m = matchingProfile(profile, index);
   assert.equal(m.readiness, "limited");
   assert.ok(m.issues.some((i) => i.field === "HQ state" && i.severity === "limited"));
   const confirmed = confirmWithFounder(profile, "hq_state", "admin@x.com", "2026-10-21T00:00:00Z")!;
   assert.equal(matchingProfile(confirmed, index).readiness, "ready");
+});
+
+test("what the founder's shared files say counts as evidence", () => {
+  const withFiles = founderTranscript([
+    { role: "assistant", content: "Could you share your deck?" },
+    {
+      role: "user",
+      content: "Here it is.",
+      attachments: [{ facts: "Ledgerly: B2B SaaS priced per dock door per month. Seed round of $2M." }],
+    },
+  ]);
+  assert.equal(verifyQuote("B2B SaaS priced per dock door per month", withFiles), true);
+  assert.equal(verifyQuote("Could you share your deck", withFiles), false); // still never Rupert's words
+});
+
+test("confirming a sector with the founder clears its unfound quotes", () => {
+  const base = fromEngineProfile(engine(), lists, index, { ...meta, source: "ai" });
+  const { profile, problems } = applyAiClassification(base, {
+    ...aiOutput,
+    primary_sector: { ...aiOutput.primary_sector, evidence: ["we are the leading payments platform for clinics"] },
+  }, index, transcript);
+  const confirmed = confirmWithFounder(profile, "sector:sector.fintech", "admin@x.com", "2026-10-21T00:00:00Z")!;
+  const { issues } = validateProfile(confirmed, index, openBuildProblems(confirmed, problems));
+  assert.ok(!issues.some((i) => i.field === "Primary sector"));
+});
+
+test("markets and investor types left empty add no notes", () => {
+  const profile = fromEngineProfile(engine({ markets: [] }), lists, index, meta);
+  const { issues } = validateProfile(profile, index);
+  assert.ok(!issues.some((i) => i.field === "Markets" || i.field === "Investor types"));
 });
 
 test("an unverifiable 'founder' claim becomes an AI interpretation that needs confirmation", () => {

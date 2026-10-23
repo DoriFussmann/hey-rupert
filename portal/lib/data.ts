@@ -91,12 +91,6 @@ function asClient(row: Record<string, unknown>): Client {
     vertical,
     sector: vertical,
     geography: row.geography != null ? String(row.geography) : null,
-    fund_match_count:
-      typeof row.fund_match_count === "number"
-        ? row.fund_match_count
-        : row.fund_match_count != null && String(row.fund_match_count) !== ""
-          ? Number(row.fund_match_count)
-          : null,
     admin_notes: notes,
     notes,
     stage: row.stage != null ? String(row.stage) : undefined,

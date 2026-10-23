@@ -250,6 +250,30 @@ export function fieldLabel(id: string) {
 
 export type MatchAnswers = Record<string, string | string[]>;
 
+/** What an empty field means, so a blank never reads as "missing". */
+export const EMPTY_FIELD_MEANS: Record<string, string> = {
+  instrument: "Equity (default)",
+  core_industry: "Derived from the verticals",
+  investor_types: "Set from the stage",
+};
+
+/** A field's saved answer as display text, or null when it is empty. */
+export function fieldDisplay(field: MatchField, value: string | string[] | undefined) {
+  if (Array.isArray(value) && value.length > 0) {
+    return field.kind === "investor_types" ? value.map(firmTypeLabel).join(", ") : value.join(", ");
+  }
+  if (typeof value === "string" && value.trim()) return value;
+  return null;
+}
+
+/** The fields of one profile section; the US state only for a US company. */
+export function sectionFields(section: string, answers: MatchAnswers) {
+  const isUs = answers.hq_country === "United States";
+  return MATCH_FIELDS.filter((field) => field.section === section).filter(
+    (field) => field.kind !== "state" || isUs,
+  );
+}
+
 /**
  * The company profile as plain text, by topic, for an AI prompt. Empty
  * answers are left out, except the ones where empty means "none".

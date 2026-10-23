@@ -45,6 +45,30 @@ function text(value: unknown) {
 }
 
 /**
+ * Records an in-app admin notification unless an unread one of the same type
+ * is already waiting for this client, so repeated events (a founder adding
+ * several messages) don't flood the list. Best effort, like notifyAdmin.
+ */
+export async function notifyAdminOnce(
+  supabase: ServiceClient,
+  clientId: string,
+  type: string,
+) {
+  const { count, error } = await supabase
+    .from("notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("client_id", clientId)
+    .eq("type", type)
+    .or("read.eq.false,read.is.null");
+  if (error) {
+    console.error(`Notification check failed (${type}): ${error.message}`);
+    return;
+  }
+  if ((count ?? 0) > 0) return;
+  await notifyAdmin(supabase, clientId, type, { email: false });
+}
+
+/**
  * Records an admin notification and, when `email` is set and that email is
  * switched on in Forms → Emails, emails it too.
  * `details` is optional extra text placed in the email body.

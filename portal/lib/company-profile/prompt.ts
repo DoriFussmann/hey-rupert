@@ -18,7 +18,7 @@ export function classificationRules(index: TaxIndex) {
     "1. First establish what the company itself builds or sells (`product`) and who pays for it (`customers`), each with the founder's exact words as evidence.",
     "2. The company's sector is what the company does, never its customers' industry, its suppliers' or its sales channels'. A payments tool sold to clinics is fintech, not healthtech. List industries the founder mentioned that are not the company's own in `not_company_sectors`, with the reason.",
     "3. `primary_sector`: the most specific category the evidence supports. Use a broad industry only when no specific sector fits. Up to two `secondary_sectors`, only for a real second line of business, each with its own evidence. Never add a sector to reach more investors.",
-    "4. `evidence`: exact quotes copied from the founder's own messages in the transcript, word for word. Not Rupert's questions, not the summary, not the onboarding facts. Code checks every quote against the founder's messages; a quote that isn't there is discarded.",
+    "4. `evidence`: exact quotes copied word for word from the founder's own messages in the transcript, or from what their shared files say (the \"[The founder shared …]\" notes in their messages). Not Rupert's questions, not the summary, not the onboarding facts. Code checks every quote against the founder's messages and files; a quote that isn't there is discarded.",
     "5. `rationale`: explain why that evidence supports that category, in one or two sentences. A quote without a reason does not count.",
     "6. `founder_stated`: true only when the founder said it themselves (for example \"we're a fintech\"). If you inferred it, false.",
     "7. `confidence`: high, medium or low. Use low whenever the founder's words could fit another category.",
@@ -44,7 +44,7 @@ const CLASS_SCHEMA = {
   properties: {
     node_id: { type: "string", description: "A category id from the lists." },
     founder_stated: { type: "boolean" },
-    evidence: { type: "array", items: { type: "string" }, description: "Exact quotes from the founder's messages." },
+    evidence: { type: "array", items: { type: "string" }, description: "Exact quotes from the founder's messages or their shared files." },
     rationale: { type: "string", description: "Why the evidence supports this category." },
     confidence: { type: "string", enum: ["high", "medium", "low"] },
   },

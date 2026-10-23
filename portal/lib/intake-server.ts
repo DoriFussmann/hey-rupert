@@ -255,6 +255,7 @@ function systemPrompt(
   guide: string | null,
   materials: InterviewMaterials,
   conflicts: IntakeConflict[],
+  followUp: boolean,
 ) {
   return promptSystem(
     prompt,
@@ -266,9 +267,16 @@ function systemPrompt(
     materialsBlock(materials, conflicts),
     guide,
     "## How to respond",
-    "Always respond by calling the `respond` tool. `reply` is the message the founder sees. `topics` reports the coverage of EVERY topic after this turn: `covered` when you have what the topic needs, `partial` when you have some of it, `missing` otherwise. `note` is a short factual summary of what you have learned for that topic so far (empty if nothing). Count information you already knew from the company details or the shared files as known.",
+    "Always respond by calling the `respond` tool. `reply` is the message the founder sees. `topics` reports the coverage of EVERY topic after this turn: `covered` once the founder has answered what the topic asks, as fully as they can. An answer such as \"none\", \"not sure yet\" or \"skip this one\", or a detail they don't have (for example no lead investor or no close date yet), still makes the topic `covered`. `partial` only while you still plan to ask about that topic in this interview; once you move on from a topic, it is `covered`. `missing` when nothing is known yet. `note` is a short factual summary of what you have learned for that topic so far (empty if nothing). Count information you already knew from the company details or the shared files as known.",
+    followUp ? FOLLOW_UP_GUIDE : null,
   );
 }
+
+/** Added once the intake is complete: the founder is coming back to add more. */
+const FOLLOW_UP_GUIDE = [
+  "## After the intake",
+  "The intake is already complete. The founder has come back to add information, correct something or share more materials. Thank them, confirm briefly what you took from it, and update the topic notes. Ask a short follow-up only if something they added is unclear. Tell them Rupert's team will see what they added. Never ask them to repeat the interview.",
+].join("\n");
 
 // The API requires the conversation to start with a user turn. How to open is in the managed prompt.
 const OPENING_USER_TURN = "[The founder has just opened the intake interview.]";
@@ -411,6 +419,8 @@ export type InterviewTurnOptions = {
   files?: PreparedFiles;
   /** The sector classification guide, for interviews that use it. */
   guide?: string | null;
+  /** The intake is already complete: the founder is adding more. */
+  followUp?: boolean;
   override?: PromptOverride | null;
 };
 
@@ -421,7 +431,7 @@ export async function nextInterviewTurn(
   client: Record<string, unknown>,
   messages: IntakeMessage[],
   topicStatus: Record<string, TopicStatus>,
-  { materials, conflicts, files, guide = null, override }: InterviewTurnOptions,
+  { materials, conflicts, files, guide = null, followUp = false, override }: InterviewTurnOptions,
 ): Promise<{ ok: true; turn: InterviewTurn } | { ok: false; reason: string }> {
   const prompt = await loadPrompt(supabase, "intake_interviewer", {
     clientId: String(client.id ?? ""),
@@ -456,6 +466,7 @@ export async function nextInterviewTurn(
       guide,
       materials,
       conflicts,
+      followUp,
     ),
     messages: turns,
     tool: RESPOND_TOOL,

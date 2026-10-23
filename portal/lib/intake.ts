@@ -384,8 +384,9 @@ export function topicCoverage(
 }
 
 /**
- * Progress over required topics: covered counts 1, partial 0.5.
- * `ready` is true once every required topic is covered.
+ * Progress over required topics: the share that is covered. A partly
+ * answered topic adds nothing yet, so the bar moves in even steps and only
+ * reaches 100% when every required topic is covered (`ready`).
  */
 export function intakeProgress(
   topics: IntakeTopic[],
@@ -395,16 +396,13 @@ export function intakeProgress(
   const scored = required.length > 0 ? required : topics;
   if (scored.length === 0) return { percent: 0, ready: false };
 
-  const points = scored.reduce((sum, topic) => {
-    const coverage = topicCoverage(topicStatus, topic.id);
-    return sum + (coverage === "covered" ? 1 : coverage === "partial" ? 0.5 : 0);
-  }, 0);
+  const covered = scored.filter(
+    (topic) => topicCoverage(topicStatus, topic.id) === "covered",
+  ).length;
 
   return {
-    percent: Math.round((points / scored.length) * 100),
-    ready: scored.every(
-      (topic) => topicCoverage(topicStatus, topic.id) === "covered",
-    ),
+    percent: Math.round((covered / scored.length) * 100),
+    ready: covered === scored.length,
   };
 }
 

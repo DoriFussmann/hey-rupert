@@ -49,6 +49,7 @@ export function notificationLabel(type: string) {
   if (type === "intake_completed") return "Completed Client Intake";
   if (type === "materials_submitted") return "Submitted Company Materials";
   if (type === "materials_added") return "Added Company Files";
+  if (type === "intake_updated") return "Added to Intake";
   if (type === "feedback_viewed") return "Opened Analysis & Feedback";
   if (type === "narrative_viewed") return "Opened Outreach Narrative";
   if (type === "deck_review_confirmed") return "Confirmed Analysis & Feedback";
@@ -76,6 +77,7 @@ export function notificationAction(type: string) {
   if (type === "intake_completed") return "completed the Client Intake";
   if (type === "materials_submitted") return "submitted their company materials";
   if (type === "materials_added") return "added files to their company materials";
+  if (type === "intake_updated") return "added to their intake after finishing it";
   if (type === "feedback_viewed") return "opened your Analysis & Feedback";
   if (type === "narrative_viewed") return "opened your outreach narrative";
   if (type === "deck_review_confirmed") return "confirmed the Analysis & Feedback";

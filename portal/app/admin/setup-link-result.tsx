@@ -19,44 +19,6 @@ export type SetupLinkDetails = {
   expiresAt: string;
 };
 
-export function buildWelcomeEmail(details: SetupLinkDetails) {
-  const greetingName = details.firstName || "there";
-  return `Hi ${greetingName},
-
-Thank you for the call today. I enjoyed the conversation and appreciate you taking the time.
-
-A small heads-up that this email is slightly longer than usual, but I wanted to put everything you need in one place.
-
-Statement of Work
-
-I've created your Rupert Client Portal, where you'll find the Statement of Work we discussed today.
-
-Please take a look when you have a chance. If everything looks good, click to confirm. If you have any questions or would like to discuss anything in the SOW, just let me know.
-
-Once you confirm, I'll issue the Service Order and send you the next step.
-
-You can also see the overall onboarding process in the portal, so you'll have visibility into what comes next. The other sections of the portal will become active as we move through setup and launch the campaign.
-
-Your portal link is below.
-
-///
-Your Rupert Portal
-
-Set your password here (link valid until ${formatDate(details.expiresAt)}):
-${details.setupUrl}
-
-You'll be taken straight into your portal. After that, log in any time at ${PORTAL_HOST} (Login, top-right corner) with ${details.email} and the password you chose.
-
-Once logged in, you'll see your Statement of Work and onboarding steps.
-///
-
-Thanks again, ${greetingName}.
-
-I'm looking forward to hopefully working together, and please reach out with any questions as you review everything.
-
-Dori`;
-}
-
 // Shorter body for an existing client who needs to set a new password.
 export function buildResetEmail(details: SetupLinkDetails) {
   const greetingName = details.firstName || "there";

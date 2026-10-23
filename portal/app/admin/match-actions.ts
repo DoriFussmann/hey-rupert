@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { isServiceRoleConfigured } from "@/lib/env";
+import { writeIntakeBrief } from "@/lib/agents-server";
 import { asIntakeInterview } from "@/lib/intake-server";
 import {
   FUND_UPLOAD_FOLDER,
@@ -409,12 +410,25 @@ export async function buildMatchProfile(
     ]);
   if (clientError) return { ok: false, error: clientError.message };
   if (!client) return { ok: false, error: "Client not found." };
+  if (!client.intake_completed_at) {
+    return { ok: false, error: "Analyze opens once the client completes the intake." };
+  }
   if (interviewError) return { ok: false, error: interviewError.message };
   if (!current.ok) return current;
-  const interview = interviewRow ? asIntakeInterview(interviewRow) : null;
-  if (!interview || interview.messages.length === 0) {
+  const loadedInterview = interviewRow ? asIntakeInterview(interviewRow) : null;
+  if (!loadedInterview || loadedInterview.messages.length === 0) {
     return { ok: false, error: "There is no intake interview to build from yet." };
   }
+
+  // The intake brief feeds the profile: write it first when it is missing,
+  // or older than the intake and not edited by hand. A failed brief never
+  // blocks the profile; the Overview panel can write it again.
+  const brief = loadedInterview.admin_brief;
+  const briefDue =
+    !brief || (!brief.edited_at && Boolean(brief.based_on) && loadedInterview.updated_at > brief.based_on);
+  const written = briefDue ? await writeIntakeBrief(supabase, clientId) : null;
+  if (written && !written.ok) console.error(`Intake brief not written: ${written.error}`);
+  const interview = written?.ok ? { ...loadedInterview, admin_brief: written.value } : loadedInterview;
 
   // With the investor taxonomy, the AI also classifies the company, with
   // founder evidence; without it, the profile is built as before.

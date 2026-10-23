@@ -133,14 +133,49 @@ export function quoteKey(text: string) {
     .trim();
 }
 
-/** The founder's own words: their messages only (not Rupert's turns, summaries or file extracts). */
-export function founderTranscript(messages: { role: string; content: string }[]) {
+/**
+ * What the founder said and shared: their own messages, plus what Rupert
+ * read in the files they shared in the intake. Rupert's turns and the
+ * summaries never count. Materials the founder uploaded count as their word.
+ */
+export function founderTranscript(
+  messages: { role: string; content: string; attachments?: { facts: string }[] }[],
+) {
   return quoteKey(
     messages
       .filter((message) => message.role === "user")
-      .map((message) => message.content)
+      .flatMap((message) => [
+        ...(message.attachments ?? []).map((file) => file.facts),
+        message.content,
+      ])
+      .filter((text) => text.trim())
       .join("\n"),
   );
+}
+
+/** Whether a category's name appears as a whole phrase in the founder's words or files. */
+function namedIn(label: string, transcript: string) {
+  const name = quoteKey(label);
+  if (!name) return false;
+  const escaped = name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^a-z0-9])${escaped}($|[^a-z0-9])`).test(transcript);
+}
+
+/**
+ * An unconfirmed place with no evidence (for example the HQ state, which is
+ * read from the profile fields) is accepted when the founder named it in
+ * their messages or their files.
+ */
+function acceptIfNamed<T extends Classification>(c: T | null, transcript: string): T | null {
+  if (!c || c.status !== "needs_confirmation" || verifiedCount(c) > 0) return c;
+  if (!namedIn(c.label, transcript)) return c;
+  return {
+    ...c,
+    source: "founder",
+    status: "accepted",
+    evidence: [{ quote: c.label, verified: true }],
+    rationale: "Named in the founder's messages or the files they shared.",
+  };
 }
 
 /**
@@ -420,7 +455,7 @@ export function readAiClass(
   const claimsFounder = raw.founder_stated === true;
   const verified = evidence.some((e) => e.verified);
   if (claimsFounder && !verified) {
-    problems.push({ field, severity: "limited", message: "Marked as stated by the founder, but no supplied quote was found in the founder's messages. Treated as an AI interpretation." });
+    problems.push({ field, severity: "limited", message: "Marked as stated by the founder, but no supplied quote was found in the founder's messages or files. Treated as an AI interpretation." });
   }
   const source: ClassSource = claimsFounder && verified ? "founder" : "ai";
   const solid = verified && rationale.length >= RATIONALE_MIN && confidence !== "low";
@@ -511,7 +546,11 @@ export function applyAiClassification(
       },
       sectors: primary ? [{ ...primary, role: "primary" as const }, ...secondaries] : base.sectors.map(unconfirmed),
       stage: stage ?? (base.stage ? unconfirmed(base.stage) : null),
-      hq: { ...base.hq, country: country ?? (base.hq.country ? unconfirmed(base.hq.country) : null) },
+      hq: {
+        ...base.hq,
+        country: acceptIfNamed(country ?? (base.hq.country ? unconfirmed(base.hq.country) : null), transcript),
+        state: acceptIfNamed(base.hq.state, transcript),
+      },
       ambiguities,
     },
     problems,
@@ -556,7 +595,7 @@ export function validateProfile(profile: CompanyProfile, index: TaxIndex, extra:
       const why = c.source === "legacy"
         ? "saved before evidence was recorded"
         : verifiedCount(c) === 0
-          ? "no founder quote supports it"
+          ? "nothing the founder said or shared supports it"
           : c.rationale.length < RATIONALE_MIN
             ? "the reasoning is missing"
             : "the AI's confidence is low";
@@ -592,17 +631,17 @@ export function validateProfile(profile: CompanyProfile, index: TaxIndex, extra:
   if (profile.hq.country?.nodeId === "geo.us" && !profile.hq.state) add("HQ state", "limited", "US company without a state: regional US investors can't be checked.");
   if (profile.hq.state && profile.hq.state.source !== "legacy") needsConfirming(profile.hq.state, "HQ state");
 
+  // A quote that couldn't be found matters only while the sector is undecided.
   for (const sector of profile.sectors) {
+    if (sector.status === "confirmed_founder" || sector.source === "admin") continue;
     for (const e of sector.evidence) {
-      if (!e.verified) add(sector.role === "primary" ? "Primary sector" : "Secondary sector", "limited", `Quote not found in the founder's messages: "${e.quote.slice(0, 80)}".`);
+      if (!e.verified) add(sector.role === "primary" ? "Primary sector" : "Secondary sector", "limited", `Quote not found in the founder's messages or files: "${e.quote.slice(0, 80)}".`);
     }
   }
   for (const a of profile.ambiguities) add("To clarify", "limited", a.question);
   for (const w of profile.converterWarnings) add("Consistency", "limited", w);
 
   if (profile.sectors.some((s) => s.source === "legacy")) add("Profile", "info", "Legacy profile: no evidence was recorded. Rebuild from the intake to collect it.");
-  if (profile.markets.length === 0) add("Markets", "info", "No other markets given.");
-  if (profile.firmTypes.length === 0) add("Investor types", "info", "Investor types are set from the stage.");
 
   const readiness: Readiness = issues.some((i) => i.severity === "blocking")
     ? "blocked"

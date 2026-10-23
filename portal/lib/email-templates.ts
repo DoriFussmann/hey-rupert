@@ -23,7 +23,11 @@ export type EmailToken =
   | "client_link"
   | "task_summary"
   | "task_links"
-  | "closing";
+  | "closing"
+  | "setup_link"
+  | "link_expires"
+  | "login_email"
+  | "portal_host";
 
 export const TOKEN_HELP: Record<EmailToken, string> = {
   greeting: '"Hi Maya," (or "Hi," when there is no first name)',
@@ -45,6 +49,10 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
     '"Open your portal: …", or one line per step with its link when several are waiting',
   closing:
     "\"Questions? Just reply to this email.\" — on the last reminder: an offer to reply or book a call",
+  setup_link: "The client's one-time set-password link",
+  link_expires: 'When the set-password link stops working, e.g. "Nov 6, 2026"',
+  login_email: "The email address the client logs in with",
+  portal_host: 'Where the client logs in later, e.g. "heyrupert.com"',
 };
 
 /** Example values for previews and test emails. */
@@ -64,6 +72,10 @@ export const SAMPLE_VALUES: Record<EmailToken, string> = {
   task_summary: "sign your NDA",
   task_links: "",
   closing: "Questions? Just reply to this email.",
+  setup_link: "https://heyrupert.com/auth/setup?token=sample",
+  link_expires: "Nov 6, 2026",
+  login_email: "maya@acme.com",
+  portal_host: "heyrupert.com",
 };
 
 const TOKEN_PATTERN = /\{([a-z_]+)\}/g;
@@ -143,7 +155,8 @@ export type AdminEmailType =
 export type EmailTemplateKey =
   | `client:${ClientTurn}`
   | `admin:${AdminEmailType}`
-  | "reminder";
+  | "reminder"
+  | typeof WELCOME_EMAIL_KEY;
 
 export type EmailTemplateGroup = "client" | "admin" | "reminder";
 
@@ -195,6 +208,52 @@ export const REMINDER_TOKENS_LIST: readonly EmailToken[] = [
 ];
 
 export const DEFAULT_SIGNATURE = "Dori\nHey Rupert";
+
+export const WELCOME_EMAIL_KEY = "welcome";
+
+export const WELCOME_TOKENS_LIST: readonly EmailToken[] = [
+  "greeting",
+  "first_name",
+  "company",
+  "setup_link",
+  "link_expires",
+  "login_email",
+  "portal_host",
+  "signature",
+];
+
+/**
+ * The welcome email Rupert copies and sends himself after adding a client:
+ * never sent by the portal. The set-password details are filled in.
+ */
+const WELCOME_TEMPLATE: EmailTemplateDefinition = {
+  key: WELCOME_EMAIL_KEY,
+  group: "client",
+  title: "Welcome email (new client)",
+  trigger:
+    "Drafted when you add a client, and again from Welcome Email on the client page. You copy it and send it yourself; the portal never sends it.",
+  subject: "Your Rupert Portal & Statement of Work",
+  body: [
+    "{greeting}",
+    "Thank you for the call today. I enjoyed the conversation and appreciate you taking the time.",
+    "A small heads-up that this email is slightly longer than usual, but I wanted to put everything you need in one place.",
+    "Statement of Work",
+    "I've created your Rupert Client Portal, where you'll find the Statement of Work we discussed today.",
+    "Please take a look when you have a chance. If everything looks good, click to confirm. If you have any questions or would like to discuss anything in the SOW, just let me know.",
+    "Once you confirm, I'll issue the Service Order and send you the next step.",
+    "You can also see the overall onboarding process in the portal, so you'll have visibility into what comes next. The other sections of the portal will become active as we move through setup and launch the campaign.",
+    "Your portal link is below.",
+    "///\nYour Rupert Portal",
+    "Set your password here (link valid until {link_expires}):\n{setup_link}",
+    "You'll be taken straight into your portal. After that, log in any time at {portal_host} (Login, top-right corner) with {login_email} and the password you chose.",
+    "Once logged in, you'll see your Statement of Work and onboarding steps.\n///",
+    "Thanks again, {first_name}.",
+    "I'm looking forward to hopefully working together, and please reach out with any questions as you review everything.",
+    "Dori",
+  ].join("\n\n"),
+  tokens: WELCOME_TOKENS_LIST,
+  switchable: false,
+};
 
 function clientBody(prepared: string, task: string) {
   return [
@@ -388,6 +447,7 @@ const REMINDER_TEMPLATE: EmailTemplateDefinition = {
 };
 
 export const EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
+  WELCOME_TEMPLATE,
   ...CLIENT_TEMPLATES,
   ...ADMIN_TEMPLATES,
   REMINDER_TEMPLATE,

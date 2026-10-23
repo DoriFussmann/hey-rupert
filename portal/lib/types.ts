@@ -45,7 +45,6 @@ export type Client = {
   vertical?: string | null;
   sector: string | null;
   geography?: string | null;
-  fund_match_count?: number | null;
   admin_notes?: string | null;
   notes: string | null;
   stage?: string;
@@ -162,6 +161,7 @@ export type NotificationType =
   | "intake_completed"
   | "materials_submitted"
   | "materials_added"
+  | "intake_updated"
   | "feedback_viewed"
   | "narrative_viewed"
   | "framing_confirmed"

@@ -12,6 +12,8 @@ import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
 import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-card";
+import { CompanyMaterialsCard } from "@/app/admin/clients/[id]/company-materials-card";
+import { WelcomeEmailButton } from "@/app/admin/clients/[id]/welcome-email";
 import { NextAction, type NextActionTurn } from "@/app/admin/clients/[id]/next-action";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
@@ -269,9 +271,18 @@ export default async function ClientDetailPage({
               : undefined,
         }
       : turn;
-  const materialsFiles = materialsRow
-    ? asMaterials(materialsRow.status === "submitted" ? materialsRow.published : materialsRow.draft).files
-    : [];
+  const materials = materialsRow
+    ? asMaterials(materialsRow.status === "submitted" ? materialsRow.published : materialsRow.draft)
+    : null;
+  const materialsFiles = materials?.files ?? [];
+  const materialsIn = materialsRow?.status === "submitted" || Boolean(materials?.no_deck.trim());
+  const analyzeBlocked = !client.intake_completed_at
+    ? "Analyze opens once the client completes the intake."
+    : !materialsIn
+      ? "Analyze opens once the client's materials are in."
+      : null;
+  const showWelcome =
+    !client.is_test_pilot && (access.status === "pending" || access.status === "expired");
 
   return (
     <>
@@ -288,6 +299,7 @@ export default async function ClientDetailPage({
         description={`${client.is_test_pilot ? "Test pilot. " : ""}${client.archived_at ? "Archived. " : ""}Opened ${formatDate(client.created_at)}. Last activity ${formatDate(client.last_activity_at)}.`}
         actions={
           <div className="flex flex-wrap items-end gap-md">
+            {showWelcome ? <WelcomeEmailButton clientId={client.id} /> : null}
             <Link
               href={`/admin/clients/${client.id}/profile`}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
@@ -323,12 +335,15 @@ export default async function ClientDetailPage({
             : null
         }
       />
-      {client.intake_completed_at ? (
+      {materials ? (
+        <CompanyMaterialsCard files={materialsFiles} links={materialLinks} noDeck={materials.no_deck} />
+      ) : null}
+      {client.intake_completed_at || matchProfile ? (
         <CompanyProfileCard
           clientId={client.id}
           initialState={matchProfile}
           interviewUpdatedAt={interview?.updated_at ?? null}
-          hasInterview={Boolean(interview && interview.messages.length > 0)}
+          blockedReason={analyzeBlocked}
           claudeReady={claudeReady}
         />
       ) : null}

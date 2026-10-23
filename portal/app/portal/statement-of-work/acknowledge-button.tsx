@@ -57,7 +57,7 @@ export function AcknowledgeButton({
       </button>
       {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
       <p className="mt-md text-body-sm text-body">
-        Review of the Statement of Work is not a commitment.
+        Confirmation of the Statement of Work is not a commitment.
       </p>
       <p className="mt-sm text-body-sm text-body">
         Next step: you will receive a Service Order to sign and a Setup Fee invoice.

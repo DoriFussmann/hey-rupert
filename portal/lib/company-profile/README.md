@@ -9,7 +9,7 @@ Classification**.
 | Step | Where | What is stored | Authoritative for |
 |---|---|---|---|
 | 1. Founder interview | `/portal/intake`, `lib/intake-server.ts` | `intake_interviews.messages`, `topic_status`, confirmed `summary` | What the founder said |
-| 2. Profile fields | Admin "Rebuild from intake" (or first open of the client page), `extractAnswers` in `lib/match/profile-server.ts` | `match_profiles.answers` (+ `settings`) | **What the current matching engine runs on** |
+| 2. Profile fields | Admin "Analyze" on the client page (or "Rebuild from intake" on the profile page), once the intake is complete, `extractAnswers` in `lib/match/profile-server.ts` | `match_profiles.answers` (+ `settings`) | **What the current matching engine runs on** |
 | 3. Canonical profile | Same build, plus the admin actions below; `lib/company-profile` | `company_profile_versions` (append-only) | Sector, stage and geography as taxonomy categories, with evidence |
 | 4. Match | `lib/match/run-server.ts` → `buildProfile(answers)` → `to-profile.mjs` → engine | Match views | Unchanged in Phase 2 |
 
@@ -29,9 +29,9 @@ Other inputs and how they relate:
 - `provenance`: the fingerprint of the saved answers, the interview time and the taxonomy revision.
 
 Each classification records:
-- `source`: `founder` (the founder stated it, proven by a quote from their own messages), `ai` (an AI interpretation), `admin` (an admin decision) or `legacy` (from a profile saved before Phase 2; no evidence).
+- `source`: `founder` (the founder stated it, proven by a quote from their own messages or the files they shared), `ai` (an AI interpretation), `admin` (an admin decision) or `legacy` (from a profile saved before Phase 2; no evidence).
 - `status`: `accepted`, `needs_confirmation` or `confirmed_founder`. An admin marks "confirmed with founder" after checking with them; this does not change the source.
-- `evidence`: quotes, each with `verified`. A quote is checked against the founder's own messages only, not Rupert's questions, summaries or file extracts. Comparison ignores case, quote style and spacing; "…" may join parts that appear in order. Quotes under 12 characters never count.
+- `evidence`: quotes, each with `verified`. A quote is checked against the founder's own messages and what Rupert read in the files they shared in the intake (uploaded materials count as the founder's word), never Rupert's questions or summaries. Comparison ignores case, quote style and spacing; "…" may join parts that appear in order. Quotes under 12 characters never count. An HQ country or state with no quote is accepted when the founder named it in their messages or files.
 - `rationale`: why the evidence supports the category. A classification without a verified quote and a rationale of at least 20 characters needs confirmation. So does one with low confidence.
 
 The AI may choose only active taxonomy categories, excluding groups and the generalist marker. Anything else is rejected. If the profile fields already had a value, it is kept, unconfirmed.
@@ -39,8 +39,8 @@ The AI may choose only active taxonomy categories, excluding groups and the gene
 ## Readiness (displayed only in Phase 2)
 
 - **Blocked**: no primary sector, stage or HQ country; an invalid, retired or wrong-dimension category; more than one primary or more than two secondary sectors.
-- **Limited match**: a primary sector, stage or HQ country that needs confirmation; a secondary sector without its own verified evidence and justification; a quote not found in the founder's messages; a US company without a state; open questions to clarify; checks from the existing converter (for example, stage vs raise).
-- **Ready**: none of the above. Info notes, such as a legacy profile, no other markets, or investor types set from the stage, don't lower readiness.
+- **Limited match**: a primary sector, stage or HQ country that needs confirmation; a secondary sector without its own verified evidence and justification; a quote not found in the founder's messages or files (until the sector is confirmed with the founder or decided by an admin); a US company without a state; open questions to clarify; checks from the existing converter (for example, stage vs raise).
+- **Ready**: none of the above. Info notes, such as a legacy profile or a broad primary sector, don't lower readiness.
 
 The current engine keeps its own rule, unchanged: it needs a stage, a sector and an HQ country.
 

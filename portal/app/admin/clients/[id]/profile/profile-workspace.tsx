@@ -13,40 +13,19 @@ import {
 } from "@/app/admin/clients/[id]/match/ui";
 import { formatDateAtTime } from "@/lib/format";
 import {
+  EMPTY_FIELD_MEANS,
   MATCH_FIELDS,
   MATCH_SECTIONS,
   NONE_OK_FIELDS,
-  firmTypeLabel,
+  fieldDisplay,
   isListField,
   matchPath,
+  sectionFields,
   type MatchAnswers,
-  type MatchField,
   type MatchProfileState,
 } from "@/lib/match/shared";
 
-/** What an empty field means, so a blank never reads as "missing". */
-const EMPTY_MEANS: Record<string, string> = {
-  instrument: "Equity (default)",
-  core_industry: "Derived from the verticals",
-  investor_types: "Set from the stage",
-};
-
 const WIDE_KINDS = new Set(["textarea", "verticals", "industries", "markets"]);
-
-function display(field: MatchField, value: string | string[] | undefined) {
-  if (Array.isArray(value) && value.length > 0) {
-    return field.kind === "investor_types" ? value.map(firmTypeLabel).join(", ") : value.join(", ");
-  }
-  if (typeof value === "string" && value.trim()) return value;
-  return null;
-}
-
-function fieldsOf(section: string, answers: MatchAnswers) {
-  const isUs = answers.hq_country === "United States";
-  return MATCH_FIELDS.filter((field) => field.section === section).filter(
-    (field) => field.kind !== "state" || isUs,
-  );
-}
 
 function SectionPanel({
   clientId,
@@ -74,7 +53,7 @@ function SectionPanel({
   const [draft, setDraft] = useState<MatchAnswers>(answers);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fields = fieldsOf(section, editing ? draft : answers);
+  const fields = sectionFields(section, editing ? draft : answers);
 
   // Each edit starts from the saved answers.
   useEffect(() => {
@@ -181,8 +160,8 @@ function SectionPanel({
       ) : (
         <dl className="divide-y divide-border">
           {fields.map((field) => {
-            const shown = display(field, answers[field.id]);
-            const fallback = NONE_OK_FIELDS.has(field.id) ? "None" : EMPTY_MEANS[field.id];
+            const shown = fieldDisplay(field, answers[field.id]);
+            const fallback = NONE_OK_FIELDS.has(field.id) ? "None" : EMPTY_FIELD_MEANS[field.id];
             return (
               <div key={field.id} className="grid gap-xs px-lg py-sm sm:grid-cols-[minmax(0,11rem)_1fr] sm:gap-md">
                 <dt className="text-body-sm text-muted">{field.label}</dt>
@@ -331,7 +310,7 @@ export function ProfileWorkspace({
         </ul>
       ) : null}
 
-      <div className="grid items-start gap-lg lg:grid-cols-2">
+      <div className="grid items-start gap-lg">
         {MATCH_SECTIONS.map((section) => (
           <SectionPanel
             key={section}

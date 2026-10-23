@@ -6,7 +6,8 @@ import type { User } from "@supabase/supabase-js";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { roleFromUser } from "@/lib/roles";
-import { issueSetupLink } from "@/lib/password-setup";
+import { getClientAccess, issueSetupLink } from "@/lib/password-setup";
+import { renderWelcomeEmail, type WelcomeEmail } from "@/lib/welcome-email";
 import { createServiceClient } from "@/lib/supabase/admin";
 import {
   ENGAGEMENT_STAGES,
@@ -73,7 +74,6 @@ export type CreateClientInput = {
   raise_stage: string;
   vertical: string;
   geography: string;
-  fund_match_count: string;
   admin_notes: string;
 };
 
@@ -104,6 +104,8 @@ export type CreateClientResult =
       email: string;
       setupUrl: string | null;
       expiresAt: string | null;
+      /** The welcome email to copy, from Forms → Emails; none for a test pilot. */
+      welcome: WelcomeEmail | null;
       /** Set when the form asked to push the Statement of Work. */
       sow?: { ok: true } | { ok: false; error: string };
     }
@@ -247,15 +249,6 @@ export async function createClientRecord(
     return { ok: false, error: "Raise stage must be Pre-seed, Seed, or Series A." };
   }
 
-  let fundMatchCount: number | null = null;
-  const fundMatchRaw = blankToNull(input.fund_match_count);
-  if (fundMatchRaw) {
-    fundMatchCount = Number(fundMatchRaw);
-    if (!Number.isFinite(fundMatchCount)) {
-      return { ok: false, error: "Fund match count must be a number." };
-    }
-  }
-
   const { supabase } = access;
 
   const existingByEmail = await findClientIdByEmail(supabase, email);
@@ -343,7 +336,6 @@ export async function createClientRecord(
     raise_stage: raiseStage,
     vertical: blankToNull(input.vertical),
     geography: blankToNull(input.geography),
-    fund_match_count: fundMatchCount,
     admin_notes: blankToNull(input.admin_notes),
     ...(website ? { company_website: website } : {}),
     stage: "sow",
@@ -373,6 +365,7 @@ export async function createClientRecord(
   // A test pilot is never signed into: Rupert views it as the client.
   let setupUrl: string | null = null;
   let expiresAt: string | null = null;
+  let welcome: WelcomeEmail | null = null;
   if (!testPilot) {
     const issued = await issueSetupLink(supabase, userId);
     if (!issued.ok) {
@@ -381,6 +374,13 @@ export async function createClientRecord(
     }
     setupUrl = issued.link.url;
     expiresAt = issued.link.expiresAt;
+    welcome = await renderWelcomeEmail(supabase, {
+      firstName,
+      company: companyName,
+      email,
+      setupUrl,
+      expiresAt,
+    });
   }
 
   let sow: { ok: true } | { ok: false; error: string } | undefined;
@@ -398,6 +398,7 @@ export async function createClientRecord(
     email,
     setupUrl,
     expiresAt,
+    welcome,
     sow,
   };
 }
@@ -450,6 +451,69 @@ export async function issueClientSetupLink(
     setupUrl: issued.link.url,
     expiresAt: issued.link.expiresAt,
   };
+}
+
+/**
+ * The client's welcome email, to copy again after the Add Client window was
+ * closed. Only while the set-password link is unused and unexpired;
+ * otherwise `link` says why, and a new link can be created.
+ */
+export type WelcomeEmailResult =
+  | {
+      ok: true;
+      link: "pending";
+      firstName: string;
+      email: string;
+      setupUrl: string;
+      expiresAt: string;
+      welcome: WelcomeEmail;
+    }
+  | { ok: true; link: "set" | "expired" | "none" }
+  | { ok: false; error: string };
+
+export async function loadWelcomeEmail(clientId: string): Promise<WelcomeEmailResult> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { data: client, error } = await access.supabase
+    .from("clients")
+    .select("first_name, company_name, email")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!client) return { ok: false, error: "Client not found." };
+
+  const status = await getClientAccess(clientId);
+  if (status.status === "unavailable") return { ok: false, error: status.error };
+  if (status.status === "set") return { ok: true, link: "set" };
+  if (status.status === "expired") return { ok: true, link: "expired" };
+  if (status.status === "legacy") return { ok: true, link: "none" };
+
+  const firstName = String(client.first_name ?? "").trim();
+  const email = String(client.email ?? "").trim();
+  const welcome = await renderWelcomeEmail(access.supabase, {
+    firstName,
+    company: String(client.company_name ?? ""),
+    email,
+    setupUrl: status.url,
+    expiresAt: status.expiresAt,
+  });
+  return {
+    ok: true,
+    link: "pending",
+    firstName,
+    email,
+    setupUrl: status.url,
+    expiresAt: status.expiresAt,
+    welcome,
+  };
+}
+
+/** Creates a new set-password link, then returns the welcome email with it. */
+export async function renewWelcomeEmail(clientId: string): Promise<WelcomeEmailResult> {
+  const issued = await issueClientSetupLink(clientId);
+  if (!issued.ok) return issued;
+  return loadWelcomeEmail(clientId);
 }
 
 const STAGE_VALUES = new Set<string>(

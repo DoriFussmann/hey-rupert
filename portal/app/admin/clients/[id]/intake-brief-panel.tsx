@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { generateIntakeBrief, updateIntakeBrief } from "@/app/admin/agent-actions";
 import { MarkdownBody } from "@/components/markdown-body";
 import { formatDateAtTime } from "@/lib/format";
@@ -26,8 +26,8 @@ function editable(brief: IntakeBrief): Editable {
 
 /**
  * The intake at a glance: an AI-written brief plus industry, geography,
- * stage and raise. Written automatically the first time the page is opened
- * after the intake completes; editable and regenerable.
+ * stage and raise. Written by Analyze on the client page (or Write summary
+ * here), never on page load; editable and regenerable.
  */
 export function IntakeBriefPanel({
   clientId,
@@ -48,7 +48,6 @@ export function IntakeBriefPanel({
   const [form, setForm] = useState<Editable | null>(null);
   const [pending, setPending] = useState<null | "generate" | "save">(null);
   const [error, setError] = useState<string | null>(null);
-  const started = useRef(false);
 
   async function generate() {
     setPending("generate");
@@ -67,14 +66,6 @@ export function IntakeBriefPanel({
       setPending(null);
     }
   }
-
-  // First visit after the intake: write the brief without waiting for a click.
-  useEffect(() => {
-    if (started.current || initialBrief || !hasInterview || !claudeReady) return;
-    started.current = true;
-    void generate();
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- runs once on mount
-  }, []);
 
   async function onRegenerate() {
     if (

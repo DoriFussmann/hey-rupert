@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/back-link";
 import { PageHeader } from "@/components/page-header";
@@ -84,8 +85,24 @@ export default async function CompanyProfilePage({ params }: { params: { id: str
     <>
       <BackLink href={`/admin/clients/${client.id}`} label={client.company_name} />
       <PageHeader
-        title="Company profile"
+        title="Company Profile"
         description={`Everything Rupert knows about ${client.company_name}, by topic. Matching, the materials analysis and the outreach narrative all read from here.`}
+        actions={
+          <div className="flex flex-wrap items-end gap-sm">
+            <a
+              href={`/admin/clients/${client.id}/profile/export`}
+              className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+            >
+              Download as Markdown
+            </a>
+            <Link
+              href={`/admin/clients/${client.id}`}
+              className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
+            >
+              Back to Client
+            </Link>
+          </div>
+        }
       />
       {error ? (
         <p role="alert" className="mb-lg rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">
@@ -111,7 +128,7 @@ export default async function CompanyProfilePage({ params }: { params: { id: str
       <ProfileWorkspace
         clientId={client.id}
         initialState={state}
-        canBuildFromIntake={hasInterview && claudeReady}
+        canBuildFromIntake={hasInterview && claudeReady && Boolean(client.intake_completed_at)}
         taxonomy={{
           stages: [...RME.VC_LADDER, ...RME.PE_STAGES],
           verticals: RME.VERTICALS,
