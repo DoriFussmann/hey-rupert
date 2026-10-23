@@ -7,6 +7,15 @@ test("every matching topic is a default topic", () => {
   for (const id of Object.keys(MATCHING_TOPICS)) assert.ok(ids.has(id), id);
   assert.equal(matchingUse("competitors"), null);
   assert.equal(matchingUse("raise"), "Stage");
+  // Financing and investor types use the defaults: not asked, not locked.
+  for (const id of ["round_terms", "investor_preferences"]) {
+    assert.equal(matchingUse(id), null);
+    assert.ok(!ids.has(id), id);
+  }
+  // A saved list keeps them until an admin removes them; they're never added back.
+  const saved = [...DEFAULT_INTAKE_TOPICS, { id: "round_terms", title: "Round terms", guidance: "x", required: true }];
+  assert.ok(withMatchingTopics(saved).some((topic) => topic.id === "round_terms"));
+  assert.ok(!withMatchingTopics(DEFAULT_INTAKE_TOPICS).some((topic) => topic.id === "round_terms"));
 });
 
 test("matching topics can't be removed or made optional; others are kept as they are", () => {

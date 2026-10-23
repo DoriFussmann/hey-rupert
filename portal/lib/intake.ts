@@ -289,24 +289,10 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     required: true,
   },
   {
-    id: "round_terms",
-    title: "Round terms",
-    guidance:
-      "The instrument (SAFE, convertible note, priced equity or debt), whether they still need a lead investor, and the valuation or cap if set.",
-    required: true,
-  },
-  {
     id: "traction",
     title: "Traction",
     guidance:
       "Key metrics that show progress, and revenue stage: pre-revenue, under $10k MRR, $10–100k MRR, or $100k+ MRR.",
-    required: true,
-  },
-  {
-    id: "investor_preferences",
-    title: "Investor preferences",
-    guidance:
-      "Preferred investor types (VC, angel, family office, corporate) and target geographies.",
     required: true,
   },
   {
@@ -457,14 +443,17 @@ export function asIntakeBrief(value: unknown): IntakeBrief | null {
 /**
  * Topics the company profile for matching is built from, and what each one
  * feeds. They can't be removed or made optional: without them a profile can't
- * run, or matches on defaults. Their title and wording can still be edited.
+ * run. Their title and wording can still be edited.
+ *
+ * Not asked, on purpose: the financing type (every SAFE, note or priced round
+ * is equity, the default) and the investor types (set from the stage: VC,
+ * angel groups and family offices at pre-seed and seed). A founder who
+ * volunteers either still has it picked up from the conversation.
  */
 export const MATCHING_TOPICS: Record<string, string> = {
   company: "HQ country and US state",
   sector: "Primary and secondary sectors",
   raise: "Stage",
-  round_terms: "Financing type",
-  investor_preferences: "Fund types wanted",
   existing_and_exclusions: "Funds to exclude",
 };
 
