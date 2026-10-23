@@ -44,7 +44,7 @@ export function AppShell({
           aria-expanded={!collapsed}
           aria-label={collapsed ? "Show menu" : "Hide menu"}
           title={collapsed ? "Show menu" : "Hide menu"}
-          className={`mb-md flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-secondary transition-colors duration-hover hover:border-primary hover:text-primary ${
+          className={`mb-md flex h-9 w-9 shrink-0 items-center justify-center text-muted transition-colors duration-hover hover:text-heading ${
             collapsed ? "self-center" : "self-end"
           }`}
         >
