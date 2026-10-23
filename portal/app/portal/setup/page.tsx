@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { Checklist } from "@/components/checklist";
 import { TurnBanner } from "@/components/setup/turn-banner";
@@ -19,7 +20,7 @@ export default async function SetupPage() {
         description={
           open
             ? `${complete} of ${SETUP_TOTAL} complete. Rupert writes, you confirm.`
-            : "Opens once you submit your company materials."
+            : "Opens once your Client Intake is complete."
         }
       />
 
@@ -60,6 +61,19 @@ export default async function SetupPage() {
           dimmed: item.status === "open",
         }))}
       />
+
+      {open ? (
+        <p className="mt-lg text-body-sm text-muted">
+          Have an updated deck or something new?{" "}
+          <Link
+            href="/portal/materials"
+            className="text-primary no-underline hover:text-primary-hover"
+          >
+            Add it to your company files
+          </Link>
+          .
+        </p>
+      ) : null}
     </>
   );
 }

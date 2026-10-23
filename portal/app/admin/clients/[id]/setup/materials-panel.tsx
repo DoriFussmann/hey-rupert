@@ -77,7 +77,7 @@ export function MaterialsPanel({
   }
 
   const answers = labelledAnswers(fields, materials.fields);
-  const empty = materials.files.length === 0 && answers.length === 0;
+  const empty = materials.files.length === 0 && answers.length === 0 && !materials.no_deck;
 
   return (
     <StepFrame
@@ -85,12 +85,19 @@ export function MaterialsPanel({
       intro={
         submitted
           ? `Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Run Analyze in Setup to review everything with the AI.`
-          : "The client uploads their deck and shares company details here, then submits. Below is what they have added so far."
+          : "The client shares their deck and files in the Client Intake; they are submitted when the intake completes. Below is what they have added so far."
       }
     >
       <div className="px-lg py-md">
         {empty ? (
           <p className="text-body-sm text-muted">Nothing added yet.</p>
+        ) : null}
+
+        {materials.no_deck ? (
+          <div className="mb-md">
+            <p className="text-label uppercase tracking-label text-muted">No deck yet</p>
+            <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{materials.no_deck}</p>
+          </div>
         ) : null}
 
         {materials.files.length > 0 ? (

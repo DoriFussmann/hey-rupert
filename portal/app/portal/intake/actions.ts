@@ -4,10 +4,16 @@ import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import {
   INTAKE_LIMITS,
+  conflictLine,
+  intakeFileProblem,
   intakeProgress,
+  intakeReady,
+  mergeConflicts,
   mergeTopicStatus,
+  type IntakeConflict,
   type IntakeInterview,
   type IntakeMessage,
+  type IntakeTopic,
 } from "@/lib/intake";
 import {
   asIntakeInterview,
@@ -15,23 +21,45 @@ import {
   loadInterview,
   nextInterviewTurn,
   writeInterviewSummary,
-  type SharedDocument,
+  type InterviewMaterials,
 } from "@/lib/intake-server";
 import { loadInterviewGuide } from "@/lib/company-profile/server";
-import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
-import { MATERIALS_BUCKET, fileExtension, formatBytes } from "@/lib/setup";
+import { prepareFiles, type PreparedFiles } from "@/lib/material-files-server";
+import {
+  attachMaterialFile,
+  completeIntakeWithMaterials,
+  loadMaterialsView,
+  safeFileName,
+  saveNoDeckNote,
+} from "@/lib/materials-server";
+import {
+  MATERIALS_BUCKET,
+  MATERIAL_MAX_FILES,
+  NO_DECK_MAX,
+  formatBytes,
+  type MaterialFile,
+  type MaterialsView,
+} from "@/lib/setup";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 
 export type IntakeActionResult =
-  | { ok: true; interview: IntakeInterview }
+  | { ok: true; interview: IntakeInterview; materials: MaterialsView }
   | { ok: false; error: string; aiUnavailable?: boolean };
 
 const AI_UNAVAILABLE =
   "Rupert is unavailable right now. Please try again in a few minutes, or use Book a call.";
 
+const FILES_NOT_READ =
+  "Your files are saved, but Rupert couldn't read them just now. Please try again in a minute.";
+
 const TABLE_MISSING =
   "The intake interview is not set up yet. Please use Book a call and we will sort it out.";
+
+const MATERIALS_NEEDED =
+  "Share your deck in the panel, or tell Rupert you don't have one yet.";
+
+const EMPTY_MATERIALS: MaterialsView = { files: [], noDeck: "", submitted: false };
 
 function now() {
   return new Date().toISOString();
@@ -41,6 +69,7 @@ function revalidateIntake(clientId: string) {
   revalidatePath("/portal", "layout");
   revalidatePath("/portal/onboarding");
   revalidatePath("/portal/intake");
+  revalidatePath("/portal/materials");
   revalidatePath("/admin", "layout");
   revalidatePath(`/admin/clients/${clientId}`);
 }
@@ -68,48 +97,82 @@ async function loadOpenClient({ user, supabase }: PortalAccess) {
 
 const CONFIRMED_ERROR = "Your intake is complete and confirmed.";
 
-function topicNotes(
-  topics: { id: string; title: string }[],
+/** The client's materials now. Unreadable materials count as none shared yet. */
+async function currentMaterials({ supabase, user }: PortalAccess) {
+  const loaded = await loadMaterialsView(supabase, user.id);
+  return loaded.ok ? loaded.view : EMPTY_MATERIALS;
+}
+
+function interviewMaterials(view: MaterialsView): InterviewMaterials {
+  return { files: view.files.map((file) => file.name), noDeck: view.noDeck };
+}
+
+function readiness(view: MaterialsView) {
+  return { fileCount: view.files.length, noDeck: view.noDeck };
+}
+
+async function success(
+  access: PortalAccess,
+  interview: IntakeInterview,
+): Promise<IntakeActionResult> {
+  return { ok: true, interview, materials: await currentMaterials(access) };
+}
+
+/** What Rupert gathered, the materials and any disagreements, for the admin email. */
+function completionDetails(
+  topics: IntakeTopic[],
   topicStatus: IntakeInterview["topic_status"],
+  view: MaterialsView,
+  conflicts: IntakeConflict[],
 ) {
-  const lines = topics
+  const notes = topics
     .map((topic) => {
       const note = topicStatus[topic.id]?.note?.trim();
       return note ? `- ${topic.title}: ${note}` : null;
     })
     .filter(Boolean);
-  return lines.length > 0
-    ? `What Rupert gathered:\n${lines.join("\n")}`
-    : undefined;
+  return [
+    notes.length > 0 ? `What Rupert gathered:\n${notes.join("\n")}` : "",
+    view.files.length > 0
+      ? `Files:\n${view.files.map((file) => `- ${file.name} (${formatBytes(file.size)})`).join("\n")}`
+      : "No files shared.",
+    view.noDeck ? `No deck yet: ${view.noDeck}` : "",
+    conflicts.length > 0
+      ? `Where the files and the founder's answers disagreed:\n${conflicts.map((conflict) => `- ${conflictLine(conflict)}`).join("\n")}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 /**
- * Completes the intake the first time every required topic is covered:
- * marks it done and emails the admin. The stage stays on intake until the
- * client submits Company Materials. The client can keep chatting to add the
- * optional extras.
+ * Completes the intake the first time every required topic is covered and
+ * the materials are shared (or the founder has no deck yet): the materials
+ * are submitted with it, Setup opens and the admin is emailed. The client
+ * can keep chatting to add the optional extras.
  */
-async function completeIfEssentialsCovered(
-  { supabase, user }: PortalAccess,
+async function completeIfReady(
+  access: PortalAccess,
   client: Record<string, unknown>,
-  topics: Parameters<typeof intakeProgress>[0],
+  topics: IntakeTopic[],
   topicStatus: IntakeInterview["topic_status"],
+  conflicts: IntakeConflict[],
 ) {
   if (client.intake_completed_at) return;
-  if (!intakeProgress(topics, topicStatus).ready) return;
+  const view = await currentMaterials(access);
+  if (!intakeReady(topics, topicStatus, readiness(view))) return;
 
-  const { data, error } = await supabase
-    .from("clients")
-    .update({ intake_completed_at: now() })
-    .eq("id", user.id)
-    .is("intake_completed_at", null)
-    .select("id");
-
-  if (error || !data || data.length === 0) return;
+  const { supabase, user } = access;
+  const completed = await completeIntakeWithMaterials(supabase, user.id, now());
+  if (!completed.ok) {
+    console.error(`Intake completion failed: ${completed.error}`);
+    return;
+  }
+  if (!completed.completed) return;
 
   await notifyAdmin(supabase, user.id, "intake_completed", {
     email: true,
-    details: topicNotes(topics, topicStatus),
+    details: completionDetails(topics, topicStatus, view, conflicts),
   });
   revalidateIntake(user.id);
 }
@@ -126,7 +189,7 @@ export async function startIntake(): Promise<IntakeActionResult> {
   const existing = await loadInterview(supabase, user.id);
   if (!existing.ok) return { ok: false, error: TABLE_MISSING };
   if (existing.interview && existing.interview.messages.length > 0) {
-    return { ok: true, interview: existing.interview };
+    return success(access, existing.interview);
   }
   if (opened.client.intake_completed_at) {
     return { ok: false, error: "Your intake is already complete." };
@@ -135,7 +198,12 @@ export async function startIntake(): Promise<IntakeActionResult> {
   const settings = await loadIntakeSettings(supabase);
   // A new interview uses the classification guide (the column defaults to it).
   const guide = await loadInterviewGuide(supabase);
-  const turn = await nextInterviewTurn(supabase, settings, opened.client, [], {}, undefined, guide);
+  const view = await currentMaterials(access);
+  const turn = await nextInterviewTurn(supabase, settings, opened.client, [], {}, {
+    materials: interviewMaterials(view),
+    conflicts: [],
+    guide,
+  });
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
 
   const messages: IntakeMessage[] = [
@@ -159,13 +227,8 @@ export async function startIntake(): Promise<IntakeActionResult> {
     .single();
 
   if (error || !data) return { ok: false, error: TABLE_MISSING };
-  await completeIfEssentialsCovered(
-    access,
-    opened.client,
-    settings.topics,
-    topicStatus,
-  );
-  return { ok: true, interview: asIntakeInterview(data) };
+  await completeIfReady(access, opened.client, settings.topics, topicStatus, []);
+  return success(access, asIntakeInterview(data));
 }
 
 /** The interview, if the client can add to it right now. */
@@ -199,10 +262,11 @@ async function takeTurn(
   client: Record<string, unknown>,
   interview: IntakeInterview,
   message: IntakeMessage,
-  document?: SharedDocument,
+  files?: PreparedFiles,
 ): Promise<IntakeActionResult> {
   const { supabase, user } = access;
   const settings = await loadIntakeSettings(supabase);
+  const view = await currentMaterials(access);
   const withUser: IntakeMessage[] = [...interview.messages, message];
 
   const turn = await nextInterviewTurn(
@@ -211,28 +275,38 @@ async function takeTurn(
     client,
     withUser,
     interview.topic_status,
-    document,
-    interview.classification_guide ? await loadInterviewGuide(supabase) : null,
+    {
+      materials: interviewMaterials(view),
+      conflicts: interview.conflicts,
+      files,
+      guide: interview.classification_guide ? await loadInterviewGuide(supabase) : null,
+    },
   );
   if (!turn.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
 
-  // What Rupert took from a shared file stays with the message, so later
+  // What Rupert took from each shared file stays with the message, so later
   // turns (and the summary) still know what it said.
-  const saved: IntakeMessage[] = message.attachment
-    ? [
-        ...interview.messages,
-        { ...message, attachment: { ...message.attachment, facts: turn.turn.documentFacts } },
-      ]
-    : withUser;
+  const saved: IntakeMessage = message.attachments
+    ? {
+        ...message,
+        attachments: message.attachments.map((file) => ({
+          ...file,
+          facts: turn.turn.fileFacts.get(file.name) ?? "",
+        })),
+      }
+    : message;
+  const at = now();
   const messages: IntakeMessage[] = [
-    ...saved,
-    { role: "assistant", content: turn.turn.reply, at: now() },
+    ...interview.messages,
+    saved,
+    { role: "assistant", content: turn.turn.reply, at },
   ];
   const topicStatus = mergeTopicStatus(
     interview.topic_status,
     turn.turn.topics,
     settings.topics,
   );
+  const conflicts = mergeConflicts(interview.conflicts, turn.turn.conflicts, at);
 
   // Guard against a second tab writing at the same time: only update if the
   // message count is still the one this turn was based on.
@@ -241,8 +315,9 @@ async function takeTurn(
     .update({
       messages,
       topic_status: topicStatus,
+      material_conflicts: conflicts,
       client_message_count: interview.client_message_count + 1,
-      updated_at: now(),
+      updated_at: at,
     })
     .eq("client_id", user.id)
     .eq("client_message_count", interview.client_message_count)
@@ -256,10 +331,10 @@ async function takeTurn(
     };
   }
 
-  await completeIfEssentialsCovered(access, client, settings.topics, topicStatus);
+  await completeIfReady(access, client, settings.topics, topicStatus, conflicts);
 
   revalidatePath(`/admin/clients/${user.id}`);
-  return { ok: true, interview: asIntakeInterview(data[0]) };
+  return success(access, asIntakeInterview(data[0]));
 }
 
 export async function sendIntakeMessage(
@@ -288,7 +363,7 @@ export async function sendIntakeMessage(
 }
 
 /**
- * Step 1 of sharing a PDF in the chat: checks it and returns a one-time
+ * Step 1 of sharing a file in the intake: checks it and returns a one-time
  * signed URL the browser uploads to directly.
  */
 export async function createIntakeUpload(file: {
@@ -302,15 +377,11 @@ export async function createIntakeUpload(file: {
 
   const name = String(file?.name ?? "").trim();
   const size = Number(file?.size) || 0;
-  if (fileExtension(name) !== "pdf") {
-    return { ok: false, error: "Share a PDF here. Other files can be added in Setup." };
-  }
-  if (size <= 0) return { ok: false, error: `${name} is empty.` };
-  if (size > INTAKE_LIMITS.fileMaxBytes) {
-    return {
-      ok: false,
-      error: `${name} is ${formatBytes(size)}. PDFs up to ${formatBytes(INTAKE_LIMITS.fileMaxBytes)} can be shared here; add larger files in Setup.`,
-    };
+  const problem = intakeFileProblem({ name, size });
+  if (problem) return { ok: false, error: problem };
+  const view = await currentMaterials(access);
+  if (view.files.length >= MATERIAL_MAX_FILES) {
+    return { ok: false, error: `Up to ${MATERIAL_MAX_FILES} files can be shared.` };
   }
 
   const path = `${access.user.id}/${randomUUID()}/${safeFileName(name)}`;
@@ -323,41 +394,57 @@ export async function createIntakeUpload(file: {
   return { ok: true, path: data.path, token: data.token };
 }
 
+type UploadedFile = { path: string; name: string; size: number; type: string };
+
 /**
- * Step 2: Rupert reads the uploaded PDF in this turn. The file is also added
- * to the client's company materials, so they do not upload it again in Setup.
+ * Step 2: the uploaded files join the client's company materials, then
+ * Rupert reads them all in one turn. Safe to retry: a file already added is
+ * not added twice.
  */
-export async function sendIntakeFile(input: {
-  path: string;
-  name: string;
-  size: number;
-  type: string;
+export async function sendIntakeFiles(input: {
+  files: UploadedFile[];
   note: string;
 }): Promise<IntakeActionResult> {
   const access = await requirePortalService();
   if (!access.ok) return access;
 
-  const path = String(input?.path ?? "");
-  if (!path.startsWith(`${access.user.id}/`) || path.includes("..")) {
-    return { ok: false, error: "That upload does not belong to you." };
+  const uploads = Array.isArray(input?.files) ? input.files.slice(0, MATERIAL_MAX_FILES) : [];
+  if (uploads.length === 0) return { ok: false, error: "Choose a file first." };
+  for (const upload of uploads) {
+    const path = String(upload?.path ?? "");
+    if (!path.startsWith(`${access.user.id}/`) || path.includes("..")) {
+      return { ok: false, error: "That upload does not belong to you." };
+    }
+    const problem = intakeFileProblem({
+      name: String(upload?.name ?? ""),
+      size: Number(upload?.size) || 0,
+    });
+    if (problem) return { ok: false, error: problem };
   }
   const note = String(input?.note ?? "").trim().slice(0, INTAKE_LIMITS.messageMaxChars);
-  const name = String(input?.name ?? "file").slice(0, 255);
 
   const open = await loadOpenInterview(access);
   if (!open.ok) return open;
 
-  const { data: blob, error: downloadError } = await access.supabase.storage
-    .from(MATERIALS_BUCKET)
-    .download(path);
-  if (downloadError || !blob) {
-    return { ok: false, error: "The file could not be read. Please try uploading it again." };
+  const attached: MaterialFile[] = [];
+  let late = false;
+  for (const upload of uploads) {
+    const result = await attachMaterialFile(access.supabase, access.user.id, {
+      path: String(upload.path),
+      name: String(upload.name ?? "file"),
+      size: Number(upload.size) || 0,
+      type: String(upload.type ?? ""),
+    });
+    if (!result.ok) return { ok: false, error: result.error };
+    attached.push(result.file);
+    late = late || result.late;
   }
-  const bytes = Buffer.from(await blob.arrayBuffer());
-  if (bytes.length > INTAKE_LIMITS.fileMaxBytes) {
-    return { ok: false, error: "That file is too large to read here. Add it in Setup instead." };
+  if (late) {
+    await notifyAdmin(access.supabase, access.user.id, "materials_added", { email: false });
   }
+  revalidateIntake(access.user.id);
 
+  const prepared = await prepareFiles(access.supabase, attached);
   const result = await takeTurn(
     access,
     open.client,
@@ -366,25 +453,45 @@ export async function sendIntakeFile(input: {
       role: "user",
       content: note,
       at: now(),
-      attachment: { name, path, facts: "" },
+      attachments: attached.map((file) => ({ name: file.name, path: file.path, facts: "" })),
     },
-    { name, base64: bytes.toString("base64") },
+    prepared,
   );
-
-  // Best effort: the chat goes on even if the file cannot be added to Setup.
-  if (result.ok) {
-    const attached = await attachMaterialFile(access.supabase, access.user.id, {
-      path,
-      name,
-      size: Number(input?.size) || bytes.length,
-      type: String(input?.type ?? "application/pdf"),
-    });
-    if (!attached.ok) console.error(`Intake file not added to materials: ${attached.error}`);
+  if (!result.ok && result.aiUnavailable) {
+    return { ok: false, error: FILES_NOT_READ, aiUnavailable: true };
   }
   return result;
 }
 
-/** Writes the per-topic summary once every required topic is covered. */
+/** The founder has no deck yet: records why, and tells Rupert in the chat. */
+export async function declareNoDeck(reason: string): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+
+  const note = String(reason ?? "").trim();
+  if (!note) return { ok: false, error: "Add a short reason first." };
+  if (note.length > NO_DECK_MAX) {
+    return { ok: false, error: `Please keep it under ${NO_DECK_MAX} characters.` };
+  }
+
+  const open = await loadOpenInterview(access);
+  if (!open.ok) return open;
+  const view = await currentMaterials(access);
+  if (view.files.length > 0) {
+    return { ok: false, error: "You've already shared files, so there's no need." };
+  }
+
+  const saved = await saveNoDeckNote(access.supabase, access.user.id, note);
+  if (!saved.ok) return saved;
+
+  return takeTurn(access, open.client, open.interview, {
+    role: "user",
+    content: `I don't have a pitch deck yet. ${note}`,
+    at: now(),
+  });
+}
+
+/** Writes the per-topic summary once the intake is ready. */
 export async function requestIntakeSummary(): Promise<IntakeActionResult> {
   const access = await requirePortalService();
   if (!access.ok) return access;
@@ -401,7 +508,7 @@ export async function requestIntakeSummary(): Promise<IntakeActionResult> {
     return { ok: false, error: CONFIRMED_ERROR };
   }
   if (interview.status === "review" && interview.summary) {
-    return { ok: true, interview };
+    return success(access, interview);
   }
 
   const settings = await loadIntakeSettings(supabase);
@@ -411,6 +518,13 @@ export async function requestIntakeSummary(): Promise<IntakeActionResult> {
       error: "A few required topics are still open. Keep chatting with Rupert.",
     };
   }
+  const view = await currentMaterials(access);
+  if (
+    !opened.client.intake_completed_at &&
+    !intakeReady(settings.topics, interview.topic_status, readiness(view))
+  ) {
+    return { ok: false, error: MATERIALS_NEEDED };
+  }
 
   const summary = await writeInterviewSummary(
     supabase,
@@ -418,6 +532,7 @@ export async function requestIntakeSummary(): Promise<IntakeActionResult> {
     opened.client,
     interview.messages,
     interview.topic_status,
+    interview.conflicts,
   );
   if (!summary.ok) {
     return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
@@ -431,7 +546,7 @@ export async function requestIntakeSummary(): Promise<IntakeActionResult> {
     .single();
 
   if (error || !data) return { ok: false, error: error?.message ?? TABLE_MISSING };
-  return { ok: true, interview: asIntakeInterview(data) };
+  return success(access, asIntakeInterview(data));
 }
 
 /** Leaves the summary and goes back to the conversation. */
@@ -451,12 +566,12 @@ export async function resumeIntakeConversation(): Promise<IntakeActionResult> {
 
   if (error) return { ok: false, error: error.message };
   if (data && data.length > 0) {
-    return { ok: true, interview: asIntakeInterview(data[0]) };
+    return success(access, asIntakeInterview(data[0]));
   }
 
   const loaded = await loadInterview(access.supabase, access.user.id);
   if (!loaded.ok || !loaded.interview) return { ok: false, error: TABLE_MISSING };
-  return { ok: true, interview: loaded.interview };
+  return success(access, loaded.interview);
 }
 
 /** Saves the client's edited summary and completes the intake. */
@@ -477,6 +592,25 @@ export async function confirmIntake(
     return { ok: false, error: "Review the summary before confirming." };
   }
 
+  // Normally the intake was already completed when the essentials and the
+  // materials were in; confirming the summary then only records the edits.
+  const completedAt = now();
+  if (!opened.client.intake_completed_at) {
+    const settings = await loadIntakeSettings(supabase);
+    const view = await currentMaterials(access);
+    if (!intakeReady(settings.topics, interview.topic_status, readiness(view))) {
+      return { ok: false, error: MATERIALS_NEEDED };
+    }
+    const completed = await completeIntakeWithMaterials(supabase, user.id, completedAt);
+    if (!completed.ok) return completed;
+    if (completed.completed) {
+      await notifyAdmin(supabase, user.id, "intake_completed", {
+        email: true,
+        details: completionDetails(settings.topics, interview.topic_status, view, interview.conflicts),
+      });
+    }
+  }
+
   const edited = new Map(
     (Array.isArray(answers) ? answers : []).map((item) => [
       String(item?.topic_id ?? ""),
@@ -488,7 +622,6 @@ export async function confirmIntake(
     answer: edited.get(item.topic_id) || item.answer,
   }));
 
-  const completedAt = now();
   const { error } = await supabase
     .from("intake_interviews")
     .update({
@@ -502,28 +635,12 @@ export async function confirmIntake(
 
   if (error) return { ok: false, error: error.message };
 
-  // Normally the intake was already completed when the essentials were
-  // covered; confirming the summary then only records the client's edits.
-  if (!opened.client.intake_completed_at) {
-    const { error: clientError } = await supabase
-      .from("clients")
-      .update({ intake_completed_at: completedAt })
-      .eq("id", user.id);
-
-    if (clientError) return { ok: false, error: clientError.message };
-
-    await notifyAdmin(supabase, user.id, "intake_completed", { email: true });
-  }
-
   revalidateIntake(user.id);
-  return {
-    ok: true,
-    interview: {
-      ...interview,
-      summary,
-      status: "completed",
-      completed_at: completedAt,
-      updated_at: completedAt,
-    },
-  };
+  return success(access, {
+    ...interview,
+    summary,
+    status: "completed",
+    completed_at: completedAt,
+    updated_at: completedAt,
+  });
 }

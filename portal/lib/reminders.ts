@@ -104,7 +104,7 @@ export function pendingClientTurns(
   if (ndaSignedAt && !intakeAt) {
     turns.push({
       key: "intake",
-      task: "complete your intake interview with Rupert",
+      task: "complete your intake interview with Rupert and share your deck",
       path: "/portal/intake",
       since: ndaSignedAt,
     });

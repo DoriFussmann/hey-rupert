@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import {
   confirmIntake,
   createIntakeUpload,
+  declareNoDeck,
   requestIntakeSummary,
   resumeIntakeConversation,
-  sendIntakeFile,
+  sendIntakeFiles,
   sendIntakeMessage,
   startIntake,
   type IntakeActionResult,
@@ -17,15 +18,28 @@ import { BOOK_CALL_URL } from "@/components/book-call-link";
 import { RupertAvatar } from "@/components/rupert-avatar";
 import { formatDate } from "@/lib/format";
 import {
+  INTAKE_FILE_EXTENSIONS,
   INTAKE_LIMITS,
   extrasProgress,
+  intakeFileProblem,
   intakeProgress,
+  intakeReady,
+  materialsProvided,
   topicCoverage,
+  type IntakeConflict,
   type IntakeInterview,
   type IntakeTopic,
   type TopicCoverage,
 } from "@/lib/intake";
-import { MATERIALS_BUCKET, fileExtension, formatBytes } from "@/lib/setup";
+import {
+  MATERIALS_BUCKET,
+  MATERIAL_MAX_BYTES,
+  MATERIAL_MAX_FILES,
+  NO_DECK_MAX,
+  fileExtension,
+  formatBytes,
+  type MaterialsView,
+} from "@/lib/setup";
 import { createClient } from "@/lib/supabase/client";
 
 const primaryButton =
@@ -37,18 +51,49 @@ const secondaryButton =
 const QUICK_REPLIES = ["None", "Not sure yet", "Skip this one"];
 const TEXTAREA_MAX_PX = 168;
 
-function FileChip({ name, inverse }: { name: string; inverse?: boolean }) {
+const ACCEPT = INTAKE_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
+
+function FileBadge({ name }: { name: string }) {
   return (
-    <span
-      className={`inline-flex max-w-full items-center gap-xs rounded-md border px-sm py-xs text-body-sm ${
-        inverse ? "border-primary/30 bg-surface text-heading" : "border-border bg-surface text-heading"
-      }`}
-    >
-      <span className="rounded border border-border px-xs text-label uppercase tracking-label text-muted">
-        PDF
-      </span>
+    <span className="shrink-0 rounded border border-border px-xs text-label uppercase tracking-label text-muted">
+      {fileExtension(name) || "file"}
+    </span>
+  );
+}
+
+function FileChip({ name }: { name: string }) {
+  return (
+    <span className="inline-flex max-w-full items-center gap-xs rounded-md border border-primary/30 bg-surface px-sm py-xs text-body-sm text-heading">
+      <FileBadge name={name} />
       <span className="truncate">{name}</span>
     </span>
+  );
+}
+
+/** Where the founder's files and answers disagreed, and what they confirmed. */
+function ConflictList({ conflicts }: { conflicts: IntakeConflict[] }) {
+  if (conflicts.length === 0) return null;
+  return (
+    <div className="border-t border-border px-lg py-md">
+      <p className="text-label uppercase tracking-label text-muted">
+        Checked with you
+      </p>
+      <p className="mt-xs text-body-sm text-muted">
+        Where your files and your answers differed. Rupert works from what you confirmed.
+      </p>
+      <ul className="mt-sm divide-y divide-border">
+        {conflicts.map((conflict) => (
+          <li key={conflict.id} className="py-sm text-body-sm">
+            <p className="text-heading">
+              {conflict.status === "resolved" ? conflict.resolution : "Not confirmed yet"}
+            </p>
+            <p className="mt-xs text-muted">
+              {conflict.file || "Your files"}: {conflict.file_says} · You said: {conflict.founder_says}
+            </p>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -169,33 +214,43 @@ function TypingIndicator({ label }: { label?: string }) {
   );
 }
 
+/** One file being uploaded, before Rupert has it. */
+type PendingUpload = { name: string; size: number; type: string; file: File };
+
+type UploadedFile = { path: string; name: string; size: number; type: string };
+
 export function IntakeExperience({
   initialInterview,
+  initialMaterials,
   topics,
   completedAt,
   firstName,
   readOnly,
-  materialsSubmitted,
 }: {
   initialInterview: IntakeInterview | null;
+  initialMaterials: MaterialsView;
   topics: IntakeTopic[];
   completedAt: string | null;
   firstName: string;
   readOnly: boolean;
-  /** Company Materials already submitted, so Setup has started. */
-  materialsSubmitted: boolean;
 }) {
   const router = useRouter();
   const [interview, setInterview] = useState<IntakeInterview | null>(
     initialInterview,
   );
+  const [materials, setMaterials] = useState<MaterialsView>(initialMaterials);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<
-    "start" | "send" | "upload" | "summary" | "resume" | "confirm" | null
+    "start" | "send" | "upload" | "no_deck" | "summary" | "resume" | "confirm" | null
   >(null);
   // Shown in the conversation right away, before Rupert answers.
-  const [outgoing, setOutgoing] = useState<{ text: string; file: string | null } | null>(null);
+  const [outgoing, setOutgoing] = useState<{ text: string; files: string[] } | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [panelDragging, setPanelDragging] = useState(false);
+  // Files saved but not yet read by Rupert (his reply failed): sent again on retry.
+  const [unread, setUnread] = useState<{ files: UploadedFile[]; note: string } | null>(null);
+  const [noDeckOpen, setNoDeckOpen] = useState(false);
+  const [noDeckReason, setNoDeckReason] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
   const [aiUnavailable, setAiUnavailable] = useState(false);
@@ -213,18 +268,26 @@ export function IntakeExperience({
   const progress = completed
     ? { percent: 100, ready: true }
     : intakeProgress(topics, topicStatus);
-  // The essentials are done once every required topic is covered; the intake
-  // is then complete for Rupert, and the extras are recommended.
+  const materialsState = { fileCount: materials.files.length, noDeck: materials.noDeck };
+  const hasMaterials = materialsProvided(materialsState);
+  // The intake is complete for Rupert once the essentials are covered and
+  // the materials are in (or the founder has no deck yet); the extras are
+  // then recommended.
+  const intakeDone =
+    Boolean(completedAt) || intakeReady(topics, topicStatus, materialsState);
   const essentialsDone = progress.ready || Boolean(completedAt);
   const extras = extrasProgress(topics, topicStatus);
   const messages = interview?.messages ?? [];
+  const conflicts = interview?.conflicts ?? [];
   const reviewing = interview?.status === "review" && !completed;
   const limitReached =
     (interview?.client_message_count ?? 0) >= INTAKE_LIMITS.clientMessagesMax;
+  const roomForFiles = MATERIAL_MAX_FILES - materials.files.length;
 
   function apply(result: IntakeActionResult) {
     if (result.ok) {
       setInterview(result.interview);
+      setMaterials(result.materials);
       setError(null);
       setAiUnavailable(false);
       return true;
@@ -287,70 +350,120 @@ export function IntakeExperience({
     }
   }, [interview?.summary]);
 
-  /** Sends a message (or a file) and shows it in the conversation at once. */
+  /** Sends a message (or files) and shows it in the conversation at once. */
   async function deliver(
-    kind: "send" | "upload",
-    shown: { text: string; file: string | null },
+    kind: "send" | "upload" | "no_deck",
+    shown: { text: string; files: string[] },
     action: () => Promise<IntakeActionResult>,
   ) {
-    const wasReady = progress.ready;
-    let nowReady = false;
+    const wasDone = intakeDone;
+    let nowDone = false;
     setOutgoing(shown);
     setDraft("");
     const sent = await run(kind, async () => {
       const result = await action();
       if (result.ok) {
-        nowReady = intakeProgress(topics, result.interview.topic_status).ready;
+        nowDone = intakeReady(topics, result.interview.topic_status, {
+          fileCount: result.materials.files.length,
+          noDeck: result.materials.noDeck,
+        });
       }
       return result;
     });
     setOutgoing(null);
-    if (!sent) setDraft(shown.text);
-    // The essentials just got covered: the intake is now complete, so refresh
-    // the sidebar and onboarding counts.
-    if (sent && nowReady && !wasReady) router.refresh();
+    if (!sent && kind === "send") setDraft(shown.text);
+    // The intake just completed: refresh the sidebar and onboarding counts.
+    if (sent && nowDone && !wasDone) router.refresh();
     inputRef.current?.focus();
+    return sent;
   }
 
   async function onSend(event?: React.FormEvent, preset?: string) {
     event?.preventDefault();
     const text = (preset ?? draft).trim();
     if (!text || pending || readOnly || limitReached) return;
-    await deliver("send", { text, file: null }, () => sendIntakeMessage(text));
+    await deliver("send", { text, files: [] }, () => sendIntakeMessage(text));
   }
 
-  async function onFile(file: File | undefined) {
-    if (!file || pending || readOnly || limitReached) return;
-    if (fileExtension(file.name) !== "pdf") {
-      setError("Share a PDF here. Other files can be added in Setup.");
+  /** Uploads the files, then Rupert reads them all in one reply. */
+  async function onFiles(list: FileList | File[] | null | undefined) {
+    if (!list || pending || readOnly || limitReached) return;
+    const incoming: PendingUpload[] = Array.from(list).map((file) => ({
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file,
+    }));
+    if (incoming.length === 0) return;
+    const problems = incoming
+      .map((file) => intakeFileProblem(file))
+      .filter((problem): problem is string => Boolean(problem));
+    const valid = incoming.filter((file) => !intakeFileProblem(file)).slice(0, Math.max(roomForFiles, 0));
+    if (valid.length < incoming.length - problems.length) {
+      problems.push(`Up to ${MATERIAL_MAX_FILES} files can be shared.`);
+    }
+    if (valid.length === 0) {
+      setError(problems.join(" ") || "Choose a file to share.");
       return;
     }
-    if (file.size > INTAKE_LIMITS.fileMaxBytes) {
-      setError(
-        `${file.name} is ${formatBytes(file.size)}. PDFs up to ${formatBytes(INTAKE_LIMITS.fileMaxBytes)} can be shared here; add larger files in Setup.`,
-      );
-      return;
-    }
+
     const note = draft.trim();
-    await deliver("upload", { text: note, file: file.name }, async () => {
-      const ticket = await createIntakeUpload({ name: file.name, size: file.size });
-      if (!ticket.ok) return ticket;
-      const { error: uploadError } = await createClient()
-        .storage.from(MATERIALS_BUCKET)
-        .uploadToSignedUrl(ticket.path, ticket.token, file, { contentType: "application/pdf" });
-      if (uploadError) return { ok: false, error: `Upload failed: ${uploadError.message}` };
-      return sendIntakeFile({
-        path: ticket.path,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        note,
-      });
-    });
+    const sent = await deliver(
+      "upload",
+      { text: note, files: valid.map((file) => file.name) },
+      async () => {
+        const uploaded: UploadedFile[] = [];
+        for (const item of valid) {
+          const ticket = await createIntakeUpload({ name: item.name, size: item.size });
+          if (!ticket.ok) return ticket;
+          const { error: uploadError } = await createClient()
+            .storage.from(MATERIALS_BUCKET)
+            .uploadToSignedUrl(ticket.path, ticket.token, item.file, {
+              contentType: item.type || undefined,
+            });
+          if (uploadError) {
+            return { ok: false, error: `${item.name}: upload failed (${uploadError.message}).` };
+          }
+          uploaded.push({ path: ticket.path, name: item.name, size: item.size, type: item.type });
+        }
+        const result = await sendIntakeFiles({ files: uploaded, note });
+        setUnread(!result.ok && result.aiUnavailable ? { files: uploaded, note } : null);
+        return result;
+      },
+    );
+    if (!sent && note) setDraft(note);
+    if (sent && problems.length > 0) setError(problems.join(" "));
     if (fileRef.current) fileRef.current.value = "";
   }
 
-  const canWrite = !readOnly && !limitReached && pending === null;
+  async function onRetryFiles() {
+    if (!unread || pending) return;
+    const retry = unread;
+    const sent = await deliver(
+      "upload",
+      { text: retry.note, files: retry.files.map((file) => file.name) },
+      () => sendIntakeFiles(retry),
+    );
+    if (sent) setUnread(null);
+  }
+
+  async function onNoDeck(event: React.FormEvent) {
+    event.preventDefault();
+    const reason = noDeckReason.trim();
+    if (!reason || pending || readOnly || limitReached) return;
+    const sent = await deliver(
+      "no_deck",
+      { text: `I don't have a pitch deck yet. ${reason}`, files: [] },
+      () => declareNoDeck(reason),
+    );
+    if (sent) {
+      setNoDeckOpen(false);
+      setNoDeckReason("");
+    }
+  }
+
+  const chatOpen = !readOnly && !limitReached && !completed && !reviewing;
+  const canWrite = chatOpen && pending === null;
 
   function onKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
@@ -400,27 +513,195 @@ export function IntakeExperience({
 
   const essentialTopics = topics.filter((topic) => topic.required);
   const extraTopics = topics.filter((topic) => !topic.required);
+  const uploading = pending === "upload";
+
+  const materialsPanel = (
+    <section
+      aria-labelledby="intake-materials-title"
+      className="rounded-card border border-border bg-surface"
+    >
+      <div className="flex items-start gap-sm border-b border-border px-lg py-md">
+        <CoverageIcon coverage={hasMaterials || completed ? "covered" : "missing"} />
+        <div className="min-w-0 flex-1">
+          <h2 id="intake-materials-title" className="text-h4">
+            Company materials
+          </h2>
+          <p className="mt-xs text-body-sm text-muted">
+            {materials.files.length > 0
+              ? `${materials.files.length} of ${MATERIAL_MAX_FILES} files shared`
+              : materials.noDeck
+                ? "No deck yet. That's fine."
+                : "Start with your pitch deck. Add a one-pager, financials or anything else useful."}
+          </p>
+        </div>
+      </div>
+
+      {chatOpen ? (
+        <div className="px-lg pt-md">
+          <div
+            role="button"
+            tabIndex={canWrite ? 0 : -1}
+            aria-disabled={!canWrite}
+            aria-label="Share files: drop them here or press Enter to browse"
+            onClick={() => canWrite && fileRef.current?.click()}
+            onKeyDown={(event) => {
+              if (!canWrite) return;
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                fileRef.current?.click();
+              }
+            }}
+            onDragOver={(event) => {
+              if (!canWrite || !event.dataTransfer.types.includes("Files")) return;
+              event.preventDefault();
+              setPanelDragging(true);
+            }}
+            onDragLeave={() => setPanelDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setPanelDragging(false);
+              if (canWrite) void onFiles(event.dataTransfer.files);
+            }}
+            className={`flex flex-col items-center justify-center rounded-card border-2 border-dashed px-md py-lg text-center transition-colors duration-hover ${
+              canWrite ? "cursor-pointer" : "cursor-not-allowed opacity-60"
+            } ${
+              panelDragging
+                ? "border-primary bg-primary-tint"
+                : "border-border bg-background hover:border-primary/50"
+            }`}
+          >
+            <svg className="h-7 w-7 text-primary" viewBox="0 0 24 24" aria-hidden>
+              <path
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"
+              />
+            </svg>
+            <p className="mt-sm text-body-sm text-heading">
+              {uploading ? "Rupert is reading…" : (
+                <>
+                  Drop files here, or <span className="text-primary">browse</span>
+                </>
+              )}
+            </p>
+            <p className="mt-xs text-body-sm text-muted">
+              PDF works best. PowerPoint, Word, Excel, CSV and images too, up to{" "}
+              {formatBytes(MATERIAL_MAX_BYTES)} each.
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <ul className="divide-y divide-border px-lg py-sm">
+        {materials.files.map((file) => (
+          <li key={file.path} className="flex items-center gap-sm py-sm">
+            <FileBadge name={file.name} />
+            <span className="min-w-0 flex-1 truncate text-body-sm text-heading">{file.name}</span>
+            <span className="shrink-0 text-body-sm text-muted">{formatBytes(file.size)}</span>
+          </li>
+        ))}
+        {materials.files.length === 0 && materials.noDeck ? (
+          <li className="py-sm text-body-sm text-muted">
+            You told Rupert: {materials.noDeck}
+          </li>
+        ) : null}
+        {materials.files.length === 0 && !materials.noDeck ? (
+          <li className="py-sm text-body-sm text-muted">No files shared yet.</li>
+        ) : null}
+      </ul>
+
+      {chatOpen && materials.files.length === 0 && !materials.noDeck ? (
+        <div className="border-t border-border px-lg py-md">
+          {noDeckOpen ? (
+            <form onSubmit={onNoDeck}>
+              <label
+                htmlFor="intake-no-deck"
+                className="block text-body-sm text-heading"
+              >
+                No deck yet? Tell Rupert briefly why.
+              </label>
+              <textarea
+                id="intake-no-deck"
+                rows={2}
+                value={noDeckReason}
+                maxLength={NO_DECK_MAX}
+                onChange={(event) => setNoDeckReason(event.target.value)}
+                placeholder="e.g. We're still building it, it'll be ready next month."
+                className="mt-sm w-full resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
+              />
+              <div className="mt-sm flex flex-wrap gap-sm">
+                <button
+                  type="submit"
+                  className={primaryButton}
+                  disabled={!canWrite || !noDeckReason.trim()}
+                >
+                  {pending === "no_deck" ? "Sending…" : "Tell Rupert"}
+                </button>
+                <button
+                  type="button"
+                  className={secondaryButton}
+                  disabled={pending !== null}
+                  onClick={() => setNoDeckOpen(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          ) : (
+            <button
+              type="button"
+              className="text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
+              disabled={!canWrite}
+              onClick={() => setNoDeckOpen(true)}
+            >
+              I don&apos;t have a deck yet
+            </button>
+          )}
+        </div>
+      ) : null}
+
+      {materials.submitted ? (
+        <div className="border-t border-border px-lg py-md">
+          <Link
+            href="/portal/materials"
+            className="text-body-sm text-primary no-underline hover:text-primary-hover"
+          >
+            {readOnly ? "View company files" : "Add or view company files"}
+          </Link>
+        </div>
+      ) : null}
+    </section>
+  );
 
   const progressPanel = (
-    <aside className="rounded-card border border-border bg-surface lg:sticky lg:top-lg lg:self-start">
+    <aside className="rounded-card border border-border bg-surface">
       <div className="flex items-center gap-md border-b border-border px-lg py-lg">
         <ProgressRing percent={essentialsDone ? 100 : progress.percent} />
         <div>
           <p className="text-h4 text-heading">
             {completed
               ? "Intake complete"
-              : essentialsDone
+              : intakeDone
                 ? "Essentials done"
-                : "Your intake"}
+                : essentialsDone
+                  ? "Almost there"
+                  : "Your intake"}
           </p>
           <p className="mt-xs text-body-sm text-muted">
             {completed
-              ? materialsSubmitted
+              ? materials.submitted
                 ? "Thank you. Rupert is on it."
                 : "Last step: share your deck and materials."
-              : essentialsDone && extras.total > 0
-                ? `Extras: ${extras.covered} of ${extras.total} covered`
-                : "Progress on the essentials."}
+              : intakeDone
+                ? extras.total > 0
+                  ? `Extras: ${extras.covered} of ${extras.total} covered`
+                  : "Rupert has what he needs."
+                : essentialsDone
+                  ? "Share your deck, or tell Rupert you don't have one yet."
+                  : "Progress on the essentials."}
           </p>
         </div>
       </div>
@@ -444,26 +725,44 @@ export function IntakeExperience({
         <div className="border-t border-border px-lg py-md">
           <button
             type="button"
-            className={`${essentialsDone ? secondaryButton : primaryButton} w-full`}
-            disabled={!progress.ready || pending !== null || readOnly}
+            className={`${intakeDone ? secondaryButton : primaryButton} w-full`}
+            disabled={!intakeDone || pending !== null || readOnly}
             onClick={() => void run("summary", requestIntakeSummary)}
           >
             {pending === "summary" ? "Writing your summary…" : "Review summary"}
           </button>
           <p className="mt-sm text-center text-body-sm text-muted">
-            {progress.ready
+            {intakeDone
               ? "Optional. Rupert already has what he needs."
-              : "Opens once the essentials are covered."}
+              : "Opens once the essentials and your materials are in."}
           </p>
         </div>
       ) : null}
     </aside>
   );
 
+  const sidebar = (
+    <div className="flex flex-col gap-lg lg:sticky lg:top-lg lg:self-start">
+      {materialsPanel}
+      {progressPanel}
+    </div>
+  );
+
   const errorBlock = error ? (
     <div role="alert" className="mt-sm text-body-sm text-error">
       {error}
-      {aiUnavailable ? (
+      {unread && !pending ? (
+        <>
+          {" "}
+          <button
+            type="button"
+            className="text-primary hover:text-primary-hover"
+            onClick={() => void onRetryFiles()}
+          >
+            Try again
+          </button>
+        </>
+      ) : aiUnavailable ? (
         <>
           {" "}
           <a
@@ -482,8 +781,8 @@ export function IntakeExperience({
   if (completed) {
     return (
       <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="rounded-card border border-border bg-surface p-lg">
-          <div className="flex items-center gap-md">
+        <section className="rounded-card border border-border bg-surface">
+          <div className="flex items-center gap-md p-lg">
             <RupertAvatar size={56} />
             <div>
               <h2 className="text-h4">
@@ -492,14 +791,14 @@ export function IntakeExperience({
               <p className="mt-xs text-body-sm text-muted">
                 Intake confirmed
                 {completedAt ? ` on ${formatDate(completedAt)}` : ""}.
-                {materialsSubmitted
+                {materials.submitted
                   ? " Rupert is on it."
                   : " One step left in onboarding."}
               </p>
             </div>
           </div>
-          {materialsSubmitted ? null : (
-            <div className="mt-lg flex flex-wrap items-center justify-between gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
+          {materials.submitted ? null : (
+            <div className="mx-lg mb-lg flex flex-wrap items-center justify-between gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
               <div>
                 <p className="text-label uppercase tracking-label text-primary">
                   Your turn
@@ -517,7 +816,7 @@ export function IntakeExperience({
             </div>
           )}
           {interview?.summary ? (
-            <dl className="mt-lg divide-y divide-border border-t border-border">
+            <dl className="divide-y divide-border border-t border-border px-lg">
               {interview.summary.map((item) => (
                 <div key={item.topic_id} className="py-md">
                   <dt className="text-label uppercase tracking-label text-muted">
@@ -530,8 +829,9 @@ export function IntakeExperience({
               ))}
             </dl>
           ) : null}
+          <ConflictList conflicts={conflicts} />
         </section>
-        {progressPanel}
+        {sidebar}
       </div>
     );
   }
@@ -571,6 +871,7 @@ export function IntakeExperience({
               </label>
             ))}
           </div>
+          <ConflictList conflicts={conflicts} />
           <div className="flex flex-wrap items-center gap-sm border-t border-border px-lg py-md">
             <button
               type="button"
@@ -594,7 +895,7 @@ export function IntakeExperience({
           </div>
           {errorBlock ? <div className="px-lg pb-md">{errorBlock}</div> : null}
         </section>
-        {progressPanel}
+        {sidebar}
       </div>
     );
   }
@@ -604,30 +905,40 @@ export function IntakeExperience({
       role="status"
       className="mb-lg flex flex-wrap items-start gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
     >
-      <CoverageIcon coverage="covered" />
+      <CoverageIcon coverage={intakeDone ? "covered" : "partial"} />
       <div className="min-w-0 flex-1">
         <p className="text-body-sm text-heading">
-          <span className="font-medium">
-            {extras.done
-              ? "Everything is covered. Thank you."
-              : "The essentials are done."}
-          </span>{" "}
-          {extras.done
-            ? "Rupert has everything he needs. You can review your summary anytime."
-            : "Rupert has what he needs to start, and your intake is marked complete. A few more minutes on the extras can make your campaign noticeably sharper. We recommend it."}
+          {!intakeDone ? (
+            <>
+              <span className="font-medium">The essentials are done.</span>{" "}
+              One thing left: share your deck in the materials panel, or tell
+              Rupert you don&apos;t have one yet.
+            </>
+          ) : extras.done ? (
+            <>
+              <span className="font-medium">Everything is covered. Thank you.</span>{" "}
+              Rupert has everything he needs. You can review your summary anytime.
+            </>
+          ) : (
+            <>
+              <span className="font-medium">Your intake is complete.</span>{" "}
+              Rupert has what he needs to start. A few more minutes on the
+              extras can make your campaign noticeably sharper. We recommend it.
+            </>
+          )}
         </p>
-        <div className="mt-sm flex flex-wrap items-center gap-md">
-          {!extras.done ? (
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={readOnly || limitReached}
-              onClick={() => inputRef.current?.focus()}
-            >
-              Continue with Rupert
-            </button>
-          ) : null}
-          {progress.ready ? (
+        {intakeDone ? (
+          <div className="mt-sm flex flex-wrap items-center gap-md">
+            {!extras.done ? (
+              <button
+                type="button"
+                className={primaryButton}
+                disabled={readOnly || limitReached}
+                onClick={() => inputRef.current?.focus()}
+              >
+                Continue with Rupert
+              </button>
+            ) : null}
             <button
               type="button"
               className="text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
@@ -636,8 +947,8 @@ export function IntakeExperience({
             >
               Review summary
             </button>
-          ) : null}
-        </div>
+          </div>
+        ) : null}
       </div>
     </section>
   ) : null;
@@ -661,7 +972,7 @@ export function IntakeExperience({
             if (!canWrite) return;
             event.preventDefault();
             setDragging(false);
-            void onFile(event.dataTransfer.files?.[0]);
+            void onFiles(event.dataTransfer.files);
           }}
         >
           <header className="flex items-center gap-md border-b border-border px-lg py-md">
@@ -698,7 +1009,9 @@ export function IntakeExperience({
                 </div>
               ) : (
                 <div key={index} className="flex flex-col items-end gap-xs">
-                  {message.attachment ? <FileChip name={message.attachment.name} inverse /> : null}
+                  {(message.attachments ?? []).map((file) => (
+                    <FileChip key={file.path} name={file.name} />
+                  ))}
                   {message.content ? (
                     <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-br-none bg-primary-tint px-md py-sm text-body-sm leading-relaxed text-heading">
                       {message.content}
@@ -709,7 +1022,9 @@ export function IntakeExperience({
             )}
             {outgoing ? (
               <div className="flex flex-col items-end gap-xs opacity-80">
-                {outgoing.file ? <FileChip name={outgoing.file} inverse /> : null}
+                {outgoing.files.map((name) => (
+                  <FileChip key={name} name={name} />
+                ))}
                 {outgoing.text ? (
                   <p className="max-w-[85%] whitespace-pre-wrap rounded-card rounded-br-none bg-primary-tint px-md py-sm text-body-sm leading-relaxed text-heading">
                     {outgoing.text}
@@ -717,9 +1032,11 @@ export function IntakeExperience({
                 ) : null}
               </div>
             ) : null}
-            {pending === "start" || pending === "send" ? <TypingIndicator /> : null}
-            {pending === "upload" ? (
-              <TypingIndicator label="Reading your file. This can take up to a minute." />
+            {pending === "start" || pending === "send" || pending === "no_deck" ? (
+              <TypingIndicator />
+            ) : null}
+            {uploading ? (
+              <TypingIndicator label="Reading your files. This can take up to a minute." />
             ) : null}
             {messages.length === 0 && pending === null && readOnly ? (
               <p className="text-center text-body-sm text-muted">
@@ -751,16 +1068,17 @@ export function IntakeExperience({
                 ref={fileRef}
                 id="intake-file"
                 type="file"
-                accept="application/pdf,.pdf"
+                multiple
+                accept={ACCEPT}
                 className="sr-only"
                 tabIndex={-1}
-                onChange={(event) => void onFile(event.target.files?.[0])}
+                onChange={(event) => void onFiles(event.target.files)}
               />
               <button
                 type="button"
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-muted transition-colors duration-hover hover:bg-surface hover:text-heading disabled:opacity-40"
-                aria-label="Share a PDF (your deck or one-pager)"
-                title="Share a PDF (your deck or one-pager)"
+                aria-label="Share files (your deck and other materials)"
+                title="Share files (your deck and other materials)"
                 disabled={!canWrite}
                 onClick={() => fileRef.current?.click()}
               >
@@ -794,7 +1112,7 @@ export function IntakeExperience({
               </button>
             </div>
             <p className="mt-xs flex justify-between gap-sm text-body-sm text-muted">
-              <span>Enter to send · Shift+Enter for a new line · Drop a PDF to share your deck</span>
+              <span>Enter to send · Shift+Enter for a new line · Drop files to share them</span>
               {draft.length > INTAKE_LIMITS.messageMaxChars * 0.8 ? (
                 <span className="font-mono text-mono">
                   {draft.length}/{INTAKE_LIMITS.messageMaxChars}
@@ -816,11 +1134,11 @@ export function IntakeExperience({
 
           {dragging ? (
             <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-card border-2 border-dashed border-primary bg-surface/90">
-              <p className="text-body-sm text-heading">Drop your PDF to share it with Rupert</p>
+              <p className="text-body-sm text-heading">Drop your files to share them with Rupert</p>
             </div>
           ) : null}
         </section>
-        {progressPanel}
+        {sidebar}
       </div>
     </>
   );

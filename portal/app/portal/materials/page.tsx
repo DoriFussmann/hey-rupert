@@ -34,10 +34,18 @@ export default async function MaterialsPage() {
 
   return (
     <>
-      <BackLink href="/portal/onboarding" label="Onboarding" />
+      {submitted ? (
+        <BackLink href="/portal/setup" label="Setup" />
+      ) : (
+        <BackLink href="/portal/onboarding" label="Onboarding" />
+      )}
       <PageHeader
-        title="Company Materials"
-        description="The last onboarding step. Files you shared in the intake are already here. Add your deck if it is not, plus anything else Rupert should know."
+        title={submitted ? "Company Files" : "Company Materials"}
+        description={
+          submitted
+            ? `Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Add an updated deck or anything new at any time.`
+            : "The last onboarding step. Files you shared in the intake are already here. Add your deck if it is not, plus anything else Rupert should know."
+        }
       />
 
       {!open ? (
@@ -46,13 +54,7 @@ export default async function MaterialsPage() {
             This opens once your Client Intake is complete.
           </p>
         </section>
-      ) : submitted ? (
-        <TurnBanner
-          owner="rupert"
-          title={`Submitted ${row?.published_at ? formatDateAtTime(row.published_at) : ""}. Rupert is reviewing your materials.`}
-          detail="We'll email you when his feedback is ready."
-        />
-      ) : (
+      ) : submitted ? null : (
         <TurnBanner
           owner="client"
           title={

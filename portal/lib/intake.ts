@@ -1,6 +1,8 @@
 // AI Intake Interviewer: shared types, defaults and progress rules.
 // Pure module: safe to use on the server and in the browser.
 
+import { MATERIAL_EXTENSIONS, MATERIAL_MAX_BYTES, fileExtension, formatBytes } from "./setup.ts";
+
 export type IntakeTopic = {
   id: string;
   title: string;
@@ -13,7 +15,7 @@ export type TopicCoverage = "missing" | "partial" | "covered";
 
 export type TopicStatus = { status: TopicCoverage; note: string };
 
-/** A file the founder shared in the chat (a PDF, also added to their materials). */
+/** A file the founder shared in the chat (also added to their company materials). */
 export type IntakeAttachment = {
   name: string;
   path: string;
@@ -25,7 +27,8 @@ export type IntakeMessage = {
   role: "assistant" | "user";
   content: string;
   at: string;
-  attachment?: IntakeAttachment;
+  /** Files shared with this message. */
+  attachments?: IntakeAttachment[];
 };
 
 export type IntakeSummaryItem = {
@@ -34,16 +37,117 @@ export type IntakeSummaryItem = {
   answer: string;
 };
 
-/** A shared file reads as a note plus what Rupert took from it. */
+/** Shared files read as a note plus what Rupert took from each. */
 export function intakeMessageText(message: IntakeMessage) {
-  if (!message.attachment) return message.content;
-  const facts = message.attachment.facts.trim();
-  return [
-    `[The founder shared ${message.attachment.name}.${facts ? ` What it says:\n${facts}` : ""}]`,
-    message.content,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
+  const files = message.attachments ?? [];
+  if (files.length === 0) return message.content;
+  const notes = files.map((file) => {
+    const facts = file.facts.trim();
+    return `[The founder shared ${file.name}.${facts ? ` What it says:\n${facts}` : ""}]`;
+  });
+  return [...notes, message.content].filter(Boolean).join("\n\n");
+}
+
+/**
+ * A point where a shared file and the founder's answers disagree. Rupert
+ * asks once; the founder's answer is the resolution.
+ */
+export type IntakeConflict = {
+  /** Short stable key Rupert gives the disagreement, e.g. "raise_amount". */
+  id: string;
+  topic_id: string;
+  file: string;
+  file_says: string;
+  founder_says: string;
+  /** What the founder confirmed. Empty while open. */
+  resolution: string;
+  status: "open" | "resolved";
+  updated_at: string;
+};
+
+export const CONFLICTS_MAX = 30;
+
+const CONFLICT_ID_PATTERN = /^[a-z0-9_]{1,40}$/;
+
+function clip(value: unknown, max: number) {
+  return value != null ? String(value).trim().slice(0, max) : "";
+}
+
+/**
+ * Reads stored or reported conflicts; drops anything unusable. A conflict
+ * counts as resolved only with a resolution, unless `trustStatus` (a turn's
+ * update, whose resolution may already be stored).
+ */
+export function asConflicts(value: unknown, trustStatus = false): IntakeConflict[] {
+  if (!Array.isArray(value)) return [];
+  const seen = new Set<string>();
+  const conflicts: IntakeConflict[] = [];
+  for (const raw of value) {
+    if (!raw || typeof raw !== "object") continue;
+    const item = raw as Record<string, unknown>;
+    const id = clip(item.id, 40).toLowerCase();
+    if (!CONFLICT_ID_PATTERN.test(id) || seen.has(id)) continue;
+    seen.add(id);
+    const resolution = clip(item.resolution, 500);
+    conflicts.push({
+      id,
+      topic_id: clip(item.topic_id, 40),
+      file: clip(item.file, 255),
+      file_says: clip(item.file_says, 500),
+      founder_says: clip(item.founder_says, 500),
+      resolution,
+      status: item.status === "resolved" && (resolution || trustStatus) ? "resolved" : "open",
+      updated_at: clip(item.updated_at, 40),
+    });
+    if (conflicts.length >= CONFLICTS_MAX) break;
+  }
+  return conflicts;
+}
+
+/**
+ * Merges the conflicts Rupert reports in a turn into the stored ones, by id.
+ * A resolved conflict stays resolved; empty fields keep their earlier value.
+ */
+export function mergeConflicts(
+  current: IntakeConflict[],
+  updates: unknown,
+  at: string,
+): IntakeConflict[] {
+  const merged = current.map((conflict) => ({ ...conflict }));
+  for (const update of asConflicts(updates, true)) {
+    const index = merged.findIndex((conflict) => conflict.id === update.id);
+    if (index === -1) {
+      if (merged.length >= CONFLICTS_MAX) continue;
+      merged.push({
+        ...update,
+        status: update.status === "resolved" && update.resolution ? "resolved" : "open",
+        updated_at: at,
+      });
+      continue;
+    }
+    const previous = merged[index];
+    if (previous.status === "resolved") continue;
+    const resolution = update.resolution || previous.resolution;
+    merged[index] = {
+      ...previous,
+      topic_id: update.topic_id || previous.topic_id,
+      file: update.file || previous.file,
+      file_says: update.file_says || previous.file_says,
+      founder_says: update.founder_says || previous.founder_says,
+      resolution,
+      status: update.status === "resolved" && resolution ? "resolved" : "open",
+      updated_at: at,
+    };
+  }
+  return merged;
+}
+
+/** One line per conflict, for prompts and emails. */
+export function conflictLine(conflict: IntakeConflict) {
+  const base = `${conflict.file || "A file"} said "${conflict.file_says}"; the founder said "${conflict.founder_says}"`;
+  return conflict.status === "resolved"
+    ? `${base}. Confirmed: ${conflict.resolution}`
+    : `${base}. Not confirmed yet.`;
 }
 
 export type IntakeInterviewStatus = "in_progress" | "review" | "completed";
@@ -75,6 +179,8 @@ export type IntakeInterview = {
   client_id: string;
   messages: IntakeMessage[];
   topic_status: Record<string, TopicStatus>;
+  /** Where a shared file and the founder's answers disagreed. */
+  conflicts: IntakeConflict[];
   summary: IntakeSummaryItem[] | null;
   admin_brief: IntakeBrief | null;
   status: IntakeInterviewStatus;
@@ -96,9 +202,62 @@ export const INTAKE_TOPICS_SLUG = "intake_topics";
 export const INTAKE_LIMITS = {
   messageMaxChars: 2000,
   clientMessagesMax: 40,
-  /** PDFs shared in the chat are read in one go; larger ones go in Setup. */
-  fileMaxBytes: 20 * 1024 * 1024,
 } as const;
+
+/** Formats the AI can't read: the intake asks for a PDF instead. */
+export const INTAKE_PDF_INSTEAD: Record<string, string> = {
+  key: "Keynote",
+  ppt: "older PowerPoint (.ppt)",
+  doc: "older Word (.doc)",
+  xls: "older Excel (.xls)",
+};
+
+/** File types the founder can share in the intake. */
+export const INTAKE_FILE_EXTENSIONS = MATERIAL_EXTENSIONS.filter(
+  (extension) => !INTAKE_PDF_INSTEAD[extension],
+);
+
+/** Why a file can't be shared in the intake, or null when it can. */
+export function intakeFileProblem(file: { name: string; size: number }): string | null {
+  const name = file.name.trim();
+  const extension = fileExtension(name);
+  if (!name) return "The file has no name.";
+  if (INTAKE_PDF_INSTEAD[extension]) {
+    return `${name}: ${INTAKE_PDF_INSTEAD[extension]} files can't be read. Please export it as a PDF and share that.`;
+  }
+  if (!INTAKE_FILE_EXTENSIONS.includes(extension)) {
+    return `${name}: this file type isn't supported. Use PDF, PowerPoint, Word, Excel, CSV, text or images.`;
+  }
+  if (file.size <= 0) return `${name} is empty.`;
+  if (file.size > MATERIAL_MAX_BYTES) {
+    return `${name} is ${formatBytes(file.size)}. The limit is ${formatBytes(MATERIAL_MAX_BYTES)} per file.`;
+  }
+  return null;
+}
+
+/** What the founder has shared toward the intake's materials requirement. */
+export type IntakeMaterialsState = {
+  fileCount: number;
+  /** The founder's reason for having no deck yet; empty otherwise. */
+  noDeck: string;
+};
+
+/** At least one file, or a reason for having no deck yet. */
+export function materialsProvided(materials: IntakeMaterialsState) {
+  return materials.fileCount > 0 || materials.noDeck.trim().length > 0;
+}
+
+/**
+ * The intake is complete once every required topic is covered and the
+ * founder has shared materials (or said they have no deck yet).
+ */
+export function intakeReady(
+  topics: IntakeTopic[],
+  topicStatus: Record<string, TopicStatus>,
+  materials: IntakeMaterialsState,
+) {
+  return intakeProgress(topics, topicStatus).ready && materialsProvided(materials);
+}
 
 export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
   {
@@ -175,7 +334,7 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     id: "anything_else",
     title: "Anything else",
     guidance:
-      "Anything else the founder wants Rupert to know before preparing the campaign.",
+      "Links worth sharing (data room, product demo, press), recent wins, and anything else the founder wants Rupert to know before preparing the campaign.",
     required: false,
   },
 ];

@@ -5,9 +5,10 @@ import { getIntakeInterview, getPortalView } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { DEFAULT_INTAKE_TOPICS } from "@/lib/intake";
 import { loadIntakeSettings } from "@/lib/intake-server";
+import { materialsView } from "@/lib/materials-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
-// Each message waits on Claude, and reading a shared PDF takes longer.
+// Each message waits on Claude, and reading shared files takes longer.
 export const maxDuration = 120;
 
 export default async function IntakePage() {
@@ -31,7 +32,7 @@ export default async function IntakePage() {
       <BackLink href="/portal/onboarding" label="Onboarding" />
       <PageHeader
         title="Client Intake"
-        description="A short conversation with Rupert so we can prepare your investor campaign. Answer in your own words, or drop in your deck as a PDF and Rupert will read it first. You can leave and come back anytime."
+        description="A short conversation with Rupert so we can prepare your investor campaign. Start by sharing your pitch deck and any other materials: Rupert reads them first, so he only asks about what they don't cover. You can leave and come back anytime."
       />
       {client && open ? (
         <IntakeExperience
@@ -40,11 +41,9 @@ export default async function IntakePage() {
           completedAt={client.intake_completed_at ?? null}
           firstName={firstName}
           readOnly={viewAs}
-          materialsSubmitted={
-            client.setup_steps?.some(
-              (row) => row.step === "materials" && row.status === "submitted",
-            ) ?? false
-          }
+          initialMaterials={materialsView(
+            client.setup_steps?.find((row) => row.step === "materials"),
+          )}
         />
       ) : (
         <section className="max-w-prose rounded-card border border-border bg-surface p-lg">

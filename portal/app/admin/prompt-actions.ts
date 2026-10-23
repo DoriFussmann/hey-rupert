@@ -16,6 +16,7 @@ import {
 } from "@/lib/agents-server";
 import { loadInterviewGuide } from "@/lib/company-profile/server";
 import { loadIntakeSettings, loadInterview, nextInterviewTurn, writeInterviewSummary } from "@/lib/intake-server";
+import { loadMaterialsView } from "@/lib/materials-server";
 import { extractAnswers } from "@/lib/match/profile-server";
 import { draftNudge, loadNudgeDetail } from "@/lib/nudge-server";
 import { PROMPT_NOTE_MAX, isPromptKey, promptDefinition, promptTextProblems, type PromptKey, type PromptOverride } from "@/lib/prompts";
@@ -134,7 +135,7 @@ async function runTest(
     }
     const settings = await loadIntakeSettings(supabase);
     if (key === "intake_summary") {
-      const summary = await writeInterviewSummary(supabase, settings, client, current.messages, current.topic_status, override);
+      const summary = await writeInterviewSummary(supabase, settings, client, current.messages, current.topic_status, current.conflicts, override);
       if (!summary.ok) return { ok: false, error: summary.reason };
       return { ok: true, output: { title, sections: summary.items.map((item) => ({ label: item.title, text: item.answer })) } };
     }
@@ -142,7 +143,15 @@ async function runTest(
     // Replays Rupert's reply to the founder's latest message (or the opening, before any).
     const lastFounder = current.messages.map((message) => message.role).lastIndexOf("user");
     const upTo = lastFounder >= 0 ? current.messages.slice(0, lastFounder + 1) : [];
-    const turn = await nextInterviewTurn(supabase, settings, client, upTo, current.topic_status, undefined, guide, override);
+    const materials = await loadMaterialsView(supabase, clientId);
+    const turn = await nextInterviewTurn(supabase, settings, client, upTo, current.topic_status, {
+      materials: materials.ok
+        ? { files: materials.view.files.map((file) => file.name), noDeck: materials.view.noDeck }
+        : { files: [], noDeck: "" },
+      conflicts: current.conflicts,
+      guide,
+      override,
+    });
     if (!turn.ok) return { ok: false, error: turn.reason };
     return {
       ok: true,

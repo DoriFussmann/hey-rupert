@@ -1,4 +1,4 @@
-import { SETUP_FEE_LABEL, isKickoffReady } from "@/lib/service-order";
+import { SETUP_FEE_LABEL, isKickoffReady } from "./service-order.ts";
 
 export type OnboardingTimestamps = {
   sow_confirmed_at?: string | null;
@@ -36,8 +36,7 @@ export type OnboardingItemId =
   | "service_order"
   | "payment"
   | "nda"
-  | "intake"
-  | "materials";
+  | "intake";
 
 export type OnboardingItem = {
   id: OnboardingItemId;
@@ -78,11 +77,6 @@ export const ONBOARDING_STEPS: Record<
     short: "Client Intake",
     adminAction: "Review Client Intake",
   },
-  materials: {
-    title: "Company Materials",
-    short: "Company Materials",
-    adminAction: "Review company materials",
-  },
 };
 
 export const ONBOARDING_TOTAL = Object.keys(ONBOARDING_STEPS).length;
@@ -94,10 +88,39 @@ export const INTAKE_HREF = "/portal/intake";
 export const MATERIALS_HREF = "/portal/materials";
 
 /**
+ * Company Materials, as part of the intake. New clients share them inside
+ * the intake, and they are submitted when it completes. A client whose
+ * intake completed before that (or whose materials Rupert sent back) still
+ * submits them on the Company Materials page.
+ */
+export function materialsStatus(source: OnboardingSource | null | undefined): {
+  status: OnboardingStatus;
+  detail: string;
+  completedAt: string | null;
+} {
+  const intakeAt = source?.intake_completed_at ?? null;
+  const row = source?.setup_steps?.find((entry) => entry.step === "materials") ?? null;
+  if (row?.status === "submitted") {
+    return { status: "done", detail: "Submitted", completedAt: row.completed_at };
+  }
+  if (!intakeAt) {
+    return { status: "open", detail: "Shared in the Client Intake", completedAt: null };
+  }
+  return {
+    status: "your_turn",
+    detail:
+      row && row.version > 0
+        ? "Rupert asked for a few more things"
+        : "Share your deck and materials",
+    completedAt: null,
+  };
+}
+
+/**
  * Client onboarding, in order:
  * SoW → Service Order + Setup Fee (either order) → kick-off → NDA →
- * Intake → Company Materials. Onboarding ends when the client has given
- * Rupert everything. Setup starts after the materials are submitted.
+ * Intake (with the company materials). Onboarding ends when the client has
+ * given Rupert everything. Setup starts when the intake completes.
  */
 export function getOnboardingItems(
   source: OnboardingSource | null | undefined,
@@ -107,12 +130,7 @@ export function getOnboardingItems(
   const paymentAt = source?.payment_received_at ?? null;
   const ndaAt = source?.nda_signed_at ?? null;
   const intakeAt = source?.intake_completed_at ?? null;
-  const materialsRow =
-    source?.setup_steps?.find((row) => row.step === "materials") ?? null;
-  const materialsDone = materialsRow?.status === "submitted";
-  const materialsSentBack = Boolean(
-    materialsRow && materialsRow.version > 0 && !materialsDone,
-  );
+  const materials = materialsStatus(source);
 
   const sowDone = Boolean(sowAt);
   const orderIssued = Boolean(source?.service_order_content?.trim());
@@ -185,29 +203,30 @@ export function getOnboardingItems(
             : "open",
       completedAt: ndaAt,
     }),
-    item("intake", {
-      detail: intakeAt
-        ? "Completed"
-        : kickedOff && ndaAt
-          ? "A short interview with Rupert"
-          : "After the NDA",
-      href: intakeAt || (kickedOff && ndaAt) ? INTAKE_HREF : undefined,
-      status: intakeAt ? "done" : kickedOff && ndaAt ? "your_turn" : "open",
-      completedAt: intakeAt,
-    }),
-    item("materials", {
-      detail: materialsDone
-        ? "Submitted"
-        : !intakeAt
-          ? "After the Client Intake"
-          : materialsSentBack
-            ? "Rupert asked for a few more things"
-            : "Share your deck and materials",
-      href: intakeAt ? MATERIALS_HREF : undefined,
-      status: materialsDone ? "done" : intakeAt ? "your_turn" : "open",
-      completedAt: materialsDone ? (materialsRow?.completed_at ?? null) : null,
-    }),
+    // Done once the intake and the materials are both with Rupert. An intake
+    // completed without them sends the client to Company Materials.
+    intakeAt && materials.status !== "done"
+      ? item("intake", {
+          detail: materials.detail,
+          href: MATERIALS_HREF,
+          status: "your_turn",
+          completedAt: null,
+        })
+      : item("intake", {
+          detail: intakeAt
+            ? "Completed"
+            : kickedOff && ndaAt
+              ? "A short interview with Rupert, with your deck"
+              : "After the NDA",
+          href: intakeAt || (kickedOff && ndaAt) ? INTAKE_HREF : undefined,
+          status: intakeAt ? "done" : kickedOff && ndaAt ? "your_turn" : "open",
+          completedAt: intakeAt ? latestOf(intakeAt, materials.completedAt) : null,
+        }),
   ];
+}
+
+function latestOf(a: string, b: string | null) {
+  return b && Date.parse(b) > Date.parse(a) ? b : a;
 }
 
 export function onboardingProgress(

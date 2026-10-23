@@ -1,5 +1,6 @@
 import { formatDateAtTime } from "@/lib/format";
 import {
+  conflictLine,
   intakeProgress,
   topicCoverage,
   type IntakeInterview,
@@ -16,7 +17,7 @@ function statusLine(
     if (!interview || interview.messages.length === 0) return when;
     return interview.status === "completed"
       ? `${when} · summary confirmed by the client`
-      : `${when} (essentials covered) · the client may still add extras`;
+      : `${when} (essentials and materials in) · the client may still add extras`;
   }
   if (!interview || interview.messages.length === 0) return "Not started";
   if (interview.status === "review") return "Client is reviewing the summary";
@@ -35,6 +36,7 @@ export function IntakePanel({
   const topicStatus = interview?.topic_status ?? {};
   const { percent } = intakeProgress(topics, topicStatus);
   const summary = interview?.summary ?? null;
+  const conflicts = interview?.conflicts ?? [];
 
   return (
     <section className="mt-lg rounded-card border border-border bg-surface">
@@ -77,6 +79,24 @@ export function IntakePanel({
         </ul>
       ) : null}
 
+      {conflicts.length > 0 ? (
+        <div className="border-t border-border px-lg py-md">
+          <p className="text-label uppercase tracking-label text-muted">
+            Files vs. answers ({conflicts.length})
+          </p>
+          <ul className="mt-sm space-y-xs">
+            {conflicts.map((conflict) => (
+              <li
+                key={conflict.id}
+                className={`text-body-sm ${conflict.status === "open" ? "text-warning" : "text-body"}`}
+              >
+                {conflictLine(conflict)}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
       {interview && interview.messages.length > 0 ? (
         <details className="border-t border-border px-lg py-lg">
           <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
@@ -89,9 +109,16 @@ export function IntakePanel({
                   {message.role === "assistant" ? "Rupert" : "Client"}
                   {message.at ? ` · ${formatDateAtTime(message.at)}` : ""}
                 </p>
-                <p className="mt-xs whitespace-pre-wrap text-body">
-                  {message.content}
-                </p>
+                {(message.attachments ?? []).map((file) => (
+                  <p key={file.path} className="mt-xs text-muted">
+                    Shared {file.name}
+                  </p>
+                ))}
+                {message.content ? (
+                  <p className="mt-xs whitespace-pre-wrap text-body">
+                    {message.content}
+                  </p>
+                ) : null}
               </li>
             ))}
           </ol>

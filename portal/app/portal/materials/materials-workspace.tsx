@@ -66,7 +66,10 @@ export function MaterialsWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [savedValues, setSavedValues] = useState(values);
 
+  // After submitting, the client can still add files (an updated deck);
+  // removing files and editing answers stay closed.
   const locked = submitted || readOnly;
+  const canAdd = !readOnly;
   const busy = uploads.some((upload) => upload.state === "uploading");
 
   async function uploadOne(file: File) {
@@ -123,7 +126,7 @@ export function MaterialsWorkspace({
   }
 
   async function addFiles(list: FileList | File[]) {
-    if (locked) return;
+    if (!canAdd) return;
     setError(null);
     const incoming = Array.from(list);
     const room = MATERIAL_MAX_FILES - files.length - uploads.filter((u) => u.state === "uploading").length;
@@ -149,6 +152,9 @@ export function MaterialsWorkspace({
   }
 
   const changed = fields.some((field) => values[field.id] !== savedValues[field.id]);
+  const shownFields = submitted
+    ? fields.filter((field) => (values[field.id] ?? "").trim())
+    : fields;
 
   async function saveText() {
     if (locked || !changed) return;
@@ -208,14 +214,15 @@ export function MaterialsWorkspace({
         <div className="border-b border-border px-lg py-md">
           <h2 className="text-h4">Pitch deck & files</h2>
           <p className="mt-xs text-body-sm text-muted">
-            Your latest pitch deck first, as a PDF if you can: Rupert reads PDFs
-            in full, slides and visuals included. Add one-pagers, financial
-            summaries or anything else useful. PowerPoint, Word, Excel, CSV and
-            images also work, up to {formatBytes(MATERIAL_MAX_BYTES)} each.
+            {submitted
+              ? "Everything you've shared with Rupert. Add an updated deck or anything new; Rupert is notified."
+              : "Your latest pitch deck first, as a PDF if you can: Rupert reads PDFs in full, slides and visuals included. Add one-pagers, financial summaries or anything else useful."}{" "}
+            PowerPoint, Word, Excel, CSV and images also work, up to{" "}
+            {formatBytes(MATERIAL_MAX_BYTES)} each.
           </p>
         </div>
 
-        {!locked ? (
+        {canAdd ? (
           <div className="px-lg pt-lg">
             <div
               role="button"
@@ -333,10 +340,10 @@ export function MaterialsWorkspace({
         </ul>
       </section>
 
-      {/* Questions */}
-      {fields.length > 0 ? (
+      {/* Questions: once submitted, only the ones answered */}
+      {shownFields.length > 0 ? (
         <section className="grid gap-lg rounded-card border border-border bg-surface px-lg py-lg">
-          {fields.map((field) => {
+          {shownFields.map((field) => {
             const inputId = `material-field-${field.id}`;
             const helpId = field.help ? `${inputId}-help` : undefined;
             const common = {

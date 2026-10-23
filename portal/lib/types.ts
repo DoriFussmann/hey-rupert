@@ -161,6 +161,7 @@ export type NotificationType =
   | "setup_fee_paid"
   | "intake_completed"
   | "materials_submitted"
+  | "materials_added"
   | "feedback_viewed"
   | "framing_confirmed"
   | "framing_changes_requested"

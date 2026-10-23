@@ -4,12 +4,18 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeAgent, callClaudeTool, webFetchTool } from "@/lib/anthropic";
 import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
-import { prepareFiles, saveIntakeBrief } from "@/lib/agents-server";
+import { saveIntakeBrief } from "@/lib/agents-server";
+import { prepareFiles } from "@/lib/material-files-server";
 import type { IntakeBrief, IntakeMessage, TopicStatus } from "@/lib/intake";
 import { buildClientContext, loadIntakeSettings } from "@/lib/intake-server";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { loadMaterialFields } from "@/lib/material-fields-server";
-import { loadOrCreateMaterials, safeFileName } from "@/lib/materials-server";
+import {
+  completeIntakeWithMaterials,
+  loadOrCreateMaterials,
+  safeFileName,
+  saveNoDeckNote,
+} from "@/lib/materials-server";
 import {
   PROFILE_PROPERTIES,
   cleanAnswers,
@@ -217,7 +223,8 @@ export async function completeIntakeWithTestData(
   const prompt = await loadPrompt(supabase, "test_pilot_intake", { clientId, purpose: "Test Pilot: intake answers" });
   if (!prompt.ok) return { ok: false, error: prompt.error };
   const website = websiteUrl(text(client.company_website));
-  const files = await prepareFiles(supabase, await materialsFiles(supabase, clientId));
+  const attached = await materialsFiles(supabase, clientId);
+  const files = await prepareFiles(supabase, attached);
 
   const topics = settings.topics
     .map((topic) => `- [${topic.id}] ${topic.title}: ${topic.guidance}`)
@@ -294,12 +301,14 @@ export async function completeIntakeWithTestData(
   );
   if (interviewError) return { ok: false, error: interviewError.message };
 
-  const { error: clientError } = await supabase
-    .from("clients")
-    .update({ intake_completed_at: at })
-    .eq("id", clientId)
-    .is("intake_completed_at", null);
-  if (clientError) return { ok: false, error: clientError.message };
+  // As in a real intake, the materials go to Rupert with it. Without a test
+  // deck, the founder "has no deck yet".
+  if (attached.length === 0) {
+    const noDeck = await saveNoDeckNote(supabase, clientId, "Test pilot: no test deck was attached.");
+    if (!noDeck.ok) return noDeck;
+  }
+  const completed = await completeIntakeWithMaterials(supabase, clientId, at);
+  if (!completed.ok) return completed;
 
   const list = (value: string | string[] | undefined) =>
     Array.isArray(value) ? value.join(", ") : text(value);
@@ -420,7 +429,7 @@ export async function submitMaterialsWithTestData(
   }
 
   const draft = asMaterials(row.draft);
-  const payload: MaterialsPayload = { files: draft.files, fields: { ...draft.fields, ...answers } };
+  const payload: MaterialsPayload = { ...draft, fields: { ...draft.fields, ...answers } };
   const at = nowIso();
   const version = row.version + 1;
   const { data, error } = await supabase

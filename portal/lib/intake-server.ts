@@ -3,8 +3,11 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeTool, type ClaudeMessage } from "@/lib/anthropic";
 import { promptSystem, type ActivePrompt, type PromptOverride } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
+import type { PreparedFiles } from "@/lib/material-files-server";
 import {
+  asConflicts,
   asIntakeBrief,
+  conflictLine,
   DEFAULT_INTAKE_TOPICS,
   intakeMessageText,
   INTAKE_TOPICS_SLUG,
@@ -12,6 +15,7 @@ import {
   parseIntakeTopics,
   topicCoverage,
   withMatchingTopics,
+  type IntakeConflict,
   type IntakeInterview,
   type IntakeMessage,
   type IntakeSummaryItem,
@@ -60,15 +64,23 @@ function asMessages(value: unknown): IntakeMessage[] {
         content: String(item.content ?? ""),
         at: String(item.at ?? ""),
       };
-      const file = item.attachment;
-      if (file && typeof file === "object") {
-        const entry = file as Record<string, unknown>;
-        message.attachment = {
+      // Messages saved before several files could be shared hold one `attachment`.
+      const files = Array.isArray(item.attachments)
+        ? item.attachments
+        : item.attachment
+          ? [item.attachment]
+          : [];
+      const attachments = files
+        .filter(
+          (file): file is Record<string, unknown> =>
+            Boolean(file) && typeof file === "object",
+        )
+        .map((entry) => ({
           name: String(entry.name ?? "file"),
           path: String(entry.path ?? ""),
           facts: String(entry.facts ?? ""),
-        };
-      }
+        }));
+      if (attachments.length > 0) message.attachments = attachments;
       return message;
     });
 }
@@ -108,6 +120,7 @@ export function asIntakeInterview(row: Record<string, unknown>): IntakeInterview
     client_id: String(row.client_id),
     messages: asMessages(row.messages),
     topic_status: asTopicStatus(row.topic_status),
+    conflicts: asConflicts(row.material_conflicts),
     summary: asSummary(row.summary),
     admin_brief: asIntakeBrief(row.admin_brief),
     status,
@@ -196,13 +209,52 @@ function topicsBlock(
     .join("\n");
 }
 
-/** The managed interviewer prompt, then what the code adds: the facts, the topics and the reply format. */
+/** What the founder has shared toward their company materials, for Rupert's context. */
+export type InterviewMaterials = {
+  files: string[];
+  /** The founder's reason for having no deck yet; empty otherwise. */
+  noDeck: string;
+};
+
+function materialsBlock(materials: InterviewMaterials, conflicts: IntakeConflict[]) {
+  const shared =
+    materials.files.length > 0
+      ? `Files shared so far: ${materials.files.join(", ")}.`
+      : materials.noDeck
+        ? `No files shared. The founder said they have no deck yet: "${materials.noDeck}".`
+        : "No files shared yet.";
+  const open = conflicts.filter((conflict) => conflict.status === "open");
+  const resolved = conflicts.filter((conflict) => conflict.status === "resolved");
+  return [
+    shared,
+    open.length > 0
+      ? `Disagreements still to confirm:\n${open.map((conflict) => `- [${conflict.id}] ${conflictLine(conflict)}`).join("\n")}`
+      : "",
+    resolved.length > 0
+      ? `Already confirmed (never ask again):\n${resolved.map((conflict) => `- [${conflict.id}] ${conflictLine(conflict)}`).join("\n")}`
+      : "",
+    [
+      "How materials work in this interview:",
+      "- The founder shares their pitch deck and other company materials in this interview, using the panel beside the chat. The intake can only be completed once they have shared at least one file, or told you they don't have a deck yet.",
+      "- If no file has been shared and the founder hasn't said they have no deck, ask for the pitch deck first, before anything else: they can drop it into the Company materials panel (or use the paperclip), and add any other materials (one-pager, financial summary). Tell them that if they don't have a deck yet, that's fine: they can choose \"I don't have a deck yet\" in that panel.",
+      "- When files arrive, treat what they say as known: confirm it briefly rather than asking for it again.",
+      "- When a file and what the founder told you disagree on a fact that matters (amounts, stage, dates, location, instrument, metrics, names), ask one short question to confirm which is right. Ignore differences in wording or rounding. The founder's answer always wins. Ask about each disagreement only once.",
+      "- Report every disagreement in `conflicts`: when you first notice it (status `open`), and when the founder answers (status `resolved`, with the confirmed fact in `resolution`). Reuse the same `id` for the same disagreement.",
+    ].join("\n"),
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+}
+
+/** The managed interviewer prompt, then what the code adds: the facts, the topics, the materials and the reply format. */
 function systemPrompt(
   prompt: ActivePrompt,
   settings: IntakeSettings,
   context: string,
   topicStatus: Record<string, TopicStatus>,
   guide: string | null,
+  materials: InterviewMaterials,
+  conflicts: IntakeConflict[],
 ) {
   return promptSystem(
     prompt,
@@ -210,9 +262,11 @@ function systemPrompt(
     context,
     "## Interview topics",
     topicsBlock(settings.topics, topicStatus),
+    "## Company materials",
+    materialsBlock(materials, conflicts),
     guide,
     "## How to respond",
-    "Always respond by calling the `respond` tool. `reply` is the message the founder sees. `topics` reports the coverage of EVERY topic after this turn: `covered` when you have what the topic needs, `partial` when you have some of it, `missing` otherwise. `note` is a short factual summary of what you have learned for that topic so far (empty if nothing). Count information you already knew from the company details as known.",
+    "Always respond by calling the `respond` tool. `reply` is the message the founder sees. `topics` reports the coverage of EVERY topic after this turn: `covered` when you have what the topic needs, `partial` when you have some of it, `missing` otherwise. `note` is a short factual summary of what you have learned for that topic so far (empty if nothing). Count information you already knew from the company details or the shared files as known.",
   );
 }
 
@@ -258,10 +312,42 @@ const RESPOND_TOOL = {
           required: ["id", "status", "note"],
         },
       },
-      document_facts: {
-        type: "string",
+      files: {
+        type: "array",
         description:
-          "Only when the founder just shared a file: everything in it that matters for the interview topics, as a compact factual list (at most about 1,500 characters). Empty otherwise.",
+          "Only when the founder just shared files: one entry per file read in this turn, with everything in it that matters for the interview topics as a compact factual list (at most about 1,500 characters). Empty otherwise.",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "The file name, exactly as given." },
+            facts: { type: "string" },
+          },
+          required: ["name", "facts"],
+        },
+      },
+      conflicts: {
+        type: "array",
+        description:
+          "Disagreements between a shared file and what the founder said, noticed or resolved in this turn. Empty when nothing changed.",
+        items: {
+          type: "object",
+          properties: {
+            id: {
+              type: "string",
+              description: "Short lowercase key, e.g. raise_amount. Reuse it for the same disagreement.",
+            },
+            topic_id: { type: "string" },
+            file: { type: "string", description: "The file the other value came from." },
+            file_says: { type: "string" },
+            founder_says: { type: "string" },
+            status: { type: "string", enum: ["open", "resolved"] },
+            resolution: {
+              type: "string",
+              description: "The fact the founder confirmed. Empty while open.",
+            },
+          },
+          required: ["id", "topic_id", "file", "file_says", "founder_says", "status", "resolution"],
+        },
       },
     },
     required: ["reply", "topics"],
@@ -271,13 +357,20 @@ const RESPOND_TOOL = {
 export type InterviewTurn = {
   reply: string;
   topics: { id: string; status: TopicCoverage; note: string }[];
-  /** What Rupert took from a file shared in this turn. */
-  documentFacts: string;
+  /** What Rupert took from each file shared in this turn, by file name. */
+  fileFacts: Map<string, string>;
+  /** Disagreements noticed or resolved in this turn (merged by the caller). */
+  conflicts: unknown;
 };
 
 function readTurn(input: unknown): InterviewTurn | null {
   if (!input || typeof input !== "object") return null;
-  const value = input as { reply?: unknown; topics?: unknown; document_facts?: unknown };
+  const value = input as {
+    reply?: unknown;
+    topics?: unknown;
+    files?: unknown;
+    conflicts?: unknown;
+  };
   const reply = typeof value.reply === "string" ? value.reply.trim() : "";
   if (!reply) return null;
 
@@ -295,16 +388,31 @@ function readTurn(input: unknown): InterviewTurn | null {
         }))
     : [];
 
-  const documentFacts =
-    typeof value.document_facts === "string" ? value.document_facts.trim().slice(0, 3000) : "";
-  return { reply, topics, documentFacts };
+  const fileFacts = new Map<string, string>();
+  if (Array.isArray(value.files)) {
+    for (const item of value.files) {
+      if (!item || typeof item !== "object") continue;
+      const entry = item as Record<string, unknown>;
+      const name = String(entry.name ?? "").trim();
+      const facts = String(entry.facts ?? "").trim().slice(0, 3000);
+      if (name && facts) fileFacts.set(name, facts);
+    }
+  }
+  return { reply, topics, fileFacts, conflicts: value.conflicts ?? [] };
 }
 
-/** A PDF the founder shares in this turn, read once. */
-export type SharedDocument = { name: string; base64: string };
+// Reading files takes longer than a chat reply.
+const FILES_TURN_TIMEOUT_MS = 100_000;
 
-// Reading a deck takes longer than a chat reply.
-const DOCUMENT_TURN_TIMEOUT_MS = 100_000;
+export type InterviewTurnOptions = {
+  materials: InterviewMaterials;
+  conflicts: IntakeConflict[];
+  /** Files the founder shares in this turn, read once. */
+  files?: PreparedFiles;
+  /** The sector classification guide, for interviews that use it. */
+  guide?: string | null;
+  override?: PromptOverride | null;
+};
 
 /** Asks Claude for Rupert's next message, given the conversation so far. */
 export async function nextInterviewTurn(
@@ -313,10 +421,7 @@ export async function nextInterviewTurn(
   client: Record<string, unknown>,
   messages: IntakeMessage[],
   topicStatus: Record<string, TopicStatus>,
-  document?: SharedDocument,
-  /** The sector classification guide, for interviews that use it. */
-  guide: string | null = null,
-  override?: PromptOverride | null,
+  { materials, conflicts, files, guide = null, override }: InterviewTurnOptions,
 ): Promise<{ ok: true; turn: InterviewTurn } | { ok: false; reason: string }> {
   const prompt = await loadPrompt(supabase, "intake_interviewer", {
     clientId: String(client.id ?? ""),
@@ -326,27 +431,36 @@ export async function nextInterviewTurn(
   if (!prompt.ok) return { ok: false, reason: prompt.error };
   const turns: ClaudeMessage[] = toClaudeMessages(messages);
   const last = turns[turns.length - 1];
-  if (document && last.role === "user" && typeof last.content === "string") {
-    // The file goes in with the founder's latest turn.
-    last.content = [
-      {
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: document.base64 },
-        title: document.name,
-      },
-      {
-        type: "text",
-        text: `${last.content}\n\n[${document.name} is attached. Read it, mark every topic it answers as covered or partial, fill document_facts, then thank the founder briefly and ask only about what is still missing.]`,
-      },
-    ];
+  if (files && last.role === "user" && typeof last.content === "string") {
+    // The files go in with the founder's latest turn.
+    const { read, skipped, blocks } = files;
+    const instructions = [
+      read.length > 0
+        ? `[The founder just shared: ${read.join(", ")}. Read every file, mark each topic they answer as covered or partial, fill \`files\` with one entry per file, and note any disagreement with what the founder told you. Then thank them briefly and ask only about what is still missing or needs confirming.]`
+        : "",
+      skipped.length > 0
+        ? `[These files were saved but can't be read here: ${skipped.join(" ")} Tell the founder they are saved and Rupert will review them himself.]`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+    last.content = [...blocks, { type: "text", text: `${last.content}\n\n${instructions}` }];
   }
 
   const result = await callClaudeTool<unknown>({
-    system: systemPrompt(prompt.value, settings, buildClientContext(client), topicStatus, guide),
+    system: systemPrompt(
+      prompt.value,
+      settings,
+      buildClientContext(client),
+      topicStatus,
+      guide,
+      materials,
+      conflicts,
+    ),
     messages: turns,
     tool: RESPOND_TOOL,
-    maxTokens: document ? 3000 : 1024,
-    timeoutMs: document ? DOCUMENT_TURN_TIMEOUT_MS : undefined,
+    maxTokens: files ? 4000 : 1024,
+    timeoutMs: files ? FILES_TURN_TIMEOUT_MS : undefined,
     // A plain-text answer is still shown to the client; topic coverage is
     // simply left unchanged for that turn.
     fallbackFromText: (text) => ({ reply: text, topics: [] }),
@@ -388,6 +502,7 @@ export async function writeInterviewSummary(
   client: Record<string, unknown>,
   messages: IntakeMessage[],
   topicStatus: Record<string, TopicStatus>,
+  conflicts: IntakeConflict[],
   override?: PromptOverride | null,
 ): Promise<{ ok: true; items: IntakeSummaryItem[] } | { ok: false; reason: string }> {
   const prompt = await loadPrompt(supabase, "intake_summary", {
@@ -409,6 +524,10 @@ export async function writeInterviewSummary(
       buildClientContext(client),
       "## Topics",
       topicsBlock(settings.topics, topicStatus),
+      conflicts.length > 0 ? "## Where a file and the founder's answers disagreed" : null,
+      conflicts.length > 0
+        ? `${conflicts.map((conflict) => `- ${conflictLine(conflict)}`).join("\n")}\nUse what the founder confirmed. Where nothing was confirmed, give the founder's answer and add "(the deck says …)" so Rupert can check.`
+        : null,
     ),
     messages: [
       {

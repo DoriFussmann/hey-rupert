@@ -9,6 +9,7 @@ import {
   type MaterialField,
 } from "@/lib/material-fields";
 import { advanceStage } from "@/lib/kickoff";
+import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
 import { notifyAdmin } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 import {
@@ -91,6 +92,17 @@ async function loadMaterials(access: PortalAccess) {
   return { ok: true as const, row: again.row };
 }
 
+/** The materials row, open for adding files (also after they are submitted). */
+async function openMaterialsForFiles() {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const opened = await loadSetupClient(access);
+  if (!opened.ok) return opened;
+  const loaded = await loadMaterials(access);
+  if (!loaded.ok) return loaded;
+  return { ok: true as const, access, row: loaded.row };
+}
+
 async function openMaterialsDraft() {
   const access = await requirePortalService();
   if (!access.ok) return access;
@@ -131,15 +143,6 @@ async function saveDraft(
   return { ok: true as const };
 }
 
-function safeFileName(name: string) {
-  const cleaned = name
-    .normalize("NFKD")
-    .replace(/[^\w.\- ]+/g, "")
-    .replace(/\s+/g, "-")
-    .slice(-120);
-  return cleaned || "file";
-}
-
 /**
  * Step 1 of an upload: checks the file and returns a one-time signed URL the
  * browser uploads to directly (large decks never pass through our server).
@@ -150,7 +153,7 @@ export async function createMaterialUpload(file: {
 }): Promise<
   { ok: true; path: string; token: string } | { ok: false; error: string }
 > {
-  const opened = await openMaterialsDraft();
+  const opened = await openMaterialsForFiles();
   if (!opened.ok) return opened;
 
   const name = String(file?.name ?? "").trim();
@@ -170,7 +173,10 @@ export async function createMaterialUpload(file: {
       error: `${name} is ${formatBytes(size)}. The limit is ${formatBytes(MATERIAL_MAX_BYTES)} per file.`,
     };
   }
-  if (asMaterials(opened.row.draft).files.length >= MATERIAL_MAX_FILES) {
+  const current = asMaterials(
+    opened.row.status === "submitted" ? opened.row.published : opened.row.draft,
+  );
+  if (current.files.length >= MATERIAL_MAX_FILES) {
     return {
       ok: false,
       error: `You can upload up to ${MATERIAL_MAX_FILES} files. Remove one to add another.`,
@@ -191,46 +197,39 @@ export async function createMaterialUpload(file: {
   return { ok: true, path: data.path, token: data.token };
 }
 
-/** Step 2 of an upload: records the uploaded file on the draft. */
+/**
+ * Step 2 of an upload: records the uploaded file. Before the materials are
+ * submitted it goes on the draft; after, it is added to what Rupert has and
+ * he is notified in the app.
+ */
 export async function registerMaterialFile(file: {
   path: string;
   name: string;
   size: number;
   type: string;
 }): Promise<{ ok: true; file: MaterialFile } | { ok: false; error: string }> {
-  const opened = await openMaterialsDraft();
+  const opened = await openMaterialsForFiles();
   if (!opened.ok) return opened;
-  const { access, row } = opened;
+  const { access } = opened;
 
   const path = String(file?.path ?? "");
   if (!path.startsWith(`${access.user.id}/`) || path.includes("..")) {
     return { ok: false, error: "That upload does not belong to you." };
   }
 
-  const draft = asMaterials(row.draft);
-  if (draft.files.some((item) => item.path === path)) {
-    return { ok: false, error: "That file is already attached." };
-  }
-  if (draft.files.length >= MATERIAL_MAX_FILES) {
-    return { ok: false, error: `You can upload up to ${MATERIAL_MAX_FILES} files.` };
-  }
-
-  const entry: MaterialFile = {
+  const attached = await attachMaterialFile(access.supabase, access.user.id, {
     path,
-    name: String(file?.name ?? "file").slice(0, 255),
+    name: String(file?.name ?? "file"),
     size: Number(file?.size) || 0,
-    type: String(file?.type ?? "").slice(0, 120),
-    uploaded_at: nowIso(),
-  };
-
-  const saved = await saveDraft(access, row, {
-    ...draft,
-    files: [...draft.files, entry],
+    type: String(file?.type ?? ""),
   });
-  if (!saved.ok) return saved;
+  if (!attached.ok) return attached;
+  if (attached.late) {
+    await notifyAdmin(access.supabase, access.user.id, "materials_added", { email: false });
+  }
 
   revalidateSetup(access.user.id);
-  return { ok: true, file: entry };
+  return { ok: true, file: attached.file };
 }
 
 export async function removeMaterialFile(path: string): Promise<SetupActionResult> {

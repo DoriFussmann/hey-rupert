@@ -48,6 +48,7 @@ export function notificationLabel(type: string) {
   if (type === "setup_fee_paid") return "Paid Setup Fee";
   if (type === "intake_completed") return "Completed Client Intake";
   if (type === "materials_submitted") return "Submitted Company Materials";
+  if (type === "materials_added") return "Added Company Files";
   if (type === "feedback_viewed") return "Opened Analysis & Feedback";
   if (type === "deck_review_confirmed") return "Confirmed Analysis & Feedback";
   if (type === "framing_confirmed") return "Confirmed Outreach Narrative";
@@ -73,6 +74,7 @@ export function notificationAction(type: string) {
   if (type === "setup_fee_paid") return "paid the Setup Fee";
   if (type === "intake_completed") return "completed the Client Intake";
   if (type === "materials_submitted") return "submitted their company materials";
+  if (type === "materials_added") return "added files to their company materials";
   if (type === "feedback_viewed") return "opened your Analysis & Feedback";
   if (type === "deck_review_confirmed") return "confirmed the Analysis & Feedback";
   if (type === "framing_confirmed") return "confirmed the outreach narrative";

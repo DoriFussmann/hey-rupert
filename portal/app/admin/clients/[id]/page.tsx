@@ -78,7 +78,7 @@ import {
   listSowSends,
 } from "@/lib/data";
 import { formatDate } from "@/lib/format";
-import { getOnboardingItems } from "@/lib/onboarding";
+import { getOnboardingItems, materialsStatus } from "@/lib/onboarding";
 import { nextTurn } from "@/lib/progress";
 import { isKickoffReady, kickoffDate } from "@/lib/service-order";
 import { getClientAccess } from "@/lib/password-setup";
@@ -197,16 +197,14 @@ export default async function ClientDetailPage({
     },
   ];
 
-  const materialsOnboarding = getOnboardingItems(client).find(
-    (item) => item.id === "materials",
-  );
+  const materialsOnboarding = materialsStatus(client);
   const materialsItem: SetupItem = {
     ...setupStep("materials"),
-    status: materialsOnboarding?.status ?? "open",
-    detail: materialsOnboarding?.detail ?? "After the Client Intake",
+    status: materialsOnboarding.status,
+    detail: materialsOnboarding.detail,
     since: materialsRow?.turn_since ?? null,
-    completedAt: materialsOnboarding?.completedAt ?? null,
-    visible: materialsOnboarding?.status !== "open",
+    completedAt: materialsOnboarding.completedAt,
+    visible: materialsOnboarding.status !== "open",
   };
   panels.push({
     key: "materials",

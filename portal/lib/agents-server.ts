@@ -4,7 +4,6 @@ import {
   callClaudeAgent,
   callClaudeTool,
   webFetchTool,
-  type ClaudeContentBlock,
   type ClaudeTool,
 } from "@/lib/anthropic";
 import { listFacts, listFactsText } from "@/lib/founder-list-facts";
@@ -13,6 +12,7 @@ import { promptSystem, type PromptOverride } from "@/lib/prompts";
 import { loadPrompt, loadPrompts } from "@/lib/prompts-server";
 import {
   INTAKE_BRIEF_FIELDS,
+  conflictLine,
   intakeMessageText,
   type IntakeBrief,
   type IntakeInterview,
@@ -21,16 +21,13 @@ import { buildClientContext, loadInterview } from "@/lib/intake-server";
 import { labelledAnswers, type MaterialField } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 import { profileText } from "@/lib/match/shared";
-import { OFFICE_TEXT_EXTENSIONS, extractOfficeText } from "@/lib/office-text";
+import { prepareFiles } from "@/lib/material-files-server";
 import {
-  MATERIALS_BUCKET,
   asEmailCopy,
   asFeedback,
   asInvestorList,
   asMaterials,
   asNarrative,
-  fileExtension,
-  formatBytes,
   fitTiersFor,
   tierEmails,
   LINKEDIN_NOTE_MAX,
@@ -85,22 +82,26 @@ async function profileContext(supabase: ServiceClient, clientId: string) {
 
 function intakeContext(interview: IntakeInterview | null) {
   if (!interview) return "No intake interview on record.";
+  const conflicts =
+    interview.conflicts.length > 0
+      ? `\n\nWhere the founder's files and answers differed (use what the founder confirmed):\n${interview.conflicts.map((conflict) => `- ${conflictLine(conflict)}`).join("\n")}`
+      : "";
   if (interview.admin_brief) {
     const brief = interview.admin_brief;
     const facts = INTAKE_BRIEF_FIELDS.map(
       (field) => `${field.label}: ${brief[field.key] || "not stated"}`,
     ).join("\n");
-    return `${facts}\n\n${brief.summary}`;
+    return `${facts}\n\n${brief.summary}${conflicts}`;
   }
   if (interview.summary && interview.summary.length > 0) {
-    return interview.summary
+    return `${interview.summary
       .map((item) => `${item.title}: ${item.answer}`)
-      .join("\n");
+      .join("\n")}${conflicts}`;
   }
   const notes = Object.entries(interview.topic_status)
     .filter(([, status]) => status.note)
     .map(([id, status]) => `${id}: ${status.note}`);
-  return notes.length > 0 ? notes.join("\n") : "The intake has no answers yet.";
+  return notes.length > 0 ? `${notes.join("\n")}${conflicts}` : "The intake has no answers yet.";
 }
 
 function answersBlock(fields: MaterialField[], values: Record<string, string>) {
@@ -271,112 +272,6 @@ export async function draftIntakeBrief(
 // ---------------------------------------------------------------------------
 // Materials analysis
 
-const PDF_IMAGE_BUDGET_BYTES = 20 * 1024 * 1024;
-const IMAGE_MAX_BYTES = 5 * 1024 * 1024;
-const IMAGE_TYPES: Record<string, string> = {
-  png: "image/png",
-  jpg: "image/jpeg",
-  jpeg: "image/jpeg",
-  gif: "image/gif",
-  webp: "image/webp",
-};
-const PLAIN_TEXT = new Set(["txt", "md", "csv"]);
-const ASK_FOR_PDF: Record<string, string> = {
-  key: "Keynote can't be read. Ask the client for a PDF export.",
-  ppt: "Old PowerPoint format can't be read. Ask the client for a PDF.",
-  doc: "Old Word format can't be read. Ask the client for a PDF or .docx.",
-  xls: "Old Excel format can't be read. Ask the client for .xlsx or CSV.",
-};
-
-type PreparedFiles = {
-  blocks: ClaudeContentBlock[];
-  read: string[];
-  skipped: string[];
-};
-
-export async function prepareFiles(
-  supabase: ServiceClient,
-  files: ReturnType<typeof asMaterials>["files"],
-): Promise<PreparedFiles> {
-  const prepared: PreparedFiles = { blocks: [], read: [], skipped: [] };
-  let binaryBytes = 0;
-
-  for (const file of files) {
-    const extension = fileExtension(file.name);
-    if (ASK_FOR_PDF[extension]) {
-      prepared.skipped.push(`${file.name}: ${ASK_FOR_PDF[extension]}`);
-      continue;
-    }
-    const isPdf = extension === "pdf";
-    const imageType = IMAGE_TYPES[extension];
-    const isOffice = (OFFICE_TEXT_EXTENSIONS as readonly string[]).includes(extension);
-    if (!isPdf && !imageType && !isOffice && !PLAIN_TEXT.has(extension)) {
-      prepared.skipped.push(`${file.name}: this file type can't be read.`);
-      continue;
-    }
-    if (imageType && file.size > IMAGE_MAX_BYTES) {
-      prepared.skipped.push(
-        `${file.name}: images over ${formatBytes(IMAGE_MAX_BYTES)} can't be read.`,
-      );
-      continue;
-    }
-    if ((isPdf || imageType) && binaryBytes + file.size > PDF_IMAGE_BUDGET_BYTES) {
-      prepared.skipped.push(
-        `${file.name}: skipped to stay within the ${formatBytes(PDF_IMAGE_BUDGET_BYTES)} the AI can read in one go.`,
-      );
-      continue;
-    }
-
-    const { data, error } = await supabase.storage.from(MATERIALS_BUCKET).download(file.path);
-    if (error || !data) {
-      prepared.skipped.push(`${file.name}: could not be downloaded (${error?.message ?? "unknown error"}).`);
-      continue;
-    }
-    const buffer = Buffer.from(await data.arrayBuffer());
-
-    if (isPdf) {
-      binaryBytes += buffer.length;
-      prepared.blocks.push({
-        type: "document",
-        source: { type: "base64", media_type: "application/pdf", data: buffer.toString("base64") },
-        title: file.name,
-      });
-      prepared.read.push(file.name);
-    } else if (imageType) {
-      binaryBytes += buffer.length;
-      prepared.blocks.push({ type: "text", text: `Image file: ${file.name}` });
-      prepared.blocks.push({
-        type: "image",
-        source: { type: "base64", media_type: imageType, data: buffer.toString("base64") },
-      });
-      prepared.read.push(file.name);
-    } else {
-      let content = "";
-      try {
-        content = isOffice
-          ? extractOfficeText(buffer, extension)
-          : buffer.toString("utf8").slice(0, 120_000);
-      } catch (err) {
-        prepared.skipped.push(
-          `${file.name}: could not be read (${err instanceof Error ? err.message : "unknown error"}).`,
-        );
-        continue;
-      }
-      if (!content.trim()) {
-        prepared.skipped.push(`${file.name}: no readable text.`);
-        continue;
-      }
-      prepared.blocks.push({
-        type: "document",
-        source: { type: "text", media_type: "text/plain", data: content },
-        title: file.name,
-      });
-      prepared.read.push(isOffice ? `${file.name} (text only)` : file.name);
-    }
-  }
-  return prepared;
-}
-
 const ANALYSIS_TOOL: ClaudeTool = {
   name: "submit_analysis",
   description: "Deliver the Company Summary and the Investor Framing.",
@@ -417,7 +312,11 @@ export async function runMaterialsAnalysis(
   const links = clientLinks(materials.fields);
   const interview = interviewResult.ok ? interviewResult.interview : null;
 
-  if (files.blocks.length === 0 && labelledAnswers(fields, materials.fields).length === 0) {
+  if (
+    files.blocks.length === 0 &&
+    labelledAnswers(fields, materials.fields).length === 0 &&
+    !materials.no_deck
+  ) {
     return {
       ok: false,
       error: `There is nothing the AI can read. ${files.skipped.join(" ")}`.trim(),
@@ -437,6 +336,7 @@ export async function runMaterialsAnalysis(
     files.read.length > 0
       ? `Attached below: ${files.read.join(", ")}.`
       : "No readable files.",
+    materials.no_deck ? `The founder has no pitch deck yet: ${materials.no_deck}` : "",
     files.skipped.length > 0 ? `Not readable: ${files.skipped.join(" ")}` : "",
     "## Links the founder provided",
     links.length > 0

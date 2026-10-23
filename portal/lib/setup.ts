@@ -91,6 +91,18 @@ export type MaterialsPayload = {
   files: MaterialFile[];
   /** Answers to the Company Materials fields, by field id. */
   fields: Record<string, string>;
+  /** The founder's reason for having no deck yet (said in the intake). Empty otherwise. */
+  no_deck: string;
+};
+
+/** Longest "no deck yet" reason the founder can give. */
+export const NO_DECK_MAX = 500;
+
+/** The client's materials as they stand: what was submitted, or the draft. */
+export type MaterialsView = {
+  files: MaterialFile[];
+  noDeck: string;
+  submitted: boolean;
 };
 
 // Analysis & Feedback (stored on the deck_review step). The draft is Rupert's
@@ -752,7 +764,7 @@ export function asMaterials(value: unknown): MaterialsPayload {
       fields[legacy] = str(raw[legacy]);
     }
   }
-  return { files, fields };
+  return { files, fields, no_deck: str(raw.no_deck, NO_DECK_MAX).trim() };
 }
 
 function asFiles(value: unknown): MaterialFile[] {
