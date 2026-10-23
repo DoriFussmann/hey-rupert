@@ -13,7 +13,6 @@ export const PROMPT_LIST = [
   { key: "outreach_narrative", title: "Outreach narrative", group: "Company and narrative" },
   { key: "email_copy", title: "Email copy", group: "Company and narrative" },
   { key: "match_profile", title: "Match profile", group: "Company and narrative" },
-  { key: "feedback_email", title: "Feedback email", group: "Emails to founders" },
   { key: "narrative_email", title: "Narrative email", group: "Emails to founders" },
   { key: "narrative_email_revision", title: "Narrative email: reply to changes", group: "Emails to founders" },
   { key: "investor_list_email", title: "Investor list email", group: "Emails to founders" },

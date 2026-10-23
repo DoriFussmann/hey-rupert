@@ -65,8 +65,8 @@ function answerText(row: SetupStepState, version: number) {
 }
 
 /**
- * The bottom of the Analysis & Feedback, Outreach Narrative and Investor
- * Matching panels: the email (drafted by AI, editable), Save draft, Push to
+ * The bottom of the Outreach Narrative and Investor Matching panels: the
+ * email (drafted by AI, editable), Save draft, Push to
  * Client Portal & Send, an optional preview, and the send log. The panel owns
  * the document; the email is saved with it.
  */

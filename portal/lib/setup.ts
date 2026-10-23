@@ -49,10 +49,10 @@ export type SetupHistoryEntry = {
 };
 
 /** Steps Rupert sends as a document: one action pushes it to the portal and emails the client. */
-export type SetupDocumentStep = "deck_review" | "framing" | "investor_list";
+export type SetupDocumentStep = "framing" | "investor_list";
 
 export function isSetupDocumentStep(value: unknown): value is SetupDocumentStep {
-  return value === "deck_review" || value === "framing" || value === "investor_list";
+  return value === "framing" || value === "investor_list";
 }
 
 /** One row of `setup_steps`, as the app uses it. */
@@ -105,8 +105,9 @@ export type MaterialsView = {
   submitted: boolean;
 };
 
-// Analysis & Feedback (stored on the deck_review step). The draft is Rupert's
-// workspace; the published payload is the client's view of it.
+// Analysis & Feedback (stored on the deck_review step): feedback sent as its
+// own step before the Company Materials Feedback moved into the Outreach
+// Narrative. Read only: clients who received it can still open it.
 
 export type FeedbackArea = "deck" | "story" | "metrics" | "materials" | "other";
 export type FeedbackPriority = "high" | "medium" | "low";
@@ -151,6 +152,25 @@ export type MaterialsAnalysis = {
   skipped: string[];
 };
 
+/**
+ * Company Materials Feedback: Rupert's read of the company and what to
+ * improve in the materials. Sent with the Outreach Narrative, for the
+ * founder to read; it is never confirmed.
+ */
+export type MaterialsFeedback = {
+  /** How Rupert reads the company (markdown). */
+  summary: string;
+  /** What to improve in the deck and materials, by priority (markdown). */
+  improvements: string;
+  /** Rupert only: when Analyze ran, and what the AI read or could not. */
+  generated_at: string;
+  read: string[];
+  skipped: string[];
+};
+
+/** The client's comment on the Company Materials Feedback, kept with their answer on the narrative. */
+export const MATERIALS_FEEDBACK_NOTE_KEY = "materials_feedback";
+
 /** The email Rupert sends with a push. */
 export type ClientEmailDraft = {
   subject: string;
@@ -168,7 +188,7 @@ export type FeedbackDraft = {
 };
 
 /**
- * What the client sees: the summary and framing, files and links. `intro`
+ * What the client saw: the summary and framing, files and links. `intro`
  * and `items` exist only on feedback sent before that (a message and a list
  * of recommendations); they stay visible to those clients.
  */
@@ -185,7 +205,7 @@ export type FeedbackPublished = {
 
 /** Shown under What happens next unless Rupert edits it for this client. */
 export const NARRATIVE_NEXT_STEPS =
-  "Once you confirm this and Rupert's feedback, he sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
+  "Once you confirm this narrative, Rupert sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
 
 export type NarrativePayload = {
   /** The core story (markdown). */
@@ -196,6 +216,8 @@ export type NarrativePayload = {
   approach: string;
   /** What the client should expect after they confirm. */
   next_steps: string;
+  /** Rupert's Company Materials Feedback, sent with this version. Absent before Analyze. */
+  feedback?: MaterialsFeedback;
   /** Files and links Rupert shares with the narrative. */
   attachments: MaterialFile[];
   links: FeedbackLink[];
@@ -449,23 +471,29 @@ export const MATERIALS_STEP: SetupStepDefinition = {
   kind: "client",
 };
 
+/**
+ * Feedback sent as its own step before it moved into the Outreach
+ * Narrative. Not a Setup step any more; clients who received it can still
+ * open it.
+ */
+export const LEGACY_FEEDBACK_STEP: SetupStepDefinition = {
+  id: "deck_review",
+  title: "Analysis & Feedback",
+  short: "Analysis & Feedback",
+  href: "/portal/setup/deck-review",
+  clientTask: "read Rupert's feedback on your materials",
+  adminAction: "Nothing: the feedback now goes with the outreach narrative",
+  kind: "review",
+};
+
 export const SETUP_STEPS: SetupStepDefinition[] = [
-  {
-    id: "deck_review",
-    title: "Analysis & Feedback",
-    short: "Analysis & Feedback",
-    href: "/portal/setup/deck-review",
-    clientTask: "read Rupert's feedback on your materials and confirm",
-    adminAction: "Analyze the materials and send the feedback",
-    kind: "review",
-  },
   {
     id: "framing",
     title: "Outreach Narrative",
     short: "Outreach Narrative",
     href: "/portal/setup/framing",
     clientTask: "review and confirm the outreach narrative",
-    adminAction: "Build the outreach narrative",
+    adminAction: "Analyze the materials, build the outreach narrative and send it",
     kind: "review",
   },
   {
@@ -492,6 +520,7 @@ export const SETUP_TOTAL = SETUP_STEPS.length;
 
 const STEP_BY_ID = new Map<SetupStepId, SetupStepDefinition>([
   [MATERIALS_STEP.id, MATERIALS_STEP],
+  [LEGACY_FEEDBACK_STEP.id, LEGACY_FEEDBACK_STEP],
   ...SETUP_STEPS.map((step) => [step.id, step] as const),
 ]);
 
@@ -505,8 +534,8 @@ export function isSetupStepId(value: unknown): value is SetupStepId {
 
 /**
  * Setup is open once the stage is setup or live. The stage moves to setup
- * when Company Materials are submitted. A client already in setup stays open
- * even if materials are later sent back.
+ * when the intake completes (with the company materials). A client already
+ * in setup stays open even if materials are later sent back.
  */
 export function isSetupOpen(stage?: string | null) {
   return stage === "setup" || stage === "live";
@@ -541,17 +570,6 @@ function rowFor(rows: SetupStepState[] | null | undefined, id: SetupStepId) {
   return rows?.find((row) => row.step === id) ?? null;
 }
 
-/** The later of two timestamps, or null when neither is set. */
-function latest(a: string | null | undefined, b: string | null | undefined) {
-  if (!a || !b) return a || b || null;
-  return Date.parse(a) >= Date.parse(b) ? a : b;
-}
-
-/** Feedback the client confirmed, or feedback sent before confirming existed. */
-export function isFeedbackConfirmed(row: SetupStepState | null | undefined) {
-  return row?.status === "confirmed" || row?.status === "published";
-}
-
 /** True once Rupert has pushed this step: the client can open it. */
 export function isSharedWithClient(row: SetupStepState | null | undefined) {
   return Boolean(row && row.version > 0 && row.status !== "draft");
@@ -559,33 +577,27 @@ export function isSharedWithClient(row: SetupStepState | null | undefined) {
 
 /** Why the investor list cannot be sent yet, in Rupert's words. */
 export const INVESTOR_LIST_BLOCKED =
-  "Available once the client confirms the Analysis & Feedback and the outreach narrative.";
+  "Available once the client confirms the outreach narrative.";
 
 /**
- * Both the feedback and the narrative are confirmed and no investor list has
- * been sent yet: Rupert's next move is the investor list.
+ * The narrative is confirmed and no investor list has been sent yet:
+ * Rupert's next move is the investor list. The feedback plays no part.
  */
 export function readyForInvestorList(source: SetupSource | null | undefined) {
   const rows = source?.setup_steps ?? [];
   const list = rowFor(rows, "investor_list");
-  return (
-    isFeedbackConfirmed(rowFor(rows, "deck_review")) &&
-    rowFor(rows, "framing")?.status === "confirmed" &&
-    (list?.version ?? 0) === 0
-  );
+  return rowFor(rows, "framing")?.status === "confirmed" && (list?.version ?? 0) === 0;
 }
 
 export function getSetupItems(source: SetupSource | null | undefined): SetupItem[] {
   const rows = source?.setup_steps ?? [];
 
   const materials = rowFor(rows, "materials");
-  const deck = rowFor(rows, "deck_review");
   const framing = rowFor(rows, "framing");
   const list = rowFor(rows, "investor_list");
   const copy = rowFor(rows, "email_copy");
 
   const materialsDone = materials?.status === "submitted";
-  const feedbackDone = isFeedbackConfirmed(deck);
   const framingDone = framing?.status === "confirmed";
   const listDone = list?.status === "confirmed";
 
@@ -593,7 +605,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
 
   // Every Setup step: Rupert pushes, the client confirms (or asks for changes).
   const reviewItem = (
-    id: Exclude<SetupStepId, "materials">,
+    id: Exclude<SetupStepId, "materials" | "deck_review">,
     row: SetupStepState | null,
     reachable: boolean,
     blockedDetail: string,
@@ -652,41 +664,30 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
     };
   };
 
-  // 1–2. Analysis & Feedback, then the Outreach Narrative. Both open when
-  // the materials are submitted (the last Onboarding step); Rupert can push
-  // the narrative before the feedback is confirmed. Anything already pushed
-  // stays visible if the materials are sent back.
-  items.push(
-    reviewItem(
-      "deck_review",
-      deck,
-      materialsDone || (deck?.version ?? 0) > 0,
-      "After you share your materials",
-      "Rupert is reviewing your materials",
-      materials?.completed_at ?? null,
-    ),
-  );
+  // 1. The Outreach Narrative, with the Company Materials Feedback. Opens
+  // when the materials are submitted (with the intake). Anything already
+  // pushed stays visible if the materials are sent back.
   items.push(
     reviewItem(
       "framing",
       framing,
       materialsDone || (framing?.version ?? 0) > 0,
-      "After you share your materials",
-      "Rupert is writing your outreach narrative",
+      "After your Client Intake",
+      "Rupert is reviewing your materials and writing your outreach narrative",
       materials?.completed_at ?? null,
     ),
   );
-  // 3. The investor list opens once the client has confirmed both. A list
-  // Rupert already sent stays the client's to review.
-  const listReady = (feedbackDone && framingDone) || (list?.version ?? 0) > 0;
+  // 2. The investor list opens once the client has confirmed the narrative.
+  // A list Rupert already sent stays the client's to review.
+  const listReady = framingDone || (list?.version ?? 0) > 0;
   items.push(
     reviewItem(
       "investor_list",
       list,
       listReady,
-      "After you confirm the feedback and the outreach narrative",
+      "After you confirm the outreach narrative",
       "Rupert is matching investors",
-      latest(deck?.completed_at, framing?.completed_at) ?? list?.updated_at ?? null,
+      framing?.completed_at ?? list?.updated_at ?? null,
     ),
   );
   items.push(
@@ -851,7 +852,7 @@ export function asClientEmail(value: unknown): ClientEmailDraft {
   };
 }
 
-/** Rupert's feedback workspace: the summary and framing, files, links and the email. */
+/** A feedback draft from before it moved into the narrative: the summary and framing, files, links and the email. */
 export function asFeedback(value: unknown): FeedbackDraft {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
     string,
@@ -862,18 +863,6 @@ export function asFeedback(value: unknown): FeedbackDraft {
     attachments: asFiles(raw.attachments),
     links: asLinks(raw.links),
     client_email: asClientEmail(raw.client_email),
-  };
-}
-
-/** The part of the feedback the client sees (never what the AI read). */
-export function feedbackForClient(draft: FeedbackDraft): FeedbackPublished {
-  return {
-    summary: draft.analysis?.summary ?? "",
-    framing: draft.analysis?.framing ?? "",
-    intro: "",
-    items: [],
-    attachments: draft.attachments,
-    links: draft.links,
   };
 }
 
@@ -902,12 +891,6 @@ export function feedbackChecks(
   return Object.keys(checks).filter((id) => ids.has(id));
 }
 
-export function feedbackProblem(draft: FeedbackDraft) {
-  if (!draft.analysis?.summary.trim()) return "Write the Company Summary before sending.";
-  if (!draft.analysis.framing.trim()) return "Write the Investor Framing before sending.";
-  return null;
-}
-
 /** Why the email cannot go yet, or null. */
 export function clientEmailProblem(email: ClientEmailDraft) {
   if (!email.subject.trim()) return "Add a subject to the email.";
@@ -928,6 +911,22 @@ function optionalText(value: unknown, max: number) {
   return text || undefined;
 }
 
+/** Rupert's Company Materials Feedback; undefined when there is none. */
+export function asMaterialsFeedback(value: unknown): MaterialsFeedback | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const summary = str(raw.summary, 30000);
+  const improvements = str(raw.improvements, 30000);
+  if (!summary.trim() && !improvements.trim()) return undefined;
+  return {
+    summary,
+    improvements,
+    generated_at: str(raw.generated_at, 40),
+    read: asStringList(raw.read),
+    skipped: asStringList(raw.skipped),
+  };
+}
+
 /** Older rows stored the framing as one markdown `body`: it becomes the core. */
 export function asNarrative(value: unknown): NarrativePayload {
   const raw = (value && typeof value === "object" ? value : {}) as Record<
@@ -940,6 +939,7 @@ export function asNarrative(value: unknown): NarrativePayload {
     key_messages: str(raw.key_messages, 20000),
     approach: str(raw.approach, 20000),
     next_steps: nextSteps || NARRATIVE_NEXT_STEPS,
+    feedback: asMaterialsFeedback(raw.feedback),
     attachments: asFiles(raw.attachments),
     links: asLinks(raw.links),
     admin_note: str(raw.admin_note, NOTE_MAX).trim() || undefined,
@@ -951,9 +951,19 @@ export function asNarrative(value: unknown): NarrativePayload {
   };
 }
 
-/** What the client sees of a narrative: everything except Rupert's change summary. */
+/**
+ * What the client sees of a narrative: everything except Rupert's change
+ * summary and what the AI read for the feedback.
+ */
 export function narrativeForClient(value: unknown): NarrativePayload {
-  return { ...asNarrative(value), change_summary: undefined };
+  const narrative = asNarrative(value);
+  return {
+    ...narrative,
+    change_summary: undefined,
+    feedback: narrative.feedback
+      ? { ...narrative.feedback, generated_at: "", read: [], skipped: [] }
+      : undefined,
+  };
 }
 
 export function narrativeHasEarlierDraft(narrative: NarrativePayload) {

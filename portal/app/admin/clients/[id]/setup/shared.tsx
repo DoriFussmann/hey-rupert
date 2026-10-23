@@ -21,10 +21,9 @@ export const inputClass =
 /** Why Rupert cannot push a step yet, in Rupert's words. */
 export const ADMIN_BLOCKED: Record<SetupStepId, string> = {
   materials: "Waiting for the client's materials",
-  deck_review: "Push opens once the client submits their materials",
-  framing: "Push opens once the client submits their materials",
-  investor_list:
-    "Push opens once the client confirms the Analysis & Feedback and the outreach narrative",
+  deck_review: "The feedback now goes with the outreach narrative",
+  framing: "Push opens once the client's intake and materials are in",
+  investor_list: "Push opens once the client confirms the outreach narrative",
   email_copy: "Push opens once the client confirms the investor list",
 };
 

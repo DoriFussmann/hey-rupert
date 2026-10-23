@@ -1,11 +1,11 @@
 import { EmailCopyPanel } from "@/app/admin/clients/[id]/setup/email-copy-panel";
-import { FeedbackWorkspace } from "@/app/admin/clients/[id]/setup/feedback-workspace";
 import { InvestorListPanel } from "@/app/admin/clients/[id]/setup/investor-list-panel";
 import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor";
 import {
   SETUP_TOTAL,
   asFeedback,
   asInvestorList,
+  isSharedWithClient,
   getSetupItems,
   readyForInvestorList,
   tierCounts,
@@ -29,7 +29,7 @@ export function SetupWorkspace({
 }: {
   clientId: string;
   source: SetupSource;
-  /** Signed links for files saved on the feedback and narrative drafts. */
+  /** Signed links for files saved on the narrative draft. */
   fileLinks: Record<string, string>;
   /** The client's email address. */
   clientEmail: string;
@@ -44,8 +44,10 @@ export function SetupWorkspace({
   const row = (id: SetupStepId) => rows.find((entry) => entry.step === id) ?? null;
   const done = items.filter((entry) => entry.status === "done").length;
   const materialsSubmitted = row("materials")?.status === "submitted";
-  const feedbackRow = row("deck_review");
-  const hasAnalysis = Boolean(asFeedback(feedbackRow?.draft).analysis);
+  // Feedback a client received as its own step, before it moved into the narrative.
+  const legacyRow = row("deck_review");
+  const legacyFeedback =
+    isSharedWithClient(legacyRow) || Boolean(asFeedback(legacyRow?.draft).analysis);
   const investors = asInvestorList(row("investor_list")?.published);
   const listScheme = investors.tier_scheme ?? "three";
   const counts = tierCounts(investors.rows, listScheme);
@@ -66,10 +68,10 @@ export function SetupWorkspace({
           ) : null}
         </div>
         <p className="mt-xs text-body-sm text-muted">
-          {done} of {SETUP_TOTAL} complete. Analysis & Feedback and the outreach narrative run
-          side by side: write each one, then Push to Client Portal & Send, and the client
-          confirms. Once both are confirmed → investor list, client confirms → email copy, client
-          confirms.
+          {done} of {SETUP_TOTAL} complete. Outreach Narrative: Analyze writes the Company
+          Materials Feedback, Build narrative writes the narrative, then one Push to Client
+          Portal & Send. The client confirms the narrative (the feedback is for them to read) →
+          investor list, client confirms → email copy, client confirms.
         </p>
         <ol className="mt-md flex flex-wrap gap-sm text-body-sm">
           {items.map((entry, index) => (
@@ -98,21 +100,13 @@ export function SetupWorkspace({
         </ol>
       </div>
 
-      <FeedbackWorkspace
-        clientId={clientId}
-        item={item("deck_review")}
-        row={feedbackRow}
-        to={clientEmail}
-        materialsSubmitted={materialsSubmitted}
-        claudeReady={claudeReady}
-        fileLinks={fileLinks}
-      />
       <NarrativeEditor
         clientId={clientId}
         item={item("framing")}
         row={row("framing")}
         to={clientEmail}
-        hasAnalysis={hasAnalysis}
+        materialsSubmitted={materialsSubmitted}
+        legacyFeedback={legacyFeedback}
         claudeReady={claudeReady}
         fileLinks={fileLinks}
       />

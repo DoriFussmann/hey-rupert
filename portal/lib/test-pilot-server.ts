@@ -43,7 +43,7 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 export type StepResult = { ok: true } | { ok: false; error: string };
 
 /** Setup steps the "client" confirms in a test run. */
-export type ReviewStep = "deck_review" | "framing" | "investor_list" | "email_copy";
+export type ReviewStep = "framing" | "investor_list" | "email_copy";
 
 const TEST_IP = "test-pilot";
 

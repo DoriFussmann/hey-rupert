@@ -52,7 +52,7 @@ For each topic, write a concise, factual answer in plain sentences or short list
 const NARRATIVE_EMAIL_REVISION_PROMPT = `This email answers the founder's requested changes to the narrative. Write it as a reply to their notes, instead of the usual structure:
 1. Thank them briefly and confirm the changes they asked for, naming each one in a few words. Use only the list of changes you receive; never claim a change that is not listed there.
 2. Say the updated narrative is in their portal.
-3. Say Rupert would like to start investor matching: ask them to confirm the narrative in the portal so he can begin, or to reply with any further comments. If the Analysis & Feedback is not confirmed yet (its status is given below), ask them to confirm both.
+3. Say Rupert would like to start investor matching: ask them to confirm the narrative in the portal so he can begin, or to reply with any further comments.
 Keep it under 140 words.`;
 
 const VERIFY_ROLE_CHECK_PROMPT = `You check whether a person in an investor database still works at the firm listed for them, and in what role. Use web search. The firm's own team page and public LinkedIn profiles are the best sources; recent press, portfolio announcements and conference bios also help.
@@ -116,12 +116,12 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   materials_analysis: agentDetails(
     "materials_analysis",
-    "The company profile, client record, intake, written answers, readable files and the founder's own links; the answer format (summary and framing).",
+    "The company profile, client record, intake, written answers, readable files and the founder's own links; the answer format (summary and improvements).",
     true,
   ),
   outreach_narrative: agentDetails(
     "outreach_narrative",
-    "The company profile, client record, intake, answers, Rupert's summary and framing, and the founder's change requests; the answer format (three sections, plus changes when revising).",
+    "The company profile, client record, intake, answers, Rupert's Company Materials Feedback, and the founder's change requests; the answer format (three sections, plus changes when revising).",
     true,
   ),
   email_copy: agentDetails(
@@ -134,12 +134,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The intake interview, and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",
     true,
   ),
-  feedback_email: agentDetails("feedback_email", `Rupert's edited summary and framing, shared files and links, and company information. ${EMAIL_FIXED}`, true),
-  narrative_email: agentDetails("narrative_email", `Rupert's edited narrative, shared files and links, and company information. ${EMAIL_FIXED}`, true),
+  narrative_email: agentDetails("narrative_email", `Rupert's edited narrative and Company Materials Feedback, shared files and links, and company information. ${EMAIL_FIXED}`, true),
   narrative_email_revision: {
     slug: agentPromptSlug("narrative_email_revision"),
     usedBy: "Added to the Narrative email when the founder asked for changes: how the reply confirms them.",
-    fixed: `The founder's requests, Rupert's list of changes, and whether the Analysis & Feedback is confirmed. ${EMAIL_FIXED}`,
+    fixed: `The founder's requests and Rupert's list of changes. ${EMAIL_FIXED}`,
     testable: false,
     defaultText: NARRATIVE_EMAIL_REVISION_PROMPT,
   },

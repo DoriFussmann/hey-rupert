@@ -12,10 +12,10 @@ const read = (path: string) => readFileSync(join(portal, path), "utf8").replace(
 const row = (slug: string, content: string | null, version: number | null): PromptRow => ({ slug, content, active_version: version });
 const slug = (key: Parameters<typeof promptDefinition>[0]) => promptDefinition(key).slug;
 
-test("the registry: 17 prompts, each stored once, each starting text usable", () => {
-  assert.equal(PROMPTS.length, 17);
-  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 17);
-  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 17);
+test("the registry: 16 prompts, each stored once, each starting text usable", () => {
+  assert.equal(PROMPTS.length, 16);
+  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 16);
+  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 16);
   for (const prompt of PROMPTS) {
     // The database only accepts these slugs as prompts.
     assert.ok(prompt.slug === "intake_prompt" || prompt.slug.startsWith("agent_prompt:"), prompt.slug);
@@ -25,13 +25,13 @@ test("the registry: 17 prompts, each stored once, each starting text usable", ()
 });
 
 test("each AI call gets the active version from the database", () => {
-  const rows = [row(slug("feedback_email"), "Write a short feedback email.", 3), row(slug("email_copy"), "Write the copy.", 1)];
-  const loaded = resolvePrompts(rows, ["feedback_email", "email_copy"]);
+  const rows = [row(slug("nudge_email"), "Write a short nudge email.", 3), row(slug("email_copy"), "Write the copy.", 1)];
+  const loaded = resolvePrompts(rows, ["nudge_email", "email_copy"]);
   assert.ok(loaded.ok);
-  assert.deepEqual(loaded.value.feedback_email, { key: "feedback_email", text: "Write a short feedback email.", version: 3 });
+  assert.deepEqual(loaded.value.nudge_email, { key: "nudge_email", text: "Write a short nudge email.", version: 3 });
   assert.equal(loaded.value.email_copy.version, 1);
   // The managed prompt comes first; the code's fixed parts follow; empty parts are left out.
-  assert.equal(promptSystem(loaded.value.feedback_email, "## Facts", "", null, false, "x"), "Write a short feedback email.\n\n## Facts\n\nx");
+  assert.equal(promptSystem(loaded.value.nudge_email, "## Facts", "", null, false, "x"), "Write a short nudge email.\n\n## Facts\n\nx");
 });
 
 test("an admin edit changes the next generation, with no deploy", () => {
@@ -78,6 +78,17 @@ test("the migration starts every prompt from exactly the registry's text", () =>
   // Versions can't be rewritten, and a prompt's text changes only through a saved version.
   assert.match(sql, /form_template_versions_immutable/);
   assert.match(sql, /form_templates_prompt_guard/);
+});
+
+test("the narrative-feedback migration saves exactly the registry's text for the prompts it updates", () => {
+  const sql = read("supabase/narrative_feedback.sql");
+  const tag = "$rupert_prompt$";
+  for (const key of ["materials_analysis", "narrative_email", "narrative_email_revision"]) {
+    const prompt = PROMPTS.find((item) => item.key === key)!;
+    assert.ok(sql.includes(`'${prompt.slug}',`), prompt.slug);
+    assert.ok(sql.includes(`${tag}${prompt.defaultText}${tag}`), `${key}: text differs from the registry`);
+  }
+  assert.ok(!PROMPTS.some((item) => item.key === ("feedback_email" as string)));
 });
 
 function sourceFiles(dir: string): string[] {

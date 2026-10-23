@@ -4,7 +4,6 @@ import type { EmailResult } from "@/lib/email";
 import { sendClientEmail } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
 import {
-  FEEDBACK_DEFAULT_MESSAGE,
   emailTemplate,
   renderEmail,
   tidyBody,
@@ -17,14 +16,13 @@ import { clientAddress, firstNameOf, greetingFor } from "@/lib/notify";
 import { PORTAL_URL } from "@/lib/portal-url";
 import type { ClientEmailDraft, InvestorListPayload, SetupDocumentStep } from "@/lib/setup";
 
-// The email that goes with Push to Client Portal & Send (feedback, narrative
-// and investor list): drafted by Claude or filled from Forms → Emails, edited by
+// The email that goes with Push to Client Portal & Send (the narrative, with
+// the Company Materials Feedback, and the investor list): drafted by Claude or filled from Forms → Emails, edited by
 // Rupert, then sent as he wrote it.
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
 const TEMPLATE_KEY = {
-  deck_review: "client:feedback_ready",
   framing: "client:framing_ready",
   investor_list: "client:investor_list_ready",
 } as const satisfies Record<SetupDocumentStep, string>;
@@ -122,7 +120,6 @@ export async function renderStepEmail(
   const rendered = renderEmail(context.template, {
     ...baseValues(context, version),
     note: "",
-    message: FEEDBACK_DEFAULT_MESSAGE,
   });
   return {
     ok: true,
@@ -135,11 +132,7 @@ export async function renderStepEmail(
   };
 }
 
-/**
- * Wraps the middle Claude wrote in the greeting, portal link and signature.
- * A template with {message} (Feedback ready) places it there, so edits in
- * Forms → Emails still apply.
- */
+/** Wraps the middle Claude wrote in the greeting, portal link and signature. */
 export async function composeAiEmail(
   supabase: ServiceClient,
   clientId: string,
@@ -150,16 +143,11 @@ export async function composeAiEmail(
   if (!context.ok) return context;
 
   const values = baseValues(context, 1);
-  const body = context.template.body.includes("{message}")
-    ? renderEmail(context.template, { ...values, note: "", message: drafted.body }).body
-    : tidyBody(
-        [
-          values.greeting,
-          drafted.body,
-          `Open your portal: ${context.portalLink}`,
-          context.signature,
-        ].join("\n\n"),
-      );
+  const body = tidyBody(
+    [values.greeting, drafted.body, `Open your portal: ${context.portalLink}`, context.signature].join(
+      "\n\n",
+    ),
+  );
   return {
     ok: true,
     to: context.to,

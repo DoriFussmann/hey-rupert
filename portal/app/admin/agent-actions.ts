@@ -23,12 +23,12 @@ import {
   MATERIAL_EXTENSIONS,
   MATERIAL_MAX_BYTES,
   asClientEmail,
-  asFeedback,
+  asNarrative,
   setupFilesFolder,
   fileExtension,
   formatBytes,
   type EmailCopyPayload,
-  type FeedbackDraft,
+  type MaterialsFeedback,
   type NarrativePayload,
 } from "@/lib/setup";
 import { loadSetupStep, nowIso, setupTableError } from "@/lib/setup-server";
@@ -104,47 +104,49 @@ export async function updateIntakeBrief(
 }
 
 // ---------------------------------------------------------------------------
-// Analysis & Feedback
-
-/** Saves Rupert's feedback draft without touching anything the client sees. */
-async function saveFeedbackDraft(
-  supabase: ReturnType<typeof createServiceClient>,
-  clientId: string,
-  draft: FeedbackDraft,
-) {
-  const { error } = await supabase.from("setup_steps").upsert(
-    { client_id: clientId, step: "deck_review", draft, updated_at: nowIso() },
-    { onConflict: "client_id,step", ignoreDuplicates: false },
-  );
-  return error ? setupTableError(error.message, error.code) : null;
-}
+// Company Materials Feedback
 
 /**
- * Reads everything the client shared and replaces the Company Summary and
- * Investor Framing. Files, links and the email draft are kept.
+ * Reads everything the client shared and writes the Company Materials
+ * Feedback onto Rupert's narrative draft, replacing the previous feedback.
+ * The narrative, files, links and the email draft are kept.
  */
 export async function analyzeClientMaterials(
   clientId: string,
-): Promise<Result<{ draft: FeedbackDraft }>> {
+): Promise<Result<{ feedback: MaterialsFeedback }>> {
   const access = await requireAdminWithClaude();
   if (!access.ok) return access;
 
   const result = await runMaterialsAnalysis(access.supabase, clientId);
   if (!result.ok) return result;
 
-  const existing = await loadSetupStep(access.supabase, clientId, "deck_review");
+  const existing = await loadSetupStep(access.supabase, clientId, "framing");
   if (!existing.ok) return existing;
-  const previous = asFeedback(existing.row?.draft);
-  const draft: FeedbackDraft = { ...previous, analysis: result.value.analysis };
-
-  const error = await saveFeedbackDraft(access.supabase, clientId, draft);
-  if (error) return { ok: false, error };
+  const previous =
+    existing.row?.draft && typeof existing.row.draft === "object"
+      ? (existing.row.draft as Record<string, unknown>)
+      : {};
+  const narrative = asNarrative(existing.row?.draft);
+  const { error } = await access.supabase.from("setup_steps").upsert(
+    {
+      client_id: clientId,
+      step: "framing",
+      draft: {
+        ...narrative,
+        feedback: result.value.feedback,
+        client_email: asClientEmail(previous.client_email),
+      },
+      updated_at: nowIso(),
+    },
+    { onConflict: "client_id,step", ignoreDuplicates: false },
+  );
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
   revalidateClient(clientId);
-  return { ok: true, draft };
+  return { ok: true, feedback: result.value.feedback };
 }
 
 /**
- * Step 1 of attaching a file to the feedback or the narrative: a one-time
+ * Step 1 of attaching a file to the narrative: a one-time
  * signed upload URL under the client's Setup files folder (the browser
  * uploads directly).
  */

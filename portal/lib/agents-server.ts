@@ -23,6 +23,7 @@ import { loadMaterialFields } from "@/lib/material-fields-server";
 import { profileText } from "@/lib/match/shared";
 import { prepareFiles } from "@/lib/material-files-server";
 import {
+  MATERIALS_FEEDBACK_NOTE_KEY,
   asEmailCopy,
   asFeedback,
   asInvestorList,
@@ -34,12 +35,12 @@ import {
   type EmailCopyPayload,
   type TierScheme,
   type ClientEmailDraft,
-  type FeedbackDraft,
   type InvestorListPayload,
-  type MaterialsAnalysis,
+  type MaterialsFeedback,
   type NarrativePayload,
   type SetupHistoryEntry,
   type SetupResponse,
+  type SetupStepState,
 } from "@/lib/setup";
 import {
   AGENTS_MIGRATION_MISSING,
@@ -273,19 +274,22 @@ export async function draftIntakeBrief(
 // Materials analysis
 
 const ANALYSIS_TOOL: ClaudeTool = {
-  name: "submit_analysis",
-  description: "Deliver the Company Summary and the Investor Framing.",
+  name: "submit_feedback",
+  description: "Deliver the Company Materials Feedback: the summary and the improvements.",
   input_schema: {
     type: "object",
     properties: {
-      summary: { type: "string", description: "Company summary for the founder (markdown)." },
-      framing: { type: "string", description: "Investor framing for the founder (markdown)." },
+      summary: { type: "string", description: "How Rupert reads the company, for the founder (markdown)." },
+      improvements: {
+        type: "string",
+        description: "What to improve in the deck and materials, most important first (markdown).",
+      },
     },
-    required: ["summary", "framing"],
+    required: ["summary", "improvements"],
   },
 };
 
-export type AnalysisOutcome = { analysis: MaterialsAnalysis };
+export type AnalysisOutcome = { feedback: MaterialsFeedback };
 
 export async function runMaterialsAnalysis(
   supabase: ServiceClient,
@@ -353,7 +357,7 @@ export async function runMaterialsAnalysis(
       ...files.blocks,
       {
         type: "text",
-        text: `Read everything above, then deliver your analysis by calling the ${ANALYSIS_TOOL.name} tool.`,
+        text: `Read everything above, then deliver the Company Materials Feedback by calling the ${ANALYSIS_TOOL.name} tool.`,
       },
     ],
     tool: ANALYSIS_TOOL,
@@ -363,8 +367,8 @@ export async function runMaterialsAnalysis(
   if (!result.ok) return { ok: false, error: result.reason };
 
   const raw = result.input;
-  if (!text(raw.summary) || !text(raw.framing)) {
-    return { ok: false, error: "Claude returned an incomplete analysis. Nothing was saved." };
+  if (!text(raw.summary) || !markdownText(raw.improvements)) {
+    return { ok: false, error: "Claude returned incomplete feedback. Nothing was saved." };
   }
   const skipped = [...files.skipped];
   if (result.serverToolsSkipped && links.length > 0) {
@@ -376,9 +380,9 @@ export async function runMaterialsAnalysis(
   return {
     ok: true,
     value: {
-      analysis: {
+      feedback: {
         summary: text(raw.summary).slice(0, 30000),
-        framing: text(raw.framing).slice(0, 30000),
+        improvements: markdownText(raw.improvements).slice(0, 30000),
         generated_at: nowIso(),
         read: [
           ...files.read,
@@ -393,7 +397,7 @@ export async function runMaterialsAnalysis(
 }
 
 // ---------------------------------------------------------------------------
-// Feedback email
+// Emails
 
 const EMAIL_TOOL: ClaudeTool = {
   name: "submit_email",
@@ -490,42 +494,22 @@ function sharedLine(attachments: { name: string }[], links: { label: string; url
   return `## Files and links shared with it\n${shared.length > 0 ? shared.join(", ") : "None."}`;
 }
 
-/** The email that goes with the feedback, from Rupert's edited summary and framing. */
-export async function draftFeedbackEmail(
-  supabase: ServiceClient,
-  clientId: string,
-  draft: FeedbackDraft,
-  version: number,
-  override?: PromptOverride | null,
-): Promise<AgentResult<ClientEmailDraft>> {
-  if (!draft.analysis?.summary.trim() || !draft.analysis.framing.trim()) {
-    return {
-      ok: false,
-      error: "Write the Company Summary and Investor Framing first: the email is drafted from them.",
-    };
+/**
+ * Rupert's feedback on the materials, as context for the AI: the Company
+ * Materials Feedback on the narrative, or for a client who received feedback
+ * as its own step before, that feedback. Empty when there is none.
+ */
+function feedbackContext(rows: SetupStepState[], feedback?: MaterialsFeedback) {
+  const current =
+    feedback ?? asNarrative(rows.find((item) => item.step === "framing")?.draft).feedback;
+  if (current) {
+    return `## Rupert's Company Materials Feedback: how he reads the company\n${current.summary}\n\n## Rupert's Company Materials Feedback: what to improve\n${current.improvements}`;
   }
-  const [loaded, prompt] = await Promise.all([
-    loadClient(supabase, clientId),
-    loadPrompt(supabase, "feedback_email", { clientId, purpose: "Feedback email draft", override }),
-  ]);
-  if (!loaded.ok) return loaded;
-  if (!prompt.ok) return prompt;
-  const company = await companyContext(supabase, clientId, loaded.client);
-
-  const context = [
-    ...founderLines(loaded.client, version),
-    "## Rupert's Company Summary (his edited version; the founder sees it)",
-    draft.analysis.summary,
-    "## Rupert's Investor Framing (his edited version; the founder sees it)",
-    draft.analysis.framing,
-    sharedLine(draft.attachments, draft.links),
-    "# Company information (context only)",
-    company.text,
-  ]
-    .filter(Boolean)
-    .join("\n\n");
-
-  return draftEmailMiddle(promptSystem(prompt.value), context);
+  const legacyRow = rows.find((item) => item.step === "deck_review");
+  const legacy = asFeedback(legacyRow?.draft ?? legacyRow?.published).analysis;
+  return legacy
+    ? `## Rupert's company summary\n${legacy.summary}\n\n## Rupert's investor framing\n${legacy.framing}`
+    : "";
 }
 
 /** The email that goes with the narrative, from Rupert's edited narrative. */
@@ -542,15 +526,11 @@ export async function draftNarrativeEmail(
   const loaded = await loadClient(supabase, clientId);
   if (!loaded.ok) return loaded;
   const company = await companyContext(supabase, clientId, loaded.client);
-  const feedbackRow = company.rows.find((item) => item.step === "deck_review");
-  const feedback = asFeedback(feedbackRow?.draft);
   const framingRow = company.rows.find((item) => item.step === "framing");
   const clientAsk =
     framingRow?.status === "changes_requested"
       ? earlierNotes([], framingRow.response)
       : "";
-  const feedbackConfirmed =
-    feedbackRow?.status === "confirmed" || feedbackRow?.status === "published";
   // A reply to the founder's change requests adds its own managed instructions.
   const prompts = await loadPrompts(
     supabase,
@@ -573,11 +553,11 @@ export async function draftNarrativeEmail(
     clientAsk
       ? `## What Rupert changed\n${narrative.change_summary?.trim() || "(no list: describe the changes only from what the founder asked and what the narrative now says)"}`
       : "",
-    clientAsk ? `## Analysis & Feedback\n${feedbackConfirmed ? "Confirmed by the founder." : "Not confirmed yet."}` : "",
-    "# Company information (context only)",
-    feedback.analysis
-      ? `## Rupert's Company Summary\n${feedback.analysis.summary}\n\n## Rupert's Investor Framing\n${feedback.analysis.framing}`
+    narrative.feedback
+      ? `# Company Materials Feedback sent with it (Rupert's edited version; the founder reads it, nothing to confirm)\n${feedbackContext(company.rows, narrative.feedback)}`
       : "",
+    "# Company information (context only)",
+    narrative.feedback ? "" : feedbackContext(company.rows),
     company.text,
   ]
     .filter(Boolean)
@@ -723,11 +703,10 @@ export async function buildNarrative(
 
   const rows = grouped.get(clientId) ?? [];
   const materialsRow = rows.find((item) => item.step === "materials");
-  const feedbackRow = rows.find((item) => item.step === "deck_review");
   const framingRow = rows.find((item) => item.step === "framing");
-  const feedback = asFeedback(feedbackRow?.draft);
-  if (!feedback.analysis) {
-    return { ok: false, error: "Run Analyze under Analysis & Feedback first." };
+  const feedback = feedbackContext(rows);
+  if (!feedback) {
+    return { ok: false, error: "Run Analyze first: the narrative is built from the Company Materials Feedback." };
   }
 
   const materials = asMaterials(materialsRow?.published ?? materialsRow?.draft);
@@ -749,10 +728,7 @@ export async function buildNarrative(
     intakeContext(interviewResult.ok ? interviewResult.interview : null),
     "## The founder's written answers",
     answersBlock(fields, materials.fields),
-    "## Rupert's company summary",
-    feedback.analysis.summary,
-    "## Rupert's investor framing",
-    feedback.analysis.framing,
+    feedback,
     revising
       ? `## The version the founder reviewed\n${narrativeSections(reviewed)}\n\n## What the founder asked to change\n${clientAsk}`
       : "",
@@ -864,7 +840,11 @@ function responseNotes(response: SetupResponse | null) {
   if (!response) return "";
   const notes = [
     response.note,
-    ...Object.entries(response.item_notes).map(([key, value]) => `${key}: ${value}`),
+    ...Object.entries(response.item_notes).map(([key, value]) =>
+      key === MATERIALS_FEEDBACK_NOTE_KEY
+        ? `On the Company Materials Feedback (background, not a change to the narrative): ${value}`
+        : `${key}: ${value}`,
+    ),
   ].filter((value) => value.trim());
   return notes.join("\n");
 }
@@ -938,7 +918,6 @@ export async function draftEmailCopy(
 
   const rows = grouped.get(clientId) ?? [];
   const framingRow = rows.find((item) => item.step === "framing");
-  const feedbackRow = rows.find((item) => item.step === "deck_review");
   const listRow = rows.find((item) => item.step === "investor_list");
   const emailRow = rows.find((item) => item.step === "email_copy");
 
@@ -961,7 +940,7 @@ export async function draftEmailCopy(
   const tool = emailCopyTool(scheme);
   const tierKeys = fitTiersFor(scheme).map(({ tier }) => tier).join(", ");
 
-  const feedback = asFeedback(feedbackRow?.draft ?? feedbackRow?.published);
+  const feedback = feedbackContext(rows, narrative.feedback);
   const firstName =
     text(loaded.client.first_name) || text(loaded.client.founder_name).split(/\s+/)[0] || "the founder";
   const rebuilding = emailRow?.status === "changes_requested";
@@ -981,9 +960,7 @@ export async function draftEmailCopy(
     "## Intake summary",
     intakeSummaryText(interviewResult.ok ? interviewResult.interview : null),
     "## Materials analysis",
-    feedback.analysis
-      ? `${feedback.analysis.summary}\n\n${feedback.analysis.framing}`
-      : "No analysis yet.",
+    feedback || "No analysis yet.",
     clientAsk ? `## What the founder asked to change\n${clientAsk}` : "",
   ]
     .filter(Boolean)

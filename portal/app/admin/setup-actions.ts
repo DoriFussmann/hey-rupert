@@ -4,21 +4,15 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
-import {
-  draftFeedbackEmail,
-  draftInvestorListEmail,
-  draftNarrativeEmail,
-} from "@/lib/agents-server";
+import { draftInvestorListEmail, draftNarrativeEmail } from "@/lib/agents-server";
 import { notifyClient, type ClientTurn } from "@/lib/notify";
 import { createServiceClient } from "@/lib/supabase/admin";
 import type { EmailResult } from "@/lib/email";
 import { isHttpUrl } from "@/lib/material-fields";
 import {
   INVESTOR_LIST_BLOCKED,
-  SETUP_STEPS,
   asClientEmail,
   asEmailCopy,
-  asFeedback,
   asInvestorList,
   asInvestorListDraft,
   asMaterials,
@@ -26,8 +20,6 @@ import {
   canPublish,
   clientEmailProblem,
   emailCopyProblems,
-  feedbackForClient,
-  feedbackProblem,
   investorFlagsFrom,
   investorListForClient,
   investorListProblem,
@@ -37,7 +29,6 @@ import {
   narrativeProblem,
   setupFilesFolder,
   type ClientEmailDraft,
-  type FeedbackDraft,
   type InvestorListDraft,
   type MaterialFile,
   type NarrativePayload,
@@ -71,10 +62,9 @@ export type StepEmailResult =
   | { ok: true; email: ClientEmailDraft; pausedNote: string | null }
   | { ok: false; error: string };
 
-type PublishableStep = "deck_review" | "framing" | "investor_list" | "email_copy";
+type PublishableStep = "framing" | "investor_list" | "email_copy";
 
 const PUBLISHABLE = new Set<PublishableStep>([
-  "deck_review",
   "framing",
   "investor_list",
   "email_copy",
@@ -85,19 +75,17 @@ const EMAIL_COPY_READY: ClientTurn = "email_copy_ready";
 
 /**
  * Steps that build on each one. A confirmed step whose dependents are under
- * way is not replaced. The feedback and the narrative can be re-pushed: an
- * investor list already sent stays where it is.
+ * way is not replaced. The narrative can be re-pushed: an investor list
+ * already sent stays where it is.
  */
 const DEPENDENTS: Record<PublishableStep, SetupStepId[]> = {
-  deck_review: [],
   framing: [],
   investor_list: ["email_copy"],
   email_copy: [],
 };
 
 const BLOCKED: Record<PublishableStep, string> = {
-  deck_review: "Available once the client submits their materials.",
-  framing: "Available once the client submits their materials.",
+  framing: "Available once the client's intake and materials are in.",
   investor_list: INVESTOR_LIST_BLOCKED,
   email_copy: "Available once the client confirms the investor list.",
 };
@@ -151,21 +139,12 @@ function ownFiles(clientId: string, files: MaterialFile[]) {
   return files.filter((file) => file.path.startsWith(folder) && !file.path.includes(".."));
 }
 
-/** The feedback draft: this client's uploads and http(s) links only. */
-function cleanFeedback(clientId: string, draft: unknown): FeedbackDraft {
-  const feedback = asFeedback(draft);
-  return {
-    ...feedback,
-    attachments: ownFiles(clientId, feedback.attachments),
-    links: feedback.links.filter((link) => isHttpUrl(link.url)),
-  };
-}
-
 type NarrativeDraft = NarrativePayload & { client_email: ClientEmailDraft };
 
 /**
- * The narrative draft, cleaned the same way, with its email. Rupert's reply
- * from before the email went with each push is not carried forward.
+ * The narrative draft (with its Company Materials Feedback): this client's
+ * uploads and http(s) links only, with its email. Rupert's reply from before
+ * the email went with each push is not carried forward.
  */
 function cleanNarrative(clientId: string, draft: unknown): NarrativeDraft {
   const narrative = asNarrative(draft);
@@ -183,13 +162,11 @@ function cleanNarrative(clientId: string, draft: unknown): NarrativeDraft {
 function normalizeDraft(clientId: string, step: PublishableStep, draft: unknown) {
   if (step === "investor_list") return asInvestorListDraft(draft);
   if (step === "email_copy") return asEmailCopy(draft);
-  if (step === "deck_review") return cleanFeedback(clientId, draft);
   return cleanNarrative(clientId, draft);
 }
 
 /** What the client sees of a draft: never the analysis notes or the email. */
 function publishedPayload(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
-  if (step === "deck_review") return feedbackForClient(draft as FeedbackDraft);
   if (step === "framing") return narrativeForClient(draft as NarrativeDraft);
   if (step === "investor_list") return investorListForClient(draft as InvestorListDraft);
   return draft;
@@ -201,7 +178,6 @@ function draftProblem(step: PublishableStep, draft: ReturnType<typeof normalizeD
     const problems = emailCopyProblems(draft as ReturnType<typeof asEmailCopy>);
     return problems.length > 0 ? problems.join(" ") : null;
   }
-  if (step === "deck_review") return feedbackProblem(draft as FeedbackDraft);
   return narrativeProblem(draft as NarrativeDraft);
 }
 
@@ -381,8 +357,8 @@ export async function publishSetupStep(
 }
 
 /**
- * Push to Client Portal & Send, for the Analysis & Feedback, the Outreach
- * Narrative and the Investor List: pushes a new version to the client's
+ * Push to Client Portal & Send, for the Outreach Narrative (with the Company
+ * Materials Feedback) and the Investor List: pushes a new version to the client's
  * portal (their turn to confirm), then sends the email Rupert reviewed and records it on that
  * version. The email goes even when automatic emails are paused: Rupert
  * sends it himself. If the email fails, the push stands and the reason is
@@ -397,10 +373,7 @@ export async function sendSetupDocument(
   if (!access.ok) return access;
   if (!isSetupDocumentStep(step)) return { ok: false, error: "This step cannot be sent here." };
 
-  const email = normalizeDraft(clientId, step, draft) as
-    | FeedbackDraft
-    | NarrativeDraft
-    | InvestorListDraft;
+  const email = normalizeDraft(clientId, step, draft) as NarrativeDraft | InvestorListDraft;
   const emailProblem = clientEmailProblem(email.client_email);
   if (emailProblem) return { ok: false, error: emailProblem };
 
@@ -483,21 +456,9 @@ export async function draftSetupEmail(
   }
 
   const drafted =
-    step === "deck_review"
-      ? await draftFeedbackEmail(access.supabase, clientId, cleanFeedback(clientId, draft), version)
-      : step === "framing"
-        ? await draftNarrativeEmail(
-            access.supabase,
-            clientId,
-            cleanNarrative(clientId, draft),
-            version,
-          )
-        : await draftInvestorListEmail(
-            access.supabase,
-            clientId,
-            asInvestorListDraft(draft),
-            version,
-          );
+    step === "framing"
+      ? await draftNarrativeEmail(access.supabase, clientId, cleanNarrative(clientId, draft), version)
+      : await draftInvestorListEmail(access.supabase, clientId, asInvestorListDraft(draft), version);
   if (!drafted.ok) return drafted;
 
   const composed = await composeAiEmail(access.supabase, clientId, step, drafted.value);
@@ -534,7 +495,7 @@ export async function reopenMaterials(
   if (!row || row.status !== "submitted") {
     return { ok: false, error: "The materials are not submitted yet." };
   }
-  if (laterStepPublished(state.rows, "deck_review")) {
+  if (state.rows.some((item) => item.step === "framing" && item.version > 0)) {
     return {
       ok: false,
       error:
@@ -588,13 +549,6 @@ export async function reopenMaterials(
 
   revalidateSetup(clientId);
   return { ok: true, clientEmail };
-}
-
-function laterStepPublished(rows: SetupStepState[], step: SetupStepId) {
-  const index = SETUP_STEPS.findIndex((item) => item.id === step);
-  return SETUP_STEPS.slice(index + 1).some((item) =>
-    rows.some((row) => row.step === item.id && row.version > 0),
-  );
 }
 
 /** Runs the reminder check now (the cron runs the same thing on schedule). */

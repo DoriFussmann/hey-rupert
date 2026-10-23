@@ -163,6 +163,7 @@ export type NotificationType =
   | "materials_submitted"
   | "materials_added"
   | "feedback_viewed"
+  | "narrative_viewed"
   | "framing_confirmed"
   | "framing_changes_requested"
   | "investor_list_confirmed"

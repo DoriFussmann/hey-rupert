@@ -17,6 +17,7 @@ import {
   MATERIAL_EXTENSIONS,
   MATERIAL_MAX_BYTES,
   MATERIAL_MAX_FILES,
+  MATERIALS_FEEDBACK_NOTE_KEY,
   NOTE_MAX,
   asEmailCopy,
   asFeedbackPublished,
@@ -373,16 +374,11 @@ function excerpt(value: string, max = 1200) {
 }
 
 // ---------------------------------------------------------------------------
-// Reviews: feedback, framing, investor list, email copy
+// Reviews: the narrative, the investor list, the email copy
 
-type ReviewStep = "deck_review" | "framing" | "investor_list" | "email_copy";
+type ReviewStep = "framing" | "investor_list" | "email_copy";
 
-const REVIEW_STEPS = new Set<ReviewStep>([
-  "deck_review",
-  "framing",
-  "investor_list",
-  "email_copy",
-]);
+const REVIEW_STEPS = new Set<ReviewStep>(["framing", "investor_list", "email_copy"]);
 
 function itemLabel(
   step: ReviewStep,
@@ -396,8 +392,16 @@ function itemLabel(
     const tiers = fitTiersFor(asEmailCopy(row.published).tier_scheme);
     return (key) => tiers.find((tier) => `tier_${tier.tier}` === key)?.label ?? key;
   }
-  return (key) => key;
+  // The narrative takes one comment beside it: on the Company Materials Feedback.
+  return (key) => (key === MATERIALS_FEEDBACK_NOTE_KEY ? "Company Materials Feedback" : key);
 }
+
+/** How the item notes are introduced in Rupert's notification. */
+const ITEM_NOTES_HEADING: Record<ReviewStep, string> = {
+  framing: "On the feedback",
+  investor_list: "On specific funds",
+  email_copy: "By tier",
+};
 
 export async function respondToSetupStep(input: {
   step: string;
@@ -416,12 +420,6 @@ export async function respondToSetupStep(input: {
   if (input.decision !== "confirmed" && input.decision !== "changes_requested") {
     return { ok: false, error: "Choose confirm or request changes." };
   }
-  // The feedback is advice on the client's own materials: it is confirmed,
-  // with an optional note, not sent back.
-  if (step === "deck_review" && input.decision !== "confirmed") {
-    return { ok: false, error: "Confirm the feedback, and add a note for Rupert if you like." };
-  }
-
   const loaded = await loadSetupStep(access.supabase, access.user.id, step);
   if (!loaded.ok) return loaded;
   const row = loaded.row;
@@ -443,12 +441,16 @@ export async function respondToSetupStep(input: {
     const text = String(value ?? "").trim().slice(0, NOTE_MAX);
     if (text && label(key) !== key) itemNotes[key] = text;
   }
-  if (
-    input.decision === "changes_requested" &&
-    !note &&
-    Object.keys(itemNotes).length === 0
-  ) {
-    return { ok: false, error: "Tell Rupert what to change or what you'd like to ask." };
+  // A comment on the feedback alone doesn't ask for narrative changes.
+  const changeNotes = Object.keys(itemNotes).filter((key) => key !== MATERIALS_FEEDBACK_NOTE_KEY);
+  if (input.decision === "changes_requested" && !note && changeNotes.length === 0) {
+    return {
+      ok: false,
+      error:
+        step === "framing"
+          ? "Tell Rupert what to change in the narrative, in the comment box."
+          : "Tell Rupert what to change or what you'd like to ask.",
+    };
   }
 
   const itemLabels: Record<string, string> = {};
@@ -503,7 +505,7 @@ export async function respondToSetupStep(input: {
 
   const details = [
     note ? `Their note:\n${note}` : confirmed ? "No note." : "",
-    notesText ? `${step === "investor_list" ? "On specific funds" : "By tier"}:\n${notesText}` : "",
+    notesText ? `${ITEM_NOTES_HEADING[step]}:\n${notesText}` : "",
     complete
       ? "Setup is complete: every step is confirmed. Next: issue the first monthly invoice."
       : "",

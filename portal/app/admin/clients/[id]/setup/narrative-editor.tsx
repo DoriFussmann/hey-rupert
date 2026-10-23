@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { buildClientNarrative } from "@/app/admin/agent-actions";
+import { analyzeClientMaterials, buildClientNarrative } from "@/app/admin/agent-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
 import { MarkdownField } from "@/app/admin/clients/[id]/setup/markdown-field";
@@ -13,11 +13,13 @@ import {
   primaryButton,
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
+import { formatDateAtTime } from "@/lib/format";
 import {
   asClientEmail,
   asNarrative,
   narrativeHasEarlierDraft,
   narrativeProblem,
+  type MaterialsFeedback,
   type NarrativePayload,
   type SetupItem,
   type SetupStepState,
@@ -25,12 +27,33 @@ import {
 
 const labelClass = "block text-label uppercase tracking-label text-muted";
 
+const EMPTY_FEEDBACK: MaterialsFeedback = {
+  summary: "",
+  improvements: "",
+  generated_at: "",
+  read: [],
+  skipped: [],
+};
+
+type Message = { kind: "ok" | "error"; text: string } | null;
+
+/** The draft in its stored shape, to tell whether there are unsaved edits. */
+function snapshot(narrative: unknown) {
+  return JSON.stringify(asNarrative(narrative));
+}
+
+/**
+ * Rupert's one turn after the intake: Analyze writes the Company Materials
+ * Feedback, Build narrative writes the narrative from it, and one push sends
+ * both. The client confirms the narrative; the feedback is for them to read.
+ */
 export function NarrativeEditor({
   clientId,
   item,
   row,
   to,
-  hasAnalysis,
+  materialsSubmitted,
+  legacyFeedback,
   claudeReady,
   fileLinks,
 }: {
@@ -39,7 +62,9 @@ export function NarrativeEditor({
   row: SetupStepState | null;
   /** The client's email address. */
   to: string;
-  hasAnalysis: boolean;
+  materialsSubmitted: boolean;
+  /** The client received feedback as its own step earlier: the narrative can build from it. */
+  legacyFeedback: boolean;
   claudeReady: boolean;
   /** Signed links for files already saved on the draft. */
   fileLinks: Record<string, string>;
@@ -51,11 +76,13 @@ export function NarrativeEditor({
       : null,
   );
   const [narrative, setNarrative] = useState<NarrativePayload>(initial);
-  const [saved, setSaved] = useState(JSON.stringify(initial));
-  const [building, setBuilding] = useState(false);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const [saved, setSaved] = useState(snapshot(initial));
+  const [pending, setPending] = useState<null | "analyze" | "build">(null);
+  const [message, setMessage] = useState<Message>(null);
 
   const changesRequested = row?.status === "changes_requested";
+  const feedback = narrative.feedback;
+  const hasFeedback = Boolean(feedback);
   const hasText = [narrative.core, narrative.key_messages, narrative.approach].some((value) =>
     value.trim(),
   );
@@ -64,18 +91,63 @@ export function NarrativeEditor({
     setNarrative((current) => ({ ...current, ...patch }));
   }
 
+  function updateFeedback(patch: Partial<MaterialsFeedback>) {
+    setNarrative((current) => ({
+      ...current,
+      feedback: { ...(current.feedback ?? EMPTY_FEEDBACK), ...patch },
+    }));
+  }
+
+  /** What is now stored, after a server action replaced one part of the draft. */
+  function markStored(patch: Partial<NarrativePayload>) {
+    setSaved((current) => snapshot({ ...(JSON.parse(current) as NarrativePayload), ...patch }));
+  }
+
+  async function onAnalyze() {
+    if (
+      (feedback?.summary.trim() || feedback?.improvements.trim()) &&
+      !window.confirm(
+        "Run Analyze again? It replaces the Company Materials Feedback, including your edits. The narrative, files, links and the email are kept.",
+      )
+    ) {
+      return;
+    }
+    setPending("analyze");
+    setMessage(null);
+    try {
+      const result = await analyzeClientMaterials(clientId);
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      // Unsaved narrative edits stay; only the feedback is replaced.
+      update({ feedback: result.feedback });
+      markStored({ feedback: result.feedback });
+      setMessage({
+        kind: "ok",
+        text: hasText
+          ? "Feedback ready and saved. Edit it; rebuild the narrative if it should change too."
+          : "Feedback ready and saved. Edit it, then build the narrative.",
+      });
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "The analysis failed." });
+    } finally {
+      setPending(null);
+    }
+  }
+
   async function onBuild() {
     if (
       hasText &&
       !window.confirm(
         changesRequested
-          ? "Rebuild the narrative with the client's requested changes? It replaces the current draft."
-          : "Build a new narrative? It replaces the current draft.",
+          ? "Rebuild the narrative with the client's requested changes? It replaces the current narrative. The feedback is kept."
+          : "Build a new narrative? It replaces the current narrative. The feedback is kept.",
       )
     ) {
       return;
     }
-    setBuilding(true);
+    setPending("build");
     setMessage(null);
     try {
       const result = await buildClientNarrative(clientId);
@@ -83,8 +155,9 @@ export function NarrativeEditor({
         setMessage({ kind: "error", text: result.error });
         return;
       }
-      setNarrative(result.narrative);
-      setSaved(JSON.stringify(result.narrative));
+      // Unsaved feedback edits stay; the narrative sections are replaced.
+      setNarrative({ ...result.narrative, feedback: narrative.feedback });
+      setSaved(snapshot(result.narrative));
       setMessage({
         kind: "ok",
         text: [
@@ -102,40 +175,59 @@ export function NarrativeEditor({
         text: err instanceof Error ? err.message : "Unable to build the narrative.",
       });
     } finally {
-      setBuilding(false);
+      setPending(null);
     }
   }
+
+  const canAnalyze = materialsSubmitted && claudeReady && pending === null;
+  const canBuild = (hasFeedback || legacyFeedback) && claudeReady && pending === null;
 
   return (
     <StepFrame
       item={item}
       action={
-        <button
-          type="button"
-          className={hasText ? secondaryButton : primaryButton}
-          disabled={building || !hasAnalysis || !claudeReady}
-          onClick={onBuild}
-        >
-          {building
-            ? "Building…"
-            : changesRequested
-              ? "Rebuild with client's changes"
-              : hasText
-                ? "Rebuild narrative"
-                : "Build narrative"}
-        </button>
+        <div className="flex flex-wrap gap-sm">
+          <button
+            type="button"
+            className={hasFeedback ? secondaryButton : primaryButton}
+            disabled={!canAnalyze}
+            onClick={onAnalyze}
+          >
+            {pending === "analyze" ? "Analyzing…" : hasFeedback ? "Re-analyze" : "Analyze"}
+          </button>
+          <button
+            type="button"
+            className={hasFeedback && !hasText ? primaryButton : secondaryButton}
+            disabled={!canBuild}
+            onClick={onBuild}
+          >
+            {pending === "build"
+              ? "Building…"
+              : changesRequested
+                ? "Rebuild with client's changes"
+                : hasText
+                  ? "Rebuild narrative"
+                  : "Build narrative"}
+          </button>
+        </div>
       }
     >
       <p className="px-lg pt-md text-body-sm text-muted" aria-live="polite">
-        {building
-          ? "Writing from the analysis and intake. Usually under a minute."
-          : !hasAnalysis
-            ? "Run Analyze under Analysis & Feedback first."
+        {pending === "analyze"
+          ? "Reading everything the client shared. This can take 1–3 minutes; keep this page open."
+          : pending === "build"
+            ? "Writing from the feedback and intake. Usually under a minute."
             : !claudeReady
               ? "Claude is not configured (ANTHROPIC_API_KEY)."
-              : changesRequested
-                ? "The client asked for changes. Rebuild, or edit and send again."
-                : "You can send this before the client confirms the feedback."}{" "}
+              : !materialsSubmitted && !hasFeedback
+                ? "Analyze is available once the client's intake and materials are in."
+                : !hasFeedback && !legacyFeedback
+                  ? "Run Analyze first: the narrative is built from the feedback."
+                  : changesRequested
+                    ? "The client asked for changes. Rebuild, or edit and send again."
+                    : feedback?.generated_at
+                      ? `Last analyzed ${formatDateAtTime(feedback.generated_at)}.`
+                      : ""}{" "}
         {sendStatus(row)}
       </p>
       {message ? (
@@ -162,6 +254,61 @@ export function NarrativeEditor({
       ) : null}
 
       <div className="grid gap-lg px-lg py-md">
+        <section className="grid gap-lg rounded-card border border-border bg-background px-md py-md">
+          <div>
+            <h4 className="text-body text-heading">Company Materials Feedback</h4>
+            <p className="mt-xs text-body-sm text-muted">
+              Sent with the narrative for the client to read. They can comment on it; there is
+              nothing to confirm.
+              {legacyFeedback && !hasFeedback
+                ? " This client already received Analysis & Feedback as its own step; leave this empty to send the narrative alone."
+                : ""}
+            </p>
+          </div>
+          <div>
+            <p className={labelClass}>How Rupert reads the company</p>
+            <div className="mt-sm">
+              <MarkdownField
+                label="How Rupert reads the company"
+                value={feedback?.summary ?? ""}
+                onChange={(value) => updateFeedback({ summary: value })}
+                height={260}
+              />
+            </div>
+          </div>
+          <div>
+            <p className={labelClass}>What to improve in your materials</p>
+            <div className="mt-sm">
+              <MarkdownField
+                label="What to improve in your materials"
+                value={feedback?.improvements ?? ""}
+                onChange={(value) => updateFeedback({ improvements: value })}
+                height={260}
+              />
+            </div>
+          </div>
+          {feedback && (feedback.read.length > 0 || feedback.skipped.length > 0) ? (
+            <details className="text-body-sm">
+              <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
+                What the AI read ({feedback.read.length})
+                {feedback.skipped.length > 0 ? ` · couldn't read ${feedback.skipped.length}` : ""}
+              </summary>
+              <ul className="mt-sm list-disc space-y-xs pl-md text-body">
+                {feedback.read.map((entry) => (
+                  <li key={entry}>{entry}</li>
+                ))}
+              </ul>
+              {feedback.skipped.length > 0 ? (
+                <ul className="mt-sm list-disc space-y-xs pl-md text-warning">
+                  {feedback.skipped.map((entry) => (
+                    <li key={entry}>{entry}</li>
+                  ))}
+                </ul>
+              ) : null}
+            </details>
+          ) : null}
+        </section>
+
         <div>
           <p className={labelClass}>Core story</p>
           <div className="mt-sm">
@@ -221,7 +368,7 @@ export function NarrativeEditor({
           attachments={narrative.attachments}
           links={narrative.links}
           fileLinks={fileLinks}
-          disabled={building}
+          disabled={pending !== null}
           onChange={(patch) => update(patch)}
         />
       </div>
@@ -234,11 +381,11 @@ export function NarrativeEditor({
         to={to}
         draft={narrative}
         initialEmail={initialEmail}
-        dirty={JSON.stringify(narrative) !== saved}
-        onSaved={() => setSaved(JSON.stringify(narrative))}
+        dirty={snapshot(narrative) !== saved}
+        onSaved={() => setSaved(snapshot(narrative))}
         problem={narrativeProblem(narrative)}
-        busy={building}
-        pushSummary="Pushes the core story, key messages, approach, what happens next, files and links above to the client's portal as a new version, and sends them this email. They confirm there or ask for changes."
+        busy={pending !== null}
+        pushSummary="Pushes the narrative (core story, key messages, approach, what happens next), the Company Materials Feedback, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there or ask for changes, and can comment on the feedback."
       />
     </StepFrame>
   );

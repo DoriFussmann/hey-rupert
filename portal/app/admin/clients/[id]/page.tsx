@@ -32,7 +32,6 @@ import { matchPath, type MatchProfileState } from "@/lib/match/shared";
 import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 import {
-  asFeedback,
   asNarrative,
   asMaterials,
   isSetupComplete,
@@ -117,15 +116,9 @@ export default async function ClientDetailPage({
   const materialsRow = setupSource.setup_steps.find(
     (row) => row.step === "materials",
   );
-  const feedbackRow = setupSource.setup_steps.find(
-    (row) => row.step === "deck_review",
-  );
   const narrativeRow = setupSource.setup_steps.find((row) => row.step === "framing");
-  // Files Rupert attached to the feedback and narrative drafts.
-  const setupFiles = [
-    ...(feedbackRow ? asFeedback(feedbackRow.draft).attachments : []),
-    ...(narrativeRow ? asNarrative(narrativeRow.draft).attachments : []),
-  ];
+  // Files Rupert attached to the narrative draft.
+  const setupFiles = narrativeRow ? asNarrative(narrativeRow.draft).attachments : [];
   const service = isServiceRoleConfigured() ? createServiceClient() : null;
   const [materialLinks, setupFileLinks, materialFields] = await Promise.all([
     materialsRow && service

@@ -58,9 +58,9 @@ export function nextTurn(source: ProgressSource | null | undefined): NextTurn {
       : { owner: "admin", action: step.adminAction };
   }
 
-  // Several Setup steps can be open at once (the feedback and the narrative
-  // run side by side): Rupert's own work comes first, then what the client
-  // has to answer.
+  // More than one Setup step can be open at once (a list already sent while
+  // the narrative is reopened): Rupert's own work comes first, then what the
+  // client has to answer.
   const setupItems = getSetupItems(source);
   const adminNext = setupItems.find((item) => item.status === "waiting");
   if (adminNext) return { owner: "admin", action: adminNext.adminAction };

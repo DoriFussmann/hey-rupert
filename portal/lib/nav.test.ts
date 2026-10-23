@@ -59,10 +59,10 @@ test("section links: the one in the hash is current, the first one when there is
 test("Agents: one link per managed prompt; All prompts is current only on the list itself", () => {
   const agents = group("agents");
   const all = item("agents", "All prompts");
-  const feedback = item("agents", "Feedback email");
-  assert.equal(feedback.href, "/admin/forms/agents/feedback_email");
-  assert.equal(agents.items.length, 2 + 17);
+  const narrative = item("agents", "Narrative email");
+  assert.equal(narrative.href, "/admin/forms/agents/narrative_email");
+  assert.equal(agents.items.length, 2 + 16);
   assert.ok(navItemActive("/admin/forms/agents", "", all, agents));
-  assert.ok(!navItemActive("/admin/forms/agents/feedback_email", "", all, agents));
-  assert.ok(navItemActive("/admin/forms/agents/feedback_email", "", feedback, agents));
+  assert.ok(!navItemActive("/admin/forms/agents/narrative_email", "", all, agents));
+  assert.ok(navItemActive("/admin/forms/agents/narrative_email", "", narrative, agents));
 });

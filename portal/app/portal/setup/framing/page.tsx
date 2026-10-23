@@ -3,7 +3,7 @@ import { BackLink } from "@/components/back-link";
 import { NarrativeView } from "@/components/setup/narrative-view";
 import { ResponseHistory } from "@/components/setup/response-history";
 import { AdminReply } from "@/components/setup/admin-reply";
-import { ReviewActions } from "@/components/setup/review-actions";
+import { NarrativeReview } from "@/components/setup/narrative-review";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { TurnBanner } from "@/components/setup/turn-banner";
 import { isServiceRoleConfigured } from "@/lib/env";
@@ -30,11 +30,13 @@ export default async function FramingPage() {
       ? await signFileLinks(supabase, narrative.attachments)
       : {};
 
-  // Rupert's feedback, shown beside the narrative it shaped.
+  // Feedback the client received as its own step earlier, shown beside the
+  // narrative when this version carries no Company Materials Feedback.
   const feedbackRow = client?.setup_steps?.find((entry) => entry.step === "deck_review") ?? null;
-  const shared = feedbackRow && isSharedWithClient(feedbackRow)
-    ? asFeedbackPublished(feedbackRow.published)
-    : null;
+  const shared =
+    !narrative.feedback && feedbackRow && isSharedWithClient(feedbackRow)
+      ? asFeedbackPublished(feedbackRow.published)
+      : null;
   const feedback =
     feedbackRow && shared && (shared.framing.trim() || shared.items.length > 0)
       ? {
@@ -50,12 +52,16 @@ export default async function FramingPage() {
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Outreach Narrative"
-        description="How we'll present the company to investors: the story, the key messages, and how Rupert will approach them."
+        description="How we'll present the company to investors: the story, the key messages, and how Rupert will approach them. With it, Rupert's feedback on your materials."
       />
       {row?.status === "with_client" ? (
         <TurnBanner
           owner="client"
-          title="Review the story, the key messages and the approach, then confirm or send Rupert your notes."
+          title={
+            narrative.feedback
+              ? "Review the story, the key messages and the approach, then confirm or send Rupert your notes. Read his feedback on your materials too: nothing to confirm there."
+              : "Review the story, the key messages and the approach, then confirm or send Rupert your notes."
+          }
         />
       ) : null}
       <ReviewStatus
@@ -75,10 +81,9 @@ export default async function FramingPage() {
           {row.status === "with_client" ? (
             <>
               <AdminReply note={narrative.admin_note} />
-              <ReviewActions
-                step="framing"
+              <NarrativeReview
                 version={row.version}
-                confirmLabel="Confirm narrative"
+                hasFeedback={Boolean(narrative.feedback)}
                 readOnly={viewAs}
               />
             </>

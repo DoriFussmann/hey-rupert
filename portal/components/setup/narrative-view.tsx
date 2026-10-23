@@ -6,6 +6,7 @@ import {
   FEEDBACK_PRIORITIES,
   narrativeHasEarlierDraft,
   type FeedbackItem,
+  type MaterialsFeedback,
   type NarrativePayload,
 } from "@/lib/setup";
 
@@ -49,8 +50,9 @@ function priorityLabel(item: FeedbackItem) {
 }
 
 /**
- * Rupert's Investor Framing from the feedback, or the recommendations from
- * feedback sent before the framing was shared, as one panel in the stack.
+ * Feedback the client received as its own step, before it moved into the
+ * narrative: Rupert's Investor Framing, or the recommendations from feedback
+ * sent before the framing was shared, as one panel in the stack.
  */
 function FeedbackPanel({ feedback }: { feedback: NarrativeFeedback }) {
   const done = new Set(feedback.doneIds);
@@ -112,8 +114,41 @@ export type NarrativeFeedback = {
 };
 
 /**
+ * Rupert's Company Materials Feedback, sent with this version of the
+ * narrative. For the client to read; it is never confirmed.
+ */
+function MaterialsFeedbackPanel({ feedback }: { feedback: MaterialsFeedback }) {
+  return (
+    <CollapsiblePanel
+      title="Company Materials Feedback"
+      meta="Rupert's notes on your deck and materials, for you to act on as you see fit. Nothing to confirm."
+    >
+      <div className="grid gap-lg">
+        {feedback.summary.trim() ? (
+          <section>
+            <h3 className="text-label uppercase tracking-label text-muted">
+              How Rupert reads your company
+            </h3>
+            <MarkdownBody content={feedback.summary} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
+          </section>
+        ) : null}
+        {feedback.improvements.trim() ? (
+          <section>
+            <h3 className="text-label uppercase tracking-label text-muted">
+              What to improve in your materials
+            </h3>
+            <MarkdownBody content={feedback.improvements} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
+          </section>
+        ) : null}
+      </div>
+    </CollapsiblePanel>
+  );
+}
+
+/**
  * The Outreach Narrative as the client sees it: one column of panels, closed
- * by default, then the files and links, then What Happens Next.
+ * by default (the narrative, then the Company Materials Feedback), then the
+ * files and links, then What Happens Next.
  */
 export function NarrativeView({
   narrative,
@@ -123,10 +158,12 @@ export function NarrativeView({
   narrative: NarrativePayload;
   /** Signed download links by file path. */
   fileLinks: Record<string, string>;
-  /** The feedback the client received, when it has been shared. */
+  /** Feedback the client received as its own step earlier, when there is no Company Materials Feedback. */
   feedback?: NarrativeFeedback | null;
 }) {
-  const showFeedback = Boolean(feedback && (feedback.framing || feedback.items.length > 0));
+  const materialsFeedback = narrative.feedback;
+  const showFeedback =
+    !materialsFeedback && Boolean(feedback && (feedback.framing || feedback.items.length > 0));
 
   return (
     <div className="grid min-w-0 gap-md">
@@ -139,6 +176,7 @@ export function NarrativeView({
       <CollapsiblePanel title="Approach">
         <MarkdownBody content={narrative.approach} emptyLabel="Nothing here yet." />
       </CollapsiblePanel>
+      {materialsFeedback ? <MaterialsFeedbackPanel feedback={materialsFeedback} /> : null}
       {showFeedback && feedback ? <FeedbackPanel feedback={feedback} /> : null}
       {narrativeHasEarlierDraft(narrative) ? (
         <CollapsiblePanel

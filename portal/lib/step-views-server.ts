@@ -7,8 +7,8 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 
 /**
  * Records the first time the client opens the current version of the
- * feedback or the narrative. For the feedback it also tells Rupert (in-app;
- * email only if switched on in Forms → Emails).
+ * narrative or the investor list. For the narrative it also tells Rupert
+ * (in-app; email only if switched on in Forms → Emails).
  * Best effort: a failure never blocks the page.
  */
 export async function markStepViewed(
@@ -31,9 +31,9 @@ export async function markStepViewed(
     console.error(`View not recorded (${step}): ${error.message}`);
     return;
   }
-  if (!data || data.length === 0 || step !== "deck_review") return;
+  if (!data || data.length === 0 || step !== "framing") return;
 
-  await notifyAdmin(supabase, row.client_id, "feedback_viewed", {
+  await notifyAdmin(supabase, row.client_id, "narrative_viewed", {
     email: true,
     details:
       row.version > 1 ? `They opened version ${row.version}.` : undefined,

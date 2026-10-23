@@ -26,7 +26,8 @@ export type MilestoneId =
   | "nda_sent"
   | "nda_signed"
   | "intake_completed"
-  | SetupStepId
+  // Feedback is no longer a step of its own: it goes with the narrative.
+  | Exclude<SetupStepId, "deck_review">
   | "live";
 
 export const MILESTONES: { id: MilestoneId; label: string; short: string }[] = [
@@ -37,7 +38,6 @@ export const MILESTONES: { id: MilestoneId; label: string; short: string }[] = [
   { id: "nda_signed", label: "NDA signed", short: "NDA signed" },
   { id: "intake_completed", label: "Intake completed", short: "Intake" },
   { id: "materials", label: "Materials submitted", short: "Materials" },
-  { id: "deck_review", label: "Feedback confirmed", short: "Feedback" },
   { id: "framing", label: "Outreach narrative confirmed", short: "Narrative" },
   { id: "investor_list", label: "Investor list confirmed", short: "Investors" },
   { id: "email_copy", label: "Email copy confirmed", short: "Email copy" },
@@ -131,7 +131,6 @@ export function buildTimeline(
     nda_signed: source.nda_signed_at ?? null,
     intake_completed: source.intake_completed_at ?? null,
     materials: materialsSubmitted ? (materialsRow?.completed_at ?? null) : null,
-    deck_review: setupDone.get("deck_review") ?? null,
     framing: setupDone.get("framing") ?? null,
     investor_list: setupDone.get("investor_list") ?? null,
     email_copy: setupDone.get("email_copy") ?? null,
