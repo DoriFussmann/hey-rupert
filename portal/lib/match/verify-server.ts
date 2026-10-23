@@ -33,6 +33,8 @@ import {
   ROLE_MAX_SEARCHES,
   VERIFY_LABEL,
   VERIFY_MODES,
+  contactsForFunds,
+  primaryContact,
   VERIFY_PIPELINE,
   ZERO_COST,
   addCost,
@@ -190,43 +192,69 @@ function toVerifyContact(fund: ScopeFund, contact: RankedContact): VerifyContact
   };
 }
 
-type ScopeList = { contacts: VerifyContact[]; noEmail: Record<string, number> };
+type ScopeList = {
+  contacts: VerifyContact[];
+  noEmail: Record<string, number>;
+  /** Contacts listed per fund (by its position in the scope's funds), for fund-based limits. */
+  perFund: number[];
+};
 
 function noEmailCounts(source: ScopeSource): Record<string, number> {
   return Object.fromEntries(source.tiers.map(({ key }) => [key, 0]));
 }
 
+function emptyList(source: ScopeSource): ScopeList {
+  return { contacts: [], noEmail: noEmailCounts(source), perFund: source.funds.map(() => 0) };
+}
+
 /**
  * Contacts per mode, in outreach order (tier, fit, then rank at the fund):
- * everyone with an email, or only each fund's Primary and Backup.
+ * everyone with an email, only each fund's Primary and Backup, or only its
+ * Primary.
  */
 function collectScopes(source: ScopeSource): Record<VerifyMode, ScopeList> {
   const lists: Record<VerifyMode, ScopeList> = {
-    all: { contacts: [], noEmail: noEmailCounts(source) },
-    sequence: { contacts: [], noEmail: noEmailCounts(source) },
+    all: emptyList(source),
+    sequence: emptyList(source),
+    primary: emptyList(source),
   };
-  const seen: Record<VerifyMode, Set<string>> = { all: new Set(), sequence: new Set() };
-  const add = (mode: VerifyMode, fund: ScopeFund, contact: RankedContact) => {
+  const seen: Record<VerifyMode, Set<string>> = { all: new Set(), sequence: new Set(), primary: new Set() };
+  const add = (mode: VerifyMode, index: number, fund: ScopeFund, contact: RankedContact) => {
     const item = toVerifyContact(fund, contact);
     if (seen[mode].has(item.id)) return;
     seen[mode].add(item.id);
     lists[mode].contacts.push(item);
+    lists[mode].perFund[index] += 1;
   };
 
-  for (const fund of source.funds) {
+  source.funds.forEach((fund, index) => {
     const investing = fund.ranked.filter((contact) => contact.role !== "ops");
     // Primary and Backup first, then everyone else at the fund by rank.
-    for (const contact of fund.seq) add("all", fund, contact);
-    for (const contact of investing) if (contact.email) add("all", fund, { ...contact, seq: undefined });
+    for (const contact of fund.seq) add("all", index, fund, contact);
+    for (const contact of investing) if (contact.email) add("all", index, fund, { ...contact, seq: undefined });
     lists.all.noEmail[fund.tier] = (lists.all.noEmail[fund.tier] ?? 0) + investing.filter((contact) => !contact.email).length;
-    for (const contact of fund.seq) add("sequence", fund, contact);
-  }
+    for (const contact of fund.seq) add("sequence", index, fund, contact);
+    const primary = primaryContact(fund.seq);
+    if (primary) add("primary", index, fund, primary);
+  });
   return lists;
 }
 
 /** One mode's contacts for one tier, in outreach order. */
 function tierContacts(list: ScopeList, tier: string) {
   return list.contacts.filter((contact) => contact.tier === tier);
+}
+
+/** For each fund of the tier, in order: how many of the tier's contacts come before its end. */
+function tierFundEnds(source: ScopeSource, list: ScopeList, tier: string) {
+  const ends: number[] = [];
+  let total = 0;
+  source.funds.forEach((fund, index) => {
+    if (fund.tier !== tier) return;
+    total += list.perFund[index];
+    ends.push(total);
+  });
+  return ends;
 }
 
 function isFresh(source: ScopeSource, contact: VerifyContact) {
@@ -563,7 +591,12 @@ export async function loadVerifyOverview(
           order += isFresh(run.value, contact) ? "r" : "c";
         }
       });
-      counts[mode][tier] = { total: order.length, order, noEmail: lists[mode].noEmail[tier] ?? 0 };
+      counts[mode][tier] = {
+        total: order.length,
+        fundEnds: tierFundEnds(run.value, lists[mode], tier),
+        order,
+        noEmail: lists[mode].noEmail[tier] ?? 0,
+      };
     }
   }
 
@@ -650,10 +683,10 @@ export async function startVerificationRun(
   const toCheck: VerifyContact[] = [];
   const reused: VerifyContact[] = [];
   // Flagged contacts still undecided ("Check again") are checked like the rest.
-  // Each tier's limit keeps its first contacts in outreach order.
+  // Each tier's limit keeps the contacts of its first funds, in outreach order.
   const list = collectScopes(run.value)[mode];
   for (const { key: tier } of run.value.tiers) {
-    const limit = limits[tier] ?? null;
+    const limit = contactsForFunds(tierFundEnds(run.value, list, tier), limits[tier] ?? null);
     const contacts = tierContacts(list, tier);
     for (const contact of limit === null ? contacts : contacts.slice(0, limit)) {
       if (!flagOf(run.value, contact) && isFresh(run.value, contact)) reused.push(contact);

@@ -111,7 +111,7 @@ alter table public.contact_leads enable row level security;
 create table if not exists public.verification_runs (
   id uuid primary key default gen_random_uuid(),
   client_id uuid not null references public.clients(id) on delete cascade,
-  scope text not null check (scope in ('all', 'sequence', 'wave1')),
+  scope text not null check (scope in ('all', 'sequence', 'primary', 'wave1')),
   contacts jsonb not null default '[]'::jsonb,
   -- Contacts reused from earlier checks (same snapshot shape as contacts).
   reused jsonb not null default '[]'::jsonb,

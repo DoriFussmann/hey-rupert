@@ -11,7 +11,7 @@ import { loadSites } from "@/lib/match/sites-server";
 import { matchingProfile, validateProfile, type ProfileIssue, type Readiness } from "@/lib/company-profile/core";
 import { currentProfile, loadCompanyProfile, loadVersions } from "@/lib/company-profile/server";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import type { InvestorListPayload } from "@/lib/setup";
+import { websiteHref, type InvestorListPayload } from "@/lib/setup";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { findAlias, mapFirm, type TaxIndex } from "@/lib/taxonomy/core";
 import {
@@ -712,6 +712,23 @@ export async function loadTierRun(
   const rows = await loadResults(supabase, header.id);
   if (!rows.ok) return rows;
   return { ok: true, value: { header, rows: rows.value, complete: rows.value.length === header.resultsExpected } };
+}
+
+/**
+ * The website of each listed fund in a saved run, by run row key, from the
+ * live Fund Database. Best effort: empty when the database can't be read.
+ */
+export async function runWebsites(supabase: ServiceClient, rows: StoredResult[]): Promise<Record<string, string>> {
+  const live = await loadLiveDb(supabase);
+  if (!live.ok) return {};
+  const firms = firmsByRowKey(live.value.db.firms);
+  const sites: Record<string, string> = {};
+  for (const row of rows) {
+    if (row.status !== "tiered" && row.status !== "generalist") continue;
+    const href = websiteHref(firms.get(row.firmId)?.web);
+    if (href) sites[row.firmId] = href;
+  }
+  return sites;
 }
 
 /** Contact verification and this client's keep/remove decisions, for exporting a saved run. */

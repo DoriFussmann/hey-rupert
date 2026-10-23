@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import Link from "next/link";
 import { cardClass, n } from "@/app/admin/clients/[id]/match/ui";
 import { FundReview } from "@/app/admin/clients/[id]/match/four-tier/fund-review";
 import { RemoveFromCampaign } from "@/app/admin/matching/remove-from-campaign";
 import { SOURCE_LABEL } from "@/lib/match/capacity/allocate";
-import type { Review } from "@/lib/match/shared";
+import { verifyTierPath, type Review } from "@/lib/match/shared";
 import { distinctPeople } from "@/lib/match/tiers/client-list";
 import { reasonLabel, type StoredResult } from "@/lib/match/tiers/stored";
 import {
@@ -60,7 +61,7 @@ const CHECK_ORDER: [string, string][] = [
 ];
 
 /** Everything the run recorded about one fund: each check, the relationship used, identity and contacts. */
-function FundDetails({ row, narrow, review, campaign }: { row: StoredResult; narrow: boolean; review?: ReviewContext; campaign?: CampaignContext }) {
+function FundDetails({ row, review, campaign }: { row: StoredResult; review?: ReviewContext; campaign?: CampaignContext }) {
   const checks = (row.detail.checks ?? {}) as Record<string, Check>;
   const people = distinctPeople((row.detail.people ?? []) as PersonRecord[]);
   const identity = row.detail.identity as IdentityDetail | undefined;
@@ -70,7 +71,7 @@ function FundDetails({ row, narrow, review, campaign }: { row: StoredResult; nar
   const current = review?.reviews[baseId] ?? null;
   return (
     <div className="mt-xs space-y-xs text-body-sm">
-      <dl className={`grid gap-x-md gap-y-xs ${narrow ? "" : "sm:grid-cols-[8rem_1fr]"}`}>
+      <dl className="grid gap-x-md gap-y-xs sm:grid-cols-[8rem_1fr]">
         {CHECK_ORDER.filter(([key]) => checks[key]).map(([key, title]) => (
           <div key={key} className="contents">
             <dt className="text-muted">{title}</dt>
@@ -135,16 +136,35 @@ function FundDetails({ row, narrow, review, campaign }: { row: StoredResult; nar
   );
 }
 
+/** A small link that opens the fund's website in a new tab. */
+function WebsiteLink({ href, name }: { href: string; name: string }) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted hover:bg-background hover:text-primary"
+      title={`${name} website`}
+    >
+      <span className="sr-only">{name} website (opens in a new tab)</span>
+      <svg aria-hidden="true" viewBox="0 0 20 20" className="h-4 w-4" fill="none">
+        <path d="M8 5H5v10h10v-3M11 4h5v5M10 10l6-6" stroke="currentColor" strokeWidth="1.5" />
+      </svg>
+    </a>
+  );
+}
+
 function FundList({
   rows,
-  narrow = false,
   review,
   campaign,
+  websites = {},
 }: {
   rows: StoredResult[];
-  narrow?: boolean;
   review?: ReviewContext;
   campaign?: CampaignContext;
+  /** Fund website by run row key. */
+  websites?: Record<string, string>;
 }) {
   if (rows.length === 0) return <p className="text-body-sm text-muted">None.</p>;
   return (
@@ -154,8 +174,8 @@ function FundList({
           const baseId = row.firmId.replace(/#\d+$/, "");
           const now = review?.reviews[baseId];
           return (
-            <li key={row.firmId} className="py-xs">
-              <details>
+            <li key={row.firmId} className="flex items-start gap-xs py-xs">
+              <details className="min-w-0 flex-1">
                 <summary className="flex cursor-pointer list-none flex-wrap items-baseline justify-between gap-sm [&::-webkit-details-marker]:hidden">
                   <span className="min-w-0 text-body-sm text-heading">
                     {row.firmName} <span className="font-mono text-label text-muted">{row.firmId}</span>
@@ -170,8 +190,9 @@ function FundList({
                     {row.score != null ? `Fit ${row.score}` : reasonLabel(row.reasonCodes[row.reasonCodes.length - 1] ?? "")}
                   </span>
                 </summary>
-                <FundDetails row={row} narrow={narrow} review={review} campaign={campaign} />
+                <FundDetails row={row} review={review} campaign={campaign} />
               </details>
+              {websites[row.firmId] ? <WebsiteLink href={websites[row.firmId]} name={row.firmName} /> : null}
             </li>
           );
         })}
@@ -187,7 +208,77 @@ type RunProps = {
   rows: StoredResult[];
   complete: boolean;
   review?: ReviewContext;
+  /** Fund website by run row key. */
+  websites?: Record<string, string>;
 };
+
+/** Investing contacts of the funds, as the run recorded them. */
+function contactCount(rows: StoredResult[]) {
+  return rows.reduce((sum, row) => sum + distinctPeople((row.detail.people ?? []) as PersonRecord[]).length, 0);
+}
+
+/** The Verify Emails tab's tier for a panel: approved generalists are checked with Tier 4. */
+function verifyTier(key: string) {
+  return key === "generalist" ? "tier4" : key;
+}
+
+/**
+ * One tier as a panel on its own row, collapsed: the name, the funds and
+ * contacts in it, and (with a client) a link to verify only its funds.
+ */
+function TierPanel({
+  label,
+  description,
+  funds,
+  contacts,
+  meta,
+  verifyHref,
+  children,
+}: {
+  label: string;
+  description: string;
+  funds: number;
+  contacts: number;
+  /** Shown after the counts, e.g. "in the campaign". */
+  meta?: string;
+  verifyHref?: string;
+  children: ReactNode;
+}) {
+  return (
+    <details className={`${cardClass} group/tier mb-sm`}>
+      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-sm px-lg py-md [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 items-center gap-sm">
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 20 20"
+            className="h-4 w-4 shrink-0 text-muted transition-transform group-open/tier:rotate-90 motion-reduce:transition-none"
+            fill="none"
+          >
+            <path d="m8 5 5 5-5 5" stroke="currentColor" strokeWidth="1.5" />
+          </svg>
+          <span className="min-w-0">
+            <span className="text-h4 text-heading">{label}</span>{" "}
+            <span className="text-body-sm text-muted">{description}</span>
+          </span>
+        </span>
+        <span className="text-body-sm tabular-nums text-heading">
+          {n(funds)} fund{funds === 1 ? "" : "s"} · {n(contacts)} contact{contacts === 1 ? "" : "s"}
+          {meta ? <span className="text-muted"> {meta}</span> : null}
+        </span>
+      </summary>
+      <div className="border-t border-border px-lg py-md">
+        {verifyHref && funds > 0 ? (
+          <p className="mb-sm">
+            <Link href={verifyHref} className="text-body-sm text-primary hover:text-primary-hover">
+              Verify these funds
+            </Link>
+          </p>
+        ) : null}
+        {children}
+      </div>
+    </details>
+  );
+}
 
 const listed = (rows: StoredResult[], tier: TierKey) => rows.filter((r) => r.status === "tiered" && r.tier === tier && !r.detail.representedBy);
 const outside = (rows: StoredResult[], status: "generalist" | "unresolved" | "excluded") =>
@@ -252,29 +343,33 @@ export function RunSummary({ clientId, header, rows, complete, footnote, title =
   );
 }
 
-/** The four tiers side by side; stacked on smaller screens. */
-export function TierColumns({ rows, review }: Pick<RunProps, "rows" | "review">) {
+/** The four tiers, one collapsed panel per row. */
+export function TierColumns({ rows, review, websites }: Pick<RunProps, "rows" | "review" | "websites">) {
   return (
-    <div className="mb-lg grid gap-md lg:grid-cols-2 2xl:grid-cols-4">
-      {TIER_KEYS.map((key) => (
-        <section key={key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${TIER_INFO[key].label} funds`}>
-          <h2 className="text-h4 text-heading">
-            {TIER_INFO[key].label} <span className="text-body-sm font-normal text-muted">{n(listed(rows, key).length)}</span>
-          </h2>
-          <p className="mt-xs text-body-sm text-muted">{TIER_INFO[key].description}</p>
-          <div className="mt-sm">
-            <FundList rows={listed(rows, key)} narrow review={review} />
-          </div>
-        </section>
-      ))}
+    <div className="mb-lg">
+      {TIER_KEYS.map((key) => {
+        const funds = listed(rows, key);
+        return (
+          <TierPanel
+            key={key}
+            label={TIER_INFO[key].label}
+            description={TIER_INFO[key].description}
+            funds={funds.length}
+            contacts={contactCount(funds)}
+            verifyHref={review ? verifyTierPath(review.clientId, key) : undefined}
+          >
+            <FundList rows={funds} review={review} websites={websites} />
+          </TierPanel>
+        );
+      })}
     </div>
   );
 }
 
 /**
- * The confirmed campaign, tier by tier: the plan's funds (each can be removed
- * from the campaign), then the tier's other funds, collapsed. Approved
- * generalists get their own column, never a tier's.
+ * The confirmed campaign, tier by tier, one collapsed panel per row: the
+ * plan's funds (each can be removed from the campaign), then the tier's other
+ * funds, collapsed. Approved generalists get their own panel, never a tier's.
  */
 export function CampaignColumns({
   rows,
@@ -282,19 +377,22 @@ export function CampaignColumns({
   review,
   campaign,
   heading,
+  websites,
 }: {
   rows: StoredResult[];
   /** The plan's run row keys. */
   planned: Set<string>;
   review: ReviewContext;
   campaign: CampaignContext;
-  /** Shown above the columns: which plan this is. */
+  /** Shown above the panels: which plan this is. */
   heading?: ReactNode;
+  /** Fund website by run row key. */
+  websites?: Record<string, string>;
 }) {
   const generalists = rows.filter((r) => r.status === "generalist" && planned.has(r.firmId));
-  const columns = [
+  const panels = [
     ...TIER_KEYS.map((key) => ({
-      key,
+      key: key as string,
       label: TIER_INFO[key].label,
       description: TIER_INFO[key].description,
       inPlan: listed(rows, key).filter((r) => planned.has(r.firmId)),
@@ -307,25 +405,27 @@ export function CampaignColumns({
   return (
     <>
       {heading ? <div className="mb-sm">{heading}</div> : null}
-      <div className={`mb-lg grid gap-md lg:grid-cols-2 ${columns.length > 4 ? "2xl:grid-cols-5" : "2xl:grid-cols-4"}`}>
-        {columns.map((column) => (
-          <section key={column.key} className={`${cardClass} min-w-0 px-md py-md`} aria-label={`${column.label} funds in the campaign`}>
-            <h2 className="text-h4 text-heading">
-              {column.label} <span className="text-body-sm font-normal text-muted">{n(column.inPlan.length)} in the campaign</span>
-            </h2>
-            <p className="mt-xs text-body-sm text-muted">{column.description}</p>
-            <div className="mt-sm">
-              <FundList rows={column.inPlan} narrow campaign={campaign} />
-            </div>
-            {column.others.length > 0 ? (
+      <div className="mb-lg">
+        {panels.map((panel) => (
+          <TierPanel
+            key={panel.key}
+            label={panel.label}
+            description={panel.description}
+            funds={panel.inPlan.length}
+            contacts={contactCount(panel.inPlan)}
+            meta="in the campaign"
+            verifyHref={verifyTierPath(campaign.clientId, verifyTier(panel.key))}
+          >
+            <FundList rows={panel.inPlan} campaign={campaign} websites={websites} />
+            {panel.others.length > 0 ? (
               <details className="mt-sm border-t border-border pt-sm">
-                <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in this campaign ({n(column.others.length)})</summary>
+                <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in this campaign ({n(panel.others.length)})</summary>
                 <div className="mt-xs">
-                  <FundList rows={column.others} narrow review={review} />
+                  <FundList rows={panel.others} review={review} websites={websites} />
                 </div>
               </details>
             ) : null}
-          </section>
+          </TierPanel>
         ))}
       </div>
     </>
@@ -389,11 +489,20 @@ export function FourTierRunView(props: RunProps & { footnote?: ReactNode }) {
   return (
     <>
       <RunSummary {...props} />
-      {TIER_KEYS.map((key) => (
-        <Section key={key} title={TIER_INFO[key].label} meta={n(listed(props.rows, key).length)}>
-          <FundList rows={listed(props.rows, key)} review={props.review} />
-        </Section>
-      ))}
+      {TIER_KEYS.map((key) => {
+        const funds = listed(props.rows, key);
+        return (
+          <TierPanel
+            key={key}
+            label={TIER_INFO[key].label}
+            description={TIER_INFO[key].description}
+            funds={funds.length}
+            contacts={contactCount(funds)}
+          >
+            <FundList rows={funds} review={props.review} websites={props.websites} />
+          </TierPanel>
+        );
+      })}
       <OutsideSection rows={props.rows} />
       <NearMissSection {...props} />
     </>

@@ -47,8 +47,9 @@ function errorText(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
 }
 
-function revalidateClient(clientId: string) {
-  revalidatePath(`/admin/clients/${clientId}/match/verify`);
+/** Verify Emails lives on the Matching page; fixes also show in the Fund Database. */
+function revalidateVerify() {
+  revalidatePath("/admin/matching");
   revalidatePath("/admin/fund-database");
 }
 
@@ -84,7 +85,7 @@ export async function startVerification(
       access.email,
     );
     if (!started.ok) return { ok: false, error: started.error };
-    revalidateClient(clientId);
+    revalidateVerify();
     return { ok: true, run: started.value };
   } catch (err) {
     return { ok: false, error: errorText(err, "The verification could not start.") };
@@ -120,7 +121,7 @@ export async function finishVerifyBatch(
   try {
     const done = await finishVerificationBatch(access.supabase, String(clientId), String(runId), Number(batch), Number(ms));
     if (!done.ok) return { ok: false, error: done.error };
-    if (done.value.status === "done") revalidateClient(clientId);
+    if (done.value.status === "done") revalidateVerify();
     return { ok: true, batch: done.value };
   } catch (err) {
     return { ok: false, error: errorText(err, "The batch was not saved.") };
@@ -137,7 +138,7 @@ export async function applyVerifyActions(
   try {
     const done = await applyVerificationActions(access.supabase, String(clientId), items.slice(0, 5000), access.email);
     if (!done.ok) return { ok: false, error: done.error };
-    revalidateClient(clientId);
+    revalidateVerify();
     return { ok: true, updated: done.value };
   } catch (err) {
     return { ok: false, error: errorText(err, "The actions were not saved.") };

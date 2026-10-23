@@ -80,15 +80,31 @@ export const VERIFY_TONE: Record<VerifyState, string> = {
 };
 
 /** What a run covered. "wave1" is from runs made before per-tier limits. */
-export type VerifyScope = "all" | "sequence" | "wave1";
+export type VerifyScope = "all" | "sequence" | "primary" | "wave1";
 
-/** Everyone with an email at each fund, or only Primary + Backup. */
-export type VerifyMode = "all" | "sequence";
+/** Everyone with an email at each fund, only Primary + Backup, or only the Primary. */
+export type VerifyMode = "all" | "sequence" | "primary";
 
-export const VERIFY_MODES: VerifyMode[] = ["all", "sequence"];
+export const VERIFY_MODES: VerifyMode[] = ["all", "sequence", "primary"];
+
+export const VERIFY_MODE_LABEL: Record<VerifyMode, string> = {
+  all: "All contacts",
+  sequence: "Primary + Backup",
+  primary: "Primary only",
+};
+
+/** The fund's Primary contact for "Primary only": the one marked Primary, else the first in sequence. */
+export function primaryContact<T extends { seq?: string }>(sequence: T[]): T | null {
+  return sequence.find((contact) => contact.seq === "Primary") ?? sequence[0] ?? null;
+}
+
+/** How a run's choice of contacts reads, for runs made with any version of the page. */
+export function scopeLabel(scope: VerifyScope) {
+  return scope === "wave1" ? "First wave" : VERIFY_MODE_LABEL[scope];
+}
 
 /**
- * Contacts to check per tier, by tier key ("bullseye"…, or "core"…): null =
+ * Funds to check per tier, best fit first, by tier key ("core"…): null =
  * all of the tier, 0 = skip it. A tier left out counts as all.
  */
 export type TierLimits = Record<string, number | null>;
@@ -366,6 +382,12 @@ export type ScopeCount = {
   /** Contacts with an email in this tier. */
   total: number;
   /**
+   * One entry per fund in the tier, in outreach order: how many of the tier's
+   * contacts come before the end of that fund. A limit of N funds keeps the
+   * first fundEnds[N-1] contacts.
+   */
+  fundEnds: number[];
+  /**
    * One letter per contact, in outreach order: "c" to check, "r" reused
    * (checked recently), "f" removed before (decide first). A limit keeps the
    * first N.
@@ -375,11 +397,25 @@ export type ScopeCount = {
   noEmail: number;
 };
 
-/** Counts for the first `limit` contacts of a tier (null = all, 0 = none). */
-export function countTier(count: ScopeCount, limit: number | null) {
-  const order = limit === null ? count.order : count.order.slice(0, Math.max(0, limit));
+/** How many of a tier's contacts the first `funds` funds hold (null = all funds). */
+export function contactsForFunds(fundEnds: number[], funds: number | null): number | null {
+  if (funds === null) return null;
+  if (funds <= 0 || fundEnds.length === 0) return 0;
+  return fundEnds[Math.min(funds, fundEnds.length) - 1];
+}
+
+/** Counts for the first `funds` funds of a tier (null = all, 0 = none). */
+export function countTier(count: ScopeCount, funds: number | null) {
+  const limit = contactsForFunds(count.fundEnds, funds);
+  const order = limit === null ? count.order : count.order.slice(0, limit);
   const of = (letter: string) => order.split(letter).length - 1;
-  return { contacts: order.length, toCheck: of("c"), reused: of("r"), flagged: of("f") };
+  return {
+    funds: funds === null ? count.fundEnds.length : Math.min(Math.max(0, funds), count.fundEnds.length),
+    contacts: order.length,
+    toCheck: of("c"),
+    reused: of("r"),
+    flagged: of("f"),
+  };
 }
 
 /** A tier box's text as a limit: blank = all, otherwise a whole number. */

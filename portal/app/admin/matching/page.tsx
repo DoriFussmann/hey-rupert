@@ -25,13 +25,20 @@ function HowItWorks() {
         <li>Sector decides the tier: Core (same sector), Sphere (right next to it), Tier 3 (broader link), Tier 4 (weak but approved link). Only approved sector links count.</li>
         <li>Funds with missing or unclear data are &ldquo;unresolved&rdquo;, generalists sit apart, and one-stage-off funds are near misses. Only admins see these groups.</li>
         <li>Every run is saved permanently. Push to client puts the run&apos;s four tiers on the client&apos;s page as a draft; you send it from there.</li>
+        <li>Verify Emails checks the contacts of the confirmed campaign plan: is the person at the firm, and does the mailbox accept mail. Fixes apply to the Fund Database for every client.</li>
         <li>Rules {RULES_VERSION}.</li>
       </ul>
     </details>
   );
 }
 
-export default async function MatchingPage({ searchParams }: { searchParams: { client?: string; tab?: string; run?: string } }) {
+const TIER_KEY = /^(core|sphere|tier3|tier4)$/;
+
+export default async function MatchingPage({
+  searchParams,
+}: {
+  searchParams: { client?: string; tab?: string; run?: string; tier?: string };
+}) {
   await requireAdmin();
   const clientId = typeof searchParams.client === "string" && UUID.test(searchParams.client) ? searchParams.client : null;
   const runId = typeof searchParams.run === "string" && UUID.test(searchParams.run) ? searchParams.run : null;
@@ -60,7 +67,15 @@ export default async function MatchingPage({ searchParams }: { searchParams: { c
         ) : null}
         {picked?.is_match_sandbox || !testClientId ? <TestClientTools testClientId={testClientId} clients={real} /> : null}
       </section>
-      {picked ? <ClientMatching key={picked.id} client={picked} tab={asMatchTab(searchParams.tab)} runId={runId} /> : null}
+      {picked ? (
+        <ClientMatching
+          key={picked.id}
+          client={picked}
+          tab={asMatchTab(searchParams.tab)}
+          runId={runId}
+          verifyTier={typeof searchParams.tier === "string" && TIER_KEY.test(searchParams.tier) ? searchParams.tier : null}
+        />
+      ) : null}
     </>
   );
 }

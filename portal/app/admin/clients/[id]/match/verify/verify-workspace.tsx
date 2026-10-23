@@ -33,8 +33,12 @@ import {
   ESTIMATE_MIN_CHECKS,
   VERIFY_BATCH_SIZE,
   VERIFY_FRESH_DAYS,
+  VERIFY_MODES,
+  VERIFY_MODE_LABEL,
   VERIFY_STEPS,
+  contactsForFunds,
   countTier,
+  scopeLabel,
   formatDuration,
   formatUsd,
   needsStep,
@@ -50,6 +54,12 @@ import {
 } from "@/lib/match/verify";
 
 type Mode = "setup" | "running" | "paused" | "done";
+
+const MODE_HINT: Record<VerifyMode, string> = {
+  all: "(everyone with an email)",
+  sequence: "(the two people outreach goes to)",
+  primary: "(the first person outreach goes to)",
+};
 type Live = { index: number; contacts: VerifyContact[]; step: StepNumber | 4 };
 
 const CHOICES: { value: FlaggedChoice; label: string }[] = [
@@ -92,27 +102,35 @@ function Fact({ label, value, hint }: { label: string; value: string; hint?: str
   );
 }
 
+/** The tier boxes to start from: every tier in full, or only the tier asked for. */
+function initialBoxes(overview: VerifyOverview, onlyTier: string | null) {
+  if (!onlyTier || !overview.tiers.some((tier) => tier.key === onlyTier)) return {};
+  return Object.fromEntries(overview.tiers.map(({ key }) => [key, key === onlyTier ? "" : "0"]));
+}
+
 function SetupPanel({
   overview,
   busy,
+  onlyTier,
   onStart,
 }: {
   overview: VerifyOverview;
   busy: boolean;
+  /** Opened from a tier's "Verify these funds": only that tier is filled in. */
+  onlyTier: string | null;
   onStart: (mode: VerifyMode, limits: TierLimits, choices: { id: string; choice: FlaggedChoice }[]) => void;
 }) {
-  const [primaryBackup, setPrimaryBackup] = useState(true);
-  // Blank boxes: every tier checked in full, on either engine.
-  const [boxes, setBoxes] = useState<Record<string, string>>({});
+  const [mode, setMode] = useState<VerifyMode>("sequence");
+  // Blank boxes: every fund of the tier.
+  const [boxes, setBoxes] = useState<Record<string, string>>(() => initialBoxes(overview, onlyTier));
   const [choices, setChoices] = useState<Record<string, FlaggedChoice>>({});
-  const mode: VerifyMode = primaryBackup ? "sequence" : "all";
 
   const parsed = overview.tiers.map(({ key }) => ({ tier: key, limit: parseTierLimit(boxes[key] ?? "") }));
   const invalid = parsed.filter((item) => item.limit === "invalid").map((item) => item.tier);
   const limits = Object.fromEntries(
     parsed.map((item) => [item.tier, item.limit === "invalid" ? 0 : item.limit]),
   ) as TierLimits;
-  const empty = { total: 0, order: "", noEmail: 0 };
+  const empty = { total: 0, fundEnds: [], order: "", noEmail: 0 };
   const perTier = overview.tiers.map(({ key, label }) => ({
     tier: key,
     label,
@@ -131,7 +149,8 @@ function SetupPanel({
 
   const flagged = overview.flagged.filter((item) => {
     const position = item.positions[mode];
-    const limit = limits[item.contact.tier] ?? null;
+    const count = overview.counts[mode][item.contact.tier] ?? empty;
+    const limit = contactsForFunds(count.fundEnds, limits[item.contact.tier] ?? null);
     return position !== undefined && (limit === null || position < limit);
   });
   const choiceOf = (id: string) => choices[id] ?? "remove";
@@ -143,21 +162,29 @@ function SetupPanel({
 
   return (
     <section className={`${cardClass} px-lg py-md`}>
-      <h2 className="text-h4 text-heading">What to check</h2>
+      <h2 className="text-h4 text-heading">What to Check</h2>
       <p className="mt-xs text-body-sm text-muted">
-        How many contacts per tier, best fit first. Leave a box blank for the whole tier, or put 0 to skip it.
+        How many funds per tier, best fit first. Leave a box blank for every fund in the tier, or put 0 to skip it.
       </p>
 
-      <label className="mt-md flex items-center gap-sm text-body-sm text-heading">
-        <input
-          type="checkbox"
-          className="h-4 w-4 accent-primary"
-          checked={primaryBackup}
-          onChange={(event) => setPrimaryBackup(event.target.checked)}
-        />
-        Primary + Backup only
-        <span className="text-muted">(the two people outreach goes to at each fund)</span>
-      </label>
+      <fieldset className="mt-md">
+        <legend className={labelClass}>Contacts at each fund</legend>
+        <div className="mt-sm flex flex-wrap gap-md text-body-sm text-heading">
+          {VERIFY_MODES.map((value) => (
+            <label key={value} className="flex items-center gap-xs">
+              <input
+                type="radio"
+                name="verify-mode"
+                className="h-4 w-4 accent-primary"
+                checked={mode === value}
+                onChange={() => setMode(value)}
+              />
+              {VERIFY_MODE_LABEL[value]}
+              <span className="text-muted">{MODE_HINT[value]}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
 
       <div className={`mt-md grid gap-sm ${perTier.length === 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
         {perTier.map(({ tier, label, count, counted: tierCount }) => {
@@ -170,16 +197,16 @@ function SetupPanel({
                 className={`mt-sm w-full rounded-md border bg-surface px-sm py-sm font-mono text-body text-body outline-none focus:border-primary ${
                   bad ? "border-error" : "border-border"
                 }`}
-                placeholder={`All (${n(count.total)})`}
+                placeholder={`All (${n(count.fundEnds.length)} funds)`}
                 value={boxes[tier] ?? ""}
                 aria-invalid={bad}
-                aria-label={`${label}: how many contacts to check`}
+                aria-label={`${label}: how many funds to check`}
                 onChange={(event) => setBoxes((current) => ({ ...current, [tier]: event.target.value }))}
               />
               <span className={`mt-xs block text-body-sm ${bad ? "text-error" : "text-muted"}`}>
                 {bad
                   ? "A whole number, or blank for all."
-                  : `${n(tierCount.contacts)} of ${n(count.total)} · ${n(tierCount.toCheck)} to check · ${n(tierCount.reused)} reused`}
+                  : `${n(tierCount.funds)} funds · ${n(tierCount.contacts)} contacts · ${n(tierCount.toCheck)} to check · ${n(tierCount.reused)} reused`}
               </span>
             </label>
           );
@@ -208,7 +235,7 @@ function SetupPanel({
         Estimated time {batches > 0 ? formatDuration(batches * estimate.msPerBatch) : "—"}; keep this tab open while it
         runs.
         {flagged.length > 0 ? ` ${n(flagged.length)} removed before: decide below.` : ""}
-        {!primaryBackup && noEmail > 0 ? ` ${n(noEmail)} investing contacts have no email and are left out.` : ""}
+        {mode === "all" && noEmail > 0 ? ` ${n(noEmail)} investing contacts have no email and are left out.` : ""}
       </p>
 
       {!overview.claudeReady ? (
@@ -299,10 +326,13 @@ export function VerifyWorkspace({
   clientId,
   initialOverview,
   initialError,
+  onlyTier = null,
 }: {
   clientId: string;
   initialOverview: VerifyOverview | null;
   initialError: string | null;
+  /** Start with only this tier filled in (from a tier's "Verify these funds"). */
+  onlyTier?: string | null;
 }) {
   const [overview, setOverview] = useState(initialOverview);
   const [run, setRun] = useState<RunState | null>(initialOverview?.activeRun ?? initialOverview?.lastRun ?? null);
@@ -480,7 +510,7 @@ export function VerifyWorkspace({
         </p>
       ) : null}
 
-      {mode === "setup" && overview ? <SetupPanel overview={overview} busy={busy} onStart={(mode, limits, choices) => void start(mode, limits, choices)} /> : null}
+      {mode === "setup" && overview ? <SetupPanel overview={overview} busy={busy} onlyTier={onlyTier} onStart={(mode, limits, choices) => void start(mode, limits, choices)} /> : null}
 
       {run && (mode === "running" || mode === "paused") ? (
         <section className={`${cardClass} px-lg py-md`}>
@@ -494,8 +524,8 @@ export function VerifyWorkspace({
                 · {n(checked)} of {n(toCheckTotal)} contacts checked
               </p>
               <p className="font-mono text-body-sm text-muted">
-                {formatUsd(run.stats.usd)} · {n(run.stats.searches)} searches · {n(run.stats.hunter)} Hunter credits · started{" "}
-                {formatDateAtTime(run.createdAt)}
+                {scopeLabel(run.scope)} · {formatUsd(run.stats.usd)} · {n(run.stats.searches)} searches · {n(run.stats.hunter)} Hunter
+                credits · started {formatDateAtTime(run.createdAt)}
               </p>
             </div>
             <div className="flex flex-wrap gap-sm">
@@ -557,7 +587,7 @@ export function VerifyWorkspace({
           <FinalSummary
             key={run.id}
             clientId={clientId}
-            title={`Summary · run of ${formatDateAtTime(run.createdAt)}`}
+            title={`Summary · run of ${formatDateAtTime(run.createdAt)} · ${scopeLabel(run.scope)}`}
             results={allResults}
             stats={run.stats}
             onUpdated={applyUpdates}
@@ -566,8 +596,8 @@ export function VerifyWorkspace({
             <button type="button" className={secondaryButton} disabled={busy} onClick={() => void newRun()}>
               {busy ? "Loading…" : "Start a new run"}
             </button>
-            <Link href={matchPath(clientId)} className={`${secondaryButton} no-underline`}>
-              Back to the match
+            <Link href={matchPath(clientId, "tiers")} className={`${secondaryButton} no-underline`}>
+              Back to the Tiers
             </Link>
           </div>
         </>

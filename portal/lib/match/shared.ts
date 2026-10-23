@@ -19,12 +19,18 @@ export function matchPath(clientId: string, tab?: MatchTab) {
   return `/admin/matching?client=${encodeURIComponent(clientId)}${tab && tab !== "plan" ? `&tab=${tab}` : ""}`;
 }
 
-export const MATCH_TABS = ["plan", "tiers", "outside", "near", "history"] as const;
+/** The Verify Emails tab with only one tier filled in. */
+export function verifyTierPath(clientId: string, tier: string) {
+  return `${matchPath(clientId, "verify")}&tier=${encodeURIComponent(tier)}`;
+}
+
+export const MATCH_TABS = ["plan", "tiers", "verify", "outside", "near", "history"] as const;
 export type MatchTab = (typeof MATCH_TABS)[number];
 
 export const MATCH_TAB_LABEL: Record<MatchTab, string> = {
   plan: "Plan",
   tiers: "Tiers",
+  verify: "Verify Emails",
   outside: "Outside the tiers",
   near: "Near misses",
   history: "History",

@@ -18,8 +18,18 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { loadProfileState } from "@/lib/match/profile-server";
 import { loadHidden, loadReviews } from "@/lib/match/run-server";
 import { MATCH_TABS, MATCH_TAB_LABEL, matchPath, type MatchTab, type Review } from "@/lib/match/shared";
-import { latestTierRun, listRuns, loadTierRun, profileReadiness, staleReasons, type ProfileReadiness } from "@/lib/match/tiers/server";
+import {
+  latestTierRun,
+  listRuns,
+  loadTierRun,
+  profileReadiness,
+  runWebsites,
+  staleReasons,
+  type ProfileReadiness,
+} from "@/lib/match/tiers/server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { loadVerifyOverview } from "@/lib/match/verify-server";
+import { VerifyWorkspace } from "@/app/admin/clients/[id]/match/verify/verify-workspace";
 import { listCapacityPlans, planForRun, plannedIds } from "@/lib/match/capacity/server";
 import type { Client } from "@/lib/types";
 
@@ -76,6 +86,35 @@ function Tabs({ clientId, tab }: { clientId: string; tab: MatchTab }) {
   );
 }
 
+/** The Verify Emails tab: checks the plan's contacts, 5 at a time. */
+async function VerifyTab({ client, onlyTier }: { client: Client; onlyTier: string | null }) {
+  const loaded = await loadVerifyOverview(createServiceClient(), client.id);
+  const overview = loaded.ok ? loaded.value : null;
+  return (
+    <>
+      {client.is_match_sandbox ? (
+        <Alert tone="warning">
+          Test Pilot sandbox: checks cost real money, and Remove, Update email, Update name and Update firm change the Fund
+          Database for every client.
+        </Alert>
+      ) : null}
+      {overview ? (
+        <p className="mb-md text-body-sm text-muted">
+          {overview.planFunds === null
+            ? "No campaign plan is confirmed for the newest run, so every fund in the four tiers is in scope. Confirm a plan on the Plan tab to check only its funds."
+            : `Checking the confirmed campaign plan: ${n(overview.planFunds)} funds.`}
+        </p>
+      ) : null}
+      <VerifyWorkspace
+        clientId={client.id}
+        initialOverview={overview}
+        initialError={loaded.ok ? null : loaded.error}
+        onlyTier={onlyTier}
+      />
+    </>
+  );
+}
+
 /** The History tab: every saved run of the client; the one picked is shown in full, read-only. */
 async function HistoryTab({ clientId, runId }: { clientId: string; runId: string | null }) {
   const supabase = createServiceClient();
@@ -85,6 +124,7 @@ async function HistoryTab({ clientId, runId }: { clientId: string; runId: string
   if (tierRuns.length === 0) return <p className="text-body-sm text-muted">No saved runs yet.</p>;
   const picked = runId && tierRuns.some((run) => run.id === runId) ? runId : tierRuns[0].id;
   const loaded = await loadTierRun(supabase, clientId, picked);
+  const websites = loaded.ok ? await runWebsites(supabase, loaded.value.rows) : {};
   return (
     <>
       {runs.value.since ? <p className="mb-md text-body-sm text-muted">Test client: runs since it was last started clean ({when(runs.value.since)}).</p> : null}
@@ -103,7 +143,7 @@ async function HistoryTab({ clientId, runId }: { clientId: string; runId: string
           ))}
         </ul>
       </Section>
-      {loaded.ok ? <FourTierRunView clientId={clientId} {...loaded.value} /> : <Alert tone="error">{loaded.error}</Alert>}
+      {loaded.ok ? <FourTierRunView clientId={clientId} {...loaded.value} websites={websites} /> : <Alert tone="error">{loaded.error}</Alert>}
     </>
   );
 }
@@ -112,7 +152,18 @@ async function HistoryTab({ clientId, runId }: { clientId: string; runId: string
  * Matching for one client: readiness, the actions, and the newest saved run
  * in tabs. Everything shown about a run is read from the saved run.
  */
-export async function ClientMatching({ client, tab, runId }: { client: Client; tab: MatchTab; runId: string | null }) {
+export async function ClientMatching({
+  client,
+  tab,
+  runId,
+  verifyTier,
+}: {
+  client: Client;
+  tab: MatchTab;
+  runId: string | null;
+  /** Verify Emails opened from one tier's panel. */
+  verifyTier: string | null;
+}) {
   if (!isServiceRoleConfigured()) return <Alert tone="error">Service role key is not configured.</Alert>;
   const supabase = createServiceClient();
   const sandbox = client.is_match_sandbox === true;
@@ -133,6 +184,8 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
   const plan = run ? planForRun(savedPlans, run.header.id) : null;
   const planned = plan ? plannedIds(plan) : null;
   const stale = run ? await staleReasons(supabase, client.id, run.header, run.rows, planned ?? undefined) : null;
+  // Websites are only needed where funds are listed.
+  const websites = run && tab === "tiers" ? await runWebsites(supabase, run.rows) : {};
 
   let pushBlocked: string | null = null;
   if (!run) pushBlocked = "Run the match first.";
@@ -176,6 +229,8 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
         <PlanTab clientId={client.id} run={run} plans={savedPlans} plansError={plans.ok ? null : plans.error} />
       ) : tab === "history" ? (
         <HistoryTab clientId={client.id} runId={runId} />
+      ) : tab === "verify" ? (
+        <VerifyTab client={client} onlyTier={verifyTier} />
       ) : !run ? (
         <p className="rounded-card border border-border bg-surface px-lg py-lg text-body-sm text-muted">
           No run yet for this client. Run match when the profile can run.
@@ -192,6 +247,7 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
               planned={planned}
               review={{ clientId: client.id, reviews: reviewMap }}
               campaign={{ clientId: client.id, runId: run.header.id }}
+              websites={websites}
               heading={
                 <p className="text-body-sm text-secondary">
                   <span className="text-heading">Campaign: {planned.size.toLocaleString("en-US")} funds</span> · plan version {plan.version},{" "}
@@ -220,7 +276,7 @@ export async function ClientMatching({ client, tab, runId }: { client: Client; t
             title={planned ? "Whole run" : "Counts"}
             footnote={`Ran ${when(run.header.ranAt)} by ${run.header.ranBy ?? "unknown"}. Saved permanently: exports read it; Push to client sends its confirmed campaign plan.`}
           />
-          {planned ? null : <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} />}
+          {planned ? null : <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} websites={websites} />}
         </>
       )}
     </>

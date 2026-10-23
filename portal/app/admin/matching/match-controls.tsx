@@ -7,7 +7,7 @@ import { pushRunToClient, restoreHiddenFund } from "@/app/admin/match-actions";
 import { runMatchForClient, saveFourTierSettings } from "@/app/admin/tiers-actions";
 import { SettingsPanel, type HiddenFund } from "@/app/admin/matching/settings-panel";
 import { errorText, n, primaryButton, secondaryButton, type Notice } from "@/app/admin/clients/[id]/match/ui";
-import type { MatchSettings } from "@/lib/match/shared";
+import { matchPath, type MatchSettings } from "@/lib/match/shared";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -98,8 +98,8 @@ export function MatchControls({
           >
             {runId ? "Re-run match" : "Run match"}
           </button>
-          <Link href={`/admin/clients/${clientId}/match/verify`} className={`${secondaryButton} no-underline`}>
-            Verify emails
+          <Link href={matchPath(clientId, "verify")} className={`${secondaryButton} no-underline`}>
+            Verify Emails
           </Link>
           <button type="button" className={primaryButton} disabled={!runId || Boolean(pushBlocked) || Boolean(busy)} onClick={push}>
             Push to client

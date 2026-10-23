@@ -60,7 +60,7 @@ export async function resetTestClient(): Promise<Result<object>> {
     const done = await resetSandbox(access.supabase);
     if (!done.ok) return { ok: false, error: done.error };
     revalidatePath("/admin/matching");
-    if (done.value.clientId) revalidatePath(`/admin/clients/${done.value.clientId}/match/verify`);
+    if (done.value.clientId) revalidatePath("/admin/matching");
     return { ok: true };
   } catch (err) {
     return { ok: false, error: errorText(err, "The test client could not be reset.") };
