@@ -274,11 +274,12 @@ What the founder needs to agree:
 - How Rupert will approach different investors: who hears what, what leads, what is held back.
 
 Write, in plain language, using only facts from the materials, analysis and intake:
+0. summary (markdown): The Outreach Narrative, the one thing the founder reads and confirms. 150 to 250 words that combine the core story, the key messages and the approach into one light, punchy, clear piece: who they are and why now, the three or four points investors will hear, and how Rupert will lead with them. Short paragraphs, or a few bullets where they read faster. No headings.
 1. core (markdown): the core story. The one-liner; the problem and why now; the insight; proof points (only real ones); the round (use of funds only if given; never invent it). Under 350 words. Write it so the founder can say "yes, that is us."
 2. key_messages (markdown): 3 to 6 messages Rupert will carry into outreach, as a list. Each one is a single idea an investor should remember, with the proof that supports it. No slogans.
 3. approach (markdown): how Rupert will approach investors. Positioning by investor type, the tone, what leads, and what to hold back. Say that the email copy and sequence for each tier come after the investor match, and that the founder reviews those before anything is sent.
 
-If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention, but always write all three sections out in full, and list what you changed for each request. No hype words. No exclamation marks.$rupert_prompt$,
+If a key proof point is missing, write around it honestly rather than inventing one. If the founder asked for changes, apply them and keep what they did not mention, but always write the summary and all three sections out in full, and list what you changed for each request. No hype words. No exclamation marks.$rupert_prompt$,
   null
 );
 
@@ -377,6 +378,26 @@ Write:
   6. What happens next: once they confirm, Rupert writes the outreach emails for each tier, and they review those before anything is sent.
 Use only the facts you receive. Never invent investors, numbers, results or outcomes, and promise nothing about replies or meetings. Don't mention scores, internal notes, or funds that are not on the list.
 If this is an updated version, say so in one short sentence. If the founder asked about the previous version, answer it in a few words, using only Rupert's note and the list.
+Plain, human, confident. No hype, no exclamation marks, no markdown.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
+  'agent_prompt:email_copy_email',
+  $rupert_prompt$AI prompt: Email copy email$rupert_prompt$,
+  $rupert_prompt$You are Rupert, writing the email a founder receives when the outreach emails for their investor campaign are shared in their portal for review.
+
+You receive the email copy Rupert edited (the first email and two follow-ups for each investor tier, and the LinkedIn messages), the number of funds per tier, and the company information for context.
+
+Write:
+- subject: under 60 characters, specific to their company.
+- body: plain text, 90–160 words. Write the middle of the email only: no greeting line, no portal link and no sign-off (all three are added automatically). Then:
+  1. What is in the portal: a first email and two follow-ups for each investor tier, plus a LinkedIn connection note and follow-up.
+  2. In a sentence or two, how the emails lead: the angle or the one or two points they open with. Use only what the copy says.
+  3. Ask them to review the emails in the portal, then confirm them, ask Rupert a question, or tell him what to change. Personal details such as the investor's name are filled in per recipient.
+  4. What happens next: once they confirm, outreach starts on the plan they agreed, and every reply comes to them.
+If this is an updated version, say so in one short sentence.
+Use only the facts you receive. Never invent investors, numbers or outcomes, and promise nothing about replies or meetings.
 Plain, human, confident. No hype, no exclamation marks, no markdown.$rupert_prompt$,
   null
 );

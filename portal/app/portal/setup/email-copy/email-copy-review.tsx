@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { AdminReply } from "@/components/setup/admin-reply";
+import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
 import {
   EMAIL_SEQUENCE_LABELS,
@@ -10,6 +11,7 @@ import {
   tierEmails,
   type EmailCopyPayload,
   type FitTier,
+  type SetupQuestion,
 } from "@/lib/setup";
 
 export function EmailCopyReview({
@@ -19,6 +21,7 @@ export function EmailCopyReview({
   open,
   sentNotes,
   adminNote,
+  questions = [],
   readOnly,
 }: {
   copy: EmailCopyPayload;
@@ -26,7 +29,9 @@ export function EmailCopyReview({
   version: number;
   open: boolean;
   sentNotes: Record<string, string>;
+  /** Rupert's reply on versions pushed before each push came with an email. */
   adminNote?: string;
+  questions?: SetupQuestion[];
   readOnly: boolean;
 }) {
   const [tier, setTier] = useState<FitTier>(1);
@@ -45,11 +50,7 @@ export function EmailCopyReview({
 
   return (
     <>
-      {open && adminNote ? (
-        <div className="sticky top-0 z-20">
-          <AdminReply note={adminNote} />
-        </div>
-      ) : null}
+      {open ? <AdminReply note={adminNote} /> : null}
       <div className="mb-md flex flex-wrap gap-sm" role="tablist" aria-label="Investor tier">
         {tiers.map((entry) => {
           const count = counts.find((item) => item.tier === entry.tier)?.count ?? 0;
@@ -145,17 +146,17 @@ export function EmailCopyReview({
         </section>
       ) : null}
 
+      <QuestionThread questions={questions} />
       {open ? (
-        <>
-          <AdminReply note={adminNote} />
-          <ReviewActions
-            step="email_copy"
-            version={version}
-            itemNotes={notes}
-            confirmLabel="Confirm emails"
-            readOnly={readOnly}
-          />
-        </>
+        <ReviewActions
+          step="email_copy"
+          version={version}
+          itemNotes={notes}
+          confirmLabel="Confirm Emails"
+          itemNotesLabel="on the tiers"
+          intro="Confirm the emails to move forward, ask Rupert a question, or request changes."
+          readOnly={readOnly}
+        />
       ) : null}
     </>
   );

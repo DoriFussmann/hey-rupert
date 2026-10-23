@@ -74,6 +74,7 @@ export function SetupWorkspace({
         clientId={clientId}
         item={item("email_copy")}
         row={row("email_copy")}
+        to={clientEmail}
         tierCounts={counts}
         listScheme={listScheme}
         claudeReady={claudeReady}

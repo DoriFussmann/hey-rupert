@@ -29,8 +29,10 @@ import {
   asInvestorList,
   asMaterials,
   asNarrative,
+  EMAIL_SEQUENCE_LABELS,
   fitTiersFor,
   tierEmails,
+  workingNarrative,
   LINKEDIN_NOTE_MAX,
   type EmailCopyPayload,
   type TierScheme,
@@ -617,10 +619,64 @@ export async function draftInvestorListEmail(
   return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
+/**
+ * The email that goes with the email copy: tells the founder the outreach
+ * emails are ready, from Rupert's edited copy and the list's tier counts.
+ */
+export async function draftEmailCopyEmail(
+  supabase: ServiceClient,
+  clientId: string,
+  copy: EmailCopyPayload,
+  version: number,
+  override?: PromptOverride | null,
+): Promise<AgentResult<ClientEmailDraft>> {
+  const tiers = fitTiersFor(copy.tier_scheme);
+  if (tiers.every(({ tier }) => tierEmails(copy, tier).every((email) => !email.body.trim()))) {
+    return { ok: false, error: "Write the emails first: the email is drafted from them." };
+  }
+  const [loaded, prompt] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadPrompt(supabase, "email_copy_email", { clientId, purpose: "Email copy email draft", override }),
+  ]);
+  if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
+  const company = await companyContext(supabase, clientId, loaded.client);
+  const listRow = company.rows.find((item) => item.step === "investor_list");
+  const emailRow = company.rows.find((item) => item.step === "email_copy");
+  const clientAsk =
+    emailRow?.status === "changes_requested" ? earlierNotes([], emailRow.response) : "";
+
+  const copyText = tiers
+    .map(({ tier, label, detail }) => {
+      const emails = tierEmails(copy, tier)
+        .map((email, index) => `#### ${EMAIL_SEQUENCE_LABELS[index]}${email.subject ? `\nSubject: ${email.subject}` : ""}\n${email.body}`)
+        .join("\n\n");
+      return `### ${label} (${detail})\n${emails}`;
+    })
+    .join("\n\n");
+
+  const context = [
+    ...founderLines(loaded.client, version),
+    "# The email copy (Rupert's edited version)",
+    copyText,
+    copy.linkedin_note ? `### LinkedIn connection note\n${copy.linkedin_note}` : "",
+    copy.linkedin_followup ? `### LinkedIn follow-up\n${copy.linkedin_followup}` : "",
+    listRow ? `# Investor list (types and counts only)\n${listBrief(asInvestorList(listRow.published))}` : "",
+    clientAsk ? `## What the founder asked to change in the previous version\n${clientAsk}` : "",
+    "# Company information (context only)",
+    company.text,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  return draftEmailMiddle(promptSystem(prompt.value), context);
+}
+
 // ---------------------------------------------------------------------------
 // Outreach narrative
 
 const NARRATIVE_FIELDS = [
+  { key: "summary", label: "The Outreach Narrative" },
   { key: "core", label: "Core Story" },
   { key: "key_messages", label: "Key Messages" },
   { key: "approach", label: "Approach" },
@@ -632,11 +688,16 @@ function narrativeTool(revising: boolean): ClaudeTool {
   return {
     name: "submit_narrative",
     description: revising
-      ? "Deliver the full revised outreach narrative (all three sections, in full) and what changed."
-      : "Deliver the outreach narrative: story, key messages and approach.",
+      ? "Deliver the full revised outreach narrative (the summary and all three sections, in full) and what changed."
+      : "Deliver the outreach narrative: the summary the founder confirms, then the story, key messages and approach.",
     input_schema: {
       type: "object",
       properties: {
+        summary: {
+          type: "string",
+          description:
+            "The Outreach Narrative the founder reads and confirms (markdown): 150 to 250 words combining the core story, the key messages and the approach into one light, punchy, clear piece. No headings. Always the full text.",
+        },
         core: { type: "string", description: "Core story (markdown). Always the full text." },
         key_messages: {
           type: "string",
@@ -656,7 +717,7 @@ function narrativeTool(revising: boolean): ClaudeTool {
             }
           : {}),
       },
-      required: ["core", "key_messages", "approach", ...(revising ? ["changes"] : [])],
+      required: ["summary", "core", "key_messages", "approach", ...(revising ? ["changes"] : [])],
     },
   };
 }
@@ -737,8 +798,8 @@ export async function buildNarrative(
     .join("\n\n");
 
   const instruction = revising
-    ? `Revise the narrative to apply what the founder asked for, keeping everything they did not mention. Deliver it by calling the ${tool.name} tool with all three sections written out in full, including any section you did not change, plus the list of changes.`
-    : `Deliver the narrative by calling the ${tool.name} tool, with all three sections written out in full.`;
+    ? `Revise the narrative to apply what the founder asked for, keeping everything they did not mention. Deliver it by calling the ${tool.name} tool with the summary and all three sections written out in full, including any section you did not change, plus the list of changes.`
+    : `Deliver the narrative by calling the ${tool.name} tool, with the summary and all three sections written out in full.`;
 
   let raw: Record<string, unknown> = {};
   let missing: NarrativeField[] = [];
@@ -774,6 +835,7 @@ export async function buildNarrative(
   const working = asNarrative(framingRow?.draft ?? framingRow?.published);
   const narrative = asNarrative({
     ...working,
+    summary: section("summary"),
     core: section("core"),
     key_messages: section("key_messages"),
     approach: section("approach"),
@@ -924,7 +986,8 @@ export async function draftEmailCopy(
   if (framingRow?.status !== "confirmed") {
     return { ok: false, error: "Confirm the outreach narrative first." };
   }
-  const narrative = asNarrative(framingRow.published);
+  // Rupert's internal update to the confirmed narrative, when he made one.
+  const narrative = workingNarrative(framingRow);
   if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
     return {
       ok: false,

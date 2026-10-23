@@ -199,7 +199,8 @@ export async function createSetupUpload(
 
 /**
  * Builds the narrative, or rebuilds it with the client's requested changes,
- * and saves it as Rupert's draft. The email saved with the draft is kept.
+ * and saves it as Rupert's draft. The email saved with the draft, and any
+ * internal update to the confirmed narrative, are kept.
  */
 export async function buildClientNarrative(
   clientId: string,
@@ -212,17 +213,21 @@ export async function buildClientNarrative(
 
   const existing = await loadSetupStep(access.supabase, clientId, "framing");
   if (!existing.ok) return existing;
-  const previous = existing.row?.draft;
-  const clientEmail =
-    previous && typeof previous === "object"
-      ? (previous as Record<string, unknown>).client_email
-      : undefined;
+  const previous =
+    existing.row?.draft && typeof existing.row.draft === "object"
+      ? (existing.row.draft as Record<string, unknown>)
+      : {};
 
   const { error } = await access.supabase.from("setup_steps").upsert(
     {
       client_id: clientId,
       step: "framing",
-      draft: { ...result.value.narrative, client_email: asClientEmail(clientEmail) },
+      // The email and any internal update to the confirmed narrative are kept.
+      draft: {
+        ...result.value.narrative,
+        client_email: asClientEmail(previous.client_email),
+        ...(previous.internal_update ? { internal_update: previous.internal_update } : {}),
+      },
       updated_at: nowIso(),
     },
     { onConflict: "client_id,step", ignoreDuplicates: false },
@@ -242,8 +247,17 @@ export async function draftClientEmailCopy(
   const result = await draftEmailCopy(access.supabase, clientId);
   if (!result.ok) return result;
 
+  // The email saved with the draft is kept.
+  const existing = await loadSetupStep(access.supabase, clientId, "email_copy");
+  if (!existing.ok) return existing;
+  const previous =
+    existing.row?.draft && typeof existing.row.draft === "object"
+      ? (existing.row.draft as Record<string, unknown>)
+      : {};
+  const draft = { ...result.value, admin_note: undefined, client_email: asClientEmail(previous.client_email) };
+
   const { error } = await access.supabase.from("setup_steps").upsert(
-    { client_id: clientId, step: "email_copy", draft: result.value, updated_at: nowIso() },
+    { client_id: clientId, step: "email_copy", draft, updated_at: nowIso() },
     { onConflict: "client_id,step", ignoreDuplicates: false },
   );
   if (error) return { ok: false, error: setupTableError(error.message, error.code) };

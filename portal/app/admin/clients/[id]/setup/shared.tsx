@@ -2,13 +2,18 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { publishSetupStep, saveSetupDraft } from "@/app/admin/setup-actions";
+import { settleSetupQuestion } from "@/app/admin/setup-actions";
 import { formatDateAtTime } from "@/lib/format";
-import type {
-  SetupItem,
-  SetupResponse,
-  SetupStepId,
-  SetupStepState,
+import {
+  NOTE_MAX,
+  isOpenQuestion,
+  questionsOf,
+  type SetupDocumentStep,
+  type SetupItem,
+  type SetupQuestion,
+  type SetupResponse,
+  type SetupStepId,
+  type SetupStepState,
 } from "@/lib/setup";
 
 export const primaryButton =
@@ -175,60 +180,43 @@ export function EarlierRounds({ row }: { row: SetupStepState | null }) {
   );
 }
 
-/**
- * Save draft / push controls shared by every step Rupert writes. The draft
- * is owned by the panel; this handles the calls and the messages.
- */
-export function PublishBar({
+function QuestionItem({
   clientId,
   step,
-  item,
-  row,
-  draft,
-  dirty,
-  onSaved,
-  pushLabel,
-  problem,
-  noteLabel,
-  notePlaceholder,
-  noteOnPage = false,
+  question,
 }: {
   clientId: string;
-  step: SetupStepId;
-  item: SetupItem;
-  row: SetupStepState | null;
-  draft: unknown;
-  dirty: boolean;
-  onSaved: () => void;
-  pushLabel: string;
-  /** A reason the draft cannot be pushed yet, shown next to the button. */
-  problem?: string | null;
-  noteLabel?: string;
-  notePlaceholder?: string;
-  /** When set, the note is also stored where the client reads it on the page. */
-  noteOnPage?: boolean;
+  step: SetupDocumentStep;
+  question: SetupQuestion;
 }) {
   const router = useRouter();
-  const [note, setNote] = useState("");
-  const [pending, setPending] = useState<null | "save" | "push">(null);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(
-    null,
-  );
+  const [answer, setAnswer] = useState("");
+  const [pending, setPending] = useState<null | "answer" | "resolve">(null);
+  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const open = isOpenQuestion(question);
 
-  const reachable = item.status !== "open";
-  const withClient = row?.status === "with_client";
-
-  async function onSave() {
-    setPending("save");
+  async function settle(kind: "answer" | "resolve") {
+    if (kind === "answer" && !answer.trim()) {
+      setMessage({ kind: "error", text: "Write your answer first." });
+      return;
+    }
+    setPending(kind);
     setMessage(null);
     try {
-      const result = await saveSetupDraft(clientId, step, draft);
+      const result = await settleSetupQuestion(clientId, step, question.id, kind === "answer" ? answer : "");
       if (!result.ok) {
         setMessage({ kind: "error", text: result.error });
         return;
       }
-      onSaved();
-      setMessage({ kind: "ok", text: "Draft saved. The client does not see drafts." });
+      setMessage(
+        kind === "resolve"
+          ? { kind: "ok", text: "Marked resolved. No email was sent." }
+          : result.clientEmail.ok
+            ? { kind: "ok", text: "Answer sent. It is on their page and in their inbox." }
+            : { kind: "error", text: `Answer saved on their page, but the email was not sent: ${result.clientEmail.reason}` },
+      );
+      setAnswer("");
+      router.refresh();
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to save." });
     } finally {
@@ -236,95 +224,45 @@ export function PublishBar({
     }
   }
 
-  async function onPush() {
-    if (problem) {
-      setMessage({ kind: "error", text: problem });
-      return;
-    }
-    const question = row?.status === "confirmed"
-      ? "The client already confirmed this. Pushing a new version asks them to confirm again. Continue?"
-      : withClient
-        ? "The client has the current version. Replace it with this one and email them?"
-        : "Push to the client's portal and email them?";
-    if (!window.confirm(question)) return;
-
-    setPending("push");
-    setMessage(null);
-    try {
-      const result = await publishSetupStep(clientId, step, draft, note);
-      if (!result.ok) {
-        setMessage({ kind: "error", text: result.error });
-        return;
-      }
-      onSaved();
-      setNote("");
-      const onPage = noteOnPage
-        ? note.trim()
-          ? " Your reply is on their list."
-          : " No reply was added to their list."
-        : "";
-      setMessage(
-        result.clientEmail.ok
-          ? { kind: "ok", text: `Pushed to the portal, and the client was emailed.${onPage}` }
-          : {
-              kind: "error",
-              text: `Pushed to the portal, but the client was not emailed. ${result.clientEmail.reason}${onPage}`,
-            },
-      );
-      router.refresh();
-    } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to push." });
-    } finally {
-      setPending(null);
-    }
-  }
-
   return (
-    <div className="border-t border-border px-lg py-md">
-      <label className="block text-label uppercase tracking-label text-muted">
-        {noteLabel ?? "Note to the client (optional, included in the email)"}
-        <input
-          className={`${inputClass} mt-sm normal-case tracking-normal`}
-          value={note}
-          maxLength={1000}
-          onChange={(event) => setNote(event.target.value)}
-          placeholder={
-            notePlaceholder ??
-            (row && row.version > 0
-              ? "What changed in this version"
-              : "A line of context for the client")
-          }
-        />
-      </label>
-      <div className="mt-md flex flex-wrap items-center gap-sm">
-        <button
-          type="button"
-          className={primaryButton}
-          disabled={pending !== null || !reachable}
-          onClick={onPush}
-          title={!reachable ? ADMIN_BLOCKED[step] : undefined}
-        >
-          {pending === "push"
-            ? "Pushing…"
-            : row && row.version > 0
-              ? `${pushLabel} (v${row.version + 1})`
-              : pushLabel}
-        </button>
-        <button
-          type="button"
-          className={secondaryButton}
-          disabled={pending !== null}
-          onClick={onSave}
-        >
-          {pending === "save" ? "Saving…" : "Save draft"}
-        </button>
-        {dirty ? <p className="text-body-sm text-warning">Unsaved changes</p> : null}
-        {!reachable ? (
-          <p className="text-body-sm text-muted">
-            {ADMIN_BLOCKED[step]}. You can draft now.
-          </p>
-        ) : null}
-      </div>
+    <li className={`rounded-md border px-md py-sm ${open ? "border-primary/30 bg-primary-tint" : "border-border bg-background"}`}>
+      <p className="text-label uppercase tracking-label text-muted">
+        {open ? "Open question" : question.answered_at ? "Answered" : "Resolved"} · version {question.version}
+        {question.asked_at ? ` · asked ${formatDateAtTime(question.asked_at)}` : ""}
+      </p>
+      <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{question.question}</p>
+      {question.answer ? (
+        <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">
+          <span className="text-muted">Your answer{question.answered_at ? `, ${formatDateAtTime(question.answered_at)}` : ""}: </span>
+          {question.answer}
+        </p>
+      ) : null}
+      {!question.answer && question.resolved_at ? (
+        <p className="mt-xs text-body-sm text-muted">Resolved {formatDateAtTime(question.resolved_at)} without a written answer.</p>
+      ) : null}
+      {open ? (
+        <div className="mt-sm">
+          <label className="block text-label uppercase tracking-label text-muted">
+            Answer
+            <textarea
+              className={`${inputClass} mt-xs min-h-[80px] resize-y normal-case tracking-normal`}
+              value={answer}
+              maxLength={NOTE_MAX}
+              disabled={pending !== null}
+              onChange={(event) => setAnswer(event.target.value)}
+              placeholder="Shown on their page and emailed to them. The page stays theirs to confirm."
+            />
+          </label>
+          <div className="mt-sm flex flex-wrap items-center gap-sm">
+            <button type="button" className={primaryButton} disabled={pending !== null} onClick={() => void settle("answer")}>
+              {pending === "answer" ? "Sending…" : "Send Answer"}
+            </button>
+            <button type="button" className={secondaryButton} disabled={pending !== null} onClick={() => void settle("resolve")}>
+              {pending === "resolve" ? "Saving…" : "Mark Resolved"}
+            </button>
+          </div>
+        </div>
+      ) : null}
       {message ? (
         <p
           role={message.kind === "error" ? "alert" : "status"}
@@ -333,6 +271,36 @@ export function PublishBar({
           {message.text}
         </p>
       ) : null}
-    </div>
+    </li>
+  );
+}
+
+/**
+ * The client's questions on a review step, newest first: answer one (they
+ * are emailed) or mark it resolved. Answering never changes the turn.
+ */
+export function ClientQuestions({
+  clientId,
+  step,
+  row,
+}: {
+  clientId: string;
+  step: SetupDocumentStep;
+  row: SetupStepState | null;
+}) {
+  const questions = [...questionsOf(row)].reverse();
+  if (questions.length === 0) return null;
+  const openCount = questions.filter(isOpenQuestion).length;
+  return (
+    <section className="mx-lg mt-md">
+      <p className="text-label uppercase tracking-label text-muted">
+        Client questions{openCount > 0 ? ` · ${openCount} waiting for you` : ""}
+      </p>
+      <ul className="mt-sm space-y-sm">
+        {questions.map((question) => (
+          <QuestionItem key={question.id} clientId={clientId} step={step} question={question} />
+        ))}
+      </ul>
+    </section>
   );
 }

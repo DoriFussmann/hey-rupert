@@ -8,6 +8,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import {
   buildNarrative,
   draftEmailCopy,
+  draftEmailCopyEmail,
   draftIntakeBrief,
   draftInvestorListEmail,
   draftNarrativeEmail,
@@ -20,7 +21,7 @@ import { extractAnswers } from "@/lib/match/profile-server";
 import { draftNudge, loadNudgeDetail } from "@/lib/nudge-server";
 import { PROMPT_NOTE_MAX, isPromptKey, promptDefinition, promptTextProblems, type PromptKey, type PromptOverride } from "@/lib/prompts";
 import { listPromptVersions, savePromptVersion } from "@/lib/prompts-server";
-import { asInvestorListDraft, asNarrative } from "@/lib/setup";
+import { asEmailCopy, asInvestorListDraft, asNarrative } from "@/lib/setup";
 import { loadSetupStep } from "@/lib/setup-server";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
 
@@ -202,6 +203,7 @@ async function runTest(
       output: {
         title,
         sections: [
+          { label: "The Outreach Narrative (client)", text: narrative.summary },
           { label: "Core story", text: narrative.core },
           { label: "Key messages", text: narrative.key_messages },
           { label: "Approach", text: narrative.approach },
@@ -228,15 +230,17 @@ async function runTest(
       },
     };
   }
-  if (key === "narrative_email" || key === "investor_list_email") {
-    const step = key === "narrative_email" ? "framing" : "investor_list";
+  if (key === "narrative_email" || key === "investor_list_email" || key === "email_copy_email") {
+    const step = key === "narrative_email" ? "framing" : key === "investor_list_email" ? "investor_list" : "email_copy";
     const row = await loadSetupStep(supabase, clientId, step);
     if (!row.ok) return row;
     const version = (row.row?.version ?? 0) + 1;
     const drafted =
       key === "narrative_email"
         ? await draftNarrativeEmail(supabase, clientId, asNarrative(row.row?.draft), version, override)
-        : await draftInvestorListEmail(supabase, clientId, asInvestorListDraft(row.row?.draft), version, override);
+        : key === "email_copy_email"
+          ? await draftEmailCopyEmail(supabase, clientId, asEmailCopy(row.row?.draft), version, override)
+          : await draftInvestorListEmail(supabase, clientId, asInvestorListDraft(row.row?.draft), version, override);
     if (!drafted.ok) return drafted;
     return { ok: true, output: { title, sections: email(drafted.value.subject, drafted.value.body) } };
   }

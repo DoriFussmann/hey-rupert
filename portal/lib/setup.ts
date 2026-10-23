@@ -49,10 +49,36 @@ export type SetupHistoryEntry = {
 };
 
 /** Steps Rupert sends as a document: one action pushes it to the portal and emails the client. */
-export type SetupDocumentStep = "framing" | "investor_list";
+export type SetupDocumentStep = "framing" | "investor_list" | "email_copy";
 
 export function isSetupDocumentStep(value: unknown): value is SetupDocumentStep {
-  return value === "framing" || value === "investor_list";
+  return value === "framing" || value === "investor_list" || value === "email_copy";
+}
+
+/**
+ * A question the client asked on a review step. Asking never changes the
+ * turn: the client can still confirm. Rupert answers (the client is emailed)
+ * or marks it resolved. Stored with the step's published version and carried
+ * into each new version, so the thread stays visible.
+ */
+export type SetupQuestion = {
+  id: string;
+  question: string;
+  asked_at: string;
+  /** The version the client was looking at when they asked. */
+  version: number;
+  answer?: string;
+  answered_at?: string;
+  /** Rupert closed it without a written answer (for example, handled on a call). */
+  resolved_at?: string;
+};
+
+export const QUESTION_MAX = 2000;
+export const QUESTIONS_MAX = 50;
+
+/** Unanswered and not resolved. */
+export function isOpenQuestion(question: SetupQuestion) {
+  return !question.answered_at && !question.resolved_at;
 }
 
 /** One row of `setup_steps`, as the app uses it. */
@@ -208,6 +234,12 @@ export const NARRATIVE_NEXT_STEPS =
   "Once you confirm this narrative, Rupert sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
 
 export type NarrativePayload = {
+  /**
+   * The Outreach Narrative the client reads and confirms: short, punchy
+   * markdown drawn from the three sections below. Empty on narratives
+   * written before it existed; the client then sees the three sections.
+   */
+  summary: string;
   /** The core story (markdown). */
   core: string;
   /** 3–6 messages Rupert will carry into outreach (markdown). */
@@ -236,7 +268,16 @@ export type NarrativePayload = {
    * founder's requested changes (markdown list).
    */
   change_summary?: string;
+  questions?: SetupQuestion[];
 };
+
+/**
+ * Rupert's update to a narrative the client already confirmed, made without
+ * asking them to confirm again. Stored on the draft row (`internal_update`).
+ * The email copy is written from it; the client keeps seeing the version
+ * they confirmed. The next push replaces it.
+ */
+export type InternalNarrativeUpdate = { at: string; narrative: NarrativePayload };
 
 export const LINKEDIN_NOTE_MAX = 300;
 
@@ -280,6 +321,10 @@ export type InvestorRow = {
   hidden_duplicate?: boolean;
   /** A generalist the campaign plan approved: broad, not a tier. Grouped with the last tier for email copy. */
   broad?: boolean;
+  /** The fund's own sectors from the database (up to four). */
+  sector_focus?: string;
+  /** Where the fund invests, from the database (up to four). */
+  geography_focus?: string;
 };
 
 /** Verification totals frozen onto the list when it is pushed. Absent on older lists. */
@@ -357,6 +402,7 @@ export type InvestorListPayload = {
   run_id?: string;
   /** Four-tier lists: the rules version of that run. */
   rules_version?: string;
+  questions?: SetupQuestion[];
 };
 
 export type CopyEmail = { subject: string; body: string };
@@ -375,7 +421,11 @@ export type EmailCopyPayload = {
   linkedin_followup?: string;
   /** Rupert's reply when this version is sent back for confirmation. */
   admin_note?: string;
+  questions?: SetupQuestion[];
 };
+
+/** Rupert's email copy draft: the copy and the email that goes with the push. */
+export type EmailCopyDraft = EmailCopyPayload & { client_email: ClientEmailDraft };
 
 export type FitTierInfo = { tier: FitTier; label: string; detail: string };
 
@@ -911,6 +961,82 @@ function optionalText(value: unknown, max: number) {
   return text || undefined;
 }
 
+/** The questions stored on a published version; absent or malformed entries are dropped. */
+export function asQuestions(value: unknown): SetupQuestion[] {
+  if (!Array.isArray(value)) return [];
+  const out: SetupQuestion[] = [];
+  for (const item of value.slice(0, QUESTIONS_MAX)) {
+    if (!item || typeof item !== "object") continue;
+    const raw = item as Record<string, unknown>;
+    const id = str(raw.id, 40).trim();
+    const question = str(raw.question, QUESTION_MAX).trim();
+    if (!id || !question || out.some((existing) => existing.id === id)) continue;
+    out.push({
+      id,
+      question,
+      asked_at: str(raw.asked_at, 40),
+      version: Math.max(0, Math.floor(Number(raw.version) || 0)),
+      answer: optionalText(raw.answer, NOTE_MAX),
+      answered_at: optionalText(raw.answered_at, 40),
+      resolved_at: optionalText(raw.resolved_at, 40),
+    });
+  }
+  return out;
+}
+
+/** The questions on a step's published version. */
+export function questionsOf(row: SetupStepState | null | undefined) {
+  if (!row?.published || typeof row.published !== "object") return [];
+  return asQuestions((row.published as Record<string, unknown>).questions);
+}
+
+function withQuestions(questions: SetupQuestion[]) {
+  return questions.length > 0 ? { questions } : {};
+}
+
+/** Adds the client's question, or says why it can't be added. */
+export function addQuestion(
+  questions: SetupQuestion[],
+  input: { id: string; question: string; at: string; version: number },
+): { ok: true; questions: SetupQuestion[] } | { ok: false; error: string } {
+  const question = input.question.trim().slice(0, QUESTION_MAX);
+  if (!question) return { ok: false, error: "Write your question first." };
+  if (questions.length >= QUESTIONS_MAX) {
+    return { ok: false, error: "There are too many questions here. Please book a call with Rupert." };
+  }
+  return {
+    ok: true,
+    questions: [...questions, { id: input.id, question, asked_at: input.at, version: input.version }],
+  };
+}
+
+/** Rupert's answer (or, with an empty answer, resolved without one). Null when the question is gone. */
+export function settleQuestion(
+  questions: SetupQuestion[],
+  id: string,
+  answer: string,
+  at: string,
+): SetupQuestion[] | null {
+  if (!questions.some((item) => item.id === id)) return null;
+  const text = answer.trim().slice(0, NOTE_MAX);
+  return questions.map((item) =>
+    item.id !== id
+      ? item
+      : text
+        ? { ...item, answer: text, answered_at: at, resolved_at: undefined }
+        : { ...item, resolved_at: at },
+  );
+}
+
+/** A published payload with its questions replaced. */
+export function withPublishedQuestions(published: unknown, questions: SetupQuestion[]) {
+  const base =
+    published && typeof published === "object" ? { ...(published as Record<string, unknown>) } : {};
+  if (questions.length > 0) base.questions = questions;
+  else delete base.questions;
+  return base;
+}
+
 /** Rupert's Company Materials Feedback; undefined when there is none. */
 export function asMaterialsFeedback(value: unknown): MaterialsFeedback | undefined {
   if (!value || typeof value !== "object") return undefined;
@@ -935,6 +1061,7 @@ export function asNarrative(value: unknown): NarrativePayload {
   >;
   const nextSteps = str(raw.next_steps, 2000).trim();
   return {
+    summary: str(raw.summary, 10000),
     core: str(raw.core ?? raw.body, 30000),
     key_messages: str(raw.key_messages, 20000),
     approach: str(raw.approach, 20000),
@@ -948,7 +1075,28 @@ export function asNarrative(value: unknown): NarrativePayload {
     linkedin_note: optionalText(raw.linkedin_note, 2000),
     linkedin_followup: optionalText(raw.linkedin_followup, 5000),
     change_summary: optionalText(raw.change_summary, 5000),
+    ...withQuestions(asQuestions(raw.questions)),
   };
+}
+
+/** The internal update stored with a narrative draft, if there is one. */
+export function internalNarrativeUpdate(draft: unknown): InternalNarrativeUpdate | null {
+  if (!draft || typeof draft !== "object") return null;
+  const raw = (draft as Record<string, unknown>).internal_update;
+  if (!raw || typeof raw !== "object") return null;
+  const item = raw as Record<string, unknown>;
+  const at = str(item.at, 40).trim();
+  if (!at) return null;
+  return { at, narrative: { ...asNarrative(item.narrative), questions: undefined } };
+}
+
+/**
+ * The narrative later steps are written from: Rupert's internal update when
+ * he made one after the client confirmed, otherwise the confirmed version.
+ */
+export function workingNarrative(row: SetupStepState | null | undefined): NarrativePayload {
+  const update = row?.status === "confirmed" ? internalNarrativeUpdate(row.draft) : null;
+  return update ? update.narrative : asNarrative(row?.published);
 }
 
 /**
@@ -976,6 +1124,9 @@ export function narrativeHasEarlierDraft(narrative: NarrativePayload) {
 }
 
 export function narrativeProblem(narrative: NarrativePayload) {
+  if (!narrative.summary.trim()) {
+    return "Write The Outreach Narrative (what the client reads and confirms) before sending. Rebuild the narrative to have it written for you.";
+  }
   if (!narrative.core.trim()) return "Write the core story before sending.";
   if (!narrative.key_messages.trim()) return "Add the key messages before sending.";
   if (!narrative.approach.trim()) return "Describe how you'll approach investors before sending.";
@@ -1025,6 +1176,8 @@ export function asInvestorList(value: unknown): InvestorListPayload {
             location: str(item.location, 120).trim() || undefined,
             check_size: str(item.check_size, 80).trim() || undefined,
             stage_focus: str(item.stage_focus, 160).trim() || undefined,
+            sector_focus: str(item.sector_focus, 200).trim() || undefined,
+            geography_focus: str(item.geography_focus, 200).trim() || undefined,
             contact_count: Number.isFinite(count) && count >= 0 ? count : undefined,
             reasons: reasons.length > 0 ? reasons : undefined,
             hidden_duplicate: item.hidden_duplicate === true ? true : undefined,
@@ -1043,6 +1196,7 @@ export function asInvestorList(value: unknown): InvestorListPayload {
     verification: asInvestorVerification(raw.verification),
     client_flags: asInvestorFlags(raw.client_flags, rows.map((row) => row.id)),
     removed_flags: asRemovedFlags(raw.removed_flags),
+    ...withQuestions(asQuestions(raw.questions)),
     ...(scheme === "four"
       ? {
           tier_scheme: "four" as const,
@@ -1071,6 +1225,7 @@ export function investorListForClient(draft: InvestorListPayload): InvestorListP
     verification: draft.verification,
     client_flags: draft.client_flags,
     removed_flags: draft.removed_flags,
+    ...withQuestions(draft.questions ?? []),
     ...(draft.tier_scheme === "four"
       ? {
           tier_scheme: "four" as const,
@@ -1301,7 +1456,13 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
     ...(adminNote ? { admin_note: adminNote } : {}),
     ...(linkedinNote ? { linkedin_note: linkedinNote } : {}),
     ...(linkedinFollowup ? { linkedin_followup: linkedinFollowup } : {}),
+    ...withQuestions(asQuestions(raw.questions)),
   };
+}
+
+export function asEmailCopyDraft(value: unknown): EmailCopyDraft {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  return { ...asEmailCopy(value), client_email: asClientEmail(raw.client_email) };
 }
 
 /** Problems that stop the email copy from being pushed. */
@@ -1366,6 +1527,69 @@ export const NOTE_MAX = 4000;
 // Investor list
 
 export const INVESTOR_FIELD_MAX = 4000;
+
+export type TierStat = {
+  tier: FitTier | "broad";
+  label: string;
+  detail: string;
+  funds: number;
+  /** Null when the list has no contact counts. */
+  contacts: number | null;
+};
+
+/**
+ * Funds and contacts per tier on the client's list, without the funds they
+ * excluded. Broad investors get their own entry when the list has any.
+ */
+export function tierStatsFor(
+  rows: InvestorRow[],
+  flags: Record<string, InvestorFundFlag>,
+  tiers: FitTierInfo[],
+  summary: InvestorListSummary | null | undefined,
+  broad: { label: string; detail: string },
+): TierStat[] {
+  const counted = rows.some((row) => typeof row.contact_count === "number");
+  const contactsOf = (list: InvestorRow[]) =>
+    counted ? list.reduce((sum, row) => sum + (row.contact_count ?? 0), 0) : null;
+  const kept = rows.filter((row) => !flags[row.id]?.excluded);
+  const stats: TierStat[] = tiers.map((entry) => {
+    const inTier = kept.filter((row) => row.tier === entry.tier && !row.broad);
+    const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
+    return { ...entry, funds: inTier.length, contacts: contactsOf(inTier) ?? fromSummary?.contacts ?? null };
+  });
+  if (rows.some((row) => row.broad)) {
+    const inBroad = kept.filter((row) => row.broad);
+    stats.push({ tier: "broad", ...broad, funds: inBroad.length, contacts: contactsOf(inBroad) });
+  }
+  return stats;
+}
+
+/**
+ * The line above the client's tier cards, e.g. "Based on your $3M Seed raise
+ * in B2B SaaS, based in California, we identified 42 funds across four
+ * tiers." Parts that are unknown are left out.
+ */
+export function investorListIntro(facts: {
+  raise: string;
+  stage: string;
+  sector: string;
+  place: string;
+  funds: number;
+  tiers: number;
+}) {
+  const round = [facts.raise.trim(), facts.stage.trim()].filter(Boolean).join(" ");
+  const basis = [
+    round ? `your ${round} raise` : "",
+    facts.sector.trim() ? `in ${facts.sector.trim()}` : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const place = facts.place.trim() ? `based in ${facts.place.trim()}` : "";
+  const based = [basis || "what you told us", place].filter(Boolean).join(", ");
+  const tierWord = ["no", "one", "two", "three", "four", "five"][facts.tiers] ?? String(facts.tiers);
+  const funds = `${facts.funds.toLocaleString("en-US")} fund${facts.funds === 1 ? "" : "s"}`;
+  return `Based on ${based}, we identified ${funds} across ${tierWord} tier${facts.tiers === 1 ? "" : "s"}.`;
+}
 
 export function tierCounts(rows: InvestorRow[], scheme?: TierScheme | null) {
   return fitTiersFor(scheme).map(({ tier }) => ({

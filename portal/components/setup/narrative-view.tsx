@@ -146,20 +146,24 @@ function MaterialsFeedbackPanel({ feedback }: { feedback: MaterialsFeedback }) {
 }
 
 /**
- * The Outreach Narrative as the client sees it: one column of panels, closed
- * by default (the narrative, then the Company Materials Feedback), then the
- * files and links, then What Happens Next.
+ * The Outreach Narrative as the client sees it: the one narrative they
+ * confirm (or, on versions written before it existed, the core story, key
+ * messages and approach), then Confirm, then the Company Materials Feedback
+ * (nothing to confirm), the files and links, and What Happens Next.
  */
 export function NarrativeView({
   narrative,
   fileLinks,
   feedback,
+  actions,
 }: {
   narrative: NarrativePayload;
   /** Signed download links by file path. */
   fileLinks: Record<string, string>;
   /** Feedback the client received as its own step earlier, when there is no Company Materials Feedback. */
   feedback?: NarrativeFeedback | null;
+  /** Confirm and the rest, shown right under the narrative, above the feedback. */
+  actions?: React.ReactNode;
 }) {
   const materialsFeedback = narrative.feedback;
   const showFeedback =
@@ -167,15 +171,30 @@ export function NarrativeView({
 
   return (
     <div className="grid min-w-0 gap-md">
-      <CollapsiblePanel title="Core Story">
-        <MarkdownBody content={narrative.core} emptyLabel="Nothing here yet." />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Key Messages">
-        <MarkdownBody content={narrative.key_messages} emptyLabel="Nothing here yet." />
-      </CollapsiblePanel>
-      <CollapsiblePanel title="Approach">
-        <MarkdownBody content={narrative.approach} emptyLabel="Nothing here yet." />
-      </CollapsiblePanel>
+      {narrative.summary.trim() ? (
+        <section
+          aria-labelledby="outreach-narrative-title"
+          className="rounded-card border border-border bg-surface px-lg py-lg"
+        >
+          <h2 id="outreach-narrative-title" className="text-h3 text-heading">
+            The Outreach Narrative
+          </h2>
+          <MarkdownBody content={narrative.summary} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
+        </section>
+      ) : (
+        <>
+          <CollapsiblePanel title="Core Story">
+            <MarkdownBody content={narrative.core} emptyLabel="Nothing here yet." />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Key Messages">
+            <MarkdownBody content={narrative.key_messages} emptyLabel="Nothing here yet." />
+          </CollapsiblePanel>
+          <CollapsiblePanel title="Approach">
+            <MarkdownBody content={narrative.approach} emptyLabel="Nothing here yet." />
+          </CollapsiblePanel>
+        </>
+      )}
+      {actions}
       {materialsFeedback ? <MaterialsFeedbackPanel feedback={materialsFeedback} /> : null}
       {showFeedback && feedback ? <FeedbackPanel feedback={feedback} /> : null}
       {narrativeHasEarlierDraft(narrative) ? (

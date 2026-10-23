@@ -4,8 +4,12 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
-import { draftInvestorListEmail, draftNarrativeEmail } from "@/lib/agents-server";
-import { notifyClient, type ClientTurn } from "@/lib/notify";
+import {
+  draftEmailCopyEmail,
+  draftInvestorListEmail,
+  draftNarrativeEmail,
+} from "@/lib/agents-server";
+import { notifyClient } from "@/lib/notify";
 import { createServiceClient } from "@/lib/supabase/admin";
 import type { EmailResult } from "@/lib/email";
 import { isHttpUrl } from "@/lib/material-fields";
@@ -13,11 +17,13 @@ import {
   INVESTOR_LIST_BLOCKED,
   asClientEmail,
   asEmailCopy,
+  asEmailCopyDraft,
   asInvestorList,
   asInvestorListDraft,
   asMaterials,
   asNarrative,
   canPublish,
+  NOTE_MAX,
   clientEmailProblem,
   emailCopyProblems,
   investorFlagsFrom,
@@ -27,8 +33,12 @@ import {
   isSetupDocumentStep,
   narrativeForClient,
   narrativeProblem,
+  questionsOf,
+  settleQuestion,
   setupFilesFolder,
+  withPublishedQuestions,
   type ClientEmailDraft,
+  type EmailCopyDraft,
   type InvestorListDraft,
   type MaterialFile,
   type NarrativePayload,
@@ -41,10 +51,17 @@ import {
   composeAiEmail,
   renderInvestorListLetter,
   renderStepEmail,
+  sendQuestionAnswerEmail,
   sendStepEmail,
 } from "@/lib/setup-email-server";
 import { carryDuplicateFlags, listedContacts } from "@/lib/match/outreach-dedupe";
-import { loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
+import {
+  loadSetupStep,
+  loadSetupSteps,
+  nowIso,
+  saveQuestions,
+  setupTableError,
+} from "@/lib/setup-server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 
@@ -69,9 +86,6 @@ const PUBLISHABLE = new Set<PublishableStep>([
   "investor_list",
   "email_copy",
 ]);
-
-/** The automatic email that goes with Email Copy (pushed with PublishBar). */
-const EMAIL_COPY_READY: ClientTurn = "email_copy_ready";
 
 /**
  * Steps that build on each one. A confirmed step whose dependents are under
@@ -144,13 +158,15 @@ type NarrativeDraft = NarrativePayload & { client_email: ClientEmailDraft };
 /**
  * The narrative draft (with its Company Materials Feedback): this client's
  * uploads and http(s) links only, with its email. Rupert's reply from before
- * the email went with each push is not carried forward.
+ * the email went with each push is not carried forward. The client's
+ * questions live on the published version, never on the draft.
  */
 function cleanNarrative(clientId: string, draft: unknown): NarrativeDraft {
   const narrative = asNarrative(draft);
   const raw = (draft && typeof draft === "object" ? draft : {}) as Record<string, unknown>;
   return {
     ...narrative,
+    questions: undefined,
     admin_note: undefined,
     attachments: ownFiles(clientId, narrative.attachments),
     links: narrative.links.filter((link) => isHttpUrl(link.url)),
@@ -159,9 +175,20 @@ function cleanNarrative(clientId: string, draft: unknown): NarrativeDraft {
 }
 
 /** Cleans a draft to the shape its step stores. */
-function normalizeDraft(clientId: string, step: PublishableStep, draft: unknown) {
-  if (step === "investor_list") return asInvestorListDraft(draft);
-  if (step === "email_copy") return asEmailCopy(draft);
+function normalizeDraft(
+  clientId: string,
+  step: PublishableStep,
+  draft: unknown,
+): NarrativeDraft | InvestorListDraft | EmailCopyDraft {
+  if (step === "investor_list") {
+    const list: InvestorListDraft = { ...asInvestorListDraft(draft), questions: undefined };
+    return list;
+  }
+  if (step === "email_copy") {
+    // Rupert's old reply on the page is replaced by the email that goes with each push.
+    const copy: EmailCopyDraft = { ...asEmailCopyDraft(draft), admin_note: undefined, questions: undefined };
+    return copy;
+  }
   return cleanNarrative(clientId, draft);
 }
 
@@ -169,7 +196,7 @@ function normalizeDraft(clientId: string, step: PublishableStep, draft: unknown)
 function publishedPayload(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
   if (step === "framing") return narrativeForClient(draft as NarrativeDraft);
   if (step === "investor_list") return investorListForClient(draft as InvestorListDraft);
-  return draft;
+  return asEmailCopy(draft);
 }
 
 function draftProblem(step: PublishableStep, draft: ReturnType<typeof normalizeDraft>) {
@@ -193,12 +220,23 @@ export async function saveSetupDraft(
     return { ok: false, error: "This step has no Rupert draft." };
   }
 
+  // An internal update to a confirmed narrative is kept when the draft is saved.
+  let keep: Record<string, unknown> = {};
+  if (step === "framing") {
+    const stored = await loadSetupStep(access.supabase, clientId, "framing");
+    if (!stored.ok) return stored;
+    const internal = stored.row?.draft && typeof stored.row.draft === "object"
+      ? (stored.row.draft as Record<string, unknown>).internal_update
+      : undefined;
+    if (internal) keep = { internal_update: internal };
+  }
+
   const at = nowIso();
   const { error } = await access.supabase.from("setup_steps").upsert(
     {
       client_id: clientId,
       step,
-      draft: normalizeDraft(clientId, step as PublishableStep, draft),
+      draft: { ...normalizeDraft(clientId, step as PublishableStep, draft), ...keep },
       updated_at: at,
     },
     { onConflict: "client_id,step", ignoreDuplicates: false },
@@ -224,7 +262,6 @@ async function writePush(
   clientId: string,
   step: PublishableStep,
   draft: unknown,
-  note: string,
 ): Promise<AdminPushResult> {
   const state = await loadState(supabase, clientId);
   if (!state.ok) return state;
@@ -265,10 +302,6 @@ async function writePush(
     );
     payload = { ...next, ...retained, ...(carried ? { client_flags: carried } : {}) };
   }
-  if (step === "email_copy") {
-    const reply = String(note ?? "").trim().slice(0, 4000);
-    payload = { ...payload, admin_note: reply || undefined };
-  }
   const problem = draftProblem(step, payload);
   if (problem) return { ok: false, error: problem };
 
@@ -288,7 +321,8 @@ async function writePush(
     step,
     status: "with_client",
     draft: payload,
-    published: publishedPayload(step, payload),
+    // The client's questions stay with the step from version to version.
+    published: withPublishedQuestions(publishedPayload(step, payload), questionsOf(row)),
     version,
     published_at: at,
     response: null,
@@ -329,36 +363,8 @@ async function writePush(
 }
 
 /**
- * Pushes the email copy to the client and emails them. The feedback, the
- * narrative and the investor list use sendSetupDocument instead.
- */
-export async function publishSetupStep(
-  clientId: string,
-  step: SetupStepId,
-  draft: unknown,
-  note: string,
-): Promise<AdminPublishResult> {
-  const access = await requireAdmin();
-  if (!access.ok) return access;
-  if (step !== "email_copy") {
-    return { ok: false, error: "This step cannot be pushed here." };
-  }
-
-  const pushed = await writePush(access.supabase, clientId, step, draft, note);
-  if (!pushed.ok) return pushed;
-
-  const clientEmail = await notifyClient(access.supabase, clientId, EMAIL_COPY_READY, {
-    note,
-    updated: pushed.version > 1,
-  });
-
-  revalidateSetup(clientId);
-  return { ok: true, clientEmail };
-}
-
-/**
  * Push to Client Portal & Send, for the Outreach Narrative (with the Company
- * Materials Feedback) and the Investor List: pushes a new version to the client's
+ * Materials Feedback), the Investor List and the Email Copy: pushes a new version to the client's
  * portal (their turn to confirm), then sends the email Rupert reviewed and records it on that
  * version. The email goes even when automatic emails are paused: Rupert
  * sends it himself. If the email fails, the push stands and the reason is
@@ -373,11 +379,11 @@ export async function sendSetupDocument(
   if (!access.ok) return access;
   if (!isSetupDocumentStep(step)) return { ok: false, error: "This step cannot be sent here." };
 
-  const email = normalizeDraft(clientId, step, draft) as NarrativeDraft | InvestorListDraft;
+  const email = normalizeDraft(clientId, step, draft);
   const emailProblem = clientEmailProblem(email.client_email);
   if (emailProblem) return { ok: false, error: emailProblem };
 
-  const pushed = await writePush(access.supabase, clientId, step, draft, "");
+  const pushed = await writePush(access.supabase, clientId, step, draft);
   if (!pushed.ok) return pushed;
 
   const clientEmail = await sendStepEmail(access.supabase, clientId, step, {
@@ -458,7 +464,9 @@ export async function draftSetupEmail(
   const drafted =
     step === "framing"
       ? await draftNarrativeEmail(access.supabase, clientId, cleanNarrative(clientId, draft), version)
-      : await draftInvestorListEmail(access.supabase, clientId, asInvestorListDraft(draft), version);
+      : step === "email_copy"
+        ? await draftEmailCopyEmail(access.supabase, clientId, asEmailCopy(draft), version)
+        : await draftInvestorListEmail(access.supabase, clientId, asInvestorListDraft(draft), version);
   if (!drafted.ok) return drafted;
 
   const composed = await composeAiEmail(access.supabase, clientId, step, drafted.value);
@@ -468,6 +476,106 @@ export async function draftSetupEmail(
     email: composed.email,
     pausedNote: composed.paused ? STEP_EMAIL_PAUSED_NOTE : null,
   };
+}
+
+// ---------------------------------------------------------------------------
+// The client's questions
+
+/**
+ * Answers a client's question (they are emailed the answer) or, with an
+ * empty answer, marks it resolved without one. The turn does not change:
+ * the client can still confirm.
+ */
+export async function settleSetupQuestion(
+  clientId: string,
+  step: SetupDocumentStep,
+  questionId: string,
+  answer: string,
+): Promise<AdminPublishResult> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
+  const text = String(answer ?? "").trim();
+  if (text.length > NOTE_MAX) {
+    return { ok: false, error: `Keep the answer under ${NOTE_MAX} characters.` };
+  }
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const loaded = await loadSetupStep(access.supabase, clientId, step);
+    if (!loaded.ok) return loaded;
+    const row = loaded.row;
+    if (!row) return { ok: false, error: "This step has no questions." };
+    const asked = questionsOf(row).find((item) => item.id === questionId);
+    const next = settleQuestion(questionsOf(row), String(questionId), text, nowIso());
+    if (!asked || !next) return { ok: false, error: "That question is no longer here. Refresh the page." };
+    const saved = await saveQuestions(access.supabase, row, next);
+    if (!saved.ok) return saved;
+    if (!saved.saved) continue;
+
+    const clientEmail: EmailResult = text
+      ? await sendQuestionAnswerEmail(access.supabase, clientId, step, {
+          question: asked.question,
+          answer: text,
+        })
+      : { ok: false, reason: "Resolved without an answer: no email sent." };
+    revalidateSetup(clientId);
+    return { ok: true, clientEmail };
+  }
+  return { ok: false, error: "The step changed meanwhile. Refresh and try again." };
+}
+
+// ---------------------------------------------------------------------------
+// Outreach Narrative: internal update after the client confirmed
+
+/**
+ * Saves Rupert's update to a narrative the client already confirmed, without
+ * asking them to confirm again and without emailing them. The email copy is
+ * written from it; the client's page keeps the version they confirmed.
+ */
+export async function saveNarrativeInternalUpdate(
+  clientId: string,
+  draft: unknown,
+): Promise<{ ok: true; at: string } | { ok: false; error: string }> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+
+  const loaded = await loadSetupStep(access.supabase, clientId, "framing");
+  if (!loaded.ok) return loaded;
+  const row = loaded.row;
+  if (!row || row.status !== "confirmed") {
+    return { ok: false, error: "Only a narrative the client confirmed can be updated internally. Push it instead." };
+  }
+  const narrative = cleanNarrative(clientId, draft);
+  const problem = narrativeProblem(narrative);
+  if (problem) return { ok: false, error: problem };
+
+  const at = nowIso();
+  // The email saved with the draft is kept as it was.
+  const stored = row.draft && typeof row.draft === "object" ? (row.draft as Record<string, unknown>) : {};
+  const { client_email: _unused, ...content } = narrative;
+  void _unused;
+  const { data, error } = await access.supabase
+    .from("setup_steps")
+    .update({
+      draft: {
+        ...content,
+        client_email: asClientEmail(stored.client_email),
+        internal_update: { at, narrative: narrativeForClient(content) },
+      },
+      updated_at: at,
+    })
+    .eq("client_id", clientId)
+    .eq("step", "framing")
+    .eq("status", "confirmed")
+    .eq("version", row.version)
+    .select("client_id");
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  if (!data || data.length === 0) {
+    return { ok: false, error: "The narrative changed meanwhile. Refresh and try again." };
+  }
+
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true, at };
 }
 
 // ---------------------------------------------------------------------------

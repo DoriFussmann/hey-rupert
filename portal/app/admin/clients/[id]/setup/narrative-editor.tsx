@@ -2,12 +2,14 @@
 
 import { useState } from "react";
 import { analyzeClientMaterials, buildClientNarrative } from "@/app/admin/agent-actions";
+import { saveNarrativeInternalUpdate } from "@/app/admin/setup-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
 import { MarkdownField } from "@/app/admin/clients/[id]/setup/markdown-field";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
   ClientAnswer,
+  ClientQuestions,
   StepFrame,
   inputClass,
   primaryButton,
@@ -17,6 +19,7 @@ import { formatDateAtTime } from "@/lib/format";
 import {
   asClientEmail,
   asNarrative,
+  internalNarrativeUpdate,
   narrativeHasEarlierDraft,
   narrativeProblem,
   type MaterialsFeedback,
@@ -37,9 +40,14 @@ const EMPTY_FEEDBACK: MaterialsFeedback = {
 
 type Message = { kind: "ok" | "error"; text: string } | null;
 
+/** The narrative as Rupert edits it: the client's questions live on the published version. */
+function editable(value: unknown): NarrativePayload {
+  return { ...asNarrative(value), questions: undefined };
+}
+
 /** The draft in its stored shape, to tell whether there are unsaved edits. */
 function snapshot(narrative: unknown) {
-  return JSON.stringify(asNarrative(narrative));
+  return JSON.stringify(editable(narrative));
 }
 
 /**
@@ -69,7 +77,7 @@ export function NarrativeEditor({
   /** Signed links for files already saved on the draft. */
   fileLinks: Record<string, string>;
 }) {
-  const initial = asNarrative(row?.draft ?? row?.published);
+  const initial = editable(row?.draft ?? row?.published);
   const initialEmail = asClientEmail(
     row?.draft && typeof row.draft === "object"
       ? (row.draft as Record<string, unknown>).client_email
@@ -77,14 +85,16 @@ export function NarrativeEditor({
   );
   const [narrative, setNarrative] = useState<NarrativePayload>(initial);
   const [saved, setSaved] = useState(snapshot(initial));
-  const [pending, setPending] = useState<null | "analyze" | "build">(null);
+  const [pending, setPending] = useState<null | "analyze" | "build" | "internal">(null);
   const [message, setMessage] = useState<Message>(null);
+  const [internalAt, setInternalAt] = useState(internalNarrativeUpdate(row?.draft)?.at ?? null);
 
   const changesRequested = row?.status === "changes_requested";
+  const confirmed = row?.status === "confirmed";
   const feedback = narrative.feedback;
   const hasFeedback = Boolean(feedback);
-  const hasText = [narrative.core, narrative.key_messages, narrative.approach].some((value) =>
-    value.trim(),
+  const hasText = [narrative.summary, narrative.core, narrative.key_messages, narrative.approach].some(
+    (value) => value.trim(),
   );
 
   function update(patch: Partial<NarrativePayload>) {
@@ -179,6 +189,32 @@ export function NarrativeEditor({
     }
   }
 
+  async function onInternalUpdate() {
+    if (
+      !window.confirm(
+        "Save this as an internal update? The email copy will be written from it. The client is not emailed and is not asked to confirm again; their page keeps the version they confirmed.",
+      )
+    ) {
+      return;
+    }
+    setPending("internal");
+    setMessage(null);
+    try {
+      const result = await saveNarrativeInternalUpdate(clientId, narrative);
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      setInternalAt(result.at);
+      setSaved(snapshot(narrative));
+      setMessage({ kind: "ok", text: "Internal update saved. The email copy will be written from it." });
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to save." });
+    } finally {
+      setPending(null);
+    }
+  }
+
   const canAnalyze = materialsSubmitted && claudeReady && pending === null;
   const canBuild = (hasFeedback || legacyFeedback) && claudeReady && pending === null;
 
@@ -204,10 +240,10 @@ export function NarrativeEditor({
             {pending === "build"
               ? "Building…"
               : changesRequested
-                ? "Rebuild with client's changes"
+                ? "Rebuild With Client's Changes"
                 : hasText
-                  ? "Rebuild narrative"
-                  : "Build narrative"}
+                  ? "Rebuild Narrative"
+                  : "Build Narrative"}
           </button>
         </div>
       }
@@ -239,6 +275,25 @@ export function NarrativeEditor({
         </p>
       ) : null}
       <ClientAnswer row={row} hideWaiting />
+      <ClientQuestions clientId={clientId} step="framing" row={row} />
+      {confirmed ? (
+        <section className="mx-lg mt-md rounded-md border border-border bg-background px-md py-sm">
+          <p className="text-body-sm text-secondary">
+            The client confirmed this narrative. To use new intake info or materials without asking them
+            again: Re-analyze or Rebuild Narrative, edit, then Save as Internal Update. The email copy is
+            written from it; the client&apos;s page keeps the version they confirmed.
+            {internalAt ? ` Internal update saved ${formatDateAtTime(internalAt)}.` : ""}
+          </p>
+          <button
+            type="button"
+            className={`${secondaryButton} mt-sm`}
+            disabled={pending !== null}
+            onClick={() => void onInternalUpdate()}
+          >
+            {pending === "internal" ? "Saving…" : "Save as Internal Update"}
+          </button>
+        </section>
+      ) : null}
       {changesRequested && narrative.change_summary ? (
         <section className="mx-lg mt-md rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
           <p className={labelClass}>What Changed · only you see this</p>
@@ -310,7 +365,20 @@ export function NarrativeEditor({
         </section>
 
         <div>
-          <p className={labelClass}>Core story</p>
+          <p className={labelClass}>The Outreach Narrative · what the client reads and confirms</p>
+          <p className="mb-sm mt-xs text-body-sm text-muted">
+            150 to 250 words, light and clear, drawn from the three sections below. Build narrative
+            writes it for you.
+          </p>
+          <MarkdownField
+            label="The Outreach Narrative"
+            value={narrative.summary}
+            onChange={(value) => update({ summary: value })}
+            height={280}
+          />
+        </div>
+        <div>
+          <p className={labelClass}>Core story · for Rupert and the emails</p>
           <div className="mt-sm">
             <MarkdownField
               label="Core story"
@@ -385,7 +453,7 @@ export function NarrativeEditor({
         onSaved={() => setSaved(snapshot(narrative))}
         problem={narrativeProblem(narrative)}
         busy={pending !== null}
-        pushSummary="Pushes the narrative (core story, key messages, approach, what happens next), the Company Materials Feedback, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there or ask for changes, and can comment on the feedback."
+        pushSummary="Pushes The Outreach Narrative (and what happens next), the Company Materials Feedback, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
       />
     </StepFrame>
   );

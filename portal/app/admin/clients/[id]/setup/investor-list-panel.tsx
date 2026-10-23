@@ -5,6 +5,7 @@ import Link from "next/link";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import {
   ClientAnswer,
+  ClientQuestions,
   EarlierRounds,
   StepFrame,
   inputClass,
@@ -124,6 +125,7 @@ export function InvestorListPanel({
         {sendStatus(row)}
       </p>
       <ClientAnswer row={row} hideWaiting />
+      <ClientQuestions clientId={clientId} step="investor_list" row={row} />
 
       {empty ? (
         <p className="px-lg pt-md text-body-sm text-secondary">

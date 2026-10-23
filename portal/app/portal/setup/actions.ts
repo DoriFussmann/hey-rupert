@@ -19,6 +19,9 @@ import {
   MATERIAL_MAX_FILES,
   MATERIALS_FEEDBACK_NOTE_KEY,
   NOTE_MAX,
+  QUESTION_MAX,
+  addQuestion,
+  questionsOf,
   asEmailCopy,
   asFeedbackPublished,
   asInvestorList,
@@ -37,7 +40,13 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
-import { loadSetupStep, loadSetupSteps, nowIso, setupTableError } from "@/lib/setup-server";
+import {
+  loadSetupStep,
+  loadSetupSteps,
+  nowIso,
+  saveQuestions,
+  setupTableError,
+} from "@/lib/setup-server";
 
 export type SetupActionResult = { ok: true } | { ok: false; error: string };
 
@@ -522,6 +531,66 @@ export async function respondToSetupStep(input: {
 
   revalidateSetup(access.user.id);
   return { ok: true };
+}
+
+const QUESTION_HEADING: Record<ReviewStep, string> = {
+  framing: "the outreach narrative",
+  investor_list: "the investor list",
+  email_copy: "the email copy",
+};
+
+/**
+ * The client asks Rupert a question on a review step. It never changes the
+ * turn: they can still confirm. Rupert is notified in-app and by email.
+ */
+export async function askSetupQuestion(input: {
+  step: string;
+  version: number;
+  question: string;
+}): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const opened = await loadSetupClient(access);
+  if (!opened.ok) return opened;
+
+  const step = input?.step as ReviewStep;
+  if (!REVIEW_STEPS.has(step)) return { ok: false, error: "Unknown step." };
+  const text = String(input.question ?? "").trim();
+  if (!text) return { ok: false, error: "Write your question first." };
+  if (text.length > QUESTION_MAX) {
+    return { ok: false, error: `Please keep your question under ${QUESTION_MAX} characters.` };
+  }
+
+  // One retry when another write landed between the read and the save.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const loaded = await loadSetupStep(access.supabase, access.user.id, step);
+    if (!loaded.ok) return loaded;
+    const row = loaded.row;
+    if (!row || row.status !== "with_client") {
+      return { ok: false, error: "There is nothing waiting for your review here." };
+    }
+    if (Number(input.version) !== row.version) {
+      return { ok: false, error: "Rupert has updated this since you opened it. Refresh to see the latest." };
+    }
+    const added = addQuestion(questionsOf(row), {
+      id: randomUUID(),
+      question: text,
+      at: nowIso(),
+      version: row.version,
+    });
+    if (!added.ok) return added;
+    const saved = await saveQuestions(access.supabase, row, added.questions);
+    if (!saved.ok) return saved;
+    if (!saved.saved) continue;
+
+    await notifyAdmin(access.supabase, access.user.id, `${step}_question`, {
+      email: true,
+      details: `Their question on ${QUESTION_HEADING[step]}:\n${text}\n\nAnswer it on the client page. They can still confirm meanwhile.`,
+    });
+    revalidateSetup(access.user.id);
+    return { ok: true };
+  }
+  return { ok: false, error: "Your question could not be saved. Please try again." };
 }
 
 /** Saves exclude, "I know them", or a note on one fund. Does not change the turn. */

@@ -5,9 +5,9 @@ import { ReviewActions } from "@/components/setup/review-actions";
 import { MATERIALS_FEEDBACK_NOTE_KEY, NOTE_MAX } from "@/lib/setup";
 
 /**
- * Confirm or request changes on the narrative. When the version carries the
- * Company Materials Feedback, an optional comment on it travels with the
- * answer; it never blocks confirming.
+ * Confirm Narrative, Ask a Question or Request Changes. When the version
+ * carries the Company Materials Feedback (shown below), an optional comment
+ * on it travels with the answer; it never blocks confirming.
  */
 export function NarrativeReview({
   version,
@@ -22,17 +22,26 @@ export function NarrativeReview({
 
   return (
     <>
+      <ReviewActions
+        step="framing"
+        version={version}
+        confirmLabel="Confirm Narrative"
+        itemNotes={hasFeedback ? { [MATERIALS_FEEDBACK_NOTE_KEY]: comment } : undefined}
+        itemNotesLabel="on the feedback"
+        intro="Confirm The Outreach Narrative to move forward, ask Rupert a question, or request changes."
+        readOnly={readOnly}
+      />
       {hasFeedback ? (
-        <section className="mt-lg rounded-card border border-border bg-surface px-lg py-md">
+        <section className="rounded-card border border-border bg-surface px-lg py-md">
           <label
             htmlFor="feedback-comment"
             className="block text-label uppercase tracking-label text-muted"
           >
-            Comments on the feedback (optional)
+            Comments on the Feedback Below (optional)
           </label>
           <p className="mt-xs text-body-sm text-muted">
             Anything you&apos;d like Rupert to know about his notes on your materials. Sent with your
-            answer below.
+            answer above.
           </p>
           <textarea
             id="feedback-comment"
@@ -46,15 +55,6 @@ export function NarrativeReview({
           />
         </section>
       ) : null}
-      <ReviewActions
-        step="framing"
-        version={version}
-        confirmLabel="Confirm narrative"
-        itemNotes={hasFeedback ? { [MATERIALS_FEEDBACK_NOTE_KEY]: comment } : undefined}
-        itemNotesLabel="on the feedback"
-        intro="Confirm the narrative to move forward, or send Rupert your changes and questions."
-        readOnly={readOnly}
-      />
     </>
   );
 }

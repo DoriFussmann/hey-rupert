@@ -131,6 +131,8 @@ export function fourTierClientList(
     const reasons = reasonsOf(row, firm, stageLabel);
     const checkSize = (checkSizes[firm.id] ?? "").trim();
     const stages = firm.stages.filter(Boolean).slice(0, 4).join(", ");
+    const sectors = Array.from(new Set([...firm.vert, ...firm.ind].filter(Boolean))).slice(0, 4).join(", ");
+    const geography = firm.geo.filter(Boolean).slice(0, 4).join(", ");
     const item: InvestorRow = {
       id: row.firmId.trim().slice(0, 200),
       fund_name: firm.name,
@@ -141,6 +143,8 @@ export function fourTierClientList(
       location: location || undefined,
       check_size: checkSize || undefined,
       stage_focus: stages || undefined,
+      sector_focus: sectors || undefined,
+      geography_focus: geography || undefined,
       website: websiteHref(firm.web) || undefined,
       // Generalists use Tier 4's email copy; marked broad, they are counted apart from every tier.
       tier: row.status === "generalist" ? FOUR_TIER_FIT.tier4 : FOUR_TIER_FIT[row.tier as TierKey],

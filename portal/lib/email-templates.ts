@@ -27,7 +27,9 @@ export type EmailToken =
   | "setup_link"
   | "link_expires"
   | "login_email"
-  | "portal_host";
+  | "portal_host"
+  | "question"
+  | "answer";
 
 export const TOKEN_HELP: Record<EmailToken, string> = {
   greeting: '"Hi Maya," (or "Hi," when there is no first name)',
@@ -53,6 +55,8 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   link_expires: 'When the set-password link stops working, e.g. "Nov 6, 2026"',
   login_email: "The email address the client logs in with",
   portal_host: 'Where the client logs in later, e.g. "heyrupert.com"',
+  question: "The client's question, as they wrote it",
+  answer: "Your answer, as you wrote it",
 };
 
 /** Example values for previews and test emails. */
@@ -76,6 +80,8 @@ export const SAMPLE_VALUES: Record<EmailToken, string> = {
   link_expires: "Nov 6, 2026",
   login_email: "maya@acme.com",
   portal_host: "heyrupert.com",
+  question: "Could we leave out funds that backed our main competitor?",
+  answer: "Yes. I've marked them, and they won't be contacted.",
 };
 
 const TOKEN_PATTERN = /\{([a-z_]+)\}/g;
@@ -136,6 +142,9 @@ export type ClientTurn =
   | "email_copy_ready";
 
 export type AdminEmailType =
+  | "framing_question"
+  | "investor_list_question"
+  | "email_copy_question"
   | "sow_confirmed"
   | "service_order_agreed"
   | "setup_fee_paid"
@@ -156,7 +165,8 @@ export type EmailTemplateKey =
   | `client:${ClientTurn}`
   | `admin:${AdminEmailType}`
   | "reminder"
-  | typeof WELCOME_EMAIL_KEY;
+  | typeof WELCOME_EMAIL_KEY
+  | typeof QUESTION_ANSWERED_KEY;
 
 export type EmailTemplateGroup = "client" | "admin" | "reminder";
 
@@ -226,6 +236,27 @@ export const WELCOME_TOKENS_LIST: readonly EmailToken[] = [
  * The welcome email Rupert copies and sends himself after adding a client:
  * never sent by the portal. The set-password details are filled in.
  */
+export const QUESTION_ANSWERED_KEY = "client:question_answered";
+
+/** Sent when Rupert answers a question the client asked on a review step. */
+const QUESTION_ANSWERED_TEMPLATE: EmailTemplateDefinition = {
+  key: QUESTION_ANSWERED_KEY,
+  group: "client",
+  title: "Answer to your question",
+  trigger:
+    "When you answer a client's question on the Outreach Narrative, Investor List or Email Copy. It goes even when automatic emails are paused, because you send it yourself.",
+  subject: "Rupert answered your question",
+  body: [
+    "{greeting}",
+    "You asked:\n{question}",
+    "Rupert's answer:\n{answer}",
+    "You can confirm whenever you're ready, or ask another question: {portal_link}",
+    "{signature}",
+  ].join("\n\n"),
+  tokens: ["greeting", "first_name", "company", "question", "answer", "portal_link", "signature"],
+  switchable: false,
+};
+
 const WELCOME_TEMPLATE: EmailTemplateDefinition = {
   key: WELCOME_EMAIL_KEY,
   group: "client",
@@ -346,7 +377,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   clientTemplate(
     "email_copy_ready",
     "Outreach emails ready",
-    "When you publish the email copy (or a revised version).",
+    "Fills Draft Email under Email Copy when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send.",
     "/portal/setup/email-copy",
     "Your outreach emails are ready — you're up",
     "Rupert has written the outreach emails for each investor tier.",
@@ -377,6 +408,9 @@ function adminTemplate(
 }
 
 const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
+  adminTemplate("framing_question", "Question on the narrative", "asked a question on the outreach narrative"),
+  adminTemplate("investor_list_question", "Question on the investor list", "asked a question on the investor list"),
+  adminTemplate("email_copy_question", "Question on the email copy", "asked a question on the email copy"),
   adminTemplate("sow_confirmed", "Statement of Work confirmed", "confirmed the Statement of Work"),
   adminTemplate("service_order_agreed", "Service Order signed", "signed the Service Order"),
   adminTemplate("setup_fee_paid", "Setup Fee paid", "paid the Setup Fee"),
@@ -407,8 +441,8 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
   adminTemplate("investor_list_confirmed", "Investor list confirmed", "confirmed the investor list"),
   adminTemplate(
     "investor_list_changes_requested",
-    "Investor list questions",
-    "sent questions on the investor list",
+    "Investor list changes requested",
+    "asked for changes to the investor list",
   ),
   adminTemplate("email_copy_confirmed", "Email copy confirmed", "confirmed the email copy"),
   adminTemplate(
@@ -449,6 +483,7 @@ const REMINDER_TEMPLATE: EmailTemplateDefinition = {
 export const EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
   WELCOME_TEMPLATE,
   ...CLIENT_TEMPLATES,
+  QUESTION_ANSWERED_TEMPLATE,
   ...ADMIN_TEMPLATES,
   REMINDER_TEMPLATE,
 ];

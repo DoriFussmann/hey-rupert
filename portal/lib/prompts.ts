@@ -121,7 +121,7 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   outreach_narrative: agentDetails(
     "outreach_narrative",
-    "The company profile, client record, intake, answers, Rupert's Company Materials Feedback, and the founder's change requests; the answer format (three sections, plus changes when revising).",
+    "The company profile, client record, intake, answers, Rupert's Company Materials Feedback, and the founder's change requests; the answer format (The Outreach Narrative the client confirms and three sections, plus changes when revising).",
     true,
   ),
   email_copy: agentDetails(
@@ -145,6 +145,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   investor_list_email: agentDetails(
     "investor_list_email",
     `Facts the code prepares from this founder's list only: the confirmed plan, funds and share per tier, up to five Core funds that may be named with their matched criteria, and the verification results with a fixed definition; Rupert's note and company information. ${EMAIL_FIXED}`,
+    true,
+  ),
+  email_copy_email: agentDetails(
+    "email_copy_email",
+    `Rupert's edited email copy (every tier's emails and the LinkedIn messages), the funds per tier, and company information. ${EMAIL_FIXED}`,
     true,
   ),
   nudge_email: agentDetails("nudge_email", `The waiting step, how long it has waited and the nudges already sent. ${EMAIL_FIXED}`, true),

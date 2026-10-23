@@ -5,7 +5,7 @@ import { ResponseHistory } from "@/components/setup/response-history";
 import { AdminReply } from "@/components/setup/admin-reply";
 import { NarrativeReview } from "@/components/setup/narrative-review";
 import { ReviewStatus } from "@/components/setup/review-status";
-import { TurnBanner } from "@/components/setup/turn-banner";
+import { QuestionThread } from "@/components/setup/question-thread";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { getPortalSetup } from "@/lib/portal-setup";
 import {
@@ -13,6 +13,7 @@ import {
   asNarrative,
   feedbackChecks,
   isSharedWithClient,
+  questionsOf,
 } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
 import { markStepViewed } from "@/lib/step-views-server";
@@ -47,47 +48,49 @@ export default async function FramingPage() {
         }
       : null;
 
+  const open = row?.status === "with_client";
+  const questions = questionsOf(row);
+
   return (
     <>
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Outreach Narrative"
-        description="How we'll present the company to investors: the story, the key messages, and how Rupert will approach them. With it, Rupert's feedback on your materials."
+        description="How Rupert will present your company to investors. With it, his feedback on your materials."
       />
-      {row?.status === "with_client" ? (
-        <TurnBanner
-          owner="client"
-          title={
-            narrative.feedback
-              ? "Review the story, the key messages and the approach, then confirm or send Rupert your notes. Read his feedback on your materials too: nothing to confirm there."
-              : "Review the story, the key messages and the approach, then confirm or send Rupert your notes."
-          }
-        />
-      ) : null}
       <ReviewStatus
         item={item}
         row={row}
+        clientTitle={
+          narrative.feedback
+            ? "Confirm The Outreach Narrative. Rupert's feedback on your materials is below it: nothing to confirm there."
+            : "Confirm The Outreach Narrative, or ask Rupert a question."
+        }
         waitingTitle="Rupert has your note."
         waitingDetail="He'll reply and send the narrative back for you to confirm."
       />
       {visible && row ? (
         <>
-          {row.status === "with_client" && narrative.admin_note ? (
-            <div className="sticky top-0 z-20">
-              <AdminReply note={narrative.admin_note} />
-            </div>
-          ) : null}
-          <NarrativeView narrative={narrative} fileLinks={fileLinks} feedback={feedback} />
-          {row.status === "with_client" ? (
-            <>
-              <AdminReply note={narrative.admin_note} />
-              <NarrativeReview
-                version={row.version}
-                hasFeedback={Boolean(narrative.feedback)}
-                readOnly={viewAs}
-              />
-            </>
-          ) : null}
+          {open ? <AdminReply note={narrative.admin_note} /> : null}
+          <NarrativeView
+            narrative={narrative}
+            fileLinks={fileLinks}
+            feedback={feedback}
+            actions={
+              open ? (
+                <>
+                  <QuestionThread questions={questions} />
+                  <NarrativeReview
+                    version={row.version}
+                    hasFeedback={Boolean(narrative.feedback)}
+                    readOnly={viewAs}
+                  />
+                </>
+              ) : questions.length > 0 ? (
+                <QuestionThread questions={questions} />
+              ) : null
+            }
+          />
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
       ) : null}

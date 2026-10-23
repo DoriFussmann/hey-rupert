@@ -5,6 +5,8 @@ import {
   asMaterials,
   asResponse,
   isSetupStepId,
+  withPublishedQuestions,
+  type SetupQuestion,
   type MaterialFile,
   type SetupHistoryEntry,
   type SetupRowStatus,
@@ -113,6 +115,28 @@ export async function loadSetupStep(
     ok: true,
     row: data ? asSetupStepState(data as Record<string, unknown>) : null,
   };
+}
+
+/**
+ * Changes the questions on a step's published version. Only when the row is
+ * unchanged since it was read, so a question and an answer written at the
+ * same moment never overwrite each other; `false` means try again.
+ */
+export async function saveQuestions(
+  supabase: ServiceClient,
+  row: SetupStepState,
+  questions: SetupQuestion[],
+): Promise<{ ok: true; saved: boolean } | { ok: false; error: string }> {
+  const { data, error } = await supabase
+    .from("setup_steps")
+    .update({ published: withPublishedQuestions(row.published, questions), updated_at: nowIso() })
+    .eq("client_id", row.client_id)
+    .eq("step", row.step)
+    .eq("version", row.version)
+    .eq("updated_at", row.updated_at)
+    .select("client_id");
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  return { ok: true, saved: Boolean(data && data.length > 0) };
 }
 
 export const AGENTS_MIGRATION_MISSING =

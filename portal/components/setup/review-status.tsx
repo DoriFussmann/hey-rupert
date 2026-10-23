@@ -3,15 +3,18 @@ import { TurnBanner } from "@/components/setup/turn-banner";
 import { formatDateAtTime } from "@/lib/format";
 import type { SetupItem, SetupStepState } from "@/lib/setup";
 
-/** The turn banner for a review step (framing, investor list, email copy). */
+/** The one turn banner on a review step (framing, investor list, email copy). */
 export function ReviewStatus({
   item,
   row,
+  clientTitle,
   waitingTitle,
   waitingDetail,
 }: {
   item: SetupItem | null;
   row: SetupStepState | null;
+  /** What the client is asked to do while it is their turn. */
+  clientTitle?: string;
   /** Replaces the generic "working on your feedback" copy. */
   waitingTitle?: string;
   waitingDetail?: string;
@@ -26,7 +29,7 @@ export function ReviewStatus({
     return (
       <TurnBanner
         owner="client"
-        title={item.detail}
+        title={clientTitle ?? item.detail}
         detail={
           row.published_at
             ? `Shared ${formatDateAtTime(row.published_at)}${row.version > 1 ? ` · version ${row.version}` : ""}`

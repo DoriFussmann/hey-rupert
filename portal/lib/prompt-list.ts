@@ -16,6 +16,7 @@ export const PROMPT_LIST = [
   { key: "narrative_email", title: "Narrative email", group: "Emails to founders" },
   { key: "narrative_email_revision", title: "Narrative email: reply to changes", group: "Emails to founders" },
   { key: "investor_list_email", title: "Investor list email", group: "Emails to founders" },
+  { key: "email_copy_email", title: "Email copy email", group: "Emails to founders" },
   { key: "nudge_email", title: "Nudge email", group: "Emails to founders" },
   { key: "verify_role_check", title: "Verify emails: role check", group: "Matching" },
   { key: "taxonomy_mapping", title: "Taxonomy: map raw labels", group: "Taxonomy" },

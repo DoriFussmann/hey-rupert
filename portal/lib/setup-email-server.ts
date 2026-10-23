@@ -4,6 +4,7 @@ import type { EmailResult } from "@/lib/email";
 import { sendClientEmail } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
 import {
+  QUESTION_ANSWERED_KEY,
   emailTemplate,
   renderEmail,
   tidyBody,
@@ -25,6 +26,7 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 const TEMPLATE_KEY = {
   framing: "client:framing_ready",
   investor_list: "client:investor_list_ready",
+  email_copy: "client:email_copy_ready",
 } as const satisfies Record<SetupDocumentStep, string>;
 
 export const STEP_EMAIL_PAUSED_NOTE =
@@ -177,5 +179,33 @@ export async function sendStepEmail(
     subject: email.subject,
     text,
     html: step === "investor_list" ? investorListEmailHtml(text) : undefined,
+  });
+}
+
+/**
+ * Emails the client Rupert's answer to their question, with a link back to
+ * the step. Sent even when automatic emails are paused: Rupert sends it.
+ */
+export async function sendQuestionAnswerEmail(
+  supabase: ServiceClient,
+  clientId: string,
+  step: SetupDocumentStep,
+  { question, answer }: { question: string; answer: string },
+): Promise<EmailResult> {
+  const context = await loadContext(supabase, clientId, step);
+  if (!context.ok) return { ok: false, reason: context.error };
+  const settings = await loadEmailSettings(supabase);
+  const rendered = renderEmail(settings.templates[QUESTION_ANSWERED_KEY], {
+    ...baseValues(context, 1),
+    question: question.trim(),
+    answer: answer.trim(),
+  });
+  return sendClientEmail(supabase, {
+    clientId,
+    kind: "manual",
+    templateKey: QUESTION_ANSWERED_KEY,
+    to: [context.to],
+    subject: rendered.subject,
+    text: rendered.body,
   });
 }

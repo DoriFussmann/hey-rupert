@@ -12,10 +12,10 @@ const read = (path: string) => readFileSync(join(portal, path), "utf8").replace(
 const row = (slug: string, content: string | null, version: number | null): PromptRow => ({ slug, content, active_version: version });
 const slug = (key: Parameters<typeof promptDefinition>[0]) => promptDefinition(key).slug;
 
-test("the registry: 16 prompts, each stored once, each starting text usable", () => {
-  assert.equal(PROMPTS.length, 16);
-  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 16);
-  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 16);
+test("the registry: 17 prompts, each stored once, each starting text usable", () => {
+  assert.equal(PROMPTS.length, 17);
+  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 17);
+  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 17);
   for (const prompt of PROMPTS) {
     // The database only accepts these slugs as prompts.
     assert.ok(prompt.slug === "intake_prompt" || prompt.slug.startsWith("agent_prompt:"), prompt.slug);
@@ -160,4 +160,16 @@ test("a prompt can only shape text: AI drafts can't send email or bypass approva
   }
   // The prompt tests run the draft functions only; saving and sending are separate admin actions.
   assert.doesNotMatch(read("app/admin/prompt-actions.ts"), /saveIntakeBrief|sendNudge|upsert|\.insert\(|\.update\(/);
+});
+
+test("the client-review migration saves exactly the registry's text for the prompts it adds or updates", () => {
+  const sql = read("supabase/client_review.sql");
+  const tag = "$rupert_prompt$";
+  for (const key of ["email_copy_email", "outreach_narrative"] as const) {
+    const prompt = PROMPTS.find((item) => item.key === key)!;
+    assert.ok(sql.includes(`'${prompt.slug}'`), prompt.slug);
+    assert.ok(sql.includes(`${tag}${prompt.defaultText}${tag}`), `${key}: text differs from the registry`);
+  }
+  // An edited narrative prompt is never replaced.
+  assert.match(sql, /elsif btrim\(v_active\) <> btrim\(v_old\) then/);
 });

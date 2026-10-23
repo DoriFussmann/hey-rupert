@@ -50,6 +50,9 @@ export function notificationLabel(type: string) {
   if (type === "materials_submitted") return "Submitted Company Materials";
   if (type === "materials_added") return "Added Company Files";
   if (type === "intake_updated") return "Added to Intake";
+  if (type === "framing_question") return "Question on Narrative";
+  if (type === "investor_list_question") return "Question on Investor List";
+  if (type === "email_copy_question") return "Question on Email Copy";
   if (type === "feedback_viewed") return "Opened Analysis & Feedback";
   if (type === "narrative_viewed") return "Opened Outreach Narrative";
   if (type === "deck_review_confirmed") return "Confirmed Analysis & Feedback";
@@ -57,7 +60,7 @@ export function notificationLabel(type: string) {
   if (type === "framing_changes_requested") return "Requested Narrative Changes";
   if (type === "investor_list_confirmed") return "Confirmed Investor List";
   if (type === "investor_list_changes_requested") {
-    return "Questions on Investor List";
+    return "Requested List Changes";
   }
   if (type === "email_copy_confirmed") return "Confirmed Email Copy";
   if (type === "email_copy_changes_requested") return "Requested Email Changes";
@@ -78,6 +81,9 @@ export function notificationAction(type: string) {
   if (type === "materials_submitted") return "submitted their company materials";
   if (type === "materials_added") return "added files to their company materials";
   if (type === "intake_updated") return "added to their intake after finishing it";
+  if (type === "framing_question") return "asked a question on the outreach narrative";
+  if (type === "investor_list_question") return "asked a question on the investor list";
+  if (type === "email_copy_question") return "asked a question on the email copy";
   if (type === "feedback_viewed") return "opened your Analysis & Feedback";
   if (type === "narrative_viewed") return "opened your outreach narrative";
   if (type === "deck_review_confirmed") return "confirmed the Analysis & Feedback";
@@ -87,7 +93,7 @@ export function notificationAction(type: string) {
   }
   if (type === "investor_list_confirmed") return "confirmed the investor list";
   if (type === "investor_list_changes_requested") {
-    return "sent questions on the investor list";
+    return "asked for changes to the investor list";
   }
   if (type === "email_copy_confirmed") return "confirmed the email copy";
   if (type === "email_copy_changes_requested") {

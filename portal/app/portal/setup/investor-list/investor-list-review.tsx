@@ -2,18 +2,23 @@
 
 import { useEffect, useId, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { respondToSetupStep, saveInvestorFundFlag } from "@/app/portal/setup/actions";
+import { askSetupQuestion, respondToSetupStep, saveInvestorFundFlag } from "@/app/portal/setup/actions";
+import { QuestionThread } from "@/components/setup/question-thread";
+import { TurnBanner } from "@/components/setup/turn-banner";
 import { formatDate } from "@/lib/format";
 import { BROAD_LABEL } from "@/lib/founder-list-facts";
 import { applyFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import {
   NOTE_MAX,
+  QUESTION_MAX,
   fitTiersFor,
+  tierStatsFor,
   type FitTier,
   type InvestorFundFlag,
   type InvestorListSummary,
   type InvestorRow,
   type InvestorVerification,
+  type SetupQuestion,
   type TierScheme,
 } from "@/lib/setup";
 
@@ -25,9 +30,41 @@ type TabKey = FitTier | "broad";
 const BROAD_DETAIL = "Investors with broader mandates. They fit your stage and location, but they are not sector-specific matches.";
 
 const primaryButton =
-  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-primary px-md text-body text-white hover:bg-primary-hover motion-reduce:transition-none";
+  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md bg-primary px-md text-body-sm text-white hover:bg-primary-hover motion-reduce:transition-none";
 const secondaryButton =
-  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border bg-surface px-md text-body text-heading hover:bg-background motion-reduce:transition-none";
+  "inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-md border border-border bg-surface px-md text-body-sm text-heading hover:bg-background motion-reduce:transition-none";
+
+type AskMode = "question" | "changes";
+
+const ASK_TEXT: Record<AskMode, { title: (admin: string) => string; detail: string; label: string; send: string }> = {
+  question: {
+    title: (admin) => `Ask ${admin} a Question`,
+    detail: "The answer comes here and by email. You can still confirm the list meanwhile.",
+    label: "Your question",
+    send: "Send Question",
+  },
+  changes: {
+    title: () => "Request Changes",
+    detail: "Rupert updates the list and sends you a new version to confirm. Your notes on funds are included.",
+    label: "What should change",
+    send: "Send Request",
+  },
+};
+
+/** The fund's details, for the panel that opens under it. */
+function detailRows(row: InvestorRow) {
+  return [
+    { label: "Firm Type", value: row.fund_type || fundType(row) },
+    { label: "Stage", value: row.stage_focus ?? "" },
+    { label: "Geography", value: row.geography_focus || row.location || "" },
+    { label: "Sector", value: row.sector_focus ?? "" },
+    {
+      label: "Contacts",
+      value: typeof row.contact_count === "number" ? n(row.contact_count) : row.contact,
+    },
+    ...(row.check_size ? [{ label: "Check Size", value: row.check_size }] : []),
+  ];
+}
 const smallButton =
   "inline-flex min-h-[44px] items-center justify-center rounded-md border border-border bg-surface px-sm text-body-sm text-secondary hover:bg-background hover:text-heading motion-reduce:transition-none";
 
@@ -78,6 +115,8 @@ export function InvestorListReview({
   adminName,
   publishedAt,
   adminNote,
+  questions = [],
+  intro,
   readOnly,
   heading = "h1",
 }: {
@@ -94,6 +133,9 @@ export function InvestorListReview({
   adminName: string;
   publishedAt?: string | null;
   adminNote?: string;
+  questions?: SetupQuestion[];
+  /** One line above the tier cards: what the list is based on. */
+  intro?: string;
   /** Preview and view-as: controls stay visible and do not save. */
   readOnly: boolean;
   heading?: "h1" | "p";
@@ -115,9 +157,11 @@ export function InvestorListReview({
   const [limit, setLimit] = useState(PAGE_SIZE);
   const [shownMessage, setShownMessage] = useState("");
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [askOpen, setAskOpen] = useState(false);
+  const [askMode, setAskMode] = useState<AskMode | null>(null);
   const [askText, setAskText] = useState("");
-  const [pending, setPending] = useState<null | "confirmed" | "changes_requested">(null);
+  const [asked, setAsked] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  const [pending, setPending] = useState<null | "confirmed" | AskMode>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveFailed, setSaveFailed] = useState<Record<string, FlagPatch>>({});
 
@@ -139,24 +183,15 @@ export function InvestorListReview({
   useEffect(() => {
     const dialog = askRef.current;
     if (!dialog) return;
-    if (askOpen && !dialog.open) dialog.showModal();
-    if (!askOpen && dialog.open) dialog.close();
-  }, [askOpen]);
+    if (askMode && !dialog.open) dialog.showModal();
+    if (!askMode && dialog.open) dialog.close();
+  }, [askMode]);
 
-  const tierStats = useMemo(() => {
-    const contactsOf = (list: InvestorRow[]) =>
-      list.some((row) => typeof row.contact_count === "number") ? list.reduce((sum, row) => sum + (row.contact_count ?? 0), 0) : null;
-    const stats: { tier: TabKey; label: string; detail: string; funds: number; contacts: number | null }[] = tiers.map((entry) => {
-      const inTier = rows.filter((row) => row.tier === entry.tier && !row.broad);
-      const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
-      return { ...entry, funds: inTier.length, contacts: fromSummary ? fromSummary.contacts : contactsOf(inTier) };
-    });
-    const broad = rows.filter((row) => row.broad);
-    if (broad.length > 0) {
-      stats.push({ tier: "broad", label: BROAD_LABEL, detail: BROAD_DETAIL, funds: broad.length, contacts: contactsOf(broad) });
-    }
-    return stats;
-  }, [rows, summary, tiers]);
+  // Excluded funds drop out of the counts as soon as the client excludes them.
+  const tierStats = useMemo(
+    () => tierStatsFor(rows, flags, tiers, summary, { label: BROAD_LABEL, detail: BROAD_DETAIL }),
+    [rows, summary, tiers, flags],
+  );
 
   const inTab = useMemo(
     () => rows.filter((row) => (tier === "broad" ? row.broad : row.tier === tier && !row.broad)),
@@ -232,20 +267,16 @@ export function InvestorListReview({
     void commit(id, { note: next });
   }
 
-  async function respond(decision: "confirmed" | "changes_requested") {
+  async function respond() {
     if (blocked) return;
-    if (decision === "changes_requested" && !askText.trim()) {
-      setError("Write your question first.");
-      return;
-    }
-    setPending(decision);
+    setPending("confirmed");
     setError(null);
     try {
       const result = await respondToSetupStep({
         step: "investor_list",
         version,
-        decision,
-        note: decision === "changes_requested" ? askText : "",
+        decision: "confirmed",
+        note: "",
         itemNotes: notesFromFlags(flags),
       });
       if (!result.ok) {
@@ -253,7 +284,41 @@ export function InvestorListReview({
         return;
       }
       setConfirmOpen(false);
-      setAskOpen(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function sendAsk() {
+    if (blocked || !askMode) return;
+    const itemNotes = notesFromFlags(flags);
+    if (!askText.trim() && (askMode === "question" || Object.keys(itemNotes).length === 0)) {
+      setError(askMode === "question" ? "Write your question first." : "Write what should change first.");
+      return;
+    }
+    setPending(askMode);
+    setError(null);
+    try {
+      const result =
+        askMode === "question"
+          ? await askSetupQuestion({ step: "investor_list", version, question: askText })
+          : await respondToSetupStep({
+              step: "investor_list",
+              version,
+              decision: "changes_requested",
+              note: askText,
+              itemNotes,
+            });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      if (askMode === "question") setAsked(`Question sent. ${adminName} will answer here and by email.`);
+      setAskMode(null);
+      setAskText("");
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
@@ -292,34 +357,33 @@ export function InvestorListReview({
       }
     >
       <header>
-        <Title className="text-h1 text-heading">Your investor list</Title>
-        <p className="mt-sm text-body text-secondary">
+        <Title className="text-h2 text-heading">Your Investor List</Title>
+        <p className="mt-xs text-body-sm text-secondary">
           {company} · prepared by {adminName}
           {dateLabel ? ` · ${dateLabel}` : ""}
         </p>
       </header>
 
       {open ? (
-        <p
-          className="mt-lg rounded-card border border-border bg-primary-tint px-md py-md text-body text-heading"
-          role="status"
-        >
-          Review the list and confirm. Outreach starts only after you confirm, and you&apos;ll
-          approve every email before it&apos;s sent.
-        </p>
+        <div className="mt-lg">
+          <TurnBanner
+            owner="client"
+            title="Review the list, then confirm it or ask a question. Outreach starts only after you confirm, and you'll approve every email before it's sent."
+          />
+        </div>
       ) : null}
 
       {open && adminNote?.trim() ? (
         <section className="mt-lg rounded-card border border-border bg-surface px-md py-md">
-          <p className="text-body text-heading">From {adminName}</p>
-          <p className="mt-sm whitespace-pre-wrap text-body text-body">{adminNote}</p>
+          <p className="text-body-sm text-heading">From {adminName}</p>
+          <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{adminNote}</p>
         </section>
       ) : null}
 
       {open ? (
         <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-surface px-md py-sm shadow-[0_-8px_24px_rgba(0,0,0,0.08)] md:sticky md:inset-x-auto md:bottom-auto md:top-0 md:mt-lg md:rounded-card md:border md:shadow-none">
           <div className="flex flex-wrap items-center gap-sm">
-            <p className="min-w-[12rem] flex-1 text-body text-heading" aria-live="polite">
+            <p className="min-w-[12rem] flex-1 text-body-sm text-heading" aria-live="polite">
               Confirming {n(confirming)} funds · {n(excluded)} excluded
             </p>
             <button
@@ -331,7 +395,7 @@ export function InvestorListReview({
                 setConfirmOpen(true);
               }}
             >
-              {pending === "confirmed" ? "Confirming…" : "Confirm list"}
+              {pending === "confirmed" ? "Confirming…" : "Confirm List"}
             </button>
             <button
               type="button"
@@ -340,64 +404,71 @@ export function InvestorListReview({
               onClick={() => {
                 if (blocked) return;
                 setError(null);
-                setAskOpen(true);
+                setAsked(null);
+                setAskMode("question");
               }}
             >
-              Ask {adminName} a question
+              Ask a Question
+            </button>
+            <button
+              type="button"
+              className={secondaryButton}
+              aria-disabled={blocked || undefined}
+              onClick={() => {
+                if (blocked) return;
+                setError(null);
+                setAsked(null);
+                setAskMode("changes");
+              }}
+            >
+              Request Changes
             </button>
             {readOnly ? (
-              <p className="text-body text-secondary">Preview: actions disabled</p>
+              <p className="text-body-sm text-secondary">Preview: actions disabled</p>
             ) : null}
           </div>
-          {error ? (
-            <p role="alert" className="mt-sm text-body text-error">
+          {asked ? (
+            <p role="status" className="mt-sm text-body-sm text-success">
+              {asked}
+            </p>
+          ) : null}
+          {error && !askMode && !confirmOpen ? (
+            <p role="alert" className="mt-sm text-body-sm text-error">
               {error}
             </p>
           ) : null}
         </div>
       ) : null}
 
+      <QuestionThread questions={questions} adminName={adminName} />
+
       <section className="mt-lg" aria-labelledby="tier-summary-heading">
-        <h2 id="tier-summary-heading" className="text-h2 text-heading">
-          Tier summary
+        <h2 id="tier-summary-heading" className="text-h3 text-heading">
+          Tier Summary
         </h2>
-        <div className={`mt-md grid gap-md ${tierStats.length >= 4 ? "md:grid-cols-2 xl:grid-cols-4" : "md:grid-cols-3"}`}>
-          {tierStats.map((entry) => {
-            const pressed = tier === entry.tier;
-            return (
-              <button
-                key={entry.tier}
-                type="button"
-                aria-pressed={pressed}
-                className={`flex flex-col items-start justify-start rounded-card border bg-surface px-md py-md text-left hover:bg-background motion-reduce:transition-none ${
-                  pressed ? "border-heading" : "border-border"
-                }`}
-                onClick={() => {
-                  setTier(entry.tier);
-                  setTypes([]);
-                }}
-              >
-                <span className="block text-h3 text-heading">{entry.label}</span>
-                {pressed ? <span className="mt-xs block text-body text-heading">Selected</span> : null}
-                <span className="mt-sm block text-body text-secondary">{entry.detail}</span>
-                <span className="mt-sm block text-body text-heading">
-                  {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
-                  {entry.contacts !== null
-                    ? ` · ${n(entry.contacts)} contact${entry.contacts === 1 ? "" : "s"}`
-                    : ""}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+        {intro ? <p className="mt-xs max-w-prose text-body-sm text-secondary">{intro}</p> : null}
+        <ul className={`mt-md grid gap-sm ${tierStats.length >= 4 ? "sm:grid-cols-2 xl:grid-cols-4" : "sm:grid-cols-3"}`}>
+          {tierStats.map((entry) => (
+            <li key={entry.tier} className="rounded-card border border-border bg-surface px-md py-sm">
+              <p className="text-body-sm font-medium text-heading">{entry.label}</p>
+              <p className="mt-xs text-label text-secondary">{entry.detail}</p>
+              <p className="mt-xs text-body-sm text-heading">
+                {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
+                {entry.contacts !== null
+                  ? ` · ${n(entry.contacts)} contact${entry.contacts === 1 ? "" : "s"}`
+                  : ""}
+              </p>
+            </li>
+          ))}
+        </ul>
       </section>
 
       {ran && verification ? (
         <section className="mt-lg rounded-card border border-border bg-surface px-md py-md" aria-labelledby="quality-check-heading">
-          <h2 id="quality-check-heading" className="text-h2 text-heading">
-            Quality check
+          <h2 id="quality-check-heading" className="text-h4 text-heading">
+            Quality Check
           </h2>
-          <p className="mt-sm text-body text-body">
+          <p className="mt-xs text-body-sm text-body">
             Before sharing this list we checked a sample of {n(verification.sample_size ?? 0)}{" "}
             contacts: {n(verification.firms_confirmed_active ?? 0)} of{" "}
             {n(verification.firms_checked ?? 0)} firms confirmed active, and{" "}
@@ -407,7 +478,7 @@ export function InvestorListReview({
               : ""}
           </p>
           {checkedLabel(verification.verified_at) ? (
-            <p className="mt-sm text-body text-secondary">
+            <p className="mt-xs text-body-sm text-secondary">
               Checked {checkedLabel(verification.verified_at)}
             </p>
           ) : null}
@@ -415,7 +486,7 @@ export function InvestorListReview({
       ) : null}
 
       <section className="mt-lg" aria-labelledby="investors-heading">
-        <h2 id="investors-heading" className="text-h2 text-heading">
+        <h2 id="investors-heading" className="text-h3 text-heading">
           Investors
         </h2>
         <div
@@ -435,9 +506,9 @@ export function InvestorListReview({
                 aria-selected={selected}
                 aria-controls="investor-tier-panel"
                 tabIndex={selected ? 0 : -1}
-                className={`min-h-[44px] rounded-md border px-md text-body motion-reduce:transition-none ${
+                className={`min-h-[44px] rounded-md border px-md text-body-sm motion-reduce:transition-none ${
                   selected
-                    ? "border-heading bg-surface text-heading"
+                    ? "border-heading bg-primary-tint text-heading"
                     : "border-border bg-surface text-secondary"
                 }`}
                 onClick={() => {
@@ -445,7 +516,7 @@ export function InvestorListReview({
                   setTypes([]);
                 }}
               >
-                {entry.label} ({n(entry.funds)}){selected ? " · selected" : ""}
+                {entry.label} ({n(entry.funds)})
               </button>
             );
           })}
@@ -458,14 +529,15 @@ export function InvestorListReview({
           className="mt-md"
         >
           <div className="flex flex-wrap items-end gap-sm">
-            <label className="block min-w-[16rem] flex-1 text-body text-heading" htmlFor={searchId}>
-              Fund name
+            <label className="block min-w-[16rem] flex-1 text-body-sm text-heading" htmlFor={searchId}>
+              Search Funds by Name
               <input
                 id={searchId}
                 type="search"
                 value={query}
+                placeholder="Fund name"
                 onChange={(event) => setQuery(event.target.value)}
-                className="mt-xs min-h-[44px] w-full rounded-md border border-border bg-surface px-md py-sm text-body text-body"
+                className="mt-xs min-h-[44px] w-full rounded-md border border-border bg-surface px-md py-sm text-body-sm text-body"
               />
             </label>
             <button
@@ -474,7 +546,7 @@ export function InvestorListReview({
               aria-pressed={showExcluded}
               onClick={() => setShowExcluded((current) => !current)}
             >
-              {showExcluded ? "✓ Show excluded" : "Show excluded"}
+              {showExcluded ? "✓ Show Excluded" : "Show Excluded"}
             </button>
           </div>
           {typeCounts.length > 0 ? (
@@ -485,7 +557,7 @@ export function InvestorListReview({
                   <button
                     key={type}
                     type="button"
-                    className={`min-h-[44px] rounded-md border px-md text-body motion-reduce:transition-none ${
+                    className={`min-h-[44px] rounded-md border px-md text-body-sm motion-reduce:transition-none ${
                       pressed ? "border-heading bg-surface text-heading" : "border-border bg-surface text-secondary"
                     }`}
                     aria-pressed={pressed}
@@ -510,7 +582,7 @@ export function InvestorListReview({
           </p>
 
           {shown.length === 0 ? (
-            <p className="mt-md text-body text-secondary">No funds match.</p>
+            <p className="mt-md text-body-sm text-secondary">No funds match.</p>
           ) : (
             <ul className="mt-md space-y-md">
               {shown.map((row) => {
@@ -520,8 +592,8 @@ export function InvestorListReview({
                   return (
                     <li key={row.id} className="rounded-card border border-border bg-surface px-md py-sm">
                       <div className="flex flex-wrap items-center justify-between gap-sm">
-                        <h3 className="text-h3 text-heading">{row.fund_name}</h3>
-                        <span className="text-body text-heading">Excluded</span>
+                        <h3 className="text-body-sm font-medium text-heading">{row.fund_name}</h3>
+                        <span className="text-body-sm text-muted">Excluded</span>
                         <button
                           type="button"
                           className={secondaryButton}
@@ -555,12 +627,29 @@ export function InvestorListReview({
                   );
                 }
                 const writing = noteOpen[row.id] || Boolean(noteValue(row.id));
+                const isOpen = Boolean(expanded[row.id]);
                 return (
                   <li key={row.id} className="rounded-card border border-border bg-surface px-md py-sm">
                     <div className="flex flex-wrap items-center justify-between gap-x-md gap-y-xs">
                       <div className="min-w-[14rem] flex-1">
-                        <h3 className="flex flex-wrap items-center gap-x-sm text-body text-heading">
-                          <span className="font-medium">{row.fund_name}</span>
+                        <h3 className="flex flex-wrap items-center gap-x-sm text-body-sm text-heading">
+                          <button
+                            type="button"
+                            className="inline-flex min-h-[44px] items-center gap-xs text-left font-medium text-heading hover:text-primary"
+                            aria-expanded={isOpen}
+                            aria-controls={`fund-details-${row.id}`}
+                            onClick={() => setExpanded((current) => ({ ...current, [row.id]: !isOpen }))}
+                          >
+                            <svg
+                              aria-hidden="true"
+                              viewBox="0 0 20 20"
+                              className={`h-4 w-4 shrink-0 text-muted transition-transform motion-reduce:transition-none ${isOpen ? "rotate-90" : ""}`}
+                              fill="none"
+                            >
+                              <path d="m8 5 5 5-5 5" stroke="currentColor" strokeWidth="1.5" />
+                            </svg>
+                            {row.fund_name}
+                          </button>
                           {row.website ? (
                             <a
                               href={row.website}
@@ -575,7 +664,7 @@ export function InvestorListReview({
                             </a>
                           ) : null}
                         </h3>
-                        {meta ? <p className="text-body-sm text-secondary">{meta}</p> : null}
+                        {meta ? <p className="text-label text-secondary">{meta}</p> : null}
                       </div>
                       {open ? (
                         <div className="flex flex-wrap gap-xs">
@@ -626,6 +715,19 @@ export function InvestorListReview({
                         <p className="text-body-sm text-heading">I know them</p>
                       ) : null}
                     </div>
+                    {isOpen ? (
+                      <dl
+                        id={`fund-details-${row.id}`}
+                        className="mt-sm grid gap-x-md gap-y-xs rounded-md border border-border bg-background px-md py-sm text-body-sm sm:grid-cols-[8rem_1fr]"
+                      >
+                        {detailRows(row).map((item) => (
+                          <div key={item.label} className="contents">
+                            <dt className="text-muted">{item.label}</dt>
+                            <dd className="text-heading">{item.value || "Not listed"}</dd>
+                          </div>
+                        ))}
+                      </dl>
+                    ) : null}
                     {open ? null : flag.note ? (
                       <p className="mt-sm text-body-sm text-body">
                         <span className="text-heading">Note: </span>
@@ -634,11 +736,11 @@ export function InvestorListReview({
                     ) : null}
                     {open && writing ? (
                       <div className="mt-md">
-                        <label className="block text-body text-heading" htmlFor={`note-${row.id}`}>
+                        <label className="block text-body-sm text-heading" htmlFor={`note-${row.id}`}>
                           Note on {row.fund_name}
                           <textarea
                             id={`note-${row.id}`}
-                            className="mt-xs w-full rounded-md border border-border bg-background px-md py-sm text-body text-body"
+                            className="mt-xs w-full rounded-md border border-border bg-background px-md py-sm text-body-sm text-body"
                             rows={3}
                             maxLength={NOTE_MAX}
                             value={noteValue(row.id)}
@@ -674,7 +776,7 @@ export function InvestorListReview({
                           >
                             Save
                           </button>
-                          <p className="text-body text-secondary" aria-live="polite">
+                          <p className="text-body-sm text-secondary" aria-live="polite">
                             {saved[row.id] ?? ""}
                           </p>
                         </div>
@@ -721,13 +823,13 @@ export function InvestorListReview({
       <dialog
         ref={confirmRef}
         aria-labelledby="confirm-list-title"
-        className="w-[min(100%,36rem)] rounded-card border border-border bg-surface p-lg text-body text-body"
+        className="w-[min(100%,36rem)] rounded-card border border-border bg-surface p-lg text-body-sm text-body"
         onClose={() => setConfirmOpen(false)}
       >
-        <h2 id="confirm-list-title" className="text-h2 text-heading">
-          Confirm this list?
+        <h2 id="confirm-list-title" className="text-h3 text-heading">
+          Confirm This List?
         </h2>
-        <ul className="mt-md list-disc space-y-xs pl-md text-body text-heading">
+        <ul className="mt-md list-disc space-y-xs pl-md text-body-sm text-heading">
           {tierStats.map((entry) => (
             <li key={entry.tier}>
               {entry.label}: {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
@@ -737,13 +839,13 @@ export function InvestorListReview({
           <li>I know them: {n(known)}</li>
         </ul>
         {error ? (
-          <p role="alert" className="mt-md text-body text-error">
+          <p role="alert" className="mt-md text-body-sm text-error">
             {error}
           </p>
         ) : null}
         <div className="mt-lg flex flex-wrap gap-sm">
-          <button type="button" className={primaryButton} onClick={() => void respond("confirmed")}>
-            {pending === "confirmed" ? "Confirming…" : "Confirm list"}
+          <button type="button" className={primaryButton} onClick={() => void respond()}>
+            {pending === "confirmed" ? "Confirming…" : "Confirm List"}
           </button>
           <button type="button" className={secondaryButton} onClick={() => setConfirmOpen(false)}>
             Cancel
@@ -754,40 +856,41 @@ export function InvestorListReview({
       <dialog
         ref={askRef}
         aria-labelledby="ask-question-title"
-        className="w-[min(100%,36rem)] rounded-card border border-border bg-surface p-lg text-body text-body"
-        onClose={() => setAskOpen(false)}
+        className="w-[min(100%,36rem)] rounded-card border border-border bg-surface p-lg text-body-sm text-body"
+        onClose={() => setAskMode(null)}
       >
-        <h2 id="ask-question-title" className="text-h2 text-heading">
-          Ask {adminName} a question
-        </h2>
-        <label className="mt-md block text-body text-heading" htmlFor="investor-question">
-          Your question
-          <textarea
-            id="investor-question"
-            className="mt-xs w-full rounded-md border border-border bg-background px-md py-sm text-body text-body"
-            rows={4}
-            maxLength={NOTE_MAX}
-            value={askText}
-            onChange={(event) => setAskText(event.target.value)}
-          />
-        </label>
-        {error ? (
-          <p role="alert" className="mt-md text-body text-error">
-            {error}
-          </p>
+        {askMode ? (
+          <>
+            <h2 id="ask-question-title" className="text-h3 text-heading">
+              {ASK_TEXT[askMode].title(adminName)}
+            </h2>
+            <p className="mt-xs text-body-sm text-muted">{ASK_TEXT[askMode].detail}</p>
+            <label className="mt-md block text-body-sm text-heading" htmlFor="investor-question">
+              {ASK_TEXT[askMode].label}
+              <textarea
+                id="investor-question"
+                className="mt-xs w-full rounded-md border border-border bg-background px-md py-sm text-body-sm text-body"
+                rows={4}
+                maxLength={askMode === "question" ? QUESTION_MAX : NOTE_MAX}
+                value={askText}
+                onChange={(event) => setAskText(event.target.value)}
+              />
+            </label>
+            {error ? (
+              <p role="alert" className="mt-md text-body-sm text-error">
+                {error}
+              </p>
+            ) : null}
+            <div className="mt-lg flex flex-wrap gap-sm">
+              <button type="button" className={primaryButton} onClick={() => void sendAsk()}>
+                {pending === askMode ? "Sending…" : ASK_TEXT[askMode].send}
+              </button>
+              <button type="button" className={secondaryButton} onClick={() => setAskMode(null)}>
+                Cancel
+              </button>
+            </div>
+          </>
         ) : null}
-        <div className="mt-lg flex flex-wrap gap-sm">
-          <button
-            type="button"
-            className={primaryButton}
-            onClick={() => void respond("changes_requested")}
-          >
-            {pending === "changes_requested" ? "Sending…" : "Send question"}
-          </button>
-          <button type="button" className={secondaryButton} onClick={() => setAskOpen(false)}>
-            Cancel
-          </button>
-        </div>
       </dialog>
     </div>
   );

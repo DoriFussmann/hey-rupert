@@ -6,21 +6,43 @@ import { loadEmailSettings } from "@/lib/email-settings";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 import { adminFirstName } from "@/lib/investor-list-email";
+import { loadProfileState } from "@/lib/match/profile-server";
 import { getPortalSetup } from "@/lib/portal-setup";
-import { asInvestorList } from "@/lib/setup";
+import { asInvestorList, fitTiersFor, investorListIntro, questionsOf } from "@/lib/setup";
 import { createServiceClient } from "@/lib/supabase/admin";
+
+function answer(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value.join(", ") : (value ?? "").trim();
+}
 
 export default async function InvestorListPage() {
   const { client, row, viewAs } = await getPortalSetup("investor_list");
   const visible = Boolean(row && row.version > 0);
   const list = asInvestorList(row?.published);
-  const settings =
-    visible && isServiceRoleConfigured()
-      ? await loadEmailSettings(createServiceClient())
-      : null;
+  const service = visible && isServiceRoleConfigured() ? createServiceClient() : null;
+  const [settings, profile] = service && client
+    ? await Promise.all([loadEmailSettings(service), loadProfileState(service, client.id)])
+    : [null, null];
   const adminName = adminFirstName(settings?.signature || DEFAULT_SIGNATURE);
   const company = client?.company_name?.trim() || "Your company";
   const open = row?.status === "with_client";
+  const answers = profile?.ok && profile.value ? profile.value.answers : {};
+  const shownRows = list.rows.filter((entry) => !entry.hidden_duplicate);
+  const intro = visible
+    ? investorListIntro({
+        raise: answer(answers.raise_amount) || client?.raise_amount || "",
+        stage: answer(answers.stage) || client?.raise_stage || "",
+        sector: answer(answers.core_vertical) || answer(answers.core_industry),
+        place:
+          answers.hq_country === "United States"
+            ? answer(answers.hq_state) || "the United States"
+            : answer(answers.hq_country),
+        funds: shownRows.length,
+        tiers: fitTiersFor(list.tier_scheme).filter(({ tier }) =>
+          shownRows.some((entry) => entry.tier === tier && !entry.broad),
+        ).length,
+      })
+    : "";
 
   return (
     <>
@@ -56,6 +78,8 @@ export default async function InvestorListPage() {
           adminName={adminName}
           publishedAt={row.published_at}
           adminNote={list.admin_note}
+          questions={questionsOf(row)}
+          intro={intro}
           readOnly={viewAs}
         />
       ) : (

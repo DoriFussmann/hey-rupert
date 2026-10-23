@@ -2,9 +2,12 @@
 
 import { useMemo, useState } from "react";
 import { draftClientEmailCopy } from "@/app/admin/agent-actions";
+import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
+import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
 import {
   EMAIL_SEQUENCE_LABELS,
   LINKEDIN_NOTE_MAX,
+  asClientEmail,
   asEmailCopy,
   emailCopyProblems,
   emptyEmailCopy,
@@ -18,8 +21,8 @@ import {
 } from "@/lib/setup";
 import {
   ClientAnswer,
+  ClientQuestions,
   EarlierRounds,
-  PublishBar,
   StepFrame,
   inputClass,
   secondaryButton,
@@ -34,10 +37,16 @@ function hasContent(copy: EmailCopyPayload) {
   );
 }
 
+/** The copy as Rupert edits it: no reply and no questions (those live on the published version). */
+function editable(value: unknown): EmailCopyPayload {
+  return { ...asEmailCopy(value), admin_note: undefined, questions: undefined };
+}
+
 export function EmailCopyPanel({
   clientId,
   item,
   row,
+  to,
   tierCounts,
   listScheme,
   claudeReady,
@@ -45,6 +54,8 @@ export function EmailCopyPanel({
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
+  /** The client's email address. */
+  to: string;
   /** Funds per tier of the confirmed investor list, in its own scheme. */
   tierCounts: { tier: FitTier; count: number }[];
   /** How the confirmed investor list groups its funds. New copy follows it. */
@@ -52,11 +63,16 @@ export function EmailCopyPanel({
   claudeReady: boolean;
 }) {
   const initial = useMemo(() => {
-    const draft = asEmailCopy(row?.draft);
+    const draft = editable(row?.draft);
     if (hasContent(draft)) return draft;
-    const published = asEmailCopy(row?.published);
+    const published = editable(row?.published);
     return hasContent(published) ? published : emptyEmailCopy(listScheme);
   }, [row, listScheme]);
+  const initialEmail = asClientEmail(
+    row?.draft && typeof row.draft === "object"
+      ? (row.draft as Record<string, unknown>).client_email
+      : null,
+  );
 
   const [copy, setCopy] = useState<EmailCopyPayload>(initial);
   const [savedKey, setSavedKey] = useState(JSON.stringify(initial));
@@ -162,13 +178,9 @@ export function EmailCopyPanel({
       item={item}
       intro="A first email and two follow-ups for each fit tier. Leave a follow-up subject blank to send it in the same thread. Use placeholders like {{first_name}} and {{fund_name}} for personal details."
     >
-      <ClientAnswer row={row} />
-      {changesRequested ? (
-        <p className="px-lg pt-md text-body-sm text-secondary">
-          The emails do not need to change. Write a reply when you push if you want. The
-          client sees that reply above Confirm.
-        </p>
-      ) : null}
+      <p className="px-lg pt-md text-body-sm text-muted">{sendStatus(row)}</p>
+      <ClientAnswer row={row} hideWaiting />
+      <ClientQuestions clientId={clientId} step="email_copy" row={row} />
       <div className="flex flex-wrap items-center gap-sm border-b border-border px-lg py-md">
         <button
           type="button"
@@ -311,19 +323,29 @@ export function EmailCopyPanel({
         ) : null}
       </div>
       <EarlierRounds row={row} />
-      <PublishBar
+      <DocumentStep
         clientId={clientId}
         step="email_copy"
         item={item}
         row={row}
+        to={to}
         draft={copy}
+        initialEmail={initialEmail}
         dirty={JSON.stringify(copy) !== savedKey}
         onSaved={() => setSavedKey(JSON.stringify(copy))}
-        pushLabel="Push emails for confirmation"
         problem={problems.length > 0 ? problems.join(" ") : null}
-        noteLabel="Reply (optional). Shown on their page, above Confirm, and in the email."
-        notePlaceholder="For example: softened the first email."
-        noteOnPage
+        busy={drafting}
+        pushSummary="Pushes the emails and LinkedIn messages above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."
+        clientPreview={
+          <EmailCopyReview
+            copy={copy}
+            counts={schemeMismatch ? [] : tierCounts}
+            version={(row?.version ?? 0) + 1}
+            open={false}
+            sentNotes={{}}
+            readOnly
+          />
+        }
       />
     </StepFrame>
   );
