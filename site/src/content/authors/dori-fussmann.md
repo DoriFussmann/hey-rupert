@@ -2,11 +2,13 @@
 name: Dori Fussmann
 slug: dori-fussmann
 role: Founder
-bio: "Dori Fussmann is an entrepreneur, finance executive, and former investment banker with experience spanning company building, capital markets, and strategic finance. He was the Founder and CEO of The Vets, a U.S. home pet care company, and previously worked in investment banking at Citi, Ion Pacific, and Morgan Stanley, advising companies on M&A, IPOs, and strategic financing transactions across the technology and consumer sectors.
+bio: "Dori Fussmann is an entrepreneur and finance executive, and the founder of Rupert. Rupert researches investors and runs personalized outreach for founders raising capital. He also founded InMarketLab, and he was Founder and CEO of The Vets, a technology-enabled home veterinary care company that raised institutional capital and later merged with BetterVet.
 
-Dori currently serves as CFO of BlueMark and mentors early-stage founders through Cornell Tech’s Runway Startups Program and Yale’s Tsai Center for Innovative Thinking (Tsai CITY), advising on fundraising, business models, go-to-market strategy, positioning, and commercialization.
+Fractional CFO roles include BlueMark, Translucent AI, Natrion, and Snout. He serves as Fractional CFO of BlueMark, an impact-investment intelligence platform. At Natrion he served as Fractional CFO during the latest fundraise, working across financial planning, investor materials, and close. At Snout he served as Fractional CFO on the company's $100M financing round.
 
-Having worked on both sides of the table—as an investment banker advising companies and as a founder building and financing one—Dori brings a practical understanding of how founders should approach capital raising, investor positioning, and the fundraising process.
+He is Fundraising & Strategic Finance Advisor to Ambi Robotics and Manatee, covering financial planning, fundraising advisory, and go-to-market strategy. He is an Advisor to Sniffi in India and to Swift Vets in Australia. Those advisory roles are not finance engagements.
+
+He previously worked in investment banking at Citi, Morgan Stanley, and Ion Pacific, advising technology and consumer companies on M&A, IPOs, and strategic financing. He mentors early-stage founders through Cornell Tech's Runway Startups Program and Yale's Tsai CITY, on fundraising, financial planning, and go-to-market.
 
 Dori holds degrees in Accounting and Business Management (B.A.) and Law (LL.B.) from IDC Herzliya."
 photo: ../../assets/founder/dori-fussmann/photo.jpg

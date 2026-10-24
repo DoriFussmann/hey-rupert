@@ -34,7 +34,7 @@ export const SITE_IDENTITY: SiteIdentity = {
 export const AUTHOR_PATH: AuthorPath = (slug) => `/about/#${slug}`;
 
 export const SITE_DESCRIPTION =
-  "Rupert runs investor research, targeting, personalized outreach and follow-up for founders raising capital. Every reply and investor relationship stays yours.";
+  "Rupert runs investor research, targeting, and personalized outreach for founders raising capital. You approve the messages. Investor relationships stay yours.";
 
 /** Default marketing Open Graph image (1200×630). */
 export const DEFAULT_OG_IMAGE = "/og-default.png";

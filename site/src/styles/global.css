@@ -1235,7 +1235,7 @@
   .step-band {
     width: 100%;
     padding: theme("spacing.lg");
-    background: #e6ede3;
+    background: #EAF4EE;
     border-radius: 12px;
     border: 1px solid transparent;
     transition:
@@ -1250,8 +1250,8 @@
   }
 
   .step-band:hover {
-    background: #dce6d8;
-    border-color: #ccd5cc;
+    background: #DFEDE5;
+    border-color: #C3E0D6;
   }
 
   .step-script {
@@ -1541,7 +1541,7 @@
   }
 
   .case-card {
-    background: #e6ede3;
+    background: #EAF4EE;
     border-radius: 12px;
   }
 
@@ -1688,7 +1688,7 @@
 
   .experience-card {
     padding: theme("spacing.xl") theme("spacing.lg");
-    background: #e6ede3;
+    background: #EAF4EE;
     border-radius: 12px;
     border: 1px solid transparent;
     transition:
@@ -1698,8 +1698,8 @@
   }
 
   .experience-card:hover {
-    background: #dce6d8;
-    border-color: #ccd5cc;
+    background: #DFEDE5;
+    border-color: #C3E0D6;
     transform: translateY(-3px);
   }
 

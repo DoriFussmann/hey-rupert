@@ -51,6 +51,36 @@ export const caseStudies: CaseStudy[] = [
     body: "Serves as Fractional CFO of BlueMark, an impact-investment intelligence platform.",
   },
   {
+    name: "Translucent AI",
+    role: "Fractional CFO",
+    logo: caseLogo("translucent-ai.png"),
+    body: "Fractional CFO at Translucent AI.",
+  },
+  {
+    name: "Ambi Robotics",
+    role: "Fundraising & Strategic Finance Advisor",
+    logo: caseLogo("ambi-robotics.png"),
+    body: "Fundraising & Strategic Finance Advisor to Ambi Robotics.",
+  },
+  {
+    name: "Manatee",
+    role: "Fundraising & Strategic Finance Advisor",
+    logo: caseLogo("manatee.png"),
+    body: "Fundraising & Strategic Finance Advisor to Manatee.",
+  },
+  {
+    name: "Sniffi",
+    role: "Advisor",
+    logo: caseLogo("sniffi.png"),
+    body: "Advisor to Sniffi in India.",
+  },
+  {
+    name: "Swift Vets",
+    role: "Advisor",
+    logo: caseLogo("swift-vets.png"),
+    body: "Advisor to Swift Vets in Australia.",
+  },
+  {
     name: "Morgan Stanley",
     role: "Investment Banking Professional",
     logo: caseLogo("morgan-stanley.png"),
