@@ -2,13 +2,13 @@
 import { Image } from "astro:assets";
 import { SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
-import rupertLogo from "../assets/brand/rupert-logo.svg";
+import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
 ---
 
 <footer class="mt-auto border-t border-border">
   <div class="site-wrap py-xl lg:py-2xl">
     <a class="footer-logo" href={sitePath("/")} aria-label={SITE_NAME}>
-      <Image src={rupertLogo} alt="" inferSize />
+      <Image class="site-logo__mark" src={rupertPortrait} alt="" width={72} height={72} />
     </a>
     <p class="type-body mt-md max-w-prose">
       Expert-managed investor outreach for founders raising capital.

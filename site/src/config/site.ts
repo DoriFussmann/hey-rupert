@@ -20,7 +20,7 @@ export const DORI_LINKEDIN =
  */
 export const SAME_AS: string[] = [];
 
-/** Organization logo (512×512 PNG of the Rupert mark). */
+/** Organization logo (512×512 PNG of the Rupert portrait). */
 export const LOGO_PATH = "/logo.png";
 
 export const SITE_IDENTITY: SiteIdentity = {

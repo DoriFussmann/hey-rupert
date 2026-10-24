@@ -58,13 +58,13 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     name: "Ambi Robotics",
-    role: "Fundraising & Strategic Finance Advisor",
+    role: "Capital advisor",
     logo: caseLogo("ambi-robotics.png"),
     body: "Fundraising & Strategic Finance Advisor to Ambi Robotics.",
   },
   {
     name: "Manatee",
-    role: "Fundraising & Strategic Finance Advisor",
+    role: "Capital advisor",
     logo: caseLogo("manatee.png"),
     body: "Fundraising & Strategic Finance Advisor to Manatee.",
   },
@@ -82,19 +82,19 @@ export const caseStudies: CaseStudy[] = [
   },
   {
     name: "Morgan Stanley",
-    role: "Investment Banking Professional",
+    role: "Investment Banking",
     logo: caseLogo("morgan-stanley.png"),
     body: "Advised technology and consumer companies on M&A, IPOs, and strategic financing — sitting in the rooms where a raise is judged on thesis fit, timing, and whether the story holds.",
   },
   {
     name: "Cornell Tech",
-    role: "Mentor",
+    role: "Startups mentor",
     logo: cornellTechLogo,
     body: "Mentors early-stage founders through Cornell Tech's Runway Startups Program.",
   },
   {
     name: "Yale",
-    role: "Mentor",
+    role: "Startups mentor",
     logo: caseLogo("yale.png"),
     body: "Mentors early-stage founders through Yale's Tsai CITY.",
   },

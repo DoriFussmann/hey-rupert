@@ -2,13 +2,20 @@
 import { Image } from "astro:assets";
 import { PORTAL_LOGIN_URL, SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
-import rupertLogo from "../assets/brand/rupert-logo.svg";
+import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
 ---
 
 <header class="site-header">
   <nav class="site-wrap site-header__bar" aria-label="Primary">
     <a class="site-logo" href={sitePath("/")} aria-label={SITE_NAME}>
-      <Image src={rupertLogo} alt="" inferSize loading="eager" />
+      <Image
+        class="site-logo__mark"
+        src={rupertPortrait}
+        alt=""
+        width={72}
+        height={72}
+        loading="eager"
+      />
     </a>
     <button
       class="nav-toggle"
