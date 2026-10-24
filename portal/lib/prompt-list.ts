@@ -19,6 +19,7 @@ export const PROMPT_LIST = [
   { key: "email_copy_email", title: "Email copy email", group: "Emails to founders" },
   { key: "nudge_email", title: "Nudge email", group: "Emails to founders" },
   { key: "verify_role_check", title: "Verify emails: role check", group: "Matching" },
+  { key: "match_options", title: "Thin match: sector options", group: "Matching" },
   { key: "taxonomy_mapping", title: "Taxonomy: map raw labels", group: "Taxonomy" },
   { key: "taxonomy_relationships", title: "Taxonomy: suggest relationships", group: "Taxonomy" },
   { key: "test_pilot_intake", title: "Test Pilot: intake answers", group: "Test Pilot" },

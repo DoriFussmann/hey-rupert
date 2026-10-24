@@ -119,6 +119,7 @@ export function cleanSettings(input: unknown): MatchSettings {
       ? (siteN as MatchSettings["siteN"])
       : DEFAULT_SETTINGS.siteN,
     dropDead: raw.dropDead !== false,
+    stageReach: raw.stageReach === "next" ? "next" : "exact",
   };
 }
 

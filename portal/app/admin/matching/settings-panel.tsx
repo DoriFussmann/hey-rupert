@@ -135,8 +135,9 @@ export function SettingsPanel({
           className={secondaryButton}
           disabled={busy}
           onClick={() => {
-            // Tightness and wave size aren't used by the matching engine: they stay as saved.
-            const next = { ...DEFAULT_SETTINGS, tune: settings.tune, waveSize: settings.waveSize };
+            // Tightness and wave size aren't used by the matching engine, and stage reach is set
+            // on the Tiers tab: they stay as saved.
+            const next = { ...DEFAULT_SETTINGS, tune: settings.tune, waveSize: settings.waveSize, stageReach: settings.stageReach };
             setDraft(next);
             onApply(next);
           }}

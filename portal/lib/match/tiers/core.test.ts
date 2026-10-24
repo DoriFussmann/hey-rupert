@@ -330,7 +330,7 @@ test("generalists go to their own group, never Tier 4", () => {
 test("stage: exact passes; one stage off is excluded and counted; not stated or ambiguous is unresolved", () => {
   const exact = firm({ stages: ["Seed"] });
   const spanning = firm({ stages: ["Early Stage"] });
-  const oneOff = firm({ stages: ["Pre-Seed"] });
+  const oneOff = firm({ stages: ["Series A"] });
   const far = firm({ stages: ["Series B"] });
   const none = firm({ stages: [] });
   const review = firm({ stages: ["Seedish"] });
@@ -341,7 +341,28 @@ test("stage: exact passes; one stage off is excluded and counted; not stated or 
     "unresolved:stage_ambiguous", "unresolved:stage_ambiguous",
   ]);
   assert.equal(result.counts.reasons.stage_one_off, 1);
-  assert.match(outcome(result, oneOff).checks.stage!.detail, /Lists Pre-Seed, not Seed/);
+  assert.match(outcome(result, oneOff).checks.stage!.detail, /Lists Series A, not Pre-Seed or Seed/);
+});
+
+test("stage: Pre-Seed and Seed are one stage (Early stage), both ways", () => {
+  const preSeedFund = firm({ stages: ["Pre-Seed"] });
+  const seedFund = firm({ stages: ["Seed"] });
+  const seedCompany = run([preSeedFund]);
+  assert.equal(place(outcome(seedCompany, preSeedFund)), "core");
+  assert.match(outcome(seedCompany, preSeedFund).checks.stage!.detail, /count as one stage \(Early stage\)/);
+  const preSeedCompany = run([seedFund], { profile: profile({ stage: "stage.pre_seed" }) });
+  assert.equal(place(outcome(preSeedCompany, seedFund)), "core");
+});
+
+test("stage reach: one stage up passes with its own explanation; the next rung is the near miss", () => {
+  const seriesA = firm({ stages: ["Series A"] });
+  const seriesB = firm({ stages: ["Series B"] });
+  const exact = run([seriesA, seriesB]);
+  assert.equal(place(outcome(exact, seriesA)), "excluded:stage_one_off");
+  const reached = run([seriesA, seriesB], { stageReach: "next" });
+  assert.equal(place(outcome(reached, seriesA)), "core");
+  assert.match(outcome(reached, seriesA).checks.stage!.detail, /one stage up/);
+  assert.equal(place(outcome(reached, seriesB)), "excluded:stage_one_off");
 });
 
 test("a sector relationship never overrides a failed gate", () => {
@@ -632,7 +653,7 @@ test("stored rows keep repeated FirmIDs apart", () => {
   const a = firm({ id: "DUP", name: "Same Fund" });
   const b = firm({ id: "DUP", name: "Same Fund", web: "https://other.vc" });
   const c = firm({ vert: ["Insurtech"] });
-  const d = firm({ stages: ["Pre-Seed"] });
+  const d = firm({ stages: ["Series A"] });
   const db: FundDb = { firms: [a, b, c, d], contacts: contactsFor([a, c, d]) };
   const newRows = tierRows(runTiers({ db, index, profile: profile(), legacy: legacy() }));
   assert.deepEqual(newRows.map((r) => r.firm_id).sort(), ["DUP", "DUP#2", c.id, d.id].sort());
@@ -767,7 +788,7 @@ test("offices: each office keeps its own checks; the firm shows once as its stro
 });
 
 test("exports read only the saved rows: listed funds, contacts with verification, outside the tiers, near misses", () => {
-  const near = firm({ stages: ["Pre-Seed"], name: "Near Fund" });
+  const near = firm({ stages: ["Series A"], name: "Near Fund" });
   const { db, keep } = identityFixture();
   // Without the duplicate shell (W2): its own copy of Ann has no verification of its own.
   const all: FundDb = { firms: [...db.firms.filter((f) => f.id !== "W2"), near], contacts: [...db.contacts.filter((c) => c.fid !== "W2"), ...contactsFor([near])] };

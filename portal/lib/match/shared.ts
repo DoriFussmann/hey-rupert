@@ -323,6 +323,8 @@ export type MatchSettings = {
   /** Websites checked per tier (0 = off). */
   siteN: 0 | 50 | 100 | 200;
   dropDead: boolean;
+  /** How far past the company's stage the four-tier match reaches: its stage only, or also one stage up. */
+  stageReach: "exact" | "next";
 };
 
 export const SITE_N_OPTIONS: MatchSettings["siteN"][] = [0, 50, 100, 200];
@@ -340,6 +342,7 @@ export const DEFAULT_SETTINGS: MatchSettings = {
   },
   siteN: 50,
   dropDead: true,
+  stageReach: "exact",
 };
 
 export type ProfileGap = { id: string; label: string; kind: "missing" | "unasked" };

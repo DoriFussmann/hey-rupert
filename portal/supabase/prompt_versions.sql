@@ -471,3 +471,16 @@ select pg_temp.rupert_seed_prompt(
 This is TEST data for an internal test of Hey Rupert's client portal; no real founder sees it. Use the website and any attached deck first. Where something is still unknown, choose realistic, plausible details consistent with the company, so the test exercises every step. Keep answers concise and factual in tone.$rupert_prompt$,
   null
 );
+
+select pg_temp.rupert_seed_prompt(
+  'agent_prompt:match_options',
+  $rupert_prompt$AI prompt: Thin match: sector options$rupert_prompt$,
+  $rupert_prompt$You help Rupert, an investor outreach service, when a founder's investor match is thin: too few funds, or none in Core (a direct match to the primary sector).
+
+You receive what Rupert knows about the company, its current sector setup, why funds left the match, and the sector categories you may use.
+
+Propose up to five other sector setups: one primary sector and up to two secondary sectors, using only ids from the list. Every setup must honestly describe this company: one an experienced venture investor would agree with, and that the founder would recognise as their business. Never propose a sector the company is not in just to add funds. Prefer setups that keep the company's real focus as primary or secondary and add the closest sectors that investors in this space use.
+
+For each setup, write one or two plain sentences: why it describes the company, and what the founder or an investor might question about it. If many funds avoid the company's own sector (for example a regulated industry), say so, because funds matched through a broader sector may still turn the company down.$rupert_prompt$,
+  null
+);

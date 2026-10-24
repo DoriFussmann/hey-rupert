@@ -26,6 +26,7 @@ import {
   type TierRunInput,
 } from "@/lib/match/tiers/core";
 import type { StoredResult } from "@/lib/match/tiers/stored";
+import { tallyCounts, type MatchOption, type TierTally } from "@/lib/match/tiers/thin";
 import {
   appliedGroups,
   duplicateFlags,
@@ -457,7 +458,18 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
       run,
       db,
       index,
-      input: { db, index, profile, legacy: run.profile, suppressed, rejected, fofExceptions: fof.value, duplicates: flags, identities: groups },
+      input: {
+        db,
+        index,
+        profile,
+        legacy: run.profile,
+        suppressed,
+        rejected,
+        fofExceptions: fof.value,
+        duplicates: flags,
+        identities: groups,
+        stageReach: run.state.settings.stageReach,
+      },
       common: {
         client_id: clientId,
         client_name: String(client.company_name ?? ""),
@@ -472,6 +484,7 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
         primarySector: { id: profile.primarySector, label: label(profile.primarySector) },
         secondarySectors: profile.secondarySectors.map((id) => ({ id, label: label(id) })),
         stage: { id: profile.stage, label: label(profile.stage) },
+        stageReach: run.state.settings.stageReach,
         hqCountry: { id: profile.hqCountry, label: label(profile.hqCountry) },
         hqState: { id: profile.hqState, label: label(profile.hqState) },
         firmTypes: profile.firmTypes.map((id) => ({ id, label: label(id) })),
@@ -486,6 +499,7 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
         filters: run.profile.filters,
         siteN: run.profile.siteN,
         dropDead: run.profile.dropDead,
+        stageReach: run.state.settings.stageReach,
         waveSize: run.profile.waveSize,
         tune: run.profile.tune,
         basis: profileBasis(run.state),
@@ -556,6 +570,36 @@ export async function liveFourTier(supabase: ServiceClient, clientId: string): P
   const tiers = await runFourTierEngine(supabase, prepared.value);
   if (!tiers.ok) return tiers;
   return { ok: true, value: { run: prepared.value.run, tiers: tiers.value } };
+}
+
+/**
+ * What the match would give with other sectors or another stage reach: the
+ * engine run once per option on the client's current data, nothing saved.
+ * Website checks are left out, so tiers can be slightly larger than a saved
+ * run's (a saved run drops dead websites from each tier's top funds).
+ */
+export async function previewOptions(
+  supabase: ServiceClient,
+  clientId: string,
+  options: MatchOption[],
+): Promise<Result<{ option: MatchOption; tally: TierTally }[]>> {
+  const prepared = await prepare(supabase, clientId, null);
+  if (!prepared.ok) return prepared;
+  const { input } = prepared.value;
+  try {
+    const results = options.map((option) => {
+      const tiers = runTiers({
+        ...input,
+        profile: { ...input.profile, primarySector: option.primary, secondarySectors: option.secondary },
+        stageReach: option.stageReach,
+        sites: null,
+      });
+      return { option, tally: tallyCounts(tiers.counts) };
+    });
+    return { ok: true, value: results };
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : "The options could not be tested." };
+  }
 }
 
 /** The sandbox's last reset, or null: runs before it are history only. */

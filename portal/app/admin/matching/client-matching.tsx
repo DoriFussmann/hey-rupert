@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { MatchControls } from "@/app/admin/matching/match-controls";
 import { PlanTab } from "@/app/admin/matching/plan-tab";
+import { ThinMatchPanel } from "@/app/admin/matching/thin-match-panel";
 import type { HiddenFund } from "@/app/admin/matching/settings-panel";
 import {
   Alert,
@@ -15,6 +16,9 @@ import {
 import { n } from "@/app/admin/clients/[id]/match/ui";
 import { READINESS_LABEL } from "@/lib/company-profile/core";
 import { isServiceRoleConfigured } from "@/lib/env";
+import { isClaudeConfigured } from "@/lib/anthropic";
+import { loadThinThresholds } from "@/lib/match/thin-match-server";
+import { runLimits, tallyRows } from "@/lib/match/tiers/thin";
 import { loadProfileState } from "@/lib/match/profile-server";
 import { loadHidden, loadReviews } from "@/lib/match/run-server";
 import { MATCH_TABS, MATCH_TAB_LABEL, matchPath, type MatchTab, type Review } from "@/lib/match/shared";
@@ -167,13 +171,14 @@ export async function ClientMatching({
   if (!isServiceRoleConfigured()) return <Alert tone="error">Service role key is not configured.</Alert>;
   const supabase = createServiceClient();
   const sandbox = client.is_match_sandbox === true;
-  const [state, readiness, latest, reviews, hidden, plans] = await Promise.all([
+  const [state, readiness, latest, reviews, hidden, plans, thresholds] = await Promise.all([
     loadProfileState(supabase, client.id),
     profileReadiness(supabase, client.id),
     latestTierRun(supabase, client.id),
     loadReviews(supabase, client.id),
     loadHidden(supabase),
     listCapacityPlans(supabase, client.id),
+    loadThinThresholds(supabase),
   ]);
   if (!state.ok) return <Alert tone="error">{state.error}</Alert>;
   if (!latest.ok) return <Alert tone="error">{latest.error}</Alert>;
@@ -241,6 +246,14 @@ export async function ClientMatching({
         <NearMissSection clientId={client.id} header={run.header} rows={run.rows} />
       ) : (
         <>
+          <ThinMatchPanel
+            clientId={client.id}
+            tally={tallyRows(run.rows)}
+            thresholds={thresholds}
+            limits={runLimits(run.rows)}
+            stageReach={state.value?.settings.stageReach ?? "exact"}
+            claudeReady={isClaudeConfigured()}
+          />
           {plan && planned ? (
             <CampaignColumns
               rows={run.rows}

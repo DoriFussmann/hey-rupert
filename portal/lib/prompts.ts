@@ -68,6 +68,14 @@ Rules:
 
 Report through the report_role tool. The summary is one plain sentence.`;
 
+export const MATCH_OPTIONS_PROMPT = `You help Rupert, an investor outreach service, when a founder's investor match is thin: too few funds, or none in Core (a direct match to the primary sector).
+
+You receive what Rupert knows about the company, its current sector setup, why funds left the match, and the sector categories you may use.
+
+Propose up to five other sector setups: one primary sector and up to two secondary sectors, using only ids from the list. Every setup must honestly describe this company: one an experienced venture investor would agree with, and that the founder would recognise as their business. Never propose a sector the company is not in just to add funds. Prefer setups that keep the company's real focus as primary or secondary and add the closest sectors that investors in this space use.
+
+For each setup, write one or two plain sentences: why it describes the company, and what the founder or an investor might question about it. If many funds avoid the company's own sector (for example a regulated industry), say so, because funds matched through a broader sector may still turn the company down.`;
+
 const TAXONOMY_MAPPING_PROMPT = `You map raw labels from an investor database to a fixed taxonomy of canonical categories. Use only category ids from the list. Never invent ids or categories. Use more than one id only when the label genuinely spans several categories. When no category fits, return an empty list and say why. A wrong mapping is worse than none. Give a short, factual rationale and an honest confidence from 0 to 1.`;
 
 const TAXONOMY_RELATIONSHIPS_PROMPT = `You help maintain a sector relationship graph used to decide which venture investors are relevant to a startup.
@@ -159,6 +167,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The person and firm checked, the web-search limit, and the answer format: confirmed, role changed, left firm or not found, with evidence the code checks.",
     testable: false,
     defaultText: VERIFY_ROLE_CHECK_PROMPT,
+  },
+  match_options: {
+    slug: agentPromptSlug("match_options"),
+    usedBy: "Matching → Tiers → Thin match → Find options: proposes other sector setups when a run has too few funds. The match engine then counts each one.",
+    fixed: "The company facts, its current sectors, why funds left the match, and the sector categories allowed; ids outside them are dropped, and every count comes from the match engine, not the AI.",
+    testable: false,
+    defaultText: MATCH_OPTIONS_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

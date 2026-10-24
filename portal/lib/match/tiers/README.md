@@ -31,7 +31,7 @@ Each status carries the deciding reason code (`REASONS` in `core.ts`) and a chec
 | 4 | Firm type | The client's chosen types, or the engine module's defaults for the stage. Read through approved firm-type mappings.<br>• No type → `firm_type_missing`<br>• A value with no approved mapping → `firm_type_unrecognized`<br>• A known type that isn't wanted → `firm_type_mismatch` |
 | 4a | Funds of funds | Only when "Fund of funds" (`financing.fund_of_funds`) is the fund's only financing type. Excluded unless there is an approved exception in `match_fof_exceptions`. → `fof_no_exception`. Listed next to another financing type, the fund is checked like any other (counted as `fofWithOtherFinancing`). |
 | 5 | Financing | The client's instruments, default Equity.<br>• None stated → `financing_missing`<br>• Values with no approved mapping → `financing_unrecognized`<br>• Known values that don't match → `financing_mismatch` |
-| 6 | Stage | The fund must list the company's stage, using approved stage mappings (a value such as "Early Stage" can cover several stages).<br>• One rung away on the venture ladder → `stage_one_off` (excluded, counted)<br>• Any other stage → `stage_mismatch`<br>• No stage → `stage_not_stated` (unresolved)<br>• Values unmapped or under review → `stage_ambiguous` (unresolved) |
+| 6 | Stage | The fund must list the company's stage, using approved stage mappings (a value such as "Early Stage" can cover several stages). **Pre-Seed and Seed are one stage (Early stage)**: a company at either matches funds that list either. With the client's stage reach set to "Also one stage up" (Thin match panel), funds listing the next venture stage also pass, with their own explanation.<br>• One rung away from the stages accepted → `stage_one_off` (excluded, counted)<br>• Any other stage → `stage_mismatch`<br>• No stage → `stage_not_stated` (unresolved)<br>• Values unmapped or under review → `stage_ambiguous` (unresolved) |
 | 7 | Geography | See below. |
 | 8 | Optional filters | No platforms (8+ stages), needs a decision maker, needs an email, founded after a year, minimum data confidence, team near you. Using the engine module's contact ranking. → `filter_*` |
 | 9 | Generalists | "Diversified", or 15 or more industries → `generalist`. Kept out of the tiers and saved for Phase 4. |
@@ -41,6 +41,10 @@ Each status carries the deciding reason code (`REASONS` in `core.ts`) and a chec
 | — | Client "no" reviews | The fund stays in its tier, marked rejected, and isn't counted. |
 
 There are no tightness controls and no wave limit.
+
+## Thin match
+
+On the Tiers tab, the newest run is compared with two minimums (one setting for every client, editable there): Core funds and funds in all tiers. Below either, the panel lists what holds the run down (the most common deciding reasons) and **Find options**: the AI (prompt `match_options`) proposes up to five sector setups that honestly describe the company, and the engine counts each one, and the current setup, with the stage as profiled and with "Also one stage up" (`previewOptions` in `server.ts`, nothing saved, before website checks). **Apply** saves the sectors as a new profile version with the reason, sets the stage reach, and runs the match again. Nothing is pushed.
 
 ## Geography
 

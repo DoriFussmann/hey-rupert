@@ -40,7 +40,7 @@ import {
 } from "../../taxonomy/core.ts";
 
 /** Recorded with every run. Change it whenever a rule below changes. */
-export const RULES_VERSION = "tiers-2026-10.2";
+export const RULES_VERSION = "tiers-2026-10.3";
 
 export const TIER_KEYS = ["core", "sphere", "tier3", "tier4"] as const;
 export type TierKey = (typeof TIER_KEYS)[number];
@@ -293,6 +293,8 @@ export type TierRunInput = {
   duplicates?: Map<string, DuplicateFlag>;
   /** Groups to show once per list (confirmed duplicates; office groups not rejected). */
   identities?: IdentityGroup[];
+  /** How far past the company's stage the match reaches (default: its stage only). */
+  stageReach?: StageReach;
 };
 
 export const FUND_OF_FUNDS = "financing.fund_of_funds";
@@ -460,7 +462,41 @@ function ladderOf(index: TaxIndex, id: string) {
 
 type StageResult = { code: ReasonCode | null; check: Check; note: boolean };
 
-export function stageCheck(firm: Firm, mapping: FirmMapping, stage: string, index: TaxIndex): StageResult {
+/**
+ * Early stage: Pre-Seed and Seed are one stage. A company at either matches
+ * funds that list either.
+ */
+export const EARLY_STAGES = ["stage.pre_seed", "stage.seed"] as const;
+
+/** How far past the company's own stage a client's match reaches. */
+export type StageReach = "exact" | "next";
+
+export const STAGE_REACH_LABEL: Record<StageReach, string> = {
+  exact: "The company's stage only",
+  next: "Also one stage up",
+};
+
+/**
+ * The stages a fund may list to pass: the company's stage (both early
+ * stages for an early company) and, with reach "next", the venture stage
+ * one rung above them.
+ */
+export function acceptedStages(stage: string, index: TaxIndex, reach: StageReach = "exact") {
+  const own = (EARLY_STAGES as readonly string[]).includes(stage) ? [...EARLY_STAGES] : [stage];
+  if (reach !== "next") return { own, reached: [] as string[] };
+  const top = Math.max(...own.map((id) => ladderOf(index, id) ?? -Infinity));
+  if (!Number.isFinite(top)) return { own, reached: [] as string[] };
+  const reached = Array.from(index.nodes.keys()).filter((id) => ladderOf(index, id) === top + 1);
+  return { own, reached };
+}
+
+export function stageCheck(
+  firm: Firm,
+  mapping: FirmMapping,
+  stage: string,
+  index: TaxIndex,
+  reach: StageReach = "exact",
+): StageResult {
   const name = label(index, stage);
   if (firm.stages.length === 0) {
     return { code: "stage_not_stated", check: { result: "unresolved", detail: "No stage stated." }, note: false };
@@ -468,9 +504,32 @@ export function stageCheck(firm: Firm, mapping: FirmMapping, stage: string, inde
   const tags = tagsOf(mapping, "stage");
   const approved = approvedIds(tags);
   const unclear = unrecognized(mapping, ["stage"]) || tags.some((tag) => tag.review !== "approved");
+  const raw = (id: string) => tags.find((tag) => tag.nodeId === id)?.raw ?? label(index, id);
+  const { own, reached } = acceptedStages(stage, index, reach);
   if (approved.has(stage)) {
-    const raw = tags.find((tag) => tag.nodeId === stage)?.raw ?? name;
-    return { code: null, check: { result: "pass", detail: `Lists ${name} ("${raw}").` }, note: unclear };
+    return { code: null, check: { result: "pass", detail: `Lists ${name} ("${raw(stage)}").` }, note: unclear };
+  }
+  const sameStage = own.find((id) => approved.has(id));
+  if (sameStage) {
+    return {
+      code: null,
+      check: {
+        result: "pass",
+        detail: `Lists ${label(index, sameStage)} ("${raw(sameStage)}"); Pre-Seed and Seed count as one stage (Early stage).`,
+      },
+      note: unclear,
+    };
+  }
+  const up = reached.find((id) => approved.has(id));
+  if (up) {
+    return {
+      code: null,
+      check: {
+        result: "pass",
+        detail: `Lists ${label(index, up)} ("${raw(up)}"), one stage up: this client's match also reaches one stage up.`,
+      },
+      note: unclear,
+    };
   }
   if (unclear) {
     return {
@@ -479,19 +538,21 @@ export function stageCheck(firm: Firm, mapping: FirmMapping, stage: string, inde
       note: false,
     };
   }
-  const ladder = ladderOf(index, stage);
-  const near = ladder == null ? [] : Array.from(approved).filter((id) => {
+  const accepted = [...own, ...reached];
+  const rungs = accepted.map((id) => ladderOf(index, id)).filter((value): value is number => value != null);
+  const near = Array.from(approved).filter((id) => {
     const other = ladderOf(index, id);
-    return other != null && Math.abs(other - ladder) === 1;
+    return other != null && !accepted.includes(id) && rungs.some((rung) => Math.abs(other - rung) === 1);
   });
+  const wanted = accepted.map((id) => label(index, id)).join(" or ");
   if (near.length) {
     return {
       code: "stage_one_off",
-      check: { result: "fail", detail: `Lists ${near.map((id) => label(index, id)).join(", ")}, not ${name}.` },
+      check: { result: "fail", detail: `Lists ${near.map((id) => label(index, id)).join(", ")}, not ${wanted}.` },
       note: false,
     };
   }
-  return { code: "stage_mismatch", check: { result: "fail", detail: `Does not list ${name}: "${joinRaw(firm.stages)}".` }, note: false };
+  return { code: "stage_mismatch", check: { result: "fail", detail: `Does not list ${wanted}: "${joinRaw(firm.stages)}".` }, note: false };
 }
 
 type GeoResult = { code: ReasonCode | null; check: Check; note: boolean; scope: "national" | "regional" | "us_regional" | null };
@@ -877,7 +938,7 @@ export function runTiers(input: TierRunInput): TierRun {
     }
 
     // 6. Stage.
-    const st = stageCheck(firm, mapping, stage, index);
+    const st = stageCheck(firm, mapping, stage, index, input.stageReach ?? "exact");
     out.checks.stage = st.check;
     if (st.note) out.notes.push("stage_review_note");
     if (st.code) {
