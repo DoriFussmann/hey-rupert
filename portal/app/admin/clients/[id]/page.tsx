@@ -45,6 +45,8 @@ import {
 import { signFileLinks, signMaterialLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { reanalyzeState } from "@/lib/reanalyze";
+import { latestAudit } from "@/lib/list-audit-server";
+import type { ListAudit } from "@/lib/list-audit";
 
 // The AI analysis runs in server actions on this page and can take minutes.
 export const maxDuration = 300;
@@ -143,6 +145,12 @@ export default async function ClientDetailPage({
       : Promise.resolve(DEFAULT_MATERIAL_FIELDS),
   ]);
   const claudeReady = isClaudeConfigured();
+  const auditLoaded = service && isSetupOpen(client.stage) ? await latestAudit(service, client.id) : null;
+  const listAudit: { value: ListAudit | null; error: string | null } = auditLoaded
+    ? auditLoaded.ok
+      ? { value: auditLoaded.value, error: null }
+      : { value: null, error: auditLoaded.error }
+    : { value: null, error: null };
 
   // Each work panel, in process order. Finished ones move to the collapsed
   // Completed panel at the bottom; open ones stay at the top.
@@ -236,6 +244,7 @@ export default async function ClientDetailPage({
           companyName={client.company_name?.trim() || "your company"}
           adminName={adminFirstName(emailPanel.signature)}
           claudeReady={claudeReady}
+          listAudit={listAudit}
         />
       ),
     });

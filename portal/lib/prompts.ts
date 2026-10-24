@@ -76,6 +76,16 @@ Propose up to five other sector setups: one primary sector and up to two seconda
 
 For each setup, write one or two plain sentences: why it describes the company, and what the founder or an investor might question about it. If many funds avoid the company's own sector (for example a regulated industry), say so, because funds matched through a broader sector may still turn the company down.`;
 
+export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
+
+When you review funds, open each fund's website when a link is given, then decide:
+- ok: it plausibly invests in companies like yours (sector, stage, geography) and looks active.
+- flag: something would make you stop and ask: the website does not mention your sector or stage, the fund looks inactive, it seems to avoid your sector, its portfolio includes a competitor, it is already an investor or someone you pitched, or its tier looks wrong.
+- remove: you clearly would not want it contacted: a closed fund, a dead website, it excludes your sector, it backs a direct competitor, or it is already an investor.
+Give one sentence grounded in what you saw, and the question you would ask Rupert about it, if any. Never invent what a website says; if you could not open it, say so.
+
+When you write the overall read: say in a few sentences how the list lands with you, then list the questions you would ask Rupert when you first see it, what would bother you, and what you would want explained (why a fund is in its tier, why names you expected are missing, why the list is the size it is). For each question, add the short answer Rupert should be ready to give, using only the facts you receive. Plain language, no hype.`;
+
 const TAXONOMY_MAPPING_PROMPT = `You map raw labels from an investor database to a fixed taxonomy of canonical categories. Use only category ids from the list. Never invent ids or categories. Use more than one id only when the label genuinely spans several categories. When no category fits, return an empty list and say why. A wrong mapping is worse than none. Give a short, factual rationale and an honest confidence from 0 to 1.`;
 
 const TAXONOMY_RELATIONSHIPS_PROMPT = `You help maintain a sector relationship graph used to decide which venture investors are relevant to a startup.
@@ -174,6 +184,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The company facts, its current sectors, why funds left the match, and the sector categories allowed; ids outside them are dropped, and every count comes from the match engine, not the AI.",
     testable: false,
     defaultText: MATCH_OPTIONS_PROMPT,
+  },
+  list_audit: {
+    slug: agentPromptSlug("list_audit"),
+    usedBy: "Setup → Investor List → Run audit: reads the draft list as the founder will (the first funds in each tier and their websites) and writes the questions the founder will ask. Nothing is changed or sent.",
+    fixed: "The company facts and exclusions, the funds checked (5 per request, with their websites to open), the list's tier counts, and the answer formats (a verdict per fund; the overall read with questions and concerns).",
+    testable: false,
+    defaultText: LIST_AUDIT_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

@@ -10,6 +10,7 @@ import {
   type SetupSource,
   type SetupStepId,
 } from "@/lib/setup";
+import type { ListAudit } from "@/lib/list-audit";
 
 /**
  * Rupert's side of the Setup Turn Engine: one panel per step, in order.
@@ -24,6 +25,7 @@ export function SetupWorkspace({
   companyName,
   adminName,
   claudeReady,
+  listAudit,
 }: {
   clientId: string;
   source: SetupSource;
@@ -35,6 +37,8 @@ export function SetupWorkspace({
   companyName: string;
   adminName: string;
   claudeReady: boolean;
+  /** The newest investor list audit, or why it could not be read. */
+  listAudit: { value: ListAudit | null; error: string | null };
 }) {
   const items = getSetupItems(source);
   const rows = source.setup_steps ?? [];
@@ -69,6 +73,8 @@ export function SetupWorkspace({
         companyName={companyName}
         clientFirstName={clientFirstName}
         adminName={adminName}
+        audit={listAudit}
+        claudeReady={claudeReady}
       />
       <EmailCopyPanel
         clientId={clientId}

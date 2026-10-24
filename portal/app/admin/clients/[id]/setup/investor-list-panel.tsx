@@ -12,9 +12,11 @@ import {
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
+import { ListAuditPanel } from "@/app/admin/clients/[id]/setup/list-audit-panel";
 import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
 import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
 import { formatDate } from "@/lib/format";
+import { auditSendWarning, listFingerprint, type ListAudit } from "@/lib/list-audit";
 import { matchPath } from "@/lib/match/shared";
 import {
   NOTE_MAX,
@@ -73,6 +75,8 @@ export function InvestorListPanel({
   companyName,
   clientFirstName,
   adminName,
+  audit,
+  claudeReady,
 }: {
   clientId: string;
   item: SetupItem;
@@ -82,6 +86,9 @@ export function InvestorListPanel({
   companyName: string;
   clientFirstName: string;
   adminName: string;
+  /** The newest founder's-eye audit, or why it could not be read. */
+  audit: { value: ListAudit | null; error: string | null };
+  claudeReady: boolean;
 }) {
   const initial = useMemo(() => {
     const draft = asInvestorListDraft(row?.draft);
@@ -109,6 +116,11 @@ export function InvestorListPanel({
   });
   const adminRows = flaggedOnly ? flaggedRows : list.rows;
   const changesRequested = row?.status === "changes_requested";
+  const fingerprint = listFingerprint(list.rows);
+  const auditWarning = empty ? null : auditSendWarning(audit.value, fingerprint);
+  const sendHint = clientFirstName
+    ? `Sending makes the list visible in ${clientFirstName}'s portal.`
+    : "Sending makes the list visible in the client's portal.";
 
   return (
     <StepFrame
@@ -241,6 +253,15 @@ export function InvestorListPanel({
               }}
             />
           </div>
+          <ListAuditPanel
+            key={audit.value?.id ?? "none"}
+            clientId={clientId}
+            initialAudit={audit.value}
+            loadError={audit.error}
+            fingerprint={fingerprint}
+            scheme={list.tier_scheme}
+            claudeReady={claudeReady}
+          />
         </>
       )}
 
@@ -274,11 +295,7 @@ export function InvestorListPanel({
         problem={investorListProblem(list)}
         busy={false}
         pushSummary="Pushes the fund list above (fund names, tiers, websites and contact counts) and your note to the client's portal as a new version, and sends them this email. They add notes, ask questions or confirm there."
-        sendHint={
-          clientFirstName
-            ? `Sending makes the list visible in ${clientFirstName}'s portal.`
-            : "Sending makes the list visible in the client's portal."
-        }
+        sendHint={auditWarning ? `${sendHint} Audit: ${auditWarning}` : sendHint}
         clientPreview={
           empty ? undefined : (
             <ClientPreview list={list} company={companyName} adminName={adminName} />
