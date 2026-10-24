@@ -239,7 +239,7 @@ const jsonLd: Record<string, unknown>[] = [
     </section>
 
     <section class="site-wrap pt-lg pb-xl lg:pt-xl lg:pb-2xl reveal" aria-labelledby="about-heading">
-      <div class="founder-grid">
+      <div class="founder-grid founder-grid--about">
         <div class="founder-copy">
           <p class="type-label">About</p>
           <h2 id="about-heading" class="type-h2 mt-md">
@@ -319,8 +319,8 @@ const jsonLd: Record<string, unknown>[] = [
           pillars.map((pillar, index) => (
             <li class="step-band">
               <p class="step-script">Step {index + 1}</p>
-              <h3 class="type-h2 mt-sm">{pillar.title}</h3>
-              <p class="type-body mt-sm max-w-prose">{pillar.summary}</p>
+              <h3 class="type-h2">{pillar.title}</h3>
+              <p class="type-body">{pillar.summary}</p>
               <div class="step-band__stages">
                 {pillar.items.map((item) => (
                   <details class="pillar-item">
@@ -352,7 +352,7 @@ const jsonLd: Record<string, unknown>[] = [
           experience.map((item) => (
             <li class="experience-card">
               <p class="experience-card__value">{item.value}</p>
-              <p class="type-h4 mt-sm">{item.label}</p>
+              <p class="type-h4">{item.label}</p>
             </li>
           ))
         }

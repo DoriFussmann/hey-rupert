@@ -24,7 +24,7 @@ export default {
           DEFAULT: "#B5935A",
           text: "#7A5C28",
         },
-        background: "#FAF9F7",
+        background: "#F6F8F5",
         surface: "#FFFFFF",
         border: "#E4E2DE",
         muted: {

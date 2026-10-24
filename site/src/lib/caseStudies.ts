@@ -31,6 +31,12 @@ export const caseStudies: CaseStudy[] = [
     body: "Founded and led The Vets, a tech-enabled pet healthcare company that later merged with BetterVet.",
   },
   {
+    name: "BlueMark",
+    role: "Fractional CFO",
+    logo: caseLogo("bluemark.png"),
+    body: "Serves as Fractional CFO of BlueMark, an impact-investment intelligence platform.",
+  },
+  {
     name: "Natrion",
     role: "Fractional CFO",
     logo: caseLogo("natrion.png"),
@@ -45,10 +51,22 @@ export const caseStudies: CaseStudy[] = [
     linkLabel: "$100M financing round",
   },
   {
-    name: "BlueMark",
-    role: "Fractional CFO",
-    logo: caseLogo("bluemark.png"),
-    body: "Serves as Fractional CFO of BlueMark, an impact-investment intelligence platform.",
+    name: "Cornell Tech",
+    role: "Startups mentor",
+    logo: cornellTechLogo,
+    body: "Mentors early-stage founders through Cornell Tech's Runway Startups Program.",
+  },
+  {
+    name: "Yale",
+    role: "Startups mentor",
+    logo: caseLogo("yale.png"),
+    body: "Mentors early-stage founders through Yale's Tsai CITY.",
+  },
+  {
+    name: "Morgan Stanley",
+    role: "Investment Banking",
+    logo: caseLogo("morgan-stanley.png"),
+    body: "Advised technology and consumer companies on M&A, IPOs, and strategic financing — sitting in the rooms where a raise is judged on thesis fit, timing, and whether the story holds.",
   },
   {
     name: "Translucent AI",
@@ -79,23 +97,5 @@ export const caseStudies: CaseStudy[] = [
     role: "Advisor",
     logo: caseLogo("swift-vets.png"),
     body: "Advisor to Swift Vets in Australia.",
-  },
-  {
-    name: "Morgan Stanley",
-    role: "Investment Banking",
-    logo: caseLogo("morgan-stanley.png"),
-    body: "Advised technology and consumer companies on M&A, IPOs, and strategic financing — sitting in the rooms where a raise is judged on thesis fit, timing, and whether the story holds.",
-  },
-  {
-    name: "Cornell Tech",
-    role: "Startups mentor",
-    logo: cornellTechLogo,
-    body: "Mentors early-stage founders through Cornell Tech's Runway Startups Program.",
-  },
-  {
-    name: "Yale",
-    role: "Startups mentor",
-    logo: caseLogo("yale.png"),
-    body: "Mentors early-stage founders through Yale's Tsai CITY.",
   },
 ];
