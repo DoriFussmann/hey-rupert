@@ -13,6 +13,7 @@ import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
 import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-card";
 import { CompanyMaterialsCard } from "@/app/admin/clients/[id]/company-materials-card";
+import { ReanalyzeBanner } from "@/app/admin/clients/[id]/reanalyze-banner";
 import { WelcomeEmailButton } from "@/app/admin/clients/[id]/welcome-email";
 import { NextAction, type NextActionTurn } from "@/app/admin/clients/[id]/next-action";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
@@ -43,6 +44,7 @@ import {
 } from "@/lib/setup";
 import { signFileLinks, signMaterialLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { reanalyzeState } from "@/lib/reanalyze";
 
 // The AI analysis runs in server actions on this page and can take minutes.
 export const maxDuration = 300;
@@ -281,6 +283,28 @@ export default async function ClientDetailPage({
     : !materialsIn
       ? "Analyze opens once the client's materials are in."
       : null;
+  const narrative = narrativeRow ? asNarrative(narrativeRow.draft ?? narrativeRow.published) : null;
+  const brief = interview?.admin_brief ?? null;
+  const reanalysis = reanalyzeState({
+    intakeCompleted: Boolean(client.intake_completed_at),
+    materialsIn,
+    interview: interview
+      ? { updatedAt: interview.updated_at, messages: interview.messages.map(({ role, at }) => ({ role, at })) }
+      : null,
+    brief: brief ? { basedOn: brief.based_on, editedAt: brief.edited_at } : null,
+    feedback: narrative?.feedback ? { generatedAt: narrative.feedback.generated_at } : null,
+    profile: matchProfile
+      ? { builtAt: matchProfile.builtAt, sourceInterviewAt: matchProfile.sourceInterviewAt, editedAt: matchProfile.editedAt }
+      : null,
+    files: materialsFiles.map((file) => ({ uploadedAt: file.uploaded_at })),
+    narrative: {
+      hasText: Boolean(
+        narrative && [narrative.summary, narrative.core, narrative.key_messages, narrative.approach].some((part) => part.trim()),
+      ),
+      sent: (narrativeRow?.version ?? 0) > 0,
+      changesRequested: narrativeRow?.status === "changes_requested",
+    },
+  });
   const showWelcome =
     !client.is_test_pilot && (access.status === "pending" || access.status === "expired");
 
@@ -335,6 +359,7 @@ export default async function ClientDetailPage({
             : null
         }
       />
+      <ReanalyzeBanner clientId={client.id} state={reanalysis} claudeReady={claudeReady} />
       {materials ? (
         <CompanyMaterialsCard files={materialsFiles} links={materialLinks} noDeck={materials.no_deck} />
       ) : null}

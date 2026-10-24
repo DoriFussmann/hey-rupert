@@ -22,6 +22,7 @@ import {
   cleanAnswers,
   extractAnswers,
   loadProfileState,
+  materialsFeedbackText,
   saveProfileState,
 } from "@/lib/match/profile-server";
 import {
@@ -434,7 +435,8 @@ export async function buildMatchProfile(
   // founder evidence; without it, the profile is built as before.
   const taxonomy = await loadTaxonomy(supabase);
   const index = taxonomy.ok ? taxonomy.value : null;
-  const extracted = await extractAnswers(supabase, client as Record<string, unknown>, interview, index);
+  const feedback = await materialsFeedbackText(supabase, clientId);
+  const extracted = await extractAnswers(supabase, client as Record<string, unknown>, interview, index, null, feedback);
   if (!extracted.ok) return extracted;
 
   const settings = current.value?.settings ?? DEFAULT_SETTINGS;

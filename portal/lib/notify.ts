@@ -45,14 +45,16 @@ function text(value: unknown) {
 }
 
 /**
- * Records an in-app admin notification unless an unread one of the same type
- * is already waiting for this client, so repeated events (a founder adding
- * several messages) don't flood the list. Best effort, like notifyAdmin.
+ * Records an admin notification (and, with `email`, emails it) unless an
+ * unread one of the same type is already waiting for this client, so
+ * repeated events (a founder adding several messages or files) don't flood
+ * the list or the inbox. Best effort, like notifyAdmin.
  */
 export async function notifyAdminOnce(
   supabase: ServiceClient,
   clientId: string,
   type: string,
+  { email = false, details }: { email?: boolean; details?: string } = {},
 ) {
   const { count, error } = await supabase
     .from("notifications")
@@ -65,7 +67,7 @@ export async function notifyAdminOnce(
     return;
   }
   if ((count ?? 0) > 0) return;
-  await notifyAdmin(supabase, clientId, type, { email: false });
+  await notifyAdmin(supabase, clientId, type, { email, details });
 }
 
 /**

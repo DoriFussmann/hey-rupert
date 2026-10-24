@@ -587,6 +587,24 @@ export async function latestTierRun(supabase: ServiceClient, clientId: string): 
 }
 
 /**
+ * Whether the company profile (its answers, settings or version) changed
+ * since this run, so the match needs to run again before a push. The
+ * profile-only part of staleReasons, without loading the Fund Database.
+ */
+export async function profileChangedSince(
+  supabase: ServiceClient,
+  clientId: string,
+  header: RunHeader,
+): Promise<Result<boolean>> {
+  const [state, versions] = await Promise.all([loadProfileState(supabase, clientId), loadVersions(supabase, clientId, 1)]);
+  if (!state.ok) return state;
+  if (!versions.ok) return versions;
+  const basisChanged = !header.settings.basis || !state.value || profileBasis(state.value) !== header.settings.basis;
+  const versionChanged = (versions.value[0]?.version ?? null) !== header.profileVersion;
+  return { ok: true, value: basisChanged || versionChanged };
+}
+
+/**
  * Why a saved run no longer reflects the client's data, in words. Empty when
  * it still does. A run with reasons can't be pushed: run the match again.
  */

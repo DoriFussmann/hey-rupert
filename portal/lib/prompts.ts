@@ -131,7 +131,7 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   match_profile: agentDetails(
     "match_profile",
-    "The intake interview, and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",
+    "The intake interview, Rupert's read of every shared file (from the Company Materials Feedback, once Analyze has run), and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",
     true,
   ),
   narrative_email: agentDetails("narrative_email", `Rupert's edited narrative and Company Materials Feedback, shared files and links, and company information. ${EMAIL_FIXED}`, true),

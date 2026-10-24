@@ -118,6 +118,19 @@ async function success(
   return { ok: true, interview, materials: await currentMaterials(access) };
 }
 
+const EXCERPT_MAX = 400;
+
+/** The start of a founder's message, for an admin email. */
+function excerpt(text: string) {
+  const clean = text.trim();
+  return clean.length > EXCERPT_MAX ? `${clean.slice(0, EXCERPT_MAX).trimEnd()}…` : clean;
+}
+
+/** The files a founder just added, for the admin email. */
+function addedFilesDetails(files: MaterialFile[]) {
+  return `Files:\n${files.map((file) => `- ${file.name} (${formatBytes(file.size)})`).join("\n")}`;
+}
+
 /** What Rupert gathered, the materials and any disagreements, for the admin email. */
 function completionDetails(
   topics: IntakeTopic[],
@@ -335,7 +348,10 @@ async function takeTurn(
   await completeIfReady(access, client, settings.topics, topicStatus, conflicts);
   // Files added after the intake already notify as materials_added.
   if (followUp && !message.attachments?.length) {
-    await notifyAdminOnce(supabase, user.id, "intake_updated");
+    await notifyAdminOnce(supabase, user.id, "intake_updated", {
+      email: true,
+      details: `What they wrote:\n${excerpt(message.content)}`,
+    });
   }
 
   revalidatePath(`/admin/clients/${user.id}`);
@@ -445,7 +461,10 @@ export async function sendIntakeFiles(input: {
     late = late || result.late;
   }
   if (late) {
-    await notifyAdmin(access.supabase, access.user.id, "materials_added", { email: false });
+    await notifyAdminOnce(access.supabase, access.user.id, "materials_added", {
+      email: true,
+      details: addedFilesDetails(attached),
+    });
   }
   revalidateIntake(access.user.id);
 

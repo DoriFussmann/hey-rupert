@@ -17,7 +17,7 @@ import {
 import { loadInterviewGuide } from "@/lib/company-profile/server";
 import { loadIntakeSettings, loadInterview, nextInterviewTurn, writeInterviewSummary } from "@/lib/intake-server";
 import { loadMaterialsView } from "@/lib/materials-server";
-import { extractAnswers } from "@/lib/match/profile-server";
+import { extractAnswers, materialsFeedbackText } from "@/lib/match/profile-server";
 import { draftNudge, loadNudgeDetail } from "@/lib/nudge-server";
 import { PROMPT_NOTE_MAX, isPromptKey, promptDefinition, promptTextProblems, type PromptKey, type PromptOverride } from "@/lib/prompts";
 import { listPromptVersions, savePromptVersion } from "@/lib/prompts-server";
@@ -120,7 +120,8 @@ async function runTest(
     const current = interview.interview;
     if (key === "match_profile") {
       const taxonomy = await loadTaxonomy(supabase);
-      const extracted = await extractAnswers(supabase, client, current, taxonomy.ok ? taxonomy.value : null, override);
+      const feedback = await materialsFeedbackText(supabase, clientId);
+      const extracted = await extractAnswers(supabase, client, current, taxonomy.ok ? taxonomy.value : null, override, feedback);
       if (!extracted.ok) return extracted;
       return {
         ok: true,

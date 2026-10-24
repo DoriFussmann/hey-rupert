@@ -152,6 +152,8 @@ export type AdminEmailType =
   | "nda_signed"
   | "intake_completed"
   | "materials_submitted"
+  | "materials_added"
+  | "intake_updated"
   | "narrative_viewed"
   | "framing_confirmed"
   | "framing_changes_requested"
@@ -418,6 +420,16 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
   adminTemplate("nda_signed", "NDA signed", "signed the NDA"),
   adminTemplate("intake_completed", "Intake completed", "completed the Client Intake"),
   adminTemplate("materials_submitted", "Materials submitted", "submitted their company materials"),
+  {
+    ...adminTemplate("materials_added", "Files added after the intake", "added files to their company materials"),
+    trigger:
+      "When a client adds files after their materials are submitted (in the intake chat or on Company Files). One email until you read the in-app alert; {details} lists the files.",
+  },
+  {
+    ...adminTemplate("intake_updated", "Intake chat after completion", "added to their intake after finishing it"),
+    trigger:
+      "When a client chats in the intake after completing it. One email until you read the in-app alert; {details} quotes the message.",
+  },
   {
     ...adminTemplate(
       "narrative_viewed",

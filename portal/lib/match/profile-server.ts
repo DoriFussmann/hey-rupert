@@ -23,6 +23,8 @@ import {
   type ProfileGap,
 } from "@/lib/match/shared";
 import { matchTableError } from "@/lib/match/db-server";
+import { asNarrative } from "@/lib/setup";
+import { loadSetupStep } from "@/lib/setup-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import type { AiClassification } from "@/lib/company-profile/core";
 import { CLASSIFICATION_PROPERTY, classificationRules } from "@/lib/company-profile/prompt";
@@ -334,7 +336,7 @@ function knownFacts(client: Record<string, unknown>) {
   return lines.length > 0 ? lines.join("\n") : "Nothing on record.";
 }
 
-function interviewText(interview: IntakeInterview) {
+function interviewText(interview: IntakeInterview, materialsFeedback: string) {
   const transcript = interview.messages
     .map((message) => `${message.role === "assistant" ? "Rupert" : "Founder"}: ${intakeMessageText(message)}`)
     .join("\n\n");
@@ -345,6 +347,9 @@ function interviewText(interview: IntakeInterview) {
     summary ? `## Summary the founder confirmed\n${summary}` : "",
     interview.admin_brief ? `## Intake brief\n${interview.admin_brief.summary}` : "",
     transcript ? `## Interview transcript\n${transcript}` : "",
+    materialsFeedback
+      ? `## Rupert's read of every file the founder shared (from the Company Materials Feedback)\n${materialsFeedback}`
+      : "",
   ]
     .filter(Boolean)
     .join("\n\n");
@@ -361,6 +366,8 @@ export async function extractAnswers(
   interview: IntakeInterview,
   taxonomy: TaxIndex | null = null,
   override?: PromptOverride | null,
+  /** How Rupert reads the company from all its files, so files shared outside the chat count too. */
+  materialsFeedback = "",
 ): Promise<
   | { ok: true; answers: MatchAnswers; classification: AiClassification | null; promptVersion: number }
   | { ok: false; error: string }
@@ -394,7 +401,7 @@ export async function extractAnswers(
     messages: [
       {
         role: "user",
-        content: `${interviewText(interview)}\n\nFill the profile by calling the save_profile tool.`,
+        content: `${interviewText(interview, materialsFeedback.trim())}\n\nFill the profile by calling the save_profile tool.`,
       },
     ],
     tool,
@@ -411,4 +418,15 @@ export async function extractAnswers(
         ? (classification as AiClassification)
         : null,
   };
+}
+
+/**
+ * The Company Materials Feedback's read of the company, for the profile: it
+ * covers every file the founder shared, including files added outside the
+ * intake chat. Empty when Analyze has not run (or the step can't be read).
+ */
+export async function materialsFeedbackText(supabase: ServiceClient, clientId: string) {
+  const loaded = await loadSetupStep(supabase, clientId, "framing");
+  if (!loaded.ok || !loaded.row) return "";
+  return asNarrative(loaded.row.draft ?? loaded.row.published).feedback?.summary.trim() ?? "";
 }

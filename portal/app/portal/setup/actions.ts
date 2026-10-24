@@ -10,7 +10,7 @@ import {
 } from "@/lib/material-fields";
 import { advanceStage } from "@/lib/kickoff";
 import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
-import { notifyAdmin } from "@/lib/notify";
+import { notifyAdmin, notifyAdminOnce } from "@/lib/notify";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 import {
   MATERIALS_BUCKET,
@@ -235,7 +235,10 @@ export async function registerMaterialFile(file: {
   });
   if (!attached.ok) return attached;
   if (attached.late) {
-    await notifyAdmin(access.supabase, access.user.id, "materials_added", { email: false });
+    await notifyAdminOnce(access.supabase, access.user.id, "materials_added", {
+      email: true,
+      details: `Files:\n- ${attached.file.name} (${formatBytes(attached.file.size)})`,
+    });
   }
 
   revalidateSetup(access.user.id);
