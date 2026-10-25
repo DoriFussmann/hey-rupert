@@ -242,19 +242,6 @@ The single most important rule in this entire debate is one that applies regardl
 While slide deck templates provide excellent starting points, authentic pitch deck design requires significant customization. Templates establish structural frameworks and design systems, but a unique value proposition demands unique visual expression.
  The right order is: lock the structure with a template, pressure-test the narrative with advisors and early investor conversations, then — and only then — invest in custom design if the stage and competitive context justify it.
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The fundraising environment in October 2026 is clarifying quickly for founders preparing pitch decks. 
-Global venture funding reached [a reported record of $510 billion in the first half of 2026](https://news.crunchbase.com/?p=93740), with AI companies taking more than 70% of startup capital in the second quarter and early-stage funding more than doubling year over year.
- But concentration of capital does not mean easier access: 
-fewer startups are getting funded overall, while stronger startups are raising larger rounds, with reporting pointing to shrinking deal counts alongside growing deal values.
- For founders completing pitch deck templates right now, 
-investor attention continues declining — now under two minutes for seed-stage decks — team slides are gaining importance as investors prioritize people in an AI-heavy landscape, and mobile-first viewing now accounts for more than 70% of initial reviews.
-
-Early-stage investors are inspecting evidence much more closely, meaning founders with vague narratives and generic AI claims are competing at a disadvantage against teams with customer revenue, specialist knowledge, and a credible path to the next round.
- The practical implication: completing a template correctly, with bottoms-up logic and real evidence on every slide, has never mattered more.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - Write a one-paragraph investment thesis before touching any slide — every placeholder you fill should serve that thesis, and gaps in it will show up in the deck.

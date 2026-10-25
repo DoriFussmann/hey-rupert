@@ -117,23 +117,9 @@ If the honest answer is a compelling team, a well-researched thesis, and an earl
 
 If you have a working product, users engaging with it, and at least some early signal about whether the unit economics can work, you may be ready for seed. But even here, preparation matters. Seed investors are conducting genuine diligence — they will talk to customers, examine your retention, and stress-test your market size assumptions. Walking into that process with a strong product and weak data discipline is its own kind of unreadiness.
 
-Only around 45% of companies that raise pre-seed will reach a seed round within 24 months
- — which underscores why the pre-seed round itself needs to be sized and structured to fund the milestones that make seed possible, not just to extend runway for its own sake. The goal of pre-seed is not to survive; it is to build the proof that makes the next conversation with a different class of investor credible.
+The goal of pre-seed is not to survive; it is to build the proof that makes the next conversation with a different class of investor credible.
 
 Once a founder has a clear read on which stage their evidence actually supports, the next challenge is identifying investors who are genuinely active at that stage right now — not firms whose websites say they do pre-seed but whose last five investments were all $3M rounds. The gap between an investor's stated mandate and their recent deal history is often significant, and cold outreach to the wrong fund burns time and credibility. A research-led approach to investor targeting — one that maps recent check sizes, stage preference, sector focus, and portfolio fit before a single message is sent — is what separates a tightly run process from one that stalls in the first wave. Rupert's outreach process is built precisely around that kind of matching: using actual deal history to find the investors most likely to be receptive to your specific company at your specific stage, then running the campaign with full transparency so founders see every conversation and retain every relationship.
-
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The early-stage funding environment entering Q4 2026 is showing two simultaneous and somewhat contradictory trends. 
-Bessemer Venture Partners announced $5.75 billion in new capital in late September — $1.75 billion allocated specifically to seed and early-stage investing — in one of the largest single fund closes of the year, signaling that institutional appetite for early-stage bets remains strong.
- At the same time, 
-over 40% of seed and Series A investment in 2026 has gone to rounds of $100 million or more, a striking concentration that was not a meaningful feature of the market for most of startup history.
- For the majority of founders raising at conventional pre-seed and seed sizes, 
-seed funding remained relatively stable at roughly $9 billion in Q3 across more than 3,500 companies
-, suggesting that capital is still moving to normal-sized early-stage rounds even as mega-deals distort the headline numbers. The clearest structural pattern is that 
-VCs are becoming increasingly specialized rather than generalist
-, which makes stage and sector fit in investor targeting more important than ever for founders navigating either a pre-seed or seed process.
-<!-- WHERE-THINGS-STAND:END -->
 
 ## Key Takeaways
 

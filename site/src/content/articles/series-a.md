@@ -127,7 +127,6 @@ Because seed deal volume exploded while Series A capacity stayed roughly flat, t
 The time dimension compounds the pressure. 
 While companies that are funded at the seed stage are typically raising larger checks, they're also taking longer to move on to Series A and face lower odds of graduating to that phase at all. Since 2023, U.S. startups have been taking longer to raise a Series A round following an initial seed round of $1 million and over, with that time frame now stretching to more than two years.
 
-
  That figure alone should recalibrate how founders think about runway planning. A company that closes seed today and assumes it will raise Series A in 18 months is planning against a median that no longer exists.
 
 The implication is clear: 
@@ -146,7 +145,7 @@ $1.5M ARR growing 2.5x with 110% NRR might price around $40M post-money ($1.5M �
 
 Pre-money valuations for Series A rounds in 2026 range from $25M to $80M, with the median around $40M to $50M. Valuation depends heavily on revenue multiple, growth rate, market size, team quality, and competitive dynamics.
  The AI premium is real and should not be treated as the baseline: 
-much of that increase is concentrated in AI deals; non-AI Series A rounds are still pricing closer to a $40–42M pre-money, so founders should check the AI-vs-non-AI split before benchmarking their own round against the headline medians.
+much of that increase is concentrated in AI deals, so founders should check the AI-vs-non-AI split before benchmarking their own round against the headline medians.
 
 One often-overlooked truth: 
 a $30M post-money valuation that closes beats a $60M valuation that doesn't. The only valuation that matters is the one investors actually wire money at.
@@ -201,7 +200,7 @@ Target 40 to 60 funds that actually lead Series A rounds in your sector. Expect 
 When building your target list, focus on firms that have recent experience in your sector and stage. Review their portfolio for potential conflicts — a firm is unlikely to lead your round if they already back a direct competitor. Warm introductions from existing investors, other founders in the firm's portfolio, or mutual connections convert at 5x to 10x the rate of cold outreach.
 
 Quality of targeting matters far more than volume. 
-The top 10 VC funds captured nearly 43% of all venture capital in Q3 of 2025, the highest share in at least a decade.
+
  Capital is concentrating, which means reaching the right partner at the right fund with a message that demonstrates genuine fit is the work — not maximizing outreach volume. 
 Warm intros help, but they are not required if your numbers are strong and your outreach is sharp. Many Series A rounds today start with well-crafted cold or semi-warm emails. A relevant, personalized message to an investor who funds your stage beats a generic intro to one who does not.
 
@@ -235,7 +234,3 @@ Getting the investor targeting, outreach sequencing, and pipeline management rig
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The Series A market in mid-2026 is defined by a stark divergence: headline venture numbers are historic, but access remains structurally concentrated. US venture capital hit $412.7 billion in H1 2026 — nearly 30% more than all of 2025 — while global startup funding reached a record $510 billion, per PitchBook-NVCA and Crunchbase. Yet that headline obscures who is capturing the capital. AI absorbed 86% of US VC dollars, with OpenAI and Anthropic alone accounting for 43% of all H1 funding; the Q2 2026 Venture Monitor explicitly flagged the "collapse of corporate VC and nontraditional participation outside of AI." For non-AI founders, conditions remain structurally difficult. The Cooley Q2 2026 Venture Financing Report found that while Series A deal volume ticked up quarter-over-quarter, median Series A pre-money valuations actually declined in Q2, down rounds rose to 12.1%, and pay-to-play provisions increased to 8.4% — signals of ongoing stress below the headline. The exit environment improved modestly, anchored by SpaceX's landmark $1.75 trillion IPO, but PitchBook notes the broader IPO pipeline beyond OpenAI and Anthropic has yet to be built. The structural message for founders is unchanged: disciplined preparation, precise investor targeting, and metrics that clear the bar before the process begins.
-<!-- WHERE-THINGS-STAND:END -->

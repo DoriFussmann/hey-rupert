@@ -63,7 +63,6 @@ Sending updates only when things are good trains investors to interpret silence 
 The payoff is concrete and well-documented. 
 Founders who send consistent updates are twice as likely to raise follow-on funding, according to [Visible's data](https://visible.vc/blog/ultimate-report-part-2/).
 
-Companies maintaining monthly investor updates see a 40% higher chance of securing follow-on funding, according to a 2025 efficiency study.
  These are not small margins. They reflect the compounding nature of investor trust: every update you send is a data point that makes the next conversation easier, the next ask warmer, and the next round faster to close.
 
 ## The Five Core Sections of a Strong Investor Update
@@ -194,17 +193,6 @@ Companies that move from "periodic" to "always-on" communication, engaging inves
  The seed-to-Series-A transition is exactly when this discipline needs to become intentional rather than improvised.
 
 ---
-
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The investor update landscape in late 2026 is being shaped by a broader tightening of investor scrutiny at the early stage. 
-Investors are increasingly demanding proof: paying customers, clean IP ownership, clear burn rate, and a plan that shows how long cash will last
- — context that makes the structured monthly investor update more valuable, not less, as a vehicle for demonstrating exactly that evidence over time. 
-In 2026, investors use CRMs like Affinity, HubSpot, and Airtable, and some teams now summarize founder updates with AI tools, which means vague updates are easier to ignore while clear metrics stand out.
- On the fundraising environment side, 
-the median time between funding rounds has stretched to 744 days as of Q4 2024, indicating a longer fundraising cycle that emphasizes the need for capital efficiency and strategic planning
- — and, by extension, for the kind of sustained investor relationship management that monthly updates make possible. The core mechanics of what makes an effective investor update — cadence discipline, honest challenge disclosure, and a specific ask — remain stable and are not subject to meaningful change in the near term.
-<!-- WHERE-THINGS-STAND:END -->
 
 ## Key Takeaways
 

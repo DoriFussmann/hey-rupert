@@ -78,7 +78,7 @@ Founders typically give up 15–25% per round at pre-seed through Series A, narr
 
 In 2026, seed investors demand more than promising ideas — many expect $300K–$500K in ARR
  before they will price a round. 
-Carta's July 2026 benchmark puts the median Series A at $14.4 million, with most investors requiring $1–3 million in ARR and strong growth of 150% year-over-year, along with a clear path to $10 million ARR within 18–24 months.
+Carta's July 2026 benchmark puts the median Series A at $14.4 million, and most investors at that stage expect around $1–3 million in ARR with strong growth.
  Priced rounds make sense once you have enough data to defend a valuation — attempting one too early simply means selling cheap, because investors will price the uncertainty into the number.
 
 Priced equity rounds require more legal work and typically cost $15,000–$25,000 in attorney fees
@@ -118,8 +118,6 @@ The discount rate on convertible notes typically runs 10–25%, rewarding early 
 
 Venture debt is structurally different from every other instrument on this list. It is not equity, and it does not pretend to be. You borrow a defined amount, pay interest, and repay the principal — typically over 36–48 months, often with an initial interest-only period. The benefit is that you extend your runway between priced rounds without issuing new shares.
 
-Nearly 60% of venture debt deals now occur at late or growth stage
-, which signals something important: this is not an early-stage instrument. 
 Venture debt is best used to extend runway 6–12 months between equity rounds without resetting valuation, and it requires recent VC backing — lenders underwrite based on your investors' credibility, not your cash flow.
  A founder who has never raised an institutional equity round will find the venture debt market largely closed to them.
 
@@ -180,11 +178,3 @@ That is the problem Rupert is built to solve. Rather than leaving founders to re
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The funding instrument landscape has continued to consolidate through mid-2026. Carta's Q2 2026 State of Pre-Seed report confirms SAFEs held at 93% of pre-seed rounds and captured 95% of all pre-seed capital raised — but the more telling shift is concentration: startups on Carta raised roughly the same dollars in Q2 2026 as Q2 2025 ($3.19B vs. $3.22B) across 22% fewer instruments, pushing the average instrument size to a record $276,000, up 27% year-over-year. Convertible notes have nearly disappeared outside capital-intensive sectors like biotech and energy. Median post-money SAFE caps now range from $10M to $35M depending on round size. One notable new signal: AI's share of pre-seed dollars appears to be plateauing — at roughly 49% of H1 2026 pre-seed capital, it is essentially flat versus 2025's full-year figure, suggesting the AI premium at the earliest stage may be stabilizing. Globally, venture funding hit a record $510 billion in H1 2026 alone per Crunchbase, but that headline is dominated by a handful of US AI megadeals. For seed-stage founders outside that cohort, the dynamics are unchanged: SAFEs dominate, check sizes are larger but scarcer, and venture debt remains a post-institutional tool.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.

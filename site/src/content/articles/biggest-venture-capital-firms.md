@@ -77,7 +77,7 @@ AUM includes committed but undeployed capital ("dry powder") so a firm's "size" 
 
 That distinction matters enormously. A firm that raised a $10 billion fund last year may have deployed only a fraction of it. Its AUM is high; its actual activity at your stage may be lower than a smaller, more active firm deploying steadily from a $500 million vehicle.
 
-The 18 largest VC firms hold a combined $621 billion in AUM — roughly 35–40% of all US venture capital under management — and that concentration has grown materially since 2018. The National Venture Capital Association tracks around 3,400 active US firms, with about 2,200 deploying in a given year, yet a small group at the top controls an outsized share.
+The National Venture Capital Association tracks around 3,400 active US firms, with about 2,200 deploying in a given year, yet a small group at the top controls an outsized share.
  Understanding which firms sit at that apex, and why, is step one. Understanding whether any of them are actually appropriate for your round is step two.
 
 ---
@@ -86,14 +86,13 @@ The 18 largest VC firms hold a combined $621 billion in AUM — roughly 35–40%
 
 ### Andreessen Horowitz (a16z) — ~$90B AUM
 
-Andreessen Horowitz raised just over $15 billion in new funding in early 2026, representing over 18% of all venture capital dollars allocated in the United States in 2025, which brought the organization to more than $90 billion in assets under management.
+Andreessen Horowitz raised roughly $15 billion in new funds in early 2026.
  That single fundraise — the largest in Silicon Valley history at the time — reshaped the competitive landscape overnight.
 
 Andreessen Horowitz invests in both early-stage startups and established growth companies, with investments spanning healthcare, consumer, cryptocurrency, gaming, fintech, education, and enterprise software.
 
 Key differences from its closest rival: Sequoia invests more selectively at seed and Series A, while a16z casts a wider net across more total companies. a16z's platform services are more formalised and larger-staffed, and while both firms are heavily AI-weighted, a16z has made a more explicit political and defense-tech commitment through its American Dynamism fund.
 
-Investment sizes vary significantly by stage. Available data shows a16z averages $17.6 million at seed, $24.1 million at Series A, and $121 million at Series B.
  Founders raising a pre-seed or small seed round should note that the firm's Speedrun program — 
 launched in 2023 as a gaming-focused program and expanded to all sectors in 2025, investing up to $1 million per company across cohorts of 60 startups
  — provides a lower-dilution entry point.
@@ -116,11 +115,11 @@ Both Sequoia and Andreessen Horowitz are running AI-first books, but the constru
 
 General Catalyst has grown into one of the largest global venture platforms, investing across early, growth, and transformational stages. The firm has backed companies such as Stripe, Snap, and Airbnb.
  General Catalyst is notable for operating one of the more expansive healthcare investment practices among the mega-funds, 
-with NEA, Khosla Ventures, and General Catalyst having built dedicated strategies in healthcare, a sector that accounted for 16.5% of all VC deals in 2024.
+with NEA, Khosla Ventures, and General Catalyst having built dedicated strategies in healthcare.
 
 ### Thrive Capital — ~$37B AUM
 
-Led by Josh Kushner, Thrive Capital reported $26.8 billion in AUM as of 2025, with the firm's footprint expanding rapidly in early 2026 after raising an additional $10 billion for its largest-ever vehicle, "Thrive X," which was heavily oversubscribed.
+Thrive Capital, led by Josh Kushner, has expanded rapidly and recently closed Thrive X, its largest fund to date.
 
 In AI, Andreessen Horowitz, Sequoia, Thrive Capital, and Lightspeed are deploying heavily into AI infrastructure and enterprise applications.
  Thrive's concentrated, conviction-driven approach — with deep involvement in OpenAI and other frontier AI companies — means it operates with a narrower but higher-conviction portfolio than most peers of similar AUM.
@@ -131,7 +130,7 @@ In AI, Andreessen Horowitz, Sequoia, Thrive Capital, and Lightspeed are deployin
 
 ### Lightspeed Venture Partners — ~$40B AUM
 
-In early 2026, Lightspeed Venture Partners operates as one of the most aggressive "mega-managers" in the venture ecosystem, following a record-breaking $9 billion fundraise completed in late 2025. The firm has fundamentally repositioned itself as an AI-first investor, with nearly 60% of its recent India-based investments flowing into AI-native startups.
+In early 2026, Lightspeed Venture Partners operates as one of the most aggressive "mega-managers" in the venture ecosystem, following a record-breaking $9 billion fundraise completed in late 2025. The firm has fundamentally repositioned itself as an AI-first investor.
 
 Lightspeed has committed over $5.5 billion to AI since 2012 and backed more than 165 AI-native companies. Founders outside AI will get fewer warm handoffs here than at a true generalist.
 
@@ -189,12 +188,11 @@ Accel is concentrating on AI infrastructure and sector-specific agentic AI workf
 Asian and European VC firms are systematically under-represented in SEC-based rankings, since they typically don't file Form ADV with the US regulator.
  This creates a structurally misleading picture for any founder operating outside the US or seeking investors with genuine international geographic thesis overlap.
 
-The largest venture capital firms in Europe in 2026 are Index Ventures, Atomico, HV Capital, Northzone, Balderton Capital, and EQT Ventures. European venture capital AUM reached approximately $95 billion across the continent, with London anchoring $45 billion of that total. Index Ventures operates transatlantic headquarters in London and San Francisco and is arguably the most successful pan-European firm, having exited Figma and Scale AI in 2025. Atomico, founded by Skype co-founder Niklas Zennström, is the largest Europe-only platform with $4.7 billion in AUM and the publisher of the annual State of European Tech report. Balderton Capital is London's longest-running pure-play European VC and one of the few European firms with a multi-stage platform that can lead from seed through Series C.
+The largest venture capital firms in Europe in 2026 are Index Ventures, Atomico, HV Capital, Northzone, Balderton Capital, and EQT Ventures. European venture capital AUM reached approximately $95 billion across the continent, with London anchoring $45 billion of that total. Index Ventures operates transatlantic headquarters in London and San Francisco and is arguably the most successful pan-European firm, having exited Figma and Scale AI in 2025. Atomico, founded by Skype co-founder Niklas Zennström, is the largest Europe-only platform and the publisher of the annual State of European Tech report. Balderton Capital is London's longest-running pure-play European VC and one of the few European firms with a multi-stage platform that can lead from seed through Series C.
 
 In Asia, 
 Peak XV Partners, formerly Sequoia Capital India and Southeast Asia, operates independently from US Sequoia since the 2024 split and manages $9 billion in AUM across 13 funds.
  For Indian founders in particular, 
-Peak XV is the most active investor in Indian startups, with investment in 47 entities according to the ASK Private Wealth Hurun India Future Unicorn Index.
 
 None of these firms appear prominently in US-origin AUM rankings. All of them are fully relevant to non-US founders and to any founder whose sector thesis, geography, or customer base aligns with their investment mandate.
 
@@ -244,11 +242,3 @@ By AUM, the five largest venture capital firms in 2026 are SoftBank Vision Fund 
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The H1 2026 concentration story has only deepened into Q3. Global VC investment totaled $560.4 billion through mid-year — higher than every full year on record except 2021 — and August alone added $42 billion across roughly 1,500 startups, up 122% year-over-year, with seven billion-dollar rounds driving the bulk of it, led by Databricks at $5 billion and a $190 billion valuation. Corporate investors now account for a record 87.9% of US AI VC deal value in 2026, even as they participate in a smaller share of deals overall. A new structural theme has also crystallized: defense technology, long a venture afterthought, saw $14.6 billion invested in just the first five months of 2026 — roughly nine times 2020 levels — with Anduril's $5 billion Series H at a $61 billion valuation its single largest raise. Meanwhile, a16z launched a dedicated $1.1 billion Machine Age Fund for physical AI infrastructure in late August, signaling the industry's center of gravity is shifting beyond software. The concentration dynamic for founders has not eased: fewer deals, larger rounds, and capital still flowing overwhelmingly to a small number of category leaders.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.

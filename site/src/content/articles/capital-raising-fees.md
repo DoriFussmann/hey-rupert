@@ -157,15 +157,6 @@ Most founders focus on the success fee percentage. The real risks are in the cla
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The capital raising fee landscape has seen meaningful activity in the past 45 days. 
-In 2026 year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, with multistage fund participation at Series A hitting record highs by both count and value — reshaping who gets funded in what analysts are describing as a barbell market.
- That competitive dynamic makes the quality of investor targeting more consequential than ever: founders who reach the right investors with a researched, personalized approach are competing in a different market from those whose advisors send bulk outreach. On the regulatory side, 
-in February 2026, the SEC Small Business Capital Formation Advisory Committee approved recommendations supporting a limited finder exemption, with [an April 2026 submission](https://www.taftlaw.com/news-events/law-bulletins/sec-small-business-capital-formation-advisory-committee-recommendations-on-finder-regulations/) urging the Commission to act — but these are recommendations only, not binding law.
- Separately, recent data from the success-fee-only advisor market shows a growing founder appetite for alternatives to the traditional retainer-plus-success-fee structure, though the absence of a retainer does not eliminate tail-period and attribution risks that remain the most consequential terms in any engagement letter.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - Success fees for Seed and early Series A raises typically fall between 3% and 6% of capital closed — anything above 6% on a venture round warrants scrutiny, and smaller rounds command higher percentages because the advisor's absolute dollar return is lower.

@@ -246,11 +246,3 @@ Many investors will simply not open a DocSend link from cold outreach, if a deck
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in late 2026 has hardened further around traction evidence, with the evidence bar now materially higher than mid-year. Carta's July 2026 benchmark puts the median seed round at $4.1M on a valuation of about $24M, with median dilution of 18%. Graduation odds have fallen sharply: only 24% of US companies that raised a $1M+ seed in 2023 have raised again, and 16% of the 2024 cohort, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), with the gap to Series A now running beyond two years. That means a seed deck has to credibly fund a longer runway than most founders model, and it makes the traction slide the single most consequential page in the deck.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.

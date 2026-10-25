@@ -89,7 +89,7 @@ A founder raising a $3M Seed who signs up for a self-serve investor database is 
 
 ## The Fundraising Environment These Services Are Operating In
 
-Understanding what capital raising services offer also means understanding the market they are operating in — because the difficulty of the raise shapes the value of professional help. Only about 20% of seeded companies raise a Series A; fewer than 1% of all startups ever do.
+Understanding what capital raising services offer also means understanding the market they are operating in — because the difficulty of the raise shapes the value of professional help. Only a minority of seed-funded companies ever raise a Series A: of US startups that raised a $1M+ seed in 2023, just 24% have raised again, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/).
 
 The math is straightforward: too many seeds were planted in 2021 and 2022, and Series A investors have become dramatically more selective — the bar has shifted from "promising metrics" to a clear demonstration of product-market fit with a credible path to significant ARR.
  At the same time, 
@@ -164,21 +164,6 @@ Before engaging any capital raising service for a Seed or Series A round, five q
 For Seed and Series A founders who have a compelling company and story but cannot afford to spend six months managing an unstructured outreach process themselves, the right capital raising service compresses the fundraising timeline without removing them from the relationships being built. The CEO stays focused on the company. Experienced operators build and execute the investor process. And every conversation, every contact, and every introduced investor remains the founder's — not the service provider's — asset.
 
 That is the value proposition Rupert was built to deliver. Expert operators who research investor fit, personalize outreach, manage the pipeline, and maintain complete transparency at every step — while ensuring the founder retains full ownership of every relationship from the first message to the final close. For founders raising at Seed or Series A who understand what a professional process looks like and want one without losing control of their company to run it, that combination is exactly what the category should offer.
-
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The capital raising environment as of late September 2026 is one where capital is available but increasingly concentrated and selective. 
-The median seed valuation on Carta rose significantly over the past two years while median deal sizes stayed flat, with AI companies taking roughly half of pre-seed dollars and the top tenth of startups capturing roughly half of all money raised.
-
-The median U.S. Series A deal reached $15 million last year, with that trend continuing upward into 2026
- — but 
-the volume of deals is actually declining, with Q1 2026 seeing under 4,000 deals, down from over 5,000 in the same period the previous year.
- Against this backdrop, 
-the consensus from practitioners is that founders need a fundamentally different fundraising operating model in the current environment — the old approach of broad outreach and generic decks has weakened, replaced by a demand for sharper positioning, stronger evidence, and tighter process control.
- Market demand for structured fundraising support remains strong: 
-as recently as September 28, 2026, a new fundraising platform announced its 2027 waitlist, specifically designed to help founders find more relevant investors, strengthen messaging, and keep outreach moving alongside the demands of building a company
- — a signal that the gap between what founders need and what self-serve tools deliver continues to drive new entrants into the expert-managed outreach category.
-<!-- WHERE-THINGS-STAND:END -->
 
 ## Key Takeaways
 

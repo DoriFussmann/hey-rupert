@@ -184,7 +184,6 @@ Dilution at Series A is typically 18 to 22 percent.
 
 No section on startup funding stages would be honest without confronting the statistics that sit between the seed and Series A rows of the table. The Series A crunch is not a myth or a historical artefact — it is a structural feature of the market that every seed-funded founder is navigating right now.
 
-Historically, 20–30% of seed-funded companies have successfully made the leap to Series A, with top VC funds boasting rates as high as 50–75%.
  Recent cohort data tells a more sobering story. 
 Of companies that raised a $1 million-plus seed round in 2023, only 24% have progressed further, according to [a May 2026 Crunchbase report](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), with rates falling sharply since 2021. For the 2024 cohort, the figure is 16%.
 
@@ -273,9 +272,9 @@ For a company navigating the narrow passage from [seed to Series A](/articles/se
 
 ## Bridge Rounds and Extensions: Tools, Not Lifelines
 
-No guide to startup funding stages is complete without an honest account of bridge rounds, because the decision of whether to bridge is often where stage diagnosis gets most distorted. In 2026, roughly 38% of seed-funded startups raise a bridge before they ever see a priced Series A term sheet.
+No guide to startup funding stages is complete without an honest account of bridge rounds, because the decision of whether to bridge is often where stage diagnosis gets most distorted.
  That normalization is structural, not a symptom of widespread failure. 
-The Series A market in 2025 showed an 18% decline in deal volume year-over-year with total capital invested down 23%, and Crunchbase data shows the gap between seed and Series A now runs more than two years.
+Crunchbase data shows the gap between seed and Series A now runs more than two years.
  With gaps that long, a bridge can be the right answer — but only when it is tied to a defined, measurable outcome.
 
 A bridge round strengthens your position when the startup has clear traction and a defined path to the next round; it signals trouble when existing investors sit out and the bridge is used to cover operating losses without improving fundamentals.
@@ -306,9 +305,3 @@ Diligence typically involves a full data room review, customer reference calls, 
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The global venture market's split-screen dynamic sharpened further through Q2 and into August 2026. The Q2 2026 PitchBook-NVCA Venture Monitor confirmed H1 investment exceeded every previous full-year record at $412.7 billion — but 87.5% went to $100M+ megadeals and 86% flowed to AI companies, leaving seed and early-stage founders competing for roughly 12.5% of the total. The structural squeeze at the bottom of the funnel is now measurable: global pre-seed-through-Series-A funding has fallen from roughly $19 billion per quarter in early 2023 to approximately $10 billion by Q2 2026, per Dealroom data. On the positive side, the Q2 Monitor noted improving exit conditions — SpaceX completed its IPO and both OpenAI and Anthropic filed confidentially — and Carta recorded down rounds at just 11.4% of new fundings in Q1 2026, a multi-year low. For founders outside AI infrastructure, the math is unchanged: fewer rounds, higher bars, and a longer runway to each next stage.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.

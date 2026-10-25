@@ -125,16 +125,6 @@ The correct answer is unambiguous: every investor contact, every email thread, e
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-US startups raised more than $400 billion in the first half of 2026, surpassing every previous full-year investment total on record, with AI companies and mega-rounds absorbing the overwhelming majority of deployed capital, while venture firms themselves raised nearly as much through June as during all of 2025 — though commitments remained concentrated among a small group of established managers.
- For founders raising at the Seed and Series A stages, the market reads very differently from the headline numbers: 
-the environment into 2026 feels "surgical — fewer deals, bigger checks and conviction concentrated at the very top," a dynamic that makes targeted, relationship-driven outreach more consequential than at any point in recent memory.
-
-Investors are increasingly deciding not off the deck but off the conversation — how the founder thinks, who they're connected to, who's vouching for them, and whether the round process feels like a real deal or a spray campaign.
- In that context, the market conditions that make a well-run fundraising engagement valuable are not softening; they are intensifying, and the bar for what qualifies as credible outreach continues to rise alongside the concentration of capital.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - Define the exact scope of help you need before evaluating anyone: investor targeting and outreach management is a distinct mandate from deck refinement or financial modeling, and conflating them leads to hiring the wrong person.

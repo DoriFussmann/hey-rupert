@@ -105,12 +105,11 @@ The instinct to search for "investors near me" is often dismissed as unsophistic
 ## Warm Introductions Are the Primary Channel — Treat Them That Way
 
 The data on warm versus cold outreach is unambiguous. 
-Cold outreach produces 1–5% response rates and under 1% meeting conversion; warm introductions push response rates to 50–80% and meeting conversion to 25–50% — and they are the dominant path to investor meetings.
+Cold outreach converts to meetings at a small fraction of the rate warm introductions do, and warm introductions remain the dominant path to investor meetings.
  The structural reason is straightforward: 
 investors substitute social proof for financial proof because early-stage startups lack the data history to model.
  A trusted voucher clears the legitimacy question before the investor reads a single slide, which means the conversation that follows can be about the opportunity rather than the founder's credibility.
 
-Around 80% of UK angels rely on trusted networks for deal flow, and roughly 50% of VC deals originate from professional networks or co-investor referrals.
  These numbers hold across geographies. Warm introductions are not a nice-to-have; they are the primary channel, and treating them as such means investing in mapping your second-degree network before sending a single piece of outreach.
 
 That mapping process has a specific structure. Start with the investors you or your co-founders know directly — prior investors, advisors, or angels from previous companies. Then work outward: which portfolio founders from funds you are targeting have you met, or could you legitimately reach through a shared connection? Which advisors or operators in your network have relationships with your target investors? Accelerator alumni networks, shared board members, and mutual advisors at professional services firms are all paths worth charting. 
@@ -127,7 +126,7 @@ What distinguishes cold outreach that works from cold outreach that is ignored c
 Referencing a portfolio company or a blog post by that investor relevant to your startup demonstrates genuine engagement, and founders who do this homework signal that they would be good partners who value alignment.
 
 The mechanics of cold outreach also matter. 
-Emailing one to two contacts per firm drives approximately 7.8% reply rates, while blasting ten or more contacts at the same firm drops that figure to around 3.8% — one well-chosen partner plus a principal consistently outperforms carpet-bombing the whole firm.
+Emailing one or two well-chosen contacts per firm works far better than blasting ten or more people at the same fund: one partner plus a principal consistently outperforms carpet-bombing the whole firm.
  Sequencing matters too: a structured follow-up cadence — initial message, a new angle five to seven days later, a final brief ask two weeks after that — converts far more silence into meetings than a single message ever will.
 
 The highest-performing cold outreach is not about volume. It is about precision, personalisation, and patience.
@@ -240,13 +239,3 @@ The accredited investor filter has been cracking open since 2020, and reforms ar
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The fundraising environment heading into the second half of 2026 is defined by a striking paradox: capital volumes are high but access is narrowing sharply. 
-US venture investment hit $412.7 billion in the first half of 2026 — already above any previous full-year total — but more than 81% of those dollars went into rounds of $100 million or more, making it a record market in headline terms and a concentrated one in practical terms, with investors spending in large bursts around specific categories and a relatively small number of companies.
-
-Sixteen megafunds raised nearly 70% of the $72.4 billion in VC fundraising in the first half of 2026, while limited partners remained cautious and liquidity has not fully healed.
- For founders raising outside the AI infrastructure, defense tech, and deep tech categories drawing the largest cheques, the practical implication is clear: 
-targeting investors whose focus and thesis align precisely with your startup is now critical, since venture firms have become highly selective and will back only startups that fit precisely into their stage, industry, and business model.
- Precision targeting and disciplined, personalised outreach are not optional refinements in this environment — they are the baseline requirements for getting a first meeting.
-<!-- WHERE-THINGS-STAND:END -->

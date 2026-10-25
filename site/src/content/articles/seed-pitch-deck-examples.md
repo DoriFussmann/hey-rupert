@@ -162,7 +162,7 @@ The purpose of including this example is not to suggest founders abandon slides.
 ## The Pattern Across All Seven Decks
 
 Studying these decks together produces a consistent finding: 
-the first four slides get 60% of total deck attention — if your traction chart is on slide seven, you've already lost it.
+the first few slides get most of the attention — if your traction chart is on slide seven, you've already lost it.
  Every deck in this set that worked placed its most persuasive signal (a specific user number, a specific revenue figure, a specific demand validation) in the opening sequence.
 
 The structural mistake visible in the decks that fail (and there are far more failed decks than funded ones) is that founders present their deck the way they understand their business, not the way investors evaluate businesses. 
@@ -190,11 +190,3 @@ Rupert was built specifically for this gap. Every campaign is researched by expe
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in late 2026 remains defined by a sharpening split between headline totals and on-the-ground access. Global venture funding reached a record $510 billion in the first half of 2026, yet early-stage deals contributed only 5% of total US capital in August — with 135 seed transactions generating just $870 million against the late-stage megadeal machine. Carta's Q2 2026 State of Pre-Seed report confirms the concentration dynamic at the entry level: roughly the same dollars as Q2 2025 went into 22% fewer instruments, pushing average pre-seed instrument size to a record $276,000. Notably, AI's share of pre-seed dollars has now plateaued near 50% for two consecutive periods — a ceiling, not a floor. At seed, Carta's Q2 2026 benchmark puts the median round at $4.5 million on a $23.9 million post-money valuation at 19.4% dilution, with the down-round rate falling to 11.4% — the lowest since 2020. For deck construction, the AI-wrapper discount has sharpened into a failure-rate conversation: industry analysis now projects 80–90% of wrapper startups will fail in 2026, meaning founders must demonstrate proprietary data loops and workflow-level embedding, not model adjacency, before a moat slide lands.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.

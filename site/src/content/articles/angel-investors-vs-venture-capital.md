@@ -182,17 +182,3 @@ This matters to founders because it changes the competitive dynamics of seed rou
 Early-stage funds split into three patterns: pre-seed/seed specialists writing $250K–$2M; multi-stage Series A leads at $2M–$15M; and corporate-VC participation at $1M–$5M follow-on.
  A multi-stage firm writing a $3M seed check is not doing it out of charity — they are buying the right to lead the Series A. That creates a specific relationship dynamic: if you take their seed check, their Series A is effectively your path of least resistance. That can be powerful if the partnership is right, and constraining if it isn't.
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The angel and venture capital markets are both active heading into the second half of 2026, but the structural divergence between them has deepened further. The ACA's 2026 Angel Funders Report confirms angel investment rose 12% to $491.3 million in 2025, with groups writing larger checks into fewer companies — a disciplined recovery, not a broad one. Two new details sharpen the picture: life sciences (medical devices, pharma, digital health, diagnostics) now accounts for nearly 47% of reported angel dollars, up from 37% in 2024, and nearly two-thirds of angel groups completed at least one AI investment during the year. On the venture side, the Q2 2026 PitchBook-NVCA Venture Monitor confirms H1 totals exceeded every prior full-year record, but concentration has only tightened — mid-Q3 data shows first-time managers have fallen to just 4% of US fundraising, with new fund formation down sharply from its 2022 peak. The VC market is setting records at the top while closing off at every level below it, making angel capital not just the more accessible first check for most founders, but structurally the only realistic one.
-<!-- WHERE-THINGS-STAND:END -->
-
----
-
-Knowing which investor type fits your raise is only the first step. The harder work — researching which specific angels or funds invest at your stage and sector, building a prioritized target list, crafting outreach that actually gets responses, and running a process tight enough to generate momentum — is where most founders lose time and deals.
-
-That's the work Rupert was built for. Whether you're running an angel campaign, targeting seed-stage VCs, or doing both in parallel, Rupert's team of experienced operators handles the research, personalization, and outreach management on your behalf — while you retain full visibility into every conversation and every investor relationship. Founders don't have to choose between building their company and running a professional fundraising process. With the right execution layer in place, they can do both.
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.

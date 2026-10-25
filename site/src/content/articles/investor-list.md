@@ -151,7 +151,7 @@ A short list of genuinely well-matched investors beats a sprawling one that neve
 **The sender reputation problem.** This is the one that can do lasting damage. 
 Google and Yahoo's 2024 sender requirements mean a bounce rate over 2% gets you spam-filtered for weeks. Unverified investor lists used to be "fine" — they are now actively dangerous to your domain reputation.
  The consequences are not abstract: 
-verified lists can produce a 1.1% meeting rate versus 0.4% for unverified lists and 0.05% for purchased lists. Purchased lists often destroy sender reputation while producing almost nothing.
+Purchased lists often destroy sender reputation while producing almost nothing.
 
 Sending a generic pitch deck to a blind-copy list of 500 venture capitalists is no longer just ineffective — it is a surefire way to damage your domain reputation.
  For a founder who needs their domain to work for the next six months of outreach, burning it in the first week with a purchased list is a costly mistake that takes time to reverse.
@@ -159,17 +159,6 @@ Sending a generic pitch deck to a blind-copy list of 500 venture capitalists is 
 There are scenarios where data vendor contact enrichment (not a bulk purchased list, but verified email lookup on a specific named investor) has a legitimate place in a research workflow. That is a different tool for a different purpose — a scalpel, not a blunt instrument.
 
 ---
-
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-Recent data and commentary from October 2026 paint a consistent picture for founders preparing their investor lists: 
-investor conversations are becoming more selective, and money is available but founders must earn access with traction, capital discipline, and defensible positioning.
-
-Warmer introductions matter more than ever, as cold outreach conversion has dropped sharply — first meetings now typically come through a portfolio company founder, a scout, or an existing investor rather than a cold email.
- This makes the access-path mapping embedded in a well-built investor list more operationally critical than at any previous point in the cycle. 
-The best investor database for a founder is rarely the biggest one — broad platforms index the whole private market but are priced and built for investors, while founder-first tools cover the early-stage investors most startups actually pitch.
- The tooling landscape continues to evolve, but the underlying discipline — a researched, tiered, fit-confirmed list built before outreach opens — remains the consistent determinant of whether a fundraising process gains traction or stalls.
-<!-- WHERE-THINGS-STAND:END -->
 
 ## Key Takeaways
 

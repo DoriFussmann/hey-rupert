@@ -171,19 +171,6 @@ The follow-up cadence deserves particular attention. Venture timelines are long,
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The broader fundraising environment heading into late 2026 makes disciplined pipeline management more important, not less. 
-Through the first half of 2026, venture capital reached record investment levels, but the recovery remains uneven — broader improvements in the exit environment will be essential to restoring liquidity and supporting startups and investors across the innovation economy.
-
-The current moment feels surgical: fewer deals, bigger checks, and conviction concentrated at the very top of the market.
- For founders outside the AI mega-deal category, that environment demands precision. 
-Building a pipeline by stage, geography, sector, and partner relevance — rather than chasing famous logos — is where the discipline actually lives. Precision beats volume in a concentrated market.
- On the tooling side, 
-the bar has moved in 2026: eighteen months ago, a clean kanban board felt sufficient for most seed rounds, but now founders expect warm-intro mapping, reminder logic, and investor activity signals baked into their pipeline tools.
- The category is maturing rapidly alongside the market conditions that make it necessary.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - An investor CRM is purpose-built for the relationship-driven, long-cycle work of raising venture capital — it handles pipeline stages, conversation history, follow-up cadence, and investor updates in ways that sales CRMs and spreadsheets fundamentally cannot.

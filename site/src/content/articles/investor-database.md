@@ -140,17 +140,16 @@ investors typically look for fit across market, timing, and founder expertise �
 This is where most founders underestimate what they are taking on. Database research and investor outreach are distinct skill sets, and the distance between having access to a database and actually closing a round is filled by execution work that does not appear in any platform's feature list.
 
 The outreach phase demands personalized, credible messaging that reflects genuine knowledge of each investor's thesis. 
-Average cold email reply rates have declined sharply, with the top 10% of founders still hitting 15–25%. Success depends on the context surrounding your message rather than a hidden script.
+Success depends on the context surrounding your message rather than a hidden script.
  That context means demonstrating, in the first few sentences, that you understand what this specific investor has backed and why your company is genuinely relevant to their current thesis — not a generic pitch deck blast with the investor's first name swapped in.
 
-Studies show 70% of cold emails never get a follow-up, but just one more message can boost replies by nearly 66%.
  Follow-up timing matters too: 
 a three-day wait before following up increases reply rates by 31%, while waiting more than five days drops responses by 24%.
  These are not intuitive cadences, and managing them across a pipeline of 40+ investors simultaneously — while running a company — is where most founder-led fundraising campaigns lose discipline and stall.
 
-Data from DocSend's 2025 fundraising report shows that while warm intros convert at 8–12% from intro to meeting, well-crafted cold emails convert at 2–4%. That gap is smaller than most founders assume.
+Warm intros convert to meetings at a much higher rate than cold emails, but well-crafted cold emails still work. That gap is smaller than most founders assume.
 
-23% of seed-stage founders raised their round with at least one investor who came through cold outreach. The "warm intro or nothing" narrative is overstated, particularly at pre-seed and seed stages where investors are actively looking for undiscovered companies.
+The "warm intro or nothing" narrative is overstated, particularly at pre-seed and seed stages where investors are actively looking for undiscovered companies.
  The implication is not that cold outreach always works — it is that it works when the targeting is tight, the message is genuinely personalized, and the follow-up is disciplined. All three of those conditions require time and operator-level judgment that most founders cannot reliably sustain while simultaneously building a product.
 
 ## Running the Process Without Losing the Company
@@ -200,7 +199,3 @@ After submission, Form D is publicly available on the SEC's EDGAR database.
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The venture capital environment heading into Q4 2026 makes disciplined investor targeting more consequential than ever for early-stage founders. US startups raised $18.1B across just 333 deals in August 2026 — deal count fell 32% from July's 492 transactions even as capital held up, a summer compression pattern that has repeated across every month of 2026: fewer transactions, higher average sizes, with the bulk flowing to a small number of companies. Globally, the picture is more striking: $42B poured into 1,500+ startups worldwide in August, up 122% year-over-year, yet seven companies captured billion-dollar rounds — and over 40% of seed and Series A investment in 2026 has gone to rounds of $100M or more, almost entirely AI-driven. The structural squeeze on non-mega-round founders is tightening: the average time between Seed and Series A has stretched to 616 days, and investors are now penalizing founders for raising too early with thin metrics rather than for taking longer. In this environment, a misaligned investor list is not merely inefficient — it is a competitive disadvantage that erodes a founder's credibility window with the investors who actually matter to their round.
-<!-- WHERE-THINGS-STAND:END -->

@@ -81,7 +81,7 @@ Regional VCs are institutional funds raised from LPs — often local family offi
 ### Family Offices
 
 Family offices manage private wealth for high-net-worth families and are among the most underappreciated sources of local startup capital. 
-Regional family offices now direct roughly 12% of private capital committed to sub-$25M EBITDA deals, and typically write $5M to $50M equity cheques with far more flexibility than angel groups.
+Regional family offices can write larger equity cheques than angel groups, with far more flexibility on structure.
  They tend to move more slowly than angels but have longer time horizons and fewer return-period constraints. They are often invisible in public databases, which is why introductions through local advisors and law firms frequently unlock them.
 
 ### Incubators, Accelerators, and University Programmes
@@ -184,7 +184,6 @@ Early customers are an underused path to the same people. Someone already paying
 
 Formal angel groups are the next layer, not a replacement for that warm path. Most regional groups invest between $100,000 and $250,000 per company, pooled from member cheques of roughly $10,000 to $50,000, and they put most of that capital within a two-to-three-hour drive. A member introduction still clears screening more often than the open application alone. Approach the group before you work through local venture funds: groups compare notes with those funds, and a string of passes will follow the application into the room.
 
-
 ---
 
 ## When to Skip Local-First
@@ -201,15 +200,3 @@ If your local ecosystem is thin — few active angels, no regional funds with re
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-[Global startup funding reached $510 billion in the first half of 2026](https://news.crunchbase.com/?p=93740), up from $440 billion for all of 2025
-, but the headline figure masks a striking concentration dynamic that directly affects how local founders should think about their searches. 
-[Crunchbase data shows](https://news.crunchbase.com/?p=93740) that more than 70% of second-quarter startup capital flowed into AI-focused companies, while OpenAI and Anthropic alone accounted for 43% of H1 funding.
- That mega-round concentration means deal count remains well below prior highs, and the practical capital available to most early-stage founders sits in the regional and angel layer rather than the institutional tier. 
-Angel capital in 2026 is consolidating around fewer, deeper, conviction-led bets
-, which reinforces the importance of local relationship-building over high-volume cold outreach. On the geographic side, 
-global venture is not converging on one template — different regions are attracting capital where they already have talent density, regulatory familiarity, or operational edge
-, a pattern that gives locally embedded founders a genuine structural advantage when targeting investors who understand their specific ecosystem. 
-Ecosystem-wide metrics indicate more than $35 billion in annual global angel investment, with regions that have active angel networks showing 20–25% higher startup survival rates.
-<!-- WHERE-THINGS-STAND:END -->

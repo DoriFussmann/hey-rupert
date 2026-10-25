@@ -94,7 +94,7 @@ That all-time-high median is dragged up by AI mega-rounds most companies will ne
  For non-AI B2B companies, 
 the median US seed round is $2–3M, with pre-money valuations of $8–15M for B2B SaaS.
 
-AI-native startups with strong traction command $3–6M on $15–25M pre-money. Accelerator-backed companies often see a 30–50% valuation premium over the median. Capital has concentrated heavily into AI: more than 60% of all venture dollars in Q1 2026 went to AI companies.
+AI-native startups with strong traction command $3–6M on $15–25M pre-money. Accelerator-backed companies often see a 30–50% valuation premium over the median.
 
 That demand pushes AI valuations well above non-AI peers, roughly a 1.3x premium on seed round size, and at Series A, foundational-model companies raising near $300M medians versus about $55M for non-AI.
 
@@ -118,11 +118,11 @@ This is where the mechanical difference between seed and Series A is starkest, a
 
 ### How Seed Rounds Are Documented
 
-SAFEs are now used in more than 70% of seed-stage deals in the US, and they have become the default instrument for early fundraising. A SAFE note — Simple Agreement for Future Equity — is a fundraising instrument that lets a startup raise capital without setting a valuation or issuing equity immediately. Instead, the investor gives you money today in exchange for the right to receive equity later, typically when you raise a priced round like a Series A.
+SAFEs have become the default instrument for early fundraising. A SAFE note — Simple Agreement for Future Equity — is a fundraising instrument that lets a startup raise capital without setting a valuation or issuing equity immediately. Instead, the investor gives you money today in exchange for the right to receive equity later, typically when you raise a priced round like a Series A.
 
 A SAFE is not equity today and it's not a loan. It's a promise that the investor will receive shares later if a defined trigger happens, usually an equity financing where you sell preferred stock. That design is why SAFEs are fast — they intentionally avoid negotiating the "full stack" of preferred terms until a priced round.
  Convertible notes occupy a similar niche but carry interest and a maturity date, making them more common in bridge situations. 
-SAFEs dominate early rounds while convertible notes have consolidated into a narrower but persistent niche. SAFEs now dominate pre-seed fundraising by a wide margin. By Q1 2025, 90% of pre-seed deals used SAFEs, and convertible notes made up roughly 10%.
+SAFEs dominate early rounds while convertible notes have consolidated into a narrower but persistent niche. SAFEs now dominate pre-seed fundraising by a wide margin.
 
 One warning founders should heed: 
 institutional Series A investors review the cap table carefully. Multiple SAFEs issued at different caps over multiple seed rounds create complexity — and potential dilution — that can concern institutional investors. Some founders have issued a dozen or more SAFEs at different terms over 18–24 months. By the time the Series A closes, the dilution from conversions at various caps can significantly reduce founder ownership and complicate the post-money ownership math.
@@ -196,7 +196,7 @@ Raising too early is as damaging as raising too late. A premature [Series A proc
 
 The right time to raise a Series A is when you can demonstrate: (1) repeatable, scalable revenue with predictable growth — not just one good quarter; (2) a go-to-market motion you can articulate precisely and that your team can replicate without the founder closing every deal; (3) a financial model that shows how the Series A capital converts into the next 18–24 months of structured growth; and (4) enough runway — ideally 6+ months — to run a 90-day process without becoming a distressed seller.
 
-Raise Series A when you have $1M–$3M ARR, 100%+ year-over-year growth, and a repeatable go-to-market motion. Less than 40% of seed-funded startups successfully raise Series A, so timing matters — raising too early with thin metrics will slow the process and weaken your terms.
+Raise Series A when you have $1M–$3M ARR, 100%+ year-over-year growth, and a repeatable go-to-market motion. Most seed-funded startups never raise a Series A, so timing matters — raising too early with thin metrics will slow the process and weaken your terms.
 
 The investor list preparation is itself a signal of readiness. Institutional investors talk to each other constantly. If you run a poorly targeted process — emailing funds whose check size, stage, or sector focus doesn't match your profile — you burn access, generate unflattering signals in the market, and narrow your options before your best conversations have started.
 
@@ -240,17 +240,6 @@ The founders who clear Series A in 2026 share three traits: they hit the efficie
 The single biggest planning error at this stage is treating "Series A preparation" as something that happens in the final month before you start taking meetings. 
 Starting too late is the single biggest fundraising error.
  Preparation for a Series A — data room, financial model, cohort analysis, investor target list — should begin at least six months before you intend to run a formal process. That means starting no later than the 12–14 month post-seed mark for most founders. The actual outreach campaign, when you launch it, should feel like the culmination of months of preparation, not the beginning of it.
-
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The venture market as of late September 2026 presents a bifurcated picture for founders navigating the seed-to-Series-A transition. 
-The $4.1M median seed round at $24M post-money and 18% dilution sit near record highs — yet only 24% of the 2023 seed cohort and 16% of the 2024 cohort have raised again, per Crunchbase.
-
-Year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, and multistage fund participation at Series A has hit record highs by count and value, reshaping who gets funded in a barbell market. Crunchbase data shows that of companies that raised a $1M-plus seed round in 2023, only 24% have progressed further — and for the 2024 cohort, that figure drops to just 16%.
- Meanwhile, the AI premium continues to widen the gap between top-performing companies and the rest of the market, with recent data indicating that more than 60% of all venture dollars in Q1 2026 flowed to AI companies, pulling stage-level medians upward even as most non-AI founders negotiate on considerably tighter terms. The macro signal is clear: capital is available, but it is concentrating rapidly, and the evidence bar continues to rise faster than round sizes.
-<!-- WHERE-THINGS-STAND:END -->
-
----
 
 ## Key Takeaways
 

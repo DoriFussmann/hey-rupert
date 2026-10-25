@@ -125,11 +125,6 @@ Choosing the right pitch deck framework is genuinely consequential — it shapes
 
 That targeting and outreach process is where most fundraises lose momentum — not because the deck was wrong, but because the right deck never reached the right investors. Rupert handles exactly that piece: researching investor fit, managing personalized outreach, and running the pipeline from first contact through to closed conversations, while founders retain complete visibility into every relationship and every reply. The framework gets you in the room. The outreach process determines which rooms you're actually in.
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The pitch deck framework conversation remains stable at the structural level — Sequoia, YC, and Kawasaki continue to be the three most-cited reference points for founders — but the surrounding fundraising environment has shifted meaningfully in recent months. Data from late 2026 reporting indicates [a record $510 billion in global venture funding in the first half of 2026](https://news.crunchbase.com/?p=93740), with AI companies capturing more than 70% of startup capital in Q2 alone, and early-stage funding more than doubling year over year. Seed benchmarks have also moved up, with one analysis citing a US median seed pre-money valuation of $18.4 million in Q1 2026 data. Within that environment, investor attention per deck has continued to compress — current estimates put the average review window for seed-stage decks under two minutes — which makes the structural discipline of a named framework more important, not less. Founders who reach investors with a clearly argued deck are also being asked harder questions on traction: recent market commentary consistently flags that Seed and Series A rounds now require stronger evidence, whether that means ARR, paid pilots, retention curves, or design partners, depending on the business. Framework choice shapes how that evidence is sequenced and how quickly it lands.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - The Sequoia pitch deck template — 10 sections from Company Purpose through Vision — is the industry's closest thing to a default VC framework and works best for founders with a clear "why now" narrative, particularly in emailed outbound decks sent before any meeting is booked.
