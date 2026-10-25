@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { confirmedAnswers, knowledgeFacts, knowledgeFiles, sharedRead } from "./company-knowledge.ts";
+import { intakeKnowledge, knowledgeFacts, knowledgeFiles, sharedRead } from "./company-knowledge.ts";
 
 test("facts: the client record first, the intake brief where it is empty, empty facts left out", () => {
   const facts = knowledgeFacts(
@@ -16,14 +16,23 @@ test("facts: the client record first, the intake brief where it is empty, empty 
   ]);
 });
 
-test("intake answers: only once confirmed, without topics left empty", () => {
+test("intake: the confirmed summary; without one, Rupert's notes per topic; empty topics left out", () => {
+  const topics = [
+    { id: "a", title: "The raise", guidance: "", required: true },
+    { id: "b", title: "Traction", guidance: "", required: true },
+  ];
   const summary = [
     { topic_id: "a", title: "The raise", answer: "$1.5M SAFE" },
     { topic_id: "b", title: "Traction", answer: "Not provided." },
   ];
-  assert.equal(confirmedAnswers({ status: "review", summary }), null);
-  assert.equal(confirmedAnswers(null), null);
-  assert.deepEqual(confirmedAnswers({ status: "completed", summary }), [summary[0]]);
+  const notes = { a: { status: "covered" as const, note: "Raising $1.5M on a SAFE" }, b: { status: "missing" as const, note: "" } };
+  assert.deepEqual(intakeKnowledge({ status: "completed", summary, topic_status: notes }, topics), { confirmed: true, items: [summary[0]] });
+  assert.deepEqual(intakeKnowledge({ status: "in_progress", summary: null, topic_status: notes }, topics), {
+    confirmed: false,
+    items: [{ topic_id: "a", title: "The raise", answer: "Raising $1.5M on a SAFE" }],
+  });
+  assert.equal(intakeKnowledge({ status: "in_progress", summary: null, topic_status: {} }, topics), null);
+  assert.equal(intakeKnowledge(null, topics), null);
 });
 
 test("Rupert's read: only what was sent to the founder, never a draft", () => {
@@ -37,6 +46,10 @@ test("Rupert's read: only what was sent to the founder, never a draft", () => {
     draft: { summary: "Newer draft" },
   };
   assert.deepEqual(sharedRead(sent), { read: "How Rupert reads it", story: "The story", confirmed: true });
+  // An older narrative: no short version, feedback sent as its own step.
+  const older = { step: "framing", status: "with_client", version: 1, published: { core: "The core story" }, draft: {} };
+  const legacy = { step: "deck_review", status: "confirmed", version: 1, published: { summary: "Rupert's earlier read" }, draft: {} };
+  assert.deepEqual(sharedRead(older, legacy), { read: "Rupert's earlier read", story: "The core story", confirmed: false });
 });
 
 test("files: what was submitted (or the draft before that), newest first", () => {

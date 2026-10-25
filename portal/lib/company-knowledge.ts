@@ -2,8 +2,8 @@
 // in one place. Pure module: which facts, summaries and files are shown,
 // and only what was already shared with the founder (never a draft).
 
-import type { IntakeBrief, IntakeSummaryItem } from "./intake.ts";
-import { asMaterials, asNarrative, type MaterialFile } from "./setup.ts";
+import type { IntakeBrief, IntakeSummaryItem, IntakeTopic, TopicStatus } from "./intake.ts";
+import { asFeedbackPublished, asMaterials, asNarrative, type MaterialFile } from "./setup.ts";
 
 export type KnowledgeFact = { label: string; value: string };
 
@@ -35,25 +35,43 @@ export function knowledgeFacts(client: ClientFacts, brief: Pick<IntakeBrief, "in
 
 const NOT_PROVIDED = /^not provided\.?$/i;
 
-/** The intake summary the founder confirmed, without topics left empty. Null until confirmed. */
-export function confirmedAnswers(
-  interview: { status: string; summary: IntakeSummaryItem[] | null } | null,
-): IntakeSummaryItem[] | null {
-  if (!interview || interview.status !== "completed" || !interview.summary) return null;
-  return interview.summary.filter((item) => text(item.answer) && !NOT_PROVIDED.test(text(item.answer)));
+export type IntakeKnowledge = { confirmed: boolean; items: IntakeSummaryItem[] };
+
+/**
+ * What the founder told Rupert in the intake: the summary they confirmed,
+ * or, when they never confirmed one, what Rupert noted per topic in the
+ * conversation. Topics left empty are left out. Null when there is nothing.
+ */
+export function intakeKnowledge(
+  interview: { status: string; summary: IntakeSummaryItem[] | null; topic_status: Record<string, TopicStatus> } | null,
+  topics: IntakeTopic[],
+): IntakeKnowledge | null {
+  if (!interview) return null;
+  const answered = (item: IntakeSummaryItem) => text(item.answer) && !NOT_PROVIDED.test(text(item.answer));
+  if (interview.status === "completed" && interview.summary) {
+    const items = interview.summary.filter(answered);
+    if (items.length > 0) return { confirmed: true, items };
+  }
+  const items = topics
+    .map((topic) => ({ topic_id: topic.id, title: topic.title, answer: text(interview.topic_status[topic.id]?.note) }))
+    .filter(answered);
+  return items.length > 0 ? { confirmed: false, items } : null;
 }
 
 type StepRow = { step: string; status: string; version: number; published: unknown; draft: unknown } | null | undefined;
 
 /**
- * Rupert's read of the company, as sent to the founder with the Outreach
- * Narrative, and the narrative's short version. Null until it was sent.
+ * Rupert's read of the company, as sent to the founder, and the Outreach
+ * Narrative. Null until a narrative was sent. Narratives sent before the
+ * short version existed show their core story; feedback the founder got as
+ * its own step earlier stands in when the narrative carries none.
  */
-export function sharedRead(framing: StepRow) {
+export function sharedRead(framing: StepRow, legacyFeedback?: StepRow) {
   if (!framing || framing.version <= 0) return null;
   const narrative = asNarrative(framing.published);
-  const read = narrative.feedback?.summary.trim() ?? "";
-  const story = narrative.summary.trim();
+  const legacy = legacyFeedback && legacyFeedback.version > 0 ? asFeedbackPublished(legacyFeedback.published) : null;
+  const read = narrative.feedback?.summary.trim() || legacy?.summary.trim() || legacy?.framing.trim() || "";
+  const story = narrative.summary.trim() || narrative.core.trim();
   if (!read && !story) return null;
   return { read, story, confirmed: framing.status === "confirmed" };
 }
