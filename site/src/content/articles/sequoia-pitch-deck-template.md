@@ -125,6 +125,11 @@ Choosing the right pitch deck framework is genuinely consequential — it shapes
 
 That targeting and outreach process is where most fundraises lose momentum — not because the deck was wrong, but because the right deck never reached the right investors. Rupert handles exactly that piece: researching investor fit, managing personalized outreach, and running the pipeline from first contact through to closed conversations, while founders retain complete visibility into every relationship and every reply. The framework gets you in the room. The outreach process determines which rooms you're actually in.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+The main deck frameworks (Sequoia, YC and Kawasaki) remain the standard reference points, but investors are asking harder questions about traction: ARR, paid pilots, retention or design partners, depending on the business. With venture funding at a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/) yet concentrated in few companies, a clearly structured deck helps that evidence land quickly.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - The Sequoia pitch deck template — 10 sections from Company Purpose through Vision — is the industry's closest thing to a default VC framework and works best for founders with a clear "why now" narrative, particularly in emailed outbound decks sent before any meeting is booked.

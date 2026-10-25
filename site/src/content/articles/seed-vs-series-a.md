@@ -241,6 +241,11 @@ The single biggest planning error at this stage is treating "Series A preparatio
 Starting too late is the single biggest fundraising error.
  Preparation for a Series A — data room, financial model, cohort analysis, investor target list — should begin at least six months before you intend to run a formal process. That means starting no later than the 12–14 month post-seed mark for most founders. The actual outreach campaign, when you launch it, should feel like the culmination of months of preparation, not the beginning of it.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+The seed-to-Series A transition is harder than at any point in recent years. [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median seed round at $4.1M and the median Series A at $14.4M, yet only 24% of US companies that raised a $1M+ seed in 2023 have raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). Capital is available, but it is concentrating, and the evidence bar for Series A keeps rising.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Seed and Series A represent fundamentally different investor bets: seed investors fund founders and ideas; Series A investors fund proven, repeatable traction — every other difference in check size, legal structure, and diligence depth flows from this distinction.

@@ -160,6 +160,11 @@ There are scenarios where data vendor contact enrichment (not a bulk purchased l
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Investors are more selective in late 2026, and first meetings increasingly come through warm paths: portfolio founders, scouts and existing investors. That makes the access-path column of a well-built investor list more valuable than ever. The underlying discipline hasn't changed: build a researched, tiered list with confirmed fit before outreach opens.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - An investor list is a researched, tiered target set filtered by stage, sector, check size, geography, and portfolio fit — not a raw directory of names — and it must be built before outreach begins.

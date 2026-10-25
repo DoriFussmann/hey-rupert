@@ -240,3 +240,8 @@ Rupert is built specifically for this problem. Founders who work with Rupert ret
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Startup funding in late 2026 is at record levels but strikingly narrow: global venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), with two AI companies taking about 43% of it. For most founders, that means fewer checks, higher bars at each stage and a longer path to the next round.
+<!-- WHERE-THINGS-STAND:END -->
+

@@ -12,6 +12,4 @@ runAudit({
   distDir: join(siteRoot, "dist"),
   articlesDir: join(siteRoot, "src", "content", "articles"),
   requireKeyTakeaways: false,
-  // "Where Things Stand" news blocks were removed: they carried unsourced, fast-dating figures.
-  requireWts: false,
 });

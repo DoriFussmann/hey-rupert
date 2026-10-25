@@ -242,3 +242,8 @@ By AUM, the five largest venture capital firms in 2026 are SoftBank Vision Fund 
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Capital is still concentrating at the top of the market: global venture funding reached a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), with two AI companies taking about 43% of it. For seed and Series A founders, the size of a firm's fund matters less than whether it is actively writing checks at their stage and in their sector right now.
+<!-- WHERE-THINGS-STAND:END -->
+

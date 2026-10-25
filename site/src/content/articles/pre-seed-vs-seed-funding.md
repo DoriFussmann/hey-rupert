@@ -121,6 +121,11 @@ The goal of pre-seed is not to survive; it is to build the proof that makes the 
 
 Once a founder has a clear read on which stage their evidence actually supports, the next challenge is identifying investors who are genuinely active at that stage right now — not firms whose websites say they do pre-seed but whose last five investments were all $3M rounds. The gap between an investor's stated mandate and their recent deal history is often significant, and cold outreach to the wrong fund burns time and credibility. A research-led approach to investor targeting — one that maps recent check sizes, stage preference, sector focus, and portfolio fit before a single message is sent — is what separates a tightly run process from one that stalls in the first wave. Rupert's outreach process is built precisely around that kind of matching: using actual deal history to find the investors most likely to be receptive to your specific company at your specific stage, then running the campaign with full transparency so founders see every conversation and retain every relationship.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Early-stage funding is becoming more selective at both stages. [Carta's State of Pre-Seed report for Q2 2026](https://carta.com/data/state-of-pre-seed-q2-2026/) shows fewer, larger pre-seed deals, and [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median seed round at $4.1M. Investors are also more specialized, which makes stage and sector fit more important when building a list for either round.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Pre-seed investors bet on a founding team's conviction and insight; seed investors bet on early product evidence and a credible path to growth — these are fundamentally different investment theses, not just different round sizes.

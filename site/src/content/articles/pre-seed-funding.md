@@ -195,6 +195,11 @@ Pre-seed startup funding in Q1 2026 matches recent quarters, suggesting a stabil
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+[Carta's State of Pre-Seed report for Q2 2026](https://carta.com/data/state-of-pre-seed-q2-2026/) shows a market that is stable in dollars but more selective in deal count: roughly the same capital as a year earlier went into about 22% fewer instruments, pushing the average pre-seed instrument to a record $276,000. [California collected 52% of all pre-seed capital raised on Carta](https://carta.com/data/pre-seed-funding-map-q2-2026/) in Q2 2026. The pattern rewards founders who run a targeted, well-researched process.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Pre-seed is the earliest formal equity stage — typically structured as a SAFE, used to validate an idea, build an MVP, and hire the first one to three people before a seed round is warranted.

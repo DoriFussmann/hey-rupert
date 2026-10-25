@@ -125,6 +125,11 @@ The correct answer is unambiguous: every investor contact, every email thread, e
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+For founders raising seed and Series A rounds, the market feels selective: fewer deals, larger checks and conviction concentrated at the top. Investors increasingly decide on the conversation rather than the deck, including who is vouching for the founder and whether the process feels like a real round, which raises the bar for any consultant running outreach on a founder's behalf.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Define the exact scope of help you need before evaluating anyone: investor targeting and outreach management is a distinct mandate from deck refinement or financial modeling, and conflating them leads to hiring the wrong person.

@@ -165,6 +165,11 @@ For Seed and Series A founders who have a compelling company and story but canno
 
 That is the value proposition Rupert was built to deliver. Expert operators who research investor fit, personalize outreach, manage the pipeline, and maintain complete transparency at every step — while ensuring the founder retains full ownership of every relationship from the first message to the final close. For founders raising at Seed or Series A who understand what a professional process looks like and want one without losing control of their company to run it, that combination is exactly what the category should offer.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Capital is available in late 2026 but highly concentrated: venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), much of it in very large AI rounds. For seed and Series A founders, that means fewer, more selective investors and a longer path between rounds, which raises the value of precise targeting and a well-run process over broad outreach.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - "Capital raising services" is not a single product — it covers at least five distinct models (consultants, placement agents, investor databases, crowdfunding portals, and expert-managed outreach agencies), and matching the wrong model to your round type is one of the most costly early-stage fundraising mistakes.

@@ -274,3 +274,8 @@ VentureSouth is one of the largest and most established angel networks in the So
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Angel investors remain the most common first check for pre-seed founders in late 2026, but they are asking for more proof than a few years ago: paid pilots, repeat usage and retention rather than a story alone. With graduation odds falling (only 24% of US startups that raised a $1M+ seed in 2023 have raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/)), angels are weighing whether a company can reach its next round, so a focused list of well-matched angels beats a long, generic one.
+<!-- WHERE-THINGS-STAND:END -->
+

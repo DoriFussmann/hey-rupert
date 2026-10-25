@@ -190,3 +190,8 @@ Rupert was built specifically for this gap. Every campaign is researched by expe
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Seed rounds are larger but harder to win: [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median seed round at $4.1M, while only 24% of the 2023 seed cohort has raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). The decks that work in this market lead with evidence early and make the traction story impossible to miss.
+<!-- WHERE-THINGS-STAND:END -->
+

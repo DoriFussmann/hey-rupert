@@ -199,3 +199,8 @@ After submission, Form D is publicly available on the SEC's EDGAR database.
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Investor databases keep getting bigger, but the bottleneck for founders is still qualification, not access. With investors more selective and seed-to-Series A gaps stretching past two years for many US startups, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), a misaligned list wastes the few months a founder has to build momentum with the right investors.
+<!-- WHERE-THINGS-STAND:END -->
+

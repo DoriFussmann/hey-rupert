@@ -157,6 +157,11 @@ Most founders focus on the success fee percentage. The real risks are in the cla
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Fee structures for capital raising have not shifted materially this year: retainers, success fees and hybrids remain the main models, and success fees still fall as a percentage as deal size rises. On the regulatory side, in February 2026 the SEC Small Business Capital Formation Advisory Committee recommended a limited finder exemption, with [an April 2026 submission](https://www.taftlaw.com/news-events/law-bulletins/sec-small-business-capital-formation-advisory-committee-recommendations-on-finder-regulations/) urging the Commission to act. These are recommendations only, not binding law.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Success fees for Seed and early Series A raises typically fall between 3% and 6% of capital closed — anything above 6% on a venture round warrants scrutiny, and smaller rounds command higher percentages because the advisor's absolute dollar return is lower.

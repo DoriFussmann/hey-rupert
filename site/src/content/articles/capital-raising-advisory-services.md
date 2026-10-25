@@ -114,6 +114,11 @@ Given tighter purse strings in non-AI opportunities, only companies with the str
 
 Rupert is built to be the transparent extension of the founding team that early-stage raises actually require. Every investor campaign is researched, personalized, and managed by experienced operators — not templated and batched. Founders retain complete visibility into every conversation and every investor relationship introduced during the engagement, with no tail-period surprises and no opaque network that the advisor controls. The investor relationship belongs to the founder from the first introduction, which is how it should be in a model designed around genuine partnership rather than intermediary leverage.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+The rules on who can be paid for introducing investors have not materially changed: transaction-based fees still generally require broker-dealer registration, as the [SEC's broker-dealer guide](https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html) explains. Meanwhile, the path from seed to Series A has stretched past two years for many US startups, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), which puts a premium on advisers who improve targeting and keep investor relationships with the founder.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Capital raising advisory services and broker-dealers are legally distinct: broker-dealers must be FINRA-registered to receive transaction-based compensation on securities offerings, while advisory services operating on retainer or project fees avoid that regulatory exposure — a distinction with real consequences if it surfaces in future due diligence.
