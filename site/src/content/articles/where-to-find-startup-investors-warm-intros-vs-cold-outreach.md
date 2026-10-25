@@ -22,6 +22,8 @@ keywords:
   - investor outreach
 draft: false
 internalLinks:
+  - slug: investor-update-template
+    anchor: "Investor update template"
   - slug: how-to-find-investors
     anchor: "How to find the right investors"
   - slug: investor-list
@@ -117,11 +119,11 @@ If you wait for perfect warm intro coverage, you will never start. Aim for 70–
 
 There is a specific failure mode worth naming: using cold outreach with top-tier investors — the ones you most want warm paths to — because it feels faster, and then burning a chance at a high-quality introduction because the investor already has you mentally categorized as a cold email they didn't reply to. 
 If you send a cold email and it goes nowhere, then later secure a warm intro, treat the warm intro as a fresh start. The introducer's credibility is what matters — the cold outreach combined with the warm nudge likely created some name recognition which subtly works to your advantage.
- But the better discipline is to reserve cold outreach for investors where you genuinely lack a warm path, not as a shortcut for investors where you simply haven't done the relationship work yet.
+ But the better discipline is to reserve cold outreach for investors where you genuinely lack a warm path, not as a shortcut for investors where you simply haven't done the relationship work yet. Investors who pass are part of the pipeline too: a short monthly update keeps them warm, and an [investor update template](/articles/investor-update-template/) makes that habit easy to keep.
 
 This is also where founder bandwidth becomes the binding constraint. Researching warm paths, identifying the right connector for each investor, drafting a compelling forwardable blurb, managing follow-ups, and tracking all of it against a live pipeline is a substantial operational load — one that compounds quickly when you are running it across 50 or 80 targets while simultaneously building a product, managing a team, and maintaining customer conversations.
 
-Founders who want both channels run in parallel — a curated warm-intro map and a personalized cold outreach sequence — without losing their own time to the mechanics of execution are increasingly turning to operators who specialize in exactly this structure. Rupert is built around this model: experienced operators who research the investor landscape, map genuine warm paths through portfolio founder and backer networks, build personalized cold sequences for the broader longlist, and manage all of it with complete transparency — every conversation, every investor relationship, and every pipeline update visible to the founder at all times. The channel strategy is not a black box. It is a structured process that founders can see, shape, and own.
+Founders who want both channels run in parallel — a curated warm-intro map and a personalized cold outreach sequence — without losing their own time to the mechanics of execution are increasingly turning to operators who specialize in exactly this structure. [Rupert](/how-it-works/) is built around this model: experienced operators who research the investor landscape, map genuine warm paths through portfolio founder and backer networks, build personalized cold sequences for the broader longlist, and manage all of it with complete transparency — every conversation, every investor relationship, and every pipeline update visible to the founder at all times. The channel strategy is not a black box. It is a structured process that founders can see, shape, and own.
 
 The investors who fund great companies are reachable. The question is whether you reach them through the right channel, with the right story, at the right moment in your raise — or whether you burn the relationship with a rushed, generic approach that signals the opposite of the discipline your company will need to operate.
 

@@ -46,7 +46,7 @@ faqs:
 supportingKeyword: investor crm
 ---
 
-Fundraising is one of the most relationship-intensive processes a founder will ever run. You're managing dozens of simultaneous conversations, each at a different stage, each requiring a tailored follow-up at exactly the right moment, each tied to a partner's specific thesis, check-size preference, and decision-making cadence. And you're doing all of it while trying to run a company. The tool sitting at the center of that process — the investor CRM — is either a source of discipline and momentum, or it quietly lets the whole thing unravel.
+Fundraising is one of the most relationship-intensive processes a founder will ever run. You're managing dozens of simultaneous conversations, each at a different stage, each requiring a tailored follow-up at exactly the right moment, each tied to a partner's specific thesis, check-size preference, and decision-making cadence. And you're doing all of it while trying to run a company. The tool sitting at the center of that process — the investor CRM — is either a source of discipline and momentum, or it quietly lets the whole thing unravel. A CRM is where the work of [finding investors](/articles/how-to-find-investors/) turns into a managed pipeline.
 
 This guide is for founders at Seed and Series A who want to understand what an investor CRM actually does, why it differs fundamentally from sales software, how to choose the right one for their stage, and how to use it to run a fundraising process that doesn't drop a single warm relationship.
 
@@ -167,7 +167,7 @@ The practical rhythm looks like this. Before any outreach goes out, every invest
 For seed teams, the priority is visibility: who has been contacted, who is engaged, which meetings happened, and what the next action is.
  This doesn't require sophisticated tooling — it requires consistent behavior. The CRM is only as good as the data going into it.
 
-The follow-up cadence deserves particular attention. Venture timelines are long, and "we're still thinking about it" can mean anything from genuine interest to polite deflection. A well-maintained CRM surfaces which conversations haven't had activity in two weeks, which term preferences haven't been documented, and which investors have seen the deck but haven't responded — all signals that require different follow-up strategies.
+The follow-up cadence deserves particular attention. Venture timelines are long, and "we're still thinking about it" can mean anything from genuine interest to polite deflection. A well-maintained CRM surfaces which conversations haven't had activity in two weeks, which term preferences haven't been documented, and which investors have seen the deck but haven't responded — all signals that require different follow-up strategies. If you would rather not run that cadence yourself, [Rupert](/how-it-works/) manages the follow-up while every relationship stays yours.
 
 ---
 

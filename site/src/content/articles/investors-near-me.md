@@ -196,7 +196,7 @@ Similarly, if you have a warm introduction path into a Tier-1 fund — a mutual 
 Your startup location determines available capital, talent access, customer proximity, and cultural fit
  — but your investor strategy should be built around where the best fit actually exists, not where it is most convenient to look.
 
-If your local ecosystem is thin — few active angels, no regional funds with relevant sector knowledge, and no strong accelerator community — then the local-first advantage evaporates. In that case, the energy spent building local relationships should instead go into finding warm paths into national investors through alumni networks, operator communities, and the portfolios of funds you are already targeting.
+If your local ecosystem is thin — few active angels, no regional funds with relevant sector knowledge, and no strong accelerator community — then the local-first advantage evaporates. In that case, the energy spent building local relationships should instead go into finding warm paths into national investors through alumni networks, operator communities, and the portfolios of funds you are already targeting. [Rupert](/how-it-works/) builds national investor lists matched to your stage and sector for exactly this situation.
 
 ---
 

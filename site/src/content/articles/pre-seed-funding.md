@@ -53,7 +53,7 @@ faqs:
 
 ## What Pre-Seed Funding Actually Is — and What It Isn't
 
-Pre-seed funding is the first formal capital a startup raises from outside investors. It is not a friends-and-family check, not a bank loan, and not a government grant. It is equity financing — specifically, the stage at which an idea has enough shape to attract people who invest for a living, even before the company has revenue, a full team, or a proven product.
+Pre-seed funding is the first formal capital a startup raises from outside investors. It is not a friends-and-family check, not a bank loan, and not a government grant. It is equity financing — specifically, the stage at which an idea has enough shape to attract people who invest for a living, even before the company has revenue, a full team, or a proven product. It is the first of the [startup funding stages](/articles/startup-funding-stages/), and it sets up everything that follows.
 
 The canonical pre-seed round exists to fund three things: validating the core idea, building a minimum viable product, and hiring the first one to three people who aren't the founders. Everything else — scaling, go-to-market, building sales infrastructure — comes later, and trying to fund those activities from a pre-seed round almost always means raising too little money at terms that will haunt later rounds.
 
@@ -156,7 +156,7 @@ founders should expect to pitch their deck 30 to 50 times before closing, ultima
 
 The quality of your investor list matters as much as its length. Pre-seed investing is highly relationship-mediated: warm introductions consistently outperform cold outreach, and the relevance of an investor's portfolio to your category matters more than their fund size. Spending two weeks building a precise list of the right investors — people who have funded comparable companies at the same stage, in the same space, in the past 24 months — produces better outcomes than blasting a generic pitch to hundreds of names from a database.
 
-Research, personalization, and pipeline management are the operational core of fundraising, and they are also the part that takes founders away from building. For founders who understand what pre-seed capital is for — and who are ready to run a disciplined process to raise it — working with experienced operators who handle the investor research, personalize every outreach, and manage the pipeline while founders stay focused on building is one of the most leveraged decisions a pre-seed company can make. Rupert is built for exactly that: every campaign is researched and managed by experienced operators, with full founder visibility into every conversation and every relationship from start to close.
+Research, personalization, and pipeline management are the operational core of fundraising, and they are also the part that takes founders away from building. For founders who understand what pre-seed capital is for — and who are ready to run a disciplined process to raise it — working with experienced operators who handle the investor research, personalize every outreach, and manage the pipeline while founders stay focused on building is one of the most leveraged decisions a pre-seed company can make. [Rupert](/how-it-works/) is built for exactly that: every campaign is researched and managed by experienced operators, with full founder visibility into every conversation and every relationship from start to close.
 
 ## Four Pre-Seed Misconceptions That Trip Up First-Time Founders
 
