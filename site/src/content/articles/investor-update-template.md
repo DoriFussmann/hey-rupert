@@ -194,6 +194,11 @@ Companies that move from "periodic" to "always-on" communication, engaging inves
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Investors are scrutinizing early-stage companies more closely, asking for evidence of paying customers, burn and runway. Regular investor updates are one of the simplest ways to show that evidence over time; [Visible's data](https://visible.vc/blog/ultimate-report-part-2/) links consistent updates to better odds of raising follow-on funding. The core of a good update hasn't changed: a steady cadence, honest challenges and a specific ask.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - A monthly investor update is one of the highest-leverage founder habits: data consistently shows that founders who send structured, regular updates are significantly more likely to secure follow-on funding and close their next round faster.

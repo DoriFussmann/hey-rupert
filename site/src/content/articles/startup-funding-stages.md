@@ -305,3 +305,8 @@ Diligence typically involves a full data room review, customer reference calls, 
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+The funding stages are the same, but the bar at each one keeps rising. [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median seed round at $4.1M and the median Series A at $14.4M, while only 24% of the 2023 seed cohort has raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). For most founders, that means planning for longer runways between stages.
+<!-- WHERE-THINGS-STAND:END -->
+

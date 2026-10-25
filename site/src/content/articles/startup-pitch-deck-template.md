@@ -242,6 +242,11 @@ The single most important rule in this entire debate is one that applies regardl
 While slide deck templates provide excellent starting points, authentic pitch deck design requires significant customization. Templates establish structural frameworks and design systems, but a unique value proposition demands unique visual expression.
  The right order is: lock the structure with a template, pressure-test the narrative with advisors and early investor conversations, then — and only then — invest in custom design if the stage and competitive context justify it.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Global venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), but fewer startups are getting funded overall while the strongest raise larger rounds. Early-stage investors are inspecting evidence more closely, so filling in a template with bottom-up logic and real proof on every slide matters more than ever.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - Write a one-paragraph investment thesis before touching any slide — every placeholder you fill should serve that thesis, and gaps in it will show up in the deck.

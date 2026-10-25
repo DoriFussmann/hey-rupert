@@ -197,3 +197,8 @@ At early stages, investors often do not have years of financial history to evalu
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Pitch decks matter as much as ever in late 2026, but investors expect them to carry more evidence: traction, retention and a clear path to the next round rather than a vision alone. With seed-to-Series A gaps stretching past two years for many US startups, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), a deck that shows how the round funds real milestones stands out.
+<!-- WHERE-THINGS-STAND:END -->
+

@@ -239,3 +239,8 @@ The accredited investor filter has been cracking open since 2020, and reforms ar
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+The fundraising market in late 2026 combines record headline volume with narrow access: venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), but much of it went to a few very large rounds. For most founders, the practical implication is unchanged: target investors whose stage, sector and check size genuinely fit, and run outreach as a disciplined process rather than a broadcast.
+<!-- WHERE-THINGS-STAND:END -->
+

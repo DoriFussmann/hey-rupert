@@ -178,3 +178,8 @@ That is the problem Rupert is built to solve. Rather than leaving founders to re
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+The funding-instrument picture has kept consolidating: SAFEs remain the default at pre-seed, convertible notes are increasingly rare outside capital-intensive sectors, and venture debt remains a tool for companies that already have institutional backing. [Carta's State of Pre-Seed report for Q2 2026](https://carta.com/data/state-of-pre-seed-q2-2026/) shows the same dollars going into fewer, larger instruments.
+<!-- WHERE-THINGS-STAND:END -->
+

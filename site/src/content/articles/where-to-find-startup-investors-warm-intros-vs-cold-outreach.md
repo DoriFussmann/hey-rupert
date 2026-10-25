@@ -125,3 +125,8 @@ Founders who want both channels run in parallel — a curated warm-intro map and
 
 The investors who fund great companies are reachable. The question is whether you reach them through the right channel, with the right story, at the right moment in your raise — or whether you burn the relationship with a rushed, generic approach that signals the opposite of the discipline your company will need to operate.
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Investors are more selective in late 2026, and warm introductions through portfolio founders, scouts and existing investors remain the strongest path to a first meeting. Cold outreach still works when it is precisely targeted and genuinely personalized, so the quality of every investor touchpoint matters more than it did in looser funding conditions.
+<!-- WHERE-THINGS-STAND:END -->
+

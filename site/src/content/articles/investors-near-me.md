@@ -200,3 +200,8 @@ If your local ecosystem is thin — few active angels, no regional funds with re
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Global startup funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), but much of it went to a handful of AI companies, so most early-stage capital still sits with angels, regional funds and local networks. That favors founders who build relationships in their own ecosystem first, where investors understand the market and can move quickly.
+<!-- WHERE-THINGS-STAND:END -->
+

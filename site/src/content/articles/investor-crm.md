@@ -171,6 +171,11 @@ The follow-up cadence deserves particular attention. Venture timelines are long,
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+With investors more selective and the path between rounds getting longer (more than two years from seed to Series A for many US startups, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/)), keeping track of every investor conversation matters more than ever. Founders increasingly expect their pipeline tools to handle warm-intro mapping, follow-up reminders and notes on each investor, not just a kanban board.
+<!-- WHERE-THINGS-STAND:END -->
+
 ## Key Takeaways
 
 - An investor CRM is purpose-built for the relationship-driven, long-cycle work of raising venture capital — it handles pipeline stages, conversation history, follow-up cadence, and investor updates in ways that sales CRMs and spreadsheets fundamentally cannot.

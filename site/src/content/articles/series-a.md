@@ -234,3 +234,8 @@ Getting the investor targeting, outreach sequencing, and pipeline management rig
 
 ---
 
+## Where Things Stand
+<!-- WHERE-THINGS-STAND:START -->
+Series A remains the hardest round to win in late 2026. Venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), but most of it went to a small number of very large rounds, and only 24% of US startups that raised a $1M+ seed in 2023 have raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). Disciplined preparation, precise targeting and metrics that clear the bar before the process starts matter more than ever.
+<!-- WHERE-THINGS-STAND:END -->
+
