@@ -369,8 +369,13 @@ export default async function ClientDetailPage({
         }
       />
       <ReanalyzeBanner clientId={client.id} state={reanalysis} claudeReady={claudeReady} />
-      {materials ? (
-        <CompanyMaterialsCard files={materialsFiles} links={materialLinks} noDeck={materials.no_deck} />
+      {materials || client.intake_completed_at ? (
+        <CompanyMaterialsCard
+          clientId={client.id}
+          files={materialsFiles}
+          links={materialLinks}
+          noDeck={materials?.no_deck ?? ""}
+        />
       ) : null}
       {client.intake_completed_at || matchProfile ? (
         <CompanyProfileCard

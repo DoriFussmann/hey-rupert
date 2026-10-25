@@ -1,15 +1,19 @@
+import { AdminMaterialUpload } from "@/app/admin/clients/[id]/admin-material-upload";
 import { formatDate } from "@/lib/format";
 import { fileExtension, formatBytes, type MaterialFile } from "@/lib/setup";
 
 /**
  * What the founder shared, at the top of the client page: one line per file
  * with a download link (signed for an hour; reload the page for fresh links).
+ * Rupert can add files here too (for example ones the founder emailed).
  */
 export function CompanyMaterialsCard({
+  clientId,
   files,
   links,
   noDeck,
 }: {
+  clientId: string;
   files: MaterialFile[];
   /** Signed download link per file path. */
   links: Record<string, string>;
@@ -22,9 +26,12 @@ export function CompanyMaterialsCard({
         <h2 id="company-materials-title" className="text-h4 text-heading">
           Company Materials
         </h2>
-        <span className="text-body-sm text-muted">
-          {files.length} file{files.length === 1 ? "" : "s"}
-        </span>
+        <div className="flex flex-wrap items-center gap-md">
+          <span className="text-body-sm text-muted">
+            {files.length} file{files.length === 1 ? "" : "s"}
+          </span>
+          <AdminMaterialUpload clientId={clientId} />
+        </div>
       </div>
       {files.length === 0 ? (
         <p className="px-lg py-md text-body-sm text-muted">
@@ -39,6 +46,7 @@ export function CompanyMaterialsCard({
                   {fileExtension(file.name) || "file"}
                 </span>
                 <span className="truncate text-body-sm text-heading">{file.name}</span>
+                {file.added_by === "admin" ? <span className="shrink-0 text-body-sm text-muted">Added by Rupert</span> : null}
               </span>
               <span className="flex items-center gap-md text-body-sm text-muted">
                 <span>

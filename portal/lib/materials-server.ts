@@ -76,6 +76,8 @@ export async function attachMaterialFile(
   supabase: ServiceClient,
   clientId: string,
   file: { path: string; name: string; size: number; type: string },
+  /** Set when Rupert adds the file for the client. */
+  addedBy?: "admin",
 ): Promise<{ ok: true; file: MaterialFile; late: boolean } | { ok: false; error: string }> {
   const path = text(file?.path);
   if (!path.startsWith(`${clientId}/`) || path.includes("..")) {
@@ -98,6 +100,7 @@ export async function attachMaterialFile(
     size: Number(file?.size) || 0,
     type: text(file?.type).slice(0, 120),
     uploaded_at: nowIso(),
+    ...(addedBy ? { added_by: addedBy } : {}),
   };
   const withFile = (payload: MaterialsPayload): MaterialsPayload => ({
     ...payload,

@@ -111,6 +111,8 @@ export type MaterialFile = {
   size: number;
   type: string;
   uploaded_at: string;
+  /** "admin" when Rupert added the file for the client (for example from an email). Absent: the client shared it. */
+  added_by?: "admin";
 };
 
 export type MaterialsPayload = {
@@ -798,6 +800,7 @@ export function asMaterials(value: unknown): MaterialsPayload {
           size: Number(item.size) || 0,
           type: str(item.type, 120),
           uploaded_at: str(item.uploaded_at, 40),
+          ...(item.added_by === "admin" ? { added_by: "admin" as const } : {}),
         }))
         .filter((item) => item.path)
     : [];

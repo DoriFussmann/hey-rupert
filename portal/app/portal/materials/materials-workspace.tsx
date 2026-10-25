@@ -302,6 +302,7 @@ export function MaterialsWorkspace({
                   file.name
                 )}
               </span>
+              {file.added_by === "admin" ? <span className="text-body-sm text-muted">Added by Rupert</span> : null}
               <span className="text-body-sm text-muted">{formatBytes(file.size)}</span>
               {!locked ? (
                 <button

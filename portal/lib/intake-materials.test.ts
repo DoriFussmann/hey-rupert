@@ -96,6 +96,17 @@ test("a message with several files reads as each file's facts, then the note", (
   assert.ok(text.endsWith("Here you go"));
 });
 
+test("materials keep who added a file: Rupert's files are marked, the client's are not", () => {
+  const files = asMaterials({
+    files: [
+      { path: "c/1/deck.pdf", name: "deck.pdf", size: 10, type: "application/pdf", uploaded_at: "2026-10-25T00:00:00.000Z", added_by: "admin" },
+      { path: "c/2/model.xlsx", name: "model.xlsx", size: 5, type: "", uploaded_at: "", added_by: "someone" },
+    ],
+  }).files;
+  assert.equal(files[0].added_by, "admin");
+  assert.equal("added_by" in files[1], false);
+});
+
 test("materials keep the no-deck reason", () => {
   assert.equal(asMaterials({ files: [], fields: {}, no_deck: " Still building it " }).no_deck, "Still building it");
   assert.equal(asMaterials({}).no_deck, "");
