@@ -5,9 +5,9 @@ slug: pre-seed-vs-seed-funding
 date: "2026-09-30"
 updatedDate: "2026-09-30"
 author: dori-fussmann
-category: startup funding
-pillarKeyword: startup funding
-supportingKeyword: pre seed funding
+category: startup funding stages
+pillarKeyword: startup funding stages
+supportingKeyword: pre seed vs seed funding
 articleType: comparison
 targetKeyword: pre seed vs seed funding
 tags:
@@ -20,20 +20,15 @@ image: ../../assets/articles/pre-seed-vs-seed-funding.png
 imageAlt: "Two diverging paths on a whiteboard diagram labelled pre-seed and seed, with founder and investor figures at each stage"
 keywords:
   - pre seed vs seed funding
-  - pre seed funding
-  - startup funding
+  - startup funding stages
 draft: false
 internalLinks:
-  - slug: startup-funding
-    anchor: startup funding
-  - slug: angel-investors-for-pre-seed-funding
-    anchor: angel investors for pre seed funding
-  - slug: how-to-raise-pre-seed-funding
-    anchor: how to raise pre seed funding
+  - slug: startup-funding-stages
+    anchor: "Startup funding stages, pre-seed to Series C"
   - slug: pre-seed-funding
-    anchor: pre seed funding
-  - slug: what-is-pre-seed-funding
-    anchor: what is pre seed funding
+    anchor: "Pre-seed funding: the complete guide"
+  - slug: seed-vs-series-a
+    anchor: "Seed vs. Series A"
 
 externalLinks: []
 faqs:
@@ -51,7 +46,7 @@ Somewhere between "we have an idea and a team" and "we have a product and early 
 
 ## The Core Difference: What Kind of Bet Is Being Made
 
-The clearest way to understand the pre-seed versus seed divide is through the lens of what each type of investor is actually betting on. Pre-seed funding is often the most challenging round to raise precisely because investors are being asked to bet on a team and an idea, not on proven metrics.
+The clearest way to understand the pre-seed versus seed divide is through the lens of what each type of investor is actually betting on. [Pre-seed funding](/articles/pre-seed-funding/) is often the most challenging round to raise precisely because investors are being asked to bet on a team and an idea, not on proven metrics.
  At this stage, the founding team's credibility, their insight into the problem, and the size and urgency of the market they are targeting do more work than any spreadsheet. 
 Pre-seed investors at this stage include angels, friends and family, accelerators, and small venture capital firms writing checks between $25,000 and $1 million.
  The investment thesis is essentially: this team has the right to win in this space, and we believe them before the data agrees.
@@ -138,7 +133,3 @@ VCs are becoming increasingly specialized rather than generalist
 - The investor base shifts meaningfully between stages — pre-seed draws angels, micro-VCs, and accelerators, while seed attracts dedicated seed funds and occasionally multi-stage VCs entering early, each with different process expectations.
 - Dilution increases and timelines lengthen at seed: founders typically give up 10–15% at pre-seed on a quick SAFE close, versus 20%+ at seed in a process that can run 8–16 weeks and may include board observer rights.
 - The most costly mistake is misreading your stage: trying to raise seed without seed-stage proof wastes months and burns relationships, while over-preparing for seed when a pre-seed raise could fund the needed milestones costs equally precious time.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [startup funding](/articles/startup-funding/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
-<!-- CMS-INTERNAL:END -->

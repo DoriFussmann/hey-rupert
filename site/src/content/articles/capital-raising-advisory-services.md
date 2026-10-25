@@ -5,9 +5,9 @@ slug: capital-raising-advisory-services
 date: "2026-09-29"
 updatedDate: "2026-09-29"
 author: dori-fussmann
-category: investor database
-pillarKeyword: investor database
-supportingKeyword: capital raising services
+category: capital raising services
+pillarKeyword: capital raising services
+supportingKeyword: capital raising advisory services
 articleType: comparison
 targetKeyword: capital raising advisory services
 tags:
@@ -21,19 +21,14 @@ imageAlt: Founder at a whiteboard comparing two fundraising models — an adviso
 keywords:
   - capital raising advisory services
   - capital raising services
-  - investor database
 draft: false
 internalLinks:
-  - slug: investor-database
-    anchor: investor database
-  - slug: capital-raising-consultants
-    anchor: capital raising consultants
-  - slug: capital-raising-fees
-    anchor: capital raising fees
   - slug: capital-raising-services
-    anchor: capital raising services
+    anchor: "Capital raising services for startups"
   - slug: startup-fundraising-consultant
-    anchor: startup fundraising consultant
+    anchor: "Hiring a fundraising consultant"
+  - slug: capital-raising-fees
+    anchor: "What capital raising actually costs"
 
 externalLinks: []
 faqs:
@@ -55,7 +50,7 @@ Under U.S. securities law, a "broker" is someone involved in the business of eff
  That registration requirement is the bright legal line separating broker-dealers from advisory consultants.
 
 Individuals who pass licensing exams — known as "Registered Representatives" — and maintain their affiliation with registered broker-dealers can lawfully receive compensation for facilitating securities transactions, meaning they can be rewarded with a success fee if a transaction successfully closes.
- Advisory consultants, by contrast, typically operate on a retainer or project-fee basis and do not take success fees tied directly to the close of a securities transaction — a structural distinction that keeps them outside the broker-dealer registration framework.
+ Advisory consultants, by contrast, typically operate on a retainer or project-fee basis and do not take [success fees](/articles/capital-raising-fees/) tied directly to the close of a securities transaction — a structural distinction that keeps them outside the broker-dealer registration framework.
 
 It is important to note that securities laws in the U.S. also extend to the sale of securities by private startups through private processes, unless specific exemptions are met — meaning private capital raises are also subject to regulation by the SEC, and individuals involved in executing such transactions must possess the necessary licenses and registrations.
  This catches many founders off guard. A friend, an advisor, or a consultant who introduces you to investors and receives a percentage of what you close isn't operating in a casual gray zone — they may be acting as an unlicensed broker-dealer.
@@ -128,7 +123,3 @@ The regulatory and market environment around capital raising advisory services r
 - Tail periods — typically 12 to 24 months in broker-dealer agreements — mean a fee obligation can follow a founder long after an engagement ends; advisory contracts vary far more on this point and the scope and duration must be negotiated explicitly before signing.
 - The quality gap inside the advisory category is enormous: a genuine expert-run service builds thesis-matched investor targeting and manages conversations with full founder transparency, while lower-quality providers sell access to a database and call it outreach.
 - For early-stage founders, the right selection criteria are transparency, sector-specific targeting precision, and confirmed ownership of every investor relationship introduced — not regulatory label.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
-<!-- CMS-INTERNAL:END -->

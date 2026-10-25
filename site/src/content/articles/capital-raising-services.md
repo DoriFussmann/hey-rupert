@@ -5,9 +5,8 @@ slug: capital-raising-services
 date: "2026-09-29"
 updatedDate: "2026-09-29"
 author: dori-fussmann
-category: investor database
-pillarKeyword: investor database
-supportingKeyword: capital raising services
+category: capital raising services
+pillarKeyword: capital raising services
 articleType: comprehensive
 targetKeyword: capital raising services
 tags:
@@ -20,19 +19,18 @@ image: ../../assets/articles/capital-raising-services.png
 imageAlt: "Founder reviewing a structured investor outreach pipeline on a laptop, surrounded by investor shortlists and fundraising notes"
 keywords:
   - capital raising services
-  - investor database
 draft: false
 internalLinks:
-  - slug: investor-database
-    anchor: investor database
-  - slug: capital-raising-advisory-services
-    anchor: capital raising advisory services
-  - slug: capital-raising-consultants
-    anchor: capital raising consultants
-  - slug: capital-raising-fees
-    anchor: capital raising fees
   - slug: startup-fundraising-consultant
-    anchor: startup fundraising consultant
+    anchor: "Hiring a fundraising consultant"
+  - slug: capital-raising-advisory-services
+    anchor: "Advisors vs. broker-dealers for capital raising"
+  - slug: capital-raising-fees
+    anchor: "What capital raising actually costs"
+  - slug: how-to-find-investors
+    anchor: "How to find the right investors"
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: "Warm intros vs. cold outreach to investors"
 
 externalLinks: []
 faqs:
@@ -54,11 +52,11 @@ The phrase "capital raising services" covers an enormous amount of ground — an
 
 ### Fundraising Consultants
 
-Fundraising consultants typically work as strategic advisors rather than operators. They help you sharpen your pitch, stress-test your financial model, refine your narrative, and prepare materials. Some will make introductions from their personal networks; most will not execute outreach on your behalf. The value is in the preparation and the strategic thinking, but the founder still runs the process. This model suits founders who are confident in their ability to execute outreach and manage a pipeline but need expert input on positioning and materials.
+[Fundraising consultants](/articles/startup-fundraising-consultant/) typically work as strategic advisors rather than operators. They help you sharpen your pitch, stress-test your financial model, refine your narrative, and prepare materials. Some will make introductions from their personal networks; most will not execute outreach on your behalf. The value is in the preparation and the strategic thinking, but the founder still runs the process. This model suits founders who are confident in their ability to execute outreach and manage a pipeline but need expert input on positioning and materials.
 
 ### Placement Agents
 
-Placement agents are regulated intermediaries — typically registered broker-dealers — who formally represent you to investors and take a success fee (often called "carry") as a percentage of capital raised. They are most common at growth stages and in private equity contexts, where deal sizes justify the economics of a formal placement process and where regulatory frameworks require brokerage registration for certain types of compensation. For Seed and Series A founders, placement agents are relatively rare and sometimes too expensive or structurally mismatched for the round size.
+Placement agents are regulated intermediaries — typically registered [broker-dealers](/articles/capital-raising-advisory-services/) — who formally represent you to investors and take a [success fee](/articles/capital-raising-fees/) (often called "carry") as a percentage of capital raised. They are most common at growth stages and in private equity contexts, where deal sizes justify the economics of a formal placement process and where regulatory frameworks require brokerage registration for certain types of compensation. For Seed and Series A founders, placement agents are relatively rare and sometimes too expensive or structurally mismatched for the round size.
 
 ### Investor Databases
 
@@ -186,7 +184,3 @@ as recently as September 28, 2026, a new fundraising platform announced its 2027
 - The single most predictive variable in outreach conversion is the quality of targeting and personalization — volume of contacts reached is a poor proxy for process quality, and bulk outreach to recycled lists actively damages a founder's reputation with investors.
 - Two of three Series A deals now involve investors who already knew the founder for six months or more, which means a disciplined, relationship-first outreach process is not optional; it is the baseline requirement for a competitive round.
 - Before engaging any capital raising service, founders should demand clear answers on five points: data recency, personalization method, transparency and reporting, fee structure and exit terms, and explicit confirmation that every investor relationship transfers to the founder at engagement end.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
-<!-- CMS-INTERNAL:END -->

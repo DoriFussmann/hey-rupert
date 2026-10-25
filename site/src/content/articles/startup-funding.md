@@ -5,7 +5,7 @@ description: "What founders need to know about startup funding: stages, instrume
 slug: startup-funding
 date: 2026-08-18
 author: dori-fussmann
-category: startup funding
+category: startup funding stages
 tags:
   - startup funding
   - fundraising
@@ -19,12 +19,13 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: startup funding
+pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: startup funding
 updatedDate: 2026-09-18
 keywords:
   - startup funding
+  - startup funding stages
 faqs:
   - question: How long does a typical seed or Series A fundraise take from first outreach to close?
     answer: Most seed and Series A raises take three to six months from first investor outreach to a signed term sheet and close. That timeline assumes a well-prepared founder with a defined target list, warm introductions, and a data room ready before the first meeting. Founders who run unstructured, reactive processes routinely stretch this to nine months or longer — burning runway and management attention in the process. Starting fundraising conversations twelve to eighteen months before you expect to run out of cash gives you the time to be selective and to walk away from bad terms.
@@ -36,39 +37,11 @@ faqs:
     answer: "The most common failure is structural, not product-related: founders reach Series A conversations without enough ARR, without sufficient revenue growth rate, or having spent too long at seed without building relationships with Series A investors who will eventually lead their round. The seed-to-Series A graduation rate has fallen sharply — from around 50% in the 2018–2021 era to roughly 35–38% today on an extended timeline. Most founders who do not make it had a fundable product; they ran an undisciplined process, targeted the wrong investors, or failed to build investor relationships before they needed a term sheet."
 internalLinks:
   - slug: startup-funding-stages
-    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
-  - slug: early-stage-venture-capital
-    anchor: early-stage venture capital
-  - slug: startup-funding-rounds-faq
-    anchor: startup funding rounds
-  - slug: startup-funding-stages-explained
-    anchor: startup funding stages explained
+    anchor: "Startup funding stages, pre-seed to Series C"
   - slug: types-of-funding-for-startups
-    anchor: types of funding for startups
-  - slug: angel-investors
-    anchor: angel investors
-  - slug: investor-database
-    anchor: investor database
-  - slug: pitch-deck
-    anchor: pitch deck
-  - slug: series-a
-    anchor: series a
-  - slug: venture-capital
-    anchor: venture capital
-  - slug: investor-crm
-    anchor: investor crm
+    anchor: "Types of startup funding: equity, SAFEs, debt"
   - slug: how-to-find-investors
-    anchor: how to find investors
-  - slug: angel-investors-for-pre-seed-funding
-    anchor: angel investors for pre seed funding
-  - slug: how-to-raise-pre-seed-funding
-    anchor: how to raise pre seed funding
-  - slug: pre-seed-funding
-    anchor: pre seed funding
-  - slug: pre-seed-vs-seed-funding
-    anchor: pre seed vs seed funding
-  - slug: what-is-pre-seed-funding
-    anchor: what is pre seed funding
+    anchor: "How to find the right investors"
 
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
@@ -80,6 +53,7 @@ externalLinks:
   - label: "A Guide to Early-Stage Startup Funding: Your Options"
     url: https://www.capboard.io/en/captable/startup-funding-sources
     addedAt: 2026-08-18
+supportingKeyword: startup funding
 ---
 ## What Startup Funding Actually Is — and What It Isn't
 
@@ -148,7 +122,7 @@ A SAFE has no interest and no maturity date, making it one of the most attractiv
  Unlike convertible debt, it does not accrue interest or create a liability on the balance sheet. Unlike a priced equity round, it does not require a formal valuation negotiation or an expensive legal process.
 
 The market has converged on SAFEs with striking speed. 
-At the pre-seed stage, SAFEs comprised a record high of 93% of all deals on Carta in Q1 2026, while convertible notes fell to a record low of just 7% of pre-seed rounds. In 2025, the majority of early-stage rounds under $4 million were completed using SAFEs or convertible notes.
+At the pre-seed stage, SAFEs comprised a record high of 93% of all deals on Carta in Q1 2026, while [convertible notes](/articles/types-of-funding-for-startups/) fell to a record low of just 7% of pre-seed rounds. In 2025, the majority of early-stage rounds under $4 million were completed using SAFEs or convertible notes.
 
 Two terms inside a SAFE carry the most weight for founders: the valuation cap and the discount rate. The valuation cap is the maximum pre-money valuation at which the SAFE investor's capital will convert into equity when a priced round occurs. 
 The cap protects early investors from excessive dilution if the startup raises its priced round at a far higher valuation — and from a founder's perspective, the cap determines exactly how much ownership the early check costs.
@@ -268,7 +242,3 @@ The startup funding market in late 2026 has moved from concentrated recovery to 
 See Related below for more on this topic.
 
 See Sources below for the references behind this article.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how to find investors](/articles/how-to-find-investors/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
-<!-- CMS-INTERNAL:END -->

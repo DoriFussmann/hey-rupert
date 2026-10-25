@@ -19,13 +19,12 @@ locale: en-US
 twitterCard: summary_large_image
 draft: false
 pillarKeyword: pitch deck
-supportingKeyword: seed pitch deck
+supportingKeyword: pitch deck examples
 articleType: flex
-targetKeyword: seed pitch deck examples
+targetKeyword: pitch deck examples
 updatedDate: 2026-09-28
 keywords:
-  - seed pitch deck examples
-  - seed pitch deck
+  - pitch deck examples
   - pitch deck
 faqs:
   - question: How many slides should a seed pitch deck have?
@@ -38,15 +37,11 @@ faqs:
     answer: Design matters enough that a visually chaotic deck creates friction — but professional polish does not compensate for weak content. Buffer's seed deck was simple and not visually sophisticated; it raised $500K because the traction metrics were compelling. Airbnb's original 2009 deck is widely described as rough by modern standards, yet it remains the most studied seed deck in history. Investors in 2026 do spend more total time on decks with clear data visualization, but the data itself — not its presentation — is what drives conviction.
 internalLinks:
   - slug: pitch-deck
-    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-  - slug: pre-seed-pitch-deck
-    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-  - slug: seed-funding-pitch-deck-faq
-    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    anchor: "How to build a pitch deck"
   - slug: seed-pitch-deck
-    anchor: The Complete Seed Pitch Deck Guide for Raising Founders
-  - slug: seed-round-pitch-deck-template
-    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    anchor: "Building a seed pitch deck"
+  - slug: startup-pitch-deck-template
+    anchor: "Pitch deck template, slide by slide"
 
 externalLinks:
   - label: The Ultimate Pitch Deck Guide for Startup Founders
@@ -65,7 +60,7 @@ externalLinks:
     url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
     addedAt: 2026-08-13
 ---
-Most pitch deck advice starts from a template. This article starts from evidence. The decks below are real (they raised real money from real investors) and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
+Most [pitch deck](/articles/pitch-deck/) advice starts from a [template](/articles/startup-pitch-deck-template/). This article starts from evidence. The decks below are real (they raised real money from real investors) and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
 
 The patterns that emerge from studying funded seed decks are not particularly mysterious once you see them. They are, however, consistently violated by founders who build decks the way they understand their business rather than the way investors evaluate one.
 
@@ -73,7 +68,7 @@ The patterns that emerge from studying funded seed decks are not particularly my
 
 ## The Deck That Every Other Deck Gets Compared To: Airbnb (2009)
 
-The Airbnb 2009 pitch deck is a 14-slide seed deck that raised $600K from Sequoia.
+The Airbnb 2009 pitch deck is a 14-slide [seed deck](/articles/seed-pitch-deck/) that raised $600K from Sequoia.
  It has become, by any measure, the most studied seed deck in history — and not just because of how large Airbnb eventually became. The deck works as a teaching document because its discipline is visible and replicable.
 
 It had no complex financial modelling, but it did one thing perfectly: it turned a counterintuitive idea (sleeping in a stranger's house) into a logical inevitability by focusing on a specific niche first.

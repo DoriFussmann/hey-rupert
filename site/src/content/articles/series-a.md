@@ -5,7 +5,7 @@ description: "What Series A really means in 2026: round sizes, ARR benchmarks, v
 slug: series-a
 date: 2026-08-18
 author: dori-fussmann
-category: series a
+category: startup funding stages
 tags:
   - series a
   - startup funding
@@ -19,12 +19,13 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: series a
+pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: series a
 updatedDate: 2026-09-18
 keywords:
   - series a
+  - startup funding stages
 faqs:
   - question: What is the difference between seed and Series A funding?
     answer: Seed rounds typically use SAFEs or convertible notes, involve angel investors or micro-VCs, and carry minimal governance strings. Series A is a priced equity round that introduces preferred stock with liquidation preferences, anti-dilution protections, a formal board seat for the lead investor, and protective provisions that govern major company decisions. The shift is structural, not just a matter of round size — the documents you sign at Series A shape governance for every future round.
@@ -35,28 +36,12 @@ faqs:
   - question: What happens after I close a Series A?
     answer: The capital creates an 18–24 month runway to hit the milestones needed for a strong Series B. In practice, the first 90 days should focus on building the executive team (typically a first VP of Sales, Engineering, or Marketing), establishing board governance with a quarterly meeting cadence, and setting quarterly revenue targets that work backward from Series B benchmarks — generally $8M–$15M ARR with sustained 2x year-over-year growth. The commitments embedded in your Series A pitch become the baseline investors use to price the next round.
 internalLinks:
-  - slug: angel-investors
-    anchor: angel investors
-  - slug: investor-database
-    anchor: investor database
-  - slug: pitch-deck
-    anchor: pitch deck
-  - slug: startup-funding
-    anchor: startup funding
-  - slug: venture-capital
-    anchor: venture capital
-  - slug: investor-crm
-    anchor: investor crm
-  - slug: how-long-between-seed-and-series-a
-    anchor: how long between seed and series a
-  - slug: pre-seed-vs-seed-vs-series-a
-    anchor: pre seed vs seed vs series a
-  - slug: seed-funding-vs-series-a
-    anchor: seed funding vs series a
+  - slug: startup-funding-stages
+    anchor: "Startup funding stages, pre-seed to Series C"
   - slug: seed-vs-series-a
-    anchor: seed vs series a
-  - slug: how-to-find-investors
-    anchor: how to find investors
+    anchor: "Seed vs. Series A"
+  - slug: biggest-venture-capital-firms
+    anchor: "The biggest VC firms, and which write early checks"
 
 externalLinks:
   - label: "Series A Funding Guide — How to Prepare and Close ..."
@@ -68,6 +53,7 @@ externalLinks:
   - label: "Series A Funding: Your Guide in 2024"
     url: "https://www.capboard.io/en/captable/series-a-funding-explained"
     addedAt: 2026-08-27
+supportingKeyword: series a
 ---
 ## What Series A Actually Is — and Why It Matters
 
@@ -86,7 +72,7 @@ Series A funding is the first priced round and represents a significant mileston
 
 ## How Series A Differs from Seed: Structure, Not Just Size
 
-The surface difference between seed and Series A is the dollar amount. The substantive difference is in the legal architecture.
+The surface difference between [seed and Series A](/articles/seed-vs-series-a/) is the dollar amount. The substantive difference is in the legal architecture.
 
 Series A and later rounds use preferred stock. Seed rounds may use SAFE notes or convertible notes instead of priced rounds with preferred stock.
  That distinction carries enormous practical weight. SAFEs and convertible notes are deliberately light-touch instruments — minimal governance, no board seats, deferred valuation. They are designed to get capital into a company quickly and inexpensively while both sides wait for more information.
@@ -245,7 +231,3 @@ Getting the investor targeting, outreach sequencing, and pipeline management rig
 <!-- WHERE-THINGS-STAND:START -->
 The Series A market in mid-2026 is defined by a stark divergence: headline venture numbers are historic, but access remains structurally concentrated. US venture capital hit $412.7 billion in H1 2026 — nearly 30% more than all of 2025 — while global startup funding reached a record $510 billion, per PitchBook-NVCA and Crunchbase. Yet that headline obscures who is capturing the capital. AI absorbed 86% of US VC dollars, with OpenAI and Anthropic alone accounting for 43% of all H1 funding; the Q2 2026 Venture Monitor explicitly flagged the "collapse of corporate VC and nontraditional participation outside of AI." For non-AI founders, conditions remain structurally difficult. The Cooley Q2 2026 Venture Financing Report found that while Series A deal volume ticked up quarter-over-quarter, median Series A pre-money valuations actually declined in Q2, down rounds rose to 12.1%, and pay-to-play provisions increased to 8.4% — signals of ongoing stress below the headline. The exit environment improved modestly, anchored by SpaceX's landmark $1.75 trillion IPO, but PitchBook notes the broader IPO pipeline beyond OpenAI and Anthropic has yet to be built. The structural message for founders is unchanged: disciplined preparation, precise investor targeting, and metrics that clear the bar before the process begins.
 <!-- WHERE-THINGS-STAND:END -->
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/) · [how to find investors](/articles/how-to-find-investors/)
-<!-- CMS-INTERNAL:END -->

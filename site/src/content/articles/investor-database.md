@@ -5,7 +5,7 @@ description: "A founder's guide to investor databases: what they cover, how to f
 slug: investor-database
 date: 2026-08-18
 author: dori-fussmann
-category: investor database
+category: how to find investors
 tags:
   - fundraising
   - investor research
@@ -19,55 +19,39 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: investor database
+pillarKeyword: how to find investors
 articleType: comprehensive
 targetKeyword: investor database
-updatedDate: 2026-09-18
+updatedDate: "2026-10-25"
 keywords:
   - investor database
+  - how to find investors
 faqs:
-  - question: What is an investor database and what does it typically include?
-    answer: An investor database is a searchable repository of capital sources — VC firms, angel investors, family offices, and others — with profiles that typically include investment stage, sector focus, check size range, geography, portfolio history, and contact information. The depth and accuracy of these fields varies significantly across platforms, from community-curated free tools to institutional-grade data platforms built primarily for fund managers.
-  - question: How many investors should be on my outreach list?
-    answer: Quality matters far more than volume. A targeted list of 40–60 investors who are genuinely matched to your stage, sector, check size, and geography will almost always outperform a raw list of 500 names with no qualification. Each investor on your list should be verified against their current thesis before outreach begins — stale or misaligned contacts waste your most valuable fundraising window.
-  - question: Can I raise a Seed or Series A round using only cold outreach from a database?
-    answer: Yes, cold outreach from a database can be a meaningful part of a Seed or Series A raise, but execution quality is the deciding variable. Research suggests roughly 23–30% of successful seed rounds include at least one investor sourced through cold outreach. The distinction is between mass-blast cold email and personalized, thesis-matched outreach that demonstrates genuine knowledge of each investor's portfolio — the latter converts at meaningfully higher rates.
-  - question: What's the difference between a self-serve investor database and expert-managed investor outreach?
-    answer: A self-serve database gives you access to investor data but leaves the qualification, personalization, follow-up sequencing, and pipeline management entirely to you. Expert-managed outreach layers experienced operator judgment on top of that infrastructure — researching each investor's current thesis, crafting genuinely personalized messages, managing response handling, and maintaining pipeline discipline — so database access actually translates into conversations rather than unanswered emails.
+  - question: "What is an investor database and what does it typically include?"
+    answer: "An investor database is a searchable repository of capital sources — VC firms, angel investors, family offices, and others — with profiles that typically include investment stage, sector focus, check size range, geography, portfolio history, and contact information. The depth and accuracy of these fields varies significantly across platforms, from community-curated free tools to institutional-grade data platforms built primarily for fund managers."
+  - question: "How many investors should be on my outreach list?"
+    answer: "Quality matters far more than volume. A targeted list of 40–60 investors who are genuinely matched to your stage, sector, check size, and geography will almost always outperform a raw list of 500 names with no qualification. Each investor on your list should be verified against their current thesis before outreach begins — stale or misaligned contacts waste your most valuable fundraising window."
+  - question: "Can I raise a Seed or Series A round using only cold outreach from a database?"
+    answer: "Yes, cold outreach from a database can be a meaningful part of a Seed or Series A raise, but execution quality is the deciding variable. Research suggests roughly 23–30% of successful seed rounds include at least one investor sourced through cold outreach. The distinction is between mass-blast cold email and personalized, thesis-matched outreach that demonstrates genuine knowledge of each investor's portfolio — the latter converts at meaningfully higher rates."
+  - question: "What's the difference between a self-serve investor database and expert-managed investor outreach?"
+    answer: "A self-serve database gives you access to investor data but leaves the qualification, personalization, follow-up sequencing, and pipeline management entirely to you. Expert-managed outreach layers experienced operator judgment on top of that infrastructure — researching each investor's current thesis, crafting genuinely personalized messages, managing response handling, and maintaining pipeline discipline — so database access actually translates into conversations rather than unanswered emails."
+  - question: "How do I search SEC EDGAR Form D filings to find investors?"
+    answer: "Go to efts.sec.gov (EDGAR's full-text search) and search for the industry or company type you're targeting. Filter results to Form D filings. Each filing lists the issuer and often names the investors or placement agents involved. You can also search by the name of a company you know raised money in your sector and pull its Form D directly to see who backed it — giving you a verified, primary-source name to research further."
 internalLinks:
-  - slug: angel-investors
-    anchor: angel investors
-  - slug: pitch-deck
-    anchor: pitch deck
-  - slug: series-a
-    anchor: series a
-  - slug: startup-funding
-    anchor: startup funding
-  - slug: venture-capital
-    anchor: venture capital
-  - slug: investor-crm
-    anchor: investor crm
-  - slug: capital-raising-advisory-services
-    anchor: capital raising advisory services
-  - slug: capital-raising-consultants
-    anchor: capital raising consultants
-  - slug: capital-raising-fees
-    anchor: capital raising fees
-  - slug: capital-raising-services
-    anchor: capital raising services
-  - slug: startup-fundraising-consultant
-    anchor: startup fundraising consultant
   - slug: how-to-find-investors
-    anchor: how to find investors
+    anchor: "How to find the right investors"
   - slug: investor-list
-    anchor: investor list
-  - slug: list-of-private-investors
-    anchor: list of private investors
+    anchor: "How to build an investor list"
+  - slug: investor-crm
+    anchor: "Running your raise in an investor CRM"
+  - slug: capital-raising-services
+    anchor: "Capital raising services for startups"
 
 externalLinks:
   - label: "Investor Database FAQ: Raising venture capital for startups"
     url: "https://blog.foundersuite.com/guide-to-using-the-investor-database/"
     addedAt: 2026-08-27
+supportingKeyword: investor database
 ---
 An investor database is not a fundraising strategy. It is research infrastructure — a structured, searchable repository of VC firms, angel investors, family offices, and other capital sources, filterable by stage, sector, geography, and check size. Understanding exactly what that infrastructure can and cannot do is where most founders either save weeks of wasted effort or lose their best fundraising window to a list that was never going to convert.
 
@@ -88,7 +72,7 @@ The most transparent free platforms are ones where investors share exactly what 
 Mid-tier, founder-focused platforms go further on both coverage and functionality. 
 The strongest paid options in this tier offer databases of more than 125,000 angel investors and venture capitalists built specifically for founders who are actively raising, with each profile including verified email addresses, phone numbers, LinkedIn, investment focus, and past investments.
 
-Platforms like Foundersuite combine a CRM with a database of 230,000+ investors to help founders build their funnel — an all-in-one approach that streamlines fundraising and investor relations for startups.
+Platforms like Foundersuite combine [a CRM](/articles/investor-crm/) with a database of 230,000+ investors to help founders build their funnel — an all-in-one approach that streamlines fundraising and investor relations for startups.
  These platforms are priced for founders rather than institutions, 
 with founder-focused paid databases sitting in the affordable middle (some starting around $29–$59/month with verified contact details included) while institutional tools run upwards of $20,000/year and are built for VC firms and analysts, not bootstrapped founders.
 
@@ -137,7 +121,7 @@ Where institutional-grade platforms genuinely earn their cost for startups is be
 
 ## Building a Qualified Target List
 
-A database gives you raw material. Building a qualified target list requires layering judgment on top of filters.
+A database gives you raw material. Building a qualified [target list](/articles/investor-list/) requires layering judgment on top of filters.
 
 Start with the hard constraints: stage match, sector focus, check size range, and geography. These four filters eliminate the majority of investors in any database immediately. An investor who writes $5M–$15M Series A checks into enterprise SaaS is not relevant to a founder raising a $750K pre-seed round, regardless of how strong a connection you might have into that firm.
 
@@ -179,11 +163,44 @@ For founders raising Seed through Series A who need a disciplined process withou
 
 That is precisely what Rupert is built to do. Rupert handles the database work, the qualification, the personalized outreach, and the pipeline management on the founder's behalf — while the founder retains complete visibility into every conversation and full ownership of every investor relationship. For founders who know their company is worth funding but don't have the bandwidth to run a research-and-outreach operation at the standard that actually converts, that combination is how database infrastructure translates into funded rounds.
 
+## Free Investor Databases Worth Your Time
+
+### Crunchbase Free Tier
+
+Crunchbase is the most well-known investor database in the startup world, and its free tier is a legitimate starting point for research. 
+It offers a large searchable index of investors, funding rounds, and company profiles — making it a reliable starting point for mapping a market landscape or understanding historical funding activity.
+ The limitation is real, though: 
+Crunchbase's free tier caps searches tightly, and founders closing rounds consistently upgrade to paid for direct contact access.
+
+Use the free tier for qualification, not outreach. If you find a firm's name on another free platform and want to verify their focus and recent activity, Crunchbase is the right confirmation tool. If you need email addresses or are trying to build a contact list at scale, the free tier will frustrate you quickly.
+
+### OpenVC
+
+OpenVC is a free, open-source investor directory that provides access to thousands of early-stage investors including angels, VCs, accelerators, and family offices. The platform includes basic CRM functionality, deck submission tools, and educational playbooks, and it is designed to democratize fundraising access for pre-seed teams with limited budgets.
+
+What makes OpenVC particularly strong among free options is something structural, not cosmetic: the investors who list there have actively opted in to receiving cold inbound from founders. 
+OpenVC is the best free option if you want investors who actually accept cold inbound.
+ This matters enormously in practice. A cold email sent to an investor who signed up for a platform specifically to discover founders carries a fundamentally different reception than the same email sent to a scraped address from a generic list. Response rates on opt-in platforms are meaningfully higher, and the lack of a warm intro is less of a handicap when the investor has already signaled openness to discovery.
+
+### AngelList
+
+AngelList is one of the most established platforms connecting startups with angel investors and venture capitalists. The platform has facilitated billions in startup investments and offers tools for both fundraising and hiring. Startups can create comprehensive profiles, connect with investors, and manage their fundraising rounds all in one place. Browsing on AngelList is free, though investment fees apply to fund operations, and the database coverage is weighted toward companies actively using the platform for fundraising.
+
+The practical implication: AngelList is most useful when you are building a list of angels and smaller funds who are actively deploying capital right now through the platform. It is less comprehensive as a universe-of-investors directory, but highly actionable for the investors who show up there.
+
+### SEC EDGAR Form D Filings
+
+This is the most underused free resource available to any founder raising in the United States, and it deserves a longer explanation because most founders have never thought to use it. SEC Form D is a notice filed by companies raising capital privately, outlining exempt offerings to maintain regulatory compliance and investor transparency.
+
+Form D filing is required within 15 days after the first sale of securities, defined as the date when the first investor becomes irrevocably committed.
+ The key insight for founders doing investor research is what Form D filings reveal: every US company that closes a private round is required to file one, and those filings name the investors.
+
+After submission, Form D is publicly available on the SEC's EDGAR database.
+ That means EDGAR is, in effect, a primary-source map of who is actively writing checks in any given sector — updated continuously, searchable for free, and drawn from legal filings rather than self-reported database entries that may be months out of date. If you find a company in your space that recently closed a seed round, pull their Form D. The investors listed there are verified check-writers in your sector, which is precisely the signal you want before personalizing outreach.
+
+---
+
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
 The venture capital environment heading into Q4 2026 makes disciplined investor targeting more consequential than ever for early-stage founders. US startups raised $18.1B across just 333 deals in August 2026 — deal count fell 32% from July's 492 transactions even as capital held up, a summer compression pattern that has repeated across every month of 2026: fewer transactions, higher average sizes, with the bulk flowing to a small number of companies. Globally, the picture is more striking: $42B poured into 1,500+ startups worldwide in August, up 122% year-over-year, yet seven companies captured billion-dollar rounds — and over 40% of seed and Series A investment in 2026 has gone to rounds of $100M or more, almost entirely AI-driven. The structural squeeze on non-mega-round founders is tightening: the average time between Seed and Series A has stretched to 616 days, and investors are now penalizing founders for raising too early with thin metrics rather than for taking longer. In this environment, a misaligned investor list is not merely inefficient — it is a competitive disadvantage that erodes a founder's credibility window with the investors who actually matter to their round.
 <!-- WHERE-THINGS-STAND:END -->
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/) · [how to find investors](/articles/how-to-find-investors/) · [investor list](/articles/investor-list/) · [list of private investors](/articles/list-of-private-investors/)
-<!-- CMS-INTERNAL:END -->

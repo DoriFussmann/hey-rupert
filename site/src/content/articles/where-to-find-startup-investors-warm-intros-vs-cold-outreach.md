@@ -5,10 +5,9 @@ slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
 date: "2026-08-27"
 updatedDate: "2026-09-30"
 author: dori-fussmann
-category: how to find investors
-pillarKeyword: how to find investors
-supportingKeyword: how to find investors for startup
-articleType: comparison
+category: investor outreach
+pillarKeyword: investor outreach
+articleType: comprehensive
 targetKeyword: where to find investors for startup
 tags:
   - investor outreach
@@ -20,16 +19,17 @@ image: ../../assets/articles/where-to-find-startup-investors-warm-intros-vs-cold
 imageAlt: Founder at a desk mapping a split investor outreach strategy with warm intro paths on one side and cold email sequences on the other
 keywords:
   - where to find investors for startup
-  - how to find investors for startup
-  - how to find investors
+  - investor outreach
 draft: false
 internalLinks:
-  - slug: angel-investors
-    anchor: angel investors
-  - slug: find-investors-online-free
-    anchor: find investors online free
   - slug: how-to-find-investors
-    anchor: how to find investors
+    anchor: "How to find the right investors"
+  - slug: investor-list
+    anchor: "How to build an investor list"
+  - slug: investor-crm
+    anchor: "Running your raise in an investor CRM"
+  - slug: capital-raising-services
+    anchor: "Capital raising services for startups"
 
 externalLinks: []
 faqs:
@@ -89,7 +89,7 @@ Studies show that 70% of cold emails never get a follow-up, but just one more me
 The most effective fundraising processes treat warm introductions and cold outreach not as competing strategies but as tools matched to different investor tiers. The logic is straightforward: 
 the smartest fundraising strategies combine both channels — use warm intros for your highest-priority investors and cold email to cover the rest.
 
-In practice, this means segmenting your target investor list before a single message is sent. Your top 10–15 investors — the funds whose thesis, portfolio, and check size are the strongest fit — are where warm-intro capital gets deployed. These are the conversations where extra relationship-building time compounds: where a portfolio founder's reference carries the most weight, where a mutual advisor's credibility shortens diligence, and where burning a weak introduction is most costly. 
+In practice, this means segmenting your target [investor list](/articles/investor-list/) before a single message is sent. Your top 10–15 investors — the funds whose thesis, portfolio, and check size are the strongest fit — are where warm-intro capital gets deployed. These are the conversations where extra relationship-building time compounds: where a portfolio founder's reference carries the most weight, where a mutual advisor's credibility shortens diligence, and where burning a weak introduction is most costly. 
 Build a target list with three tiers: dream investors where you have strong warm intro paths, great-fit investors where you have any intro path, and good-fit investors where you might need to go cold.
 
 The broader longlist — investors whose thesis is directionally relevant but who are not on your top tier — is where cold outreach runs efficiently and, crucially, where it teaches you something. Every response pattern from cold outreach is a signal: which hook generates curiosity, which traction metric makes investors lean in, which framing of the market lands and which one gets you politely rebuffed. That learning feeds directly into the warm-intro conversations you will have later.
@@ -138,7 +138,3 @@ August 2026 funding data shows that money is still flowing, but many seed and ea
 Investors are closely vetting early-stage startups to find companies with traction and massive potential, and VC funding has already reached $300B across 6,000 startups in 2026 according to Crunchbase
  — though that capital is concentrated in select sectors and later-stage deals. For founders at Seed and Series A, this environment makes the quality of every investor touchpoint — warm or cold — more consequential than it was during the looser funding conditions of prior cycles.
 <!-- WHERE-THINGS-STAND:END -->
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to find investors](/articles/how-to-find-investors/)
-<!-- CMS-INTERNAL:END -->

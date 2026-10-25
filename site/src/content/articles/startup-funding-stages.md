@@ -4,7 +4,7 @@ description: From pre-seed to Series C, understand what each startup funding sta
 slug: startup-funding-stages
 date: 2026-08-18
 author: dori-fussmann
-category: startup funding
+category: startup funding stages
 tags:
   - startup funding
   - startup funding stages
@@ -18,34 +18,42 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: startup funding
-supportingKeyword: startup funding stages
+pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: startup funding stages
-updatedDate: 2026-09-18
+updatedDate: "2026-10-25"
 keywords:
   - startup funding stages
-  - startup funding
 faqs:
-  - question: What is the difference between pre-seed and seed funding?
+  - question: "What is the difference between pre-seed and seed funding?"
     answer: "Pre-seed is the earliest outside capital — typically $250K–$1.5M raised on a SAFE — used to validate a problem and build an initial MVP, often before any revenue. Seed funding follows once you have a working product and early traction, usually $2M–$5M at a $10M–$25M valuation. The practical difference is evidence: pre-seed investors bet on the founder and the idea; seed investors need proof that real customers want what you've built."
-  - question: How much equity do founders typically give up at each funding stage?
+  - question: "How much equity do founders typically give up at each funding stage?"
     answer: "Dilution varies but typical ranges are: 10–15% at pre-seed, 15–20% at seed, 18–22% at Series A, 20–25% at Series B, and 7–15% at Series C. The cumulative effect means a founder who raises through Series C might retain 40–50% of the company before employee options are factored in. Structuring rounds efficiently — with realistic valuations and the right instrument (SAFE vs. priced equity) — is one of the highest-leverage decisions you'll make."
-  - question: What does 'Series A crunch' mean, and how does it affect my raise?
+  - question: "What does 'Series A crunch' mean, and how does it affect my raise?"
     answer: "The Series A crunch refers to the structural gap between the large number of seed-funded startups and the much smaller number of Series A slots available. Historically around 20–30% of seed companies graduate to Series A; recent data shows that figure has dropped closer to 15–24% for recent cohorts. The practical implication: seed investors are now asking 'could this become a Series A company?' from day one, and founders must plan their runway and milestones with the Series A bar in mind — not just survival."
-  - question: How long does it realistically take to move from seed to Series A?
-    answer: The median time from seed close to Series A has stretched to over 24 months in recent cycles, up from around 18 months in 2020. Some founders take 30 months or more. This means planning a seed round runway of 24–30 months — not 18 — and ensuring your milestone targets (typically $1M–$3M ARR for B2B SaaS) are achievable within that window. Running out of cash six months short of the number that would have unlocked Series A is one of the most common and avoidable fundraising failures.
+  - question: "How long does it realistically take to move from seed to Series A?"
+    answer: "The median time from seed close to Series A has stretched to over 24 months in recent cycles, up from around 18 months in 2020. Some founders take 30 months or more. This means planning a seed round runway of 24–30 months — not 18 — and ensuring your milestone targets (typically $1M–$3M ARR for B2B SaaS) are achievable within that window. Running out of cash six months short of the number that would have unlocked Series A is one of the most common and avoidable fundraising failures."
+  - question: "Can a company skip the seed stage and go straight from pre-seed to Series A?"
+    answer: "It is rare but possible — typically only when a founding team has exceptional prior exits and can demonstrate unusually fast traction. In practice, most institutional Series A investors expect to see at least 12–18 months of post-product operating data, a repeatable customer acquisition motion, and $1M–$2M+ in ARR or equivalent. Skipping seed means skipping the period where those metrics are built, so it almost always shortens the runway for demonstrating them, not eliminates the need."
+  - question: "What is a 'down round' and how do I avoid one?"
+    answer: "A down round is when you raise at a lower valuation than your previous round. It signals distress, triggers anti-dilution provisions that punish existing shareholders, and complicates future fundraising. The best prevention is setting a realistic valuation in your current round — one that your next-round milestones can credibly exceed — and maintaining enough runway to avoid raising under pressure."
 internalLinks:
-  - slug: startup-funding
-    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
-  - slug: early-stage-venture-capital
-    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
-  - slug: startup-funding-rounds-faq
-    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
-  - slug: startup-funding-stages-explained
-    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+  - slug: pre-seed-funding
+    anchor: "Pre-seed funding: the complete guide"
+  - slug: pre-seed-vs-seed-funding
+    anchor: "Pre-seed vs. seed funding"
+  - slug: seed-vs-series-a
+    anchor: "Seed vs. Series A"
+  - slug: series-a
+    anchor: "Raising a Series A"
   - slug: types-of-funding-for-startups
-    anchor: "Startup Funding Types: Equity, SAFEs, Debt & Bootstrapping"
+    anchor: "Types of startup funding: equity, SAFEs, debt"
+  - slug: startup-funding
+    anchor: "How startup funding works"
+  - slug: how-to-find-investors
+    anchor: "How to find the right investors"
+  - slug: pitch-deck
+    anchor: "How to build a pitch deck"
 
 externalLinks:
   - label: "Startup Funding Stages Explained (Bootstrapping to Series C)"
@@ -73,7 +81,7 @@ This guide moves through each stage in turn — what it is, who invests, how muc
 
 Pre-seed is the first outside money your company receives. At this point, a startup is often little more than an idea, a problem hypothesis, or an early prototype. 
 At this point, a startup is often little more than an idea, a prototype, or an early MVP, and the founding team is usually just one to three people, with zero revenue.
- The pre-seed round exists to convert that early stage into something testable — an MVP that allows you to generate the initial signals seed investors will later require.
+ The [pre-seed round](/articles/pre-seed-funding/) exists to convert that early stage into something testable — an MVP that allows you to generate the initial signals seed investors will later require.
 
 ### Who Invests
 
@@ -156,7 +164,7 @@ Series A investors need to see clear evidence of product-market fit. In 2026, th
 ### Dilution
 
 Dilution at Series A is typically 18 to 22 percent.
- A founder who has managed pre-seed and seed dilution carefully can still enter Series A with 50–60% ownership.
+ A founder who has managed [pre-seed and seed](/articles/pre-seed-vs-seed-funding/) dilution carefully can still enter Series A with 50–60% ownership.
 
 ---
 
@@ -247,7 +255,42 @@ This is the work Rupert was built to do. Rather than handing founders a database
 
 The appeal for founders who are focused on hitting their milestones is straightforward: the research, personalisation, and pipeline management that drives a disciplined fundraising process gets handled by people who have run these processes before, while the founder retains complete visibility into every outreach sent and every investor relationship built. Nothing is a black box. Every contact, every reply, and every resulting conversation belongs to the founder — not the service.
 
-For a company navigating the narrow passage from seed to Series A, or preparing to open a first seed process, that combination of expertise and transparency can be the difference between a raise that closes and one that quietly stalls.
+For a company navigating the narrow passage from [seed to Series A](/articles/seed-vs-series-a/), or preparing to open a first seed process, that combination of expertise and transparency can be the difference between a raise that closes and one that quietly stalls.
+
+---
+
+## Bridge Rounds and Extensions: Tools, Not Lifelines
+
+No guide to startup funding stages is complete without an honest account of bridge rounds, because the decision of whether to bridge is often where stage diagnosis gets most distorted. In 2026, roughly 38% of seed-funded startups raise a bridge before they ever see a priced Series A term sheet.
+ That normalization is structural, not a symptom of widespread failure. 
+The Series A market in 2025 showed an 18% decline in deal volume year-over-year with total capital invested down 23%, and the average time between seed and Series A has stretched to around 616 days.
+ With gaps that long, a bridge can be the right answer — but only when it is tied to a defined, measurable outcome.
+
+A bridge round strengthens your position when the startup has clear traction and a defined path to the next round; it signals trouble when existing investors sit out and the bridge is used to cover operating losses without improving fundamentals.
+ The signal to future investors is not that you bridged — it is whether the bridge accomplished what it set out to do. 
+Bridge rounds keep the company alive and provide time to hit the higher milestones that Series A investors now demand, but they often come with less favorable terms: shorter maturities, conversion discounts that dilute founders further, and the implicit signal to future investors that the company could not raise a priced round.
+
+The test for a bridge is simple: can you articulate the specific milestone you will hit with this capital, the timeline in which you will hit it, and the investor who has indicated they would fund a priced round once you do? If the answer to any of those three is "not yet," you are not ready to bridge — you are ready to cut burn and extend runway until the answer becomes yes.
+
+---
+
+## What Investors Check in Due Diligence at Each Stage
+
+### Stage-by-stage: what scrutiny looks like at seed versus Series A
+
+Due diligence is not a uniform process. What an investor examines depends heavily on what stage you are at, because the risk profile of the investment is fundamentally different.
+
+At seed, investors are largely betting on team, market, and early signal. The scrutiny focuses on founder background and why this particular team is uniquely equipped to solve this problem, market size and whether the opportunity can support a venture-scale outcome, and early traction signals — not necessarily revenue, but evidence that the product has found real users who care. 
+Seed investors want to see a working product (not prototype), early traction in the range of $5,000–$50,000 MRR for SaaS or 50–500 users for consumer, retention signals, founder-market fit, and a plausible path to Series A metrics.
+
+At Series A, the bar shifts materially. 
+Key investor evaluation metrics in 2026 include ARR growth rate (30–100%+ for early stage), net revenue retention above 100%, gross margin above 65% for SaaS, burn multiple below 1.5x, CAC payback period under 18 months, and team quality.
+ Beyond the headline metrics, Series A investors conduct reference calls with existing investors, customers, and often former employees — sources who can speak to whether the founder operates with integrity and whether the team executes under pressure. 
+Most Series A investors require $1–3 million ARR with strong growth (150%+ year-over-year) and a clear path to $10 million ARR within 18–24 months.
+
+The practical preparation for due diligence is the same at both stages: build your data room before you start fundraising, not after a term sheet arrives. 
+Diligence typically involves a full data room review, customer reference calls, expert interviews, and sometimes third-party financial or technical audits. The process can take 4–8 weeks for priced rounds.
+ Every week saved in due diligence is a week gained on your runway.
 
 ---
 

@@ -4,11 +4,10 @@ h1: "Investor Update Template for Seed and Series A"
 description: "A proven investor update template for seed and Series A founders: what to include, how often to send it, and how to use updates to warm your next raise."
 slug: investor-update-template
 date: "2026-09-28"
-updatedDate: "2026-10-12"
+updatedDate: "2026-10-25"
 author: dori-fussmann
-category: investor crm
-pillarKeyword: investor crm
-supportingKeyword: investor update template
+category: investor update template
+pillarKeyword: investor update template
 articleType: comprehensive
 targetKeyword: investor update template
 tags:
@@ -21,15 +20,14 @@ image: ../../assets/articles/investor-update-template.png
 imageAlt: Founder at a laptop writing a structured monthly investor update email with a clean metrics dashboard visible on screen
 keywords:
   - investor update template
-  - investor crm
 draft: false
 internalLinks:
   - slug: investor-crm
-    anchor: investor crm
-  - slug: shareholder-update
-    anchor: shareholder update
-  - slug: startup-investor-update-presentation
-    anchor: startup investor update presentation
+    anchor: "Running your raise in an investor CRM"
+  - slug: how-to-find-investors
+    anchor: "How to find the right investors"
+  - slug: seed-vs-series-a
+    anchor: "Seed vs. Series A"
 
 externalLinks: []
 faqs:
@@ -43,9 +41,9 @@ faqs:
     answer: "Start before you close if possible, but definitely within the first month after closing. The sooner you establish the cadence, the easier it is to maintain — and the longer your track record of consistent communication when your next raise opens. Founders who start updates immediately after a seed close arrive at their Series A with 12–18 months of documented progress that prospective investors can review. That history is a fundraising asset that cannot be recreated in a hurry."
   - question: "Should I use a dedicated platform or just send plain email?"
     answer: "Plain email is enough for most seed-stage founders. Every investor reads it, replies come straight back, and BCC keeps the thread from turning into reply-all. A purpose-built tool is worth it when you want open and click data, or when the update list lives in the same system as your fundraising pipeline. Do not let the tool choice delay the first send."
+  - question: "Do I legally have to send a shareholder update?"
+    answer: "It depends on what your shareholders' agreement says. Many early-stage agreements include an 'Information Rights' or 'Right of Information' clause that obliges you to provide periodic financial statements — often quarterly or annually — to investors above a certain ownership threshold. If your agreement includes such a clause, those obligations are legally binding. If it doesn't, there is no statutory requirement for most private US companies to send periodic narrative updates. That said, not communicating with your shareholders is almost always a mistake regardless of legal obligation — trust erodes fast in silence."
 ---
-
-## The Investor Update Template for Seed and Series A Founders
 
 Most founders underestimate what a monthly investor update actually does. On the surface, it looks like an obligation — a courtesy email to the people who gave you money, confirming you're still alive and building. In practice, it is one of the most powerful compounding habits a founder can develop: it builds trust with current backers, activates their networks on your behalf, and systematically warms prospective investors for your next round. The template is almost secondary to the discipline. Get the cadence right, get the five core sections right, and the update does real fundraising work every month — long before you formally go out to raise.
 
@@ -164,7 +162,7 @@ Major events — a round closed, a key hire, a churned customer that matters —
 
 An investor update program only delivers its full value when it sits inside a broader investor relationship management system — a structured way of tracking who is on your list, when you last communicated with each person, and what stage each prospective investor is at in your pipeline.
 
-Think of your investor CRM in three tiers: existing backers who receive every monthly update automatically; warm prospectives who are on your update list and periodically receive a note tailored to where you are in the fundraising cycle; and cold targets who are being researched and qualified before any outreach begins. The investor update is the tool that moves people from the second tier to active interest — it is the relationship infrastructure that runs between raises, not just during them.
+Think of your [investor CRM](/articles/investor-crm/) in three tiers: existing backers who receive every monthly update automatically; warm prospectives who are on your update list and periodically receive a note tailored to where you are in the fundraising cycle; and cold targets who are being researched and qualified before any outreach begins. The investor update is the tool that moves people from the second tier to active interest — it is the relationship infrastructure that runs between raises, not just during them.
 
 Tracking who opens and engages with your updates adds another layer of signal. 
 The right investor update approach makes updates faster to produce, more consistent in structure, and trackable — you can see who opened, who clicked, and who ignored it before you pick up the phone.
@@ -179,6 +177,20 @@ Set a recurring calendar block on the first Wednesday of every month, two hours,
 Write the ask first, before you fill in anything else. This forces clarity about what you actually need this month, and it prevents the ask from being an afterthought that gets softened at the end of an already-long email. One specific ask per update. No exceptions.
 
 For founders who want their investor relationships managed with the same discipline as their product roadmap, working with an experienced outreach partner can be the difference between a fragmented, reactive fundraising process and a structured pipeline that stays warm between raises. Rupert's expert-run outreach service — where every investor on your list is researched, every conversation is personalized, and every relationship remains yours — is built precisely for this stage of the founder journey: after you've found product-market fit, before you've built the fundraising infrastructure that a serious Series A requires. The investor update template is the foundation. The investor relationship infrastructure around it is what turns that template into a raise.
+
+## Investor Updates vs. Shareholder Updates: When They Diverge
+
+The moment a tiered reporting approach becomes genuinely necessary is typically a Series A close — or, more precisely, the moment institutional investors, board observers, and equity management platforms enter the picture together.
+
+After a Series A, your cap table will likely include an institutional lead with formal information rights that specify exactly what they receive and when. You may have board observers who attend meetings and receive board-level communications. You'll have angels from earlier rounds who are still on the cap table but have no board role and don't need — or want — the same depth of information as your lead. And you'll probably be using an equity management platform that tracks all of it. At that point, running a single undifferentiated monthly email to everyone is both insufficient (for the institutional investor's contractual rights) and excessive (for the quiet angel who just wants to know the company is alive and growing).
+
+Segment your audience and use tools to customize communication based on engagement level.
+ In practice, this means: a fuller quarterly shareholder update — board-approved language, structured financials, complete disclosure — goes to all equity holders. A more frequent, conversational monthly email goes to your active supporters, board members, advisors, and warm prospects. These two tracks serve the same underlying goal — transparency with your stakeholders — but they are calibrated for different audiences.
+
+Companies that move from "periodic" to "always-on" communication, engaging investors throughout the year rather than just at key moments, build a structural advantage in trust.
+ The seed-to-Series-A transition is exactly when this discipline needs to become intentional rather than improvised.
+
+---
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
@@ -198,7 +210,3 @@ the median time between funding rounds has stretched to 744 days as of Q4 2024, 
 - Cadence consistency matters more than polish: send on the same date every month, keep the format under 500 words in plain text, and never skip an update because the month was hard — silence trains investors to assume the worst.
 - Investor updates serve two distinct functions simultaneously: maintaining trust and accountability with existing backers, and systematically warming prospective investors for your next raise when they are added to your update list months before you formally go out.
 - The investor update template is not a standalone tool — it works best as part of a structured investor CRM that tracks communication history, engagement signals, and pipeline stage for every current and prospective investor on your list.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [investor crm](/articles/investor-crm/) · [shareholder update](/articles/shareholder-update/) · [startup investor update presentation](/articles/startup-investor-update-presentation/)
-<!-- CMS-INTERNAL:END -->

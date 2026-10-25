@@ -4,7 +4,7 @@ description: A side-by-side breakdown of equity rounds, SAFEs, convertible notes
 slug: types-of-funding-for-startups
 date: 2026-08-18
 author: dori-fussmann
-category: startup funding
+category: startup funding stages
 tags:
   - startup funding
   - types of funding for startups
@@ -18,15 +18,14 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: startup funding
-supportingKeyword: startup funding stages
+pillarKeyword: startup funding stages
+supportingKeyword: types of funding for startups
 articleType: comparison
 targetKeyword: types of funding for startups
 updatedDate: 2026-09-18
 keywords:
   - types of funding for startups
   - startup funding stages
-  - startup funding
 faqs:
   - question: What is the difference between a SAFE and a convertible note?
     answer: "Both SAFEs and convertible notes let you raise money without setting a valuation upfront, but they differ in one critical way: a convertible note is a debt instrument that accrues interest (typically 4–8% annually) and has a maturity date, usually 12–24 months, by which it must convert or be repaid. A SAFE carries no interest and no maturity date. If the company never raises a priced round, a SAFE holder has no legal claim to repayment, whereas a convertible noteholder does. In practice, SAFEs are simpler, faster, and cheaper to execute — legal costs can run close to zero using Y Combinator's standard templates — making them the dominant choice at pre-seed today."
@@ -37,16 +36,12 @@ faqs:
   - question: Is bootstrapping still a realistic path in 2026?
     answer: "Yes, particularly for B2B SaaS, niche software, and service-backed tech companies with clear customer demand and early revenue potential. Cheaper tooling, AI-assisted development, and remote teams have meaningfully reduced the capital required to reach an initial product and first customers. Bootstrapping also has a strategic fundraising benefit: investors view a founder who built real traction without external capital as lower-risk, which can translate into better terms if and when you do choose to raise. The trade-off is speed — in winner-take-all markets requiring rapid scaling, bootstrapping is rarely viable."
 internalLinks:
-  - slug: startup-funding
-    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
-  - slug: early-stage-venture-capital
-    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
-  - slug: startup-funding-rounds-faq
-    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
   - slug: startup-funding-stages
-    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
-  - slug: startup-funding-stages-explained
-    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+    anchor: "Startup funding stages, pre-seed to Series C"
+  - slug: startup-funding
+    anchor: "How startup funding works"
+  - slug: pre-seed-funding
+    anchor: "Pre-seed funding: the complete guide"
 
 externalLinks:
   - label: "6 Types of Funding for Startups: Definitive Guide"
