@@ -75,7 +75,7 @@ externalLinks:
 ## What Startup Funding Stages Actually Are — and Why They Matter
 
 Startup funding does not arrive as one continuous stream. It moves in discrete rounds — each named, each sized, and each tied to a specific level of company maturity. That structure is not arbitrary. 
-Startup funding stages are discrete rounds of investment that correspond to specific moments in a company's growth, and they exist because investor risk tolerance changes as a startup matures.
+Startup funding stages are discrete rounds of investment that correspond to specific moments in a company's growth, and they exist because investor risk tolerance changes as a startup matures. For the bigger picture of how raising capital works, see [how startup funding works](/articles/startup-funding/).
 
 At the earliest stage, there is almost nothing to evaluate except the founder and the idea. By Series C, investors are underwriting a proven business with millions in revenue and a clear path to dominance.
 
@@ -93,7 +93,7 @@ This guide moves through each stage in turn — what it is, who invests, how muc
 
 Pre-seed is the first outside money your company receives. At this point, a startup is often little more than an idea, a problem hypothesis, or an early prototype. 
 At this point, a startup is often little more than an idea, a prototype, or an early MVP, and the founding team is usually just one to three people, with zero revenue.
- The [pre-seed round](/articles/pre-seed-funding/) exists to convert that early stage into something testable — an MVP that allows you to generate the initial signals seed investors will later require.
+ The [pre-seed round](/articles/pre-seed-funding/) exists to convert that early stage into something testable — an MVP that allows you to generate the initial signals seed investors will later require. The instrument matters as much as the amount; [types of startup funding](/articles/types-of-funding-for-startups/) compares SAFEs, priced equity and debt.
 
 ### Who Invests
 
@@ -154,7 +154,7 @@ Expect to give up 15–20% at seed. That dilution, combined with pre-seed, means
 
 ### What It Is
 
-Series A represents the first major growth round after seed funding. At this stage, companies have validated their product and initial business model and now need capital to scale operations, expand their team, and prove they can grow efficiently. Series A capital is often used to formalise a go-to-market engine, expand engineering and operations, and build the infrastructure required for larger customers.
+Series A represents the first major growth round after seed funding. At this stage, companies have validated their product and initial business model and now need capital to scale operations, expand their team, and prove they can grow efficiently. Series A capital is often used to formalise a go-to-market engine, expand engineering and operations, and build the infrastructure required for larger customers. For the full process, from readiness to term sheet, see [raising a Series A](/articles/series-a/).
 
 The critical distinction from seed is this: seed proves your product solves a problem; Series A proves you can build a machine that acquires and retains customers repeatedly and at scale. Investors are no longer evaluating whether your solution works — they are underwriting the scalability of the entire business model.
 
@@ -262,7 +262,7 @@ Once a founder understands their stage clearly, the next problem is almost alway
 According to research by Techstars, it typically takes 100 to 200 investor conversations to close a solid pre-seed or seed round.
  Most of those conversations can be de-risked by doing the research upfront — understanding which investors have recently written checks at your stage, in your sector, and at your traction level. The founders who compress their fundraising timelines are almost always the ones who start with a tight, well-researched target list rather than a mass-market approach.
 
-This is the work Rupert was built to do. Rather than handing founders a database and leaving them to build outreach infrastructure from scratch, Rupert's experienced operators research the investor universe on a founder's behalf — identifying which funds are actively deploying at the right stage, mapping portfolio overlaps and competitive conflicts, and building personalised outreach for each contact. Every conversation that results is one the founder can have with full context already in place, rather than cold-starting from a generic email.
+This is the work [Rupert](/how-it-works/) was built to do. Rather than handing founders a database and leaving them to build outreach infrastructure from scratch, Rupert's experienced operators research the investor universe on a founder's behalf — identifying which funds are actively deploying at the right stage, mapping portfolio overlaps and competitive conflicts, and building personalised outreach for each contact. Every conversation that results is one the founder can have with full context already in place, rather than cold-starting from a generic email.
 
 The appeal for founders who are focused on hitting their milestones is straightforward: the research, personalisation, and pipeline management that drives a disciplined fundraising process gets handled by people who have run these processes before, while the founder retains complete visibility into every outreach sent and every investor relationship built. Nothing is a black box. Every contact, every reply, and every resulting conversation belongs to the founder — not the service.
 

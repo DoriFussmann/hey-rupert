@@ -93,7 +93,7 @@ Investors spend under four minutes per deck on average. That figure should refra
 ## The Essential Slides — And Why the Order Matters
 
 Most effective pitch decks contain between 10 and 15 slides, typically covering the problem, solution, market opportunity, product, business model, traction, competition, and team.
- These are the categories investors expect to see addressed. But the order and relative emphasis are not fixed, they are decisions that communicate your confidence about where your story is strongest.
+ These are the categories investors expect to see addressed. But the order and relative emphasis are not fixed, they are decisions that communicate your confidence about where your story is strongest. To work through each slide in order, use this [pitch deck template, slide by slide](/articles/startup-pitch-deck-template/), or compare the [Sequoia, YC and Kawasaki formats](/articles/sequoia-pitch-deck-template/) if you are still choosing a structure.
 
 The conventional sequence, cover, problem, solution, market, business model, traction, team, competition, financials, ask, is conventional for a reason. 
 The best-performing decks tend to follow the same underlying logic: start with the problem, explain the solution, show the market, prove traction, and end with a credible raise.
@@ -131,7 +131,7 @@ The structural implication is concrete: a [seed deck](/articles/seed-pitch-deck/
 
 ## Traction: The Slide That Does the Most Work
 
-Traction is worth treating as its own section because it is the one variable that can compensate for weakness almost anywhere else in the deck. A mediocre market sizing slide becomes less concerning when revenue is growing 20% month-over-month. A team that lacks a famous logo on its bios becomes more credible when pilot customers are renewing at 110%.
+Traction is worth treating as its own section because it is the one variable that can compensate for weakness almost anywhere else in the deck. A mediocre market sizing slide becomes less concerning when revenue is growing 20% month-over-month. A team that lacks a famous logo on its bios becomes more credible when pilot customers are renewing at 110%. For real decks and what made them work, see these [pitch deck examples](/articles/seed-pitch-deck-examples/).
 
 At seed, investors expect measurable traction: revenue growth, customer acquisition cost, lifetime value, and churn rates.
  But even before those metrics exist, signal matters. 
@@ -171,7 +171,7 @@ The strategic thinking that makes a deck compelling (the insight, the narrative 
 
 ## The Deck Is Not the Fundraise
 
-This is the point where many otherwise strong founders lose rounds they should have won. They build a good deck. They send it. They wait.
+This is the point where many otherwise strong founders lose rounds they should have won. They build a good deck. They send it. They wait. Once the deck is ready, [Rupert](/how-it-works/) can run the investor research and outreach around it.
 
 The deck is the beginning of the process, not the process itself. What happens after the deck lands — how quickly you follow up, how you manage the pipeline, how you personalize outreach to each investor's specific thesis and portfolio context — is what determines whether a strong deck converts to a term sheet or sits in an inbox accruing silence.
 

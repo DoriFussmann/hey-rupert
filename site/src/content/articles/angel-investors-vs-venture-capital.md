@@ -67,7 +67,7 @@ externalLinks:
     url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
     addedAt: 2026-10-25
 ---
-Both investor types write equity checks into early-stage startups. Both want outsized returns. From the outside, that can make angels and venture capitalists look like variations of the same thing — one with smaller checks, one with bigger. That framing is wrong, and it costs founders months. The decision between angel capital and venture capital is really a decision about whose money you're taking, how that person makes decisions, what they'll expect from you in return, and whether your company is at the right stage to receive either. Getting this right before you start outreach is one of the most important calls you'll make in a raise.
+Both investor types write equity checks into early-stage startups. Both want outsized returns. From the outside, that can make angels and venture capitalists look like variations of the same thing — one with smaller checks, one with bigger. That framing is wrong, and it costs founders months. The decision between angel capital and venture capital is really a decision about whose money you're taking, how that person makes decisions, what they'll expect from you in return, and whether your company is at the right stage to receive either. Getting this right before you start outreach is one of the most important calls you'll make in a raise. Choosing between them is one of the first decisions when you [find investors](/articles/how-to-find-investors/) for your round.
 
 ## The Fundamental Difference: Whose Money Is It?
 
@@ -180,8 +180,7 @@ Multistage investors with unlimited follow-on capital have increasingly invested
 
 This matters to founders because it changes the competitive dynamics of seed rounds. 
 Early-stage funds split into three patterns: pre-seed/seed specialists writing $250K–$2M; multi-stage Series A leads at $2M–$15M; and corporate-VC participation at $1M–$5M follow-on.
- A multi-stage firm writing a $3M seed check is not doing it out of charity — they are buying the right to lead the Series A. That creates a specific relationship dynamic: if you take their seed check, their Series A is effectively your path of least resistance. That can be powerful if the partnership is right, and constraining if it isn't.
-
+ A multi-stage firm writing a $3M seed check is not doing it out of charity — they are buying the right to lead the Series A. That creates a specific relationship dynamic: if you take their seed check, their Series A is effectively your path of least resistance. That can be powerful if the partnership is right, and constraining if it isn't. Making that call before outreach begins is part of the investor targeting [Rupert](/how-it-works/) does with founders.
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
 Venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), but most of it went to a handful of very large AI rounds. For early-stage founders, that concentration keeps angels and small seed funds as the realistic first check, while larger VCs reserve conviction for companies with clear traction. [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median seed round at $4.1M, a size that usually needs a lead fund behind the angels.

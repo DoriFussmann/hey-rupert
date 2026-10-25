@@ -67,8 +67,8 @@ supportingKeyword: series a
 ## What Series A Actually Is — and Why It Matters
 
 Series A is a startup's first major priced equity round. 
-A Series A in 2026 is typically $8M to $15M raised at a $30M to $60M post-money valuation, led by an institutional VC who takes a board seat.
- That sentence is deceptively simple. What it conceals is a structural shift in how a company is governed, financed, and evaluated — a shift that affects every round that follows.
+A Series A in 2026 is typically a $10M–$15M round led by an institutional VC who takes a board seat; [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median at $14.4M.
+ That sentence is deceptively simple. What it conceals is a structural shift in how a company is governed, financed, and evaluated — a shift that affects every round that follows. It is the point in the [startup funding stages](/articles/startup-funding-stages/) where investors stop betting on potential and start paying for proof.
 
 Most founders treat Series A as a bigger version of their seed raise. It is not. 
 At seed, your pitch is a story about a vision, a team, and a market opportunity. At Series A, your pitch is a story about a business that works and a plan to make it bigger.
@@ -230,7 +230,7 @@ Series A is the highest-stakes fundraising process most founders will run. The c
 
 The practical answer is not to outsource the relationship — every investor interaction, every follow-up, every term sheet conversation belongs to the founder. The answer is to structure the work. Researching the right 40–60 funds, personalizing outreach at scale, maintaining a disciplined pipeline, and tracking where each conversation stands in the process are all tasks that benefit from operational rigor. When that infrastructure is in place and managed by people who have run these processes before, the active raise becomes what it should be: a period of focused investor engagement, not an administrative grind.
 
-Getting the investor targeting, outreach sequencing, and pipeline management right determines whether a raise closes in four months or stretches to nine. Rupert provides the experienced operators and complete transparency to run that process without pulling the founder off the product — every conversation, every contact, every investor relationship stays with the founder throughout. In a market where fewer than one in five seed-funded companies reaches Series A, the execution of the fundraising process itself is a competitive advantage.
+Getting the investor targeting, outreach sequencing, and pipeline management right determines whether a raise closes in four months or stretches to nine. [Rupert](/how-it-works/) provides the experienced operators and complete transparency to run that process without pulling the founder off the product — every conversation, every contact, every investor relationship stays with the founder throughout. In a market where fewer than one in five seed-funded companies reaches Series A, the execution of the fundraising process itself is a competitive advantage.
 
 ---
 

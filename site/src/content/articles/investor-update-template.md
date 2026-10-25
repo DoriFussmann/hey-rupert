@@ -6,8 +6,8 @@ slug: investor-update-template
 date: "2026-09-28"
 updatedDate: "2026-10-25"
 author: dori-fussmann
-category: investor update template
-pillarKeyword: investor update template
+category: investor outreach
+pillarKeyword: investor outreach
 articleType: comprehensive
 targetKeyword: investor update template
 tags:
@@ -20,14 +20,15 @@ image: ../../assets/articles/investor-update-template.png
 imageAlt: Founder at a laptop writing a structured monthly investor update email with a clean metrics dashboard visible on screen
 keywords:
   - investor update template
+  - investor outreach
 draft: false
 internalLinks:
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: "Warm intros vs. cold outreach to investors"
   - slug: investor-crm
     anchor: "Running your raise in an investor CRM"
   - slug: how-to-find-investors
     anchor: "How to find the right investors"
-  - slug: seed-vs-series-a
-    anchor: "Seed vs. Series A"
 
 externalLinks:
   - label: "Visible: Investor Reporting for Startups"
@@ -46,9 +47,10 @@ faqs:
     answer: "Plain email is enough for most seed-stage founders. Every investor reads it, replies come straight back, and BCC keeps the thread from turning into reply-all. A purpose-built tool is worth it when you want open and click data, or when the update list lives in the same system as your fundraising pipeline. Do not let the tool choice delay the first send."
   - question: "Do I legally have to send a shareholder update?"
     answer: "It depends on what your shareholders' agreement says. Many early-stage agreements include an 'Information Rights' or 'Right of Information' clause that obliges you to provide periodic financial statements — often quarterly or annually — to investors above a certain ownership threshold. If your agreement includes such a clause, those obligations are legally binding. If it doesn't, there is no statutory requirement for most private US companies to send periodic narrative updates. That said, not communicating with your shareholders is almost always a mistake regardless of legal obligation — trust erodes fast in silence."
+supportingKeyword: investor update template
 ---
 
-Most founders underestimate what a monthly investor update actually does. On the surface, it looks like an obligation — a courtesy email to the people who gave you money, confirming you're still alive and building. In practice, it is one of the most powerful compounding habits a founder can develop: it builds trust with current backers, activates their networks on your behalf, and systematically warms prospective investors for your next round. The template is almost secondary to the discipline. Get the cadence right, get the five core sections right, and the update does real fundraising work every month — long before you formally go out to raise.
+Most founders underestimate what a monthly investor update actually does. On the surface, it looks like an obligation — a courtesy email to the people who gave you money, confirming you're still alive and building. In practice, it is one of the most powerful compounding habits a founder can develop: it builds trust with current backers, activates their networks on your behalf, and systematically warms prospective investors for your next round. The template is almost secondary to the discipline. Get the cadence right, get the five core sections right, and the update does real fundraising work every month — long before you formally go out to raise. Updates are also an outreach tool: they keep investors who passed warm, which makes them part of [warm and cold investor outreach](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/).
 
 ## What an Investor Update Actually Is (and Isn't)
 
@@ -178,7 +180,7 @@ Set a recurring calendar block on the first Wednesday of every month, two hours,
 
 Write the ask first, before you fill in anything else. This forces clarity about what you actually need this month, and it prevents the ask from being an afterthought that gets softened at the end of an already-long email. One specific ask per update. No exceptions.
 
-For founders who want their investor relationships managed with the same discipline as their product roadmap, working with an experienced outreach partner can be the difference between a fragmented, reactive fundraising process and a structured pipeline that stays warm between raises. Rupert's expert-run outreach service — where every investor on your list is researched, every conversation is personalized, and every relationship remains yours — is built precisely for this stage of the founder journey: after you've found product-market fit, before you've built the fundraising infrastructure that a serious Series A requires. The investor update template is the foundation. The investor relationship infrastructure around it is what turns that template into a raise.
+For founders who want their investor relationships managed with the same discipline as their product roadmap, working with an experienced outreach partner can be the difference between a fragmented, reactive fundraising process and a structured pipeline that stays warm between raises. [Rupert](/how-it-works/)'s expert-run outreach service — where every investor on your list is researched, every conversation is personalized, and every relationship remains yours — is built precisely for this stage of the founder journey: after you've found product-market fit, before you've built the fundraising infrastructure that a serious Series A requires. The investor update template is the foundation. The investor relationship infrastructure around it is what turns that template into a raise.
 
 ## Investor Updates vs. Shareholder Updates: When They Diverge
 
