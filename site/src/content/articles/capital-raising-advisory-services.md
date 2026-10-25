@@ -30,7 +30,10 @@ internalLinks:
   - slug: capital-raising-fees
     anchor: "What capital raising actually costs"
 
-externalLinks: []
+externalLinks:
+  - label: "SEC: Guide to Broker-Dealer Registration"
+    url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
+    addedAt: 2026-10-25
 faqs:
   - question: "Can a capital raising advisory service legally receive a success fee?"
     answer: "This depends heavily on the structure. Under U.S. securities law, receiving transaction-based compensation tied directly to the closing of a securities offering triggers broker-dealer registration requirements. Advisory services that operate on flat retainers or project fees avoid this regulatory exposure. If any success fee is contemplated, the engagement should be reviewed by legal counsel to ensure it does not cross into unlicensed broker-dealer activity — which can create rescission rights for investors and complications in future due diligence."

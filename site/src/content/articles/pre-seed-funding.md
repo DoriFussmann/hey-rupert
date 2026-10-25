@@ -32,7 +32,10 @@ internalLinks:
   - slug: seed-pitch-deck
     anchor: "Building a seed pitch deck"
 
-externalLinks: []
+externalLinks:
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
 faqs:
   - question: "How much should I raise in a pre-seed round?"
     answer: "Size your raise around milestone math, not peer comparison. Multiply your projected monthly burn by the number of months you need to reach the proof point that makes you fundable at seed — typically 12 to 18 months — then add a 15 to 25 percent contingency buffer. In 2026, most pre-seed rounds fall between $500K and $2M, with the median instrument size on Carta reaching a record $276,000 in Q2 2026 and full rounds often stacking several instruments together."

@@ -44,21 +44,27 @@ internalLinks:
     anchor: "Pitch deck template, slide by slide"
 
 externalLinks:
-  - label: The Ultimate Pitch Deck Guide for Startup Founders
-    url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders
+  - label: "The Ultimate Pitch Deck Guide for Startup Founders"
+    url: "https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders"
     addedAt: 2026-08-13
-  - label: A Simple Template for Your Seed Funding Pitch Deck
-    url: https://underscore.vc/resources/how-to-pitch-to-investors/
+  - label: "A Simple Template for Your Seed Funding Pitch Deck"
+    url: "https://underscore.vc/resources/how-to-pitch-to-investors/"
     addedAt: 2026-08-13
-  - label: 20+ Free Pitch Deck Templates [Fully-Customizable]
-    url: https://pitch.com/templates/collections/Pitch-deck
+  - label: "20+ Free Pitch Deck Templates [Fully-Customizable]"
+    url: "https://pitch.com/templates/collections/Pitch-deck"
     addedAt: 2026-08-13
-  - label: How to build your seed round pitch deck
-    url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
+  - label: "How to build your seed round pitch deck"
+    url: "https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck"
     addedAt: 2026-08-13
-  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
-    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+  - label: "The Ultimate Guide to Creating Your Pre-Seed Pitch Deck"
+    url: "https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck"
     addedAt: 2026-08-13
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
 ---
 Most [pitch deck](/articles/pitch-deck/) advice starts from a [template](/articles/startup-pitch-deck-template/). This article starts from evidence. The decks below are real (they raised real money from real investors) and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
 

@@ -30,7 +30,16 @@ internalLinks:
   - slug: seed-vs-series-a
     anchor: "Seed vs. Series A"
 
-externalLinks: []
+externalLinks:
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: Founder Ownership Report 2026"
+    url: "https://carta.com/data/founder-ownership-2026/"
+    addedAt: 2026-10-25
 faqs:
   - question: "What is the main difference between pre-seed and seed funding?"
     answer: "Pre-seed is fundamentally a bet on the founding team and vision. Investors are backing conviction and insight before a product is fully built or users are acquired. Seed funding shifts the burden of proof: investors at this stage expect a working product, early user or revenue signal, and a credible path toward repeatable growth. The difference is not just semantics — it shapes which investors you can approach, what terms you'll receive, and how much dilution you'll take."
@@ -63,12 +72,12 @@ The financial gap between the two stages is significant and has become more legi
 
 Most pre-seed rounds are structured on post-money SAFEs, with valuation caps around $10M for $250K–$1M raises.
  The instrument itself — nearly always a SAFE rather than a priced equity round — reflects the light-touch nature of this stage. 
-Simple Agreements for Future Equity are the most popular pre-seed funding round structure by far, accounting for 92% of all pre-priced rounds in Q3 2025 according to Carta data.
+Simple Agreements for Future Equity are the most popular pre-seed funding round structure by far, used in the large majority of pre-seed rounds on Carta.
 
 At seed, the numbers step up materially. 
 The median seed pre-money valuation hit $16M in Q3 2025, up 18% from 2024, with a median cash raise of around $4M. The median seed post-money valuation reached an all-time high of about $24 million.
 
-AI and deep tech startups often command higher valuations at both stages due to investor demand, with AI-focused seed rounds closing at a 20% to 30% premium over the median across all sectors according to PitchBook's Q4 2025 data.
+AI and deep tech startups often command higher valuations at both stages due to investor demand.
 
 One important nuance: 
 seed is no longer one thing. A $2M seed and an $8M seed are different rounds with different expectations, even though they share a name.
@@ -93,7 +102,7 @@ The financial and structural differences between the two stages go beyond check 
  Due diligence at this stage is relatively light: investors are evaluating the team's background, the founder-market fit narrative, the quality of the insight, and whether the market is large enough to justify the bet. The process can move in weeks.
 
 At seed, both the economics and the process become more formal. 
-Seed dilution runs approximately 20% — with the median on Carta at 19.5%, representing a $4M raise at a $16M pre-money valuation — and founders typically face an option pool top-up of 10–15%, which further reduces their ownership.
+Seed dilution runs approximately 20% — with Carta's July 2026 benchmark putting median seed dilution at 18% on a $4.1M raise — and founders typically face an option pool top-up of 10–15%, which further reduces their ownership.
  Seed investors conduct more structured diligence: they validate customer claims, probe the product roadmap, review financials with more scrutiny, and may negotiate board seats or observer rights as part of the deal. 
 The timeline to close a seed round is typically 8–16 weeks, roughly double a pre-seed process.
 

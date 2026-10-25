@@ -30,7 +30,13 @@ internalLinks:
   - slug: capital-raising-advisory-services
     anchor: "Advisors vs. broker-dealers for capital raising"
 
-externalLinks: []
+externalLinks:
+  - label: "Axial: 2026 M&A Fee Guide"
+    url: "https://www.axial.net/forum/ma-fee-guide-2025-2026/"
+    addedAt: 2026-10-25
+  - label: "SEC: Guide to Broker-Dealer Registration"
+    url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
+    addedAt: 2026-10-25
 faqs:
   - question: "Can I negotiate the success fee percentage with a capital raising advisor?"
     answer: "Yes. Success fee percentages, retainer amounts, retainer credits, tail period length, and carve-out lists are all negotiable in most engagement letters. The goal is not simply to drive the percentage as low as possible — a misaligned fee structure that pays the advisor for activity rather than outcomes is worse than a slightly higher percentage on a well-structured deal. Focus on whether retainer payments credit against the success fee at close, how long the tail runs, and which investors are explicitly excluded."
@@ -61,7 +67,7 @@ The success fee on a $500K round is mechanically ten times smaller than on a $5M
 For Series A, 4% to 6% is the most common success fee range.
  Below that band, you are likely dealing with a lightweight service or an advisor who has accepted a below-market fee because they believe the deal is straightforward. Above 6% on a venture round warrants genuine scrutiny — not because the number is impossible to justify, but because it shifts a meaningful share of your raise into fee expense at exactly the moment your capital should be going toward growth.
 
-According to the Axial 2026 M&A Fee Guide, which surveys advisors across the middle market, the most common success fee range for $10M deals is 4% to 6%, compressing to 1% to 2% for deals above $100M, reflecting that success fee percentages typically compress as raise size increases.
+According to the [Axial 2026 M&A Fee Guide](https://www.axial.net/forum/ma-fee-guide-2025-2026/), which surveys advisors across the middle market, success fees fall as a percentage as deal size rises, reflecting that success fee percentages typically compress as raise size increases.
  The compression makes sense on both sides: at larger deal sizes, even a low percentage produces meaningful absolute compensation for the advisor, so there is no need to charge a higher rate to make the engagement economically viable.
 
 One structural variant worth understanding is the Lehman and Double Lehman formula — tiered fee schedules that charge a higher percentage on the first million raised and step down as the total increases. 

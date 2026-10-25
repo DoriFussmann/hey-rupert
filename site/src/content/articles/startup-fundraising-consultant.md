@@ -30,7 +30,10 @@ internalLinks:
   - slug: capital-raising-advisory-services
     anchor: "Advisors vs. broker-dealers for capital raising"
 
-externalLinks: []
+externalLinks:
+  - label: "SEC: Guide to Broker-Dealer Registration"
+    url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
+    addedAt: 2026-10-25
 faqs:
   - question: "What is a startup fundraising consultant and what do they actually do?"
     answer: "A startup fundraising consultant helps founders execute the capital-raising process — typically covering investor research and targeting, outreach and follow-up management, and pipeline tracking. Some consultants also offer pitch deck refinement or financial modeling, but those are distinct services. The best engagements are scoped tightly around what you actually need, so you're not paying for work that doesn't move your round forward."

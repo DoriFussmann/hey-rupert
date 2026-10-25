@@ -29,7 +29,10 @@ internalLinks:
   - slug: seed-vs-series-a
     anchor: "Seed vs. Series A"
 
-externalLinks: []
+externalLinks:
+  - label: "Visible: Investor Reporting for Startups"
+    url: "https://visible.vc/blog/ultimate-report-part-2/"
+    addedAt: 2026-10-25
 faqs:
   - question: "Should I send investor updates to prospective investors who haven't funded me yet?"
     answer: "Yes — with their permission. Adding a short list of 5–10 target investors to a slightly adapted version of your update is one of the highest-leverage pre-raise tactics available. Prospective investors who receive several months of updates before you formally launch a round already understand your trajectory, your decision-making, and your metrics. When you ask for a meeting, you're not a cold pitch — you're a founder they've been watching. The key is to get their opt-in first, keep the content essentially identical to your backer update, and make sure the ask section is relevant to them (e.g., 'Happy to share our Series A materials when we go out in Q1')."
@@ -58,7 +61,7 @@ Sending updates only when things are good trains investors to interpret silence 
  The update is a structured, predictable cadence, not a communications mood ring.
 
 The payoff is concrete and well-documented. 
-Founders who send consistent updates are twice as likely to raise follow-on funding, according to Visible's 2026 data.
+Founders who send consistent updates are twice as likely to raise follow-on funding, according to [Visible's data](https://visible.vc/blog/ultimate-report-part-2/).
 
 Companies maintaining monthly investor updates see a 40% higher chance of securing follow-on funding, according to a 2025 efficiency study.
  These are not small margins. They reflect the compounding nature of investor trust: every update you send is a data point that makes the next conversation easier, the next ask warmer, and the next round faster to close.
@@ -96,7 +99,7 @@ A brief note on any hires, departures, or organizational changes. This section c
 ### 5. The Ask
 
 This is the most commonly skipped section and, by a significant margin, the most valuable one. 
-The ask is the part most founders leave out — in Visible's breakdown, 81% of updates include highlights but only 39% include a fundraising or ask section.
+The ask is the part most founders leave out.
  An update with no ask squanders the channel. You have a warm audience of people who are literally financially motivated to help you succeed. Use it.
 
 The ask must be specific and named: a warm introduction to a particular type of investor or customer, a specific hire you're looking for by function and seniority, or a piece of expertise you need in the next thirty days. Vague asks ("any intros would be appreciated") generate vague responses. Specific asks generate actual help. 

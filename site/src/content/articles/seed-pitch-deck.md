@@ -58,6 +58,9 @@ externalLinks:
   - label: "How to craft a winning pitch deck"
     url: "https://mercury.com/blog/ultimate-pitch-guide-crafting-pitch-deck"
     addedAt: 2026-08-13
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
 ---
 Your seed [pitch deck](/articles/pitch-deck/) is not a company overview. It is not a business plan in slide form. It is a structured argument designed to do exactly one thing: get a meeting with the right investor. Every word, every metric, every slide order should be optimized for that outcome — and nothing else.
 
@@ -93,7 +96,7 @@ VCs spend an average of three minutes and forty-four seconds reviewing seed pitc
 The situation is more acute than that aggregate suggests. 
 Only fifty-eight percent of pitch decks are viewed to completion. This means nearly half of founders lose investor attention before reaching their final slides. The implication is clear — every slide must earn the right to the next slide's attention.
 
-According to a review of DocSend reports, investor review time has fallen twenty-four percent since 2021. More AI-generated decks, more inbound volume, and less patience for founders who bury their best signal in slide eleven.
+Investors spend only a few minutes on a first read of a deck. More AI-generated decks, more inbound volume, and less patience for founders who bury their best signal in slide eleven.
  The volume problem is real: as more decks flood inboxes, the bar for capturing attention on the first pass has risen structurally. Design alone does not solve this. Narrative sequence and evidence density do.
 
 The first four slides capture sixty percent of total deck attention. Lead with your strongest asset.
@@ -245,7 +248,7 @@ Many investors will simply not open a DocSend link from cold outreach, if a deck
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in late 2026 has hardened further around traction evidence, with the evidence bar now materially higher than mid-year. Carta's Q2 2026 benchmark puts the median seed round at $4.5M raised at a $23.9M post-money valuation — round sizes up roughly 40% from the $3–3.2M typical just months ago — though priced-round volume on Carta hit a six-year low, meaning fewer companies are closing at all. The seed-to-Series A graduation rate has collapsed to 15–20% within 24 months (down from ~30% for 2018–2020 cohorts), and the median gap between seed and Series A has stretched to approximately 616 days, meaning decks must credibly fund a longer runway than most founders model. Multistage funds are now moving aggressively into seed — PitchBook recorded a16z and YC each making 46 seed investments in a single quarter — compressing the advantage once held by dedicated seed specialists. The AI premium of ~42% persists at seed, with non-AI B2B software clearing $14–16M pre-money versus the headline $24M median; Uncork Capital has raised the informal Series A ARR floor to $2–4M, making your traction slide the single most consequential page in the deck.
+The seed funding environment in late 2026 has hardened further around traction evidence, with the evidence bar now materially higher than mid-year. Carta's July 2026 benchmark puts the median seed round at $4.1M on a valuation of about $24M, with median dilution of 18%. Graduation odds have fallen sharply: only 24% of US companies that raised a $1M+ seed in 2023 have raised again, and 16% of the 2024 cohort, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), with the gap to Series A now running beyond two years. That means a seed deck has to credibly fund a longer runway than most founders model, and it makes the traction slide the single most consequential page in the deck.
 <!-- WHERE-THINGS-STAND:END -->
 
 See Related below for more on this topic.

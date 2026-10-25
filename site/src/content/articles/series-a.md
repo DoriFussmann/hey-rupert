@@ -53,6 +53,15 @@ externalLinks:
   - label: "Series A Funding: Your Guide in 2024"
     url: "https://www.capboard.io/en/captable/series-a-funding-explained"
     addedAt: 2026-08-27
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: Founder Ownership Report 2026"
+    url: "https://carta.com/data/founder-ownership-2026/"
+    addedAt: 2026-10-25
+  - label: "Crunchbase News: Seed Deals Keep Getting Bigger As Odds Of Reaching Series A Fall (May 2026)"
+    url: "https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/"
+    addedAt: 2026-10-25
 supportingKeyword: series a
 ---
 ## What Series A Actually Is — and Why It Matters
@@ -112,14 +121,13 @@ Series A is where fundraising stops being about promise and starts being about e
 
 The gap between the number of seed-funded companies and the number that reach Series A is not a soft market phenomenon. It is structural, and the data is striking.
 
-The Series A conversion rate — the share of seed-funded companies that raise a priced Series A within 24 months — sits at roughly 15–20% as of 2026, according to Carta and Pitchbook cohort data.
- A decade ago, that figure was closer to 30%. 
-Because seed deal volume exploded while Series A capacity stayed roughly flat, the practical result is that 70–85% of seed companies stall, bridge, or shut down before graduating.
+Of US companies that raised a $1M+ seed in 2023, only 24% have raised again, and for the 2024 cohort it is 16%, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/).
+Because seed deal volume exploded while Series A capacity stayed roughly flat, the practical result is that most seed companies stall, bridge, or shut down before graduating.
 
 The time dimension compounds the pressure. 
 While companies that are funded at the seed stage are typically raising larger checks, they're also taking longer to move on to Series A and face lower odds of graduating to that phase at all. Since 2023, U.S. startups have been taking longer to raise a Series A round following an initial seed round of $1 million and over, with that time frame now stretching to more than two years.
 
-The average time from Seed to Series A has stretched to approximately 616 days, according to recent data from PitchBook and Crunchbase.
+
  That figure alone should recalibrate how founders think about runway planning. A company that closes seed today and assumes it will raise Series A in 18 months is planning against a median that no longer exists.
 
 The implication is clear: 

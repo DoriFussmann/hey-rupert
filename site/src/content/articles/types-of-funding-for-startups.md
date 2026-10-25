@@ -45,14 +45,23 @@ internalLinks:
 
 externalLinks:
   - label: "6 Types of Funding for Startups: Definitive Guide"
-    url: https://foundersnetwork.com/types-of-funding-for-startups/
+    url: "https://foundersnetwork.com/types-of-funding-for-startups/"
     addedAt: 2026-08-18
-  - label: A Guide to Different Stages of Funding for Startups
-    url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+  - label: "A Guide to Different Stages of Funding for Startups"
+    url: "https://www.startups.com/articles/different-stages-of-funding-for-startups"
     addedAt: 2026-08-18
-  - label: 10 Types of Startup Capital
-    url: https://www.hubspot.com/startups/types-of-startup-capital
+  - label: "10 Types of Startup Capital"
+    url: "https://www.hubspot.com/startups/types-of-startup-capital"
     addedAt: 2026-08-18
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "SiliconANGLE: Global venture funding hits record $510B in first half (Crunchbase data)"
+    url: "https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/"
+    addedAt: 2026-10-25
 ---
 ## The Real Cost of Each Funding Type Is Not What You Think
 
@@ -69,7 +78,7 @@ Founders typically give up 15–25% per round at pre-seed through Series A, narr
 
 In 2026, seed investors demand more than promising ideas — many expect $300K–$500K in ARR
  before they will price a round. 
-The median Series A in 2026 is a $19.6 million deal, with most investors requiring $1–3 million in ARR and strong growth of 150% year-over-year, along with a clear path to $10 million ARR within 18–24 months.
+Carta's July 2026 benchmark puts the median Series A at $14.4 million, with most investors requiring $1–3 million in ARR and strong growth of 150% year-over-year, along with a clear path to $10 million ARR within 18–24 months.
  Priced rounds make sense once you have enough data to defend a valuation — attempting one too early simply means selling cheap, because investors will price the uncertainty into the number.
 
 Priced equity rounds require more legal work and typically cost $15,000–$25,000 in attorney fees
@@ -83,7 +92,7 @@ The Simple Agreement for Future Equity (SAFE) was introduced by Y Combinator in 
 With a SAFE, investors provide funds upfront in exchange for the right to convert their investment into shares when the company raises its next priced round. Three features separate SAFEs from debt instruments: no interest, no maturity date, and no repayment obligation.
 
 The market has voted decisively for the SAFE structure at early stages. 
-At the pre-seed stage, SAFEs comprised a record high of 93% of all deals on Carta in Q1 2026, while convertible notes fell to a record low of just 7% of pre-seed rounds. The trend is accelerating: a majority of early-stage rounds under $4 million in H1 2025 were SAFEs or convertible notes.
+At the pre-seed stage, SAFEs now make up around nine in ten deals on Carta, while convertible notes have shrunk to a small minority. The trend is accelerating: a majority of early-stage rounds under $4 million in H1 2025 were SAFEs or convertible notes.
 
 The appeal is straightforward: SAFEs are fast, cheap to execute, and avoid the friction of a formal valuation negotiation. 
 SAFEs are the cheapest deal structure to execute, with legal costs running $0–$2,000 if you use Y Combinator's free templates.

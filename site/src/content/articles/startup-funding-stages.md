@@ -59,6 +59,18 @@ externalLinks:
   - label: "Startup Funding Stages Explained (Bootstrapping to Series C)"
     url: "https://www.usehaven.com/blog-posts/startup-funding-stages"
     addedAt: 2026-08-27
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "Crunchbase News: Seed Deals Keep Getting Bigger As Odds Of Reaching Series A Fall (May 2026)"
+    url: "https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: Founder Ownership Report 2026"
+    url: "https://carta.com/data/founder-ownership-2026/"
+    addedAt: 2026-10-25
 ---
 ## What Startup Funding Stages Actually Are — and Why They Matter
 
@@ -134,7 +146,7 @@ In 2026, seed investors demand more than promising ideas. They are looking for e
 
 ### Dilution
 
-Expect to give up 15–20% at seed. That dilution, combined with pre-seed, means founders typically enter the Series A process with roughly 65–75% of their company.
+Expect to give up 15–20% at seed. That dilution, combined with pre-seed, means founders typically enter the Series A process owning a little over half the company: Carta puts the median founding team at about 56% after the seed round.
 
 ---
 
@@ -153,7 +165,7 @@ Institutional VCs with $50M to $500M in assets under management lead most Series
 
 ### 2025–2026 Benchmarks
 
-Carta's Q4 2025 data put the median seed post-money at a record $24M, and the Q1 2026 PitchBook-NVCA Venture Monitor put the median Series A deal at $19.6M with a $78.7M post-money for the broader market — a 37% year-over-year jump.
+Carta's July 2026 benchmark puts the median seed round at $4.1M on a valuation of about $24M, and the median Series A at $14.4M on a valuation of about $80M.
  For non-AI companies, the picture is somewhat more moderate: 
 a typical Series A valuation in 2026 ranges from $25M to $100M pre-money, depending on the sector, traction, and market conditions, with SaaS companies at $1–3M ARR typically seeing valuations of $30–60M.
 
@@ -174,7 +186,7 @@ No section on startup funding stages would be honest without confronting the sta
 
 Historically, 20–30% of seed-funded companies have successfully made the leap to Series A, with top VC funds boasting rates as high as 50–75%.
  Recent cohort data tells a more sobering story. 
-Of companies that raised a $1 million-plus seed round in 2023, only 24% have progressed further, according to a May 2026 Crunchbase report, with rates falling sharply since 2021. For the 2024 cohort, the figure is 16%.
+Of companies that raised a $1 million-plus seed round in 2023, only 24% have progressed further, according to [a May 2026 Crunchbase report](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/), with rates falling sharply since 2021. For the 2024 cohort, the figure is 16%.
 
 Fewer Series A dollars are available relative to seed companies hunting for capital, with seed deals currently outpacing Series A deals by a 3:1 ratio.
  The structural implication is clear: raising a seed round is increasingly a prerequisite for a harder race, not a confirmation that the next round will follow. 
@@ -263,7 +275,7 @@ For a company navigating the narrow passage from [seed to Series A](/articles/se
 
 No guide to startup funding stages is complete without an honest account of bridge rounds, because the decision of whether to bridge is often where stage diagnosis gets most distorted. In 2026, roughly 38% of seed-funded startups raise a bridge before they ever see a priced Series A term sheet.
  That normalization is structural, not a symptom of widespread failure. 
-The Series A market in 2025 showed an 18% decline in deal volume year-over-year with total capital invested down 23%, and the average time between seed and Series A has stretched to around 616 days.
+The Series A market in 2025 showed an 18% decline in deal volume year-over-year with total capital invested down 23%, and Crunchbase data shows the gap between seed and Series A now runs more than two years.
  With gaps that long, a bridge can be the right answer — but only when it is tied to a defined, measurable outcome.
 
 A bridge round strengthens your position when the startup has clear traction and a defined path to the next round; it signals trouble when existing investors sit out and the bridge is used to cover operating losses without improving fundamentals.

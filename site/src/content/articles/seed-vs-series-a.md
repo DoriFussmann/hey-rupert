@@ -31,14 +31,26 @@ internalLinks:
   - slug: pre-seed-vs-seed-funding
     anchor: "Pre-seed vs. seed funding"
 
-externalLinks: []
+externalLinks:
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: Founder Ownership Report 2026"
+    url: "https://carta.com/data/founder-ownership-2026/"
+    addedAt: 2026-10-25
+  - label: "Crunchbase News: Seed Deals Keep Getting Bigger As Odds Of Reaching Series A Fall (May 2026)"
+    url: "https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/"
+    addedAt: 2026-10-25
+  - label: "Crunchbase News: Seed Funding Is Skewing Larger And More Competitive (March 2026)"
+    url: "https://news.crunchbase.com/venture/seed-funding-skewing-larger-ai-competitive-data/"
+    addedAt: 2026-10-25
 faqs:
   - question: "What ARR do I need to raise a Series A in 2026?"
     answer: "For B2B SaaS companies, most institutional Series A investors in 2026 expect $1M–$3M in ARR, with 100%+ year-over-year growth and a demonstrably repeatable go-to-market motion. Top-quartile companies show $7M+ ARR. AI-native companies with 20%+ month-over-month growth may qualify at $500K–$800K ARR. Consumer businesses are typically assessed on MAU and engagement cohorts rather than revenue thresholds."
   - question: "How much equity will I give up at seed versus Series A?"
     answer: "At seed, founders typically dilute 15–25%, with the 2025 median sitting around 18–19%. After a Series A — which usually involves a new option pool expansion plus the round itself — the founding team's ownership commonly drops to around 36%, per Carta's 2026 dataset. Each bridge round or SAFE stack between rounds adds additional dilution, so clean cap table management from the seed stage materially affects how much of your company you own at Series A close."
   - question: "How long does it take to get from seed to Series A?"
-    answer: "The median time between closing a seed round and closing a Series A has stretched significantly since 2021. Recent data puts the median at roughly 616 days — just under 21 months — with some sources citing figures closer to 774 days for recent cohorts. The practical implication: if you plan an 18-month runway off your seed, you may be entering Series A conversations with your back against the wall. Plan for at least 24 months of runway and build your milestones backward from Series A requirements."
+    answer: "The median time between closing a seed round and closing a Series A has stretched significantly since 2021. Crunchbase data shows that for US startups raising a Series A after a $1M+ seed, the gap now runs more than two years. The practical implication: if you plan an 18-month runway off your seed, you may be entering Series A conversations with your back against the wall. Plan for at least 24 months of runway and build your milestones backward from Series A requirements."
   - question: "Can I raise a Series A on a SAFE or convertible note?"
     answer: "No. Series A rounds are priced preferred equity rounds — they involve a formal term sheet, a negotiated pre-money valuation, preferred stock with liquidation preferences and anti-dilution provisions, and typically a board seat for the lead investor. SAFEs and convertible notes that were issued at seed will convert into equity at the Series A pricing event, but the Series A itself is always a priced round with full legal documentation."
   - question: "Will Series A investors take a board seat?"
@@ -75,7 +87,7 @@ The dollar figures have moved considerably since 2021, and it matters whether yo
 
 ### Seed: Bigger Than It Looks, But the Market Has Split
 
-By Carta's mid-2026 benchmark, published July 2026, the median seed round had jumped to $4.1 million at a record $24 million post-money valuation, with founders parting with about 18% of their company.
+By Carta's mid-2026 benchmark, published July 2026, the median seed round had jumped to $4.1 million at a median valuation of about $24 million, with founders parting with about 18% of their company.
  That headline number, though, needs a significant asterisk.
 
 That all-time-high median is dragged up by AI mega-rounds most companies will never touch. Underneath it, the market has split so wide it's really two markets: AI companies raising at a huge premium, and everyone else negotiating a much more normal round.
@@ -92,9 +104,9 @@ US seed rounds of $10 million or more grew from about 2% of all seed deals in 20
 
 ### Series A: What Institutional Capital Looks Like in 2026
 
-The Series A market in 2026 has stabilized after the correction of 2022–2023 but remains significantly more selective than the peak of 2021. According to PitchBook data, approximately 2,800 Series A rounds closed in the US in 2025, down from roughly 4,200 in 2021. The median round size is $12M, up from $10M in 2023 as investors concentrate capital in fewer, higher-quality companies. Pre-money valuations at Series A range from $25M to $80M, with the median around $40M to $50M.
+The Series A market in 2026 has stabilized after the correction of 2022–2023 but remains significantly more selective than the peak of 2021. The median round size is $12M, up from $10M in 2023 as investors concentrate capital in fewer, higher-quality companies. Pre-money valuations at Series A range from $25M to $80M, with the median around $40M to $50M.
 
-Per Carta's Q4 2025 State of Private Markets data, the median Series A post-money valuation hit $78.7M, up 37% year over year from $57.5M
+Carta's July 2026 benchmark puts the median Series A at $14.4M raised at a median valuation of about $80M
  — a figure that again reflects the outsized influence of large AI rounds on stage-level medians. In 2026, the median seed-to-Series-A step-up is 3–4x — a company valued at $15M at seed is valued at $45–60M at Series A. Step-ups below 2x suggest the company underperformed between rounds
  and will raise red flags with institutional investors who expect to see compounding growth reflected in the valuation trajectory.
 
@@ -164,14 +176,12 @@ Consumer businesses use MAU and engagement cohorts instead of ARR thresholds.
 
 ## The Seed-to-Series A Gap: The Most Dangerous Moment in Your Company's Life
 
-The statistics here are sobering, and every founder planning a seed round should internalize them before setting their fundraising target. Per Carta data, only 35–40% of US seed-funded companies raise a Series A. The rest stall, extend on bridge rounds, or wind down. This conversion gap — the "Series A cliff" — is the most dangerous moment in a startup's trajectory.
+The statistics here are sobering, and every founder planning a seed round should internalize them before setting their fundraising target. Most seed-funded companies never raise a Series A. The rest stall, extend on bridge rounds, or wind down. This conversion gap — the "Series A cliff" — is the most dangerous moment in a startup's trajectory.
  More recent cohort data is even more stark: 
-of the companies that raised a $1 million-plus seed round in 2023, only 24% have progressed further, according to Crunchbase data. For the 2024 cohort of seed-funded companies, that's even lower: just 16%.
+of the companies that raised a $1 million-plus seed round in 2023, only 24% have progressed further, according to [Crunchbase data](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). For the 2024 cohort of seed-funded companies, that's even lower: just 16%.
 
 The time dimension compounds the runway problem. 
-The average time between seed and Series A has stretched to around 616 days.
- Other data points to an even longer gap: 
-the median is now 774 days — 2.1 years — up from 420 days in 2021. That's an 84% increase since the peak.
+Crunchbase data shows that since 2023, US startups have taken longer to raise a Series A after a $1M+ seed round, and that gap now stretches beyond two years.
 
 If you raise a $3M seed and plan an 18-month runway, you'll be entering Series A conversations with six months of cash left. That's a negotiation from desperation, not strength.
 
@@ -208,7 +218,7 @@ There is no shortcut on the traction side. But once you have the metrics, the ex
 
 ## From Seed to Series A: A Month-by-Month Milestone Plan
 
-The 616-day median is not a passive waiting period. It is a building period, and the founders who use it well are the ones who arrive at their formal Series A process with both the metrics and the investor relationships already in place. Here is how to think about that window.
+The two-year gap is not a passive waiting period. It is a building period, and the founders who use it well are the ones who arrive at their formal Series A process with both the metrics and the investor relationships already in place. Here is how to think about that window.
 
 ### Months 0–3: Foundation Before Traction
 
@@ -234,7 +244,7 @@ Starting too late is the single biggest fundraising error.
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
 The venture market as of late September 2026 presents a bifurcated picture for founders navigating the seed-to-Series-A transition. 
-The $4.1M median seed round at $24M post-money and 18% dilution are the highest on record — yet just 15–20% of seed-funded startups reach an institutional Series A within 24 months.
+The $4.1M median seed round at $24M post-money and 18% dilution sit near record highs — yet only 24% of the 2023 seed cohort and 16% of the 2024 cohort have raised again, per Crunchbase.
 
 Year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, and multistage fund participation at Series A has hit record highs by count and value, reshaping who gets funded in a barbell market. Crunchbase data shows that of companies that raised a $1M-plus seed round in 2023, only 24% have progressed further — and for the 2024 cohort, that figure drops to just 16%.
  Meanwhile, the AI premium continues to widen the gap between top-performing companies and the rest of the market, with recent data indicating that more than 60% of all venture dollars in Q1 2026 flowed to AI companies, pulling stage-level medians upward even as most non-AI founders negotiate on considerably tighter terms. The macro signal is clear: capital is available, but it is concentrating rapidly, and the evidence bar continues to rise faster than round sizes.
@@ -245,7 +255,7 @@ Year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, a
 ## Key Takeaways
 
 - Seed and Series A represent fundamentally different investor bets: seed investors fund founders and ideas; Series A investors fund proven, repeatable traction — every other difference in check size, legal structure, and diligence depth flows from this distinction.
-- In 2026, the median seed round is approximately $4.1M at a $24M post-money valuation (Carta data), while Series A median rounds run $10M–$20M on $40M–$80M pre-money — with AI-native companies pushing well above both floors.
+- In 2026, the median seed round is approximately $4.1M at a $24M valuation, and the median Series A is about $14M at an $80M valuation (Carta, July 2026) — with AI-native companies pushing well above both floors.
 - Deal structure shifts completely between stages: seed rounds use SAFEs or convertible notes to defer valuation, while Series A is a priced preferred equity round with board seats, liquidation preferences, anti-dilution provisions, and full legal documentation.
-- Only 16–24% of recent seed-funded companies have progressed to a Series A, and the median gap between closing a seed and closing a Series A now runs 616–774 days — making runway planning and milestone sequencing the most underrated parts of the journey.
+- Only 16–24% of recent seed-funded companies have progressed to a Series A, and the gap between a seed and a Series A now runs more than two years — making runway planning and milestone sequencing the most underrated parts of the journey.
 - Institutional Series A investors run formal IC processes with reference checks, financial model reviews, and 8–12 week timelines; targeting the wrong investors or running an undisciplined process doesn't just fail — it actively narrows your options for future attempts.

@@ -48,21 +48,24 @@ internalLinks:
     anchor: "Startup funding stages, pre-seed to Series C"
 
 externalLinks:
-  - label: What's the Difference? Venture Capitalist vs. Angel Investor
-    url: https://www.rivier.edu/academics/blog-posts/whats-the-difference-venture-capitalist-vs-angel-investor/
+  - label: "What's the Difference? Venture Capitalist vs. Angel Investor"
+    url: "https://www.rivier.edu/academics/blog-posts/whats-the-difference-venture-capitalist-vs-angel-investor/"
     addedAt: 2026-08-13
   - label: "Angel Investors vs Venture Capitalists: Key Differences"
-    url: https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/angel-investors-vs-venture-capitalists
+    url: "https://growthequityinterviewguide.com/venture-capital/types-of-venture-capital/angel-investors-vs-venture-capitalists"
     addedAt: 2026-08-13
-  - label: A guide to angel investors vs. venture capitalists
-    url: https://stripe.com/resources/more/angel-investors-vs-venture-capitalists-what-founders-need-to-know
+  - label: "A guide to angel investors vs. venture capitalists"
+    url: "https://stripe.com/resources/more/angel-investors-vs-venture-capitalists-what-founders-need-to-know"
     addedAt: 2026-08-13
   - label: "Angel Investors vs. Venture Capitalists: Key Differences"
-    url: https://www.crv.com/content/angel-investors-vs-venture-capitalists
+    url: "https://www.crv.com/content/angel-investors-vs-venture-capitalists"
     addedAt: 2026-08-13
-  - label: Learn how to find and work with angel investors
-    url: https://www.svb.com/startup-insights/raising-capital/how-to-find-the-right-angel-investors/
+  - label: "Learn how to find and work with angel investors"
+    url: "https://www.svb.com/startup-insights/raising-capital/how-to-find-the-right-angel-investors/"
     addedAt: 2026-08-13
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
 ---
 Both investor types write equity checks into early-stage startups. Both want outsized returns. From the outside, that can make angels and venture capitalists look like variations of the same thing — one with smaller checks, one with bigger. That framing is wrong, and it costs founders months. The decision between angel capital and venture capital is really a decision about whose money you're taking, how that person makes decisions, what they'll expect from you in return, and whether your company is at the right stage to receive either. Getting this right before you start outreach is one of the most important calls you'll make in a raise.
 
@@ -86,7 +89,7 @@ If you need a fast, practical way to decide which type of investor to target, ch
 Venture capitalists start at $1 million and scale up — seed-stage VCs typically invest $2M–$5M, while Series A firms deploy $5M–$15M.
 
 Stage matters just as much as size. Angels back companies that are still proving the idea — pre-seed teams building an MVP, founders with early customer conversations but no formal revenue, or products that need another six months before they can credibly pitch an institutional investor. 
-According to NVCA data from 2024, median seed round sizes hit $2.5 million, up from $2.2 million in 2023
+Carta's July 2026 benchmark puts the median seed round at $4.1 million
  — which tells you something about where the institutional bar has moved. VCs investing at seed are writing multi-million-dollar checks and want to see the signals that justify them: initial revenue, measurable retention, a clear hypothesis on the path to Series A metrics. 
 Series A investors expect $1–3 million in annual recurring revenue for SaaS companies, clear unit economics showing a path to profitability, and evidence of scalable customer acquisition channels.
 
@@ -119,7 +122,7 @@ The trade-off is that angels also typically lack what the best lead VCs bring in
 
 For most early-stage founders, the most effective strategy isn't angels *or* VCs — it's sequencing them intentionally. Raising a small angel round first serves multiple functions. It extends runway so the company can hit the milestones that make a VC raise realistic. It builds a cap table with credible names who can provide introductions and social proof. And it creates the kind of early momentum — "we've closed $300K and have two angels committed" — that gives institutional investors a reason to move faster when you do approach them.
 
-According to the Angel Capital Association, angel investor activity increased 18% year-over-year in 2024, with average angel round sizes growing from $450K in 2022 to $680K in 2024. Angels are syndicating larger rounds and moving upmarket into deals that would have been small VC rounds in 2019–2021.
+Angels are syndicating larger rounds and moving upmarket into deals that would have been small VC rounds in 2019–2021.
  That shift means the distinction between "angel round" and "institutional seed round" has blurred in practice — a well-structured angel syndicate can now assemble $750K to $1.5M in a single close, providing genuine bridge capital on the way to a formal seed or Series A process.
 
 The key is not letting angel fundraising become a substitute for VC fundraising when VC is actually the right fit. If your business model, growth rate, and total addressable market require institutional capital to reach its potential, angels can help you get there, but they can't replace it.
@@ -165,7 +168,7 @@ The growth of pre-seed reflects a fundamental market dynamic: as seed rounds hav
 ### Tier Two: Dedicated Seed Funds
 
 The middle tier consists of funds with $50M–$200M in AUM that write lead checks of $500K–$3M into seed rounds. These funds need to own meaningful stakes to make their model work, which means they generally want to lead or co-lead a round rather than fill out a syndicate. 
-The median seed round size is $3–$3.2M, but the median seed post-money valuation hit a record $24M in Q4 2025, up from $18M a year earlier.
+Carta's July 2026 benchmark puts the median seed round at $4.1M on a valuation of about $24M, with median dilution of 18%.
  At this tier, investors expect more than a strong team and a large market. They want a working product, early customer conversations, and some signal (however thin) that people will pay for what you're building.
 
 The seed market has bifurcated. If you have early product-market fit signals ($50K–$200K ARR, strong week-one retention, or a credible enterprise pilot) you can raise a $3–4M seed at a $15M post-money without much trouble. If you have a prototype and a vision, you are competing in a much harder pool.

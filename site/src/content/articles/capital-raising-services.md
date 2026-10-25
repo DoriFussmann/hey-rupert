@@ -32,7 +32,10 @@ internalLinks:
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
     anchor: "Warm intros vs. cold outreach to investors"
 
-externalLinks: []
+externalLinks:
+  - label: "SEC: Guide to Broker-Dealer Registration"
+    url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
+    addedAt: 2026-10-25
 faqs:
   - question: "What is the difference between a capital raising service and an investor database?"
     answer: "An investor database is a self-serve research tool that gives you access to a list of investors you then contact yourself. A capital raising service — specifically an expert-managed outreach model — does the research, personalization, sequencing, and pipeline management on your behalf. The database is an input; the service is the full process. Founders who lack the bandwidth or network to run a disciplined outreach campaign benefit most from the latter."
