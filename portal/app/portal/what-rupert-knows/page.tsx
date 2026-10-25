@@ -12,23 +12,11 @@ import { fileExtension, formatBytes, websiteHref } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
-const panel = "rounded-card border border-border bg-surface";
 const label = "text-label uppercase tracking-label text-muted";
 const link = "text-body-sm text-primary no-underline hover:text-primary-hover";
 const actionButton =
   "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading";
 
-function PanelHeader({ title, meta, action }: { title: string; meta?: string; action?: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-baseline justify-between gap-sm border-b border-border px-lg py-md">
-      <div className="min-w-0">
-        <h2 className="text-h4 text-heading">{title}</h2>
-        {meta ? <p className="mt-xs text-body-sm text-muted">{meta}</p> : null}
-      </div>
-      {action}
-    </div>
-  );
-}
 
 /**
  * Everything Rupert works from, for the founder: the company at a glance,
@@ -79,21 +67,20 @@ export default async function WhatRupertKnowsPage() {
               Tell Rupert
             </Link>
             <Link href="/portal/materials" className={actionButton}>
-              Add files
+              Add Files
             </Link>
           </div>
         }
       />
 
       <div className="space-y-lg">
-        <section className={panel} aria-label="At a glance">
-          <PanelHeader title="At a glance" />
-          {description ? <p className="max-w-prose px-lg pt-md text-body text-body">{description}</p> : null}
-          <dl className="grid grid-cols-2 lg:grid-cols-3">
+        <CollapsiblePanel title="At a Glance" meta={facts.map((fact) => fact.value).slice(0, 3).join(" · ")}>
+          {description ? <p className="mb-md max-w-prose text-body text-body">{description}</p> : null}
+          <dl className="-mx-lg grid grid-cols-2 lg:grid-cols-3">
             {facts.map((fact) => {
               const href = fact.label === "Website" ? websiteHref(fact.value) : "";
               return (
-                <div key={fact.label} className="min-w-0 px-lg py-md">
+                <div key={fact.label} className="min-w-0 px-lg py-sm">
                   <dt className={label}>{fact.label}</dt>
                   <dd className="mt-xs break-words text-body text-heading">
                     {href ? (
@@ -108,64 +95,69 @@ export default async function WhatRupertKnowsPage() {
               );
             })}
           </dl>
-        </section>
+        </CollapsiblePanel>
 
-        <section className={panel} aria-label="How Rupert reads your company">
-          <PanelHeader
-            title="How Rupert reads your company"
-            meta={read ? (read.confirmed ? "From the Outreach Narrative you confirmed." : "From the Outreach Narrative Rupert shared with you.") : undefined}
-            action={
-              read ? (
+        <CollapsiblePanel
+          title="How Rupert Reads Your Company"
+          meta={
+            read
+              ? read.confirmed
+                ? "From the Outreach Narrative you confirmed."
+                : "From the Outreach Narrative Rupert shared with you."
+              : "Appears once Rupert shares your Outreach Narrative."
+          }
+        >
+          {read ? (
+            <div className="space-y-lg">
+              {read.story ? (
+                <CollapsiblePanel title="The Outreach Narrative" meta="How Rupert will present your company to investors.">
+                  <MarkdownBody content={read.story} emptyLabel="" className="sow-markdown max-w-prose" />
+                </CollapsiblePanel>
+              ) : null}
+              <MarkdownBody content={read.read} emptyLabel="" />
+              <p>
                 <Link href="/portal/setup/framing" className={link}>
-                  Open the narrative
+                  Open the Narrative
                 </Link>
-              ) : null
-            }
-          />
-          <div className="space-y-lg px-lg py-lg">
-            {read ? (
-              <>
-                {read.story ? (
-                  <div className="rounded-card bg-primary-tint px-lg py-md">
-                    <p className={label}>The Outreach Narrative</p>
-                    <MarkdownBody content={read.story} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
-                  </div>
-                ) : null}
-                <MarkdownBody content={read.read} emptyLabel="" />
-              </>
-            ) : (
-              <p className="max-w-prose text-body-sm text-muted">
-                Rupert&apos;s read of your company appears here once he shares your Outreach Narrative.
               </p>
-            )}
-          </div>
-        </section>
+            </div>
+          ) : (
+            <p className="max-w-prose text-body-sm text-muted">
+              Rupert&apos;s read of your company appears here once he shares your Outreach Narrative.
+            </p>
+          )}
+        </CollapsiblePanel>
 
-        <section className={panel} aria-label="What you told Rupert">
-          <PanelHeader
-            title="What you told Rupert"
-            meta={intake ? (intake.confirmed ? "The intake summary you confirmed." : "What Rupert noted from your intake conversation.") : undefined}
-            action={
-              <Link href="/portal/intake" className={link}>
-                Add or correct something
-              </Link>
-            }
-          />
+        <CollapsiblePanel
+          title="What You Told Rupert"
+          meta={
+            intake
+              ? intake.confirmed
+                ? "The intake summary you confirmed."
+                : "What Rupert noted from your intake conversation."
+              : "Nothing from your intake yet."
+          }
+        >
           {intake ? (
-            <dl className="divide-y divide-border">
+            <dl className="-my-sm divide-y divide-border">
               {intake.items.map((item) => (
-                <div key={item.topic_id} className="grid gap-xs px-lg py-md sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:gap-lg">
+                <div key={item.topic_id} className="grid gap-xs py-md sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] sm:gap-lg">
                   <dt className={label}>{item.title}</dt>
                   <dd className="whitespace-pre-wrap text-body-sm text-body">{item.answer}</dd>
                 </div>
               ))}
             </dl>
           ) : (
-            <p className="px-lg py-lg text-body-sm text-muted">Nothing from your intake yet.</p>
+            <p className="text-body-sm text-muted">Nothing from your intake yet.</p>
           )}
-        </section>
+          <p className="mt-md">
+            <Link href="/portal/intake" className={link}>
+              Add or Correct Something
+            </Link>
+          </p>
+        </CollapsiblePanel>
 
-        <CollapsiblePanel title="Your files" meta={`${files.length} file${files.length === 1 ? "" : "s"}`}>
+        <CollapsiblePanel title="Your Files" meta={`${files.length} file${files.length === 1 ? "" : "s"}`}>
           {files.length === 0 ? (
             <p className="text-body-sm text-muted">No files shared yet.</p>
           ) : (
@@ -197,7 +189,7 @@ export default async function WhatRupertKnowsPage() {
           )}
           <p className="mt-md">
             <Link href="/portal/materials" className={link}>
-              Add files
+              Add Files
             </Link>
           </p>
         </CollapsiblePanel>
