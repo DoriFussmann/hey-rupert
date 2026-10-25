@@ -57,6 +57,9 @@ const PHASES: {
   },
 ];
 
+/** The founder's view of everything Rupert works from. Open once the intake is complete. */
+const KNOWS_HREF = "/portal/what-rupert-knows";
+
 function pathInPhase(pathname: string, prefixes: string[]) {
   return prefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
@@ -150,6 +153,22 @@ export function PortalNav({
           </Link>
         );
       })}
+      {onboarding?.intake_completed_at ? (
+        <Link
+          href={KNOWS_HREF}
+          aria-current={pathInPhase(pathname, [KNOWS_HREF]) ? "page" : undefined}
+          className={`mt-sm rounded-md border-t border-border px-sm pb-sm pt-md no-underline transition-colors duration-hover ${
+            pathInPhase(pathname, [KNOWS_HREF])
+              ? "bg-primary-tint text-primary"
+              : "text-secondary hover:bg-background hover:text-heading"
+          }`}
+        >
+          <span className="block text-body-sm">What Rupert Knows</span>
+          <span className={`mt-xs block text-body-sm ${pathInPhase(pathname, [KNOWS_HREF]) ? "text-primary" : "text-muted"}`}>
+            Your company and files
+          </span>
+        </Link>
+      ) : null}
     </nav>
   );
 }
