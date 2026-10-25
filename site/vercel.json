@@ -2,12 +2,12 @@
   "redirects": [
     {
       "source": "/articles/deck-investor-relations",
-      "destination": "/articles/investor-presentation-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
       "permanent": true
     },
     {
       "source": "/articles/deck-investor-relations/",
-      "destination": "/articles/investor-presentation-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
       "permanent": true
     },
     {
@@ -22,12 +22,12 @@
     },
     {
       "source": "/articles/investor-presentation",
-      "destination": "/articles/investor-presentation-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
       "permanent": true
     },
     {
       "source": "/articles/investor-presentation/",
-      "destination": "/articles/investor-presentation-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
       "permanent": true
     },
     {
@@ -137,6 +137,356 @@
     },
     {
       "source": "/articles/quarterly-update-email-template/",
+      "destination": "/articles/investor-update-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-investors-for-your-business-idea",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-investors-for-your-business-idea/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-private-investors-for-your-business",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-private-investors-for-your-business/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/types-of-investors-for-small-business",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/types-of-investors-for-small-business/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investors-for-small-business",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investors-for-small-business/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-investors-for-small-business",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-get-investors-for-small-business/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investors-looking-for-projects-to-fund",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investors-looking-for-projects-to-fund/",
+      "destination": "/articles/how-to-find-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/local-investors-vs-national-investors-for-startups",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/local-investors-vs-national-investors-for-startups/",
+      "destination": "/articles/investors-near-me/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-investors-for-small-business",
+      "destination": "/articles/angel-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-investors-for-small-business/",
+      "destination": "/articles/angel-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-investors-for-startups",
+      "destination": "/articles/angel-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-investors-for-startups/",
+      "destination": "/articles/angel-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-investors-for-pre-seed-funding",
+      "destination": "/articles/angel-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/angel-investors-for-pre-seed-funding/",
+      "destination": "/articles/angel-investors/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/list-of-private-investors",
+      "destination": "/articles/investor-list/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/list-of-private-investors/",
+      "destination": "/articles/investor-list/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/find-investors-online-free",
+      "destination": "/articles/investor-database/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/find-investors-online-free/",
+      "destination": "/articles/investor-database/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/early-stage-venture-capital",
+      "destination": "/articles/angel-investors-vs-venture-capital/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/early-stage-venture-capital/",
+      "destination": "/articles/angel-investors-vs-venture-capital/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/venture-capital",
+      "destination": "/articles/angel-investors-vs-venture-capital/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/venture-capital/",
+      "destination": "/articles/angel-investors-vs-venture-capital/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/capital-raising-consultants",
+      "destination": "/articles/startup-fundraising-consultant/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/capital-raising-consultants/",
+      "destination": "/articles/startup-fundraising-consultant/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/startup-funding-stages-explained",
+      "destination": "/articles/startup-funding-stages/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/startup-funding-stages-explained/",
+      "destination": "/articles/startup-funding-stages/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/startup-funding-rounds-faq",
+      "destination": "/articles/startup-funding-stages/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/startup-funding-rounds-faq/",
+      "destination": "/articles/startup-funding-stages/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/pre-seed-vs-seed-vs-series-a",
+      "destination": "/articles/startup-funding-stages/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/pre-seed-vs-seed-vs-series-a/",
+      "destination": "/articles/startup-funding-stages/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/what-is-pre-seed-funding",
+      "destination": "/articles/pre-seed-funding/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/what-is-pre-seed-funding/",
+      "destination": "/articles/pre-seed-funding/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-raise-pre-seed-funding",
+      "destination": "/articles/pre-seed-funding/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-to-raise-pre-seed-funding/",
+      "destination": "/articles/pre-seed-funding/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/seed-funding-vs-series-a",
+      "destination": "/articles/seed-vs-series-a/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/seed-funding-vs-series-a/",
+      "destination": "/articles/seed-vs-series-a/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-long-between-seed-and-series-a",
+      "destination": "/articles/seed-vs-series-a/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/how-long-between-seed-and-series-a/",
+      "destination": "/articles/seed-vs-series-a/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/biggest-venture-capital-firms-in-silicon-valley",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/biggest-venture-capital-firms-in-silicon-valley/",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/largest-venture-capital-firms-by-aum",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/largest-venture-capital-firms-by-aum/",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/famous-venture-capital-firms",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/famous-venture-capital-firms/",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/top-vc-firms",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/top-vc-firms/",
+      "destination": "/articles/biggest-venture-capital-firms/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investment-presentation-checklist",
+      "destination": "/articles/pitch-deck/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investment-presentation-checklist/",
+      "destination": "/articles/pitch-deck/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/free-pitch-deck-template",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/free-pitch-deck-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/vc-pitch-deck-template",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/vc-pitch-deck-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investor-presentation-template",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/investor-presentation-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/seed-round-pitch-deck-template",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/seed-round-pitch-deck-template/",
+      "destination": "/articles/startup-pitch-deck-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/seed-funding-pitch-deck-faq",
+      "destination": "/articles/seed-pitch-deck/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/seed-funding-pitch-deck-faq/",
+      "destination": "/articles/seed-pitch-deck/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/pre-seed-pitch-deck",
+      "destination": "/articles/seed-pitch-deck/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/pre-seed-pitch-deck/",
+      "destination": "/articles/seed-pitch-deck/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/shareholder-update",
+      "destination": "/articles/investor-update-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/shareholder-update/",
+      "destination": "/articles/investor-update-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/startup-investor-update-presentation",
+      "destination": "/articles/investor-update-template/",
+      "permanent": true
+    },
+    {
+      "source": "/articles/startup-investor-update-presentation/",
       "destination": "/articles/investor-update-template/",
       "permanent": true
     }

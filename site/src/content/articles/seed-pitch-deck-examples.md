@@ -19,13 +19,12 @@ locale: en-US
 twitterCard: summary_large_image
 draft: false
 pillarKeyword: pitch deck
-supportingKeyword: seed pitch deck
+supportingKeyword: pitch deck examples
 articleType: flex
-targetKeyword: seed pitch deck examples
+targetKeyword: pitch deck examples
 updatedDate: 2026-09-28
 keywords:
-  - seed pitch deck examples
-  - seed pitch deck
+  - pitch deck examples
   - pitch deck
 faqs:
   - question: How many slides should a seed pitch deck have?
@@ -38,34 +37,36 @@ faqs:
     answer: Design matters enough that a visually chaotic deck creates friction — but professional polish does not compensate for weak content. Buffer's seed deck was simple and not visually sophisticated; it raised $500K because the traction metrics were compelling. Airbnb's original 2009 deck is widely described as rough by modern standards, yet it remains the most studied seed deck in history. Investors in 2026 do spend more total time on decks with clear data visualization, but the data itself — not its presentation — is what drives conviction.
 internalLinks:
   - slug: pitch-deck
-    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-  - slug: pre-seed-pitch-deck
-    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-  - slug: seed-funding-pitch-deck-faq
-    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    anchor: "How to build a pitch deck"
   - slug: seed-pitch-deck
-    anchor: The Complete Seed Pitch Deck Guide for Raising Founders
-  - slug: seed-round-pitch-deck-template
-    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    anchor: "Building a seed pitch deck"
+  - slug: startup-pitch-deck-template
+    anchor: "Pitch deck template, slide by slide"
 
 externalLinks:
-  - label: The Ultimate Pitch Deck Guide for Startup Founders
-    url: https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders
+  - label: "The Ultimate Pitch Deck Guide for Startup Founders"
+    url: "https://seedscope.ai/blog/the-ultimate-pitch-deck-guide-for-startup-founders"
     addedAt: 2026-08-13
-  - label: A Simple Template for Your Seed Funding Pitch Deck
-    url: https://underscore.vc/resources/how-to-pitch-to-investors/
+  - label: "A Simple Template for Your Seed Funding Pitch Deck"
+    url: "https://underscore.vc/resources/how-to-pitch-to-investors/"
     addedAt: 2026-08-13
-  - label: 20+ Free Pitch Deck Templates [Fully-Customizable]
-    url: https://pitch.com/templates/collections/Pitch-deck
+  - label: "20+ Free Pitch Deck Templates [Fully-Customizable]"
+    url: "https://pitch.com/templates/collections/Pitch-deck"
     addedAt: 2026-08-13
-  - label: How to build your seed round pitch deck
-    url: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck
+  - label: "How to build your seed round pitch deck"
+    url: "https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck"
     addedAt: 2026-08-13
-  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
-    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+  - label: "The Ultimate Guide to Creating Your Pre-Seed Pitch Deck"
+    url: "https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck"
     addedAt: 2026-08-13
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
 ---
-Most pitch deck advice starts from a template. This article starts from evidence. The decks below are real (they raised real money from real investors) and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
+Most [pitch deck](/articles/pitch-deck/) advice starts from a [template](/articles/startup-pitch-deck-template/). This article starts from evidence. The decks below are real (they raised real money from real investors) and each one contains a structural decision worth understanding before you build your own. The goal is not to copy a format. It is to understand *why* specific choices worked, so you can make the same kind of disciplined choices in your own deck.
 
 The patterns that emerge from studying funded seed decks are not particularly mysterious once you see them. They are, however, consistently violated by founders who build decks the way they understand their business rather than the way investors evaluate one.
 
@@ -73,7 +74,7 @@ The patterns that emerge from studying funded seed decks are not particularly my
 
 ## The Deck That Every Other Deck Gets Compared To: Airbnb (2009)
 
-The Airbnb 2009 pitch deck is a 14-slide seed deck that raised $600K from Sequoia.
+The Airbnb 2009 pitch deck is a 14-slide [seed deck](/articles/seed-pitch-deck/) that raised $600K from Sequoia.
  It has become, by any measure, the most studied seed deck in history — and not just because of how large Airbnb eventually became. The deck works as a teaching document because its discipline is visible and replicable.
 
 It had no complex financial modelling, but it did one thing perfectly: it turned a counterintuitive idea (sleeping in a stranger's house) into a logical inevitability by focusing on a specific niche first.
@@ -161,7 +162,7 @@ The purpose of including this example is not to suggest founders abandon slides.
 ## The Pattern Across All Seven Decks
 
 Studying these decks together produces a consistent finding: 
-the first four slides get 60% of total deck attention — if your traction chart is on slide seven, you've already lost it.
+the first few slides get most of the attention — if your traction chart is on slide seven, you've already lost it.
  Every deck in this set that worked placed its most persuasive signal (a specific user number, a specific revenue figure, a specific demand validation) in the opening sequence.
 
 The structural mistake visible in the decks that fail (and there are far more failed decks than funded ones) is that founders present their deck the way they understand their business, not the way investors evaluate businesses. 
@@ -189,11 +190,3 @@ Rupert was built specifically for this gap. Every campaign is researched by expe
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in late 2026 remains defined by a sharpening split between headline totals and on-the-ground access. Global venture funding reached a record $510 billion in the first half of 2026, yet early-stage deals contributed only 5% of total US capital in August — with 135 seed transactions generating just $870 million against the late-stage megadeal machine. Carta's Q2 2026 State of Pre-Seed report confirms the concentration dynamic at the entry level: roughly the same dollars as Q2 2025 went into 22% fewer instruments, pushing average pre-seed instrument size to a record $276,000. Notably, AI's share of pre-seed dollars has now plateaued near 50% for two consecutive periods — a ceiling, not a floor. At seed, Carta's Q2 2026 benchmark puts the median round at $4.5 million on a $23.9 million post-money valuation at 19.4% dilution, with the down-round rate falling to 11.4% — the lowest since 2020. For deck construction, the AI-wrapper discount has sharpened into a failure-rate conversation: industry analysis now projects 80–90% of wrapper startups will fail in 2026, meaning founders must demonstrate proprietary data loops and workflow-level embedding, not model adjacency, before a moat slide lands.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.

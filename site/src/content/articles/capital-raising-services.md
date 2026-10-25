@@ -5,9 +5,8 @@ slug: capital-raising-services
 date: "2026-09-29"
 updatedDate: "2026-09-29"
 author: dori-fussmann
-category: investor database
-pillarKeyword: investor database
-supportingKeyword: capital raising services
+category: capital raising services
+pillarKeyword: capital raising services
 articleType: comprehensive
 targetKeyword: capital raising services
 tags:
@@ -20,30 +19,23 @@ image: ../../assets/articles/capital-raising-services.png
 imageAlt: "Founder reviewing a structured investor outreach pipeline on a laptop, surrounded by investor shortlists and fundraising notes"
 keywords:
   - capital raising services
-  - investor database
 draft: false
 internalLinks:
-  - slug: investor-database
-    anchor: investor database
-  - slug: capital-raising-advisory-services
-    anchor: capital raising advisory services
-  - slug: capital-raising-consultants
-    anchor: capital raising consultants
-  - slug: capital-raising-fees
-    anchor: capital raising fees
   - slug: startup-fundraising-consultant
-    anchor: startup fundraising consultant
+    anchor: "Hiring a fundraising consultant"
+  - slug: capital-raising-advisory-services
+    anchor: "Advisors vs. broker-dealers for capital raising"
+  - slug: capital-raising-fees
+    anchor: "What capital raising actually costs"
+  - slug: how-to-find-investors
+    anchor: "How to find the right investors"
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: "Warm intros vs. cold outreach to investors"
 
 externalLinks:
-  - label: Database
-    url: "https://supabase.com/database"
-    addedAt: 2026-09-30
-  - label: UNSDG
-    url: "https://unstats.un.org/sdgs/unsdg/"
-    addedAt: 2026-09-30
-  - label: Consumer Complaint Database
-    url: "https://www.consumerfinance.gov/data-research/consumer-complaints/"
-    addedAt: 2026-09-30
+  - label: "SEC: Guide to Broker-Dealer Registration"
+    url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
+    addedAt: 2026-10-25
 faqs:
   - question: "What is the difference between a capital raising service and an investor database?"
     answer: "An investor database is a self-serve research tool that gives you access to a list of investors you then contact yourself. A capital raising service — specifically an expert-managed outreach model — does the research, personalization, sequencing, and pipeline management on your behalf. The database is an input; the service is the full process. Founders who lack the bandwidth or network to run a disciplined outreach campaign benefit most from the latter."
@@ -63,11 +55,11 @@ The phrase "capital raising services" covers an enormous amount of ground — an
 
 ### Fundraising Consultants
 
-Fundraising consultants typically work as strategic advisors rather than operators. They help you sharpen your pitch, stress-test your financial model, refine your narrative, and prepare materials. Some will make introductions from their personal networks; most will not execute outreach on your behalf. The value is in the preparation and the strategic thinking, but the founder still runs the process. This model suits founders who are confident in their ability to execute outreach and manage a pipeline but need expert input on positioning and materials.
+[Fundraising consultants](/articles/startup-fundraising-consultant/) typically work as strategic advisors rather than operators. They help you sharpen your pitch, stress-test your financial model, refine your narrative, and prepare materials. Some will make introductions from their personal networks; most will not execute outreach on your behalf. The value is in the preparation and the strategic thinking, but the founder still runs the process. This model suits founders who are confident in their ability to execute outreach and manage a pipeline but need expert input on positioning and materials.
 
 ### Placement Agents
 
-Placement agents are regulated intermediaries — typically registered broker-dealers — who formally represent you to investors and take a success fee (often called "carry") as a percentage of capital raised. They are most common at growth stages and in private equity contexts, where deal sizes justify the economics of a formal placement process and where regulatory frameworks require brokerage registration for certain types of compensation. For Seed and Series A founders, placement agents are relatively rare and sometimes too expensive or structurally mismatched for the round size.
+Placement agents are regulated intermediaries — typically registered [broker-dealers](/articles/capital-raising-advisory-services/) — who formally represent you to investors and take a [success fee](/articles/capital-raising-fees/) (often called "carry") as a percentage of capital raised. They are most common at growth stages and in private equity contexts, where deal sizes justify the economics of a formal placement process and where regulatory frameworks require brokerage registration for certain types of compensation. For Seed and Series A founders, placement agents are relatively rare and sometimes too expensive or structurally mismatched for the round size.
 
 ### Investor Databases
 
@@ -97,7 +89,7 @@ A founder raising a $3M Seed who signs up for a self-serve investor database is 
 
 ## The Fundraising Environment These Services Are Operating In
 
-Understanding what capital raising services offer also means understanding the market they are operating in — because the difficulty of the raise shapes the value of professional help. Only about 20% of seeded companies raise a Series A; fewer than 1% of all startups ever do.
+Understanding what capital raising services offer also means understanding the market they are operating in — because the difficulty of the raise shapes the value of professional help. Only a minority of seed-funded companies ever raise a Series A: of US startups that raised a $1M+ seed in 2023, just 24% have raised again, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/).
 
 The math is straightforward: too many seeds were planted in 2021 and 2022, and Series A investors have become dramatically more selective — the bar has shifted from "promising metrics" to a clear demonstration of product-market fit with a credible path to significant ARR.
  At the same time, 
@@ -173,21 +165,6 @@ For Seed and Series A founders who have a compelling company and story but canno
 
 That is the value proposition Rupert was built to deliver. Expert operators who research investor fit, personalize outreach, manage the pipeline, and maintain complete transparency at every step — while ensuring the founder retains full ownership of every relationship from the first message to the final close. For founders raising at Seed or Series A who understand what a professional process looks like and want one without losing control of their company to run it, that combination is exactly what the category should offer.
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The capital raising environment as of late September 2026 is one where capital is available but increasingly concentrated and selective. 
-The median seed valuation on Carta rose significantly over the past two years while median deal sizes stayed flat, with AI companies taking roughly half of pre-seed dollars and the top tenth of startups capturing roughly half of all money raised.
-
-The median U.S. Series A deal reached $15 million last year, with that trend continuing upward into 2026
- — but 
-the volume of deals is actually declining, with Q1 2026 seeing under 4,000 deals, down from over 5,000 in the same period the previous year.
- Against this backdrop, 
-the consensus from practitioners is that founders need a fundamentally different fundraising operating model in the current environment — the old approach of broad outreach and generic decks has weakened, replaced by a demand for sharper positioning, stronger evidence, and tighter process control.
- Market demand for structured fundraising support remains strong: 
-as recently as September 28, 2026, a new fundraising platform announced its 2027 waitlist, specifically designed to help founders find more relevant investors, strengthen messaging, and keep outreach moving alongside the demands of building a company
- — a signal that the gap between what founders need and what self-serve tools deliver continues to drive new entrants into the expert-managed outreach category.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - "Capital raising services" is not a single product — it covers at least five distinct models (consultants, placement agents, investor databases, crowdfunding portals, and expert-managed outreach agencies), and matching the wrong model to your round type is one of the most costly early-stage fundraising mistakes.
@@ -195,11 +172,3 @@ as recently as September 28, 2026, a new fundraising platform announced its 2027
 - The single most predictive variable in outreach conversion is the quality of targeting and personalization — volume of contacts reached is a poor proxy for process quality, and bulk outreach to recycled lists actively damages a founder's reputation with investors.
 - Two of three Series A deals now involve investors who already knew the founder for six months or more, which means a disciplined, relationship-first outreach process is not optional; it is the baseline requirement for a competitive round.
 - Before engaging any capital raising service, founders should demand clear answers on five points: data recency, personalization method, transparency and reporting, fee structure and exit terms, and explicit confirmation that every investor relationship transfers to the founder at engagement end.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
-<!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Database](https://supabase.com/database) · [UNSDG](https://unstats.un.org/sdgs/unsdg/) · [Consumer Complaint Database](https://www.consumerfinance.gov/data-research/consumer-complaints/).
-<!-- CMS-EXTERNAL:END -->

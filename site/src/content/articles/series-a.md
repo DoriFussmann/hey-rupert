@@ -5,7 +5,7 @@ description: "What Series A really means in 2026: round sizes, ARR benchmarks, v
 slug: series-a
 date: 2026-08-18
 author: dori-fussmann
-category: series a
+category: startup funding stages
 tags:
   - series a
   - startup funding
@@ -19,12 +19,13 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: series a
+pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: series a
 updatedDate: 2026-09-18
 keywords:
   - series a
+  - startup funding stages
 faqs:
   - question: What is the difference between seed and Series A funding?
     answer: Seed rounds typically use SAFEs or convertible notes, involve angel investors or micro-VCs, and carry minimal governance strings. Series A is a priced equity round that introduces preferred stock with liquidation preferences, anti-dilution protections, a formal board seat for the lead investor, and protective provisions that govern major company decisions. The shift is structural, not just a matter of round size — the documents you sign at Series A shape governance for every future round.
@@ -35,31 +36,15 @@ faqs:
   - question: What happens after I close a Series A?
     answer: The capital creates an 18–24 month runway to hit the milestones needed for a strong Series B. In practice, the first 90 days should focus on building the executive team (typically a first VP of Sales, Engineering, or Marketing), establishing board governance with a quarterly meeting cadence, and setting quarterly revenue targets that work backward from Series B benchmarks — generally $8M–$15M ARR with sustained 2x year-over-year growth. The commitments embedded in your Series A pitch become the baseline investors use to price the next round.
 internalLinks:
-  - slug: angel-investors
-    anchor: angel investors
-  - slug: investor-database
-    anchor: investor database
-  - slug: pitch-deck
-    anchor: pitch deck
-  - slug: startup-funding
-    anchor: startup funding
-  - slug: venture-capital
-    anchor: venture capital
-  - slug: investor-crm
-    anchor: investor crm
-  - slug: how-long-between-seed-and-series-a
-    anchor: how long between seed and series a
-  - slug: pre-seed-vs-seed-vs-series-a
-    anchor: pre seed vs seed vs series a
-  - slug: seed-funding-vs-series-a
-    anchor: seed funding vs series a
+  - slug: startup-funding-stages
+    anchor: "Startup funding stages, pre-seed to Series C"
   - slug: seed-vs-series-a
-    anchor: seed vs series a
-  - slug: how-to-find-investors
-    anchor: how to find investors
+    anchor: "Seed vs. Series A"
+  - slug: biggest-venture-capital-firms
+    anchor: "The biggest VC firms, and which write early checks"
 
 externalLinks:
-  - label: Series A Funding Guide — How to Prepare and Close ...
+  - label: "Series A Funding Guide — How to Prepare and Close ..."
     url: "https://www.awake-partners.com/post/series-a-funding-guide"
     addedAt: 2026-08-27
   - label: "Series A Fundraising: A Comprehensive Guide"
@@ -68,7 +53,16 @@ externalLinks:
   - label: "Series A Funding: Your Guide in 2024"
     url: "https://www.capboard.io/en/captable/series-a-funding-explained"
     addedAt: 2026-08-27
-
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: Founder Ownership Report 2026"
+    url: "https://carta.com/data/founder-ownership-2026/"
+    addedAt: 2026-10-25
+  - label: "Crunchbase News: Seed Deals Keep Getting Bigger As Odds Of Reaching Series A Fall (May 2026)"
+    url: "https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/"
+    addedAt: 2026-10-25
+supportingKeyword: series a
 ---
 ## What Series A Actually Is — and Why It Matters
 
@@ -87,7 +81,7 @@ Series A funding is the first priced round and represents a significant mileston
 
 ## How Series A Differs from Seed: Structure, Not Just Size
 
-The surface difference between seed and Series A is the dollar amount. The substantive difference is in the legal architecture.
+The surface difference between [seed and Series A](/articles/seed-vs-series-a/) is the dollar amount. The substantive difference is in the legal architecture.
 
 Series A and later rounds use preferred stock. Seed rounds may use SAFE notes or convertible notes instead of priced rounds with preferred stock.
  That distinction carries enormous practical weight. SAFEs and convertible notes are deliberately light-touch instruments — minimal governance, no board seats, deferred valuation. They are designed to get capital into a company quickly and inexpensively while both sides wait for more information.
@@ -127,14 +121,12 @@ Series A is where fundraising stops being about promise and starts being about e
 
 The gap between the number of seed-funded companies and the number that reach Series A is not a soft market phenomenon. It is structural, and the data is striking.
 
-The Series A conversion rate — the share of seed-funded companies that raise a priced Series A within 24 months — sits at roughly 15–20% as of 2026, according to Carta and Pitchbook cohort data.
- A decade ago, that figure was closer to 30%. 
-Because seed deal volume exploded while Series A capacity stayed roughly flat, the practical result is that 70–85% of seed companies stall, bridge, or shut down before graduating.
+Of US companies that raised a $1M+ seed in 2023, only 24% have raised again, and for the 2024 cohort it is 16%, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/).
+Because seed deal volume exploded while Series A capacity stayed roughly flat, the practical result is that most seed companies stall, bridge, or shut down before graduating.
 
 The time dimension compounds the pressure. 
 While companies that are funded at the seed stage are typically raising larger checks, they're also taking longer to move on to Series A and face lower odds of graduating to that phase at all. Since 2023, U.S. startups have been taking longer to raise a Series A round following an initial seed round of $1 million and over, with that time frame now stretching to more than two years.
 
-The average time from Seed to Series A has stretched to approximately 616 days, according to recent data from PitchBook and Crunchbase.
  That figure alone should recalibrate how founders think about runway planning. A company that closes seed today and assumes it will raise Series A in 18 months is planning against a median that no longer exists.
 
 The implication is clear: 
@@ -153,7 +145,7 @@ $1.5M ARR growing 2.5x with 110% NRR might price around $40M post-money ($1.5M �
 
 Pre-money valuations for Series A rounds in 2026 range from $25M to $80M, with the median around $40M to $50M. Valuation depends heavily on revenue multiple, growth rate, market size, team quality, and competitive dynamics.
  The AI premium is real and should not be treated as the baseline: 
-much of that increase is concentrated in AI deals; non-AI Series A rounds are still pricing closer to a $40–42M pre-money, so founders should check the AI-vs-non-AI split before benchmarking their own round against the headline medians.
+much of that increase is concentrated in AI deals, so founders should check the AI-vs-non-AI split before benchmarking their own round against the headline medians.
 
 One often-overlooked truth: 
 a $30M post-money valuation that closes beats a $60M valuation that doesn't. The only valuation that matters is the one investors actually wire money at.
@@ -208,7 +200,7 @@ Target 40 to 60 funds that actually lead Series A rounds in your sector. Expect 
 When building your target list, focus on firms that have recent experience in your sector and stage. Review their portfolio for potential conflicts — a firm is unlikely to lead your round if they already back a direct competitor. Warm introductions from existing investors, other founders in the firm's portfolio, or mutual connections convert at 5x to 10x the rate of cold outreach.
 
 Quality of targeting matters far more than volume. 
-The top 10 VC funds captured nearly 43% of all venture capital in Q3 of 2025, the highest share in at least a decade.
+
  Capital is concentrating, which means reaching the right partner at the right fund with a message that demonstrates genuine fit is the work — not maximizing outreach volume. 
 Warm intros help, but they are not required if your numbers are strong and your outreach is sharp. Many Series A rounds today start with well-crafted cold or semi-warm emails. A relevant, personalized message to an investor who funds your stage beats a generic intro to one who does not.
 
@@ -242,15 +234,3 @@ Getting the investor targeting, outreach sequencing, and pipeline management rig
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The Series A market in mid-2026 is defined by a stark divergence: headline venture numbers are historic, but access remains structurally concentrated. US venture capital hit $412.7 billion in H1 2026 — nearly 30% more than all of 2025 — while global startup funding reached a record $510 billion, per PitchBook-NVCA and Crunchbase. Yet that headline obscures who is capturing the capital. AI absorbed 86% of US VC dollars, with OpenAI and Anthropic alone accounting for 43% of all H1 funding; the Q2 2026 Venture Monitor explicitly flagged the "collapse of corporate VC and nontraditional participation outside of AI." For non-AI founders, conditions remain structurally difficult. The Cooley Q2 2026 Venture Financing Report found that while Series A deal volume ticked up quarter-over-quarter, median Series A pre-money valuations actually declined in Q2, down rounds rose to 12.1%, and pay-to-play provisions increased to 8.4% — signals of ongoing stress below the headline. The exit environment improved modestly, anchored by SpaceX's landmark $1.75 trillion IPO, but PitchBook notes the broader IPO pipeline beyond OpenAI and Anthropic has yet to be built. The structural message for founders is unchanged: disciplined preparation, precise investor targeting, and metrics that clear the bar before the process begins.
-<!-- WHERE-THINGS-STAND:END -->
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/) · [how to find investors](/articles/how-to-find-investors/)
-<!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Series A Funding Guide — How to Prepare and Close ...](https://www.awake-partners.com/post/series-a-funding-guide) · [Series A Fundraising: A Comprehensive Guide](https://www.trustfinta.com/blog/series-a-fundraising-comprehensive-guide) · [Series A Funding: Your Guide in 2024](https://www.capboard.io/en/captable/series-a-funding-explained).
-<!-- CMS-EXTERNAL:END -->

@@ -5,7 +5,7 @@ description: "What founders need to know about startup funding: stages, instrume
 slug: startup-funding
 date: 2026-08-18
 author: dori-fussmann
-category: startup funding
+category: startup funding stages
 tags:
   - startup funding
   - fundraising
@@ -19,67 +19,50 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: startup funding
+pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: startup funding
 updatedDate: 2026-09-18
 keywords:
   - startup funding
+  - startup funding stages
 faqs:
   - question: How long does a typical seed or Series A fundraise take from first outreach to close?
     answer: Most seed and Series A raises take three to six months from first investor outreach to a signed term sheet and close. That timeline assumes a well-prepared founder with a defined target list, warm introductions, and a data room ready before the first meeting. Founders who run unstructured, reactive processes routinely stretch this to nine months or longer — burning runway and management attention in the process. Starting fundraising conversations twelve to eighteen months before you expect to run out of cash gives you the time to be selective and to walk away from bad terms.
   - question: What metrics do Series A investors actually expect to see in 2026?
     answer: The bar has moved materially since 2021. Series A investors in 2026 typically want to see $1M–$3.5M in ARR, year-over-year revenue growth of 2–3x, net revenue retention above 100% for SaaS businesses, gross margins above 65%, and a burn multiple below 1.5x. Capital efficiency metrics receive far more scrutiny than during the 2020–2021 growth era. AI-native companies can still command higher valuations at lower revenue, but even within that cohort, investors are increasingly distinguishing between durable AI businesses and feature wrappers.
   - question: When should a founder use a SAFE versus a priced equity round?
-    answer: "SAFEs are the standard instrument for pre-seed and early seed raises — Carta data shows they comprised 93% of pre-seed deals in Q1 2026. They close faster, carry no interest or maturity date, and avoid the legal complexity of a full priced round. Priced equity rounds become the norm once you are raising $4M or more, when institutional investors want a formal valuation, a lead investor, and board governance. The critical thing founders often underestimate is how multiple SAFEs stack: each has its own valuation cap, and they all convert at the priced round, meaning cumulative dilution can be significantly higher than any single SAFE suggests."
+    answer: "SAFEs are the standard instrument for pre-seed and early seed raises — around nine in ten pre-seed deals on Carta use them. They close faster, carry no interest or maturity date, and avoid the legal complexity of a full priced round. Priced equity rounds become the norm once you are raising $4M or more, when institutional investors want a formal valuation, a lead investor, and board governance. The critical thing founders often underestimate is how multiple SAFEs stack: each has its own valuation cap, and they all convert at the priced round, meaning cumulative dilution can be significantly higher than any single SAFE suggests."
   - question: What is the most common reason seed-funded startups fail to raise a Series A?
     answer: "The most common failure is structural, not product-related: founders reach Series A conversations without enough ARR, without sufficient revenue growth rate, or having spent too long at seed without building relationships with Series A investors who will eventually lead their round. The seed-to-Series A graduation rate has fallen sharply — from around 50% in the 2018–2021 era to roughly 35–38% today on an extended timeline. Most founders who do not make it had a fundable product; they ran an undisciplined process, targeted the wrong investors, or failed to build investor relationships before they needed a term sheet."
 internalLinks:
   - slug: startup-funding-stages
-    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
-  - slug: early-stage-venture-capital
-    anchor: early-stage venture capital
-  - slug: startup-funding-rounds-faq
-    anchor: startup funding rounds
-  - slug: startup-funding-stages-explained
-    anchor: startup funding stages explained
+    anchor: "Startup funding stages, pre-seed to Series C"
   - slug: types-of-funding-for-startups
-    anchor: types of funding for startups
-  - slug: angel-investors
-    anchor: angel investors
-  - slug: investor-database
-    anchor: investor database
-  - slug: pitch-deck
-    anchor: pitch deck
-  - slug: series-a
-    anchor: series a
-  - slug: venture-capital
-    anchor: venture capital
-  - slug: investor-crm
-    anchor: investor crm
+    anchor: "Types of startup funding: equity, SAFEs, debt"
   - slug: how-to-find-investors
-    anchor: how to find investors
-  - slug: angel-investors-for-pre-seed-funding
-    anchor: angel investors for pre seed funding
-  - slug: how-to-raise-pre-seed-funding
-    anchor: how to raise pre seed funding
-  - slug: pre-seed-funding
-    anchor: pre seed funding
-  - slug: pre-seed-vs-seed-funding
-    anchor: pre seed vs seed funding
-  - slug: what-is-pre-seed-funding
-    anchor: what is pre seed funding
+    anchor: "How to find the right investors"
 
 externalLinks:
   - label: "Startup Funding: A Founder's Guide to Raising ..."
-    url: https://carta.com/learn/startups/fundraising/
+    url: "https://carta.com/learn/startups/fundraising/"
     addedAt: 2026-08-18
-  - label: A Guide to Different Stages of Funding for Startups
-    url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+  - label: "A Guide to Different Stages of Funding for Startups"
+    url: "https://www.startups.com/articles/different-stages-of-funding-for-startups"
     addedAt: 2026-08-18
   - label: "A Guide to Early-Stage Startup Funding: Your Options"
-    url: https://www.capboard.io/en/captable/startup-funding-sources
+    url: "https://www.capboard.io/en/captable/startup-funding-sources"
     addedAt: 2026-08-18
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "Crunchbase News: Seed Deals Keep Getting Bigger As Odds Of Reaching Series A Fall (May 2026)"
+    url: "https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/"
+    addedAt: 2026-10-25
+supportingKeyword: startup funding
 ---
 ## What Startup Funding Actually Is — and What It Isn't
 
@@ -148,7 +131,7 @@ A SAFE has no interest and no maturity date, making it one of the most attractiv
  Unlike convertible debt, it does not accrue interest or create a liability on the balance sheet. Unlike a priced equity round, it does not require a formal valuation negotiation or an expensive legal process.
 
 The market has converged on SAFEs with striking speed. 
-At the pre-seed stage, SAFEs comprised a record high of 93% of all deals on Carta in Q1 2026, while convertible notes fell to a record low of just 7% of pre-seed rounds. In 2025, the majority of early-stage rounds under $4 million were completed using SAFEs or convertible notes.
+At the pre-seed stage, SAFEs now make up around nine in ten deals on Carta, while [convertible notes](/articles/types-of-funding-for-startups/) have shrunk to a small minority. In 2025, the majority of early-stage rounds under $4 million were completed using SAFEs or convertible notes.
 
 Two terms inside a SAFE carry the most weight for founders: the valuation cap and the discount rate. The valuation cap is the maximum pre-money valuation at which the SAFE investor's capital will convert into equity when a priced round occurs. 
 The cap protects early investors from excessive dilution if the startup raises its priced round at a far higher valuation — and from a founder's perspective, the cap determines exactly how much ownership the early check costs.
@@ -166,7 +149,7 @@ Convertible notes have fallen to just 7% of pre-seed deals, carrying legal overh
 ### Priced Equity Rounds: When Institutional Capital Arrives
 
 Priced equity rounds — where a formal valuation is set, lead investors negotiate terms, and new shares are issued — become standard as round sizes grow. 
-Among larger deals, priced rounds predominate; just 20% of seed deals larger than $5 million are SAFEs, while 70% are priced equity.
+
  Priced rounds involve more legal complexity: term sheets, investor rights agreements, board seats or observer rights, and anti-dilution provisions. That complexity is appropriate at the scale where institutional investors are writing meaningful checks and expecting governance in return.
 
 ### Venture Debt and Revenue-Based Financing
@@ -178,7 +161,6 @@ Equity is not the only option, particularly for companies with predictable reven
 ## The 2026 Market: A Bifurcated Reality
 
 The headline numbers in the 2026 venture market can be actively misleading for founders trying to benchmark their raise. 
-Roughly $425 billion flowed into startups in 2025, and about 50% of it went to AI-related companies — which sounds like a strong market, but for most early-stage founders it signals tighter competition, slower access, and a funding picture much narrower than the headline implies.
 
 The bifurcation is real and consequential. 
 Seed-stage AI startups generally command valuations about 42% higher than non-AI peers, because investors believe AI startups can grow faster.
@@ -189,7 +171,7 @@ For non-AI founders, the market in 2026 requires a materially stronger evidence 
 Key investor evaluation metrics in 2026 include ARR growth rate of 30–100%+ for early stage, net revenue retention above 100%, gross margin above 65% for SaaS, burn multiple below 1.5x, and CAC payback period under 18 months — with capital efficiency metrics receiving far more scrutiny than during the 2020–2021 growth era.
 
 The AI premium also distorts benchmark data in ways that trap founders. 
-Carta's Q4 2025 data put the median seed post-money at a record $24M, and the Q1 2026 PitchBook-NVCA Venture Monitor put the median Series A deal at $19.6M with a $78.7M post-money — but much of that increase is concentrated in AI deals, and non-AI Series A rounds are still pricing closer to a $40–42M pre-money.
+Carta's July 2026 benchmark puts the median seed round at $4.1M on a valuation of about $24M, and the median Series A at $14.4M on about $80M — but much of that increase is concentrated in AI deals.
  Using the blended median as a benchmark when you are not an AI company will lead to overpriced rounds and damaged relationships with investors who will do the math before you do.
 
 Understanding the valuation implication in the other direction is equally important: raising at too high a valuation at seed creates a Series A math problem. If your seed post-money is $24M and you have not materially outperformed expectations by the time you approach Series A, you will either face a flat round or a down round — both of which complicate future raises and team morale. Valuation is not validation.
@@ -212,7 +194,7 @@ Beyond stage-matching, investors evaluate the quality of the process itself. A w
 ## The Seed-to-Series A Gap: The Hardest Filter in Startup Funding
 
 The gap between closing a seed round and successfully raising a Series A is where the majority of venture-backed startups stall. 
-The Series A conversion rate (the share of seed-funded companies that raise a priced Series A within 24 months) sits at roughly 15–20% as of 2026, according to Carta and Pitchbook cohort data. That figure is down from roughly 30% for the 2018 cohort, leaving 70–85% of seed-funded startups that never graduate to a priced Series A.
+Graduation odds keep falling: of US companies that raised a $1M+ seed in 2023, only 24% have raised again, and for the 2024 cohort it is 16%, according to [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/).
 
 The causes are structural. 
 The bar has risen from a strong team and deck to roughly $1M–$2M ARR growing 3x year-over-year, while seed deal volume far outpaced the growth in Series A capacity.
@@ -233,8 +215,6 @@ Founders who treat fundraising as a part-time activity between product sprints c
 **Define the target list with precision.** Before any outreach begins, build a researched list of investors who are genuinely likely to invest: right stage, right sector, right check size, active fund not in harvest mode, and no undisclosed conflicts from portfolio companies. A focused list of 50–80 well-matched investors will consistently outperform a list of 300 weakly matched ones. The quality of the list determines the ceiling on the process.
 
 **Warm introductions over cold outreach.** Investor response rates to cold email from unknown founders are low enough to be statistically irrelevant at most stages. The goal of network development activity (which should begin 6–12 months before you plan to raise) is to generate warm introductions from people the investor already trusts. 
-Roughly 30% of Series A leads come from prior seed backers
-, which is why maintaining consistent, high-quality investor updates to your existing investors is not a courtesy — it is a pipeline strategy.
 
 **Sequence and parallelize meetings.** The dynamics of a fundraise reward momentum. Running meetings sequentially (waiting to hear from one investor before approaching the next) destroys that momentum and extends the process by months. The standard approach is to create a compressed window where multiple investors are seeing the company at approximately the same time, generating competitive pressure and forcing decisions on a reasonable timeline.
 
@@ -260,15 +240,3 @@ Rupert is built specifically for this problem. Founders who work with Rupert ret
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The startup funding market in late 2026 has moved from concentrated recovery to a full capital boom — but the gains remain strikingly narrow. Global VC hit a record $510 billion in H1 2026, already surpassing all of 2025, yet OpenAI and Anthropic alone accounted for roughly 43% of that total. August reinforced the structural pattern: U.S. startups raised $18.1 billion across just 333 deals — a 123% year-over-year capital surge but a 32% drop in deal count from July — with megadeals in AI infrastructure, clean energy, and defense (including River AI's $1.1B Series A, Base Power's $1.0B Series D, and Castelion's $800M Series C) driving the totals. KPMG's Venture Pulse confirmed that Q2 2026 deal volume fell to 8,467 globally, the lowest since Q3 2017, even as dollar volume hit its second-highest quarter ever. For early-stage founders outside the AI infrastructure cohort, the message sharpens further: AI now captures roughly 86% of U.S. VC dollars by volume, defense technology has emerged as a top-three venture category by capital deployed, and the Series A crunch for non-AI startups shows no sign of easing.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [Startup Funding Stages: The Definitive Guide for Founders](/articles/startup-funding-stages/) · [early-stage venture capital](/articles/early-stage-venture-capital/) · [startup funding rounds](/articles/startup-funding-rounds-faq/) · [startup funding stages explained](/articles/startup-funding-stages-explained/) · [types of funding for startups](/articles/types-of-funding-for-startups/) · [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how to find investors](/articles/how-to-find-investors/) · [angel investors for pre seed funding](/articles/angel-investors-for-pre-seed-funding/) · [how to raise pre seed funding](/articles/how-to-raise-pre-seed-funding/) · [pre seed funding](/articles/pre-seed-funding/) · [pre seed vs seed funding](/articles/pre-seed-vs-seed-funding/) · [what is pre seed funding](/articles/what-is-pre-seed-funding/)
-<!-- CMS-INTERNAL:END -->

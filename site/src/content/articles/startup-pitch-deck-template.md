@@ -1,16 +1,16 @@
 ---
-title: "Startup Pitch Deck Template: Fill It Out the Right Way Now"
-h1: How to Fill Out a Startup Pitch Deck Investors Actually Read
-description: A step-by-step guide to completing your startup pitch deck template correctly — so every slide answers an investor's real question with evidence.
+title: "Pitch Deck Template: Fill Out All 12 Slides the Right Way"
+h1: "How to Fill Out a Pitch Deck Template, Slide by Slide"
+description: "A pitch deck template, slide by slide: the 12 slides in order, what each must prove, which free templates work, and when custom design is worth it."
 slug: startup-pitch-deck-template
 date: "2026-10-13"
-updatedDate: "2026-10-13"
+updatedDate: "2026-10-25"
 author: dori-fussmann
 category: pitch deck
 pillarKeyword: pitch deck
 supportingKeyword: pitch deck template
 articleType: howto
-targetKeyword: startup pitch deck template
+targetKeyword: pitch deck template
 tags:
   - pitch deck
   - startup fundraising
@@ -20,19 +20,16 @@ tags:
 image: ../../assets/articles/startup-pitch-deck-template.png
 imageAlt: "Founder reviewing a printed startup pitch deck template at a desk, annotating slides with a pen"
 keywords:
-  - startup pitch deck template
   - pitch deck template
   - pitch deck
 draft: false
 internalLinks:
   - slug: pitch-deck
-    anchor: pitch deck
-  - slug: free-pitch-deck-template
-    anchor: free pitch deck template
+    anchor: "How to build a pitch deck"
   - slug: sequoia-pitch-deck-template
-    anchor: sequoia pitch deck template
-  - slug: vc-pitch-deck-template
-    anchor: vc pitch deck template
+    anchor: "Sequoia vs. YC vs. Kawasaki deck formats"
+  - slug: seed-pitch-deck-examples
+    anchor: "Pitch deck examples and what worked"
 externalLinks: []
 faqs:
   - question: "How many slides should a startup pitch deck template have?"
@@ -43,9 +40,11 @@ faqs:
     answer: "Filling in template placeholders with aspirational language instead of evidence. Every slide prompt is a question an investor will ask out loud. If your answer is a projection, a generic TAM figure, or a claim without a source, it will be challenged in the first meeting — or there won't be a first meeting."
   - question: "How do I know if my completed pitch deck is ready to send?"
     answer: "Apply a cold-read test: scroll through the deck as if you've never seen it before, and ask whether the investment case is clear within 90 seconds. If you need to explain slides verbally before they make sense, the deck isn't ready. Tighten the narrative first, then optimize design."
+  - question: "Should I use Google Slides, PowerPoint, or Keynote for my pitch deck?"
+    answer: "Format is almost never the deciding factor in whether you get a meeting. Google Slides is a practical default for most seed-stage founders: it is free, shareable via link, and accessible without software installs. PowerPoint remains useful if your target investors prefer offline-ready files they can annotate. Keynote suits Mac-native teams and produces sharp visual output but requires conversion for Windows-based recipients. Choose the format your team can update quickly and that your investor can open without friction — then spend your energy on the content."
 ---
 
-A startup pitch deck template gives you the structure. What it cannot give you is the substance — and that distinction is the difference between a deck that earns meetings and one that gets quietly archived after a two-minute scroll.
+A startup [pitch deck](/articles/pitch-deck/) template gives you the structure. What it cannot give you is the substance — and that distinction is the difference between a deck that earns meetings and one that gets quietly archived after a two-minute scroll.
 
 Most founders treat the template as the deliverable. They download a well-designed file, drop their company name into the title slide, fill each placeholder with whatever seems plausible, and ship it. The resulting deck looks complete. But investors reading it can feel the difference between a narrative built from first principles and a template that has been populated in an afternoon. Before you touch a single slide, there is one thing to do first.
 
@@ -114,18 +113,134 @@ The 2026 funding market has a clear pattern: fewer companies receive the largest
 
 This is where many founders hit a structural problem. Running a disciplined outreach campaign — researching investors, personalizing each message, tracking conversations, and maintaining the pipeline — is itself a part-time job. It competes directly with building the company. Rupert handles that work on founders' behalf: experienced operators research and identify the investors most likely to convert, run personalized outreach campaigns, and give founders complete visibility into every conversation and every relationship — without taking the process out of the founder's hands. The deck you have built gets in front of people who are actually positioned to act on it.
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The fundraising environment in October 2026 is clarifying quickly for founders preparing pitch decks. 
-Global venture funding reached [a reported record of $510 billion in the first half of 2026](https://news.crunchbase.com/?p=93740), with AI companies taking more than 70% of startup capital in the second quarter and early-stage funding more than doubling year over year.
- But concentration of capital does not mean easier access: 
-fewer startups are getting funded overall, while stronger startups are raising larger rounds, with reporting pointing to shrinking deal counts alongside growing deal values.
- For founders completing pitch deck templates right now, 
-investor attention continues declining — now under two minutes for seed-stage decks — team slides are gaining importance as investors prioritize people in an AI-heavy landscape, and mobile-first viewing now accounts for more than 70% of initial reviews.
+## The 12 Slides of a Pitch Deck Template, in Order
 
-Early-stage investors are inspecting evidence much more closely, meaning founders with vague narratives and generic AI claims are competing at a disadvantage against teams with customer revenue, specialist knowledge, and a credible path to the next round.
- The practical implication: completing a template correctly, with bottoms-up logic and real evidence on every slide, has never mattered more.
-<!-- WHERE-THINGS-STAND:END -->
+### Slide 1: Cover
+
+The cover slide is not decoration. It is the first five seconds of the investor's experience. It should carry your company name, a single one-line descriptor of what you do, and nothing else. The descriptor should be specific enough that an investor immediately knows the category and customer — not "AI-powered workflow automation" but "AI that writes and files insurance claims for independent adjusters." Specificity signals founder clarity. Vagueness signals hand-waving.
+
+### Slide 2: Problem
+
+The problem slide is where the deck either pulls investors in or loses them. Its job is to make investors *feel* the pain — not acknowledge it abstractly, but viscerally understand why a particular group of people is suffering right now without your solution.
+
+The most common failure here is describing a problem that is technically real but emotionally inert: "The market for X is inefficient." That is not a problem; that is an observation. A strong problem slide names a specific person, describes what their day looks like today without your solution, and quantifies the cost (in time, money, or lost opportunity) of that pain. If investors have worked in or around your industry, this slide should make them nod. If they haven't, it should give them enough context to imagine the pain clearly.
+
+### Slide 3: Market Size
+
+Demonstrating market potential is critical for securing seed funding. Highlight the size of your target market, growth trends, and any gaps your business can fill. This information reassures investors that your startup has room to thrive and scale.
+
+The market slide has one job: make the opportunity feel worth a fund-returning bet. Venture investors need to believe that if your company captures a reasonable share of the market you're describing, the outcome could be a hundred-million-dollar business. That means the number you show needs to be large — but it also needs to be credible.
+
+Make your market sizing rigorous and bottoms-up rather than top-down.
+ A top-down TAM pulled from a market research report ("the global HR software market is $45 billion") signals that you don't actually understand your customer. A bottoms-up calculation — "there are 180,000 independent insurance adjusters in the US, each filing an average of 400 claims per year, and we charge $3 per claim" — signals that you've talked to customers, you understand the unit economics, and you've done the math. That's the version that lands.
+
+### Slide 4: Solution
+
+The solution slide comes *after* the problem and market for a reason. By the time investors reach it, they should already be convinced that the problem is real and the market is worth pursuing. Now they want to know: how does your product actually fix this?
+
+Keep this slide tight. Show the product (a screenshot, a workflow diagram, or a before-and-after view) rather than describing it in prose. Your solution description should make two things clear: what specifically your product does, and why that approach is meaningfully different from what exists today. The differentiation doesn't have to be technology; it can be distribution, pricing, or focus on a customer segment competitors have ignored. But it has to be real.
+
+### Slide 5: Traction
+
+The traction slide is the pivot point of the entire deck. It is where the story shifts from "here is what we're building" to "here is evidence that it works." 
+At seed stage, most investors are evaluating four things above all else: team, problem, timing, and traction signal — and even a small proof point such as a paying customer, strong retention, or a notable pilot matters enormously.
+
+The cardinal rule of the traction slide is this: show quantitative metrics that signal genuine demand, not vanity metrics that signal activity. MRR, retention curves, week-over-week growth rate, net revenue retention, and pilot-to-paid conversion rates all tell investors that demand is real. Total app downloads, registered users, and social media followers tell them almost nothing. Investors have learned to discount these numbers precisely because so many founders lead with them to obscure the absence of actual revenue signal.
+
+Your metrics at this stage are limited, so use what you have to show trajectory: how many customers you had three months ago versus now, what changed when you shipped a new feature, and why your churn dropped after you revised onboarding.
+ Trajectory is what seeds conviction — not the absolute number, but the direction and rate of change.
+
+### Slide 6: Business Model
+
+The business model slide answers one question: how does this company make money? It should cover your pricing model, the key revenue line, and any secondary revenue streams. It does not need to be a full P&L — that belongs in the financials slide. What it needs to show is that you have thought clearly about how value creation translates to captured revenue, and that the economics are coherent at scale.
+
+Lay out the revenue engines and pricing that will drive cash flow. Map each go-to-market stage and the resources required so investors see concrete traction milestones.
+ The most convincing business model slides also include a simple unit economics view: what does it cost to acquire a customer, and what is that customer worth over time? Even rough numbers at seed stage signal that you understand the levers of your business.
+
+### Slide 7: Go-to-Market
+
+The go-to-market slide is where many seed decks go soft. Founders often describe a strategy that is too broad ("we'll grow through content, SEO, partnerships, and enterprise sales") and therefore impossible to evaluate. A good go-to-market slide does the opposite: it names the one or two channels where you have early evidence of traction, explains the unit economics of acquiring customers through those channels, and describes the sequencing of expansion as the business grows.
+
+If you already have a distribution insight — a channel, a partnership, or a community where your target customer already congregates — lead with that. Earned distribution advantages are enormously valuable at seed stage because they compress the time and capital required to reach product-market fit.
+
+### Slide 8: Competition
+
+The competition slide is not a 2x2 matrix where you conveniently occupy the top-right quadrant. Every investor has seen hundreds of those, and none of them are believed. What works instead is an honest framing: who else is solving this problem (including alternative approaches, not just direct competitors), what are those approaches' meaningful weaknesses, and what is specifically different about your approach?
+
+The best-performing decks tend to follow the same underlying logic: start with the problem, explain the solution, show the market, prove traction, and end with a credible raise
+ — and the competition slide belongs in that arc as a proof point for differentiation, not as a marketing exercise. If you can name the customers you've won *from* a specific competitor, do it. Concrete evidence of competitive displacement is worth ten 2x2 matrices.
+
+### Slide 9: Team
+
+Your seed stage pitch deck should show your conviction as a founder. You need to tell the investor why you're the right person to build this, what makes this approach work, and what you see that others don't.
+
+The team slide answers one underlying question: why are these specific people the ones most likely to win in this market? The most compelling team slides do this by naming unfair advantages — domain expertise accumulated over a decade, a prior exit in the same vertical, or deep relationships with the customer base you're targeting. Titles and university names are not advantages; they're context. Specific, relevant achievements are what move the needle.
+
+If your team has gaps (and at seed stage, most do) name them and explain how the capital will address them. Investors who find gaps on their own will worry; investors who see you've already identified the gaps will trust your self-awareness.
+
+### Slide 10: Financials
+
+Investors know that seed-stage financials are projections built on assumptions, not track records. They are not expecting precision. What they are evaluating is whether your assumptions are grounded in reality, whether you understand the key drivers of your business, and whether the opportunity is large enough to justify venture returns if things go well.
+
+Your financials slide should cover a three-year projection at minimum, with a simple revenue model, a path to gross margin improvement, and a view of your burn rate relative to the capital you are raising. Keep it to one or two slides. A dense spreadsheet screenshot signals that you do not know what matters; a clean chart with a few key numbers signals that you do.
+
+### Slide 11: Roadmap
+
+The roadmap slide bridges your current traction to your future milestones. It shows investors where the company will be in 12 and 24 months if the round closes — not in terms of features shipped, but in terms of business outcomes achieved. Think revenue milestones, customer count benchmarks, and product capability thresholds that unlock the next phase of growth.
+
+The roadmap also functions as implicit validation of your ask: if the milestones you describe are achievable with the capital you're raising, your plan is credible. If the milestones require significantly more capital than you're asking for, investors will notice the mismatch.
+
+### Slide 12: The Ask
+
+The ask slide is the most underbuilt slide in the average seed deck. Founders either treat it as an afterthought — a single number floating on a white slide — or bury the key details in fine print. Neither approach works.
+
+A strong ask slide specifies four things: the exact amount you're raising, the deal structure (SAFE with a valuation cap, or a priced round with an implied valuation), how the capital will be deployed across 18 to 24 months of runway, and the specific milestone that positions you to raise your Series A. 
+Being explicit about what you will use the seed funding to prove — clearly stating "we will use this capital to reach X milestone by Y date" — shows investors you understand what de-risking looks like even before the data exists.
+
+Vague asks signal that you haven't thought through your capital plan. 
+A fundable ask sounds like: "We're raising $2M to reach $1M ARR by Q1 2027." An unfundable one sounds like: "We're raising $2M to grow the team and expand."
+ The difference is not just in the words — it's in whether investors can picture the specific value creation their capital is buying.
+
+---
+
+## Which Free Pitch Deck Templates Are Worth Using?
+
+### The Sequoia Capital Outline
+
+The [Sequoia](/articles/sequoia-pitch-deck-template/) Capital template as the firm publishes it today is 10 slides: company purpose, problem, solution, why now, market potential, competition and alternatives, business model, team, financials, and vision. It comes from [Sequoia's own "Writing a Business Plan" guide](https://www.sequoiacap.com/article/writing-a-business-plan/), and it has outlived nearly every deck fad that arrived after it.
+ That longevity is not an accident. The framework reflects how experienced VCs move through a pitch mentally, and using it signals that you understand that logic.
+
+The template is not a design system. It is an argument in a fixed order: here is a broken thing, here is why it is breakable now, here is the size of the prize, here is why we are the ones who take it.
+ Founders who treat it as a visual formatting guide miss the point. The ten slides are a reasoning structure, and the quality of the reasoning matters far more than the slide design.
+
+### The Y Combinator Minimal Format
+
+The Y Combinator approach to pitch decks is similarly free, similarly brief, and similarly investor-recognized. YC's guidance consistently pushes founders toward a stripped-down deck that leads with clarity: what you make, who uses it, why it matters, and what the numbers say. The format is deliberately minimal because YC has observed thousands of decks and found that excess length usually signals a weak argument, not a strong one. Founders applying to YC or pitching YC-affiliated investors will find the minimal format directly relevant; founders pitching other institutional funds will find it a useful discipline regardless.
+
+### Canva, Google Slides, and Pitch.com
+
+Canva has a generous free tier with deck templates and a Pro tier with deeper features, backed by the largest and most approachable template library and a design surface most people already know. It is the safe default when money is tight and the argument is roughly in place: pick a template, drop in content, ship.
+ Google Slides works the same way — free, shareable, and requiring no software installation on the recipient's end. Pitch.com offers a free tier with collaboration features suited to teams building a deck together.
+
+None of these platforms provide fundraising-specific slide guidance. They provide visual containers. That is genuinely useful — starting from a well-proportioned blank canvas is better than starting from nothing — but the founder still needs to bring the argument.
+
+## Template vs. Custom Design: When Design Earns Its Cost
+
+The calculus changes materially at Series A and beyond. By the time a company is raising institutional capital, the investor audience is larger, more competitive, and more attuned to the signals embedded in presentation quality. 
+Series A investors are pattern-matching against dozens of deals they have seen. They want to find key metrics quickly.
+ A deck that looks generic — even if the content is strong — can create unnecessary friction at this stage because design is read as a proxy for brand maturity and operational discipline.
+
+A template provides a structure, while a custom pitch deck is built around a specific company and investment story. Custom pitch deck design focuses on investor messaging, fundraising strategy, positioning, and presenting information in a way that helps investors evaluate the opportunity more quickly.
+ At Series A, where the difference between a term sheet and a pass often comes down to marginal conviction, a deck that feels considered and intentional can close that gap.
+
+There is also a practical signal embedded in design quality at growth stage. When a company is raising $10M or more, the quality of every external communication becomes part of the investor's assessment of the team's judgment. A deck that looks like it was assembled over a weekend can undercut confidence in the company's ability to attract talent, manage a brand, and operate at scale. Custom design, done well, communicates that the founders understand their audience.
+
+### The Sequencing Rule That Most Founders Ignore
+
+The single most important rule in this entire debate is one that applies regardless of which path you choose: never invest in custom design until the narrative is fully locked. This sounds obvious. It almost never happens in practice. Founders commission custom design, receive a polished deck, and then discover through investor meetings that the problem framing is off, the market sizing is unconvincing, or the team story needs to be restructured. Every one of those changes means expensive redesign work and weeks of delay. The narrative — the argument the deck makes from slide one to the final ask — must survive investor scrutiny before it goes to a designer.
+
+While slide deck templates provide excellent starting points, authentic pitch deck design requires significant customization. Templates establish structural frameworks and design systems, but a unique value proposition demands unique visual expression.
+ The right order is: lock the structure with a template, pressure-test the narrative with advisors and early investor conversations, then — and only then — invest in custom design if the stage and competitive context justify it.
 
 ## Key Takeaways
 
@@ -134,7 +249,3 @@ Early-stage investors are inspecting evidence much more closely, meaning founder
 - Treat each template prompt as an investor question and answer it with specific evidence — customer quotes, unit economics, or comparable outcomes — not aspirational language.
 - The market size, business model, and financial projection slides are where most template decks fail; ground each one in bottoms-up logic rather than top-down figures.
 - Apply a 90-second cold-read test after completing the deck — if the investment case isn't clear in a scroll, tighten the narrative before touching the design.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [pitch deck](/articles/pitch-deck/) · [free pitch deck template](/articles/free-pitch-deck-template/) · [sequoia pitch deck template](/articles/sequoia-pitch-deck-template/) · [vc pitch deck template](/articles/vc-pitch-deck-template/).
-<!-- CMS-INTERNAL:END -->

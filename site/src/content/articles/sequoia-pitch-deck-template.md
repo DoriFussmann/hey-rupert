@@ -8,7 +8,7 @@ updatedDate: "2026-10-13"
 author: dori-fussmann
 category: pitch deck
 pillarKeyword: pitch deck
-supportingKeyword: pitch deck template
+supportingKeyword: sequoia pitch deck template
 articleType: flex
 targetKeyword: sequoia pitch deck template
 tags:
@@ -21,18 +21,15 @@ image: ../../assets/articles/sequoia-pitch-deck-template.png
 imageAlt: "Three pitch deck frameworks side by side — Sequoia, YC, and Guy Kawasaki — displayed on a whiteboard in a startup office"
 keywords:
   - sequoia pitch deck template
-  - pitch deck template
   - pitch deck
 draft: false
 internalLinks:
   - slug: pitch-deck
-    anchor: pitch deck
-  - slug: free-pitch-deck-template
-    anchor: free pitch deck template
+    anchor: "How to build a pitch deck"
   - slug: startup-pitch-deck-template
-    anchor: startup pitch deck template
-  - slug: vc-pitch-deck-template
-    anchor: vc pitch deck template
+    anchor: "Pitch deck template, slide by slide"
+  - slug: seed-pitch-deck
+    anchor: "Building a seed pitch deck"
 externalLinks: []
 faqs:
   - question: "Can I mix elements from the Sequoia, YC, and Guy Kawasaki frameworks in one deck?"
@@ -45,7 +42,7 @@ faqs:
     answer: "Treating the framework as a design exercise rather than a thinking exercise. Every named framework — Sequoia, YC, Guy Kawasaki — is fundamentally a set of questions that force founders to clarify their business logic. Founders who use the template to organize slides they've already written tend to produce decks that follow the right order but miss the underlying argument. The right approach is to answer each section's core question in a single sentence before building the slide, then build the visual around that answer."
 ---
 
-There are three frameworks every well-read founder has heard of, and most founders treat them as interchangeable alternatives for the same job. They are not. The Sequoia pitch deck template, the Y Combinator format, and Guy Kawasaki's 10/20/30 rule were each designed for a different audience, a different delivery method, and a different moment in a company's story. Choosing the wrong one doesn't just produce a weaker deck — it signals to investors that the founder doesn't understand how the fundraising process actually works.
+There are three frameworks every well-read founder has heard of, and most founders treat them as interchangeable alternatives for the same job. They are not. The Sequoia [pitch deck](/articles/pitch-deck/) template, the Y Combinator format, and Guy Kawasaki's 10/20/30 rule were each designed for a different audience, a different delivery method, and a different moment in a company's story. Choosing the wrong one doesn't just produce a weaker deck — it signals to investors that the founder doesn't understand how the fundraising process actually works.
 
 ## What the Sequoia Framework Actually Is
 
@@ -71,7 +68,7 @@ Unlike a demo-day format, the Sequoia template isn't time-constrained. It's desi
 YC's approach focuses on clarity over complexity. A YC pitch deck is usually short — around 10 to 12 slides — and structured for fast reading, with every slide supporting one idea and leading naturally to the next.
  Where the Sequoia framework is a document with narrative depth, the YC format treats each slide as a single evidentiary claim. The philosophy is almost adversarial toward founders who have not yet earned the right to a long deck.
 
-The YC pitch deck template is often considered the gold standard for startup fundraising, and its minimalist approach cuts through the noise by focusing on the core elements investors prioritize: problem, solution, business model, and traction.
+The YC [pitch deck template](/articles/startup-pitch-deck-template/) is often considered the gold standard for startup fundraising, and its minimalist approach cuts through the noise by focusing on the core elements investors prioritize: problem, solution, business model, and traction.
  That last word — traction — is where the YC format departs most sharply from the Sequoia structure. In practice, YC's guidance pushes traction evidence earlier and harder than most frameworks. 
 The most persuasive YC-style submissions tell a tight, data-driven story that begins with a well-defined problem and a differentiated solution, then anchors that narrative to credible traction, scalable unit economics, and a clear path to rapid but disciplined expansion. [According to YC](https://www.ycombinator.com/blog/how-to-design-a-better-pitch-deck), a great pitch deck follows three fundamental principles: Legibility, Simplicity, and Obviousness.
 
@@ -128,11 +125,6 @@ Choosing the right pitch deck framework is genuinely consequential — it shapes
 
 That targeting and outreach process is where most fundraises lose momentum — not because the deck was wrong, but because the right deck never reached the right investors. Rupert handles exactly that piece: researching investor fit, managing personalized outreach, and running the pipeline from first contact through to closed conversations, while founders retain complete visibility into every relationship and every reply. The framework gets you in the room. The outreach process determines which rooms you're actually in.
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The pitch deck framework conversation remains stable at the structural level — Sequoia, YC, and Kawasaki continue to be the three most-cited reference points for founders — but the surrounding fundraising environment has shifted meaningfully in recent months. Data from late 2026 reporting indicates [a record $510 billion in global venture funding in the first half of 2026](https://news.crunchbase.com/?p=93740), with AI companies capturing more than 70% of startup capital in Q2 alone, and early-stage funding more than doubling year over year. Seed benchmarks have also moved up, with one analysis citing a US median seed pre-money valuation of $18.4 million in Q1 2026 data. Within that environment, investor attention per deck has continued to compress — current estimates put the average review window for seed-stage decks under two minutes — which makes the structural discipline of a named framework more important, not less. Founders who reach investors with a clearly argued deck are also being asked harder questions on traction: recent market commentary consistently flags that Seed and Series A rounds now require stronger evidence, whether that means ARR, paid pilots, retention curves, or design partners, depending on the business. Framework choice shapes how that evidence is sequenced and how quickly it lands.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - The Sequoia pitch deck template — 10 sections from Company Purpose through Vision — is the industry's closest thing to a default VC framework and works best for founders with a clear "why now" narrative, particularly in emailed outbound decks sent before any meeting is booked.
@@ -140,7 +132,3 @@ The pitch deck framework conversation remains stable at the structural level —
 - Guy Kawasaki's 10/20/30 rule (10 slides, 20 minutes, 30pt font minimum) is an in-room presentation framework first — its constraints are valuable for demo days and live pitches but leave too little context for an asynchronously read emailed deck.
 - Using a named, credible framework signals investor-literacy to VC partners; it shows the founder understands the questions a fund uses to evaluate deals, before a single conversation takes place.
 - The right framework depends on raise stage, distribution format (email vs. live pitch), and the company's strongest proof point — no single template is universally optimal across every fundraising scenario.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [pitch deck](/articles/pitch-deck/) · [free pitch deck template](/articles/free-pitch-deck-template/) · [startup pitch deck template](/articles/startup-pitch-deck-template/) · [vc pitch deck template](/articles/vc-pitch-deck-template/).
-<!-- CMS-INTERNAL:END -->

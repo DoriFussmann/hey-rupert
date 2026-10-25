@@ -23,49 +23,46 @@ pillarKeyword: pitch deck
 supportingKeyword: seed pitch deck
 articleType: comprehensive
 targetKeyword: seed pitch deck
-updatedDate: 2026-09-28
+updatedDate: "2026-10-25"
 keywords:
   - seed pitch deck
   - pitch deck
 faqs:
-  - question: How is a seed pitch deck different from a pre-seed deck?
+  - question: "How is a seed pitch deck different from a pre-seed deck?"
     answer: "A pre-seed deck is built almost entirely on founder conviction, market insight, and early product signals — investors are underwriting the team and the idea. A seed deck must carry evidence of market response: early revenue, retention data, customer validation, or measurable usage trends. The narrative shifts from 'we believe this problem exists' to 'here is proof customers agree and are paying us to solve it.' The traction slide, which is often light or absent at pre-seed, becomes one of the highest-weighted slides at seed."
-  - question: How long should a seed pitch deck be?
-    answer: Ten to fourteen slides is the right range for a seed pitch deck, with ten to twelve being optimal for an initial investor send. Decks beyond fifteen slides see materially lower completion rates. Everything beyond the core narrative — detailed financials, technical architecture, full customer reference lists — belongs in a well-organized appendix that investors can pull up if they want it, but not in the main deck that has to survive a first read of under four minutes.
-  - question: Should the team slide go at the front or the back of a seed deck?
-    answer: At seed stage, the team slide almost always performs better in the first half of the deck — ideally slides three through five — rather than at the back. Investors form pattern-matching judgments quickly, and burying the team until slide twelve means many investors have already made a provisional decision before they see your strongest credibility signal. If your founding team has domain expertise, relevant exits, or deep sector experience, front-loading that context colours every subsequent slide positively.
-  - question: What traction does a seed investor actually want to see in 2026?
+  - question: "How long should a seed pitch deck be?"
+    answer: "Ten to fourteen slides is the right range for a seed pitch deck, with ten to twelve being optimal for an initial investor send. Decks beyond fifteen slides see materially lower completion rates. Everything beyond the core narrative — detailed financials, technical architecture, full customer reference lists — belongs in a well-organized appendix that investors can pull up if they want it, but not in the main deck that has to survive a first read of under four minutes."
+  - question: "Should the team slide go at the front or the back of a seed deck?"
+    answer: "At seed stage, the team slide almost always performs better in the first half of the deck — ideally slides three through five — rather than at the back. Investors form pattern-matching judgments quickly, and burying the team until slide twelve means many investors have already made a provisional decision before they see your strongest credibility signal. If your founding team has domain expertise, relevant exits, or deep sector experience, front-loading that context colours every subsequent slide positively."
+  - question: "What traction does a seed investor actually want to see in 2026?"
     answer: "The bar has risen. Many seed investors in 2026 expect $300K–$500K in ARR for B2B SaaS companies, alongside evidence of efficient growth and early unit economics. For consumer or marketplace businesses, strong retention and month-over-month user growth can substitute for revenue. If you are pre-revenue, the traction slide should show concrete validation signals: signed LOIs, design partner agreements, waitlist-to-customer conversion rates, or pilot data with named customers — not an unvalidated projection."
+  - question: "Can I reuse my pre-seed deck for a seed round by just updating the numbers?"
+    answer: "No — and this is one of the most common mistakes founders make. A pre-seed deck is built around a problem thesis, founder insight, and the 'why now' argument, because that's what investors are buying at that stage. A seed deck needs to retire that narrative framing and replace it with quantitative evidence: MRR, retention curves, growth rates, and early unit economics. You're not updating a deck — you're rebuilding the evidentiary case from scratch, even if the slide titles look similar."
 internalLinks:
   - slug: pitch-deck
-    anchor: "Pitch Deck: A Founder's Complete Guide to Raising Capital"
-  - slug: pre-seed-pitch-deck
-    anchor: "Pre-Seed vs Seed Pitch Deck: What Changes Between Rounds"
-  - slug: seed-funding-pitch-deck-faq
-    anchor: "Seed Pitch Deck FAQ: Practical Questions, Honest Answers"
+    anchor: "How to build a pitch deck"
   - slug: seed-pitch-deck-examples
-    anchor: "Seed Pitch Deck Examples: 7 Real Decks — and What Worked"
-  - slug: seed-round-pitch-deck-template
-    anchor: "Seed Round Pitch Deck: Structure All 12 Slides Step-by-Step"
+    anchor: "Pitch deck examples and what worked"
+  - slug: startup-pitch-deck-template
+    anchor: "Pitch deck template, slide by slide"
+  - slug: pre-seed-funding
+    anchor: "Pre-seed funding: the complete guide"
 
 externalLinks:
-  - label: "The Perfect Seed Pitch Deck: 10 Slides You Need to Win ..."
-    url: https://www.reddit.com/r/startups/comments/1lcyta0/the_perfect_seed_pitch_deck_10_slides_you_need_to/
+  - label: "The Ultimate Guide to Creating Your Pre-Seed Pitch Deck"
+    url: "https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck"
     addedAt: 2026-08-13
-  - label: The Ultimate Guide to Creating Your Pre-Seed Pitch Deck
-    url: https://www.thepitch.show/blog/the-ultimate-guide-to-creating-your-pre-seed-pitch-deck
+  - label: "A Simple Template for Your Seed Funding Pitch Deck"
+    url: "https://underscore.vc/resources/how-to-pitch-to-investors/"
     addedAt: 2026-08-13
-  - label: "How to Make a Pitch Deck: My Guide to Winning Investors ..."
-    url: https://medium.com/@isabellapennington/how-to-make-a-pitch-deck-my-guide-to-winning-investors-in-2025-c749a8b6e458
+  - label: "How to craft a winning pitch deck"
+    url: "https://mercury.com/blog/ultimate-pitch-guide-crafting-pitch-deck"
     addedAt: 2026-08-13
-  - label: A Simple Template for Your Seed Funding Pitch Deck
-    url: https://underscore.vc/resources/how-to-pitch-to-investors/
-    addedAt: 2026-08-13
-  - label: How to craft a winning pitch deck
-    url: https://mercury.com/blog/ultimate-pitch-guide-crafting-pitch-deck
-    addedAt: 2026-08-13
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
 ---
-Your seed pitch deck is not a company overview. It is not a business plan in slide form. It is a structured argument designed to do exactly one thing: get a meeting with the right investor. Every word, every metric, every slide order should be optimized for that outcome — and nothing else.
+Your seed [pitch deck](/articles/pitch-deck/) is not a company overview. It is not a business plan in slide form. It is a structured argument designed to do exactly one thing: get a meeting with the right investor. Every word, every metric, every slide order should be optimized for that outcome — and nothing else.
 
 That might sound reductive, but it is actually liberating. Once you accept that the deck's only job is to generate a conversation rather than close a check, you stop trying to explain everything and start asking a harder question: what is the minimum information an investor needs to feel enough conviction to say yes to thirty more minutes? The founders who answer that question well raise seed rounds. The ones who don't send increasingly comprehensive decks into an increasingly quiet inbox.
 
@@ -99,7 +96,7 @@ VCs spend an average of three minutes and forty-four seconds reviewing seed pitc
 The situation is more acute than that aggregate suggests. 
 Only fifty-eight percent of pitch decks are viewed to completion. This means nearly half of founders lose investor attention before reaching their final slides. The implication is clear — every slide must earn the right to the next slide's attention.
 
-According to a review of DocSend reports, investor review time has fallen twenty-four percent since 2021. More AI-generated decks, more inbound volume, and less patience for founders who bury their best signal in slide eleven.
+Investors spend only a few minutes on a first read of a deck. More AI-generated decks, more inbound volume, and less patience for founders who bury their best signal in slide eleven.
  The volume problem is real: as more decks flood inboxes, the bar for capturing attention on the first pass has risen structurally. Design alone does not solve this. Narrative sequence and evidence density do.
 
 The first four slides capture sixty percent of total deck attention. Lead with your strongest asset.
@@ -221,11 +218,31 @@ A seed pitch deck earns you the right to a meeting. A disciplined outreach proce
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The seed funding environment in late 2026 has hardened further around traction evidence, with the evidence bar now materially higher than mid-year. Carta's Q2 2026 benchmark puts the median seed round at $4.5M raised at a $23.9M post-money valuation — round sizes up roughly 40% from the $3–3.2M typical just months ago — though priced-round volume on Carta hit a six-year low, meaning fewer companies are closing at all. The seed-to-Series A graduation rate has collapsed to 15–20% within 24 months (down from ~30% for 2018–2020 cohorts), and the median gap between seed and Series A has stretched to approximately 616 days, meaning decks must credibly fund a longer runway than most founders model. Multistage funds are now moving aggressively into seed — PitchBook recorded a16z and YC each making 46 seed investments in a single quarter — compressing the advantage once held by dedicated seed specialists. The AI premium of ~42% persists at seed, with non-AI B2B software clearing $14–16M pre-money versus the headline $24M median; Uncork Capital has raised the informal Series A ARR floor to $2–4M, making your traction slide the single most consequential page in the deck.
-<!-- WHERE-THINGS-STAND:END -->
+## Pre-Seed vs. Seed Decks: Thesis vs. Proof
 
-See Related below for more on this topic.
+Pre-seed is vision; seed is proof. Pre-seed decks sell the founder and the problem. Seed decks sell the early product-market fit and the traction.
+ That one sentence contains most of what you need to know, but the practical implications ripple through every slide in your deck.
 
-See Sources below for the references behind this article.
+When you are at the pre-seed stage, your company is an experiment. The product likely does not exist yet. You might have templates to guide you, but you lack hard performance data. The investor is betting on your unique insight into the market. They are answering one question: Can this team build version one?
+ That is a fundamentally different question from what a seed investor asks, which is closer to: Does this thing actually work, and is the market responding?
+
+At pre-seed, investors are buying into three things: the severity of the problem you've identified, the elegance of your proposed solution, and your credibility as the person to pull it off.
+ Credibility here is almost entirely qualitative — it lives in the team slide, in your problem framing, and in the specificity of your insight. At seed, credibility shifts to quantitative: the data in your traction slide either supports the thesis or it doesn't.
+
+## Should You Send the Full Deck Before or After Requesting a Meeting?
+
+This is the tactical question founders get wrong most often, and the answer turns on a simple distinction: is the deck being read with you in the room, or without you? In most situations, especially cold outreach, you should not attach or link your full deck in the first message. 
+Best practice is to prepare your pitch in two versions, a full narrative version for partner meetings and a shorter teaser for cold outreach, alongside a one-to-two-page executive summary that travels well in email bodies.
+ The teaser earns the reply. The full deck earns the meeting. The financial detail earns the term sheet.
+
+Your outreach email isn't a cover letter, it's a three-sentence teaser designed to earn a click.
+ When a cold email opens with a wall of context and a 15MB PDF attached, the cognitive load alone pushes investors toward the delete key. 
+When one founder sends an email with a large file attached and another sends a link to a clean, hosted deck, the investor often archives the attachment immediately, it's bulky, presumes too much, and the hosted link loads instantly in a mobile-friendly viewer.
+
+That said, there's a real tension here worth acknowledging. Some investors, particularly angels who review on mobile, or GPs at smaller funds who manage their own inboxes, genuinely prefer to receive a PDF directly rather than clicking a tracking link. 
+A debate on LinkedIn illustrated this clearly: one camp of founders urged sharing decks only via tracked links, while many investors replied that anything other than a PDF went straight to the trash.
+ The practical resolution: lead with a short, personalized email. If you're going to include a deck at all in the first touch, a cleanly formatted PDF is less risky than a gated link that requires an email login to open. 
+Many investors will simply not open a DocSend link from cold outreach, if a deck requires entering an email address to view, they'll ignore it entirely.
+
+---
+

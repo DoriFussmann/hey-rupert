@@ -5,9 +5,9 @@ slug: capital-raising-fees
 date: "2026-09-29"
 updatedDate: "2026-09-29"
 author: dori-fussmann
-category: investor database
-pillarKeyword: investor database
-supportingKeyword: capital raising services
+category: capital raising services
+pillarKeyword: capital raising services
+supportingKeyword: capital raising fees
 articleType: faq
 targetKeyword: capital raising fees
 tags:
@@ -21,21 +21,22 @@ imageAlt: Founder reviewing a capital raising fee proposal document at a desk wi
 keywords:
   - capital raising fees
   - capital raising services
-  - investor database
 draft: false
 internalLinks:
-  - slug: investor-database
-    anchor: investor database
-  - slug: capital-raising-advisory-services
-    anchor: capital raising advisory services
-  - slug: capital-raising-consultants
-    anchor: capital raising consultants
   - slug: capital-raising-services
-    anchor: capital raising services
+    anchor: "Capital raising services for startups"
   - slug: startup-fundraising-consultant
-    anchor: startup fundraising consultant
+    anchor: "Hiring a fundraising consultant"
+  - slug: capital-raising-advisory-services
+    anchor: "Advisors vs. broker-dealers for capital raising"
 
-externalLinks: []
+externalLinks:
+  - label: "Axial: 2026 M&A Fee Guide"
+    url: "https://www.axial.net/forum/ma-fee-guide-2025-2026/"
+    addedAt: 2026-10-25
+  - label: "SEC: Guide to Broker-Dealer Registration"
+    url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
+    addedAt: 2026-10-25
 faqs:
   - question: "Can I negotiate the success fee percentage with a capital raising advisor?"
     answer: "Yes. Success fee percentages, retainer amounts, retainer credits, tail period length, and carve-out lists are all negotiable in most engagement letters. The goal is not simply to drive the percentage as low as possible — a misaligned fee structure that pays the advisor for activity rather than outcomes is worse than a slightly higher percentage on a well-structured deal. Focus on whether retainer payments credit against the success fee at close, how long the tail runs, and which investors are explicitly excluded."
@@ -49,7 +50,7 @@ faqs:
 
 ## What Is a Capital Raising Fee, and Why Does the Structure Matter More Than the Percentage?
 
-Most founders who receive a proposal from a capital raising service focus immediately on one number: the success fee percentage. That instinct is understandable, but it is also the instinct that leads to the most expensive mistakes. 
+Most founders who receive a proposal from a [capital raising service](/articles/capital-raising-services/) focus immediately on one number: the success fee percentage. That instinct is understandable, but it is also the instinct that leads to the most expensive mistakes. 
 Fees for venture capital fundraising should be evaluated by structure, not headline percentage. For founders raising $5M to $10M, advisory proposals commonly combine monthly retainers, success fees, retainer credits, tail periods, carve-outs, payment triggers, and expense reimbursement terms — and each fee component changes how advisor risk, founder cost, and closing incentives are allocated across the raise.
 
 The useful question is not what the fee percentage is. It is what exactly triggers payment, how much execution risk sits with the operator, and what total economics apply across the full engagement period.
@@ -66,7 +67,7 @@ The success fee on a $500K round is mechanically ten times smaller than on a $5M
 For Series A, 4% to 6% is the most common success fee range.
  Below that band, you are likely dealing with a lightweight service or an advisor who has accepted a below-market fee because they believe the deal is straightforward. Above 6% on a venture round warrants genuine scrutiny — not because the number is impossible to justify, but because it shifts a meaningful share of your raise into fee expense at exactly the moment your capital should be going toward growth.
 
-According to the Axial 2026 M&A Fee Guide, which surveys advisors across the middle market, the most common success fee range for $10M deals is 4% to 6%, compressing to 1% to 2% for deals above $100M, reflecting that success fee percentages typically compress as raise size increases.
+According to the [Axial 2026 M&A Fee Guide](https://www.axial.net/forum/ma-fee-guide-2025-2026/), which surveys advisors across the middle market, success fees fall as a percentage as deal size rises, reflecting that success fee percentages typically compress as raise size increases.
  The compression makes sense on both sides: at larger deal sizes, even a low percentage produces meaningful absolute compensation for the advisor, so there is no need to charge a higher rate to make the engagement economically viable.
 
 One structural variant worth understanding is the Lehman and Double Lehman formula — tiered fee schedules that charge a higher percentage on the first million raised and step down as the total increases. 
@@ -107,7 +108,7 @@ Getting this wrong does not just create a regulatory technicality — it can giv
 It is a common misconception that a "one-time" success fee means the activity is limited or exempt. The law does not contain a "one-time" exception for success-based compensation in securities offerings, and if an unregistered finder solicits investors and is paid upon closing, regulators can view the finder as acting as a broker — exposing both the finder and the issuer to enforcement risk, potential rescission rights for investors, and delays in later financings or exits.
 
 There are also active state-level requirements that layer on top of federal law. 
-Finders are subject to regulation at the state level, and each state maintains its own broker-dealer rules, independent of federal regulations — so even those relying on narrow federal positions need to consider state law.
+Finders are subject to regulation at the state level, and each state maintains its own [broker-dealer](/articles/capital-raising-advisory-services/) rules, independent of federal regulations — so even those relying on narrow federal positions need to consider state law.
  Practically speaking: if someone you know offers to make introductions and wants a percentage of what closes, get securities counsel involved before agreeing to anything.
 
 ---
@@ -135,7 +136,7 @@ Fee math matters, but it is not the most expensive variable in a capital raising
 Advisors who do not screen for mandate fit, check size, and sector alignment before outreach are optimizing for volume, not conversion — and sending your materials to every investor on a list is not targeting.
  Bulk, impersonal outreach to investors you may want to approach again — at this round or a later one — damages your standing with exactly the people you need to be selective with. A VC who receives a mass email pitch from a founder they have never heard of does not think less of the advisor; they think less of the founder.
 
-Top fundraising consultants can increase success rates by 30–50% and reduce fundraising time by 40–60%, often generating 3–10x ROI through faster closing, better terms, and higher valuations.
+Top [fundraising consultants](/articles/startup-fundraising-consultant/) can increase success rates by 30–50% and reduce fundraising time by 40–60%, often generating 3–10x ROI through faster closing, better terms, and higher valuations.
  The inverse is also true: a poor-quality service that burns your investor list, generates lukewarm meetings that never convert, and leaves you with a depleted pipeline and a damaged reputation has a real cost that dwarfs whatever retainer you paid.
 
 The test of a capital raising service is not whether it can send emails. It is whether the people running the process understand which investors are genuinely likely to fund a company at your stage and sector, can articulate why, and have a track record of personalized, researched outreach that produces competitive term sheet dynamics rather than one-at-a-time exploratory conversations.
@@ -156,15 +157,6 @@ Most founders focus on the success fee percentage. The real risks are in the cla
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The capital raising fee landscape has seen meaningful activity in the past 45 days. 
-In 2026 year-to-date, $86 billion has been deployed across 4,864 early-stage VC deals, with multistage fund participation at Series A hitting record highs by both count and value — reshaping who gets funded in what analysts are describing as a barbell market.
- That competitive dynamic makes the quality of investor targeting more consequential than ever: founders who reach the right investors with a researched, personalized approach are competing in a different market from those whose advisors send bulk outreach. On the regulatory side, 
-in February 2026, the SEC Small Business Capital Formation Advisory Committee approved recommendations supporting a limited finder exemption, with [an April 2026 submission](https://www.taftlaw.com/news-events/law-bulletins/sec-small-business-capital-formation-advisory-committee-recommendations-on-finder-regulations/) urging the Commission to act — but these are recommendations only, not binding law.
- Separately, recent data from the success-fee-only advisor market shows a growing founder appetite for alternatives to the traditional retainer-plus-success-fee structure, though the absence of a retainer does not eliminate tail-period and attribution risks that remain the most consequential terms in any engagement letter.
-<!-- WHERE-THINGS-STAND:END -->
-
 ## Key Takeaways
 
 - Success fees for Seed and early Series A raises typically fall between 3% and 6% of capital closed — anything above 6% on a venture round warrants scrutiny, and smaller rounds command higher percentages because the advisor's absolute dollar return is lower.
@@ -172,7 +164,3 @@ in February 2026, the SEC Small Business Capital Formation Advisory Committee ap
 - Finder's fees paid to unregistered individuals for investor introductions carry real legal risk in the US — no general federal finder exemption exists as of 2026, and both parties can face SEC enforcement exposure if transaction-based compensation is involved.
 - Tail periods of 12–24 months are standard, but founders should negotiate a shorter tail, a named exclusion list for pre-existing relationships, and precise language defining what constitutes an "introduction" for fee purposes.
 - The real cost of a poor capital raising service is not the fee paid — it is the reputational damage from bulk, impersonal investor outreach that poisons relationships the founder may need again at this round or the next.
-
-<!-- CMS-INTERNAL:START -->
-Further reading: [investor database](/articles/investor-database/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/)
-<!-- CMS-INTERNAL:END -->

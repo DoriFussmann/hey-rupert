@@ -4,7 +4,7 @@ description: A side-by-side breakdown of equity rounds, SAFEs, convertible notes
 slug: types-of-funding-for-startups
 date: 2026-08-18
 author: dori-fussmann
-category: startup funding
+category: startup funding stages
 tags:
   - startup funding
   - types of funding for startups
@@ -18,15 +18,14 @@ schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
 draft: false
-pillarKeyword: startup funding
-supportingKeyword: startup funding stages
+pillarKeyword: startup funding stages
+supportingKeyword: types of funding for startups
 articleType: comparison
 targetKeyword: types of funding for startups
 updatedDate: 2026-09-18
 keywords:
   - types of funding for startups
   - startup funding stages
-  - startup funding
 faqs:
   - question: What is the difference between a SAFE and a convertible note?
     answer: "Both SAFEs and convertible notes let you raise money without setting a valuation upfront, but they differ in one critical way: a convertible note is a debt instrument that accrues interest (typically 4–8% annually) and has a maturity date, usually 12–24 months, by which it must convert or be repaid. A SAFE carries no interest and no maturity date. If the company never raises a priced round, a SAFE holder has no legal claim to repayment, whereas a convertible noteholder does. In practice, SAFEs are simpler, faster, and cheaper to execute — legal costs can run close to zero using Y Combinator's standard templates — making them the dominant choice at pre-seed today."
@@ -37,27 +36,32 @@ faqs:
   - question: Is bootstrapping still a realistic path in 2026?
     answer: "Yes, particularly for B2B SaaS, niche software, and service-backed tech companies with clear customer demand and early revenue potential. Cheaper tooling, AI-assisted development, and remote teams have meaningfully reduced the capital required to reach an initial product and first customers. Bootstrapping also has a strategic fundraising benefit: investors view a founder who built real traction without external capital as lower-risk, which can translate into better terms if and when you do choose to raise. The trade-off is speed — in winner-take-all markets requiring rapid scaling, bootstrapping is rarely viable."
 internalLinks:
-  - slug: startup-funding
-    anchor: "Startup Funding: A Founder's Full Guide to Raising Capital"
-  - slug: early-stage-venture-capital
-    anchor: "Early-Stage Venture Capital: What It Is and How to Access It"
-  - slug: startup-funding-rounds-faq
-    anchor: "Startup Funding Rounds: FAQ for Founders Who Are Raising"
   - slug: startup-funding-stages
-    anchor: "Startup Funding Stages: The Definitive Guide for Founders"
-  - slug: startup-funding-stages-explained
-    anchor: How to Diagnose Your Startup Funding Stage and Raise Right
+    anchor: "Startup funding stages, pre-seed to Series C"
+  - slug: startup-funding
+    anchor: "How startup funding works"
+  - slug: pre-seed-funding
+    anchor: "Pre-seed funding: the complete guide"
 
 externalLinks:
   - label: "6 Types of Funding for Startups: Definitive Guide"
-    url: https://foundersnetwork.com/types-of-funding-for-startups/
+    url: "https://foundersnetwork.com/types-of-funding-for-startups/"
     addedAt: 2026-08-18
-  - label: A Guide to Different Stages of Funding for Startups
-    url: https://www.startups.com/articles/different-stages-of-funding-for-startups
+  - label: "A Guide to Different Stages of Funding for Startups"
+    url: "https://www.startups.com/articles/different-stages-of-funding-for-startups"
     addedAt: 2026-08-18
-  - label: 10 Types of Startup Capital
-    url: https://www.hubspot.com/startups/types-of-startup-capital
+  - label: "10 Types of Startup Capital"
+    url: "https://www.hubspot.com/startups/types-of-startup-capital"
     addedAt: 2026-08-18
+  - label: "Carta: VC Startup Fundraising Benchmarks From 1000 Rounds (July 2026)"
+    url: "https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/"
+    addedAt: 2026-10-25
+  - label: "Carta: State of Pre-Seed, Q2 2026"
+    url: "https://carta.com/data/state-of-pre-seed-q2-2026/"
+    addedAt: 2026-10-25
+  - label: "SiliconANGLE: Global venture funding hits record $510B in first half (Crunchbase data)"
+    url: "https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/"
+    addedAt: 2026-10-25
 ---
 ## The Real Cost of Each Funding Type Is Not What You Think
 
@@ -74,7 +78,7 @@ Founders typically give up 15–25% per round at pre-seed through Series A, narr
 
 In 2026, seed investors demand more than promising ideas — many expect $300K–$500K in ARR
  before they will price a round. 
-The median Series A in 2026 is a $19.6 million deal, with most investors requiring $1–3 million in ARR and strong growth of 150% year-over-year, along with a clear path to $10 million ARR within 18–24 months.
+Carta's July 2026 benchmark puts the median Series A at $14.4 million, and most investors at that stage expect around $1–3 million in ARR with strong growth.
  Priced rounds make sense once you have enough data to defend a valuation — attempting one too early simply means selling cheap, because investors will price the uncertainty into the number.
 
 Priced equity rounds require more legal work and typically cost $15,000–$25,000 in attorney fees
@@ -88,7 +92,7 @@ The Simple Agreement for Future Equity (SAFE) was introduced by Y Combinator in 
 With a SAFE, investors provide funds upfront in exchange for the right to convert their investment into shares when the company raises its next priced round. Three features separate SAFEs from debt instruments: no interest, no maturity date, and no repayment obligation.
 
 The market has voted decisively for the SAFE structure at early stages. 
-At the pre-seed stage, SAFEs comprised a record high of 93% of all deals on Carta in Q1 2026, while convertible notes fell to a record low of just 7% of pre-seed rounds. The trend is accelerating: a majority of early-stage rounds under $4 million in H1 2025 were SAFEs or convertible notes.
+At the pre-seed stage, SAFEs now make up around nine in ten deals on Carta, while convertible notes have shrunk to a small minority. The trend is accelerating: a majority of early-stage rounds under $4 million in H1 2025 were SAFEs or convertible notes.
 
 The appeal is straightforward: SAFEs are fast, cheap to execute, and avoid the friction of a formal valuation negotiation. 
 SAFEs are the cheapest deal structure to execute, with legal costs running $0–$2,000 if you use Y Combinator's free templates.
@@ -114,8 +118,6 @@ The discount rate on convertible notes typically runs 10–25%, rewarding early 
 
 Venture debt is structurally different from every other instrument on this list. It is not equity, and it does not pretend to be. You borrow a defined amount, pay interest, and repay the principal — typically over 36–48 months, often with an initial interest-only period. The benefit is that you extend your runway between priced rounds without issuing new shares.
 
-Nearly 60% of venture debt deals now occur at late or growth stage
-, which signals something important: this is not an early-stage instrument. 
 Venture debt is best used to extend runway 6–12 months between equity rounds without resetting valuation, and it requires recent VC backing — lenders underwrite based on your investors' credibility, not your cash flow.
  A founder who has never raised an institutional equity round will find the venture debt market largely closed to them.
 
@@ -176,11 +178,3 @@ That is the problem Rupert is built to solve. Rather than leaving founders to re
 
 ---
 
-## Where Things Stand
-<!-- WHERE-THINGS-STAND:START -->
-The funding instrument landscape has continued to consolidate through mid-2026. Carta's Q2 2026 State of Pre-Seed report confirms SAFEs held at 93% of pre-seed rounds and captured 95% of all pre-seed capital raised — but the more telling shift is concentration: startups on Carta raised roughly the same dollars in Q2 2026 as Q2 2025 ($3.19B vs. $3.22B) across 22% fewer instruments, pushing the average instrument size to a record $276,000, up 27% year-over-year. Convertible notes have nearly disappeared outside capital-intensive sectors like biotech and energy. Median post-money SAFE caps now range from $10M to $35M depending on round size. One notable new signal: AI's share of pre-seed dollars appears to be plateauing — at roughly 49% of H1 2026 pre-seed capital, it is essentially flat versus 2025's full-year figure, suggesting the AI premium at the earliest stage may be stabilizing. Globally, venture funding hit a record $510 billion in H1 2026 alone per Crunchbase, but that headline is dominated by a handful of US AI megadeals. For seed-stage founders outside that cohort, the dynamics are unchanged: SAFEs dominate, check sizes are larger but scarcer, and venture debt remains a post-institutional tool.
-<!-- WHERE-THINGS-STAND:END -->
-
-See Related below for more on this topic.
-
-See Sources below for the references behind this article.
