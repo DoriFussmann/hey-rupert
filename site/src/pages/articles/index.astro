@@ -3,6 +3,7 @@ import ArticleList from "../../components/ArticleList.astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { SITE_NAME } from "../../config/site";
 import { getPublishedArticles } from "../../lib/articles";
+import { TOPICS } from "../../lib/topics";
 
 const articles = await getPublishedArticles();
 const topics = [
@@ -12,9 +13,9 @@ const topics = [
       .filter((value): value is string => Boolean(value)),
   ),
 ].sort((a, b) => a.localeCompare(b));
-const title = `Articles — ${SITE_NAME}`;
+const title = `Fundraising Guides for Founders Raising Capital | ${SITE_NAME}`;
 const description =
-  "Articles from Rupert on founder-led fundraising, investor outreach, and keeping ownership of every relationship.";
+  "Guides from Rupert on finding investors, investor outreach, funding stages, pitch decks and capital raising services for founders raising pre-seed to Series A.";
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/articles/">
@@ -72,6 +73,14 @@ const description =
         </div>
       </div>
     </form>
+    <nav class="mt-lg" aria-label="Topic guides">
+      <p class="type-label">Topic guides</p>
+      <ul class="mt-sm flex flex-wrap gap-sm">
+        {TOPICS.map((topic) => (
+          <li><a class="type-body-sm" href={`/topics/${topic.slug}/`}>{topic.h1}</a></li>
+        ))}
+      </ul>
+    </nav>
     <p class="type-body mt-xl" id="article-filter-empty" hidden>
       No articles match these filters.
     </p>

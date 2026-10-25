@@ -1,0 +1,45 @@
+---
+import { getEntry } from "astro:content";
+import ArticleList from "../../components/ArticleList.astro";
+import Breadcrumbs from "../../components/Breadcrumbs.astro";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import { ARTICLES_BASE } from "../../config/site";
+import { getPublishedArticles } from "../../lib/articles";
+import { TOPICS, type Topic } from "../../lib/topics";
+import { sitePath } from "../../lib/url";
+
+export async function getStaticPaths() {
+  return TOPICS.map((topic) => ({ params: { slug: topic.slug }, props: { topic } }));
+}
+
+const { topic } = Astro.props as { topic: Topic };
+const all = await getPublishedArticles();
+const articles = all.filter((article) => article.data.pillarKeyword?.trim() === topic.name);
+const pillar = await getEntry("articles", topic.pillar);
+const pillarTitle = pillar?.data.h1 ?? pillar?.data.title ?? "";
+---
+
+<BaseLayout title={topic.title} description={topic.description} canonicalPath={`/topics/${topic.slug}/`}>
+  <main id="main-content" class="site-wrap flex-1 py-xl lg:py-2xl">
+    <Breadcrumbs
+      items={[
+        { label: "Home", href: "/" },
+        { label: "Articles", href: `/${ARTICLES_BASE}/` },
+        { label: topic.h1 },
+      ]}
+    />
+    <h1 class="type-h1 mt-lg">{topic.h1}</h1>
+    <p class="type-body mt-md max-w-prose">{topic.intro}</p>
+    {
+      pillar && (
+        <p class="type-body mt-md max-w-prose">
+          Start with the complete guide:{" "}
+          <a href={sitePath(`/${ARTICLES_BASE}/${topic.pillar}/`)}>{pillarTitle}</a>.
+        </p>
+      )
+    }
+    <div class="mt-xl">
+      <ArticleList articles={articles} />
+    </div>
+  </main>
+</BaseLayout>

@@ -8,6 +8,7 @@ import { formatDate } from "seo-core";
 import { ARTICLES_BASE } from "../config/site";
 import ArticleImage from "./ArticleImage.astro";
 import Breadcrumbs from "./Breadcrumbs.astro";
+import { topicByName } from "../lib/topics";
 
 interface Props {
   article: CollectionEntry<"articles">;
@@ -16,16 +17,22 @@ interface Props {
 const { data } = Astro.props.article;
 const updated = data.updatedDate || data.date;
 const showUpdated = Boolean(data.updatedDate) && updated > data.date;
+const topic = topicByName(data.pillarKeyword);
 const breadcrumbItems = [
   { label: "Home", href: "/" },
   { label: "Articles", href: `/${ARTICLES_BASE}/` },
+  ...(topic ? [{ label: topic.h1, href: `/topics/${topic.slug}/` }] : []),
   { label: data.title },
 ];
 ---
 
 <Breadcrumbs items={breadcrumbItems} />
 <header class="mt-lg mb-xl">
-  <p class="type-label">{data.category}</p>
+  {topic ? (
+    <p class="type-label"><a href={`/topics/${topic.slug}/`}>{topic.h1}</a></p>
+  ) : (
+    <p class="type-label">{data.category}</p>
+  )}
   <h1 class="type-h1 mt-sm">{data.h1}</h1>
   <p class="type-body-sm mt-md">
     Published on <time datetime={data.date}>{formatDate(data.date)}</time>
