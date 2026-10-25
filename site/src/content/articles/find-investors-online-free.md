@@ -31,16 +31,7 @@ internalLinks:
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
     anchor: where to find investors for startup
 
-externalLinks:
-  - label: Find My - App Store - Apple
-    url: "https://apps.apple.com/us/app/find-my/id1514844621"
-    addedAt: 2026-09-30
-  - label: Find Devices - Apple iCloud
-    url: "https://www.icloud.com/find"
-    addedAt: 2026-09-30
-  - label: "FIND | Diagnosis for all"
-    url: "https://www.finddx.org/"
-    addedAt: 2026-09-30
+externalLinks: []
 faqs:
   - question: "Is the free tier on Crunchbase actually useful for finding investors, or do you hit a wall quickly?"
     answer: "Crunchbase's free tier is useful for confirming that a firm exists, checking its sector focus, and reading a high-level profile — but it caps search results tightly and withholds direct contact details. Most founders use it for initial market mapping and qualification, then either upgrade to a paid plan or cross-reference names found on free platforms like OpenVC to get actionable outreach information."
@@ -159,7 +150,3 @@ raising venture capital has increasingly become a precise targeting game rather 
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [how to find investors](/articles/how-to-find-investors/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Find My - App Store - Apple](https://apps.apple.com/us/app/find-my/id1514844621) · [Find Devices - Apple iCloud](https://www.icloud.com/find) · [FIND | Diagnosis for all](https://www.finddx.org/).
-<!-- CMS-EXTERNAL:END -->

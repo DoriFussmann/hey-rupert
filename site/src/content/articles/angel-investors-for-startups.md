@@ -36,10 +36,10 @@ internalLinks:
     anchor: types of investors for small business
 
 externalLinks:
-  - label: Learn how to find and work with angel investors
+  - label: "Learn how to find and work with angel investors"
     url: "https://www.svb.com/startup-insights/raising-capital/how-to-find-the-right-angel-investors/"
     addedAt: 2026-08-27
-  - label: How to Find the Right Angel Investor for Your Startup
+  - label: "How to Find the Right Angel Investor for Your Startup"
     url: "https://www.jpmorgan.com/insights/business-planning/how-to-find-the-right-angel-investor-for-your-startup"
     addedAt: 2026-08-27
   - label: "Finding and Pitching Angel Investors: A Strategic Guide ..."
@@ -204,7 +204,3 @@ July's reported investments from ACA member groups highlight the continued bread
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Learn how to find and work with angel investors](https://www.svb.com/startup-insights/raising-capital/how-to-find-the-right-angel-investors/) · [How to Find the Right Angel Investor for Your Startup](https://www.jpmorgan.com/insights/business-planning/how-to-find-the-right-angel-investor-for-your-startup) · [Finding and Pitching Angel Investors: A Strategic Guide ...](https://www.vlplawgroup.com/blog/2025/02/11/finding-and-pitching-angel-investors-a-strategic-guide-for-startups/).
-<!-- CMS-EXTERNAL:END -->

@@ -31,13 +31,7 @@ internalLinks:
   - slug: how-to-find-investors
     anchor: how to find investors
 
-externalLinks:
-  - label: "QED Investors: Home"
-    url: "https://www.qedinvestors.com/"
-    addedAt: 2026-09-30
-  - label: Investor Signatories
-    url: "https://www.climateaction100.org/whos-involved/investors/"
-    addedAt: 2026-09-30
+externalLinks: []
 faqs:
   - question: "Can a founder raise a round using only cold outreach, without any warm introductions?"
     answer: "Yes, but it is statistically rare and requires significantly higher volume and precision. Data suggests that seed-stage founders have closed rounds with at least one investor sourced through cold outreach, but the conversion rate — roughly 1–5% response and under 1% meeting conversion — means you need a large, well-targeted list and a highly personalized message. Cold-only strategies work best when paired with strong traction signals and a thesis-matching approach. For most founders, cold outreach should complement a warm-intro effort, not replace it."
@@ -148,7 +142,3 @@ Investors are closely vetting early-stage startups to find companies with tracti
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to find investors](/articles/how-to-find-investors/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [QED Investors: Home](https://www.qedinvestors.com/) · [Investor Signatories](https://www.climateaction100.org/whos-involved/investors/).
-<!-- CMS-EXTERNAL:END -->

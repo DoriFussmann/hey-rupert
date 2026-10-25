@@ -29,16 +29,7 @@ internalLinks:
   - slug: investors-near-me
     anchor: investors near me
 
-externalLinks:
-  - label: "QED Investors: Home"
-    url: "https://www.qedinvestors.com/"
-    addedAt: 2026-09-30
-  - label: Find My - App Store - Apple
-    url: "https://apps.apple.com/us/app/find-my/id1514844621"
-    addedAt: 2026-10-02
-  - label: Find Devices - Apple iCloud
-    url: "https://www.icloud.com/find"
-    addedAt: 2026-10-02
+externalLinks: []
 faqs:
   - question: "Do local investors actually invest more in nearby startups?"
     answer: "Yes — research consistently shows that both angel investors and venture capitalists have a strong preference for companies in their local or regional area. The main reason is information: it's easier for a nearby investor to visit operations, speak with local customers, and assess the founding team's reputation through shared contacts. This proximity reduces the information asymmetry that makes early-stage investing so risky."
@@ -163,7 +154,3 @@ The geography-versus-fit debate in startup fundraising remains active in mid-202
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [investors near me](/articles/investors-near-me/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [QED Investors: Home](https://www.qedinvestors.com/) · [Find My - App Store - Apple](https://apps.apple.com/us/app/find-my/id1514844621) · [Find Devices - Apple iCloud](https://www.icloud.com/find).
-<!-- CMS-EXTERNAL:END -->

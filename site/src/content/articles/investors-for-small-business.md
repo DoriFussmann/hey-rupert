@@ -35,13 +35,13 @@ internalLinks:
     anchor: types of investors for small business
 
 externalLinks:
-  - label: How to find investors for your small business
+  - label: "How to find investors for your small business"
     url: "https://mercury.com/blog/how-to-find-investors-for-small-business"
     addedAt: 2026-08-27
   - label: "Guide to Finding Business Investors | CO"
     url: "https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors"
     addedAt: 2026-08-27
-  - label: Tips for Pitching to Small Business Investors
+  - label: "Tips for Pitching to Small Business Investors"
     url: "https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/"
     addedAt: 2026-08-27
 faqs:
@@ -189,7 +189,3 @@ For founders who have the conviction and the story but lack the bandwidth to bui
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [How to find investors for your small business](https://mercury.com/blog/how-to-find-investors-for-small-business) · [Guide to Finding Business Investors | CO](https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors) · [Tips for Pitching to Small Business Investors](https://www.toryburchfoundation.org/resources/raise-capital/find-small-business-investors/).
-<!-- CMS-EXTERNAL:END -->

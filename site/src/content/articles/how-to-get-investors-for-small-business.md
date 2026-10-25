@@ -35,16 +35,7 @@ internalLinks:
   - slug: types-of-investors-for-small-business
     anchor: types of investors for small business
 
-externalLinks:
-  - label: Homepage - Small Business Administration
-    url: "https://www.sba.gov/"
-    addedAt: 2026-09-30
-  - label: Small Business Credit Survey
-    url: "https://www.fedsmallbusiness.org/reports/survey"
-    addedAt: 2026-09-30
-  - label: "Shared multimodal mobility, for everyone SMALL"
-    url: "https://www.interregnorthsea.eu/small"
-    addedAt: 2026-09-30
+externalLinks: []
 faqs:
   - question: "How many investors should I contact during a seed raise?"
     answer: "Quality beats volume, but you still need enough names to absorb inevitable passes. A well-researched, tiered list of 40–60 genuinely matched investors is a strong operating target. That gives you enough concurrent conversations to build momentum and create urgency, without spreading your messaging so thin that it becomes generic."
@@ -132,7 +123,3 @@ in 2026, a spray-and-pray approach to investor targeting is not only inefficient
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [investors for small business](/articles/investors-for-small-business/) · [types of investors for small business](/articles/types-of-investors-for-small-business/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Homepage - Small Business Administration](https://www.sba.gov/) · [Small Business Credit Survey](https://www.fedsmallbusiness.org/reports/survey) · [Shared multimodal mobility, for everyone SMALL](https://www.interregnorthsea.eu/small).
-<!-- CMS-EXTERNAL:END -->

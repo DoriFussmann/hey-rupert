@@ -59,7 +59,7 @@ internalLinks:
     anchor: how to find investors
 
 externalLinks:
-  - label: Series A Funding Guide — How to Prepare and Close ...
+  - label: "Series A Funding Guide — How to Prepare and Close ..."
     url: "https://www.awake-partners.com/post/series-a-funding-guide"
     addedAt: 2026-08-27
   - label: "Series A Fundraising: A Comprehensive Guide"
@@ -68,7 +68,6 @@ externalLinks:
   - label: "Series A Funding: Your Guide in 2024"
     url: "https://www.capboard.io/en/captable/series-a-funding-explained"
     addedAt: 2026-08-27
-
 ---
 ## What Series A Actually Is — and Why It Matters
 
@@ -250,7 +249,3 @@ The Series A market in mid-2026 is defined by a stark divergence: headline ventu
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [investor database](/articles/investor-database/) · [pitch deck](/articles/pitch-deck/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [how long between seed and series a](/articles/how-long-between-seed-and-series-a/) · [pre seed vs seed vs series a](/articles/pre-seed-vs-seed-vs-series-a/) · [seed funding vs series a](/articles/seed-funding-vs-series-a/) · [seed vs series a](/articles/seed-vs-series-a/) · [how to find investors](/articles/how-to-find-investors/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Series A Funding Guide — How to Prepare and Close ...](https://www.awake-partners.com/post/series-a-funding-guide) · [Series A Fundraising: A Comprehensive Guide](https://www.trustfinta.com/blog/series-a-fundraising-comprehensive-guide) · [Series A Funding: Your Guide in 2024](https://www.capboard.io/en/captable/series-a-funding-explained).
-<!-- CMS-EXTERNAL:END -->

@@ -60,10 +60,7 @@ internalLinks:
   - slug: series-a
     anchor: series a
 
-externalLinks:
-  - label: "QED Investors: Home"
-    url: "https://www.qedinvestors.com/"
-    addedAt: 2026-09-30
+externalLinks: []
 faqs:
   - question: "How many investors should I target in a single fundraising campaign?"
     answer: "Quality beats volume. A focused list of 80–120 genuinely thesis-matched investors typically outperforms a spray-and-pray blast of 500+ names. Prioritise investors whose stage focus, sector thesis, check size, and geographic preferences all align with your company. Start with your warmest, most aligned targets, launch outreach in structured waves rather than all at once, and refine your list based on real response signals as you go."
@@ -210,7 +207,3 @@ targeting investors whose focus and thesis align precisely with your startup is 
 <!-- CMS-INTERNAL:START -->
 Further reading: [investors near me](/articles/investors-near-me/) · [angel investors for small business](/articles/angel-investors-for-small-business/) · [angel investors for startups](/articles/angel-investors-for-startups/) · [angel investors vs venture capital](/articles/angel-investors-vs-venture-capital/) · [angel investors](/articles/angel-investors/) · [find investors online free](/articles/find-investors-online-free/) · [how to get investors for small business](/articles/how-to-get-investors-for-small-business/) · [how to get investors for your business idea](/articles/how-to-get-investors-for-your-business-idea/) · [how to get private investors for your business](/articles/how-to-get-private-investors-for-your-business/) · [investors for small business](/articles/investors-for-small-business/) · [investors looking for projects to fund](/articles/investors-looking-for-projects-to-fund/) · [local investors vs national investors for startups](/articles/local-investors-vs-national-investors-for-startups/) · [types of investors for small business](/articles/types-of-investors-for-small-business/) · [where to find investors for startup](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) · [pitch deck](/articles/pitch-deck/) · [investor crm](/articles/investor-crm/) · [investor database](/articles/investor-database/) · [investor list](/articles/investor-list/) · [series a](/articles/series-a/).
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [QED Investors: Home](https://www.qedinvestors.com/).
-<!-- CMS-EXTERNAL:END -->

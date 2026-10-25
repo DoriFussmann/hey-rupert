@@ -65,16 +65,9 @@ internalLinks:
     anchor: list of private investors
 
 externalLinks:
-  - label: Institutional Investor Database - Dakota
-    url: "https://www.dakota.com/institutional-investor-database"
-    addedAt: 2026-08-27
   - label: "Investor Database FAQ: Raising venture capital for startups"
     url: "https://blog.foundersuite.com/guide-to-using-the-investor-database/"
     addedAt: 2026-08-27
-  - label: "Venture Capital Firms and Investors: Databases and Search ..."
-    url: "https://researchguides.library.syr.edu/investors"
-    addedAt: 2026-08-27
-
 ---
 An investor database is not a fundraising strategy. It is research infrastructure — a structured, searchable repository of VC firms, angel investors, family offices, and other capital sources, filterable by stage, sector, geography, and check size. Understanding exactly what that infrastructure can and cannot do is where most founders either save weeks of wasted effort or lose their best fundraising window to a list that was never going to convert.
 
@@ -194,7 +187,3 @@ The venture capital environment heading into Q4 2026 makes disciplined investor 
 <!-- CMS-INTERNAL:START -->
 Further reading: [angel investors](/articles/angel-investors/) · [pitch deck](/articles/pitch-deck/) · [series a](/articles/series-a/) · [startup funding](/articles/startup-funding/) · [venture capital](/articles/venture-capital/) · [investor crm](/articles/investor-crm/) · [capital raising advisory services](/articles/capital-raising-advisory-services/) · [capital raising consultants](/articles/capital-raising-consultants/) · [capital raising fees](/articles/capital-raising-fees/) · [capital raising services](/articles/capital-raising-services/) · [startup fundraising consultant](/articles/startup-fundraising-consultant/) · [how to find investors](/articles/how-to-find-investors/) · [investor list](/articles/investor-list/) · [list of private investors](/articles/list-of-private-investors/)
 <!-- CMS-INTERNAL:END -->
-
-<!-- CMS-EXTERNAL:START -->
-Sources: [Institutional Investor Database - Dakota](https://www.dakota.com/institutional-investor-database) · [Investor Database FAQ: Raising venture capital for startups](https://blog.foundersuite.com/guide-to-using-the-investor-database/) · [Venture Capital Firms and Investors: Databases and Search ...](https://researchguides.library.syr.edu/investors).
-<!-- CMS-EXTERNAL:END -->

@@ -49,20 +49,11 @@ internalLinks:
     anchor: What Investors Looking for Projects to Fund Actually Want
 
 externalLinks:
-  - label: Guide to Finding Business Investors | CO
-    url: https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors
-    addedAt: 2026-08-13
-  - label: OpenVC | Find investors for your startup — raise for free.
-    url: https://www.openvc.app/
+  - label: "Guide to Finding Business Investors | CO"
+    url: "https://www.uschamber.com/co/run/business-financing/guide-to-finding-business-investors"
     addedAt: 2026-08-13
   - label: "A Startup Guide to Funding: How to Find Investors"
-    url: https://vivatech.com/news/a-startup-guide-to-funding-how-to-find-investors
-    addedAt: 2026-08-13
-  - label: "Finding Investors: What Entrepreneurs Should Know"
-    url: https://www.indeed.com/hire/c/info/finding-investors
-    addedAt: 2026-08-13
-  - label: How/Where do you find investors? What is the best way to ...
-    url: https://www.reddit.com/r/startups/comments/1lvhi3j/howwhere_do_you_find_investors_what_is_the_best/
+    url: "https://vivatech.com/news/a-startup-guide-to-funding-how-to-find-investors"
     addedAt: 2026-08-13
 ---
 ## Why "Investor-Ready" Is Harder to Define Than It Sounds
