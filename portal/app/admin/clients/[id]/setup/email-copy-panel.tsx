@@ -1,5 +1,6 @@
 "use client";
 
+import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
 import { useMemo, useState } from "react";
 import { draftClientEmailCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
 import { TypedCopyEditor } from "@/app/admin/clients/[id]/setup/typed-copy-editor";
@@ -356,14 +357,12 @@ export function EmailCopyPanel({
                 placeholder={index === 0 ? "Subject" : "Subject (blank = same thread)"}
                 aria-label={`${tierName(activeTier)} ${EMAIL_SEQUENCE_LABELS[index]} subject`}
               />
-              <textarea
-                className={`${inputClass} mt-sm`}
-                rows={index === 0 ? 10 : 6}
-                maxLength={10000}
+              <EmailBodyField
+                className={inputClass}
                 value={email.body}
-                onChange={(event) => update(index, "body", event.target.value)}
+                onChange={(value) => update(index, "body", value)}
                 placeholder="Body"
-                aria-label={`${tierName(activeTier)} ${EMAIL_SEQUENCE_LABELS[index]} body`}
+                label={`${tierName(activeTier)} ${EMAIL_SEQUENCE_LABELS[index]} body`}
               />
             </li>
           ))}
@@ -379,9 +378,8 @@ export function EmailCopyPanel({
             <span className="ml-sm text-muted">
               {(copy.linkedin_note ?? "").length}/{LINKEDIN_NOTE_MAX}
             </span>
-            <textarea
+            <AutoTextarea
               className={`${inputClass} mt-sm`}
-              rows={3}
               maxLength={2000}
               value={copy.linkedin_note ?? ""}
               onChange={(event) =>
@@ -393,9 +391,8 @@ export function EmailCopyPanel({
           </label>
           <label className="mt-md block text-body-sm text-secondary">
             Follow-up
-            <textarea
+            <AutoTextarea
               className={`${inputClass} mt-sm`}
-              rows={5}
               maxLength={10000}
               value={copy.linkedin_followup ?? ""}
               onChange={(event) =>
