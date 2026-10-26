@@ -32,6 +32,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
       { href: "/admin/forms/emails", hash: "emails-client", label: "Client emails" },
       { href: "/admin/forms/emails", hash: "emails-admin", label: "Emails to me" },
       { href: "/admin/forms/emails", hash: "emails-reminder", label: "Reminders" },
+      { href: "/admin/forms/outreach-styles", label: "Investor email styles" },
       { href: "/admin/nudge", label: "Nudge" },
     ],
   },

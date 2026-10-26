@@ -3,6 +3,7 @@
 // browser. Every screen, email and reminder reads from here.
 
 import { dropSectorFocus } from "./match/shared.ts";
+import { asTypedCopy, typedCopyIssues, typedHasContent, type TypedCopy } from "./outreach/copy.ts";
 
 export type SetupStepId =
   | "materials"
@@ -417,6 +418,12 @@ export type EmailCopyPayload = {
   tiers: Partial<Record<`${FitTier}`, CopyEmail[]>>;
   /** "four" for copy written for a four-tier list. Absent: three tiers. */
   tier_scheme?: "four";
+  /**
+   * 2: copy by fund type (lib/outreach/copy.ts), in `typed`. `tiers` is then
+   * unused. Absent: one sequence per tier, as before.
+   */
+  copy_version?: 2;
+  typed?: TypedCopy;
   /** One LinkedIn connection note for every tier. 300 characters or fewer. */
   linkedin_note?: string;
   /** One LinkedIn follow-up for every tier. */
@@ -1454,13 +1461,24 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
   const linkedinNote = str(raw.linkedin_note, 2000).trim();
   const linkedinFollowup = str(raw.linkedin_followup, 10000).trim();
+  const typed = raw.copy_version === 2 ? { copy_version: 2 as const, typed: asTypedCopy(raw.typed) } : {};
   return {
     ...result,
+    ...typed,
     ...(adminNote ? { admin_note: adminNote } : {}),
     ...(linkedinNote ? { linkedin_note: linkedinNote } : {}),
     ...(linkedinFollowup ? { linkedin_followup: linkedinFollowup } : {}),
     ...withQuestions(asQuestions(raw.questions)),
   };
+}
+
+/** True when the copy has any text, in either shape. */
+export function emailCopyHasContent(copy: EmailCopyPayload) {
+  if (copy.linkedin_note?.trim() || copy.linkedin_followup?.trim()) return true;
+  if (copy.copy_version === 2) return typedHasContent(copy.typed ?? asTypedCopy(null));
+  return fitTiersFor(copy.tier_scheme).some(({ tier }) =>
+    tierEmails(copy, tier).some((email) => email.subject.trim() || email.body.trim()),
+  );
 }
 
 export function asEmailCopyDraft(value: unknown): EmailCopyDraft {
@@ -1471,7 +1489,12 @@ export function asEmailCopyDraft(value: unknown): EmailCopyDraft {
 /** Problems that stop the email copy from being pushed. */
 export function emailCopyProblems(copy: EmailCopyPayload) {
   const problems: string[] = [];
-  for (const { tier, label } of fitTiersFor(copy.tier_scheme)) {
+  if (copy.copy_version === 2) {
+    for (const issue of typedCopyIssues(copy.typed ?? asTypedCopy(null))) {
+      if (issue.level === "error") problems.push(`${issue.where}: ${issue.text}`);
+    }
+  }
+  for (const { tier, label } of copy.copy_version === 2 ? [] : fitTiersFor(copy.tier_scheme)) {
     const emails = tierEmails(copy, tier);
     if (!emails[0]?.subject.trim()) {
       problems.push(`${label}: the first email needs a subject.`);

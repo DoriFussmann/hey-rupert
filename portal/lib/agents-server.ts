@@ -45,6 +45,24 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 import {
+  CTA_LABEL,
+  OTHER_TIERS,
+  OTHER_TIER_LABEL,
+  SEQUENCE_LENGTH,
+  emptyTypedCopy,
+  groupKey,
+  outreachRows,
+  presetFor,
+  typeGroups,
+  type CopySection,
+  type FundTypeKey,
+  type OtherTier,
+  type StylePreset,
+  type TypedCopy,
+  type TypedGroupCopy,
+} from "@/lib/outreach/copy";
+import { loadOutreachStyles } from "@/lib/outreach/settings-server";
+import {
   AGENTS_MIGRATION_MISSING,
   loadSetupSteps,
   nowIso,
@@ -630,8 +648,18 @@ export async function draftEmailCopyEmail(
   version: number,
   override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
-  const tiers = fitTiersFor(copy.tier_scheme);
-  if (tiers.every(({ tier }) => tierEmails(copy, tier).every((email) => !email.body.trim()))) {
+  const tiers = copy.copy_version === 2 ? [] : fitTiersFor(copy.tier_scheme);
+  const typedGroups = copy.copy_version === 2 && copy.typed
+    ? [
+        ...copy.typed.core.map((group) => ({ section: "core" as const, group })),
+        ...copy.typed.others.map((group) => ({ section: "others" as const, group })),
+      ]
+    : [];
+  const empty =
+    copy.copy_version === 2
+      ? typedGroups.every(({ group }) => group.emails.every((email) => !email.body.trim()))
+      : tiers.every(({ tier }) => tierEmails(copy, tier).every((email) => !email.body.trim()));
+  if (empty) {
     return { ok: false, error: "Write the emails first: the email is drafted from them." };
   }
   const [loaded, prompt] = await Promise.all([
@@ -646,7 +674,19 @@ export async function draftEmailCopyEmail(
   const clientAsk =
     emailRow?.status === "changes_requested" ? earlierNotes([], emailRow.response) : "";
 
-  const copyText = tiers
+  const typedText = typedGroups
+    .map(({ section, group }) => {
+      const emails = group.emails
+        .map((email, index) => `#### ${EMAIL_SEQUENCE_LABELS[index]}${email.subject ? `\nSubject: ${email.subject}` : ""}\n${email.body}`)
+        .join("\n\n");
+      const head =
+        section === "core"
+          ? `### Core · ${group.type} (${group.funds} funds; each investor gets a personalized version, {{quick_fact}} marks the personal part)\nApproach: ${group.approach}`
+          : `### Sphere, Tier 3 and Tier 4 · ${group.type} (${group.funds} funds; {{tier_line}} is one sentence per tier)`;
+      return `${head}\n${emails}`;
+    })
+    .join("\n\n");
+  const copyText = copy.copy_version === 2 ? typedText : tiers
     .map(({ tier, label, detail }) => {
       const emails = tierEmails(copy, tier)
         .map((email, index) => `#### ${EMAIL_SEQUENCE_LABELS[index]}${email.subject ? `\nSubject: ${email.subject}` : ""}\n${email.body}`)
@@ -1067,4 +1107,258 @@ export async function draftEmailCopy(
     };
   }
   return { ok: true, value: copy };
+}
+
+// ---------------------------------------------------------------------------
+// Email copy by fund type (copy v2, lib/outreach/copy.ts)
+
+function styleText(preset: StylePreset) {
+  return [
+    `Style: ${preset.label}`,
+    `Rules:\n${preset.rules || "Short, plain, factual."}`,
+    `Word cap: first email ${preset.max_words} words; each follow-up ${Math.round(preset.max_words * 0.75)}.`,
+    `Proof points per email: ${preset.proof_points}.`,
+    `Call to action: ${CTA_LABEL[preset.cta]}.`,
+    preset.example ? `Example (copy its shape, never its facts):\n${preset.example}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function typedTool(core: boolean, tiers: OtherTier[]): ClaudeTool {
+  const properties: Record<string, unknown> = {};
+  const required: string[] = [];
+  if (core) {
+    properties.core = {
+      type: "object",
+      properties: {
+        approach: { type: "string", description: "2 to 4 sentences: what this kind of investor cares about and how the emails lead." },
+        emails: tierEmailSchema,
+      },
+      required: ["approach", "emails"],
+    };
+    required.push("core");
+  }
+  if (tiers.length > 0) {
+    properties.others = {
+      type: "object",
+      properties: {
+        emails: tierEmailSchema,
+        tier_lines: {
+          type: "object",
+          description: "One sentence per tier, inserted as {{tier_line}}.",
+          properties: Object.fromEntries(
+            tiers.map((tier) => [String(tier), { type: "string", description: `${OTHER_TIER_LABEL[tier]}: why a fund in this tier could care.` }]),
+          ),
+          required: tiers.map(String),
+        },
+      },
+      required: ["emails", "tier_lines"],
+    };
+    required.push("others");
+  }
+  return {
+    name: "submit_type_copy",
+    description: "Deliver the copy for this fund type.",
+    input_schema: { type: "object", properties, required },
+  };
+}
+
+function typedEmails(value: unknown) {
+  const list = Array.isArray(value) ? value : [];
+  return Array.from({ length: SEQUENCE_LENGTH }, (_, index) => {
+    const item = (list[index] && typeof list[index] === "object" ? list[index] : {}) as Record<string, unknown>;
+    return { subject: text(item.subject).slice(0, 300), body: text(item.body).slice(0, 10000) };
+  });
+}
+
+export type TypedDraftResult = {
+  copy: EmailCopyPayload;
+  /** Group keys written in this run. */
+  drafted: string[];
+  /** Group keys that failed, with the reason. Their previous text is kept. */
+  failed: { key: string; error: string }[];
+  /** Funds the client marked "I know them": left out of the copy. */
+  knownLeftOut: number;
+};
+
+/**
+ * Writes the investor copy by fund type for a four-tier list. `only` limits the
+ * run to some groups (`section:type` keys); every other group keeps its text.
+ */
+export async function draftTypedEmailCopy(
+  supabase: ServiceClient,
+  clientId: string,
+  options: { only?: string[] | null; override?: PromptOverride | null } = {},
+): Promise<AgentResult<TypedDraftResult>> {
+  const [loaded, interviewResult, prompt, grouped, styleLoad] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadInterview(supabase, clientId),
+    loadPrompt(supabase, "email_copy_typed", { clientId, purpose: "Email copy by fund type", override: options.override }),
+    loadSetupSteps(supabase, [clientId]),
+    loadOutreachStyles(supabase),
+  ]);
+  if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
+
+  const rows = grouped.get(clientId) ?? [];
+  const framingRow = rows.find((item) => item.step === "framing");
+  const listRow = rows.find((item) => item.step === "investor_list");
+  const emailRow = rows.find((item) => item.step === "email_copy");
+
+  if (framingRow?.status !== "confirmed") return { ok: false, error: "Confirm the outreach narrative first." };
+  const narrative = workingNarrative(framingRow);
+  if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
+    return { ok: false, error: "The confirmed narrative needs a core story, key messages and an approach. Rebuild it and confirm it again." };
+  }
+  if (listRow?.status !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  const list = asInvestorList(listRow.published);
+  if (list.tier_scheme !== "four") {
+    return { ok: false, error: "Copy by fund type needs a four-tier investor list. Use Draft with AI for this list." };
+  }
+
+  const { rows: outreach, knownLeftOut } = outreachRows(list);
+  const groups = typeGroups(outreach);
+  if (groups.core.length + groups.others.length === 0) {
+    return { ok: false, error: "No funds are left for outreach on the confirmed list (all excluded or marked as known)." };
+  }
+  const styles = styleLoad.styles;
+  const base = emptyTypedCopy(groups, styles, list.run_id);
+
+  const working = asEmailCopy(emailRow?.draft ?? emailRow?.published);
+  const previous: TypedCopy | null = working.copy_version === 2 && working.typed ? working.typed : null;
+  const only = options.only && options.only.length > 0 ? new Set(options.only) : null;
+  const wanted = (section: CopySection, type: FundTypeKey) => !only || only.has(groupKey(section, type));
+
+  const firstName =
+    text(loaded.client.first_name) || text(loaded.client.founder_name).split(/\s+/)[0] || "the founder";
+  const rebuilding = emailRow?.status === "changes_requested";
+  const asks = rebuilding ? earlierNotes(emailRow?.history ?? [], emailRow?.response ?? null) : "";
+  const feedback = feedbackContext(rows, narrative.feedback);
+
+  const shared = [
+    `Founder first name (sign the emails with this): ${firstName}`,
+    `Company: ${text(loaded.client.company_name)}`,
+    "## Outreach narrative",
+    `### Core story\n${narrative.core}`,
+    `### Key messages\n${narrative.key_messages}`,
+    `### Approach\n${narrative.approach}`,
+    "## Intake summary",
+    intakeSummaryText(interviewResult.ok ? interviewResult.interview : null),
+    "## Materials analysis",
+    feedback || "No analysis yet.",
+    asks
+      ? `## What the founder asked to change\nNotes that start with a group key (for example "core:VC" or "others:Angel group") are about that group only.\n${asks}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+
+  const types = Array.from(new Set([...base.core, ...base.others].map((group) => group.type)));
+  const jobs = types
+    .map((type) => {
+      const core = base.core.find((group) => group.type === type && wanted("core", type)) ?? null;
+      const others = base.others.find((group) => group.type === type && wanted("others", type)) ?? null;
+      return { type, core, others };
+    })
+    .filter((job) => job.core || job.others);
+
+  const results = await Promise.all(
+    jobs.map(async ({ type, core, others }) => {
+      const tiers = others ? OTHER_TIERS.filter((tier) => others.tiers?.[`${tier}`]) : [];
+      const describe = (group: TypedGroupCopy) =>
+        `${group.funds} funds${group.merged?.length ? ` (includes ${group.merged.join(", ")})` : ""}`;
+      const parts = [
+        shared,
+        `# Fund type: ${type}`,
+        core
+          ? `## Job 1: Core, ${describe(core)}\n${styleText(presetFor(styles, "core", type))}`
+          : "",
+        others
+          ? `## Job 2: Sphere, Tier 3 and Tier 4, ${describe(others)}: ${tiers
+              .map((tier) => `${OTHER_TIER_LABEL[tier]} ${others.tiers?.[`${tier}`] ?? 0}`)
+              .join(", ")}\n${styleText(presetFor(styles, "others", type))}`
+          : "",
+      ].filter(Boolean);
+      const tool = typedTool(Boolean(core), tiers);
+      const result = await callClaudeAgent<Record<string, unknown>>({
+        system: promptSystem(prompt.value),
+        content: [{ type: "text", text: `${parts.join("\n\n")}\n\nWrite the copy for ${type} by calling the ${tool.name} tool.` }],
+        tool,
+        maxTokens: 6000,
+      });
+      return { type, core, others, tiers, result };
+    }),
+  );
+
+  const drafted: string[] = [];
+  const failed: { key: string; error: string }[] = [];
+  const fresh = new Map<string, TypedGroupCopy>();
+
+  for (const { type, core, others, tiers, result } of results) {
+    if (!result.ok) {
+      if (core) failed.push({ key: groupKey("core", type), error: result.reason });
+      if (others) failed.push({ key: groupKey("others", type), error: result.reason });
+      continue;
+    }
+    const input = result.input;
+    if (core) {
+      const raw = (input.core && typeof input.core === "object" ? input.core : {}) as Record<string, unknown>;
+      const emails = typedEmails(raw.emails);
+      if (emails.some((email) => !email.body.trim())) {
+        failed.push({ key: groupKey("core", type), error: "Claude returned an incomplete sequence." });
+      } else {
+        fresh.set(groupKey("core", type), { ...core, approach: text(raw.approach).slice(0, 4000), emails });
+        drafted.push(groupKey("core", type));
+      }
+    }
+    if (others) {
+      const raw = (input.others && typeof input.others === "object" ? input.others : {}) as Record<string, unknown>;
+      const emails = typedEmails(raw.emails);
+      const linesRaw = (raw.tier_lines && typeof raw.tier_lines === "object" ? raw.tier_lines : {}) as Record<string, unknown>;
+      const tier_lines: NonNullable<TypedGroupCopy["tier_lines"]> = {};
+      for (const tier of tiers) {
+        const line = text(linesRaw[String(tier)]).trim().slice(0, 600);
+        if (line) tier_lines[`${tier}`] = line;
+      }
+      if (emails.some((email) => !email.body.trim())) {
+        failed.push({ key: groupKey("others", type), error: "Claude returned an incomplete sequence." });
+      } else {
+        fresh.set(groupKey("others", type), { ...others, emails, tier_lines });
+        drafted.push(groupKey("others", type));
+      }
+    }
+  }
+
+  if (drafted.length === 0) {
+    return { ok: false, error: failed[0] ? `Nothing was written: ${failed[0].error}` : "Nothing to draft." };
+  }
+
+  // Groups not written in this run keep their previous text, with today's counts.
+  const merge = (section: CopySection) =>
+    base[section].map((group) => {
+      const key = groupKey(section, group.type);
+      const written = fresh.get(key);
+      if (written) return written;
+      const before = previous?.[section].find((item) => item.type === group.type);
+      return before
+        ? { ...before, funds: group.funds, tiers: group.tiers, ...(group.merged ? { merged: group.merged } : {}) }
+        : group;
+    });
+
+  const typed: TypedCopy = {
+    core: merge("core"),
+    others: merge("others"),
+    // A full draft takes today's opt-out line; a partial one keeps the copy's own.
+    opt_out_line: only && previous ? previous.opt_out_line : styles.opt_out_line,
+    ...(list.run_id ? { run_id: list.run_id } : {}),
+  };
+  const copy = asEmailCopy({
+    ...working,
+    tier_scheme: "four",
+    copy_version: 2,
+    typed,
+    admin_note: working.admin_note,
+  });
+  return { ok: true, value: { copy, drafted, failed, knownLeftOut: knownLeftOut.length } };
 }
