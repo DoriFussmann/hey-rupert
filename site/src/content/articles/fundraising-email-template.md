@@ -24,7 +24,9 @@ keywords:
   - fundraising email template
   - investor outreach
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: investor outreach
 externalLinks:
   - label: "Well-crafted cold emails to investors achieve 5–15% response rates, compared to less than 1% for generic mass emails."
     url: "https://www.revenueflow.com/blog/cold-email-for-fundraising"
@@ -72,7 +74,7 @@ Every founder raising a Seed or Series A round eventually goes looking for a fun
 Well-crafted cold emails to investors achieve response rates between 5% and 15%, compared to less than 1% for generic mass emails.
  That gap is almost entirely explained by research quality and message specificity. The template is the same; the work that fills it in is what separates the outcomes.
 
-The practical implication is this: your investor outreach template should be treated as a reusable scaffold, not a script. Every investor you contact deserves a version of that scaffold that reflects their stage focus, sector thesis, and recent portfolio activity. Anything short of that is not outreach—it is noise.
+The practical implication is this: your [investor outreach](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) template should be treated as a reusable scaffold, not a script. Every investor you contact deserves a version of that scaffold that reflects their stage focus, sector thesis, and recent portfolio activity. Anything short of that is not outreach—it is noise.
 
 ## Fit Research Comes Before Copywriting
 

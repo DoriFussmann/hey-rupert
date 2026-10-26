@@ -37,9 +37,9 @@ faqs:
     answer: Design matters enough that a visually chaotic deck creates friction — but professional polish does not compensate for weak content. Buffer's seed deck was simple and not visually sophisticated; it raised $500K because the traction metrics were compelling. Airbnb's original 2009 deck is widely described as rough by modern standards, yet it remains the most studied seed deck in history. Investors in 2026 do spend more total time on decks with clear data visualization, but the data itself — not its presentation — is what drives conviction.
 internalLinks:
   - slug: pitch-deck
-    anchor: "How to build a pitch deck"
+    anchor: How to build a pitch deck
   - slug: seed-pitch-deck
-    anchor: "Building a seed pitch deck"
+    anchor: Building a seed pitch deck
   - slug: startup-pitch-deck-template
     anchor: "Pitch deck template, slide by slide"
 
@@ -186,7 +186,7 @@ Founders preparing a deck in the current environment need to recognize that conv
 
 The founders behind the decks analyzed here had one other advantage beyond good slides: they got their materials in front of investors who were specifically positioned to say yes. That kind of targeting discipline — understanding which firms invest at which stages, in which sectors, with which check sizes — is as important as the deck itself, and it is work that most founders underestimate when they are heads-down building.
 
-[Rupert](/how-it-works/) was built specifically for this gap. Every campaign is researched by experienced operators who identify investors genuinely suited to the company's stage, sector, and traction profile, then manage personalized outreach on the founder's behalf — while the founder retains complete visibility into every conversation and every relationship. The deck does the convincing. Rupert makes sure the right people actually see it.
+[Rupert](/how-it-works/) was built specifically for this gap. Every campaign is researched by experienced operators who identify investors genuinely suited to the company's stage, sector, and traction profile, then manage personalized outreach on the founder's behalf — while the founder retains complete visibility into every conversation and every relationship. The deck does the convincing. [Rupert](/book-call/) makes sure the right people actually see it.
 
 ---
 

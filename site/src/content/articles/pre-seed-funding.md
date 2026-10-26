@@ -26,11 +26,13 @@ internalLinks:
   - slug: startup-funding-stages
     anchor: "Startup funding stages, pre-seed to Series C"
   - slug: pre-seed-vs-seed-funding
-    anchor: "Pre-seed vs. seed funding"
+    anchor: Pre-seed vs. seed funding
   - slug: angel-investors
-    anchor: "Finding angel investors for your first check"
+    anchor: Finding angel investors for your first check
   - slug: seed-pitch-deck
-    anchor: "Building a seed pitch deck"
+    anchor: Building a seed pitch deck
+  - slug: startup-funding
+    anchor: startup funding
 
 externalLinks:
   - label: "Carta: State of Pre-Seed, Q2 2026"
@@ -190,7 +192,7 @@ SAFEs are used in the large majority of pre-seed rounds
 , and their relative simplicity means that once an investor verbally commits, getting to a signed document is typically a matter of days, not weeks. The legal infrastructure for a pre-seed close is not complex; the main cause of delay is usually the founder failing to create the conditions that make signing feel urgent.
 
 A realistic timeline for the full process looks like this: three to four weeks of preparation (phases one through three), six to ten weeks of active outreach and meetings (phases four and five), and two to four weeks of diligence and close. 
-Pre-seed startup funding in Q1 2026 matches recent quarters, suggesting a stabilization of the market.
+Pre-seed [startup funding](/articles/startup-funding/) in Q1 2026 matches recent quarters, suggesting a stabilization of the market.
  In a stable market, founders who run a disciplined, phased process can expect a 12–20 week end-to-end timeline. Those who treat fundraising as a background task alongside product work almost always run longer.
 
 ---
