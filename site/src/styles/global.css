@@ -1926,8 +1926,8 @@
 
   .cal-embed {
     width: 100%;
-    min-height: 44rem;
-    margin-top: theme("spacing.xl");
+    min-height: 36rem;
+    margin-top: theme("spacing.lg");
     overflow: auto;
   }
 
@@ -1937,6 +1937,10 @@
 
   .form-note {
     margin-top: theme("spacing.md");
+    color: theme("colors.muted.text");
+  }
+
+  .form-note-inline {
     color: theme("colors.muted.text");
   }
 

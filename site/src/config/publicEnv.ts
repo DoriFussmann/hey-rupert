@@ -11,7 +11,7 @@ export const BOOKING_ENDPOINT = (
 /** Public Cal.com event URL for the discovery-call scheduler. */
 export const CAL_COM_URL = (
   import.meta.env.PUBLIC_CAL_COM_URL ??
-  "https://cal.com/dori-fussmann-lqbqlb/30min"
+  "https://cal.com/team-rupert-2zxrkh/30min"
 ).trim();
 
 /** Google Analytics measurement ID. */
