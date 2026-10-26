@@ -3,7 +3,8 @@
 import { Fragment, useState } from "react";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
-import { NOTE_MAX, type SetupQuestion } from "@/lib/setup";
+import { NOTE_MAX, type CopyEmail, type SetupQuestion } from "@/lib/setup";
+import type { QuickFact } from "@/lib/outreach/core";
 import {
   OTHER_TIERS,
   OTHER_TIER_LABEL,
@@ -48,6 +49,67 @@ export function WithFields({ text, tierLine }: { text: string; tierLine?: string
   );
 }
 
+/** One approved Core contact, as the client sees it. */
+export type ClientCoreEmail = {
+  id: string;
+  fund_name: string;
+  fund_type: string;
+  person_name: string;
+  person_title: string;
+  quick_facts: QuickFact[];
+  emails: CopyEmail[];
+};
+
+function CoreEmailsList({ items, optOut }: { items: ClientCoreEmail[]; optOut: string }) {
+  return (
+    <details className="mt-lg rounded-card border border-border bg-surface">
+      <summary className="cursor-pointer px-lg py-md text-body-sm text-heading">
+        See all {items.length} personal Core emails (optional)
+      </summary>
+      <ul className="divide-y divide-border border-t border-border">
+        {items.map((item) => (
+          <li key={item.id} className="px-lg py-md">
+            <p className="text-body-sm text-heading">
+              {item.person_name || "Investor"}
+              {item.person_title ? <span className="text-muted"> · {item.person_title}</span> : null}
+              <span className="text-muted"> · {item.fund_name}</span>
+            </p>
+            {item.quick_facts.length ? (
+              <div className="mt-sm">
+                <p className="text-label uppercase tracking-label text-muted">Quick Facts on Prospect</p>
+                <ul className="mt-xs space-y-xs text-body-sm">
+                  {item.quick_facts.map((fact, index) => (
+                    <li key={index}>
+                      {fact.fact}{" "}
+                      <a href={fact.url} target="_blank" rel="noreferrer" className="text-primary underline hover:text-primary-hover">
+                        source
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+            <ol className="mt-sm space-y-sm">
+              {item.emails.map((email, index) => (
+                <li key={index}>
+                  <p className="text-label uppercase tracking-label text-muted">
+                    {SEQUENCE_LABELS[index]}
+                    {email.subject.trim() ? ` · ${email.subject}` : index > 0 ? " · same thread" : ""}
+                  </p>
+                  <div className="mt-xs whitespace-pre-wrap rounded-md bg-background px-md py-sm text-body-sm text-body">
+                    {email.body}
+                    {index === 0 && optOut ? `\n\n${optOut}` : ""}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 const tabClass = (active: boolean) =>
   `rounded-md px-md py-sm text-body-sm transition-colors duration-hover ${
     active ? "bg-primary text-white" : "border border-border bg-surface text-secondary hover:text-heading"
@@ -66,6 +128,7 @@ export function TypedCopyReview({
   questions = [],
   readOnly,
   linkedin,
+  coreEmails = [],
 }: {
   typed: TypedCopy;
   version: number;
@@ -75,6 +138,8 @@ export function TypedCopyReview({
   questions?: SetupQuestion[];
   readOnly: boolean;
   linkedin?: React.ReactNode;
+  /** Core emails Rupert approved, one per contact. */
+  coreEmails?: ClientCoreEmail[];
 }) {
   const firstSection: CopySection = typed.core.length > 0 ? "core" : "others";
   const [section, setSection] = useState<CopySection>(firstSection);
@@ -211,6 +276,7 @@ export function TypedCopyReview({
         </section>
       ) : null}
 
+      {section === "core" && coreEmails.length > 0 ? <CoreEmailsList items={coreEmails} optOut={typed.opt_out_line} /> : null}
       {linkedin}
       <QuestionThread questions={questions} />
       {open ? (

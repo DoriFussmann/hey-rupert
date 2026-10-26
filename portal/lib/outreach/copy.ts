@@ -255,6 +255,20 @@ export const DEFAULT_PRESETS: StylePreset[] = [
   },
 ];
 
+/** A style as instructions for the AI writers. */
+export function styleInstructions(preset: StylePreset) {
+  return [
+    `Style: ${preset.label}`,
+    `Rules:\n${preset.rules || "Short, plain, factual."}`,
+    `Word cap: first email ${preset.max_words} words; each follow-up ${Math.round(preset.max_words * 0.75)}.`,
+    `Proof points per email: ${preset.proof_points}.`,
+    `Call to action: ${CTA_LABEL[preset.cta]}.`,
+    preset.example ? `Example (copy its shape, never its facts):\n${preset.example}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function defaultOutreachStyles(): OutreachStyles {
   return {
     presets: DEFAULT_PRESETS.map((preset) => ({ ...preset })),
@@ -520,6 +534,8 @@ export function emailIssues(
   section: CopySection,
   maxWords: number,
   where: string,
+  /** Merge fields allowed; defaults to the section's. A fully written email allows none. */
+  allowedFields?: string[],
 ): CopyIssue[] {
   const issues: CopyIssue[] = [];
   const at = `${where}, ${SEQUENCE_LABELS[index] ?? `Email ${index + 1}`}`;
@@ -532,10 +548,16 @@ export function emailIssues(
   if (/^\s*(re|fwd?|fw)\s*:/i.test(email.subject)) {
     issues.push({ level: "error", where: at, text: "the subject pretends to be a reply or forward." });
   }
-  const allowed = MERGE_FIELDS[section];
+  const allowed = allowedFields ?? MERGE_FIELDS[section];
   for (const field of mergeFieldsIn(all)) {
     if (!allowed.includes(field)) {
-      issues.push({ level: "error", where: at, text: `uses {{${field}}}, which isn't available here (${allowed.map((f) => `{{${f}}}`).join(", ")}).` });
+      issues.push({
+        level: "error",
+        where: at,
+        text: allowed.length
+          ? `uses {{${field}}}, which isn't available here (${allowed.map((f) => `{{${f}}}`).join(", ")}).`
+          : `still has {{${field}}}; this email is written for one person, so fill it in.`,
+      });
     }
   }
   if (/\[[A-Z][^\]\n]{0,40}\]/.test(all)) {

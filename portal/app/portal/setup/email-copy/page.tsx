@@ -5,6 +5,9 @@ import { ReviewStatus } from "@/components/setup/review-status";
 import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
 import { getPortalSetup } from "@/lib/portal-setup";
 import { asEmailCopy, asInvestorList, questionsOf, tierCounts } from "@/lib/setup";
+import { isServiceRoleConfigured } from "@/lib/env";
+import { loadApprovedCoreForClient } from "@/lib/outreach/core-server";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 export default async function EmailCopyPage() {
   const { client, item, row, viewAs } = await getPortalSetup("email_copy");
@@ -16,6 +19,11 @@ export default async function EmailCopyPage() {
   const counts =
     (investors.tier_scheme ?? "three") === (copy.tier_scheme ?? "three")
       ? tierCounts(investors.rows, copy.tier_scheme)
+      : [];
+  // The personal Core emails Rupert approved, for copy written by fund type.
+  const coreEmails =
+    visible && client?.id && copy.copy_version === 2 && isServiceRoleConfigured()
+      ? await loadApprovedCoreForClient(createServiceClient(), client.id)
       : [];
   const sentNotes =
     row && row.response && row.response.version === row.version
@@ -47,6 +55,7 @@ export default async function EmailCopyPage() {
             adminNote={copy.admin_note}
             questions={questionsOf(row)}
             readOnly={viewAs}
+            coreEmails={coreEmails}
           />
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
