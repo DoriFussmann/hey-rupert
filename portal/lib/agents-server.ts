@@ -61,6 +61,7 @@ import {
   type TypedGroupCopy,
 } from "@/lib/outreach/copy";
 import { loadOutreachStyles } from "@/lib/outreach/settings-server";
+import { loadOverrides } from "@/lib/outreach/known-server";
 import {
   AGENTS_MIGRATION_MISSING,
   loadSetupSteps,
@@ -1203,7 +1204,7 @@ export async function draftTypedEmailCopy(
     return { ok: false, error: "Copy by fund type needs a four-tier investor list. Use Draft with AI for this list." };
   }
 
-  const { rows: outreach, knownLeftOut } = outreachRows(list);
+  const { rows: outreach, knownLeftOut } = outreachRows(list, await loadOverrides(supabase, clientId));
   const groups = typeGroups(outreach);
   if (groups.core.length + groups.others.length === 0) {
     return { ok: false, error: "No funds are left for outreach on the confirmed list (all excluded or marked as known)." };

@@ -54,3 +54,37 @@ Each Core fund gets 2 active contacts with their own emails, written from the Co
 - **Rewrite all of a fund type.** After the Core template changes, for example after a client asks for changes, this rewrites every active contact of that type and keeps their Quick Facts.
 - **Reserves.** Shown as "N more available" per fund. Activate puts one in the campaign, unwritten. Move to reserve takes one out.
 - **The client** sees only approved, active contacts' emails and their Quick Facts, in an optional list under Core.
+
+# Campaign and warm intros (Phase 5, part 3)
+
+| What | Where |
+|---|---|
+| Rendering the other tiers, readiness, export (pure) | `campaign.ts` |
+| Build, staleness, export, known funds, blurb | `campaign-server.ts`, `known-server.ts`, tables `outreach_campaigns` and `outreach_known_funds` |
+| Admin | Client → Setup → Campaign (`campaign-panel.tsx`); CSV at `/admin/clients/[id]/campaign/export?wave=1\|2\|all` |
+| Client | `/portal/setup/warm-intros`, linked from the confirmed investor list |
+| Prompt | `warm_intro_blurb` |
+
+**Setup:** run `supabase/outreach_campaign.sql` once.
+
+## Build
+
+- **When it can run:** the client has confirmed the copy (copy by fund type) and every active Core contact is approved. Otherwise the panel lists what's missing.
+- **What it does:** Core rows keep Rupert's approved emails. Every Sphere, Tier 3 and Tier 4 fund gets its 2 contacts (same picking as Core), with its type's sequence filled in.
+  - The tier line, first name and fund name are filled in; a missing first name gives "Hi,".
+  - These rows are approved by the client's confirmation, recorded as `client confirmation (copy vN)`.
+  - A fund whose type has no copy group is listed as not written.
+- **Stale:** a newer confirmed copy version, or a different list run, makes the build stale. Export is refused until it's built again.
+
+## Export (Instantly CSV)
+
+- **Which rows:** only active contacts whose text matches its approval hash. Edited text is skipped until it's approved again.
+- **Columns:** email, names, fund, tier, type, wave, then `subject_N`, `body_N` (text) and `body_N_html` for N = 1–3.
+- **Opt-out line:** on body 1 only.
+- **Waves:** wave 1 is each fund's first contact; wave 2 is the rest, sent a few days later.
+- **Untested:** whether Instantly takes a whole body as one variable, and whether a blank subject variable keeps a follow-up in the thread. Send a test first.
+
+## Warm intros
+
+- **What the client sees:** funds marked "I know them" are out of automation. The page lists who to ask about at each fund (names and titles only), and a note to forward (ask + blurb, `{{fund_name}}` filled per fund). They set a progress status and a note.
+- **What Rupert sees:** every known fund with the client's progress. **Put back in the campaign** includes a fund again, and the client sees that he did. Redraft or rebuild afterwards so it's included.

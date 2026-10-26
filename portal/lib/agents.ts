@@ -14,6 +14,7 @@ export type AgentId =
   | "email_copy_typed"
   | "core_quick_facts"
   | "core_email"
+  | "warm_intro_blurb"
   | "match_profile"
   | "nudge_email";
 
@@ -212,6 +213,17 @@ Write:
 - Same rules as the template: a plain, honest subject; each follow-up adds one new fact and is shorter than the first email; no hype words; no exclamation marks; sign with the founder's first name only. Don't add an opt-out line; one is added automatically.
 - Follow Rupert's note for this contact or this fund type when there is one.`;
 
+const WARM_INTRO_BLURB_PROMPT = `You are Rupert, writing a short blurb a founder sends to someone they know who can introduce them to an investor. The connector forwards it to the investor, so it must stand on its own.
+
+Write:
+- ask: one or two sentences from the founder to the connector, asking for an introduction to {{fund_name}}. Plain and easy to say yes to; no pressure.
+- blurb: the forwardable part, 60 to 100 words, about the company in the third person: what it does, the strongest proof, the round. Ends by saying the founder would welcome a short call.
+
+Rules:
+- Use only facts from the narrative, intake and analysis. Never invent numbers, customers or investors.
+- {{fund_name}} is the only field allowed, and only in the ask.
+- No hype words, no exclamation marks.`;
+
 const MATCH_PROFILE_PROMPT = `You are Rupert's research analyst at Hey Rupert. You turn a founder's intake interview into the company profile Rupert's investor-matching tool runs on. Fill the fields by calling the tool.
 
 Rules:
@@ -298,6 +310,12 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Runs after the Quick Facts for each active Core contact. Rewrites the Core template of the fund's type for that one person, using their Quick Facts, in the style set for Core. You approve each contact's emails.",
     defaultPrompt: CORE_EMAIL_PROMPT,
+  },
+  {
+    id: "warm_intro_blurb",
+    description:
+      "Runs when you click Draft with AI under Campaign → Warm intros. Writes the ask and the forwardable blurb the client sends to a connector for a fund they marked as known. You edit it before the client sees it.",
+    defaultPrompt: WARM_INTRO_BLURB_PROMPT,
   },
   {
     id: "match_profile",

@@ -12,10 +12,10 @@ const read = (path: string) => readFileSync(join(portal, path), "utf8").replace(
 const row = (slug: string, content: string | null, version: number | null): PromptRow => ({ slug, content, active_version: version });
 const slug = (key: Parameters<typeof promptDefinition>[0]) => promptDefinition(key).slug;
 
-test("the registry: 22 prompts, each stored once, each starting text usable", () => {
-  assert.equal(PROMPTS.length, 22);
-  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 22);
-  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 22);
+test("the registry: 23 prompts, each stored once, each starting text usable", () => {
+  assert.equal(PROMPTS.length, 23);
+  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 23);
+  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 23);
   for (const prompt of PROMPTS) {
     // The database only accepts these slugs as prompts.
     assert.ok(prompt.slug === "intake_prompt" || prompt.slug.startsWith("agent_prompt:"), prompt.slug);
@@ -188,4 +188,11 @@ test("the Core migration starts both Core prompts from exactly the registry's te
     assert.ok(sql.includes(`'${prompt.slug}'`), prompt.slug);
     assert.ok(sql.includes(`$rupert_prompt$${prompt.defaultText}$rupert_prompt$`), `${key}: text differs from the registry`);
   }
+});
+
+test("the campaign migration starts the warm intro prompt from exactly the registry's text", () => {
+  const sql = read("supabase/outreach_campaign.sql");
+  const prompt = PROMPTS.find((item) => item.key === "warm_intro_blurb")!;
+  assert.ok(sql.includes(`'${prompt.slug}'`), prompt.slug);
+  assert.ok(sql.includes(`$rupert_prompt$${prompt.defaultText}$rupert_prompt$`), "text differs from the registry");
 });
