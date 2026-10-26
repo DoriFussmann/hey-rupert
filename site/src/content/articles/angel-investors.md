@@ -41,11 +41,11 @@ faqs:
     answer: "Most solo angels write checks between $25K and $100K at pre-seed. Operator angels — ex-founders and executives investing their own capital — often write $50K to $250K. Angel syndicates pool capital from multiple backers and can deploy $100K to $500K as a single instrument. Your round target determines which tier of angel you should prioritize: if you're raising $500K, you need a mix of solo angels and at least one or two operator angels or syndicate leads, not a single $500K check from one individual."
 internalLinks:
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: angel-investors-vs-venture-capital
-    anchor: "Angel investors vs. venture capital"
+    anchor: Angel investors vs. venture capital
   - slug: investors-near-me
-    anchor: "Finding investors near you"
+    anchor: Finding investors near you
   - slug: pre-seed-funding
     anchor: "Pre-seed funding: the complete guide"
 
@@ -192,7 +192,7 @@ Any service model that positions itself as an intermediary — where the service
 
 What expert-managed outreach should look like is different: experienced operators doing the research, personalization, and execution work on the founder's behalf, while every conversation and every relationship stays entirely with the founder. The founder reads every email before it goes out. The founder is on every reply thread. The investor knows they are speaking with the founder — not a service, not an intermediary, not a broker. This model treats outreach execution as a professional service, not as a relationship toll.
 
-[Rupert](/how-it-works/) was built around exactly this principle. Founders raising Seed through Series A who want their outreach researched, personalized, and managed by experienced operators — without black-box processes, without hidden investor lists, and without surrendering any of the relationship capital they are building — work with Rupert knowing that every investor conversation belongs to them entirely. The work is done on the founder's behalf; the relationships are the founder's to keep and compound long after the round closes.
+[Rupert](/how-it-works/) was built around exactly this principle. Founders raising Seed through Series A who want their outreach researched, personalized, and managed by experienced operators — without black-box processes, without hidden investor lists, and without surrendering any of the relationship capital they are building — work with [Rupert](/book-call/) knowing that every investor conversation belongs to them entirely. The work is done on the founder's behalf; the relationships are the founder's to keep and compound long after the round closes.
 
 If the process of finding investors is the hardest part of your raise right now — not because you lack a compelling company, but because you lack the bandwidth to execute the research and outreach at the quality the process demands — expert-managed support is a legitimate professional choice. The question is only whether the service you choose respects the most important asset you are building alongside the product: your investor network.
 

@@ -39,13 +39,15 @@ faqs:
     answer: "Go to efts.sec.gov (EDGAR's full-text search) and search for the industry or company type you're targeting. Filter results to Form D filings. Each filing lists the issuer and often names the investors or placement agents involved. You can also search by the name of a company you know raised money in your sector and pull its Form D directly to see who backed it — giving you a verified, primary-source name to research further."
 internalLinks:
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: investor-list
-    anchor: "How to build an investor list"
+    anchor: How to build an investor list
   - slug: investor-crm
-    anchor: "Running your raise in an investor CRM"
+    anchor: Running your raise in an investor CRM
   - slug: capital-raising-services
-    anchor: "Capital raising services for startups"
+    anchor: Capital raising services for startups
+  - slug: angel-investors
+    anchor: angel investors
 
 externalLinks:
   - label: "Investor Database FAQ: Raising venture capital for startups"
@@ -53,7 +55,7 @@ externalLinks:
     addedAt: 2026-08-27
 supportingKeyword: investor database
 ---
-An investor database is not a fundraising strategy. It is research infrastructure — a structured, searchable repository of VC firms, angel investors, family offices, and other capital sources, filterable by stage, sector, geography, and check size. Understanding exactly what that infrastructure can and cannot do is where most founders either save weeks of wasted effort or lose their best fundraising window to a list that was never going to convert. It is one part of a broader process for [finding the right investors](/articles/how-to-find-investors/).
+An investor database is not a fundraising strategy. It is research infrastructure — a structured, searchable repository of VC firms, [angel investors](/articles/angel-investors/), family offices, and other capital sources, filterable by stage, sector, geography, and check size. Understanding exactly what that infrastructure can and cannot do is where most founders either save weeks of wasted effort or lose their best fundraising window to a list that was never going to convert. It is one part of a broader process for [finding the right investors](/articles/how-to-find-investors/).
 
 The market for these tools has expanded considerably. 
 The fundraising landscape has shifted: where founders once relied on personal networks, demo days, and accelerator introductions to meet investors, today's ecosystem offers a growing number of specialized platforms designed to surface the right capital partner at the right time.
@@ -160,7 +162,7 @@ The founders who navigate this well share a common trait: they treat fundraising
 
 For founders raising Seed through Series A who need a disciplined process without pulling themselves out of the business, the practical answer is expert-managed outreach built on top of rigorous database research. This means having experienced operators do the investor qualification work — verifying current theses, identifying genuine portfolio fit, researching partner-level focus areas — and then crafting personalized outreach that reflects that research, managing follow-up timing, and maintaining pipeline discipline across the full process. The critical difference from a black-box service is transparency: every conversation, every investor relationship, and every piece of context accumulated during the campaign stays with the founder. The database infrastructure becomes the starting point, not the ending point, and the gap between access and execution is closed by people who have run these processes before.
 
-That is precisely what [Rupert](/how-it-works/) is built to do. Rupert handles the database work, the qualification, the personalized outreach, and the pipeline management on the founder's behalf — while the founder retains complete visibility into every conversation and full ownership of every investor relationship. For founders who know their company is worth funding but don't have the bandwidth to run a research-and-outreach operation at the standard that actually converts, that combination is how database infrastructure translates into funded rounds.
+That is precisely what [Rupert](/how-it-works/) is built to do. [Rupert](/book-call/) handles the database work, the qualification, the personalized outreach, and the pipeline management on the founder's behalf — while the founder retains complete visibility into every conversation and full ownership of every investor relationship. For founders who know their company is worth funding but don't have the bandwidth to run a research-and-outreach operation at the standard that actually converts, that combination is how database infrastructure translates into funded rounds.
 
 ## Free Investor Databases Worth Your Time
 

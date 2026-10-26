@@ -40,9 +40,9 @@ faqs:
     answer: "No — and this is one of the most common mistakes founders make. A pre-seed deck is built around a problem thesis, founder insight, and the 'why now' argument, because that's what investors are buying at that stage. A seed deck needs to retire that narrative framing and replace it with quantitative evidence: MRR, retention curves, growth rates, and early unit economics. You're not updating a deck — you're rebuilding the evidentiary case from scratch, even if the slide titles look similar."
 internalLinks:
   - slug: pitch-deck
-    anchor: "How to build a pitch deck"
+    anchor: How to build a pitch deck
   - slug: seed-pitch-deck-examples
-    anchor: "Pitch deck examples and what worked"
+    anchor: Pitch deck examples and what worked
   - slug: startup-pitch-deck-template
     anchor: "Pitch deck template, slide by slide"
   - slug: pre-seed-funding
@@ -212,7 +212,7 @@ Data shows a weak correlation between the number of investors contacted and the 
 
 Once your seed pitch deck is in a form you are confident in, the real challenge begins: getting it in front of investors who are genuinely likely to fund a company at your stage, in your sector, at your level of traction. Most founders underestimate the research required to build that list correctly. The investors who have written seed checks in your category in the past eighteen months, who have available capital in the current fund cycle, and whose portfolio construction creates a natural fit with your company — that intersection is far smaller than a Crunchbase search suggests.
 
-That is where working with experienced operators who know the investor landscape makes a material difference. [Rupert](/how-it-works/) researches, personalizes, and manages outreach on your behalf — so the deck you have spent weeks refining reaches investors who are actually positioned to say yes, with a message that connects your specific traction to their specific investment thesis. You retain complete visibility into every conversation and every relationship; Rupert handles the systematic work of finding the right doors and getting them opened.
+That is where working with experienced operators who know the investor landscape makes a material difference. [Rupert](/how-it-works/) researches, personalizes, and manages outreach on your behalf — so the deck you have spent weeks refining reaches investors who are actually positioned to say yes, with a message that connects your specific traction to their specific investment thesis. You retain complete visibility into every conversation and every relationship; [Rupert](/book-call/) handles the systematic work of finding the right doors and getting them opened.
 
 A seed pitch deck earns you the right to a meeting. A disciplined outreach process earns you the right meetings. Both matter, and neither substitutes for the other.
 

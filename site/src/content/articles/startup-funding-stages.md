@@ -41,19 +41,19 @@ internalLinks:
   - slug: pre-seed-funding
     anchor: "Pre-seed funding: the complete guide"
   - slug: pre-seed-vs-seed-funding
-    anchor: "Pre-seed vs. seed funding"
+    anchor: Pre-seed vs. seed funding
   - slug: seed-vs-series-a
-    anchor: "Seed vs. Series A"
+    anchor: Seed vs. Series A
   - slug: series-a
-    anchor: "Raising a Series A"
+    anchor: Raising a Series A
   - slug: types-of-funding-for-startups
     anchor: "Types of startup funding: equity, SAFEs, debt"
   - slug: startup-funding
-    anchor: "How startup funding works"
+    anchor: How startup funding works
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: pitch-deck
-    anchor: "How to build a pitch deck"
+    anchor: How to build a pitch deck
 
 externalLinks:
   - label: "Startup Funding Stages Explained (Bootstrapping to Series C)"
@@ -262,7 +262,7 @@ Once a founder understands their stage clearly, the next problem is almost alway
 According to research by Techstars, it typically takes 100 to 200 investor conversations to close a solid pre-seed or seed round.
  Most of those conversations can be de-risked by doing the research upfront — understanding which investors have recently written checks at your stage, in your sector, and at your traction level. The founders who compress their fundraising timelines are almost always the ones who start with a tight, well-researched target list rather than a mass-market approach.
 
-This is the work [Rupert](/how-it-works/) was built to do. Rather than handing founders a database and leaving them to build outreach infrastructure from scratch, Rupert's experienced operators research the investor universe on a founder's behalf — identifying which funds are actively deploying at the right stage, mapping portfolio overlaps and competitive conflicts, and building personalised outreach for each contact. Every conversation that results is one the founder can have with full context already in place, rather than cold-starting from a generic email.
+This is the work [Rupert](/how-it-works/) was built to do. Rather than handing founders a database and leaving them to build outreach infrastructure from scratch, [Rupert](/book-call/)'s experienced operators research the investor universe on a founder's behalf — identifying which funds are actively deploying at the right stage, mapping portfolio overlaps and competitive conflicts, and building personalised outreach for each contact. Every conversation that results is one the founder can have with full context already in place, rather than cold-starting from a generic email.
 
 The appeal for founders who are focused on hitting their milestones is straightforward: the research, personalisation, and pipeline management that drives a disciplined fundraising process gets handled by people who have run these processes before, while the founder retains complete visibility into every outreach sent and every investor relationship built. Nothing is a black box. Every contact, every reply, and every resulting conversation belongs to the founder — not the service.
 

@@ -25,13 +25,15 @@ keywords:
 draft: false
 internalLinks:
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: investor-list
-    anchor: "How to build an investor list"
+    anchor: How to build an investor list
   - slug: investor-update-template
-    anchor: "Investor update template"
+    anchor: Investor update template
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
-    anchor: "Warm intros vs. cold outreach to investors"
+    anchor: Warm intros vs. cold outreach to investors
+  - slug: investor-database
+    anchor: investor database
 
 externalLinks: []
 faqs:
@@ -137,7 +139,7 @@ Building a pipeline by stage, geography, sector, and partner relevance — rathe
 
 The research that makes a CRM powerful has to come before the outreach begins. Which funds are actively deploying at your stage and check size? Which partners have publicly written about problems your company solves? Which portfolio companies suggest a genuine thesis overlap with what you're building? These are the questions that determine whether the investor list in your CRM is a live pipeline or a false sense of progress.
 
-An institutional investor database tells you who invests in venture capital. A fundraising CRM tells you which of those investors align with your specific thesis, where each one sits in your investor pipeline, and what needs to happen next.
+An institutional [investor database](/articles/investor-database/) tells you who invests in venture capital. A fundraising CRM tells you which of those investors align with your specific thesis, where each one sits in your investor pipeline, and what needs to happen next.
  The database is raw material. The CRM is the operating system. But neither replaces the judgment required to decide who actually belongs on the list.
 
 ---

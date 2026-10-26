@@ -25,13 +25,15 @@ keywords:
 draft: false
 internalLinks:
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: investor-database
-    anchor: "Choosing and using an investor database"
+    anchor: Choosing and using an investor database
   - slug: investor-crm
-    anchor: "Running your raise in an investor CRM"
+    anchor: Running your raise in an investor CRM
   - slug: biggest-venture-capital-firms
     anchor: "The biggest VC firms, and which write early checks"
+  - slug: angel-investors
+    anchor: angel investors
 
 externalLinks: []
 faqs:
@@ -122,7 +124,7 @@ Founders who skip the list-building step tend to waste their most irreplaceable 
 Blasting your pitch deck to every investor email you can find is a recipe for being ignored. Investors can tell immediately when a message is mass-sent, and it signals that you didn't bother to research whether they're a fit. In 2026, a targeted approach wins.
 
 The two to three week research window is also when you map your warm introduction paths. 
-Warm introductions remain the fastest path to a venture capitalist's inbox — introductions via founders, mentors, or angel investors significantly increase response rates compared to cold emails.
+Warm introductions remain the fastest path to a venture capitalist's inbox — introductions via founders, mentors, or [angel investors](/articles/angel-investors/) significantly increase response rates compared to cold emails.
  Knowing which of your investors, advisors, and portfolio connections can introduce you to which firms allows you to sequence outreach around those paths rather than defaulting to cold contact everywhere.
 
 ## What the List Makes Possible
