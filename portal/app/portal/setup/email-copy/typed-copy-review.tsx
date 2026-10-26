@@ -1,5 +1,7 @@
 "use client";
 
+import type { PreviewLeads } from "@/lib/outreach/preview";
+import { EmailPreview } from "@/components/email-preview";
 import { Fragment, useState } from "react";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
@@ -129,6 +131,7 @@ export function TypedCopyReview({
   readOnly,
   linkedin,
   coreEmails = [],
+  previewLeads = {},
 }: {
   typed: TypedCopy;
   version: number;
@@ -140,6 +143,8 @@ export function TypedCopyReview({
   linkedin?: React.ReactNode;
   /** Core emails Rupert approved, one per contact. */
   coreEmails?: ClientCoreEmail[];
+  /** A few real investors per group, for the Preview buttons. */
+  previewLeads?: PreviewLeads;
 }) {
   const firstSection: CopySection = typed.core.length > 0 ? "core" : "others";
   const [section, setSection] = useState<CopySection>(firstSection);
@@ -247,6 +252,7 @@ export function TypedCopyReview({
                   <WithFields text={email.body} tierLine={previewLine} />
                   {index === 0 && typed.opt_out_line ? `\n\n${typed.opt_out_line}` : ""}
                 </div>
+                <EmailPreview group={group} section={section} index={index} leads={previewLeads[key] ?? []} optOutLine={typed.opt_out_line} />
               </li>
             ))}
           </ol>

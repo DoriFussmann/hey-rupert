@@ -10,6 +10,10 @@ import {
   outreachTableError,
 } from "@/lib/outreach/settings-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { loadPreviewLeads } from "@/lib/outreach/preview-server";
+import type { PreviewLeads } from "@/lib/outreach/preview";
+import { asEmailCopy } from "@/lib/setup";
+import { loadSetupStep } from "@/lib/setup-server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -62,3 +66,18 @@ export async function saveOutreachStyles(raw: unknown): Promise<Result<{ styles:
   revalidatePath(STYLES_PATH);
   return { ok: true, styles };
 }
+
+/** A few real leads per copy group, for the email previews. */
+export async function loadPreviewLeadsAction(clientId: string): Promise<{ ok: true; leads: PreviewLeads } | { ok: false; error: string }> {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };
+  if (!isServiceRoleConfigured()) return { ok: false, error: "Service role key is not configured." };
+  if (!/^[0-9a-f-]{36}$/i.test(String(clientId))) return { ok: false, error: "Unknown client." };
+  const supabase = createServiceClient();
+  const step = await loadSetupStep(supabase, clientId, "email_copy");
+  if (!step.ok) return step;
+  const draft = asEmailCopy(step.row?.draft);
+  const typed = draft.copy_version === 2 ? draft.typed : asEmailCopy(step.row?.published).typed;
+  return { ok: true, leads: await loadPreviewLeads(supabase, clientId, typed) };
+}
+

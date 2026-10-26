@@ -1,5 +1,7 @@
 "use client";
 
+import type { PreviewLeads } from "@/lib/outreach/preview";
+import { EmailPreview } from "@/components/email-preview";
 import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
 import { useState } from "react";
 import { inputClass, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
@@ -29,6 +31,7 @@ export function TypedCopyEditor({
   busy,
   canDraft,
   clientNotes,
+  previewLeads = {},
 }: {
   typed: TypedCopy;
   onChange: (next: TypedCopy) => void;
@@ -38,6 +41,8 @@ export function TypedCopyEditor({
   canDraft: boolean;
   /** The client's notes on the last version, by group key. */
   clientNotes: Record<string, string>;
+  /** A few real leads per group, for the Preview buttons. */
+  previewLeads?: PreviewLeads;
 }) {
   const [section, setSection] = useState<CopySection>(typed.core.length > 0 ? "core" : "others");
   const [typeIndex, setTypeIndex] = useState(0);
@@ -200,6 +205,13 @@ export function TypedCopyEditor({
                     onChange={(value) => updateEmail(position, "body", value)}
                     placeholder="Body"
                     label={`${groupLabel(section, group.type)} ${SEQUENCE_LABELS[position]} body`}
+                  />
+                  <EmailPreview
+                    group={group}
+                    section={section}
+                    index={position}
+                    leads={previewLeads[key] ?? []}
+                    optOutLine={typed.opt_out_line}
                   />
                   {issues.length ? (
                     <ul className="mt-xs text-body-sm">

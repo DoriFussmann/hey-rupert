@@ -5,6 +5,7 @@ import { AdminReply } from "@/components/setup/admin-reply";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
 import { TypedCopyReview, type ClientCoreEmail } from "@/app/portal/setup/email-copy/typed-copy-review";
+import type { PreviewLeads } from "@/lib/outreach/preview";
 import {
   EMAIL_SEQUENCE_LABELS,
   NOTE_MAX,
@@ -25,6 +26,7 @@ export function EmailCopyReview({
   questions = [],
   readOnly,
   coreEmails,
+  previewLeads,
 }: {
   copy: EmailCopyPayload;
   counts: { tier: FitTier; count: number }[];
@@ -37,6 +39,7 @@ export function EmailCopyReview({
   readOnly: boolean;
   /** Core emails Rupert approved (copy by fund type only). */
   coreEmails?: ClientCoreEmail[];
+  previewLeads?: PreviewLeads;
 }) {
   const [tier, setTier] = useState<FitTier>(1);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -93,6 +96,7 @@ export function EmailCopyReview({
         readOnly={readOnly}
         linkedin={linkedin}
         coreEmails={coreEmails}
+        previewLeads={previewLeads}
       />
     );
   }
