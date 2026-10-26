@@ -12,6 +12,7 @@ import {
   type PaidInvoice,
 } from "@/lib/stripe-webhook";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { recordCampaignInvoicePayment } from "@/lib/outreach/live-server";
 
 export const dynamic = "force-dynamic";
 
@@ -147,7 +148,18 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true, ignored: true });
   }
 
-  const outcome = await recordSetupFeePayment(createServiceClient(), invoice);
+  // The first monthly invoice (Go Live gate) is matched by its link first.
+  const supabase = createServiceClient();
+  const campaign = await recordCampaignInvoicePayment(supabase, invoice);
+  if (campaign === "error") {
+    return NextResponse.json({ error: "Temporary failure." }, { status: 500 });
+  }
+  if (campaign !== "unmatched") {
+    revalidatePath("/portal", "layout");
+    return NextResponse.json({ received: true, outcome: `campaign_invoice_${campaign}` });
+  }
+
+  const outcome = await recordSetupFeePayment(supabase, invoice);
   if (outcome === "error") {
     return NextResponse.json({ error: "Temporary failure." }, { status: 500 });
   }

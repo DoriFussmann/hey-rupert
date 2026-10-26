@@ -41,6 +41,9 @@ import {
 } from "@/lib/setup";
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import { setWarmIntro } from "@/lib/outreach/campaign-server";
+import { markRepliesRead } from "@/lib/outreach/replies-server";
+import { goLive, pollInboxConnect, startInboxConnect } from "@/lib/outreach/live-server";
+import { notifyAdmin as notifyGoLive } from "@/lib/notify";
 import {
   loadSetupStep,
   loadSetupSteps,
@@ -749,6 +752,48 @@ export async function updateWarmIntro(firmId: string, status: string, note: stri
   if (!saved.ok) return saved;
   revalidatePath("/portal/setup/warm-intros");
   revalidatePath(`/admin/clients/${access.user.id}`);
+  return { ok: true };
+}
+
+/** The client opened a reply in the Investor Inbox. */
+export async function markReplyRead(replyId: string): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  await markRepliesRead(access.supabase, access.user.id, [String(replyId).slice(0, 40)]);
+  return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Go Live: the client's inbox and the launch
+
+/** Starts the Google or Microsoft sign-in that connects the client's inbox. */
+export async function startInboxConnectAction(provider: string): Promise<{ ok: true; authUrl: string } | { ok: false; error: string }> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const started = await startInboxConnect(access.supabase, access.user.id, provider === "microsoft" ? "microsoft" : "google");
+  return started.ok ? { ok: true, authUrl: started.value.authUrl } : started;
+}
+
+export async function pollInboxConnectAction(): Promise<
+  { ok: true; state: "pending" | "connected" | "failed"; message?: string } | { ok: false; error: string }
+> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const polled = await pollInboxConnect(access.supabase, access.user.id);
+  if (!polled.ok) return polled;
+  if (polled.value.state === "connected") revalidatePath("/portal/setup/go-live");
+  return { ok: true, ...polled.value };
+}
+
+/** The client's Go Live: they authorize sending, and the campaign starts. */
+export async function goLiveAction(consent: boolean): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const launched = await goLive(access.supabase, access.user.id, access.user.email ?? null, Boolean(consent));
+  if (!launched.ok) return launched;
+  await notifyGoLive(access.supabase, access.user.id, "went_live", { email: true });
+  revalidateSetup(access.user.id);
+  revalidatePath("/portal/live-campaign");
   return { ok: true };
 }
 

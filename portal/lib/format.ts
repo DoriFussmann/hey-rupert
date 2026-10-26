@@ -63,6 +63,7 @@ export function notificationLabel(type: string) {
     return "Requested List Changes";
   }
   if (type === "email_copy_confirmed") return "Confirmed Email Copy";
+  if (type === "went_live") return "Went Live";
   if (type === "email_copy_changes_requested") return "Requested Email Changes";
   if (type === "client_stalled") return "Stalled: No Response After Reminders";
   return statusLabel(type);
@@ -96,6 +97,7 @@ export function notificationAction(type: string) {
     return "asked for changes to the investor list";
   }
   if (type === "email_copy_confirmed") return "confirmed the email copy";
+  if (type === "went_live") return "clicked Go Live: the investor campaign is sending";
   if (type === "email_copy_changes_requested") {
     return "asked for changes to the email copy";
   }

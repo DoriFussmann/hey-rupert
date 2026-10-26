@@ -88,3 +88,42 @@ Each Core fund gets 2 active contacts with their own emails, written from the Co
 
 - **What the client sees:** funds marked "I know them" are out of automation. The page lists who to ask about at each fund (names and titles only), and a note to forward (ask + blurb, `{{fund_name}}` filled per fund). They set a progress status and a note.
 - **What Rupert sees:** every known fund with the client's progress. **Put back in the campaign** includes a fund again, and the client sees that he did. Redraft or rebuild afterwards so it's included.
+
+# Go Live, Instantly and replies (Phase 5, part 5)
+
+| What | Where |
+|---|---|
+| Campaign payload, leads, gates, events, labels, client pipeline (pure) | `live.ts` |
+| Instantly API calls | `lib/instantly.ts` |
+| Inbox, invoice, Go Live, test send, waves, pause | `live-server.ts` |
+| Webhook intake, triage decisions, client data | `replies-server.ts` (AI labelling in `reply-label-server.ts`) |
+| Routes | `/api/instantly/webhook`, `/api/cron/outreach` (daily, wave 2) |
+| Admin | Setup → Go Live panel; Clients → Replies (`/admin/replies`) |
+| Client | `/portal/setup/go-live`; Investor Inbox, Engagement Tracker, Campaign Analytics on real data |
+
+**Setup:**
+- Run `supabase/outreach_live.sql`.
+- Set `INSTANTLY_API_KEY` (scopes: accounts, campaigns, leads, webhooks) and `INSTANTLY_WEBHOOK_SECRET` (any long random string) in Vercel.
+- `CRON_SECRET` is already used by the other crons.
+
+## Flow
+
+1. **The inbox.** The client signs in with Google or Microsoft through Instantly's OAuth: a popup, polled until connected. No password reaches the portal.
+   - Warmup is switched on, and the account status is checked; only Instantly status 1 counts as healthy.
+   - If the inbox is already in the workspace, Rupert links it by email.
+2. **The invoice.** Rupert pastes the first monthly invoice link (Service Order 3.4). The Stripe webhook matches it by link before the Setup Fee flow; Rupert can also mark it paid.
+3. **Go Live.** The client ticks the authorization and clicks Go Live. Enabled only when the campaign is built and fully approved, the inbox is healthy and the invoice is paid.
+   - Go Live creates the Instantly campaign: three steps whose subject and body are per-lead variables; follow-ups go in the same thread; weekdays; stop on reply and stop for company.
+   - It registers a webhook for that campaign with the secret header, adds wave 1, activates the campaign, records the consent and sets the client to Live.
+   - Each step saves its progress, so a retry continues where it stopped.
+4. **Wave 2.** Each fund's second contact starts N days later (daily cron), or when Rupert clicks Start wave 2 now.
+   - **Add newly approved contacts** pushes reserves activated after launch.
+   - Pause and Resume map to Instantly.
+5. **Send test to me.** Before Go Live, a separate test campaign sends one approved contact's three emails to Rupert from the client's inbox, two minutes apart. Use it to confirm formatting and threading.
+6. **Frozen after launch.** Rebuilding the campaign, re-syncing Core contacts and editing pushed contacts are refused.
+
+## Replies
+
+- **Intake.** Every webhook event is logged in `outreach_events` and updates the contact: sent, opened, replied, bounced, unsubscribed, meeting. Replies and auto-replies go into `outreach_replies` as **pending**, deduplicated by Instantly's email id. Rupert gets an email for each real reply.
+- **Triage** (`/admin/replies`). Claude labels new replies (prompt `reply_triage`) with a one-line summary and a suggestion. Rupert releases, withholds (with a private reason) or undoes. Bounced contacts are listed with a pointer to the reserves.
+- **The client** sees released replies only: Investor Inbox, Engagement Tracker (furthest stage per fund) and Campaign Analytics. They reply from their own email, in the thread; there is no reply box in the portal.

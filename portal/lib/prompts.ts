@@ -167,6 +167,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The confirmed narrative, the intake summary and the analysis; the answer format (the ask and the blurb).",
     false,
   ),
+  reply_triage: agentDetails(
+    "reply_triage",
+    "The investor's reply (subject and text), who sent it and the fund; the answer format (a label from the fixed list and a one-sentence summary).",
+    false,
+  ),
   match_profile: agentDetails(
     "match_profile",
     "The intake interview, Rupert's read of every shared file (from the Company Materials Feedback, once Analyze has run), and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",

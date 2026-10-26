@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { ResponseHistory } from "@/components/setup/response-history";
@@ -44,6 +45,15 @@ export default async function EmailCopyPage() {
         waitingTitle="Rupert has your note."
         waitingDetail="He'll reply and send the emails back for you to confirm."
       />
+      {row?.status === "confirmed" && copy.copy_version === 2 ? (
+        <p className="mb-lg text-body text-secondary">
+          Next:{" "}
+          <Link href="/portal/setup/go-live" className="text-primary underline">
+            connect your inbox and go live
+          </Link>
+          .
+        </p>
+      ) : null}
       {visible && row ? (
         <>
           <EmailCopyReview

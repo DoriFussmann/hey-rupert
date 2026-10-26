@@ -35,6 +35,7 @@ function tableError(message: string, code?: string) {
 }
 
 type CampaignRow = {
+  live_at: string | null;
   copy_version: number | null;
   run_id: string;
   built_at: string | null;
@@ -48,6 +49,7 @@ async function loadCampaignRow(supabase: ServiceClient, clientId: string): Promi
   const { data } = await supabase.from("outreach_campaigns").select("*").eq("client_id", clientId).maybeSingle();
   if (!data) return null;
   return {
+    live_at: data.live_at ? String(data.live_at) : null,
     copy_version: data.copy_version == null ? null : Number(data.copy_version),
     run_id: String(data.run_id ?? ""),
     built_at: data.built_at ? String(data.built_at) : null,
@@ -234,6 +236,8 @@ export async function loadWarmIntroBlurb(supabase: ServiceClient, clientId: stri
 // The campaign
 
 export type CampaignState = {
+  /** Live in Instantly: the build and the Core emails are frozen. */
+  live: boolean;
   built: boolean;
   builtAt: string | null;
   builtBy: string | null;
@@ -250,7 +254,7 @@ export type CampaignState = {
 };
 
 function staleReason(campaign: CampaignRow | null, steps: Steps) {
-  if (!campaign?.built_at) return null;
+  if (!campaign?.built_at || campaign.live_at) return null;
   if (steps.copyRow?.status !== "confirmed") return "The email copy changed since the campaign was built and the client hasn't confirmed it again.";
   if (campaign.copy_version !== steps.copyRow.version) return "The client confirmed a newer version of the email copy. Build the campaign again.";
   if (steps.list?.run_id && campaign.run_id !== steps.list.run_id) return "The investor list changed since the campaign was built. Build it again.";
@@ -280,6 +284,7 @@ export async function loadCampaignState(supabase: ServiceClient, clientId: strin
   return {
     ok: true,
     value: {
+      live: Boolean(campaign?.live_at),
       built,
       builtAt: campaign?.built_at ?? null,
       builtBy: campaign?.built_by ?? null,
@@ -305,6 +310,8 @@ export async function buildCampaign(
   clientId: string,
   actor: string | null,
 ): Promise<Result<{ contacts: number; unwritten: string[] }>> {
+  const live = await supabase.from("outreach_campaigns").select("*").eq("client_id", clientId).maybeSingle();
+  if (live.data?.live_at) return { ok: false, error: "The campaign is live. It can't be rebuilt: what was sent stays as sent." };
   const state = await loadCampaignState(supabase, clientId);
   if (!state.ok) return state;
   if (state.value.blockers.length > 0) return { ok: false, error: state.value.blockers.join(" ") };
