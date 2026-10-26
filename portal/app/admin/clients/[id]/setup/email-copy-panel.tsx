@@ -1,7 +1,9 @@
 "use client";
 
+import type { PreviewLeads } from "@/lib/outreach/preview";
+import { loadPreviewLeadsAction } from "@/app/admin/outreach-actions";
 import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { draftClientEmailCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
 import { TypedCopyEditor } from "@/app/admin/clients/[id]/setup/typed-copy-editor";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
@@ -97,6 +99,19 @@ export function EmailCopyPanel({
   const byType = listScheme === "four";
   const typedMode = copy.copy_version === 2 || (byType && !hasContent(copy));
   const clientNotes = row?.response?.item_notes ?? {};
+  // Real leads to preview each email with; reloaded when the groups change.
+  const [previewLeads, setPreviewLeads] = useState<PreviewLeads>({});
+  const groupsKey = copy.typed ? [...copy.typed.core, ...copy.typed.others].map((g) => g.type).join(",") + copy.typed.core.length : "";
+  useEffect(() => {
+    if (!groupsKey) return;
+    let live = true;
+    void loadPreviewLeadsAction(clientId).then((result) => {
+      if (live && result.ok) setPreviewLeads(result.leads);
+    });
+    return () => {
+      live = false;
+    };
+  }, [clientId, groupsKey]);
 
   function tierName(value: FitTier) {
     return tiers.find((entry) => entry.tier === value)?.label ?? `Tier ${value}`;
@@ -301,6 +316,7 @@ export function EmailCopyPanel({
             busy={drafting}
             canDraft={claudeReady}
             clientNotes={clientNotes}
+            previewLeads={previewLeads}
           />
         ) : (
           <p className="px-lg py-lg text-body-sm text-muted">

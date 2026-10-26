@@ -8,6 +8,7 @@ import { getPortalSetup } from "@/lib/portal-setup";
 import { asEmailCopy, asInvestorList, questionsOf, tierCounts } from "@/lib/setup";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { loadApprovedCoreForClient } from "@/lib/outreach/core-server";
+import { loadPreviewLeads } from "@/lib/outreach/preview-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 export default async function EmailCopyPage() {
@@ -22,10 +23,13 @@ export default async function EmailCopyPage() {
       ? tierCounts(investors.rows, copy.tier_scheme)
       : [];
   // The personal Core emails Rupert approved, for copy written by fund type.
-  const coreEmails =
-    visible && client?.id && copy.copy_version === 2 && isServiceRoleConfigured()
-      ? await loadApprovedCoreForClient(createServiceClient(), client.id)
-      : [];
+  const typedVisible = visible && client?.id && copy.copy_version === 2 && isServiceRoleConfigured();
+  const [coreEmails, previewLeads] = typedVisible
+    ? await Promise.all([
+        loadApprovedCoreForClient(createServiceClient(), client!.id),
+        loadPreviewLeads(createServiceClient(), client!.id, copy.typed),
+      ])
+    : [[], {}];
   const sentNotes =
     row && row.response && row.response.version === row.version
       ? row.response.item_notes
@@ -66,6 +70,7 @@ export default async function EmailCopyPage() {
             questions={questionsOf(row)}
             readOnly={viewAs}
             coreEmails={coreEmails}
+            previewLeads={previewLeads}
           />
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
