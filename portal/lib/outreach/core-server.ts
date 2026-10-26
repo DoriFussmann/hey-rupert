@@ -100,13 +100,45 @@ function asMessage(row: Record<string, unknown>): CoreMessage {
   };
 }
 
-export type CoreMessageView = CoreMessage & { conflict: string; note: string };
+export type CoreMessageView = CoreMessage & {
+  conflict: string;
+  note: string;
+  /** Already added to the live Instantly campaign. */
+  pushed: boolean;
+};
 
 function asView(row: Record<string, unknown>): CoreMessageView {
-  return { ...asMessage(row), conflict: str(row.conflict, 500), note: str(row.note, 2000) };
+  return { ...asMessage(row), conflict: str(row.conflict, 500), note: str(row.note, 2000), pushed: Boolean(row.pushed_at) };
 }
 
-export type OutreachMessageView = CoreMessageView & { tier: number };
+export type Delivery = {
+  instantly_lead_id: string | null;
+  pushed_at: string | null;
+  sent_at: string | null;
+  last_step: number | null;
+  opened_at: string | null;
+  replied_at: string | null;
+  bounced_at: string | null;
+  unsubscribed_at: string | null;
+  meeting_at: string | null;
+};
+
+export type OutreachMessageView = CoreMessageView & Delivery & { tier: number };
+
+function deliveryOf(row: Record<string, unknown>): Delivery {
+  const at = (value: unknown) => (value ? String(value) : null);
+  return {
+    instantly_lead_id: at(row.instantly_lead_id),
+    pushed_at: at(row.pushed_at),
+    sent_at: at(row.sent_at),
+    last_step: row.last_step == null ? null : Number(row.last_step),
+    opened_at: at(row.opened_at),
+    replied_at: at(row.replied_at),
+    bounced_at: at(row.bounced_at),
+    unsubscribed_at: at(row.unsubscribed_at),
+    meeting_at: at(row.meeting_at),
+  };
+}
 
 /** Every contact row for a client, all tiers. */
 export async function loadOutreachMessages(supabase: ServiceClient, clientId: string): Promise<Result<OutreachMessageView[]>> {
@@ -121,7 +153,7 @@ export async function loadOutreachMessages(supabase: ServiceClient, clientId: st
       .range(from, to),
   );
   if (!rows.ok) return { ok: false, error: tableError(rows.error) };
-  return { ok: true, value: rows.rows.map((row) => ({ ...asView(row), tier: Number(row.tier) || 1 })) };
+  return { ok: true, value: rows.rows.map((row) => ({ ...asView(row), ...deliveryOf(row), tier: Number(row.tier) || 1 })) };
 }
 
 export async function loadCoreMessages(supabase: ServiceClient, clientId: string): Promise<Result<CoreMessageView[]>> {
@@ -211,6 +243,14 @@ export async function loadCoreWorkspace(supabase: ServiceClient, clientId: strin
 
 const PROBLEMS = new Set(["email_bad", "left_firm", "role_changed", "not_found"]);
 
+/** Live in Instantly: what was pushed can't change from here. */
+async function isLive(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase.from("outreach_campaigns").select("*").eq("client_id", clientId).maybeSingle();
+  return Boolean(data?.live_at);
+}
+
+const PUSHED_ERROR = "This contact is already in the live campaign. Its emails can't change here.";
+
 export type PickedContacts = { active: PersonRecord[]; reserve: PersonRecord[]; leftOut: number };
 
 /**
@@ -284,6 +324,7 @@ export async function syncCoreContacts(
   supabase: ServiceClient,
   clientId: string,
 ): Promise<Result<{ funds: number; added: number; removed: number; leftOut: number }>> {
+  if (await isLive(supabase, clientId)) return { ok: false, error: "The campaign is live. Contacts can't change now." };
   const basis = await loadBasis(supabase, clientId);
   if (!basis.ok) return basis;
   const { list, coreRows } = basis.value;
@@ -494,6 +535,7 @@ export async function writeCoreContact(
   const message = await loadMessage(supabase, clientId, id);
   if (!message.ok) return message;
   if (message.value.slot !== "active") return { ok: false, error: "Activate this contact first." };
+  if (message.value.pushed) return { ok: false, error: PUSHED_ERROR };
   if (!message.value.person.email) return { ok: false, error: "This contact has no email." };
 
   const [basis, company, styles] = await Promise.all([
@@ -584,6 +626,7 @@ export async function editCoreMessage(
 ): Promise<Result<CoreMessageView>> {
   const message = await loadMessage(supabase, clientId, id);
   if (!message.ok) return message;
+  if (message.value.pushed && edit.emails) return { ok: false, error: PUSHED_ERROR };
   const patch: Record<string, unknown> = {};
   if (edit.note !== undefined) patch.note = String(edit.note).slice(0, 2000);
   if (edit.emails) {
@@ -640,6 +683,7 @@ export async function approveCoreMessages(
 export async function setCoreSlot(supabase: ServiceClient, clientId: string, id: string, slot: ContactSlot): Promise<Result<CoreMessageView>> {
   const message = await loadMessage(supabase, clientId, id);
   if (!message.ok) return message;
+  if (message.value.pushed) return { ok: false, error: PUSHED_ERROR };
   if (message.value.slot === slot) return message;
   return saveMessage(supabase, id, {
     slot,

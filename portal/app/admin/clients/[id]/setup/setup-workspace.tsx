@@ -1,6 +1,7 @@
 import { EmailCopyPanel } from "@/app/admin/clients/[id]/setup/email-copy-panel";
 import { CoreContactsPanel } from "@/app/admin/clients/[id]/setup/core-contacts-panel";
 import { CampaignPanel } from "@/app/admin/clients/[id]/setup/campaign-panel";
+import { LivePanel } from "@/app/admin/clients/[id]/setup/live-panel";
 import { InvestorListPanel } from "@/app/admin/clients/[id]/setup/investor-list-panel";
 import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor";
 import {
@@ -91,6 +92,7 @@ export function SetupWorkspace({
         <>
           <CoreContactsPanel clientId={clientId} claudeReady={claudeReady} />
           <CampaignPanel clientId={clientId} claudeReady={claudeReady} />
+          <LivePanel clientId={clientId} />
         </>
       ) : null}
     </section>

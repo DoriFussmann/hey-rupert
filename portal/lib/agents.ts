@@ -15,6 +15,7 @@ export type AgentId =
   | "core_quick_facts"
   | "core_email"
   | "warm_intro_blurb"
+  | "reply_triage"
   | "match_profile"
   | "nudge_email";
 
@@ -224,6 +225,21 @@ Rules:
 - {{fund_name}} is the only field allowed, and only in the ask.
 - No hype words, no exclamation marks.`;
 
+const REPLY_TRIAGE_PROMPT = `You sort investor replies for Rupert, who runs a founder's investor outreach. Every reply comes to Rupert first; he decides what the founder sees. You label it and summarise it so he can decide fast.
+
+Labels:
+- interested: wants to talk, asks for a call, the deck, or a meeting.
+- question: asks something before deciding (traction, round terms, team).
+- not_now: not the right time, check back later, too early.
+- pass: declines.
+- out_of_office: an automatic away message.
+- wrong_person: they left the fund, or point to someone else.
+- bounce: a delivery failure message.
+- opt_out: asks not to be contacted again.
+- other: anything else.
+
+Write a summary of one short sentence: what they said and anything Rupert must act on (a name they referred to, a date, a question). Quote nothing longer than a few words. Never invent anything that is not in the reply.`;
+
 const MATCH_PROFILE_PROMPT = `You are Rupert's research analyst at Hey Rupert. You turn a founder's intake interview into the company profile Rupert's investor-matching tool runs on. Fill the fields by calling the tool.
 
 Rules:
@@ -316,6 +332,12 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Runs when you click Draft with AI under Campaign → Warm intros. Writes the ask and the forwardable blurb the client sends to a connector for a fund they marked as known. You edit it before the client sees it.",
     defaultPrompt: WARM_INTRO_BLURB_PROMPT,
+  },
+  {
+    id: "reply_triage",
+    description:
+      "Runs on each new investor reply when you open Replies. Labels it (interested, question, not now, pass, out of office, wrong person, bounce, opt-out, other) and writes a one-line summary. You decide what is released to the client.",
+    defaultPrompt: REPLY_TRIAGE_PROMPT,
   },
   {
     id: "match_profile",

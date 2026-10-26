@@ -16,6 +16,7 @@ export const PROMPT_LIST = [
   { key: "core_quick_facts", title: "Core: Quick Facts research", group: "Company and narrative" },
   { key: "core_email", title: "Core: personal emails", group: "Company and narrative" },
   { key: "warm_intro_blurb", title: "Warm intro blurb", group: "Company and narrative" },
+  { key: "reply_triage", title: "Reply triage", group: "Company and narrative" },
   { key: "match_profile", title: "Match profile", group: "Company and narrative" },
   { key: "narrative_email", title: "Narrative email", group: "Emails to founders" },
   { key: "narrative_email_revision", title: "Narrative email: reply to changes", group: "Emails to founders" },
