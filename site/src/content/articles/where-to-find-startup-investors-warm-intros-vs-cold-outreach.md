@@ -24,6 +24,8 @@ draft: false
 internalLinks:
   - slug: investor-update-template
     anchor: "Investor update template"
+  - slug: fundraising-email-template
+    anchor: "Fundraising email template"
   - slug: how-to-find-investors
     anchor: "How to find the right investors"
   - slug: investor-list
@@ -80,7 +82,7 @@ What cold outreach is *not* is a spray-and-pray activity.
 The fastest ways to get deleted include mass-personalization that is obviously templated, emails longer than 150 words, attachments without context, and asking for "advice" when you clearly want money.
 
 Elite outreach stays under 80 words, while anything over 200 words gets ignored.
- The discipline required is specific: reference the investor's thesis, lead with a hard traction signal in the subject line, keep the body to under 100 words, and optimize the ask for a meeting — not a term sheet — on the first send.
+ The discipline required is specific: reference the investor's thesis, lead with a hard traction signal in the subject line, keep the body to under 100 words, and optimize the ask for a meeting — not a term sheet — on the first send. A [fundraising email template](/articles/fundraising-email-template/) gives you that structure to start from.
 
 Data supports a 3-touch sequence: an initial email, then a follow-up 5–7 days later with a new data point or press mention, then a final follow-up two weeks later. Many cold-outreach meetings come from the second or third email, not the first.
  Volume without follow-up is wasted effort. 
@@ -123,7 +125,7 @@ If you send a cold email and it goes nowhere, then later secure a warm intro, tr
 
 This is also where founder bandwidth becomes the binding constraint. Researching warm paths, identifying the right connector for each investor, drafting a compelling forwardable blurb, managing follow-ups, and tracking all of it against a live pipeline is a substantial operational load — one that compounds quickly when you are running it across 50 or 80 targets while simultaneously building a product, managing a team, and maintaining customer conversations.
 
-Founders who want both channels run in parallel — a curated warm-intro map and a personalized cold outreach sequence — without losing their own time to the mechanics of execution are increasingly turning to operators who specialize in exactly this structure. [Rupert](/how-it-works/) is built around this model: experienced operators who research the investor landscape, map genuine warm paths through portfolio founder and backer networks, build personalized cold sequences for the broader longlist, and manage all of it with complete transparency — every conversation, every investor relationship, and every pipeline update visible to the founder at all times. The channel strategy is not a black box. It is a structured process that founders can see, shape, and own.
+Founders who want both channels run in parallel — a curated warm-intro map and a personalized cold outreach sequence — without losing their own time to the mechanics of execution are increasingly turning to operators who specialize in exactly this structure. [Rupert](/book-call/) is built around this model: experienced operators who research the investor landscape, map genuine warm paths through portfolio founder and backer networks, build personalized cold sequences for the broader longlist, and manage all of it with complete transparency — every conversation, every investor relationship, and every pipeline update visible to the founder at all times. The channel strategy is not a black box. It is a structured process that founders can see, shape, and own.
 
 The investors who fund great companies are reachable. The question is whether you reach them through the right channel, with the right story, at the right moment in your raise — or whether you burn the relationship with a rushed, generic approach that signals the opposite of the discipline your company will need to operate.
 

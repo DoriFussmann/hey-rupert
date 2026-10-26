@@ -171,7 +171,7 @@ The strategic thinking that makes a deck compelling (the insight, the narrative 
 
 ## The Deck Is Not the Fundraise
 
-This is the point where many otherwise strong founders lose rounds they should have won. They build a good deck. They send it. They wait. Once the deck is ready, [Rupert](/how-it-works/) can run the investor research and outreach around it.
+This is the point where many otherwise strong founders lose rounds they should have won. They build a good deck. They send it. They wait. Once the deck is ready, [Rupert](/book-call/) can run the investor research and outreach around it.
 
 The deck is the beginning of the process, not the process itself. What happens after the deck lands — how quickly you follow up, how you manage the pipeline, how you personalize outreach to each investor's specific thesis and portfolio context — is what determines whether a strong deck converts to a term sheet or sits in an inbox accruing silence.
 
