@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test lib/*.test.ts lib/taxonomy/*.test.ts lib/company-profile/*.test.ts lib/match/tiers/*.test.ts lib/match/capacity/*.test.ts"
+    "test": "node --experimental-strip-types --test lib/*.test.ts lib/taxonomy/*.test.ts lib/company-profile/*.test.ts lib/match/tiers/*.test.ts lib/match/capacity/*.test.ts lib/outreach/*.test.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

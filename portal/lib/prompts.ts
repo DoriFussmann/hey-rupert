@@ -147,6 +147,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The confirmed narrative, the investor list as tier counts and fund types (never names), the intake summary and the analysis; the answer format (three emails per tier, two LinkedIn messages).",
     true,
   ),
+  email_copy_typed: agentDetails(
+    "email_copy_typed",
+    "The confirmed narrative, the fund groups of the confirmed list (fund type, funds per tier; never names), the style for each group (rules, word cap, proof points, call to action, example), the intake summary, the analysis and any requested changes; the answer format (Core approach and three emails; the others' three emails and a line per tier). The code checks every email against the style.",
+    true,
+  ),
   match_profile: agentDetails(
     "match_profile",
     "The intake interview, Rupert's read of every shared file (from the Company Materials Feedback, once Analyze has run), and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",

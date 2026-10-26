@@ -401,7 +401,18 @@ function itemLabel(
     return (key) => rows.find((item) => item.id === key)?.fund_name ?? key;
   }
   if (step === "email_copy") {
-    const tiers = fitTiersFor(asEmailCopy(row.published).tier_scheme);
+    const copy = asEmailCopy(row.published);
+    if (copy.copy_version === 2) {
+      // Group keys are "core:VC", "others:Angel group".
+      return (key) => {
+        const [section, type] = key.split(":");
+        if ((section === "core" || section === "others") && type) {
+          return `${section === "core" ? "Core" : "Sphere, Tier 3 and Tier 4"} · ${type}`;
+        }
+        return key;
+      };
+    }
+    const tiers = fitTiersFor(copy.tier_scheme);
     return (key) => tiers.find((tier) => `tier_${tier.tier}` === key)?.label ?? key;
   }
   // The narrative takes one comment beside it: on the Company Materials Feedback.

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { draftClientEmailCopy } from "@/app/admin/agent-actions";
+import { draftClientEmailCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
+import { TypedCopyEditor } from "@/app/admin/clients/[id]/setup/typed-copy-editor";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
 import {
@@ -9,6 +10,7 @@ import {
   LINKEDIN_NOTE_MAX,
   asClientEmail,
   asEmailCopy,
+  emailCopyHasContent,
   emailCopyProblems,
   emptyEmailCopy,
   fitTiersFor,
@@ -28,13 +30,18 @@ import {
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 
-function hasContent(copy: EmailCopyPayload) {
-  return (
-    Boolean(copy.linkedin_note?.trim() || copy.linkedin_followup?.trim()) ||
-    fitTiersFor(copy.tier_scheme).some(({ tier }) =>
-      tierEmails(copy, tier).some((email) => email.subject.trim() || email.body.trim()),
-    )
-  );
+const hasContent = emailCopyHasContent;
+
+function typedDraftMessage(result: { drafted: string[]; failed: { key: string; error: string }[]; knownLeftOut: number }) {
+  const parts = [`Drafted ${result.drafted.length} group${result.drafted.length === 1 ? "" : "s"} and saved.`];
+  if (result.failed.length) {
+    parts.push(`Not written (kept as before): ${result.failed.map((item) => `${item.key} (${item.error})`).join("; ")}.`);
+  }
+  if (result.knownLeftOut) {
+    parts.push(`${result.knownLeftOut} fund${result.knownLeftOut === 1 ? "" : "s"} the client knows ${result.knownLeftOut === 1 ? "is" : "are"} left out.`);
+  }
+  parts.push("Edit, then push.");
+  return parts.join(" ");
 }
 
 /** The copy as Rupert edits it: no reply and no questions (those live on the published version). */
@@ -85,6 +92,10 @@ export function EmailCopyPanel({
   const tiers = fitTiersFor(copyScheme);
   const schemeMismatch = copyScheme !== listScheme;
   const activeTier: FitTier = tiers.some((entry) => entry.tier === tier) ? tier : 1;
+  // Four-tier lists are written by fund type (copy v2). Older copy stays as it was.
+  const byType = listScheme === "four";
+  const typedMode = copy.copy_version === 2 || (byType && !hasContent(copy));
+  const clientNotes = row?.response?.item_notes ?? {};
 
   function tierName(value: FitTier) {
     return tiers.find((entry) => entry.tier === value)?.label ?? `Tier ${value}`;
@@ -131,6 +142,17 @@ export function EmailCopyPanel({
     setDrafting(true);
     setMessage(null);
     try {
+      if (byType) {
+        const result = await draftClientTypedCopy(clientId, null);
+        if (!result.ok) {
+          setMessage({ kind: "error", text: result.error });
+          return;
+        }
+        setCopy(result.copy);
+        setSavedKey(JSON.stringify(result.copy));
+        setMessage({ kind: result.failed.length ? "error" : "ok", text: typedDraftMessage(result) });
+        return;
+      }
       const result = await draftClientEmailCopy(clientId);
       if (!result.ok) {
         setMessage({ kind: "error", text: result.error });
@@ -144,6 +166,40 @@ export function EmailCopyPanel({
         kind: "error",
         text: err instanceof Error ? err.message : "Unable to draft the emails.",
       });
+    } finally {
+      setDrafting(false);
+    }
+  }
+
+  /** Redrafts one group. Local edits to the other groups are kept. */
+  async function onRedraft(key: string) {
+    const current = copy.typed;
+    if (!current) return;
+    if (!window.confirm("Redraft this group with AI? Its emails are replaced; every other group stays as it is.")) return;
+    setDrafting(true);
+    setMessage(null);
+    try {
+      const result = await draftClientTypedCopy(clientId, [key]);
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      const [section, type] = key.split(":") as ["core" | "others", string];
+      const written = result.copy.typed?.[section].find((group) => group.type === type);
+      // The server saved its merge; the editor keeps unsaved edits elsewhere.
+      setSavedKey(JSON.stringify(result.copy));
+      if (written) {
+        setCopy((existing) => {
+          const typed = existing.typed ?? current;
+          return {
+            ...existing,
+            typed: { ...typed, [section]: typed[section].map((group) => (group.type === type ? written : group)) },
+          };
+        });
+      }
+      setMessage({ kind: result.failed.length ? "error" : "ok", text: typedDraftMessage(result) });
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to redraft." });
     } finally {
       setDrafting(false);
     }
@@ -176,7 +232,11 @@ export function EmailCopyPanel({
   return (
     <StepFrame
       item={item}
-      intro="A first email and two follow-ups for each fit tier. Leave a follow-up subject blank to send it in the same thread. Use placeholders like {{first_name}} and {{fund_name}} for personal details."
+      intro={
+        byType
+          ? "Written by fund type, in the styles set under Emails → Investor email styles. Core: an approach and a template per fund type; each Core contact later gets a personal version from {{quick_fact}}. Sphere, Tier 3 and Tier 4: one sequence per fund type, with a line per tier as {{tier_line}}. Funds the client marked as known are left out."
+          : "A first email and two follow-ups for each fit tier. Leave a follow-up subject blank to send it in the same thread. Use placeholders like {{first_name}} and {{fund_name}} for personal details."
+      }
     >
       <p className="px-lg pt-md text-body-sm text-muted">{sendStatus(row)}</p>
       <ClientAnswer row={row} hideWaiting />
@@ -192,14 +252,20 @@ export function EmailCopyPanel({
             ? "Drafting…"
             : changesRequested
               ? "Rebuild with client's changes"
-              : "Draft with AI"}
+              : byType
+                ? "Draft by fund type"
+                : "Draft with AI"}
         </button>
         <p className="text-body-sm text-muted" aria-live="polite">
           {drafting
-            ? `Writing the ${tiers.length * 3} emails and the LinkedIn messages. Usually under a minute.`
+            ? byType
+              ? "Writing the copy for each fund type. Usually under a minute."
+              : `Writing the ${tiers.length * 3} emails and the LinkedIn messages. Usually under a minute.`
             : !claudeReady
               ? "Claude is not configured (ANTHROPIC_API_KEY)."
-              : "Uses the AI Agents → Email copy instructions."}
+              : byType
+                ? "Uses the AI Agents → Email copy by fund type instructions."
+                : "Uses the AI Agents → Email copy instructions."}
         </p>
         {message ? (
           <p
@@ -210,7 +276,13 @@ export function EmailCopyPanel({
           </p>
         ) : null}
       </div>
-      {schemeMismatch ? (
+      {byType && !typedMode ? (
+        <p role="alert" className="mx-lg mt-md rounded-md border border-warning/40 px-md py-sm text-body-sm text-warning">
+          This copy has one sequence per tier. Click Draft by fund type to rewrite it by fund type (it replaces this draft;
+          the copy already sent to the client is not changed).
+        </p>
+      ) : null}
+      {schemeMismatch && !typedMode ? (
         <div role="alert" className="mx-lg mt-md rounded-md border border-warning/40 px-md py-sm text-body-sm text-warning">
           This copy has {copyScheme === "four" ? "four" : "three"} tiers; the confirmed investor list has{" "}
           {listScheme === "four" ? "four" : "three"}.{" "}
@@ -219,7 +291,25 @@ export function EmailCopyPanel({
           </button>
         </div>
       ) : null}
+      {typedMode ? (
+        copy.typed ? (
+          <TypedCopyEditor
+            typed={copy.typed}
+            onChange={(typed) => setCopy((current) => ({ ...current, typed }))}
+            onRedraft={onRedraft}
+            busy={drafting}
+            canDraft={claudeReady}
+            clientNotes={clientNotes}
+          />
+        ) : (
+          <p className="px-lg py-lg text-body-sm text-muted">
+            No copy yet. Click Draft by fund type: it groups the confirmed list&apos;s funds by type and writes each group
+            in its style.
+          </p>
+        )
+      ) : null}
       <div className="px-lg py-md">
+        {typedMode ? null : (<>
         <div className="flex flex-wrap items-center gap-sm" role="tablist" aria-label="Tier">
           {tiers.map((entry) => {
             const count = schemeMismatch ? 0 : tierCounts.find((item) => item.tier === entry.tier)?.count ?? 0;
@@ -279,7 +369,8 @@ export function EmailCopyPanel({
           ))}
         </ol>
 
-        <div className="mt-xl border-t border-border pt-lg">
+        </>)}
+        <div className={`${typedMode ? "" : "mt-xl "}border-t border-border pt-lg`}>
           <p className="text-label uppercase tracking-label text-muted">
             LinkedIn · one set for every tier
           </p>

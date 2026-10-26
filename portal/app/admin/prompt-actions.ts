@@ -8,6 +8,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import {
   buildNarrative,
   draftEmailCopy,
+  draftTypedEmailCopy,
   draftEmailCopyEmail,
   draftIntakeBrief,
   draftInvestorListEmail,
@@ -228,6 +229,23 @@ async function runTest(
           { label: "LinkedIn note", text: copy.value.linkedin_note ?? "" },
           { label: "LinkedIn follow-up", text: copy.value.linkedin_followup ?? "" },
         ],
+      },
+    };
+  }
+  if (key === "email_copy_typed") {
+    const drafted = await draftTypedEmailCopy(supabase, clientId, { override });
+    if (!drafted.ok) return drafted;
+    const typed = drafted.value.copy.typed;
+    const groups = typed ? [...typed.core.map((group) => ({ name: `Core · ${group.type}`, group })), ...typed.others.map((group) => ({ name: `Others · ${group.type}`, group }))] : [];
+    return {
+      ok: true,
+      output: {
+        title,
+        sections: groups.flatMap(({ name, group }) => [
+          ...(group.approach ? [{ label: `${name}: approach`, text: group.approach }] : []),
+          ...group.emails.map((item, index) => ({ label: `${name}, email ${index + 1} (${group.style.label})`, text: `${item.subject ? `Subject: ${item.subject}\n\n` : ""}${item.body}` })),
+          ...Object.entries(group.tier_lines ?? {}).map(([tier, line]) => ({ label: `${name}: Tier ${tier} line`, text: line ?? "" })),
+        ]),
       },
     };
   }
