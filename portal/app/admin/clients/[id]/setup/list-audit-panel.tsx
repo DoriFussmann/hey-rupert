@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronDown } from "@/components/chevron";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -70,11 +71,14 @@ export function ListAuditPanel({
   const [pending, setPending] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(loadError ? { kind: "error", text: loadError } : null);
   const [removedSinceRefresh, setRemovedSinceRefresh] = useState(0);
+  // Closed by default to save scrolling; the status line shows in the header.
+  const [open, setOpen] = useState(false);
 
   const progress = audit ? auditProgress(audit, fingerprint) : null;
   const busy = running || pending !== null;
 
   async function run() {
+    setOpen(true);
     setRunning(true);
     setNotice(null);
     try {
@@ -177,20 +181,29 @@ export function ListAuditPanel({
           : `Stopped after ${progress!.reviewed} of ${progress!.total} funds. Run it again.`;
 
   return (
-    <section className="border-t border-border" aria-labelledby="list-audit-title">
-      <div className="flex flex-wrap items-start justify-between gap-md px-lg py-md">
-        <div className="min-w-0 flex-1">
-          <h3 id="list-audit-title" className="text-heading">
+    <details
+      className="group/audit border-t border-border"
+      open={open}
+      onToggle={(event) => setOpen((event.currentTarget as HTMLDetailsElement).open)}
+    >
+      <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 flex-1">
+          <span id="list-audit-title" className="block text-heading">
             Founder&apos;s-eye audit
-          </h3>
-          <p className="mt-xs text-body-sm text-secondary">
-            The AI reads the first funds in each tier and their websites the way the founder will, and says what they
-            would question. Nothing is changed or sent.
-          </p>
-          <p className={`mt-xs text-body-sm ${progress?.stale ? "text-warning" : "text-muted"}`} aria-live="polite">
+          </span>
+          <span className={`mt-xs block text-body-sm ${progress?.stale ? "text-warning" : "text-muted"}`} aria-live="polite">
             {status}
-          </p>
-        </div>
+          </span>
+        </span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-background">
+          <ChevronDown className="h-4 w-4 transition-transform duration-hover group-open/audit:rotate-180" />
+        </span>
+      </summary>
+      <div className="flex flex-wrap items-start justify-between gap-md px-lg pb-md">
+        <p className="min-w-0 flex-1 text-body-sm text-secondary">
+          The AI reads the first funds in each tier and their websites the way the founder will, and says what they
+          would question. Nothing is changed or sent.
+        </p>
         <button
           type="button"
           className={!audit || progress?.stale ? primaryButton : secondaryButton}
@@ -305,6 +318,6 @@ export function ListAuditPanel({
           {notice.text}
         </p>
       ) : null}
-    </section>
+    </details>
   );
 }
