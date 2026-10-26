@@ -38,6 +38,7 @@ import {
   type QuickFact,
 } from "@/lib/outreach/core";
 import { loadOutreachStyles } from "@/lib/outreach/settings-server";
+import { loadOverrides } from "@/lib/outreach/known-server";
 import { asEmailCopy, asInvestorList, type CopyEmail, type InvestorRow } from "@/lib/setup";
 import { loadSetupSteps } from "@/lib/setup-server";
 
@@ -105,19 +106,27 @@ function asView(row: Record<string, unknown>): CoreMessageView {
   return { ...asMessage(row), conflict: str(row.conflict, 500), note: str(row.note, 2000) };
 }
 
-export async function loadCoreMessages(supabase: ServiceClient, clientId: string): Promise<Result<CoreMessageView[]>> {
+export type OutreachMessageView = CoreMessageView & { tier: number };
+
+/** Every contact row for a client, all tiers. */
+export async function loadOutreachMessages(supabase: ServiceClient, clientId: string): Promise<Result<OutreachMessageView[]>> {
   const rows = await selectAll<Record<string, unknown>>((from, to) =>
     supabase
       .from("outreach_messages")
       .select("*")
       .eq("client_id", clientId)
-      .eq("tier", 1)
+      .order("tier")
       .order("fund_name")
       .order("position")
       .range(from, to),
   );
   if (!rows.ok) return { ok: false, error: tableError(rows.error) };
-  return { ok: true, value: rows.rows.map(asView) };
+  return { ok: true, value: rows.rows.map((row) => ({ ...asView(row), tier: Number(row.tier) || 1 })) };
+}
+
+export async function loadCoreMessages(supabase: ServiceClient, clientId: string): Promise<Result<CoreMessageView[]>> {
+  const all = await loadOutreachMessages(supabase, clientId);
+  return all.ok ? { ok: true, value: all.value.filter((message) => message.tier === 1) } : all;
 }
 
 /** The approved Core emails a client may look through. Nothing else about the contacts. */
@@ -159,7 +168,8 @@ async function loadBasis(supabase: ServiceClient, clientId: string): Promise<Res
   const draft = asEmailCopy(emailRow?.draft);
   const published = asEmailCopy(emailRow?.published);
   const typed = draft.copy_version === 2 && draft.typed ? draft.typed : published.copy_version === 2 ? published.typed ?? null : null;
-  const coreRows = outreachRows(list).rows.filter((row) => copyTierOf(row) === 1);
+  const overrides = await loadOverrides(supabase, clientId);
+  const coreRows = outreachRows(list, overrides).rows.filter((row) => copyTierOf(row) === 1);
   return { ok: true, value: { list, typed, coreRows } };
 }
 
@@ -201,6 +211,70 @@ export async function loadCoreWorkspace(supabase: ServiceClient, clientId: strin
 
 const PROBLEMS = new Set(["email_bad", "left_firm", "role_changed", "not_found"]);
 
+export type PickedContacts = { active: PersonRecord[]; reserve: PersonRecord[]; leftOut: number };
+
+/**
+ * The contacts at each listed fund, from the list's saved run: 2 active, the
+ * rest reserves. Contacts verification flagged, or Rupert removed for this
+ * client, are left out.
+ */
+export async function pickContacts(
+  supabase: ServiceClient,
+  clientId: string,
+  runId: string,
+  rows: InvestorRow[],
+): Promise<Result<Map<string, PickedContacts>>> {
+  const run = await loadTierRun(supabase, clientId, runId);
+  if (!run.ok) return run;
+  const stored = new Map(run.value.rows.map((row) => [row.firmId.trim().slice(0, 200), row]));
+  const firmIds = Array.from(
+    new Set(rows.flatMap((row) => {
+      const result = stored.get(row.id);
+      return result ? reachablePeople(result).map((person) => person.fid) : [];
+    })),
+  );
+  const states = await contactStates(supabase, clientId, firmIds);
+  if (!states.ok) return states;
+  const out = new Map<string, PickedContacts>();
+  for (const row of rows) {
+    const result = stored.get(row.id);
+    if (!result) continue;
+    const people = reachablePeople(result) as PersonRecord[];
+    const chosen = selectCoreContacts(people, (person) => {
+      const state = verifyStateOf(person as PersonRecord, states.value);
+      const decision = states.value.get(`${person.fid}|${person.key}`)?.decision ?? null;
+      return decision === "remove" || (PROBLEMS.has(state) && decision !== "keep");
+    });
+    out.set(row.id, { active: chosen.active as PersonRecord[], reserve: chosen.reserve as PersonRecord[], leftOut: chosen.leftOut });
+  }
+  return { ok: true, value: out };
+}
+
+/** A new outreach_messages row. */
+export function contactRow(
+  clientId: string,
+  runId: string,
+  row: InvestorRow,
+  person: PersonRecord,
+  slot: ContactSlot,
+  position: number,
+  tier: number,
+) {
+  return {
+    client_id: clientId,
+    run_id: runId,
+    firm_id: row.id,
+    fund_name: row.fund_name,
+    fund_type: fundTypeKey(row.fund_type),
+    tier,
+    person_key: personKey(person),
+    person: asCorePerson(person),
+    slot,
+    position,
+    status: "pending",
+  };
+}
+
 /**
  * Lines up the contacts of the confirmed list's Core funds from its saved run:
  * 2 active per fund, the rest reserves. New contacts are added; contacts Rupert
@@ -213,18 +287,8 @@ export async function syncCoreContacts(
   const basis = await loadBasis(supabase, clientId);
   if (!basis.ok) return basis;
   const { list, coreRows } = basis.value;
-  const run = await loadTierRun(supabase, clientId, list.run_id!);
-  if (!run.ok) return run;
-  const stored = new Map(run.value.rows.map((row) => [row.firmId.trim().slice(0, 200), row]));
-
-  const firmIds = Array.from(
-    new Set(coreRows.flatMap((row) => {
-      const result = stored.get(row.id);
-      return result ? reachablePeople(result).map((person) => person.fid) : [];
-    })),
-  );
-  const states = await contactStates(supabase, clientId, firmIds);
-  if (!states.ok) return states;
+  const picked = await pickContacts(supabase, clientId, list.run_id!, coreRows);
+  if (!picked.ok) return picked;
   const existing = await loadCoreMessages(supabase, clientId);
   if (!existing.ok) return existing;
   const have = new Set(existing.value.map((message) => `${message.firm_id}#${message.person_key}`));
@@ -232,34 +296,16 @@ export async function syncCoreContacts(
   const inserts: Record<string, unknown>[] = [];
   let leftOut = 0;
   for (const row of coreRows) {
-    const result = stored.get(row.id);
-    if (!result) continue;
-    const people = reachablePeople(result) as PersonRecord[];
-    const picked = selectCoreContacts(people, (person) => {
-      const state = verifyStateOf(person as PersonRecord, states.value);
-      const decision = states.value.get(`${person.fid}|${person.key}`)?.decision ?? null;
-      return decision === "remove" || (PROBLEMS.has(state) && decision !== "keep");
-    });
-    leftOut += picked.leftOut;
-    const add = (person: PersonRecord, slot: ContactSlot, position: number) => {
-      const key = personKey(person);
-      if (have.has(`${row.id}#${key}`)) return;
-      inserts.push({
-        client_id: clientId,
-        run_id: list.run_id,
-        firm_id: row.id,
-        fund_name: row.fund_name,
-        fund_type: fundTypeKey(row.fund_type),
-        tier: 1,
-        person_key: key,
-        person: asCorePerson(person),
-        slot,
-        position,
-        status: "pending",
+    const chosen = picked.value.get(row.id);
+    if (!chosen) continue;
+    leftOut += chosen.leftOut;
+    for (const [slot, people] of [["active", chosen.active], ["reserve", chosen.reserve]] as const) {
+      people.forEach((person, index) => {
+        const key = personKey(person);
+        if (have.has(`${row.id}#${key}`)) return;
+        inserts.push(contactRow(clientId, list.run_id!, row, person, slot, slot === "active" ? index : chosen.active.length + index, 1));
       });
-    };
-    picked.active.forEach((person, index) => add(person as PersonRecord, "active", index));
-    picked.reserve.forEach((person, index) => add(person as PersonRecord, "reserve", picked.active.length + index));
+    }
   }
 
   const coreIds = new Set(coreRows.map((row) => row.id));

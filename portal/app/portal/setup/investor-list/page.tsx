@@ -28,6 +28,7 @@ export default async function InvestorListPage() {
   const open = row?.status === "with_client";
   const answers = profile?.ok && profile.value ? profile.value.answers : {};
   const shownRows = list.rows.filter((entry) => !entry.hidden_duplicate);
+  const knownCount = shownRows.filter((entry) => list.client_flags?.[entry.id]?.known && !list.client_flags?.[entry.id]?.excluded).length;
   const intro = visible
     ? investorListIntro({
         raise: answer(answers.raise_amount) || client?.raise_amount || "",
@@ -58,6 +59,15 @@ export default async function InvestorListPage() {
         <p className="mb-lg text-body text-heading" role="status">
           You confirmed this list
           {row.response?.at ? ` on ${formatDate(row.response.at)}` : ""}.
+        </p>
+      ) : null}
+      {row?.status === "confirmed" && knownCount > 0 ? (
+        <p className="mb-lg text-body text-secondary">
+          You marked {knownCount} fund{knownCount === 1 ? "" : "s"} as ones you know. They&apos;re left out of the emails:{" "}
+          <Link href="/portal/setup/warm-intros" className="text-primary underline">
+            see Your warm intros
+          </Link>
+          .
         </p>
       ) : null}
       {row?.status === "changes_requested" ? (

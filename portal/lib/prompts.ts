@@ -162,6 +162,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The Core template of the fund's type, the Core style, the person and fund, their Quick Facts, the company facts and Rupert's note; the answer format (three emails). The code checks the emails against the style and that no {{fields}} remain.",
     false,
   ),
+  warm_intro_blurb: agentDetails(
+    "warm_intro_blurb",
+    "The confirmed narrative, the intake summary and the analysis; the answer format (the ask and the blurb).",
+    false,
+  ),
   match_profile: agentDetails(
     "match_profile",
     "The intake interview, Rupert's read of every shared file (from the Company Materials Feedback, once Analyze has run), and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",

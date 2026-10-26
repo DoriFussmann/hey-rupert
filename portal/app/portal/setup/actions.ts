@@ -40,6 +40,7 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
+import { setWarmIntro } from "@/lib/outreach/campaign-server";
 import {
   loadSetupStep,
   loadSetupSteps,
@@ -737,3 +738,17 @@ export async function toggleFeedbackItem(
   revalidatePath(`/admin/clients/${access.user.id}`);
   return { ok: true };
 }
+
+// ---------------------------------------------------------------------------
+// Warm intros: the client's progress on funds they know
+
+export async function updateWarmIntro(firmId: string, status: string, note: string): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const saved = await setWarmIntro(access.supabase, access.user.id, String(firmId).slice(0, 200), status, note);
+  if (!saved.ok) return saved;
+  revalidatePath("/portal/setup/warm-intros");
+  revalidatePath(`/admin/clients/${access.user.id}`);
+  return { ok: true };
+}
+
