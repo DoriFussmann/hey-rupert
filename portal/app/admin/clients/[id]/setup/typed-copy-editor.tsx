@@ -1,5 +1,6 @@
 "use client";
 
+import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
 import { useState } from "react";
 import { inputClass, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
 import {
@@ -141,11 +142,20 @@ export function TypedCopyEditor({
           ) : null}
 
           {section === "core" ? (
+            <p className="mt-md rounded-md bg-background px-md py-sm text-body-sm text-secondary">
+              <span className="text-heading">This is a template, never sent as is.</span>{" "}
+              {"{{quick_fact}}"} marks where each investor&apos;s email gets its personal line. Under Core contacts (below),
+              Write researches each partner and fund, then rewrites this template for that one person: the{" "}
+              {"{{quick_fact}}"} sentence becomes something true about them, with its source shown as a Quick Fact, and
+              their name and fund are filled in.
+            </p>
+          ) : null}
+
+          {section === "core" ? (
             <label className="mt-md block text-body-sm text-secondary">
               Approach (shown to the client)
-              <textarea
+              <AutoTextarea
                 className={`${inputClass} mt-sm`}
-                rows={3}
                 maxLength={4000}
                 value={group.approach}
                 onChange={(event) => updateGroup({ approach: event.target.value })}
@@ -184,14 +194,12 @@ export function TypedCopyEditor({
                     placeholder={position === 0 ? "Subject" : "Subject (blank = same thread)"}
                     aria-label={`${groupLabel(section, group.type)} ${SEQUENCE_LABELS[position]} subject`}
                   />
-                  <textarea
-                    className={`${inputClass} mt-sm`}
-                    rows={position === 0 ? 10 : 6}
-                    maxLength={10000}
+                  <EmailBodyField
+                    className={inputClass}
                     value={email.body}
-                    onChange={(event) => updateEmail(position, "body", event.target.value)}
+                    onChange={(value) => updateEmail(position, "body", value)}
                     placeholder="Body"
-                    aria-label={`${groupLabel(section, group.type)} ${SEQUENCE_LABELS[position]} body`}
+                    label={`${groupLabel(section, group.type)} ${SEQUENCE_LABELS[position]} body`}
                   />
                   {issues.length ? (
                     <ul className="mt-xs text-body-sm">

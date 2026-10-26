@@ -1,5 +1,6 @@
 "use client";
 
+import { EmailBodyField } from "@/components/email-body-field";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   approveCoreAction,
@@ -165,13 +166,11 @@ function ContactCard({
                   onChange={(event) => setEmails((current) => current.map((e, i) => (i === index ? { ...e, subject: event.target.value } : e)))}
                   aria-label={`${SEQUENCE_LABELS[index]} subject`}
                 />
-                <textarea
-                  className={`${inputClass} mt-xs`}
-                  rows={index === 0 ? 9 : 5}
-                  maxLength={10000}
+                <EmailBodyField
+                  className={inputClass}
                   value={email.body}
-                  onChange={(event) => setEmails((current) => current.map((e, i) => (i === index ? { ...e, body: event.target.value } : e)))}
-                  aria-label={`${SEQUENCE_LABELS[index]} body`}
+                  onChange={(value) => setEmails((current) => current.map((e, i) => (i === index ? { ...e, body: value } : e)))}
+                  label={`${SEQUENCE_LABELS[index]} body`}
                 />
               </li>
             ))}
