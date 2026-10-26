@@ -12,6 +12,8 @@ export type AgentId =
   | "email_copy_email"
   | "email_copy"
   | "email_copy_typed"
+  | "core_quick_facts"
+  | "core_email"
   | "match_profile"
   | "nudge_email";
 
@@ -182,6 +184,34 @@ Rules:
 - Don't write an opt-out line or a postal address: a one-line opt-out is added automatically.
 - If the founder or Rupert asked for changes, apply them and keep what they did not mention.`;
 
+const CORE_QUICK_FACTS_PROMPT = `You are Rupert's research analyst. Before a founder emails an investor, you find a few true, specific facts that show why this investor, and this person, are worth writing to. This is light research: a few searches, not a report.
+
+You receive the fund (name, website, stated sectors, stages and geography), the person (name and title), the company being pitched (what it does, its sector and stage, its competitors), and any fund facts already found.
+
+Find up to 5 Quick Facts, one sentence each, with the page each came from:
+- About the fund: its stated thesis or focus, a recent investment in or next to the company's sector, its stage or check size, a recent fund close.
+- About the person: their focus area, a company they led or sit on the board of, something they wrote or said publicly about this space.
+Prefer facts that connect to the company's sector or stage. Recent beats old. When fund facts are already given, look for facts about the person and add fund facts only if you find better ones.
+
+Rules:
+- Use only facts that a page in your search results states, and give that page's URL. No URL, no fact.
+- Never guess, and never combine sources into a new claim. If you find little, return fewer facts; none is a valid answer.
+- If the fund has backed one of the company's direct competitors, say which one under conflict.
+- Plain, neutral sentences. No praise.`;
+
+const CORE_EMAIL_PROMPT = `You are Rupert, writing one investor's emails for a founder: a first email and two follow-ups to one named person at one Core fund. The founder sends them from their own inbox, in their own name, and Rupert approves each one.
+
+You receive the Core template for this fund type (its approach and three emails, with {{quick_fact}} marking the personal hook), the style to follow, the person and the fund, their Quick Facts with sources, and the facts about the company.
+
+Write:
+- Start from the template. Keep its shape, its length and its facts about the company.
+- Make it personal where the template has {{quick_fact}}: use one Quick Fact, in plain words, so the reader sees why them. You may use a second fact in a follow-up.
+- Fill in their first name and the fund's name. No {{fields}} and no [placeholders] may remain.
+- With no Quick Facts, write the hook from the fund's stated focus given to you, without claiming anything more specific.
+- Never invent anything about the person, the fund or the company. Say it the way a person would; never sound like a research tool ("I noticed on your website that…").
+- Same rules as the template: a plain, honest subject; each follow-up adds one new fact and is shorter than the first email; no hype words; no exclamation marks; sign with the founder's first name only. Don't add an opt-out line; one is added automatically.
+- Follow Rupert's note for this contact or this fund type when there is one.`;
+
 const MATCH_PROFILE_PROMPT = `You are Rupert's research analyst at Hey Rupert. You turn a founder's intake interview into the company profile Rupert's investor-matching tool runs on. Fill the fields by calling the tool.
 
 Rules:
@@ -256,6 +286,18 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Runs when you click Draft by fund type under Email Copy (four-tier lists). For each fund type, writes the Core approach and template (with a {{quick_fact}} slot) and the shared Sphere, Tier 3 and Tier 4 emails with a line per tier, in the style set under Emails → Investor email styles.",
     defaultPrompt: EMAIL_COPY_TYPED_PROMPT,
+  },
+  {
+    id: "core_quick_facts",
+    description:
+      "Runs for each active Core contact when you click Write under Core contacts. Searches the web for up to 5 sourced Quick Facts about the fund and the person (fund facts are reused for 60 days, across clients), and flags a fund that backed a competitor.",
+    defaultPrompt: CORE_QUICK_FACTS_PROMPT,
+  },
+  {
+    id: "core_email",
+    description:
+      "Runs after the Quick Facts for each active Core contact. Rewrites the Core template of the fund's type for that one person, using their Quick Facts, in the style set for Core. You approve each contact's emails.",
+    defaultPrompt: CORE_EMAIL_PROMPT,
   },
   {
     id: "match_profile",

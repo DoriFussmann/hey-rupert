@@ -45,7 +45,6 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 import {
-  CTA_LABEL,
   OTHER_TIERS,
   OTHER_TIER_LABEL,
   SEQUENCE_LENGTH,
@@ -53,11 +52,11 @@ import {
   groupKey,
   outreachRows,
   presetFor,
+  styleInstructions,
   typeGroups,
   type CopySection,
   type FundTypeKey,
   type OtherTier,
-  type StylePreset,
   type TypedCopy,
   type TypedGroupCopy,
 } from "@/lib/outreach/copy";
@@ -1112,19 +1111,6 @@ export async function draftEmailCopy(
 // ---------------------------------------------------------------------------
 // Email copy by fund type (copy v2, lib/outreach/copy.ts)
 
-function styleText(preset: StylePreset) {
-  return [
-    `Style: ${preset.label}`,
-    `Rules:\n${preset.rules || "Short, plain, factual."}`,
-    `Word cap: first email ${preset.max_words} words; each follow-up ${Math.round(preset.max_words * 0.75)}.`,
-    `Proof points per email: ${preset.proof_points}.`,
-    `Call to action: ${CTA_LABEL[preset.cta]}.`,
-    preset.example ? `Example (copy its shape, never its facts):\n${preset.example}` : "",
-  ]
-    .filter(Boolean)
-    .join("\n");
-}
-
 function typedTool(core: boolean, tiers: OtherTier[]): ClaudeTool {
   const properties: Record<string, unknown> = {};
   const required: string[] = [];
@@ -1272,12 +1258,12 @@ export async function draftTypedEmailCopy(
         shared,
         `# Fund type: ${type}`,
         core
-          ? `## Job 1: Core, ${describe(core)}\n${styleText(presetFor(styles, "core", type))}`
+          ? `## Job 1: Core, ${describe(core)}\n${styleInstructions(presetFor(styles, "core", type))}`
           : "",
         others
           ? `## Job 2: Sphere, Tier 3 and Tier 4, ${describe(others)}: ${tiers
               .map((tier) => `${OTHER_TIER_LABEL[tier]} ${others.tiers?.[`${tier}`] ?? 0}`)
-              .join(", ")}\n${styleText(presetFor(styles, "others", type))}`
+              .join(", ")}\n${styleInstructions(presetFor(styles, "others", type))}`
           : "",
       ].filter(Boolean);
       const tool = typedTool(Boolean(core), tiers);
@@ -1361,4 +1347,41 @@ export async function draftTypedEmailCopy(
     admin_note: working.admin_note,
   });
   return { ok: true, value: { copy, drafted, failed, knownLeftOut: knownLeftOut.length } };
+}
+
+/**
+ * What the outreach writers know about the company: the confirmed narrative,
+ * the intake summary and the analysis. Shared by the Core research and writer.
+ */
+export async function outreachCompanyContext(
+  supabase: ServiceClient,
+  clientId: string,
+): Promise<AgentResult<{ firstName: string; company: string; text: string; intake: string }>> {
+  const [loaded, interviewResult, grouped] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadInterview(supabase, clientId),
+    loadSetupSteps(supabase, [clientId]),
+  ]);
+  if (!loaded.ok) return loaded;
+  const rows = grouped.get(clientId) ?? [];
+  const framingRow = rows.find((item) => item.step === "framing");
+  if (framingRow?.status !== "confirmed") return { ok: false, error: "Confirm the outreach narrative first." };
+  const narrative = workingNarrative(framingRow);
+  const firstName =
+    text(loaded.client.first_name) || text(loaded.client.founder_name).split(/\s+/)[0] || "the founder";
+  const intake = intakeSummaryText(interviewResult.ok ? interviewResult.interview : null);
+  const company = text(loaded.client.company_name);
+  const body = [
+    `Founder first name (sign the emails with this): ${firstName}`,
+    `Company: ${company}`,
+    "## Outreach narrative",
+    `### Core story\n${narrative.core}`,
+    `### Key messages\n${narrative.key_messages}`,
+    `### Approach\n${narrative.approach}`,
+    "## Intake summary",
+    intake,
+    "## Materials analysis",
+    feedbackContext(rows, narrative.feedback) || "No analysis yet.",
+  ].join("\n\n");
+  return { ok: true, value: { firstName, company, text: body, intake } };
 }

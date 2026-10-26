@@ -152,6 +152,16 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The confirmed narrative, the fund groups of the confirmed list (fund type, funds per tier; never names), the style for each group (rules, word cap, proof points, call to action, example), the intake summary, the analysis and any requested changes; the answer format (Core approach and three emails; the others' three emails and a line per tier). The code checks every email against the style.",
     true,
   ),
+  core_quick_facts: agentDetails(
+    "core_quick_facts",
+    "The fund (name, website, sectors, stages, geography), the person (name, title), the company (what it does, sector, stage, competitors) and fund facts already found; web search (up to 4 searches); the answer format (facts with source links, a competitor conflict). Facts without a link are dropped by the code.",
+    false,
+  ),
+  core_email: agentDetails(
+    "core_email",
+    "The Core template of the fund's type, the Core style, the person and fund, their Quick Facts, the company facts and Rupert's note; the answer format (three emails). The code checks the emails against the style and that no {{fields}} remain.",
+    false,
+  ),
   match_profile: agentDetails(
     "match_profile",
     "The intake interview, Rupert's read of every shared file (from the Company Materials Feedback, once Analyze has run), and the fixed lists of allowed labels and classification rules, which the code checks the answer against.",

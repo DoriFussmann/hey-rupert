@@ -4,7 +4,7 @@ import { useState } from "react";
 import { AdminReply } from "@/components/setup/admin-reply";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
-import { TypedCopyReview } from "@/app/portal/setup/email-copy/typed-copy-review";
+import { TypedCopyReview, type ClientCoreEmail } from "@/app/portal/setup/email-copy/typed-copy-review";
 import {
   EMAIL_SEQUENCE_LABELS,
   NOTE_MAX,
@@ -24,6 +24,7 @@ export function EmailCopyReview({
   adminNote,
   questions = [],
   readOnly,
+  coreEmails,
 }: {
   copy: EmailCopyPayload;
   counts: { tier: FitTier; count: number }[];
@@ -34,6 +35,8 @@ export function EmailCopyReview({
   adminNote?: string;
   questions?: SetupQuestion[];
   readOnly: boolean;
+  /** Core emails Rupert approved (copy by fund type only). */
+  coreEmails?: ClientCoreEmail[];
 }) {
   const [tier, setTier] = useState<FitTier>(1);
   const [notes, setNotes] = useState<Record<string, string>>({});
@@ -89,6 +92,7 @@ export function EmailCopyReview({
         questions={questions}
         readOnly={readOnly}
         linkedin={linkedin}
+        coreEmails={coreEmails}
       />
     );
   }

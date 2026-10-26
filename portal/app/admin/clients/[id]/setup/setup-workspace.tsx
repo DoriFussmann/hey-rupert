@@ -1,4 +1,5 @@
 import { EmailCopyPanel } from "@/app/admin/clients/[id]/setup/email-copy-panel";
+import { CoreContactsPanel } from "@/app/admin/clients/[id]/setup/core-contacts-panel";
 import { InvestorListPanel } from "@/app/admin/clients/[id]/setup/investor-list-panel";
 import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor";
 import {
@@ -85,6 +86,9 @@ export function SetupWorkspace({
         listScheme={listScheme}
         claudeReady={claudeReady}
       />
+      {listScheme === "four" && row("investor_list")?.status === "confirmed" ? (
+        <CoreContactsPanel clientId={clientId} claudeReady={claudeReady} />
+      ) : null}
     </section>
   );
 }
