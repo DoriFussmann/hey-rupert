@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import { DORI_LINKEDIN } from "../../config/site";
-import { BOOKING_ENDPOINT, CAL_COM_URL } from "../../config/publicEnv";
+import { CAL_COM_URL } from "../../config/publicEnv";
 import { sitePath } from "../../lib/url";
 
 const title = "Request a Discovery Call With Dori Fussmann | Rupert";
@@ -15,9 +15,13 @@ const cover = [
   "Whether Rupert's managed service is the right fit for your company.",
 ];
 
-const formConfigured = Boolean(BOOKING_ENDPOINT);
-const calendarConfigured = Boolean(CAL_COM_URL);
-const canBook = formConfigured || calendarConfigured;
+// What Cal.com asks for once a time is picked (the event's booking questions).
+const bookingFields = [
+  { label: "Your name", required: true },
+  { label: "Email address", required: true },
+  { label: "Company name", required: true },
+  { label: "Additional notes", required: false },
+];
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/book-call/">
@@ -70,69 +74,30 @@ const canBook = formConfigured || calendarConfigured;
       </div>
 
       <div class="order-2 lg:col-span-6 lg:col-start-7 lg:row-span-2 lg:row-start-1">
-        <div class="lg:sticky lg:top-24">
-          <form
-            class="lead-form"
-            id="booking-form"
-            method="post"
-            action={formConfigured ? BOOKING_ENDPOINT : undefined}
-            data-configured={formConfigured ? "true" : "false"}
-            data-calendar={calendarConfigured ? CAL_COM_URL : ""}
-          >
-            <h2 class="type-h2">Request a Discovery Call</h2>
+        <div class="lead-form" id="booking-scheduler" data-calendar={CAL_COM_URL}>
+          <h2 class="type-h2">Pick a day and time</h2>
+          <p class="type-body mt-md">
+            Choose a 30-minute slot below. It takes under a minute.
+          </p>
 
-            <p class="mt-xl">
-              <label class="type-label" for="full-name">Full Name</label>
-              <input
-                class="field-input"
-                id="full-name"
-                name="name"
-                type="text"
-                autocomplete="name"
-                required
-              />
-            </p>
-            <p class="mt-lg">
-              <label class="type-label" for="work-email">Email</label>
-              <input
-                class="field-input"
-                id="work-email"
-                name="email"
-                type="email"
-                autocomplete="email"
-                required
-              />
-            </p>
-            <p class="mt-lg">
-              <label class="type-label" for="company">Company</label>
-              <input class="field-input" id="company" name="company" type="text" required />
-            </p>
-            <p class="mt-lg">
-              <label class="type-label" for="notes">Optional Note</label>
-              <textarea class="field-textarea" id="notes" name="notes"></textarea>
-            </p>
-            <p class="mt-xl">
-              <button class="btn-primary" type="submit">
-                {calendarConfigured ? "Submit & Pick a Time" : "Request a call"}
-              </button>
-            </p>
-            <p
-              class="form-status"
-              id="booking-status"
-              role="status"
-              hidden={canBook}
-            >
+          <div class="cal-embed" id="cal-embed" aria-label="Booking calendar"></div>
+          <p class="form-note">
+            Calendar not showing?
+            <a href={CAL_COM_URL} target="_blank" rel="noopener noreferrer">Book on Cal.com</a>.
+          </p>
+
+          <div class="rule mt-xl pt-lg">
+            <h3 class="type-label">After you pick a time, we ask for</h3>
+            <ul class="mt-md">
               {
-                !canBook &&
-                  "Online booking is not connected yet. The form is ready, but submissions are not being sent until a booking calendar is configured."
+                bookingFields.map((field) => (
+                  <li class="type-body py-xs">
+                    {field.label}
+                    <span class="form-note-inline">{field.required ? " · required" : " · optional"}</span>
+                  </li>
+                ))
               }
-            </p>
-          </form>
-
-          <div class="lead-form" id="booking-scheduler" hidden>
-            <h2 class="type-h2">You're in. Pick a time below.</h2>
-            <p class="type-body mt-md">Choose a 30-minute slot that works for you.</p>
-            <div class="cal-embed" id="cal-embed"></div>
+            </ul>
           </div>
         </div>
       </div>
@@ -153,126 +118,35 @@ const canBook = formConfigured || calendarConfigured;
     }
   }
 
-  const form = document.getElementById("booking-form");
-  const status = document.getElementById("booking-status");
-  const scheduler = document.getElementById("booking-scheduler");
-  const embed = document.getElementById("cal-embed");
-
-  function setStatus(message: string, isError = false) {
-    if (!(status instanceof HTMLElement)) return;
-    status.hidden = false;
-    status.textContent = message;
-    status.classList.toggle("form-status--error", isError);
-  }
-
-  function calLinkFromUrl(baseUrl: string) {
-    return new URL(baseUrl).pathname.replace(/^\/+|\/+$/g, "");
-  }
-
-  function bookingNotes(company: string, notes: string) {
-    const lines = [`Company: ${company}`];
-    if (notes) lines.push("", notes);
-    return lines.join("\n");
-  }
-
+  // Cal.com's embed snippet: queues commands until embed.js loads.
   function ensureCal() {
     if (window.Cal) return;
-
     const stub = function Cal(...args: unknown[]) {
       const cal = window.Cal as CalCommand;
       if (!cal.loaded) {
         cal.ns = {};
         cal.q = cal.q || [];
-        document.head.appendChild(document.createElement("script")).src =
-          "https://app.cal.com/embed/embed.js";
+        document.head.appendChild(document.createElement("script")).src = "https://app.cal.com/embed/embed.js";
         cal.loaded = true;
       }
       (cal.q = cal.q || []).push(args);
     } as CalCommand;
-
     stub.q = [];
     stub.ns = {};
     window.Cal = stub;
   }
 
-  function showCalendar(
-    baseUrl: string,
-    name: string,
-    email: string,
-    company: string,
-    notes: string,
-  ) {
-    if (!(scheduler instanceof HTMLElement) || !(embed instanceof HTMLElement)) {
-      return;
-    }
+  const scheduler = document.getElementById("booking-scheduler");
+  const embed = document.getElementById("cal-embed");
+  const calendarUrl = scheduler instanceof HTMLElement ? scheduler.dataset.calendar || "" : "";
 
+  if (embed instanceof HTMLElement && calendarUrl) {
     ensureCal();
-    if (!window.Cal) throw new Error("Could not load the calendar.");
-
-    embed.replaceChildren();
-    form?.setAttribute("hidden", "");
-    scheduler.hidden = false;
-
-    window.Cal("init", { origin: "https://cal.com" });
-    window.Cal("inline", {
+    window.Cal?.("init", { origin: "https://cal.com" });
+    window.Cal?.("inline", {
       elementOrSelector: embed,
-      calLink: calLinkFromUrl(baseUrl),
-      config: {
-        layout: "month_view",
-        theme: "light",
-        name,
-        email,
-        notes: bookingNotes(company, notes),
-        "metadata[company]": company,
-      },
-    });
-
-    scheduler.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  if (form instanceof HTMLFormElement) {
-    const configured = form.dataset.configured === "true";
-    const calendarUrl = form.dataset.calendar || "";
-
-    form.addEventListener("submit", async (event) => {
-      if (configured && form.action && form.action !== window.location.href && !calendarUrl) {
-        return;
-      }
-
-      event.preventDefault();
-      const data = new FormData(form);
-      const name = String(data.get("name") || "").trim();
-      const email = String(data.get("email") || "").trim();
-      const company = String(data.get("company") || "").trim();
-      const notes = String(data.get("notes") || "").trim();
-
-      if (configured && form.action && form.action !== window.location.href) {
-        try {
-          const response = await fetch(form.action, {
-            method: "POST",
-            body: data,
-            headers: { Accept: "application/json" },
-          });
-          if (!response.ok) throw new Error("Submit failed");
-        } catch {
-          setStatus("Something went wrong. Please try again.", true);
-          return;
-        }
-      }
-
-      if (calendarUrl) {
-        try {
-          showCalendar(calendarUrl, name, email, company, notes);
-        } catch {
-          setStatus("Something went wrong. Please try again.", true);
-        }
-        return;
-      }
-
-      setStatus(
-        "Online booking is not connected yet. The form is ready, but submissions are not being sent until a booking calendar is configured.",
-        true,
-      );
+      calLink: new URL(calendarUrl).pathname.replace(/^\/+|\/+$/g, ""),
+      config: { layout: "month_view", theme: "light" },
     });
   }
 </script>
