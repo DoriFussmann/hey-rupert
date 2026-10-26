@@ -153,7 +153,7 @@ Before signing any capital raising proposal, work through the following question
 
 **On transparency:** Will you have visibility into every investor conversation, every outreach sequence, and every response? Do the investor relationships and contact history belong to you at the end of the engagement, regardless of outcome?
 
-Most founders focus on the success fee percentage. The real risks are in the clauses around exclusivity, termination rights, tail periods, and retainer credits — because those terms determine how much flexibility you keep during the process and what you owe if it does not close. For comparison, [Rupert](/how-it-works/) does not take a percentage of the capital raised.
+Most founders focus on the success fee percentage. The real risks are in the clauses around exclusivity, termination rights, tail periods, and retainer credits — because those terms determine how much flexibility you keep during the process and what you owe if it does not close. For comparison, [Rupert](/book-call/) does not take a percentage of the capital raised.
 
 ---
 

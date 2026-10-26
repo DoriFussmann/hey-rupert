@@ -169,7 +169,7 @@ The practical rhythm looks like this. Before any outreach goes out, every invest
 For seed teams, the priority is visibility: who has been contacted, who is engaged, which meetings happened, and what the next action is.
  This doesn't require sophisticated tooling — it requires consistent behavior. The CRM is only as good as the data going into it.
 
-The follow-up cadence deserves particular attention. Venture timelines are long, and "we're still thinking about it" can mean anything from genuine interest to polite deflection. A well-maintained CRM surfaces which conversations haven't had activity in two weeks, which term preferences haven't been documented, and which investors have seen the deck but haven't responded — all signals that require different follow-up strategies. If you would rather not run that cadence yourself, [Rupert](/how-it-works/) manages the follow-up while every relationship stays yours.
+The follow-up cadence deserves particular attention. Venture timelines are long, and "we're still thinking about it" can mean anything from genuine interest to polite deflection. A well-maintained CRM surfaces which conversations haven't had activity in two weeks, which term preferences haven't been documented, and which investors have seen the deck but haven't responded — all signals that require different follow-up strategies. If you would rather not run that cadence yourself, [Rupert](/book-call/) manages the follow-up while every relationship stays yours.
 
 ---
 

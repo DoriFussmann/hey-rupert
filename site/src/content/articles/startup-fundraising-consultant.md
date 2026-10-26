@@ -121,7 +121,7 @@ This is the single most important question on the list, and it is the one most f
 Investment strategies are increasingly shifting toward higher-conviction portfolios, with firms allocating more capital per company and placing greater emphasis on long-term ownership
  — which means the investors you meet during your Seed raise are exactly the people you will need for your Series A, your Series B, and every strategic introduction in between. If a consultant retains relationship ownership after the engagement ends — controlling the contact database, the conversation history, or the warm-introduction access — they are extracting long-term value from a short-term engagement. That is a structural misalignment with your interests as a founder.
 
-The correct answer is unambiguous: every investor contact, every email thread, every conversation record belongs to you from day one and remains yours after the engagement ends. Anything less is a form of relationship rent. A service that genuinely operates in a founder's interest does not need to hold investor relationships as leverage. That is how [Rupert](/how-it-works/) is set up: investor replies come to you, and every relationship stays yours.
+The correct answer is unambiguous: every investor contact, every email thread, every conversation record belongs to you from day one and remains yours after the engagement ends. Anything less is a form of relationship rent. A service that genuinely operates in a founder's interest does not need to hold investor relationships as leverage. That is how [Rupert](/book-call/) is set up: investor replies come to you, and every relationship stays yours.
 
 ---
 
