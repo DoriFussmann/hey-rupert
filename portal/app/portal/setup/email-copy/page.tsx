@@ -40,12 +40,12 @@ export default async function EmailCopyPage() {
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Email Copy"
-        description="The outreach emails for each investor tier: a first email and two follow-ups. Personal details like the investor's name are filled in per recipient."
+        description="Your investor emails: a first email and two follow-ups for each group. Personal details like the investor's name are filled in for every recipient; use Preview to see an email as a real investor on your list gets it."
       />
       <ReviewStatus
         item={item}
         row={row}
-        clientTitle="Review the emails and LinkedIn messages, then confirm them or ask Rupert a question."
+        clientTitle="Review the emails, then confirm them or ask Rupert a question."
         waitingTitle="Rupert has your note."
         waitingDetail="He'll reply and send the emails back for you to confirm."
       />

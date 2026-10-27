@@ -33,7 +33,6 @@ import {
   fitTiersFor,
   tierEmails,
   workingNarrative,
-  LINKEDIN_NOTE_MAX,
   type EmailCopyPayload,
   type TierScheme,
   type ClientEmailDraft,
@@ -62,6 +61,7 @@ import {
 } from "@/lib/outreach/copy";
 import { loadOutreachStyles } from "@/lib/outreach/settings-server";
 import { loadOverrides } from "@/lib/outreach/known-server";
+import { campaignFacts, campaignFactsText } from "@/lib/outreach/copy-facts";
 import {
   AGENTS_MIGRATION_MISSING,
   loadSetupSteps,
@@ -695,13 +695,16 @@ export async function draftEmailCopyEmail(
     })
     .join("\n\n");
 
+  const list = listRow ? asInvestorList(listRow.published) : null;
+  const facts = list
+    ? campaignFactsText(campaignFacts(list, await loadOverrides(supabase, clientId), copy.copy_version === 2 ? copy.typed : null))
+    : "";
   const context = [
     ...founderLines(loaded.client, version),
+    facts ? `# Campaign facts (use these numbers exactly)\n${facts}` : "",
     "# The email copy (Rupert's edited version)",
     copyText,
-    copy.linkedin_note ? `### LinkedIn connection note\n${copy.linkedin_note}` : "",
-    copy.linkedin_followup ? `### LinkedIn follow-up\n${copy.linkedin_followup}` : "",
-    listRow ? `# Investor list (types and counts only)\n${listBrief(asInvestorList(listRow.published))}` : "",
+    list ? `# Investor list (types and counts only)\n${listBrief(list)}` : "",
     clientAsk ? `## What the founder asked to change in the previous version\n${clientAsk}` : "",
     "# Company information (context only)",
     company.text,
@@ -915,7 +918,7 @@ function emailCopyTool(scheme: TierScheme): ClaudeTool {
   const keys = fitTiersFor(scheme).map(({ tier }) => String(tier));
   return {
     name: "submit_email_copy",
-    description: "Deliver the tier emails and the LinkedIn messages.",
+    description: "Deliver the tier emails.",
     input_schema: {
       type: "object",
       properties: {
@@ -924,16 +927,8 @@ function emailCopyTool(scheme: TierScheme): ClaudeTool {
           properties: Object.fromEntries(keys.map((key) => [key, tierEmailSchema])),
           required: keys,
         },
-        linkedin_note: {
-          type: "string",
-          description: "LinkedIn connection note, 300 characters or fewer.",
-        },
-        linkedin_followup: {
-          type: "string",
-          description: "LinkedIn message after they connect.",
-        },
       },
-      required: ["tiers", "linkedin_note", "linkedin_followup"],
+      required: ["tiers"],
     },
   };
 }
@@ -1095,15 +1090,6 @@ export async function draftEmailCopy(
     return {
       ok: false,
       error: `Claude returned an incomplete ${missingTier.label} email. Nothing was saved.`,
-    };
-  }
-  if (!copy.linkedin_note?.trim() || !copy.linkedin_followup?.trim()) {
-    return { ok: false, error: "Claude left out a LinkedIn message. Nothing was saved." };
-  }
-  if (copy.linkedin_note.trim().length > LINKEDIN_NOTE_MAX) {
-    return {
-      ok: false,
-      error: `Claude's LinkedIn connection note is over ${LINKEDIN_NOTE_MAX} characters. Nothing was saved.`,
     };
   }
   return { ok: true, value: copy };

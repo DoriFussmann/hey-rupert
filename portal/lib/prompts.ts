@@ -144,7 +144,7 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   email_copy: agentDetails(
     "email_copy",
-    "The confirmed narrative, the investor list as tier counts and fund types (never names), the intake summary and the analysis; the answer format (three emails per tier, two LinkedIn messages).",
+    "The confirmed narrative, the investor list as tier counts and fund types (never names), the intake summary and the analysis; the answer format (three emails per tier).",
     true,
   ),
   email_copy_typed: agentDetails(
@@ -192,7 +192,7 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   email_copy_email: agentDetails(
     "email_copy_email",
-    `Rupert's edited email copy (every tier's emails and the LinkedIn messages), the funds per tier, and company information. ${EMAIL_FIXED}`,
+    `Facts the code prepares about the campaign (funds, contacts emailed per fund, investors to email, how the copy is organised, funds left out as known), Rupert's edited email copy, and company information. ${EMAIL_FIXED}`,
     true,
   ),
   nudge_email: agentDetails("nudge_email", `The waiting step, how long it has waited and the nudges already sent. ${EMAIL_FIXED}`, true),

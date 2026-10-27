@@ -429,10 +429,6 @@ export type EmailCopyPayload = {
    */
   copy_version?: 2;
   typed?: TypedCopy;
-  /** One LinkedIn connection note for every tier. 300 characters or fewer. */
-  linkedin_note?: string;
-  /** One LinkedIn follow-up for every tier. */
-  linkedin_followup?: string;
   /** Rupert's reply when this version is sent back for confirmation. */
   admin_note?: string;
   questions?: SetupQuestion[];
@@ -1470,22 +1466,17 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
     });
   }
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
-  const linkedinNote = str(raw.linkedin_note, 2000).trim();
-  const linkedinFollowup = str(raw.linkedin_followup, 10000).trim();
   const typed = raw.copy_version === 2 ? { copy_version: 2 as const, typed: asTypedCopy(raw.typed) } : {};
   return {
     ...result,
     ...typed,
     ...(adminNote ? { admin_note: adminNote } : {}),
-    ...(linkedinNote ? { linkedin_note: linkedinNote } : {}),
-    ...(linkedinFollowup ? { linkedin_followup: linkedinFollowup } : {}),
     ...withQuestions(asQuestions(raw.questions)),
   };
 }
 
 /** True when the copy has any text, in either shape. */
 export function emailCopyHasContent(copy: EmailCopyPayload) {
-  if (copy.linkedin_note?.trim() || copy.linkedin_followup?.trim()) return true;
   if (copy.copy_version === 2) return typedHasContent(copy.typed ?? asTypedCopy(null));
   return fitTiersFor(copy.tier_scheme).some(({ tier }) =>
     tierEmails(copy, tier).some((email) => email.subject.trim() || email.body.trim()),
@@ -1515,12 +1506,6 @@ export function emailCopyProblems(copy: EmailCopyPayload) {
         problems.push(`${label}: ${EMAIL_SEQUENCE_LABELS[index]} has no body.`);
       }
     });
-  }
-  const linkedin = copy.linkedin_note?.trim() ?? "";
-  if (linkedin.length > LINKEDIN_NOTE_MAX) {
-    problems.push(
-      `The LinkedIn connection note is ${linkedin.length} characters. Keep it to ${LINKEDIN_NOTE_MAX}.`,
-    );
   }
   return problems;
 }

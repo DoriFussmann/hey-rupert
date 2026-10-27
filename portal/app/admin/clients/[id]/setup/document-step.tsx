@@ -1,5 +1,6 @@
 "use client";
 
+import { AutoTextarea } from "@/components/email-body-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -243,8 +244,8 @@ export function DocumentStep({
         {step === "investor_list" ? (
           <label className={`${labelClass} mt-md`}>
             Note to client
-            <textarea
-              className={`${inputClass} mt-sm min-h-[80px] resize-y normal-case tracking-normal`}
+            <AutoTextarea
+              className={`${inputClass} mt-sm min-h-[80px] normal-case tracking-normal`}
               value={email.note ?? ""}
               maxLength={NOTE_MAX}
               placeholder="Optional. Added after the opening paragraph, before the tier list."
@@ -254,8 +255,8 @@ export function DocumentStep({
         ) : null}
         <label className={`${labelClass} mt-md`}>
           Email
-          <textarea
-            className={`${inputClass} mt-sm min-h-[260px] resize-y normal-case tracking-normal`}
+          <AutoTextarea
+            className={`${inputClass} mt-sm min-h-[160px] normal-case tracking-normal`}
             value={email.body}
             maxLength={EMAIL_BODY_MAX}
             placeholder="Click Draft Email to write it from everything above and the company information."
