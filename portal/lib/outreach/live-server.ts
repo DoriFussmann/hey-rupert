@@ -26,9 +26,9 @@ import {
   goLiveGaps,
   inboxHealthy,
   inboxStatusText,
-  isWave2Due,
+  dripQueue,
   leadFor,
-  leadsForWave,
+  testAddress,
   type LiveSettings,
 } from "@/lib/outreach/live";
 import { PORTAL_URL } from "@/lib/portal-url";
@@ -124,9 +124,12 @@ export type LiveState = {
   settings: LiveSettings;
   live: { at: string; by: string | null; campaignId: string | null; wave2PushedAt: string | null; pausedAt: string | null } | null;
   gaps: string[];
-  counts: { wave1: number; wave2: number; pushed: number };
+  counts: { wave1: number; wave2: number; pushed: number; waiting: number };
   testSentAt: string | null;
   consentText: string | null;
+  /** Test Pilot client: every email goes to a + address of `testRecipient`. */
+  testMode: boolean;
+  testRecipient: string;
 };
 
 export async function loadLiveState(supabase: ServiceClient, clientId: string): Promise<Result<LiveState>> {
@@ -150,6 +153,8 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
   const campaignReady = !campaignNote;
   const healthy = inboxHealthy(r.inbox_status);
   const pushed = messages.value.filter((m) => m.pushed_at).length;
+  const testMode = await isTestPilot(supabase, clientId);
+  const waiting = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && isApproved(m)).length;
   return {
     ok: true,
     value: {
@@ -173,9 +178,12 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
         wave1: c.summary?.wave1 ?? 0,
         wave2: c.summary?.wave2 ?? 0,
         pushed,
+        waiting,
       },
       testSentAt: r.test_sent_at,
       consentText: r.inbox_email ? CONSENT_TEXT(r.inbox_email) : null,
+      testMode,
+      testRecipient: testMode ? testRecipientOf(r.settings) : "",
     },
   };
 }
@@ -305,17 +313,50 @@ async function optOutLine(supabase: ServiceClient, clientId: string) {
 }
 
 
-async function pushWave(supabase: ServiceClient, clientId: string, campaignId: string, wave: 1 | 2): Promise<Result<number>> {
-  const messages = await loadOutreachMessages(supabase, clientId);
+/** Test Pilot clients run in test mode: their emails only ever reach Rupert's own inbox. */
+export async function isTestPilot(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase.from("clients").select("is_test_pilot").eq("id", clientId).maybeSingle();
+  return Boolean(data?.is_test_pilot);
+}
+
+/** The inbox test emails go to: the setting, else the first admin notification address. */
+export function testRecipientOf(settings: LiveSettings) {
+  if (settings.test_recipient) return settings.test_recipient;
+  const first = (process.env.ADMIN_NOTIFY_EMAIL ?? "").split(",")[0]?.trim().toLowerCase() ?? "";
+  return /^[^\s@+]+@[^\s@]+\.[^\s@]+$/.test(first) ? first : "";
+}
+
+/**
+ * Adds the next batch of contacts to the live campaign, in a proportional mix
+ * of tiers (dripQueue). `limit` 0 adds everyone eligible. In test mode every
+ * address is replaced with a + address of the test inbox.
+ */
+async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: string, limit: number): Promise<Result<number>> {
+  const [row, messages, testMode] = await Promise.all([
+    loadLiveRow(supabase, clientId),
+    loadOutreachMessages(supabase, clientId),
+    isTestPilot(supabase, clientId),
+  ]);
+  if (!row.ok) return row;
   if (!messages.ok) return messages;
-  const leads = leadsForWave(messages.value, wave);
+  const settings = row.value.settings;
+  const recipient = testMode ? testRecipientOf(settings) : "";
+  if (testMode && !recipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
+  const leads = dripQueue(messages.value, {
+    delayDays: settings.wave2_delay_days,
+    releasedEarly: Boolean(row.value.wave2_pushed_at),
+    limit,
+  });
   if (leads.length === 0) return { ok: true, value: 0 };
   const optOut = await optOutLine(supabase, clientId);
   let pushed = 0;
   for (let i = 0; i < leads.length; i += 1000) {
     const chunk = leads.slice(i, i + 1000);
-    const added = await addLeads(campaignId, chunk.map((m) => leadFor(m, optOut)));
-    if (!added.ok) return { ok: false, error: `${added.error} ${pushed} leads were added before this.` };
+    const added = await addLeads(
+      campaignId,
+      chunk.map((m) => leadFor(m, optOut, testMode ? testAddress(recipient, m) : undefined)),
+    );
+    if (!added.ok) return { ok: false, error: `${added.error} ${pushed} contacts were added before this.` };
     const now = new Date().toISOString();
     const ids = new Map((added.value.created_leads ?? []).map((lead) => [lead.index, lead.id]));
     for (let index = 0; index < chunk.length; index += 1) {
@@ -351,11 +392,13 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   const row = await loadLiveRow(supabase, clientId);
   if (!row.ok) return row;
   const inbox = row.value.inbox_email!;
+  const testMode = state.value.testMode;
+  if (testMode && !state.value.testRecipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
 
   let campaignId = row.value.instantly_campaign_id;
   if (!campaignId) {
-    const name = `${await companyName(supabase, clientId)} · investor outreach`;
-    const created = await createCampaign(campaignBody(name, inbox, row.value.settings));
+    const name = `${testMode ? "TEST · " : ""}${await companyName(supabase, clientId)} · investor outreach`;
+    const created = await createCampaign(campaignBody(name, inbox, row.value.settings, { testMode }));
     if (!created.ok) return created;
     campaignId = created.value.id;
     const saved = await saveLive(supabase, clientId, { instantly_campaign_id: campaignId });
@@ -375,15 +418,9 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
     if (!saved.ok) return saved;
   }
 
-  const wave1 = await pushWave(supabase, clientId, campaignId, 1);
+  // The first daily batch: a proportional mix of first contacts.
+  const wave1 = await pushBatch(supabase, clientId, campaignId, row.value.settings.new_per_day);
   if (!wave1.ok) return wave1;
-  const settings = row.value.settings;
-  let wave2Pushed: string | null = null;
-  if (settings.wave2_delay_days === 0) {
-    const wave2 = await pushWave(supabase, clientId, campaignId, 2);
-    if (!wave2.ok) return wave2;
-    wave2Pushed = new Date().toISOString();
-  }
 
   const activated = await activateCampaign(campaignId);
   if (!activated.ok) return activated;
@@ -393,59 +430,69 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
     live_at: now,
     live_by: actor,
     consent_text: CONSENT_TEXT(inbox),
-    ...(wave2Pushed ? { wave2_pushed_at: wave2Pushed } : {}),
   });
   if (!saved.ok) return saved;
   await advanceStage(supabase, clientId, LIVE_STAGES_FROM, "live");
   return { ok: true, value: { wave1: wave1.value } };
 }
 
-/** Adds each fund's second contact. From the daily cron once due, or by Rupert. */
+/**
+ * Lets every fund's other contacts start now, without waiting the delay after
+ * their fund's first contact, and adds the next batch.
+ */
 export async function startWave2(supabase: ServiceClient, clientId: string): Promise<Result<number>> {
   const row = await loadLiveRow(supabase, clientId);
   if (!row.ok) return row;
   if (!row.value.live_at || !row.value.instantly_campaign_id) return { ok: false, error: "The campaign isn't live." };
-  if (row.value.wave2_pushed_at) return { ok: true, value: 0 };
-  const pushed = await pushWave(supabase, clientId, row.value.instantly_campaign_id, 2);
-  if (!pushed.ok) return pushed;
-  const saved = await saveLive(supabase, clientId, { wave2_pushed_at: new Date().toISOString() });
-  return saved.ok ? pushed : saved;
+  if (!row.value.wave2_pushed_at) {
+    const saved = await saveLive(supabase, clientId, { wave2_pushed_at: new Date().toISOString() });
+    if (!saved.ok) return saved;
+  }
+  return pushBatch(supabase, clientId, row.value.instantly_campaign_id, row.value.settings.new_per_day);
 }
 
-/**
- * After Go Live: adds contacts approved since (a reserve Rupert activated to
- * replace a bounce, say). Second contacts wait for wave 2 unless it started.
- */
+/** Adds the next batch now, without waiting for tomorrow's (and any newly approved contacts). */
 export async function pushNewlyApproved(supabase: ServiceClient, clientId: string): Promise<Result<number>> {
   const row = await loadLiveRow(supabase, clientId);
   if (!row.ok) return row;
   const id = row.value.instantly_campaign_id;
   if (!row.value.live_at || !id) return { ok: false, error: "The campaign isn't live." };
-  const first = await pushWave(supabase, clientId, id, 1);
-  if (!first.ok) return first;
-  if (!row.value.wave2_pushed_at) return first;
-  const second = await pushWave(supabase, clientId, id, 2);
-  return second.ok ? { ok: true, value: first.value + second.value } : second;
+  return pushBatch(supabase, clientId, id, row.value.settings.new_per_day);
 }
 
-/** Daily: starts wave 2 for every live campaign that is due. */
+/** Saturday or Sunday in the campaign's timezone. */
+function isWeekend(timeZone: string, now = new Date()) {
+  try {
+    const day = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(now);
+    return day === "Sat" || day === "Sun";
+  } catch {
+    return false;
+  }
+}
+
+/** Daily: adds the next mixed batch to every live, unpaused campaign. */
 export async function runDueWaves(supabase: ServiceClient) {
   const { data, error } = await supabase
     .from("outreach_campaigns")
-    .select("client_id, live_at, settings, paused_at")
-    .not("live_at", "is", null)
-    .is("wave2_pushed_at", null);
-  if (error) return { started: 0, errors: [tableError(error.message, error.code)] };
+    .select("client_id, live_at, settings, paused_at, instantly_campaign_id")
+    .not("live_at", "is", null);
+  if (error) return { started: 0, added: 0, errors: [tableError(error.message, error.code)] };
   let started = 0;
+  let added = 0;
   const errors: string[] = [];
   for (const row of data ?? []) {
-    if (row.paused_at) continue;
-    if (!isWave2Due(String(row.live_at), asLiveSettings(row.settings).wave2_delay_days)) continue;
-    const result = await startWave2(supabase, String(row.client_id));
-    if (result.ok) started += 1;
-    else errors.push(`${row.client_id}: ${result.error}`);
+    if (row.paused_at || !row.instantly_campaign_id) continue;
+    const settings = asLiveSettings(row.settings);
+    // Real campaigns send on weekdays: no new contacts on a weekend, so Monday isn't doubled.
+    if (isWeekend(settings.timezone) && !(await isTestPilot(supabase, String(row.client_id)))) continue;
+    const result = await pushBatch(supabase, String(row.client_id), String(row.instantly_campaign_id), settings.new_per_day);
+    if (!result.ok) errors.push(`${row.client_id}: ${result.error}`);
+    else if (result.value > 0) {
+      started += 1;
+      added += result.value;
+    }
   }
-  return { started, errors };
+  return { started, added, errors };
 }
 
 export async function setPaused(supabase: ServiceClient, clientId: string, paused: boolean): Promise<Result<null>> {

@@ -82,6 +82,7 @@ export function DocumentStep({
   dirty,
   onSaved,
   problem,
+  warning = null,
   busy,
   pushSummary,
   clientPreview,
@@ -101,6 +102,8 @@ export function DocumentStep({
   onSaved: () => void;
   /** Why the document cannot be sent yet. */
   problem: string | null;
+  /** Worth knowing before pushing, but not blocking: asked in the confirm. */
+  warning?: string | null;
   /** The panel is busy (analyzing, building): actions wait. */
   busy: boolean;
   /** What Push to Client Portal & Send puts in the portal. */
@@ -179,6 +182,7 @@ export function DocumentStep({
       return;
     }
     const question = [
+      warning ? `${warning}\n\nPush anyway?` : "",
       `Push version ${nextVersion} to the client's portal and email ${to || "the client"}?`,
       row?.status === "confirmed" || row?.status === "published"
         ? "They already confirmed the current version: they will be asked to confirm again."

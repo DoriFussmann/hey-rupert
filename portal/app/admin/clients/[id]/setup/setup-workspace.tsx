@@ -116,6 +116,7 @@ export function setupPanels({
           tierCounts={counts}
           listScheme={listScheme}
           claudeReady={claudeReady}
+          pushWarning={outreach.coreWarning}
         />
       ),
     },

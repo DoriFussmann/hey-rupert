@@ -4,6 +4,7 @@ import { sendAdminEmail } from "@/lib/email";
 import { selectAll } from "@/lib/match/db-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
 import {
+  testAddressId,
   asReplyLabel,
   clientTotals,
   deliveryPatch,
@@ -58,7 +59,12 @@ export async function handleInstantlyEvent(supabase: ServiceClient, payload: Rec
 
   const messages = await loadOutreachMessages(supabase, clientId);
   if (!messages.ok) return "error";
-  const message = messages.value.find((m) => m.person.email.trim().toLowerCase() === leadEmail) ?? null;
+  // Test mode: the lead is a + address ending with the contact's id prefix.
+  const aliasId = testAddressId(leadEmail);
+  const message =
+    messages.value.find((m) => m.person.email.trim().toLowerCase() === leadEmail) ??
+    (aliasId ? messages.value.find((m) => m.id.replace(/-/g, "").startsWith(aliasId)) : undefined) ??
+    null;
 
   const patch = deliveryPatch(eventType, at, step);
   if (message && patch) {

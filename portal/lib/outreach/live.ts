@@ -6,6 +6,7 @@ import type { CopyEmail } from "../setup.ts";
 import { optOutFor } from "./copy.ts";
 import { isApproved, type CoreMessage } from "./core.ts";
 import { waveOf } from "./campaign.ts";
+import { interleaveByTier } from "./mix.ts";
 
 // ---------------------------------------------------------------------------
 // Sending settings
@@ -19,9 +20,13 @@ export type LiveSettings = {
   to: string;
   /** Days before follow-up 1 and before follow-up 2. */
   followup_days: [number, number];
-  /** Days after Go Live before each fund's second contact starts. */
+  /** Days after a fund's first contact is sent before its other contacts start. */
   wave2_delay_days: number;
   track_opens: boolean;
+  /** New investors added to the campaign per day, mixed across tiers. 0: everyone at once. */
+  new_per_day: number;
+  /** Test mode (Test Pilot clients only): every email goes to a + address of this inbox. */
+  test_recipient: string;
 };
 
 export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
@@ -32,6 +37,8 @@ export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
   followup_days: [4, 5],
   wave2_delay_days: 3,
   track_opens: true,
+  new_per_day: 10,
+  test_recipient: "",
 };
 
 const int = (value: unknown, min: number, max: number, fallback: number) => {
@@ -55,7 +62,84 @@ export function asLiveSettings(value: unknown): LiveSettings {
     followup_days: [int(followups[0], 1, 30, d.followup_days[0]), int(followups[1], 1, 30, d.followup_days[1])],
     wave2_delay_days: int(raw.wave2_delay_days, 0, 14, d.wave2_delay_days),
     track_opens: typeof raw.track_opens === "boolean" ? raw.track_opens : d.track_opens,
+    new_per_day: int(raw.new_per_day, 0, 500, d.new_per_day),
+    test_recipient: typeof raw.test_recipient === "string" && EMAIL.test(raw.test_recipient.trim()) ? raw.test_recipient.trim().toLowerCase() : "",
   };
+}
+
+const EMAIL = /^[^\s@+]+@[^\s@]+\.[^\s@]+$/;
+
+// ---------------------------------------------------------------------------
+// Test mode: a Test Pilot client's campaign only ever emails Rupert's own inbox
+
+const slug = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 20);
+
+/**
+ * The address a contact gets in test mode: a + alias of the test inbox that
+ * names the fund and person and ends with the contact's id, so replies map
+ * back. Google Workspace delivers every + alias to the inbox itself.
+ */
+export function testAddress(recipient: string, message: { id: string; fund_name: string; person: { first_name: string } }) {
+  const [local, domain] = recipient.split("@");
+  const tag = [slug(message.fund_name), slug(message.person.first_name), message.id.replace(/-/g, "").slice(0, 8)].filter(Boolean).join("-");
+  return `${local}+${tag}@${domain}`;
+}
+
+/** The contact id prefix in a test address, or null when it isn't one. */
+export function testAddressId(email: string) {
+  const match = /\+[a-z0-9-]*?([0-9a-f]{8})@/i.exec(email.trim());
+  return match ? match[1].toLowerCase() : null;
+}
+
+// ---------------------------------------------------------------------------
+// Sending order: a proportional mix of tiers, every batch
+
+export { interleaveByTier };
+
+export type QueueMessage = LeadMessage & { tier: number; firm_id: string; pushed_at?: string | null };
+
+/**
+ * The next contacts to add to the live campaign: approved, active, not yet
+ * added, one per address. A fund's first contact is always eligible; its
+ * other contacts once the first was added at least `delayDays` ago (or when
+ * Rupert released them early). Due second contacts go first, then first
+ * contacts, each group in a proportional mix of tiers. `limit` 0 = no limit.
+ */
+export function dripQueue<T extends QueueMessage>(
+  messages: T[],
+  options: { delayDays: number; releasedEarly: boolean; limit: number; now?: number },
+): T[] {
+  const now = options.now ?? Date.now();
+  const firstPushed = new Map<string, number>();
+  for (const m of messages) {
+    if (m.slot === "active" && m.pushed_at && waveOf(m) === 1) firstPushed.set(m.firm_id, Date.parse(m.pushed_at));
+  }
+  const firmHasFirst = new Set(messages.filter((m) => m.slot === "active" && waveOf(m) === 1).map((m) => m.firm_id));
+  const seen = new Set(messages.filter((m) => m.pushed_at).map((m) => m.person.email.trim().toLowerCase()));
+  const firsts: T[] = [];
+  const seconds: T[] = [];
+  for (const m of messages) {
+    const email = m.person.email.trim().toLowerCase();
+    if (m.slot !== "active" || !email || seen.has(email) || m.pushed_at || !isApproved(m)) continue;
+    if (waveOf(m) === 1) {
+      firsts.push(m);
+    } else {
+      const at = firstPushed.get(m.firm_id);
+      // A fund whose first contact was moved out: its next contact counts as a first one.
+      if (!firmHasFirst.has(m.firm_id)) firsts.push(m);
+      else if (options.releasedEarly ? at !== undefined : at !== undefined && now >= at + options.delayDays * 86_400_000) seconds.push(m);
+      else continue;
+    }
+    seen.add(email);
+  }
+  const queue = [...interleaveByTier(seconds), ...interleaveByTier(firsts)];
+  return options.limit > 0 ? queue.slice(0, options.limit) : queue;
 }
 
 // ---------------------------------------------------------------------------
@@ -65,17 +149,25 @@ export function asLiveSettings(value: unknown): LiveSettings {
  * Follow-ups are always sent as replies in the same thread (blank subject),
  * so a follow-up subject written in the copy is not used.
  */
-export function campaignBody(name: string, inbox: string, settings: LiveSettings, options: { test?: boolean } = {}) {
-  const days = Object.fromEntries(["0", "1", "2", "3", "4", "5", "6"].map((key) => [key, options.test ? true : key >= "1" && key <= "5"]));
-  const delayUnit = options.test ? "minutes" : "days";
+export function campaignBody(
+  name: string,
+  inbox: string,
+  settings: LiveSettings,
+  options: { test?: boolean; testMode?: boolean } = {},
+) {
+  // A test send, or a Test Pilot campaign in test mode: every day, minutes instead of days.
+  const fast = Boolean(options.test || options.testMode);
+  const days = Object.fromEntries(["0", "1", "2", "3", "4", "5", "6"].map((key) => [key, fast ? true : key >= "1" && key <= "5"]));
+  const delayUnit = fast ? "minutes" : "days";
+  // Test send: 2 minutes apart. Test mode: the settings' days, read as minutes.
   const delays = options.test ? [2, 2] : settings.followup_days;
   return {
     name: name.slice(0, 200),
     campaign_schedule: {
       schedules: [
         {
-          name: options.test ? "Test" : "Weekdays",
-          timing: options.test ? { from: "00:00", to: "23:59" } : { from: settings.from, to: settings.to },
+          name: fast ? "Test" : "Weekdays",
+          timing: fast ? { from: "00:00", to: "23:59" } : { from: settings.from, to: settings.to },
           days,
           timezone: settings.timezone,
         },
@@ -93,7 +185,8 @@ export function campaignBody(name: string, inbox: string, settings: LiveSettings
     email_list: [inbox],
     daily_limit: settings.daily_limit,
     stop_on_reply: true,
-    stop_for_company: true,
+    // Test addresses all share one domain: stopping "for the company" would stop them all.
+    stop_for_company: !fast,
     stop_on_auto_reply: false,
     open_tracking: settings.track_opens,
     link_tracking: false,
