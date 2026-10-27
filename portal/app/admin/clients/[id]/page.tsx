@@ -19,7 +19,9 @@ import { NextAction, type NextActionTurn } from "@/app/admin/clients/[id]/next-a
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { MaterialsPanel } from "@/app/admin/clients/[id]/setup/materials-panel";
-import { SetupWorkspace } from "@/app/admin/clients/[id]/setup/setup-workspace";
+import { setupPanels, type WorkPanel } from "@/app/admin/clients/[id]/setup/setup-workspace";
+import { arrangeSteps } from "@/lib/step-order";
+import { outreachSteps } from "@/lib/outreach/progress-server";
 import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
 import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
 import { Disclosure } from "@/components/disclosure";
@@ -35,6 +37,7 @@ import { matchPath, type MatchProfileState } from "@/lib/match/shared";
 import { DEFAULT_MATERIAL_FIELDS } from "@/lib/material-fields";
 import { loadMaterialFields } from "@/lib/material-fields-server";
 import {
+  asInvestorList,
   asNarrative,
   asMaterials,
   isSetupComplete,
@@ -152,11 +155,12 @@ export default async function ClientDetailPage({
       : { value: null, error: auditLoaded.error }
     : { value: null, error: null };
 
-  // Each work panel, in process order. Finished ones move to the collapsed
-  // Completed panel at the bottom; open ones stay at the top.
-  const panels: { key: string; done: boolean; node: React.ReactNode }[] = [
+  // Each work panel, in process order, with whose move it is. The next step
+  // goes on top; finished ones fold into Completed steps right under it.
+  const panels: WorkPanel[] = [
     {
       key: "sow",
+      turn: "none",
       done: Boolean(client.sow_confirmed_at),
       node: (
         <GenerateStatementOfWork
@@ -168,6 +172,7 @@ export default async function ClientDetailPage({
     },
     {
       key: "service_order",
+      turn: "none",
       done: isKickoffReady(client),
       node: (
         <GenerateServiceOrder
@@ -180,6 +185,7 @@ export default async function ClientDetailPage({
     },
     {
       key: "nda",
+      turn: "none",
       done: Boolean(client.nda_signed_at),
       node: (
         <GenerateNda
@@ -191,6 +197,7 @@ export default async function ClientDetailPage({
     },
     {
       key: "intake",
+      turn: "none",
       done: Boolean(client.intake_completed_at),
       node: (
         <IntakePanel
@@ -213,6 +220,7 @@ export default async function ClientDetailPage({
   };
   panels.push({
     key: "materials",
+    turn: materialsOnboarding.status === "your_turn" ? "client" : "none",
     done: materialsRow?.status === "submitted",
     node: (
       <MaterialsPanel
@@ -226,46 +234,48 @@ export default async function ClientDetailPage({
     ),
   });
 
-  if (isSetupOpen(client.stage)) {
-    panels.push({
-      key: "setup",
-      done: isSetupComplete(setupSource),
-      node: (
-        <SetupWorkspace
-          clientId={client.id}
-          source={setupSource}
-          fileLinks={setupFileLinks}
-          clientEmail={client.email ?? client.founder_email}
-          clientFirstName={
-            client.first_name?.trim() ||
-            client.founder_name?.trim().split(/\s+/)[0] ||
-            ""
-          }
-          companyName={client.company_name?.trim() || "your company"}
-          adminName={adminFirstName(emailPanel.signature)}
-          claudeReady={claudeReady}
-          listAudit={listAudit}
-        />
-      ),
-    });
-  }
-
-  // The work panel for the step in progress (the Setup Fee lives on the
-  // Service Order panel).
+  // The onboarding step in progress is Rupert's or the client's move (the
+  // Setup Fee lives on the Service Order panel).
   const setupDone = isSetupComplete(setupSource);
   const onboardingNext = getOnboardingItems(client).find((item) => item.status !== "done");
-  const currentKey = setupDone
-    ? null
-    : onboardingNext
-      ? onboardingNext.id === "payment"
-        ? "service_order"
-        : onboardingNext.id
-      : isSetupOpen(client.stage)
-        ? "setup"
-        : null;
-  const currentPanel = panels.find((panel) => panel.key === currentKey && !panel.done) ?? null;
-  const upcomingPanels = panels.filter((panel) => !panel.done && panel !== currentPanel);
-  const completedPanels = panels.filter((panel) => panel.done);
+  const onboardingKey = onboardingNext ? (onboardingNext.id === "payment" ? "service_order" : onboardingNext.id) : null;
+  for (const panel of panels) {
+    if (panel.key === onboardingKey && !panel.done && turn.owner !== "none") panel.turn = turn.owner;
+  }
+
+  if (isSetupOpen(client.stage)) {
+    const listRow = setupSource.setup_steps.find((row) => row.step === "investor_list");
+    const copyRow = setupSource.setup_steps.find((row) => row.step === "email_copy");
+    const list = asInvestorList(listRow?.published);
+    const outreach = service
+      ? await outreachSteps(service, client.id, {
+          listConfirmed: listRow?.status === "confirmed",
+          fourTier: list.tier_scheme === "four",
+          copyConfirmed: copyRow?.status === "confirmed",
+          copyVersion: copyRow?.version ?? 0,
+          runId: list.run_id ?? null,
+        })
+      : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const } };
+    panels.push(
+      ...setupPanels({
+        clientId: client.id,
+        source: setupSource,
+        fileLinks: setupFileLinks,
+        clientEmail: client.email ?? client.founder_email,
+        clientFirstName: client.first_name?.trim() || client.founder_name?.trim().split(/\s+/)[0] || "",
+        companyName: client.company_name?.trim() || "your company",
+        adminName: adminFirstName(emailPanel.signature),
+        claudeReady,
+        listAudit,
+        outreach,
+      }),
+    );
+  }
+
+  const arranged = arrangeSteps(panels);
+  const currentPanel = arranged.current;
+  const upcomingPanels = arranged.open;
+  const completedPanels = arranged.completed;
 
   // A test pilot has no Setup Fee invoice: paying is the "client's" step.
   const testFeeStep =
@@ -369,6 +379,25 @@ export default async function ClientDetailPage({
         }
       />
       <ReanalyzeBanner clientId={client.id} state={reanalysis} claudeReady={claudeReady} />
+      {currentPanel ? (
+        <div id="current-step" className="scroll-mt-lg">
+          {currentPanel.node}
+        </div>
+      ) : null}
+      {completedPanels.length > 0 ? (
+        <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
+          {completedPanels.map((panel) => (
+            <Fragment key={panel.key}>{panel.node}</Fragment>
+          ))}
+        </Disclosure>
+      ) : null}
+      {upcomingPanels.length > 0 ? (
+        <Disclosure title="Other steps" meta={`${upcomingPanels.length}: waiting on the client or not open yet`}>
+          {upcomingPanels.map((panel) => (
+            <Fragment key={panel.key}>{panel.node}</Fragment>
+          ))}
+        </Disclosure>
+      ) : null}
       {materials || client.intake_completed_at ? (
         <CompanyMaterialsCard
           clientId={client.id}
@@ -385,21 +414,6 @@ export default async function ClientDetailPage({
           blockedReason={analyzeBlocked}
           claudeReady={claudeReady}
         />
-      ) : null}
-      {currentPanel ? (
-        <div id="current-step" className="scroll-mt-lg">
-          {currentPanel.node}
-        </div>
-      ) : null}
-      {upcomingPanels.length > 0 ? (
-        <Disclosure
-          title="Upcoming steps"
-          meta={`${upcomingPanels.length}`}
-        >
-          {upcomingPanels.map((panel) => (
-            <Fragment key={panel.key}>{panel.node}</Fragment>
-          ))}
-        </Disclosure>
       ) : null}
       <Disclosure id="section-progress" title="Progress" defaultOpen={setupDone}>
         <ProgressOverview
@@ -466,13 +480,6 @@ export default async function ClientDetailPage({
           access={access}
         />
       </Disclosure>
-      {completedPanels.length > 0 ? (
-        <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
-          {completedPanels.map((panel) => (
-            <Fragment key={panel.key}>{panel.node}</Fragment>
-          ))}
-        </Disclosure>
-      ) : null}
     </>
   );
 }
