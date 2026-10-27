@@ -29,7 +29,8 @@ export type EmailToken =
   | "login_email"
   | "portal_host"
   | "question"
-  | "answer";
+  | "answer"
+  | "invoice_link";
 
 export const TOKEN_HELP: Record<EmailToken, string> = {
   greeting: '"Hi Maya," (or "Hi," when there is no first name)',
@@ -57,6 +58,7 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   portal_host: 'Where the client logs in later, e.g. "heyrupert.com"',
   question: "The client's question, as they wrote it",
   answer: "Your answer, as you wrote it",
+  invoice_link: "The Stripe link to the client's first monthly invoice",
 };
 
 /** Example values for previews and test emails. */
@@ -82,6 +84,7 @@ export const SAMPLE_VALUES: Record<EmailToken, string> = {
   portal_host: "heyrupert.com",
   question: "Could we leave out funds that backed our main competitor?",
   answer: "Yes. I've marked them, and they won't be contacted.",
+  invoice_link: "https://invoice.stripe.com/i/sample",
 };
 
 const TOKEN_PATTERN = /\{([a-z_]+)\}/g;
@@ -139,7 +142,8 @@ export type ClientTurn =
   | "materials_reopened"
   | "framing_ready"
   | "investor_list_ready"
-  | "email_copy_ready";
+  | "email_copy_ready"
+  | "go_live_ready";
 
 export type AdminEmailType =
   | "framing_question"
@@ -385,6 +389,25 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "Rupert has written the outreach emails for each investor tier.",
     "You're up: review them in your portal, then confirm or tell us what to change.",
   ),
+  {
+    key: "client:go_live_ready",
+    group: "client",
+    title: "Ready to go live",
+    trigger:
+      "Fills the email under Go Live when you push it to the client with the invoice link. You review and edit it, then it goes with Push to client & email.",
+    subject: "Your investor campaign is ready — you're up",
+    body: [
+      "{greeting}",
+      "Your investor campaign is built and ready to go.{updated_line}",
+      "{note}",
+      "Three last steps in your portal:\n1. Connect the inbox you use with investors (you sign in with Google or Microsoft).\n2. Pay the first monthly invoice: {invoice_link}\n3. Send yourself a test if you like, then click Go Live.",
+      "Open your portal: {portal_link}",
+      "{signature}",
+    ].join("\n\n"),
+    tokens: [...CLIENT_TOKENS_LIST, "invoice_link"],
+    path: "/portal/setup/go-live",
+    switchable: true,
+  },
 ];
 
 function adminTemplate(
@@ -545,7 +568,8 @@ export type ReminderTurnKey =
   | "setup:materials"
   | "setup:framing"
   | "setup:investor_list"
-  | "setup:email_copy";
+  | "setup:email_copy"
+  | "setup:go_live";
 
 export type ReminderTiming = {
   enabled: boolean;
@@ -571,6 +595,7 @@ export const REMINDER_STEPS: {
   { key: "setup:framing", label: "Outreach Narrative", defaults: timing(true) },
   { key: "setup:investor_list", label: "Investor List", defaults: timing(true) },
   { key: "setup:email_copy", label: "Email Copy", defaults: timing(true) },
+  { key: "setup:go_live", label: "Go Live", defaults: timing(true) },
 ];
 
 function timing(enabled: boolean): ReminderTiming {

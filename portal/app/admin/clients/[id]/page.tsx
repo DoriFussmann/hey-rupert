@@ -256,6 +256,7 @@ export default async function ClientDetailPage({
           copyVersion: copyRow?.version ?? 0,
           runId: list.run_id ?? null,
           coreFunds: list.rows.filter((row) => copyTierOf(row) === 1).length,
+          goLivePushed: (setupSource.setup_steps.find((row) => row.step === "go_live")?.version ?? 0) > 0,
         })
       : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const }, coreWarning: null };
     panels.push(

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { goLiveAction, pollInboxConnectAction, startInboxConnectAction } from "@/app/portal/setup/actions";
+import { goLiveAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
 import { formatDateTime } from "@/lib/format";
 
 const POLL_MS = 3000;
@@ -37,6 +37,8 @@ export function GoLiveView({
   gaps,
   consentText,
   counts,
+  perDay,
+  testSentAt,
 }: {
   readOnly: boolean;
   campaignReady: boolean;
@@ -45,13 +47,31 @@ export function GoLiveView({
   live: { at: string } | null;
   gaps: string[];
   consentText: string | null;
-  counts: { wave1: number; wave2: number };
+  counts: { funds: number; wave1: number; wave2: number };
+  /** New investors added a day (0: all at once). */
+  perDay: number;
+  testSentAt: string | null;
 }) {
   const router = useRouter();
   const [connecting, setConnecting] = useState(false);
   const [consent, setConsent] = useState(false);
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testNote, setTestNote] = useState<string | null>(null);
+
+  async function sendTest() {
+    setTesting(true);
+    setError(null);
+    setTestNote(null);
+    try {
+      const result = await sendMeTestAction();
+      if (!result.ok) setError(result.error);
+      else setTestNote(`On its way to ${result.to}: the three emails ${result.fund} would get, a couple of minutes apart.`);
+    } finally {
+      setTesting(false);
+    }
+  }
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -134,7 +154,7 @@ export function GoLiveView({
         </p>
       ) : (
         <p className="mb-md text-body-sm text-secondary">
-          Ready to send: {counts.wave1 + counts.wave2} investors, starting with the first contact at each fund.
+          Your campaign is ready: {counts.wave1 + counts.wave2} investors at {counts.funds} funds.
         </p>
       )}
       <ol className="grid gap-md">
@@ -176,7 +196,27 @@ export function GoLiveView({
             <p>Rupert sends it when your campaign is ready.</p>
           )}
         </Step>
-        <Step n={3} done={false} title="Authorize and go live">
+        <Step n={3} done={false} title="Review and go live">
+          <ul className="mb-md max-w-prose list-disc pl-lg">
+            <li>
+              {perDay > 0
+                ? `About ${perDay} new investors a day, on weekdays, mixed across your tiers, until all ${counts.wave1 + counts.wave2} are reached.`
+                : `All ${counts.wave1 + counts.wave2} investors start right away.`}{" "}
+              The second contact at a fund starts a few days after the first.
+            </li>
+            <li>Each investor gets the first email and up to two follow-ups, as replies in the same thread. Anyone who replies gets no more follow-ups.</li>
+            <li>Emails go out from your inbox, in your name. Rupert reads every reply first; the ones that need you appear in your Investor Inbox.</li>
+          </ul>
+          {inbox ? (
+            <div className="mb-md">
+              <button type="button" className={secondary} disabled={readOnly || testing || !campaignReady} onClick={sendTest}>
+                {testing ? "Sending…" : "Send me a test"}
+              </button>
+              <span className="ml-sm text-muted">
+                {testNote ?? (testSentAt ? `Last test ${formatDateTime(testSentAt)}.` : "Optional: see exactly what an investor gets, in your own inbox.")}
+              </span>
+            </div>
+          ) : null}
           {consentText ? (
             <label className="flex max-w-prose items-start gap-sm">
               <input type="checkbox" className="mt-1" checked={consent} disabled={readOnly || !ready} onChange={(e) => setConsent(e.target.checked)} />

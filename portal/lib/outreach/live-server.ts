@@ -17,7 +17,7 @@ import {
 import { advanceStage } from "@/lib/kickoff";
 import { loadCampaignState } from "@/lib/outreach/campaign-server";
 import { asEmailCopy } from "@/lib/setup";
-import { loadSetupSteps } from "@/lib/setup-server";
+import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
 import { isApproved } from "@/lib/outreach/core";
 import {
@@ -124,7 +124,9 @@ export type LiveState = {
   settings: LiveSettings;
   live: { at: string; by: string | null; campaignId: string | null; wave2PushedAt: string | null; pausedAt: string | null } | null;
   gaps: string[];
-  counts: { wave1: number; wave2: number; pushed: number; waiting: number };
+  counts: { funds: number; wave1: number; wave2: number; pushed: number; waiting: number };
+  /** Setup step 4: pushed to the client (with the invoice and an email), and confirmed when live. */
+  step: { version: number; pushedAt: string | null; emailedAt: string | null; status: string } | null;
   testSentAt: string | null;
   consentText: string | null;
   /** Test Pilot client: every email goes to a + address of `testRecipient`. */
@@ -155,6 +157,17 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
   const pushed = messages.value.filter((m) => m.pushed_at).length;
   const testMode = await isTestPilot(supabase, clientId);
   const waiting = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && isApproved(m)).length;
+  const stepRead = await loadSetupStep(supabase, clientId, "go_live");
+  const stepRow = stepRead.ok ? stepRead.row : null;
+  const step =
+    stepRow && stepRow.version > 0
+      ? {
+          version: stepRow.version,
+          pushedAt: stepRow.published_at,
+          emailedAt: stepRow.history.find((entry) => entry.version === stepRow.version)?.emailed_at ?? null,
+          status: stepRow.status,
+        }
+      : null;
   return {
     ok: true,
     value: {
@@ -174,7 +187,9 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
         invoicePaid: Boolean(r.invoice_paid_at),
         alreadyLive: Boolean(r.live_at),
       }),
+      step,
       counts: {
+        funds: c.summary?.funds ?? 0,
         wave1: c.summary?.wave1 ?? 0,
         wave2: c.summary?.wave2 ?? 0,
         pushed,

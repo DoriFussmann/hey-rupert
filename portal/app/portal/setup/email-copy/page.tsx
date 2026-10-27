@@ -51,11 +51,11 @@ export default async function EmailCopyPage() {
       />
       {row?.status === "confirmed" && copy.copy_version === 2 ? (
         <p className="mb-lg text-body text-secondary">
-          Next:{" "}
+          Next: Rupert prepares your campaign and emails you when{" "}
           <Link href="/portal/setup/go-live" className="text-primary underline">
-            connect your inbox and go live
-          </Link>
-          .
+            Go Live
+          </Link>{" "}
+          is ready: connect your inbox, pay the first invoice and launch.
         </p>
       ) : null}
       {visible && row ? (

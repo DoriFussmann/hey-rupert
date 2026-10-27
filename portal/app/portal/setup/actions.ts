@@ -42,7 +42,8 @@ import {
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import { setWarmIntro } from "@/lib/outreach/campaign-server";
 import { markRepliesRead } from "@/lib/outreach/replies-server";
-import { goLive, pollInboxConnect, startInboxConnect } from "@/lib/outreach/live-server";
+import { goLive, loadLiveState, pollInboxConnect, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
+import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
 import { notifyAdmin as notifyGoLive } from "@/lib/notify";
 import {
   loadSetupStep,
@@ -789,11 +790,34 @@ export async function pollInboxConnectAction(): Promise<
 export async function goLiveAction(consent: boolean): Promise<SetupActionResult> {
   const access = await requirePortalService();
   if (!access.ok) return access;
+  const opened = await loadSetupStep(access.supabase, access.user.id, "go_live");
+  if (!opened.ok) return opened;
+  if (!opened.row || opened.row.version === 0) return { ok: false, error: "Go Live opens once Rupert sends you your campaign." };
   const launched = await goLive(access.supabase, access.user.id, access.user.email ?? null, Boolean(consent));
   if (!launched.ok) return launched;
+  await confirmGoLiveStep(access.supabase, access.user.id, access.user.email ?? null);
   await notifyGoLive(access.supabase, access.user.id, "went_live", { email: true });
   revalidateSetup(access.user.id);
   revalidatePath("/portal/live-campaign");
   return { ok: true };
 }
 
+
+/** Sends the client one investor's three emails, from their own inbox, to themselves. */
+export async function sendMeTestAction(): Promise<{ ok: true; to: string; fund: string } | { ok: false; error: string }> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const state = await loadLiveState(access.supabase, access.user.id);
+  if (!state.ok) return state;
+  if (!state.value.step) return { ok: false, error: "Go Live isn't open yet." };
+  if (state.value.live) return { ok: false, error: "Your campaign is already live." };
+  const to = state.value.inbox?.email ?? access.user.email ?? "";
+  if (!to) return { ok: false, error: "Connect your inbox first." };
+  if (state.value.testSentAt && Date.now() - Date.parse(state.value.testSentAt) < 10 * 60_000) {
+    return { ok: false, error: "A test went out a few minutes ago. Check your inbox; you can send another in ten minutes." };
+  }
+  const sent = await sendTest(access.supabase, access.user.id, to);
+  if (!sent.ok) return sent;
+  revalidatePath("/portal/setup/go-live");
+  return { ok: true, to, fund: sent.value.fund };
+}

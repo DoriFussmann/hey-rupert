@@ -10,7 +10,8 @@ export type SetupStepId =
   | "deck_review"
   | "framing"
   | "investor_list"
-  | "email_copy";
+  | "email_copy"
+  | "go_live";
 
 /**
  * Stored status of a step row.
@@ -574,6 +575,15 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
     adminAction: "Write the email copy for each tier",
     kind: "review",
   },
+  {
+    id: "go_live",
+    title: "Go Live",
+    short: "Go Live",
+    href: "/portal/setup/go-live",
+    clientTask: "connect your inbox, pay the first monthly invoice and go live",
+    adminAction: "Build the campaign, add the invoice link and push Go Live to the client",
+    kind: "review",
+  },
 ];
 
 export const SETUP_TOTAL = SETUP_STEPS.length;
@@ -656,6 +666,7 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
   const framing = rowFor(rows, "framing");
   const list = rowFor(rows, "investor_list");
   const copy = rowFor(rows, "email_copy");
+  const goLive = rowFor(rows, "go_live");
 
   const materialsDone = materials?.status === "submitted";
   const framingDone = framing?.status === "confirmed";
@@ -760,6 +771,28 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
       list?.completed_at ?? null,
     ),
   );
+  // 4. Go Live: Rupert builds the campaign and pushes the invoice; the client
+  // connects their inbox, pays and clicks Go Live (which confirms the step).
+  const copyDone = copy?.status === "confirmed" || copy?.status === "published";
+  const live = source?.stage === "live";
+  const goLiveItem = reviewItem(
+    "go_live",
+    goLive,
+    copyDone || live || (goLive?.version ?? 0) > 0,
+    "After you confirm the outreach emails",
+    "Rupert is preparing your campaign",
+    copy?.completed_at ?? null,
+  );
+  if (live && goLiveItem.status !== "done") {
+    // Went live before this step existed, or outside the portal.
+    items.push({ ...goLiveItem, status: "done", detail: "Live", since: null, completedAt: goLive?.completed_at ?? null, visible: true });
+  } else if (goLiveItem.status === "done") {
+    items.push({ ...goLiveItem, detail: "Live" });
+  } else if (goLiveItem.status === "your_turn") {
+    items.push({ ...goLiveItem, detail: "Connect your inbox, pay and go live" });
+  } else {
+    items.push(goLiveItem);
+  }
 
   return items;
 }
