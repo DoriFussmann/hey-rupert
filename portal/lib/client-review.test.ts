@@ -76,10 +76,16 @@ test("excluding a fund lowers its tier's funds and contacts at once", () => {
     { id: "c", fund_name: "C", contact: "", details: "", tier: 4, why: "", comments: "", contact_count: 1, broad: true },
   ];
   const broad = { label: "Broad", detail: "Broad investors" };
+  // contacts = to email (up to 2 per fund by default); onFile = everyone identified.
   const before = tierStatsFor(rows, {}, FOUR_FIT_TIERS, null, broad);
-  assert.deepEqual(before.map((s) => [s.tier, s.funds, s.contacts]), [[1, 2, 5], [2, 0, 0], [3, 0, 0], [4, 0, 0], ["broad", 1, 1]]);
+  assert.deepEqual(before.map((s) => [s.tier, s.funds, s.contacts, s.onFile]), [[1, 2, 4, 5], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], ["broad", 1, 1, 1]]);
   const after = tierStatsFor(rows, { b: { excluded: true }, c: { excluded: true } }, FOUR_FIT_TIERS, null, broad);
-  assert.deepEqual(after.map((s) => [s.tier, s.funds, s.contacts]), [[1, 1, 2], [2, 0, 0], [3, 0, 0], [4, 0, 0], ["broad", 0, 0]]);
+  assert.deepEqual(after.map((s) => [s.tier, s.funds, s.contacts, s.onFile]), [[1, 1, 2, 2], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], ["broad", 0, 0, 0]]);
+  // The plan's contacts per fund drives the count.
+  const three = tierStatsFor(rows, {}, FOUR_FIT_TIERS, null, broad, 3);
+  assert.equal(three[0].contacts, 5);
+  const one = tierStatsFor(rows, {}, FOUR_FIT_TIERS, null, broad, 1);
+  assert.equal(one[0].contacts, 2);
 });
 
 test("the list intro names the round, sector and place it is based on", () => {

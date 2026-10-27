@@ -80,6 +80,7 @@ export default async function InvestorListPage() {
           rows={list.rows}
           summary={list.summary}
           scheme={list.tier_scheme}
+          perFirm={list.contacts_per_firm ?? 2}
           verification={list.verification}
           flags={list.client_flags}
           version={row.version}

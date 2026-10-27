@@ -217,6 +217,14 @@ function contactCount(rows: StoredResult[]) {
   return rows.reduce((sum, row) => sum + distinctPeople((row.detail.people ?? []) as PersonRecord[]).length, 0);
 }
 
+/** Contacts that will be emailed: up to `perFirm` per fund, of those with an email. */
+function emailCount(rows: StoredResult[], perFirm: number) {
+  return rows.reduce((sum, row) => {
+    const reachable = distinctPeople((row.detail.people ?? []) as PersonRecord[]).filter((p) => p.email?.trim()).length;
+    return sum + Math.min(reachable, perFirm);
+  }, 0);
+}
+
 /** The Verify Emails tab's tier for a panel: approved generalists are checked with Tier 4. */
 function verifyTier(key: string) {
   return key === "generalist" ? "tier4" : key;
@@ -231,23 +239,24 @@ function TierPanel({
   description,
   funds,
   contacts,
-  meta,
+  toEmail,
   verifyHref,
   children,
 }: {
   label: string;
   description: string;
   funds: number;
+  /** Investing contacts on file. */
   contacts: number;
-  /** Shown after the counts, e.g. "in the campaign". */
-  meta?: string;
+  /** Contacts that will be emailed, when a campaign plan sets contacts per firm. */
+  toEmail?: number;
   verifyHref?: string;
   children: ReactNode;
 }) {
   return (
     <details className={`${cardClass} group/tier mb-sm`}>
-      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-sm px-lg py-md [&::-webkit-details-marker]:hidden">
-        <span className="flex min-w-0 items-center gap-sm">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">
+        <span className="flex min-w-0 flex-1 items-center gap-sm">
           <svg
             aria-hidden="true"
             viewBox="0 0 20 20"
@@ -256,14 +265,22 @@ function TierPanel({
           >
             <path d="m8 5 5 5-5 5" stroke="currentColor" strokeWidth="1.5" />
           </svg>
-          <span className="min-w-0">
+          <span className="min-w-0 truncate" title={description}>
             <span className="text-h4 text-heading">{label}</span>{" "}
             <span className="text-body-sm text-muted">{description}</span>
           </span>
         </span>
-        <span className="text-body-sm tabular-nums text-heading">
-          {n(funds)} fund{funds === 1 ? "" : "s"} · {n(contacts)} contact{contacts === 1 ? "" : "s"}
-          {meta ? <span className="text-muted"> {meta}</span> : null}
+        <span className="shrink-0 whitespace-nowrap text-body-sm tabular-nums text-heading">
+          {n(funds)} fund{funds === 1 ? "" : "s"} ·{" "}
+          {toEmail !== undefined ? (
+            <>
+              {n(toEmail)} to email <span className="text-muted">· {n(contacts)} on file</span>
+            </>
+          ) : (
+            <>
+              {n(contacts)} contact{contacts === 1 ? "" : "s"} <span className="text-muted">on file</span>
+            </>
+          )}
         </span>
       </summary>
       <div className="border-t border-border px-lg py-md">
@@ -378,7 +395,10 @@ export function CampaignColumns({
   campaign,
   heading,
   websites,
+  perFirm = 2,
 }: {
+  /** Contacts emailed per fund, from the campaign plan. */
+  perFirm?: number;
   rows: StoredResult[];
   /** The plan's run row keys. */
   planned: Set<string>;
@@ -413,7 +433,7 @@ export function CampaignColumns({
             description={panel.description}
             funds={panel.inPlan.length}
             contacts={contactCount(panel.inPlan)}
-            meta="in the campaign"
+            toEmail={emailCount(panel.inPlan, perFirm)}
             verifyHref={verifyTierPath(campaign.clientId, verifyTier(panel.key))}
           >
             <FundList rows={panel.inPlan} campaign={campaign} websites={websites} />

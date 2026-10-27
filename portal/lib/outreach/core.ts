@@ -1,8 +1,8 @@
 // Core outreach: the contacts at each Core fund, their Quick Facts and their
 // own emails. Pure module, safe on the server and in the browser.
 //
-// Each Core fund gets 2 active contacts (the engine's Primary and Backup,
-// skipping contacts verification flagged). Any other reachable contact is a
+// Each fund gets as many active contacts as the campaign plan says (default
+// 2: the engine's Primary and Backup), skipping contacts verification flagged. Any other reachable contact is a
 // reserve: listed, not emailed, activated by Rupert. Every active contact's
 // emails are written from the Core template of the fund's type and a few
 // sourced Quick Facts, and Rupert approves each one.
@@ -11,7 +11,19 @@
 import type { CopyEmail } from "../setup.ts";
 import { SEQUENCE_LENGTH, emailIssues, fundTypeKey, type CopyIssue, type TypedCopy, type TypedGroupCopy } from "./copy.ts";
 
-export const ACTIVE_PER_FUND = 2;
+/** Contacts emailed per fund when the list doesn't say (every list before the setting was stored). */
+export const DEFAULT_CONTACTS_PER_FIRM = 2;
+
+/** The contacts per fund to email: the list's, set from its campaign plan; else the default. */
+export function perFirmOf(list: { contacts_per_firm?: number } | null | undefined) {
+  const n = Math.round(Number(list?.contacts_per_firm));
+  return Number.isFinite(n) && n >= 1 ? Math.min(n, 10) : DEFAULT_CONTACTS_PER_FIRM;
+}
+
+/** How many of a fund's contacts get emailed. */
+export function toEmail(contactsOnFile: number, perFirm: number) {
+  return Math.max(0, Math.min(contactsOnFile, perFirm));
+}
 export const MAX_QUICK_FACTS = 5;
 /** Fund facts are reused across clients for this long. */
 export const FUND_RESEARCH_TTL_DAYS = 60;
@@ -108,7 +120,7 @@ function runOrder(a: RunPerson, b: RunPerson) {
  * of one address, and contacts `blocked` (verification found a problem, or
  * Rupert removed them for this client) are left out entirely.
  */
-export function selectCoreContacts(people: RunPerson[], blocked: (person: RunPerson) => boolean) {
+export function selectCoreContacts(people: RunPerson[], blocked: (person: RunPerson) => boolean, perFirm = DEFAULT_CONTACTS_PER_FIRM) {
   const seen = new Set<string>();
   const usable: RunPerson[] = [];
   let leftOut = 0;
@@ -122,7 +134,8 @@ export function selectCoreContacts(people: RunPerson[], blocked: (person: RunPer
     }
     usable.push(person);
   }
-  return { active: usable.slice(0, ACTIVE_PER_FUND), reserve: usable.slice(ACTIVE_PER_FUND), leftOut };
+  const n = Math.max(1, Math.floor(perFirm));
+  return { active: usable.slice(0, n), reserve: usable.slice(n), leftOut };
 }
 
 /** The key a contact is stored under in outreach_messages. */

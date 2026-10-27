@@ -721,6 +721,8 @@ export async function fourTierPushList(
   clientId: string,
   runId: string,
   planned: Set<string>,
+  /** Contacts emailed per fund, from the confirmed campaign plan. */
+  perFirm = 2,
 ): Promise<Result<{ list: InvestorListPayload; people: PeopleStates }>> {
   const loaded = await loadTierRun(supabase, clientId, runId);
   if (!loaded.ok) return loaded;
@@ -746,7 +748,7 @@ export async function fourTierPushList(
     if ("check" in site && site.check) checkSizes[id] = String(site.check);
   }
   const stage = (header.profileInputs.stage as { label?: string } | undefined)?.label ?? "";
-  const list = fourTierClientList({ id: header.id, rulesVersion: header.rulesVersion, ranAt: header.ranAt }, kept, firms, stage, checkSizes);
+  const list = fourTierClientList({ id: header.id, rulesVersion: header.rulesVersion, ranAt: header.ranAt }, kept, firms, stage, checkSizes, perFirm);
   if (!list.ok) return list;
 
   const fids = Array.from(new Set(kept.flatMap((row) => reachablePeople(row).map((person) => person.fid))));

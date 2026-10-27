@@ -104,6 +104,9 @@ export function MatchControls({
           <button type="button" className={primaryButton} disabled={!runId || Boolean(pushBlocked) || Boolean(busy)} onClick={push}>
             Push to client
           </button>
+          <Link href={`/admin/clients/${clientId}#current-step`} className={`${secondaryButton} no-underline`}>
+            To Client
+          </Link>
         </div>
         <p className="mt-xs text-body-sm text-muted">
           {pushBlocked ??

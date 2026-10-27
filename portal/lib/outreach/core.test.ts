@@ -87,3 +87,10 @@ test("each Core contact is written from its type's template, or the group its ty
   assert.equal(templateFor(typed, "Angel group")?.type, "Other");
   assert.equal(templateFor(null, "VC"), null);
 });
+
+test("the plan's contacts per fund sets how many are active", () => {
+  const people = [person("a@f.com", "Primary"), person("b@f.com", "Backup"), person("c@f.com", "", 5), person("d@f.com", "", 4)];
+  assert.equal(selectCoreContacts(people, () => false, 3).active.length, 3);
+  assert.equal(selectCoreContacts(people, () => false, 1).active.length, 1);
+  assert.equal(selectCoreContacts(people, () => false).active.length, 2);
+});

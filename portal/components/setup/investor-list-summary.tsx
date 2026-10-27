@@ -25,14 +25,24 @@ export function InvestorListSummaryPanel({
               {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
             </p>
             <p className="text-body-sm text-secondary">
-              {n(entry.contacts)} investing contact{entry.contacts === 1 ? "" : "s"} identified
+              {entry.to_email !== undefined ? (
+                <>
+                  {n(entry.to_email)} to email <span className="text-muted">· {n(entry.contacts)} on file</span>
+                </>
+              ) : (
+                <>
+                  {n(entry.contacts)} investing contact{entry.contacts === 1 ? "" : "s"} on file
+                </>
+              )}
             </p>
             {entry.by_type.length > 0 ? (
               <ul className="mt-sm space-y-px text-body-sm text-secondary">
                 {entry.by_type.map((type) => (
                   <li key={type.label}>
-                    {type.label}: {n(type.funds)} fund{type.funds === 1 ? "" : "s"} · {n(type.contacts)} contact
-                    {type.contacts === 1 ? "" : "s"}
+                    {type.label}: {n(type.funds)} fund{type.funds === 1 ? "" : "s"} ·{" "}
+                    {type.to_email !== undefined
+                      ? `${n(type.to_email)} to email`
+                      : `${n(type.contacts)} contact${type.contacts === 1 ? "" : "s"} on file`}
                   </li>
                 ))}
               </ul>
