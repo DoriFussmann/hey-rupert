@@ -2,7 +2,7 @@
 
 import type { PreviewLeads } from "@/lib/outreach/preview";
 import { loadPreviewLeadsAction } from "@/app/admin/outreach-actions";
-import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
+import { EmailBodyField } from "@/components/email-body-field";
 import { useEffect, useMemo, useState } from "react";
 import { draftClientEmailCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
 import { TypedCopyEditor } from "@/app/admin/clients/[id]/setup/typed-copy-editor";
@@ -10,7 +10,6 @@ import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/documen
 import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
 import {
   EMAIL_SEQUENCE_LABELS,
-  LINKEDIN_NOTE_MAX,
   asClientEmail,
   asEmailCopy,
   emailCopyHasContent,
@@ -126,11 +125,7 @@ export function EmailCopyPanel({
     ) {
       return;
     }
-    setCopy({
-      ...emptyEmailCopy(listScheme),
-      linkedin_note: copy.linkedin_note,
-      linkedin_followup: copy.linkedin_followup,
-    });
+    setCopy(emptyEmailCopy(listScheme));
     setTier(1);
   }
 
@@ -276,7 +271,7 @@ export function EmailCopyPanel({
           {drafting
             ? byType
               ? "Writing the copy for each fund type. Usually under a minute."
-              : `Writing the ${tiers.length * 3} emails and the LinkedIn messages. Usually under a minute.`
+              : `Writing the ${tiers.length * 3} emails. Usually under a minute.`
             : !claudeReady
               ? "Claude is not configured (ANTHROPIC_API_KEY)."
               : byType
@@ -385,41 +380,6 @@ export function EmailCopyPanel({
         </ol>
 
         </>)}
-        <div className={`${typedMode ? "" : "mt-xl "}border-t border-border pt-lg`}>
-          <p className="text-label uppercase tracking-label text-muted">
-            LinkedIn · one set for every tier
-          </p>
-          <label className="mt-md block text-body-sm text-secondary">
-            Connection note
-            <span className="ml-sm text-muted">
-              {(copy.linkedin_note ?? "").length}/{LINKEDIN_NOTE_MAX}
-            </span>
-            <AutoTextarea
-              className={`${inputClass} mt-sm`}
-              maxLength={2000}
-              value={copy.linkedin_note ?? ""}
-              onChange={(event) =>
-                setCopy((current) => ({ ...current, linkedin_note: event.target.value }))
-              }
-              placeholder="Short note sent with the connection request"
-              aria-label="LinkedIn connection note"
-            />
-          </label>
-          <label className="mt-md block text-body-sm text-secondary">
-            Follow-up
-            <AutoTextarea
-              className={`${inputClass} mt-sm`}
-              maxLength={10000}
-              value={copy.linkedin_followup ?? ""}
-              onChange={(event) =>
-                setCopy((current) => ({ ...current, linkedin_followup: event.target.value }))
-              }
-              placeholder="Message after they connect"
-              aria-label="LinkedIn follow-up"
-            />
-          </label>
-        </div>
-
         {problems.length > 0 ? (
           <p className="mt-md text-body-sm text-muted">
             Before pushing: {problems.join(" ")}
@@ -439,7 +399,7 @@ export function EmailCopyPanel({
         onSaved={() => setSavedKey(JSON.stringify(copy))}
         problem={problems.length > 0 ? problems.join(" ") : null}
         busy={drafting}
-        pushSummary="Pushes the emails and LinkedIn messages above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."
+        pushSummary="Pushes the emails above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."
         clientPreview={
           <EmailCopyReview
             copy={copy}

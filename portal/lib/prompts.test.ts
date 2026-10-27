@@ -163,15 +163,19 @@ test("a prompt can only shape text: AI drafts can't send email or bypass approva
 });
 
 test("the client-review migration saves exactly the registry's text for the prompts it adds or updates", () => {
-  const sql = read("supabase/client_review.sql");
+  // The texts it saved were later replaced by prompts_no_linkedin.sql, which now holds the registry's text.
+  const sql = read("supabase/prompts_no_linkedin.sql");
   const tag = "$rupert_prompt$";
-  for (const key of ["email_copy_email", "outreach_narrative"] as const) {
+  for (const key of ["email_copy_email", "email_copy", "outreach_narrative"] as const) {
     const prompt = PROMPTS.find((item) => item.key === key)!;
     assert.ok(sql.includes(`'${prompt.slug}'`), prompt.slug);
-    assert.ok(sql.includes(`${tag}${prompt.defaultText}${tag}`), `${key}: text differs from the registry`);
+    assert.ok(sql.includes(`v_new text := ${tag}${prompt.defaultText}${tag}`), `${key}: text differs from the registry`);
+    assert.ok(!prompt.defaultText.toLowerCase().includes("linkedin"), `${key}: still mentions LinkedIn`);
   }
-  // An edited narrative prompt is never replaced.
-  assert.match(sql, /elsif btrim\(v_active\) <> btrim\(v_old\) then/);
+  assert.match(read("supabase/client_review.sql"), /agent_prompt:email_copy_email/);
+  // An edited prompt is never replaced: only the old default moves to the new one.
+  assert.match(read("supabase/client_review.sql"), /elsif btrim\(v_active\) <> btrim\(v_old\) then/);
+  assert.match(sql, /if v_active is not null and btrim\(v_active\) = btrim\(v_old\) then/);
 });
 
 test("the outreach migration starts the fund-type copy prompt from exactly the registry's text", () => {

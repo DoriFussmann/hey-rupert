@@ -226,8 +226,6 @@ async function runTest(
         title,
         sections: [
           ...sections,
-          { label: "LinkedIn note", text: copy.value.linkedin_note ?? "" },
-          { label: "LinkedIn follow-up", text: copy.value.linkedin_followup ?? "" },
         ],
       },
     };

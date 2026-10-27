@@ -129,7 +129,6 @@ export function TypedCopyReview({
   adminNote,
   questions = [],
   readOnly,
-  linkedin,
   coreEmails = [],
   previewLeads = {},
 }: {
@@ -140,7 +139,6 @@ export function TypedCopyReview({
   adminNote?: React.ReactNode;
   questions?: SetupQuestion[];
   readOnly: boolean;
-  linkedin?: React.ReactNode;
   /** Core emails Rupert approved, one per contact. */
   coreEmails?: ClientCoreEmail[];
   /** A few real investors per group, for the Preview buttons. */
@@ -283,7 +281,6 @@ export function TypedCopyReview({
       ) : null}
 
       {section === "core" && coreEmails.length > 0 ? <CoreEmailsList items={coreEmails} optOut={typed.opt_out_line} /> : null}
-      {linkedin}
       <QuestionThread questions={questions} />
       {open ? (
         <ReviewActions
