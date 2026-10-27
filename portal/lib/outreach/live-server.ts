@@ -448,6 +448,8 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   });
   if (!saved.ok) return saved;
   await advanceStage(supabase, clientId, LIVE_STAGES_FROM, "live");
+  // The client's go-live date, shown on their Live card. Kept if already set.
+  await supabase.from("clients").update({ live_at: now }).eq("id", clientId).is("live_at", null);
   return { ok: true, value: { wave1: wave1.value } };
 }
 

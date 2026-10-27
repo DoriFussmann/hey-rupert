@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { goLiveAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
 import { formatDateTime } from "@/lib/format";
+import { LiveBanner } from "@/components/live-banner";
 
 const POLL_MS = 3000;
 const POLL_LIMIT_MS = 10 * 60 * 1000;
@@ -131,16 +132,15 @@ export function GoLiveView({
 
   if (live) {
     return (
-      <div className="rounded-card border border-border bg-surface px-lg py-xl">
-        <h2 className="text-h3">Your campaign is live</h2>
-        <p className="mt-sm max-w-prose text-body-sm text-secondary">
-          Since {formatDateTime(live.at)}. The first contact at each fund is emailed first; the second follows a few days
-          later. Replies that need you appear in your Investor Inbox.
+      <LiveBanner since={live.at}>
+        <p className="max-w-prose text-body-sm text-secondary">
+          New investors are added each weekday, mixed across your tiers; the second contact at a fund follows a few days
+          after the first. Replies that need you appear in your Investor Inbox.
         </p>
         <Link href="/portal/live-campaign" className={`${primary} mt-md inline-block`}>
           Open Live Campaign
         </Link>
-      </div>
+      </LiveBanner>
     );
   }
 
