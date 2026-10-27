@@ -23,7 +23,9 @@ keywords:
   - how to cold email investors
   - investor outreach
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: investor outreach
 externalLinks:
   - label: "Startup Funding Trends | October, 2026 (STARTUP EDITION)"
     url: "https://blog.mean.ceo/startup-funding-trends-october-2026/"
@@ -48,7 +50,7 @@ faqs:
     answer: "Both matter, and warm introductions carry a meaningfully higher response rate when you have them. But no founder's network covers every investor worth reaching, and a thoughtfully researched, genuinely personalized cold email can open doors that introductions cannot. Cold outreach is most effective when treated as a disciplined, sequenced process rather than a one-off blast."
 ---
 
-Cold email to investors gets a reputation it doesn't deserve—either written off as spam or treated as a guaranteed shortcut. Neither is true. Done carelessly, a cold investor outreach email lands in a crowded inbox and earns nothing. Done well, with the right research, the right message, and the discipline to follow through, it opens conversations that a warm introduction would never have reached. This guide walks through the full process, from researching investors to following up, and explains what separates a reply from a message that goes unanswered.
+Cold email to investors gets a reputation it doesn't deserve—either written off as spam or treated as a guaranteed shortcut. Neither is true. Done carelessly, a cold [investor outreach](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) email lands in a crowded inbox and earns nothing. Done well, with the right research, the right message, and the discipline to follow through, it opens conversations that a warm introduction would never have reached. This guide walks through the full process, from researching investors to following up, and explains what separates a reply from a message that goes unanswered.
 
 ## Why Cold Outreach Is Still a Legitimate Channel
 
@@ -108,7 +110,7 @@ Most founders underestimate what a disciplined investor outreach process actuall
 
 That is time pulled directly from building the company. For a founder at Seed or Series A, the cost is not abstract—it is customer conversations not had, product decisions deferred, team dynamics left unaddressed. The fundraise matters, but the company being built is what makes the fundraise worth pursuing.
 
-This is exactly the gap that Rupert is built for. Rupert runs expert-managed investor outreach for founders raising venture capital: building the target list, developing personalized messaging, managing the follow-up sequence, and maintaining the pipeline—while the founder keeps complete visibility into every conversation and retains ownership of every investor relationship. There is no black box, no success fee, and no hand-off of the relationships that matter. Experienced operators handle the execution; the founder stays in the room for every conversation that matters.
+This is exactly the gap that [Rupert](/book-call/) is built for. Rupert runs expert-managed investor outreach for founders raising venture capital: building the target list, developing personalized messaging, managing the follow-up sequence, and maintaining the pipeline—while the founder keeps complete visibility into every conversation and retains ownership of every investor relationship. There is no black box, no success fee, and no hand-off of the relationships that matter. Experienced operators handle the execution; the founder stays in the room for every conversation that matters.
 
 If you want to understand what that looks like in practice, the right next step is a call. You will come away with a clear picture of how the process works and whether it is the right fit for your raise.
 
