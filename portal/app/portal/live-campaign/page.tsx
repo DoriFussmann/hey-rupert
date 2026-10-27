@@ -1,6 +1,7 @@
 import { PageHeader } from "@/components/page-header";
 import { Checklist } from "@/components/checklist";
 import { getPortalClient } from "@/lib/data";
+import { LiveBanner } from "@/components/live-banner";
 import {
   LIVE_ITEMS,
   checklistProgress,
@@ -23,6 +24,11 @@ export default async function LiveCampaignPage() {
             : `Opens once your campaign is live. ${complete} of ${total} complete.`
         }
       />
+      {client?.stage === "live" ? (
+        <div className="mb-lg">
+          <LiveBanner since={client.live_at ?? null} />
+        </div>
+      ) : null}
       <Checklist
         items={LIVE_ITEMS.map((item) => ({
           id: item.column,
