@@ -7,7 +7,8 @@ import { ViewAsClientLink } from "@/components/eye-icon";
 import { ProgressBar } from "@/components/progress-bar";
 import { StagePill } from "@/components/stage-pill";
 import { nextActionText, overallProgress } from "@/lib/progress";
-import type { Client, EngagementStage } from "@/lib/types";
+import type { Client } from "@/lib/types";
+import { isKickoffReady } from "@/lib/service-order";
 import type { Readiness } from "@/lib/company-profile/core";
 import { matchPath } from "@/lib/match/shared";
 
@@ -17,16 +18,6 @@ const MATCH_READY: Record<Readiness, { label: string; tone: string }> = {
   blocked: { label: "Blocked", tone: "text-error" },
 };
 
-const STAGE_FILTERS: { value: "all" | EngagementStage; label: string }[] = [
-  { value: "all", label: "All" },
-  { value: "sow", label: "SOW" },
-  { value: "service_order", label: "Service Order" },
-  { value: "nda", label: "NDA" },
-  { value: "intake", label: "Intake" },
-  { value: "setup", label: "Setup" },
-  { value: "live", label: "Live" },
-];
-
 function clientName(client: Client) {
   return (
     [client.first_name, client.last_name].filter(Boolean).join(" ") ||
@@ -34,6 +25,30 @@ function clientName(client: Client) {
   );
 }
 
+function matches(client: Client, needle: string) {
+  if (!needle) return true;
+  return [
+    client.company_name,
+    client.first_name,
+    client.last_name,
+    client.founder_name,
+    client.email,
+    client.founder_email,
+    client.raise_stage,
+    client.vertical,
+    client.sector,
+    client.geography,
+    client.stage,
+    client.status,
+  ]
+    .filter(Boolean)
+    .some((value) => value!.toLowerCase().includes(needle));
+}
+
+/**
+ * Clients in three groups: Active (Service Order signed and Setup Fee paid),
+ * Prospects (not signed or paid yet), and Archived, folded away at the bottom.
+ */
 export function ClientTable({
   clients,
   readiness = {},
@@ -42,194 +57,196 @@ export function ClientTable({
   /** Whether each client's profile can be matched, by client id. */
   readiness?: Record<string, Readiness>;
 }) {
-  const router = useRouter();
   const [query, setQuery] = useState("");
-  const [stage, setStage] = useState<"all" | EngagementStage>("all");
-  const [view, setView] = useState<"active" | "archived">("active");
+  const needle = query.trim().toLowerCase();
 
-  const scoped = useMemo(
-    () =>
-      clients.filter((client) =>
-        view === "archived" ? Boolean(client.archived_at) : !client.archived_at,
+  const groups = useMemo(() => {
+    const shown = clients.filter((client) => matches(client, needle));
+    return {
+      active: shown.filter(
+        (client) => !client.archived_at && isKickoffReady(client),
       ),
-    [clients, view],
-  );
+      prospects: shown.filter(
+        (client) => !client.archived_at && !isKickoffReady(client),
+      ),
+      archived: shown.filter((client) => Boolean(client.archived_at)),
+    };
+  }, [clients, needle]);
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase();
-    return scoped.filter((client) => {
-      if (stage !== "all" && client.stage !== stage) return false;
-      if (!needle) return true;
-      return [
-        client.company_name,
-        client.first_name,
-        client.last_name,
-        client.founder_name,
-        client.email,
-        client.founder_email,
-        client.raise_stage,
-        client.vertical,
-        client.sector,
-        client.geography,
-        client.stage,
-        client.status,
-      ]
-        .filter(Boolean)
-        .some((value) => value!.toLowerCase().includes(needle));
-    });
-  }, [scoped, query, stage]);
-
-  const archivedCount = clients.filter((client) => client.archived_at).length;
-  const tabClass = (active: boolean) =>
-    `rounded-md px-md py-sm text-body-sm transition-colors duration-hover ${
-      active
-        ? "bg-primary text-white"
-        : "border border-border bg-surface text-secondary hover:text-heading"
-    }`;
-  const filterClass = (active: boolean) =>
-    `rounded-md px-sm py-xs text-body-sm transition-colors duration-hover ${
-      active
-        ? "border border-transparent bg-primary-tint text-heading"
-        : "border border-border bg-surface text-secondary hover:text-heading"
-    }`;
+  const empty = needle ? "No clients match your search." : null;
 
   return (
-    <div className="rounded-card border border-border bg-surface">
-      <div className="flex flex-wrap items-end justify-between gap-md border-b border-border px-lg py-md">
-        <label className="block text-label uppercase tracking-label text-muted">
-          Search
-          <input
-            className="mt-sm w-full max-w-md rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Company, founder"
-          />
-        </label>
-        <div className="flex gap-sm">
-          <button
-            type="button"
-            className={tabClass(view === "active")}
-            onClick={() => setView("active")}
-          >
-            Active
-          </button>
-          <button
-            type="button"
-            className={tabClass(view === "archived")}
-            onClick={() => setView("archived")}
-          >
-            Archived{archivedCount > 0 ? ` (${archivedCount})` : ""}
-          </button>
-        </div>
-      </div>
-      <div className="flex flex-wrap items-center gap-sm border-b border-border px-lg py-md">
-        <p className="mr-sm text-label uppercase tracking-label text-muted">
-          Stage
-        </p>
-        {STAGE_FILTERS.map((option) => (
-          <button
-            key={option.value}
-            type="button"
-            aria-pressed={stage === option.value}
-            className={filterClass(stage === option.value)}
-            onClick={() => setStage(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-      </div>
-      {filtered.length === 0 ? (
-        <p className="px-lg py-xl text-body-sm text-muted">
-          {view === "archived"
-            ? "No archived clients."
-            : query.trim() || stage !== "all"
-              ? "No clients match those filters."
-              : "No clients yet."}
-        </p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-body-sm">
-            <thead>
-              <tr className="border-b border-border text-label uppercase tracking-label text-muted">
-                <th className="px-lg py-sm font-medium">Client</th>
-                <th className="px-lg py-sm font-medium">Stage</th>
-                <th className="px-lg py-sm font-medium">Progress</th>
-                <th className="px-lg py-sm font-medium">Next action</th>
-                <th className="px-lg py-sm font-medium">Ready to match</th>
-                <th className="px-lg py-sm font-medium">
-                  <span className="sr-only">View as client</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((client) => {
-                const href = `/admin/clients/${client.id}`;
-                const company = client.company_name;
-                const person = clientName(client);
-                const heading =
-                  company || person || client.email || "Open client";
-                const sub = company && person && person !== company ? person : "";
-                const progress = overallProgress(client);
+    <div className="grid gap-lg">
+      <label className="block max-w-md text-label uppercase tracking-label text-muted">
+        Search
+        <input
+          className="mt-sm w-full rounded-md border border-border bg-surface px-sm py-sm text-body-sm text-body outline-none"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Company, founder"
+        />
+      </label>
 
-                return (
-                  <tr
-                    key={client.id}
-                    className="cursor-pointer border-b border-border last:border-b-0 transition-colors duration-hover hover:bg-background"
-                    onClick={() => router.push(href)}
+      <ClientSection
+        title="Active clients"
+        hint="Service Order signed and Setup Fee paid."
+        clients={groups.active}
+        readiness={readiness}
+        empty={empty ?? "No active clients yet."}
+      />
+      <ClientSection
+        title="Prospects"
+        hint="Not signed or paid yet: Statement of Work and Service Order."
+        clients={groups.prospects}
+        readiness={readiness}
+        empty={empty ?? "No prospects right now."}
+      />
+      {groups.archived.length > 0 || !needle ? (
+        <details
+          className="group rounded-card border border-border bg-surface"
+          open={Boolean(needle) && groups.archived.length > 0}
+        >
+          <summary className="flex cursor-pointer list-none items-center justify-between px-lg py-md">
+            <span className="text-h4">
+              Archived{" "}
+              <span className="text-muted">({groups.archived.length})</span>
+            </span>
+            <span className="text-body-sm text-muted group-open:hidden">
+              Show
+            </span>
+            <span className="hidden text-body-sm text-muted group-open:inline">
+              Hide
+            </span>
+          </summary>
+          <div className="border-t border-border">
+            <ClientRows
+              clients={groups.archived}
+              readiness={readiness}
+              empty="No archived clients."
+            />
+          </div>
+        </details>
+      ) : null}
+    </div>
+  );
+}
+
+function ClientSection({
+  title,
+  hint,
+  clients,
+  readiness,
+  empty,
+}: {
+  title: string;
+  hint: string;
+  clients: Client[];
+  readiness: Record<string, Readiness>;
+  empty: string;
+}) {
+  return (
+    <section className="rounded-card border border-border bg-surface">
+      <div className="flex flex-wrap items-baseline justify-between gap-sm border-b border-border px-lg py-md">
+        <h2 className="text-h4">
+          {title} <span className="text-muted">({clients.length})</span>
+        </h2>
+        <p className="text-body-sm text-muted">{hint}</p>
+      </div>
+      <ClientRows clients={clients} readiness={readiness} empty={empty} />
+    </section>
+  );
+}
+
+function ClientRows({
+  clients,
+  readiness,
+  empty,
+}: {
+  clients: Client[];
+  readiness: Record<string, Readiness>;
+  empty: string;
+}) {
+  const router = useRouter();
+  if (clients.length === 0)
+    return <p className="px-lg py-lg text-body-sm text-muted">{empty}</p>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[820px] text-left text-body-sm">
+        <thead>
+          <tr className="border-b border-border text-label uppercase tracking-label text-muted">
+            <th className="px-lg py-sm font-medium">Client</th>
+            <th className="px-lg py-sm font-medium">Stage</th>
+            <th className="px-lg py-sm font-medium">Progress</th>
+            <th className="px-lg py-sm font-medium">Next action</th>
+            <th className="px-lg py-sm font-medium">Ready to match</th>
+            <th className="px-lg py-sm font-medium">
+              <span className="sr-only">View as client</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {clients.map((client) => {
+            const href = `/admin/clients/${client.id}`;
+            const company = client.company_name;
+            const person = clientName(client);
+            const heading = company || person || client.email || "Open client";
+            const sub = company && person && person !== company ? person : "";
+            const progress = overallProgress(client);
+
+            return (
+              <tr
+                key={client.id}
+                className="cursor-pointer border-b border-border last:border-b-0 transition-colors duration-hover hover:bg-background"
+                onClick={() => router.push(href)}
+              >
+                <td className="px-lg py-md">
+                  <Link
+                    href={href}
+                    onClick={(event) => event.stopPropagation()}
+                    className="text-primary no-underline transition-colors duration-hover hover:text-primary-hover"
                   >
-                    <td className="px-lg py-md">
-                      <Link
-                        href={href}
-                        onClick={(event) => event.stopPropagation()}
-                        className="text-primary no-underline transition-colors duration-hover hover:text-primary-hover"
-                      >
-                        {heading}
-                      </Link>
-                      {client.is_test_pilot ? (
-                        <span className="ml-sm inline-flex rounded-full border border-warning/40 px-sm py-px align-middle text-label uppercase tracking-label text-warning">
-                          Test
-                        </span>
-                      ) : null}
-                      {sub ? <p className="text-muted">{sub}</p> : null}
-                    </td>
-                    <td className="px-lg py-md">
-                      <StagePill stage={client.stage} />
-                    </td>
-                    <td className="px-lg py-md">
-                      <ProgressBar
-                        value={progress.complete}
-                        max={progress.total}
-                      />
-                      <p className="mt-xs text-body-sm text-muted">
-                        {progress.complete} of {progress.total} complete
-                      </p>
-                    </td>
-                    <td className="px-lg py-md text-muted">
-                      {nextActionText(client)}
-                    </td>
-                    <td className="px-lg py-md">
-                      {readiness[client.id] ? (
-                        <Link
-                          href={matchPath(client.id)}
-                          onClick={(event) => event.stopPropagation()}
-                          className={`${MATCH_READY[readiness[client.id]].tone} no-underline hover:underline`}
-                        >
-                          {MATCH_READY[readiness[client.id]].label}
-                        </Link>
-                      ) : (
-                        <span className="text-muted">–</span>
-                      )}
-                    </td>
-                    <td className="px-sm py-md text-right">
-                      <ViewAsClientLink clientId={client.id} label={heading} />
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                    {heading}
+                  </Link>
+                  {client.is_test_pilot ? (
+                    <span className="ml-sm inline-flex rounded-full border border-warning/40 px-sm py-px align-middle text-label uppercase tracking-label text-warning">
+                      Test
+                    </span>
+                  ) : null}
+                  {sub ? <p className="text-muted">{sub}</p> : null}
+                </td>
+                <td className="px-lg py-md">
+                  <StagePill stage={client.stage} />
+                </td>
+                <td className="px-lg py-md">
+                  <ProgressBar value={progress.complete} max={progress.total} />
+                  <p className="mt-xs text-body-sm text-muted">
+                    {progress.complete} of {progress.total} complete
+                  </p>
+                </td>
+                <td className="px-lg py-md text-muted">
+                  {nextActionText(client)}
+                </td>
+                <td className="px-lg py-md">
+                  {readiness[client.id] ? (
+                    <Link
+                      href={matchPath(client.id)}
+                      onClick={(event) => event.stopPropagation()}
+                      className={`${MATCH_READY[readiness[client.id]].tone} no-underline hover:underline`}
+                    >
+                      {MATCH_READY[readiness[client.id]].label}
+                    </Link>
+                  ) : (
+                    <span className="text-muted">–</span>
+                  )}
+                </td>
+                <td className="px-sm py-md text-right">
+                  <ViewAsClientLink clientId={client.id} label={heading} />
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
