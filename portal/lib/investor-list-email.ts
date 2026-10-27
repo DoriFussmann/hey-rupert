@@ -94,7 +94,7 @@ export function investorListEmailHtml(text: string) {
       if (cta) {
         const label = escapeHtml(cta[1]);
         const href = escapeHtml(cta[2]);
-        return `<p style="margin:24px 0"><a href="${href}" style="display:inline-block;background:#5C7A5E;color:#ffffff;text-decoration:none;font-size:16px;line-height:1.4;padding:12px 20px;border-radius:6px;min-height:44px">${label}</a></p>`;
+        return `<p style="margin:24px 0"><a href="${href}" style="display:inline-block;background:#5C7A5E;color:#ffffff;text-decoration:none;font-size:16px;line-height:1.4;padding:12px 20px;border-radius:6px">${label}</a></p>`;
       }
       const bullets = lines.filter((line) => line.startsWith("• "));
       if (bullets.length === lines.length && bullets.length > 0) {

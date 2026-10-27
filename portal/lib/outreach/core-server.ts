@@ -29,6 +29,7 @@ import {
   isApproved,
   personKey,
   researchIsFresh,
+  perFirmOf,
   selectCoreContacts,
   templateFor,
   type ContactSlot,
@@ -214,6 +215,8 @@ export type CoreWorkspace = {
   coreFunds: number;
   /** First-email word cap of the Core style, per fund type. */
   caps: Record<string, number>;
+  /** Contacts emailed per fund, from the campaign plan on the confirmed list. */
+  perFirm: number;
 };
 
 export async function loadCoreWorkspace(supabase: ServiceClient, clientId: string): Promise<Result<CoreWorkspace>> {
@@ -224,7 +227,7 @@ export async function loadCoreWorkspace(supabase: ServiceClient, clientId: strin
   ]);
   if (!messages.ok) return messages;
   const caps = Object.fromEntries(FUND_TYPES.map((type) => [type, presetFor(styles.styles, "core", type).max_words]));
-  if (!basis.ok) return { ok: true, value: { messages: messages.value, blocker: basis.error, templates: [], coreFunds: 0, caps } };
+  if (!basis.ok) return { ok: true, value: { messages: messages.value, blocker: basis.error, templates: [], coreFunds: 0, caps, perFirm: 2 } };
   const templates = (basis.value.typed?.core ?? []).filter((group) => group.emails[0]?.body.trim()).map((group) => group.type);
   return {
     ok: true,
@@ -234,6 +237,7 @@ export async function loadCoreWorkspace(supabase: ServiceClient, clientId: strin
       templates,
       coreFunds: basis.value.coreRows.length,
       caps,
+      perFirm: perFirmOf(basis.value.list),
     },
   };
 }
@@ -263,6 +267,8 @@ export async function pickContacts(
   clientId: string,
   runId: string,
   rows: InvestorRow[],
+  /** Contacts emailed per fund (the list's, from its campaign plan). */
+  perFirm: number,
 ): Promise<Result<Map<string, PickedContacts>>> {
   const run = await loadTierRun(supabase, clientId, runId);
   if (!run.ok) return run;
@@ -284,7 +290,7 @@ export async function pickContacts(
       const state = verifyStateOf(person as PersonRecord, states.value);
       const decision = states.value.get(`${person.fid}|${person.key}`)?.decision ?? null;
       return decision === "remove" || (PROBLEMS.has(state) && decision !== "keep");
-    });
+    }, perFirm);
     out.set(row.id, { active: chosen.active as PersonRecord[], reserve: chosen.reserve as PersonRecord[], leftOut: chosen.leftOut });
   }
   return { ok: true, value: out };
@@ -328,7 +334,7 @@ export async function syncCoreContacts(
   const basis = await loadBasis(supabase, clientId);
   if (!basis.ok) return basis;
   const { list, coreRows } = basis.value;
-  const picked = await pickContacts(supabase, clientId, list.run_id!, coreRows);
+  const picked = await pickContacts(supabase, clientId, list.run_id!, coreRows, perFirmOf(list));
   if (!picked.ok) return picked;
   const existing = await loadCoreMessages(supabase, clientId);
   if (!existing.ok) return existing;

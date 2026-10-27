@@ -1,7 +1,7 @@
 import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { copyTierOf, outreachRows, type TypedCopy } from "@/lib/outreach/copy";
-import { asCorePerson, templateFor } from "@/lib/outreach/core";
+import { asCorePerson, perFirmOf, templateFor } from "@/lib/outreach/core";
 import { otherGroupFor } from "@/lib/outreach/campaign";
 import { loadCoreMessages, pickContacts } from "@/lib/outreach/core-server";
 import { loadOverrides } from "@/lib/outreach/known-server";
@@ -39,7 +39,7 @@ export async function loadPreviewLeads(supabase: ServiceClient, clientId: string
       if (list.length < PER_GROUP) chosen.set(key, [...list, row]);
     }
     const all = Array.from(chosen.values()).flat();
-    const [picked, core] = await Promise.all([pickContacts(supabase, clientId, list.run_id, all), loadCoreMessages(supabase, clientId)]);
+    const [picked, core] = await Promise.all([pickContacts(supabase, clientId, list.run_id, all, perFirmOf(list)), loadCoreMessages(supabase, clientId)]);
     const facts = new Map<string, string>();
     if (core.ok) {
       for (const message of core.value) {

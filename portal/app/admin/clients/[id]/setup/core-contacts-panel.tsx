@@ -354,7 +354,8 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
       <div className="border-b border-border px-lg py-lg">
         <h3 className="text-h4">Core contacts</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
-          Two contacts per Core fund get their own emails, written from the Core template of the fund&apos;s type and a few
+          {workspace ? `${workspace.perFirm} contact${workspace.perFirm === 1 ? "" : "s"}` : "The contacts"} per Core fund (from
+          the campaign plan) get their own emails, written from the Core template of the fund&apos;s type and a few
           sourced Quick Facts. You approve each one. Other contacts wait as reserves until you activate them.
         </p>
         {workspace ? (
@@ -474,7 +475,7 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
       </ul>
       {workspace && messages.length === 0 && !workspace.blocker ? (
         <p className="border-t border-border px-lg py-md text-body-sm text-muted">
-          Click Line up contacts to take the 2 best contacts of each of the {workspace.coreFunds} Core funds from the saved match.
+          Click Line up contacts to take the {workspace.perFirm} best contact{workspace.perFirm === 1 ? "" : "s"} of each of the {workspace.coreFunds} Core funds from the saved match.
         </p>
       ) : null}
     </section>

@@ -113,6 +113,8 @@ export function fourTierClientList(
   firms: Map<string, Firm>,
   stageLabel: string,
   checkSizes: Record<string, string> = {},
+  /** Contacts emailed per fund, from the campaign plan. */
+  perFirm = 2,
 ): ListResult {
   const kept = rows.filter(pushable);
   if (kept.length === 0) return { ok: false, error: "No funds in the four tiers to send." };
@@ -161,18 +163,21 @@ export function fourTierClientList(
     tiers: TIER_KEYS.map((key) => {
       const tier = FOUR_TIER_FIT[key];
       const inTier = listed.filter((item) => item.tier === tier && !item.broad);
-      const types = new Map<string, { funds: number; contacts: number }>();
+      const types = new Map<string, { funds: number; contacts: number; to_email: number }>();
+      const emailed = (item: InvestorRow) => Math.min(item.contact_count ?? 0, perFirm);
       for (const item of inTier) {
         const label = item.fund_type || "Other";
-        const entry = types.get(label) ?? { funds: 0, contacts: 0 };
+        const entry = types.get(label) ?? { funds: 0, contacts: 0, to_email: 0 };
         entry.funds += 1;
         entry.contacts += item.contact_count ?? 0;
+        entry.to_email += emailed(item);
         types.set(label, entry);
       }
       return {
         tier,
         funds: inTier.length,
         contacts: inTier.reduce((sum, item) => sum + (item.contact_count ?? 0), 0),
+        to_email: inTier.reduce((sum, item) => sum + emailed(item), 0),
         by_type: Array.from(types.entries())
           .map(([label, value]) => ({ label, ...value }))
           .sort((a, b) => b.funds - a.funds),
@@ -188,6 +193,7 @@ export function fourTierClientList(
       summary,
       tier_scheme: "four",
       run_id: run.id,
+      contacts_per_firm: perFirm,
       rules_version: run.rulesVersion,
     },
   };

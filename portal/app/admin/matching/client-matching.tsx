@@ -261,10 +261,11 @@ export async function ClientMatching({
               review={{ clientId: client.id, reviews: reviewMap }}
               campaign={{ clientId: client.id, runId: run.header.id }}
               websites={websites}
+              perFirm={plan.inputs.contactsPerFirm}
               heading={
                 <p className="text-body-sm text-secondary">
                   <span className="text-heading">Campaign: {planned.size.toLocaleString("en-US")} funds</span> · plan version {plan.version},{" "}
-                  {plan.inputs.months} month{plan.inputs.months === 1 ? "" : "s"}. Each tier lists its campaign funds; the rest are under &quot;Not in this
+                  {plan.inputs.months} month{plan.inputs.months === 1 ? "" : "s"}, {plan.inputs.contactsPerFirm} contact{plan.inputs.contactsPerFirm === 1 ? "" : "s"} emailed per fund. Each tier lists its campaign funds; the rest are under &quot;Not in this
                   campaign&quot;.{" "}
                   <Link href={matchPath(client.id, "plan")} className="text-primary underline hover:text-primary-hover">
                     Change the plan

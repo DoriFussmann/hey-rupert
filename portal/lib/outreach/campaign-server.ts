@@ -16,7 +16,7 @@ import {
   type WarmIntroStatus,
 } from "@/lib/outreach/campaign";
 import { copyTierOf, outreachRows, type TypedCopy } from "@/lib/outreach/copy";
-import { asCorePerson, emailsHash } from "@/lib/outreach/core";
+import { asCorePerson, emailsHash, perFirmOf } from "@/lib/outreach/core";
 import { contactRow, loadOutreachMessages, pickContacts } from "@/lib/outreach/core-server";
 import { loadKnownFundRows, loadOverrides } from "@/lib/outreach/known-server";
 import { asEmailCopy, asInvestorList, type InvestorRow, type SetupStepState } from "@/lib/setup";
@@ -104,7 +104,7 @@ export async function loadKnownFunds(supabase: ServiceClient, clientId: string, 
   const byFirm = new Map(rows.map((row) => [row.firm_id, row]));
   let contacts = new Map<string, { name: string; title: string }[]>();
   if (list.run_id) {
-    const picked = await pickContacts(supabase, clientId, list.run_id, known);
+    const picked = await pickContacts(supabase, clientId, list.run_id, known, perFirmOf(list));
     if (picked.ok) {
       contacts = new Map(
         Array.from(picked.value.entries()).map(([id, chosen]) => [
@@ -301,7 +301,7 @@ export async function loadCampaignState(supabase: ServiceClient, clientId: strin
 
 /**
  * Builds the campaign from the confirmed copy: Core contacts keep the emails
- * Rupert approved; every Sphere, Tier 3 and Tier 4 fund gets its 2 contacts
+ * Rupert approved; every Sphere, Tier 3 and Tier 4 fund gets its contacts (the plan's per fund)
  * and the emails of its type's sequence, filled in and approved by the
  * client's confirmation. Rebuilding replaces the non-Core rows.
  */
@@ -322,7 +322,7 @@ export async function buildCampaign(
 
   const overrides = await loadOverrides(supabase, clientId);
   const others = outreachRows(steps.list, overrides).rows.filter((row) => copyTierOf(row) !== 1);
-  const picked = await pickContacts(supabase, clientId, steps.list.run_id, others);
+  const picked = await pickContacts(supabase, clientId, steps.list.run_id, others, perFirmOf(steps.list));
   if (!picked.ok) return picked;
 
   const approvedBy = `client confirmation (copy v${version})`;

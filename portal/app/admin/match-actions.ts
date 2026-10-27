@@ -547,7 +547,7 @@ export async function pushRunToClient(
   const plan = await loadPlanForRun(access.supabase, clientId, id);
   if (!plan.ok) return plan;
   if (!plan.value) return { ok: false, error: "Confirm a campaign plan for this run on the Plan tab, then push." };
-  const built = await fourTierPushList(access.supabase, clientId, id, plannedIds(plan.value));
+  const built = await fourTierPushList(access.supabase, clientId, id, plannedIds(plan.value), plan.value.inputs.contactsPerFirm);
   if (!built.ok) return built;
   return deliverList(access, clientId, built.value.list, built.value.people);
 }

@@ -382,8 +382,11 @@ export type InvestorListSummary = {
   tiers: {
     tier: FitTier;
     funds: number;
+    /** Investing contacts on file. */
     contacts: number;
-    by_type: { label: string; funds: number; contacts: number }[];
+    /** Contacts that will be emailed (contacts per firm, capped by what's on file). Absent on older lists. */
+    to_email?: number;
+    by_type: { label: string; funds: number; contacts: number; to_email?: number }[];
   }[];
 };
 
@@ -405,6 +408,8 @@ export type InvestorListPayload = {
   run_id?: string;
   /** Four-tier lists: the rules version of that run. */
   rules_version?: string;
+  /** Contacts emailed per fund, from the confirmed campaign plan. Absent: 2. */
+  contacts_per_firm?: number;
   questions?: SetupQuestion[];
 };
 
@@ -1198,6 +1203,8 @@ export function asInvestorList(value: unknown): InvestorListPayload {
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
   const runId = str(raw.run_id, 36).trim();
   const rulesVersion = str(raw.rules_version, 60).trim();
+  const perFirmRaw = Math.round(Number(raw.contacts_per_firm));
+  const perFirm = Number.isFinite(perFirmRaw) && perFirmRaw >= 1 && perFirmRaw <= 10 ? perFirmRaw : 0;
   return {
     rows,
     source_file: str(raw.source_file, 255),
@@ -1212,6 +1219,7 @@ export function asInvestorList(value: unknown): InvestorListPayload {
           tier_scheme: "four" as const,
           ...(ID_PATTERN.test(runId) ? { run_id: runId } : {}),
           ...(rulesVersion ? { rules_version: rulesVersion } : {}),
+          ...(perFirm ? { contacts_per_firm: perFirm } : {}),
         }
       : {}),
   };
@@ -1241,6 +1249,7 @@ export function investorListForClient(draft: InvestorListPayload): InvestorListP
           tier_scheme: "four" as const,
           ...(draft.run_id ? { run_id: draft.run_id } : {}),
           ...(draft.rules_version ? { rules_version: draft.rules_version } : {}),
+          ...(draft.contacts_per_firm ? { contacts_per_firm: draft.contacts_per_firm } : {}),
         }
       : {}),
   };
@@ -1404,6 +1413,7 @@ function asInvestorListSummary(value: unknown, scheme: TierScheme): InvestorList
       tier: asTier(item.tier, scheme),
       funds: count(item.funds),
       contacts: count(item.contacts),
+      ...(item.to_email != null ? { to_email: count(item.to_email) } : {}),
       by_type: (Array.isArray(item.by_type) ? item.by_type : [])
         .filter(
           (entry): entry is Record<string, unknown> =>
@@ -1414,6 +1424,7 @@ function asInvestorListSummary(value: unknown, scheme: TierScheme): InvestorList
           label: str(entry.label, 60),
           funds: count(entry.funds),
           contacts: count(entry.contacts),
+          ...(entry.to_email != null ? { to_email: count(entry.to_email) } : {}),
         })),
     }))
     .filter(
@@ -1559,8 +1570,10 @@ export type TierStat = {
   label: string;
   detail: string;
   funds: number;
-  /** Null when the list has no contact counts. */
+  /** Contacts that will be emailed. Null when the list has no contact counts. */
   contacts: number | null;
+  /** Investing contacts on file. Null when the list has no contact counts. */
+  onFile: number | null;
 };
 
 /**
@@ -1573,19 +1586,28 @@ export function tierStatsFor(
   tiers: FitTierInfo[],
   summary: InvestorListSummary | null | undefined,
   broad: { label: string; detail: string },
+  /** Contacts emailed per fund. */
+  perFirm = 2,
 ): TierStat[] {
   const counted = rows.some((row) => typeof row.contact_count === "number");
-  const contactsOf = (list: InvestorRow[]) =>
+  const onFileOf = (list: InvestorRow[]) =>
     counted ? list.reduce((sum, row) => sum + (row.contact_count ?? 0), 0) : null;
+  const contactsOf = (list: InvestorRow[]) =>
+    counted ? list.reduce((sum, row) => sum + Math.min(row.contact_count ?? 0, perFirm), 0) : null;
   const kept = rows.filter((row) => !flags[row.id]?.excluded);
   const stats: TierStat[] = tiers.map((entry) => {
     const inTier = kept.filter((row) => row.tier === entry.tier && !row.broad);
     const fromSummary = summary?.tiers.find((item) => item.tier === entry.tier);
-    return { ...entry, funds: inTier.length, contacts: contactsOf(inTier) ?? fromSummary?.contacts ?? null };
+    return {
+      ...entry,
+      funds: inTier.length,
+      contacts: contactsOf(inTier) ?? fromSummary?.to_email ?? null,
+      onFile: onFileOf(inTier) ?? fromSummary?.contacts ?? null,
+    };
   });
   if (rows.some((row) => row.broad)) {
     const inBroad = kept.filter((row) => row.broad);
-    stats.push({ tier: "broad", ...broad, funds: inBroad.length, contacts: contactsOf(inBroad) });
+    stats.push({ tier: "broad", ...broad, funds: inBroad.length, contacts: contactsOf(inBroad), onFile: onFileOf(inBroad) });
   }
   return stats;
 }

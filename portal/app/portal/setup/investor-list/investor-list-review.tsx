@@ -59,7 +59,7 @@ function detailRows(row: InvestorRow) {
     { label: "Geography", value: row.geography_focus || row.location || "" },
     { label: "Sector", value: row.sector_focus ?? "" },
     {
-      label: "Contacts",
+      label: "Contacts identified",
       value: typeof row.contact_count === "number" ? n(row.contact_count) : row.contact,
     },
     ...(row.check_size ? [{ label: "Check Size", value: row.check_size }] : []),
@@ -106,6 +106,7 @@ function checkedLabel(value: string | undefined) {
 export function InvestorListReview({
   rows: allRows,
   summary,
+  perFirm = 2,
   scheme,
   verification,
   flags: initialFlags,
@@ -122,6 +123,8 @@ export function InvestorListReview({
 }: {
   rows: InvestorRow[];
   summary?: InvestorListSummary | null;
+  /** Contacts emailed per fund, from the campaign plan. */
+  perFirm?: number;
   /** The list's tier scheme: three tiers unless it was pushed from the four-tier engine. */
   scheme?: TierScheme;
   verification?: InvestorVerification;
@@ -189,8 +192,8 @@ export function InvestorListReview({
 
   // Excluded funds drop out of the counts as soon as the client excludes them.
   const tierStats = useMemo(
-    () => tierStatsFor(rows, flags, tiers, summary, { label: BROAD_LABEL, detail: BROAD_DETAIL }),
-    [rows, summary, tiers, flags],
+    () => tierStatsFor(rows, flags, tiers, summary, { label: BROAD_LABEL, detail: BROAD_DETAIL }, perFirm),
+    [rows, summary, tiers, flags, perFirm],
   );
 
   const inTab = useMemo(
@@ -455,7 +458,7 @@ export function InvestorListReview({
               <p className="mt-xs text-body-sm text-heading">
                 {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
                 {entry.contacts !== null
-                  ? ` · ${n(entry.contacts)} contact${entry.contacts === 1 ? "" : "s"}`
+                  ? ` · ${n(entry.contacts)} investor${entry.contacts === 1 ? "" : "s"} to email`
                   : ""}
               </p>
             </li>
