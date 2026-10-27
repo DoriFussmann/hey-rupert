@@ -30,6 +30,7 @@ export const ADMIN_BLOCKED: Record<SetupStepId, string> = {
   framing: "Push opens once the client's intake and materials are in",
   investor_list: "Push opens once the client confirms the outreach narrative",
   email_copy: "Push opens once the client confirms the investor list",
+  go_live: "Opens once the client confirms the email copy",
 };
 
 /** The step's status from Rupert's side. */

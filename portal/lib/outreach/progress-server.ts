@@ -47,7 +47,7 @@ export async function coreReadiness(supabase: ServiceClient, clientId: string, c
 export async function outreachSteps(
   supabase: ServiceClient,
   clientId: string,
-  input: { listConfirmed: boolean; fourTier: boolean; copyConfirmed: boolean; copyVersion: number; runId: string | null; coreFunds: number },
+  input: { listConfirmed: boolean; fourTier: boolean; copyConfirmed: boolean; copyVersion: number; runId: string | null; coreFunds: number; goLivePushed: boolean },
 ): Promise<OutreachSteps> {
   if (!input.listConfirmed || !input.fourTier) return { core: NONE, campaign: NONE, live: NONE, coreWarning: null };
   try {
@@ -71,8 +71,8 @@ export async function outreachSteps(
       rows.every((m) => isApproved(m));
     const campaignDone = live || (input.copyConfirmed && built);
 
-    // Go Live: Rupert sends the invoice; then the client connects, pays and clicks.
-    const liveTurn: StepTurn = live ? "none" : !campaignDone ? "none" : campaign?.invoice_url ? "client" : "admin";
+    // Go Live: Rupert pushes it with the invoice; then the client connects, pays and clicks.
+    const liveTurn: StepTurn = live ? "none" : !campaignDone ? "none" : input.goLivePushed ? "client" : "admin";
 
     const coreWarning = live ? null : coreBlocker(core, input.coreFunds);
     return {

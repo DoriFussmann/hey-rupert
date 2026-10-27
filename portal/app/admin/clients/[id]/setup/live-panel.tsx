@@ -2,7 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import {
+  draftGoLiveEmailAction,
   goLiveTestAction,
+  pushGoLiveAction,
   pollTestInboxAction,
   startTestInboxAction,
   checkInboxAction,
@@ -12,11 +14,11 @@ import {
   pushApprovedAction,
   saveLiveSettingsAction,
   sendTestAction,
-  setInvoiceAction,
   setPausedAction,
   startWave2Action,
 } from "@/app/admin/outreach-live-actions";
-import { inputClass, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
+import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
+import { AutoTextarea } from "@/components/email-body-field";
 import type { LiveSettings } from "@/lib/outreach/live";
 import type { LiveState } from "@/lib/outreach/live-server";
 import { formatDateTime } from "@/lib/format";
@@ -46,6 +48,22 @@ export function LivePanel({ clientId }: { clientId: string }) {
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [email, setEmail] = useState<{ subject: string; body: string } | null>(null);
+
+  async function draftEmail() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const result = await draftGoLiveEmailAction(clientId, invoice);
+      if (!result.ok) setMessage({ kind: "error", text: result.error });
+      else {
+        setEmail(result.email);
+        if (result.paused) setMessage({ kind: "ok", text: "Automatic emails are paused for this client. This one still goes out, because you send it yourself." });
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => () => {
     if (timer.current) clearTimeout(timer.current);
@@ -107,12 +125,14 @@ export function LivePanel({ clientId }: { clientId: string }) {
       const result = await work();
       if (!result.ok) {
         setMessage({ kind: "error", text: result.error });
-        return;
+        return false;
       }
       apply(result.state);
       if (success) setMessage({ kind: "ok", text: success(result) });
+      return true;
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Something went wrong." });
+      return false;
     } finally {
       setBusy(false);
     }
@@ -131,8 +151,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
       <div className="border-b border-border px-lg py-lg">
         <h3 className="text-h4">Go Live</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
-          The client clicks Go Live in their portal once all four are done. It creates the Instantly campaign from the
-          locked emails, starts wave 1, and wave 2 follows on its own.
+          Setup step 4. Once the campaign is built, paste the first monthly invoice and push Go Live to the client with an
+          email. They connect their inbox, pay and click Go Live; then the daily batches go out on their own.
         </p>
         {state.testMode ? (
           <p className="mt-sm rounded-card border border-warning/40 px-md py-sm text-body-sm text-warning">
@@ -153,6 +173,15 @@ export function LivePanel({ clientId }: { clientId: string }) {
         <ul className="grid gap-sm text-body-sm">
           <Check done={state.campaignReady} label="Campaign built and approved" detail={state.campaignNote ?? undefined} />
           <Check
+            done={Boolean(state.step)}
+            label="Pushed to the client, with the invoice"
+            detail={
+              state.step
+                ? `Version ${state.step.version} · ${state.step.pushedAt ? formatDateTime(state.step.pushedAt) : ""}${state.step.emailedAt ? " · emailed" : " · not emailed"}`
+                : undefined
+            }
+          />
+          <Check
             done={Boolean(state.inbox?.healthy)}
             label={state.inbox ? `Inbox: ${state.inbox.email}` : "Client connects their inbox"}
             detail={
@@ -172,7 +201,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
           <Check
             done={Boolean(state.invoice.paidAt)}
             label="First monthly invoice paid"
-            detail={state.invoice.paidAt ? `Paid ${formatDateTime(state.invoice.paidAt)}` : state.invoice.url ? "Sent; waiting for payment." : "Paste the Stripe invoice link below."}
+            detail={state.invoice.paidAt ? `Paid ${formatDateTime(state.invoice.paidAt)}` : state.invoice.url ? "Sent; waiting for payment." : "Paste the Stripe invoice link and push."}
           />
           <Check done={Boolean(live)} label="Client clicked Go Live" detail={live ? `${formatDateTime(live.at)}${live.by ? ` by ${live.by}` : ""}` : undefined} />
         </ul>
@@ -182,13 +211,47 @@ export function LivePanel({ clientId }: { clientId: string }) {
             <>
               <label className="block text-secondary">
                 First monthly invoice (Stripe invoice link)
-                <div className="mt-xs flex gap-sm">
-                  <input className={inputClass} value={invoice} placeholder="https://invoice.stripe.com/…" onChange={(e) => setInvoice(e.target.value)} />
-                  <button type="button" className={secondaryButton} disabled={busy || invoice === (state.invoice.url ?? "")} onClick={() => run(() => setInvoiceAction(clientId, invoice), () => "Saved. The client sees the Pay button.")}>
-                    Save
-                  </button>
-                </div>
+                <input className={`${inputClass} mt-xs`} value={invoice} placeholder="https://invoice.stripe.com/…" onChange={(e) => setInvoice(e.target.value)} />
               </label>
+              {email ? (
+                <div className="grid gap-sm rounded-card border border-border px-md py-md">
+                  <p className="text-label uppercase tracking-label text-muted">Email to the client</p>
+                  <input className={inputClass} value={email.subject} aria-label="Subject" onChange={(e) => setEmail({ ...email, subject: e.target.value })} />
+                  <AutoTextarea className={inputClass} value={email.body} aria-label="Email" onChange={(e) => setEmail({ ...email, body: e.target.value })} />
+                  <p className="text-muted">Check the invoice link in the email matches the one above.</p>
+                  <div className="flex flex-wrap gap-sm">
+                    <button
+                      type="button"
+                      className={primaryButton}
+                      disabled={busy || !state.campaignReady}
+                      onClick={() => {
+                        if (!window.confirm(`${state.step ? "Send Go Live again" : "Push Go Live to the client"} and email them?`)) return;
+                        void run(
+                          () => pushGoLiveAction(clientId, invoice, email),
+                          (r) => (r.emailError ? `Pushed, but the email didn't go out: ${String(r.emailError)}` : "Pushed and emailed. It's the client's turn."),
+                        ).then((done) => {
+                          if (done) setEmail(null);
+                        });
+                      }}
+                    >
+                      {state.step ? "Send again" : "Push to client & email"}
+                    </button>
+                    <button type="button" className={secondaryButton} disabled={busy} onClick={() => setEmail(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className={`${state.step ? secondaryButton : primaryButton} justify-self-start`}
+                  disabled={busy || !state.campaignReady}
+                  title={state.campaignReady ? undefined : (state.campaignNote ?? "Build the campaign first.")}
+                  onClick={() => void draftEmail()}
+                >
+                  {state.step ? "Send Go Live again…" : "Push to client & email…"}
+                </button>
+              )}
               <button
                 type="button"
                 className="justify-self-start text-primary hover:text-primary-hover"

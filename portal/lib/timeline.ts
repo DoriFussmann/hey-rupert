@@ -26,8 +26,8 @@ export type MilestoneId =
   | "nda_sent"
   | "nda_signed"
   | "intake_completed"
-  // Feedback is no longer a step of its own: it goes with the narrative.
-  | Exclude<SetupStepId, "deck_review">
+  // Feedback is no longer a step of its own: it goes with the narrative. Go Live is the "live" milestone.
+  | Exclude<SetupStepId, "deck_review" | "go_live">
   | "live";
 
 export const MILESTONES: { id: MilestoneId; label: string; short: string }[] = [

@@ -22,6 +22,7 @@ import {
   type LiveState,
 } from "@/lib/outreach/live-server";
 import { decideReply } from "@/lib/outreach/replies-server";
+import { confirmGoLiveStep, pushGoLive, renderGoLiveEmail, type GoLiveEmail } from "@/lib/outreach/go-live-step-server";
 import { labelReply } from "@/lib/outreach/reply-label-server";
 import type { ReplyVisibility } from "@/lib/outreach/live";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -178,5 +179,35 @@ export async function goLiveTestAction(clientId: string) {
   if (!access.ok) return access;
   const launched = await goLive(access.supabase, clientId, access.actor, true);
   if (!launched.ok) return launched;
+  await confirmGoLiveStep(access.supabase, clientId, access.actor);
+  revalidateClient(clientId);
   return withState(clientId, access.supabase, { added: launched.value.wave1 });
+}
+
+function revalidateClient(clientId: string) {
+  revalidatePath("/portal", "layout");
+  revalidatePath("/portal/setup", "layout");
+  revalidatePath("/admin", "layout");
+  revalidatePath(`/admin/clients/${clientId}`);
+}
+
+// Setup step 4: Push to client & email, with the first monthly invoice.
+
+export async function draftGoLiveEmailAction(clientId: string, invoiceUrl: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const rendered = await renderGoLiveEmail(access.supabase, clientId, String(invoiceUrl ?? ""));
+  return rendered.ok ? { ok: true as const, ...rendered.value } : rendered;
+}
+
+export async function pushGoLiveAction(clientId: string, invoiceUrl: string, email: GoLiveEmail) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const pushed = await pushGoLive(access.supabase, clientId, { invoiceUrl: String(invoiceUrl ?? ""), email });
+  if (!pushed.ok) return pushed;
+  revalidateClient(clientId);
+  return withState(clientId, access.supabase, {
+    version: pushed.value.version,
+    emailError: pushed.value.clientEmail.ok ? null : pushed.value.clientEmail.reason,
+  });
 }

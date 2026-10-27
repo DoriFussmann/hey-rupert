@@ -20,7 +20,7 @@ export default async function GoLivePage() {
         title="Go Live"
         description="Three steps, then your investor emails start going out from your own inbox, in your name. You see every reply that needs you in your Investor Inbox."
       />
-      {state ? (
+      {state && (state.step || state.live) ? (
         <GoLiveView
           readOnly={viewAs}
           campaignReady={state.campaignReady}
@@ -30,6 +30,8 @@ export default async function GoLivePage() {
           gaps={state.gaps}
           consentText={state.consentText}
           counts={state.counts}
+          perDay={state.settings.new_per_day}
+          testSentAt={state.testSentAt}
         />
       ) : (
         <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">
