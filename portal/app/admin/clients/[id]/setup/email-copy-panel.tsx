@@ -71,7 +71,7 @@ export function EmailCopyPanel({
   /** How the confirmed investor list groups its funds. New copy follows it. */
   listScheme: TierScheme;
   claudeReady: boolean;
-  /** Core contacts not written and approved yet: asked about before pushing, not blocking. */
+  /** Core contacts not written and approved yet: the copy can't be pushed. */
   pushWarning?: string | null;
 }) {
   const initial = useMemo(() => {
@@ -383,7 +383,7 @@ export function EmailCopyPanel({
         </ol>
 
         </>)}
-        {pushWarning && problems.length === 0 ? <p className="mt-md text-body-sm text-warning">{pushWarning}</p> : null}
+        {pushWarning && typedMode ? <p className="mt-md text-body-sm text-warning">Before pushing: {pushWarning}</p> : null}
         {problems.length > 0 ? (
           <p className="mt-md text-body-sm text-muted">
             Before pushing: {problems.join(" ")}
@@ -401,8 +401,7 @@ export function EmailCopyPanel({
         initialEmail={initialEmail}
         dirty={JSON.stringify(copy) !== savedKey}
         onSaved={() => setSavedKey(JSON.stringify(copy))}
-        problem={problems.length > 0 ? problems.join(" ") : null}
-        warning={pushWarning}
+        problem={[...problems, ...(pushWarning && typedMode ? [pushWarning] : [])].join(" ") || null}
         busy={drafting}
         pushSummary="Pushes the emails above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."
         clientPreview={

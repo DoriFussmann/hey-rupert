@@ -22,6 +22,7 @@ import { MaterialsPanel } from "@/app/admin/clients/[id]/setup/materials-panel";
 import { setupPanels, type WorkPanel } from "@/app/admin/clients/[id]/setup/setup-workspace";
 import { arrangeSteps } from "@/lib/step-order";
 import { outreachSteps } from "@/lib/outreach/progress-server";
+import { copyTierOf } from "@/lib/outreach/copy";
 import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
 import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
 import { Disclosure } from "@/components/disclosure";
@@ -254,6 +255,7 @@ export default async function ClientDetailPage({
           copyConfirmed: copyRow?.status === "confirmed",
           copyVersion: copyRow?.version ?? 0,
           runId: list.run_id ?? null,
+          coreFunds: list.rows.filter((row) => copyTierOf(row) === 1).length,
         })
       : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const }, coreWarning: null };
     panels.push(

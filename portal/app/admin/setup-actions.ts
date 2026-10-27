@@ -10,6 +10,8 @@ import {
   draftNarrativeEmail,
 } from "@/lib/agents-server";
 import { notifyClient } from "@/lib/notify";
+import { coreReadiness } from "@/lib/outreach/progress-server";
+import { copyTierOf } from "@/lib/outreach/copy";
 import { createServiceClient } from "@/lib/supabase/admin";
 import type { EmailResult } from "@/lib/email";
 import { isHttpUrl } from "@/lib/material-fields";
@@ -304,6 +306,12 @@ async function writePush(
   }
   const problem = draftProblem(step, payload);
   if (problem) return { ok: false, error: problem };
+  // Copy by fund type: the client confirms it with every personal Core email in front of them.
+  if (step === "email_copy" && asEmailCopy(payload).copy_version === 2) {
+    const list = asInvestorList(state.rows.find((item) => item.step === "investor_list")?.published);
+    const blocked = await coreReadiness(supabase, clientId, list.rows.filter((item) => copyTierOf(item) === 1).length);
+    if (blocked) return { ok: false, error: blocked };
+  }
 
   const row = state.rows.find((item) => item.step === step) ?? null;
   if (row?.status === "confirmed" && dependentsStarted(state.rows, step)) {
