@@ -60,6 +60,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
         setEmail(result.email);
         if (result.paused) setMessage({ kind: "ok", text: "Automatic emails are paused for this client. This one still goes out, because you send it yourself." });
       }
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Something went wrong." });
     } finally {
       setBusy(false);
     }
@@ -70,14 +72,23 @@ export function LivePanel({ clientId }: { clientId: string }) {
   }, []);
 
   // Test Pilot only: Rupert signs in with the test inbox, as the client would.
+  // Waiting for the sign-in locks only the connect buttons, never the panel.
+  const [connecting, setConnecting] = useState(false);
+
+  function stopConnecting() {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    setConnecting(false);
+  }
+
   async function connectTestInbox(provider: "google" | "microsoft") {
     setMessage(null);
     const popup = window.open("about:blank", "rupert-inbox", "width=520,height=680");
-    setBusy(true);
-    const started = await startTestInboxAction(clientId, provider);
+    setConnecting(true);
+    const started = await startTestInboxAction(clientId, provider).catch((err: unknown) => ({ ok: false as const, error: err instanceof Error ? err.message : "Something went wrong." }));
     if (!started.ok) {
       popup?.close();
-      setBusy(false);
+      setConnecting(false);
       setMessage({ kind: "error", text: started.error });
       return;
     }
@@ -85,17 +96,17 @@ export function LivePanel({ clientId }: { clientId: string }) {
     else window.open(started.authUrl, "_blank");
     const until = Date.now() + 5 * 60_000;
     const poll = async () => {
-      const result = await pollTestInboxAction(clientId);
-      if (!result.ok || result.state === "failed" || (result.state === "pending" && Date.now() > until)) {
-        setBusy(false);
-        setMessage({ kind: "error", text: !result.ok ? result.error : (result.message ?? "The sign-in timed out. Try again.") });
+      const result = await pollTestInboxAction(clientId).catch(() => null);
+      if (!result || !result.ok || result.state === "failed" || (result.state === "pending" && Date.now() > until)) {
+        stopConnecting();
+        setMessage({ kind: "error", text: !result ? "Lost the connection. Try again." : !result.ok ? result.error : (result.message ?? "The sign-in timed out. Try again.") });
         return;
       }
       if (result.state === "connected") {
         popup?.close();
         const loaded = await loadLiveAction(clientId);
         if (loaded.ok) apply(loaded.state);
-        setBusy(false);
+        stopConnecting();
         setMessage({ kind: "ok", text: "Inbox connected." });
         return;
       }
@@ -249,7 +260,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   title={state.campaignReady ? undefined : (state.campaignNote ?? "Build the campaign first.")}
                   onClick={() => void draftEmail()}
                 >
-                  {state.step ? "Send Go Live again…" : "Push to client & email…"}
+                  {busy ? "Working…" : state.step ? "Send Go Live again…" : "Push to client & email…"}
                 </button>
               )}
               <button
@@ -262,12 +273,20 @@ export function LivePanel({ clientId }: { clientId: string }) {
               </button>
               {state.testMode && !state.inbox ? (
                 <div className="flex flex-wrap gap-sm">
-                  <button type="button" className={secondaryButton} disabled={busy || !state.instantlyReady} onClick={() => void connectTestInbox("google")}>
+                  <button type="button" className={secondaryButton} disabled={busy || connecting || !state.instantlyReady} onClick={() => void connectTestInbox("google")}>
                     Connect test inbox (Google)
                   </button>
-                  <button type="button" className={secondaryButton} disabled={busy || !state.instantlyReady} onClick={() => void connectTestInbox("microsoft")}>
+                  <button type="button" className={secondaryButton} disabled={busy || connecting || !state.instantlyReady} onClick={() => void connectTestInbox("microsoft")}>
                     Microsoft
                   </button>
+                  {connecting ? (
+                    <span className="self-center text-muted">
+                      Finish signing in in the window that opened…{" "}
+                      <button type="button" className="text-primary hover:text-primary-hover" onClick={stopConnecting}>
+                        Cancel
+                      </button>
+                    </span>
+                  ) : null}
                 </div>
               ) : null}
               {state.testMode ? (
