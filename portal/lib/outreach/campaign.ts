@@ -17,6 +17,7 @@ import {
   type TypedGroupCopy,
 } from "./copy.ts";
 import { emailsHash, firstNameOf, isApproved, type CoreMessage, type CorePerson } from "./core.ts";
+import { interleaveByTier } from "./mix.ts";
 
 // ---------------------------------------------------------------------------
 // Warm intros: funds the client marked "I know them"
@@ -151,7 +152,8 @@ export function exportRows(messages: CampaignMessage[], optOutLine: string, wave
   const rows: ExportRow[] = [];
   const skipped: CampaignMessage[] = [];
   const seen = new Set<string>();
-  for (const m of messages) {
+  // The same proportional mix of tiers the live campaign uses.
+  for (const m of interleaveByTier(messages)) {
     if (m.slot !== "active") continue;
     if (wave && waveOf(m) !== wave) continue;
     const email = m.person.email.trim().toLowerCase();

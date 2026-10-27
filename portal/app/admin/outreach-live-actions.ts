@@ -5,6 +5,10 @@ import { getAuthContext } from "@/lib/auth";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { isServiceRoleConfigured } from "@/lib/env";
 import {
+  goLive,
+  isTestPilot,
+  pollInboxConnect,
+  startInboxConnect,
   checkInbox,
   linkExistingInbox,
   loadLiveState,
@@ -141,4 +145,38 @@ export async function decideReplyAction(replyId: string, decision: { visibility?
   revalidatePath("/portal/pipeline");
   revalidatePath("/portal/campaigns");
   return { ok: true as const };
+}
+
+// Test Pilot only: Rupert takes the client's steps (connect an inbox, Go Live).
+// In test mode every email goes to a + address of the test inbox.
+
+async function requireTestPilot(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  if (!(await isTestPilot(access.supabase, clientId))) {
+    return { ok: false as const, error: "Only for Test Pilot clients. A real client connects their own inbox and clicks Go Live." };
+  }
+  return access;
+}
+
+export async function startTestInboxAction(clientId: string, provider: "google" | "microsoft") {
+  const access = await requireTestPilot(clientId);
+  if (!access.ok) return access;
+  const started = await startInboxConnect(access.supabase, clientId, provider === "microsoft" ? "microsoft" : "google");
+  return started.ok ? { ok: true as const, authUrl: started.value.authUrl } : started;
+}
+
+export async function pollTestInboxAction(clientId: string) {
+  const access = await requireTestPilot(clientId);
+  if (!access.ok) return access;
+  const polled = await pollInboxConnect(access.supabase, clientId);
+  return polled.ok ? { ok: true as const, ...polled.value } : polled;
+}
+
+export async function goLiveTestAction(clientId: string) {
+  const access = await requireTestPilot(clientId);
+  if (!access.ok) return access;
+  const launched = await goLive(access.supabase, clientId, access.actor, true);
+  if (!launched.ok) return launched;
+  return withState(clientId, access.supabase, { added: launched.value.wave1 });
 }

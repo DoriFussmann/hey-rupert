@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
+  goLiveTestAction,
+  pollTestInboxAction,
+  startTestInboxAction,
   checkInboxAction,
   linkInboxAction,
   loadLiveAction,
@@ -42,6 +45,46 @@ export function LivePanel({ clientId }: { clientId: string }) {
   const [linkEmail, setLinkEmail] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => () => {
+    if (timer.current) clearTimeout(timer.current);
+  }, []);
+
+  // Test Pilot only: Rupert signs in with the test inbox, as the client would.
+  async function connectTestInbox(provider: "google" | "microsoft") {
+    setMessage(null);
+    const popup = window.open("about:blank", "rupert-inbox", "width=520,height=680");
+    setBusy(true);
+    const started = await startTestInboxAction(clientId, provider);
+    if (!started.ok) {
+      popup?.close();
+      setBusy(false);
+      setMessage({ kind: "error", text: started.error });
+      return;
+    }
+    if (popup) popup.location.href = started.authUrl;
+    else window.open(started.authUrl, "_blank");
+    const until = Date.now() + 5 * 60_000;
+    const poll = async () => {
+      const result = await pollTestInboxAction(clientId);
+      if (!result.ok || result.state === "failed" || (result.state === "pending" && Date.now() > until)) {
+        setBusy(false);
+        setMessage({ kind: "error", text: !result.ok ? result.error : (result.message ?? "The sign-in timed out. Try again.") });
+        return;
+      }
+      if (result.state === "connected") {
+        popup?.close();
+        const loaded = await loadLiveAction(clientId);
+        if (loaded.ok) apply(loaded.state);
+        setBusy(false);
+        setMessage({ kind: "ok", text: "Inbox connected." });
+        return;
+      }
+      timer.current = setTimeout(poll, 3000);
+    };
+    timer.current = setTimeout(poll, 3000);
+  }
 
   function apply(next: LiveState) {
     setState(next);
@@ -91,6 +134,14 @@ export function LivePanel({ clientId }: { clientId: string }) {
           The client clicks Go Live in their portal once all four are done. It creates the Instantly campaign from the
           locked emails, starts wave 1, and wave 2 follows on its own.
         </p>
+        {state.testMode ? (
+          <p className="mt-sm rounded-card border border-warning/40 px-md py-sm text-body-sm text-warning">
+            Test mode (Test Pilot client): every email goes to{" "}
+            <strong>{state.testRecipient ? state.testRecipient.replace("@", "+…@") : "nobody yet — set a test inbox below"}</strong>, never to the
+            investors on the list. You take the client&apos;s steps here: connect an inbox, mark the invoice paid, Go Live. Sends run every
+            day, minutes apart, so the whole sequence arrives within the hour.
+          </p>
+        ) : null}
         {!state.instantlyReady ? (
           <p className="mt-sm text-body-sm text-warning">
             Instantly isn&apos;t set up: add INSTANTLY_API_KEY and INSTANTLY_WEBHOOK_SECRET in Vercel.
@@ -146,6 +197,30 @@ export function LivePanel({ clientId }: { clientId: string }) {
               >
                 {state.invoice.paidAt ? "Mark unpaid" : "Mark paid (paid outside Stripe)"}
               </button>
+              {state.testMode && !state.inbox ? (
+                <div className="flex flex-wrap gap-sm">
+                  <button type="button" className={secondaryButton} disabled={busy || !state.instantlyReady} onClick={() => void connectTestInbox("google")}>
+                    Connect test inbox (Google)
+                  </button>
+                  <button type="button" className={secondaryButton} disabled={busy || !state.instantlyReady} onClick={() => void connectTestInbox("microsoft")}>
+                    Microsoft
+                  </button>
+                </div>
+              ) : null}
+              {state.testMode ? (
+                <button
+                  type="button"
+                  className={`${secondaryButton} justify-self-start`}
+                  disabled={busy || !state.campaignReady || !state.inbox?.healthy || !state.invoice.paidAt || !state.testRecipient}
+                  title="Creates a TEST campaign in Instantly. Every email goes to the test inbox."
+                  onClick={() => {
+                    if (!window.confirm(`Go Live in test mode? Emails go to ${state.testRecipient.replace("@", "+…@")}, not to investors.`)) return;
+                    void run(() => goLiveTestAction(clientId), (r) => `Live in test mode: ${r.added} contacts added. The first emails arrive in a few minutes.`);
+                  }}
+                >
+                  Go Live (test)
+                </button>
+              ) : null}
               {!state.inbox ? (
                 <label className="block text-secondary">
                   Inbox already in Instantly? Link it
@@ -161,17 +236,18 @@ export function LivePanel({ clientId }: { clientId: string }) {
           ) : (
             <div className="grid gap-sm">
               <p className="text-secondary">
-                Live{live.pausedAt ? ` · paused ${formatDateTime(live.pausedAt)}` : ""} · {state.counts.pushed} contacts in Instantly ·{" "}
-                {live.wave2PushedAt ? `wave 2 started ${formatDateTime(live.wave2PushedAt)}` : `wave 2 starts ${settings.wave2_delay_days} days after launch`}
+                Live{live.pausedAt ? ` · paused ${formatDateTime(live.pausedAt)}` : ""} · {state.counts.pushed} contacts in Instantly · {state.counts.waiting} waiting
+                {settings.new_per_day > 0 ? ` (${settings.new_per_day} added a day${state.testMode ? "" : ", weekdays"})` : ""} ·{" "}
+                {live.wave2PushedAt ? "second contacts released" : `second contacts start ${settings.wave2_delay_days} days after the first`}
               </p>
               <div className="flex flex-wrap gap-sm">
                 {!live.wave2PushedAt ? (
-                  <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => startWave2Action(clientId), (r) => `Wave 2 started: ${r.pushed} contacts.`)}>
-                    Start wave 2 now
+                  <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => startWave2Action(clientId), (r) => `Second contacts released: ${r.pushed} added now, the rest in the daily batches.`)}>
+                    Release second contacts now
                   </button>
                 ) : null}
-                <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => pushApprovedAction(clientId), (r) => `${r.pushed} newly approved contact${r.pushed === 1 ? "" : "s"} added.`)}>
-                  Add newly approved contacts
+                <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => pushApprovedAction(clientId), (r) => `${r.pushed} contact${r.pushed === 1 ? "" : "s"} added.`)}>
+                  Add next batch now
                 </button>
                 <button
                   type="button"
@@ -220,6 +296,16 @@ export function LivePanel({ clientId }: { clientId: string }) {
               Wave 2 after (days)
               <input type="number" min={0} max={14} className={`${inputClass} mt-xs w-16`} value={settings.wave2_delay_days} onChange={(e) => field({ wave2_delay_days: Number(e.target.value) })} />
             </label>
+            <label>
+              New investors a day (0 = all at once)
+              <input type="number" min={0} max={500} className={`${inputClass} mt-xs w-20`} value={settings.new_per_day} onChange={(e) => field({ new_per_day: Number(e.target.value) })} />
+            </label>
+            {state.testMode ? (
+              <label>
+                Test inbox (Test Pilot)
+                <input className={`${inputClass} mt-xs w-64`} value={settings.test_recipient} placeholder="you@yourcompany.com" onChange={(e) => field({ test_recipient: e.target.value })} />
+              </label>
+            ) : null}
             <label className="flex items-end gap-xs pb-sm">
               <input type="checkbox" checked={settings.track_opens} onChange={(e) => field({ track_opens: e.target.checked })} />
               Track opens
@@ -244,7 +330,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
             {state.testSentAt ? <span className="text-body-sm text-muted">Last test {formatDateTime(state.testSentAt)}</span> : null}
           </div>
           <p className="mt-xs text-body-sm text-muted">
-            Follow-ups are sent as replies in the same thread. Weekdays only. Each fund&apos;s second contact starts in wave 2.
+            Follow-ups are sent as replies in the same thread. Weekdays only. Each day&apos;s batch mixes Core, Sphere, Tier 3 and
+            Tier 4 in proportion; a fund&apos;s second contact starts a few days after its first.
           </p>
         </div>
       ) : null}

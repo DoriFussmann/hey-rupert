@@ -255,7 +255,7 @@ export default async function ClientDetailPage({
           copyVersion: copyRow?.version ?? 0,
           runId: list.run_id ?? null,
         })
-      : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const } };
+      : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const }, coreWarning: null };
     panels.push(
       ...setupPanels({
         clientId: client.id,

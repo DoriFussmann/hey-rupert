@@ -112,3 +112,59 @@ test("the client's pipeline counts released replies only", () => {
   assert.equal(fundStage([{ ...rows[1], pushed_at: null }], []), null);
   assert.deepEqual(clientTotals(rows, [{ firm_id: "A", label: "interested" }]), { funds: 1, contacted: 1, opened: 1, replied: 1, meetings: 0 });
 });
+
+import { dripQueue, interleaveByTier, testAddress, testAddressId } from "./live.ts";
+
+test("interleave: every stretch holds the tiers in proportion, order within a tier kept", () => {
+  const items = [
+    ...Array.from({ length: 2 }, (_, i) => ({ tier: 1, n: `c${i}` })),
+    ...Array.from({ length: 6 }, (_, i) => ({ tier: 2, n: `s${i}` })),
+    ...Array.from({ length: 4 }, (_, i) => ({ tier: 3, n: `t${i}` })),
+  ];
+  const out = interleaveByTier(items);
+  assert.equal(out.length, 12);
+  // The first 6 already hold every tier, roughly 1 : 3 : 2.
+  const first = out.slice(0, 6).map((x) => x.tier);
+  assert.deepEqual([1, 2, 3].map((t) => first.filter((x) => x === t).length), [1, 3, 2]);
+  assert.deepEqual(out.filter((x) => x.tier === 2).map((x) => x.n), ["s0", "s1", "s2", "s3", "s4", "s5"]);
+});
+
+function qm(id: string, firm: string, tier: number, position: number, extra: Record<string, unknown> = {}) {
+  const m = message(id, { position, ...extra }) as ReturnType<typeof message> & { tier: number; firm_id: string };
+  return { ...m, tier, firm_id: firm };
+}
+
+test("drip: a daily batch, second contacts only after their fund's first plus the delay", () => {
+  const day = 86_400_000;
+  const now = Date.parse("2026-11-10T12:00:00Z");
+  const sentFiveDaysAgo = new Date(now - 5 * day).toISOString();
+  const sentYesterday = new Date(now - day).toISOString();
+  const all = [
+    qm("a1", "A", 1, 0, { pushed_at: sentFiveDaysAgo }),
+    qm("a2", "A", 1, 1),
+    qm("b1", "B", 2, 0, { pushed_at: sentYesterday }),
+    qm("b2", "B", 2, 1),
+    qm("c1", "C", 2, 0),
+    qm("d1", "D", 3, 0),
+    qm("e2", "E", 4, 1),
+  ];
+  const queue = dripQueue(all, { delayDays: 3, releasedEarly: false, limit: 0, now });
+  // a2 is due (A went out 5 days ago); b2 is not yet; E has no first contact, so e2 counts as a first.
+  assert.deepEqual(queue.map((m) => m.id), ["a2", ...interleaveByTier([all[4], all[5], all[6]]).map((m) => m.id)]);
+  assert.equal(dripQueue(all, { delayDays: 3, releasedEarly: false, limit: 2, now }).length, 2);
+  assert.ok(dripQueue(all, { delayDays: 3, releasedEarly: true, limit: 0, now }).some((m) => m.id === "b2"));
+});
+
+test("test addresses go to the test inbox and map back to the contact", () => {
+  const address = testAddress("dori@thenightventures.com", { id: "1a2b3c4d-0000-0000-0000-000000000000", fund_name: "Acre Venture Partners", person: { first_name: "Lucas" } });
+  assert.equal(address, "dori+acre-venture-partner-lucas-1a2b3c4d@thenightventures.com");
+  assert.equal(testAddressId(address), "1a2b3c4d");
+  assert.equal(testAddressId("lucas@acre.vc"), null);
+});
+
+test("test mode campaigns run in minutes, every day, without stop-for-company", () => {
+  const body = campaignBody("t", "dori@x.com", asLiveSettings(null), { testMode: true });
+  assert.equal(body.sequences[0].steps[0].delay_unit, "minutes");
+  assert.equal(body.stop_for_company, false);
+  assert.equal(campaignBody("t", "dori@x.com", asLiveSettings(null)).stop_for_company, true);
+});
