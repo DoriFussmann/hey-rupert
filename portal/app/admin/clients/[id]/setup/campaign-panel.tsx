@@ -139,30 +139,31 @@ export function CampaignPanel({ clientId, claudeReady }: { clientId: string; cla
             <button type="button" className={primaryButton} disabled={Boolean(busy) || state.blockers.length > 0} onClick={build}>
               {busy === "Building" ? "Building…" : state.built ? "Build again" : "Build campaign"}
             </button>
-            {[
-              { wave: "1", label: "Instantly CSV: wave 1" },
-              { wave: "2", label: "Wave 2" },
-              { wave: "all", label: "All contacts" },
-            ].map((item) =>
-              exportable ? (
-                <a key={item.wave} className={secondaryButton} href={`/admin/clients/${clientId}/campaign/export?wave=${item.wave}`}>
-                  {item.label}
-                </a>
-              ) : (
-                <span key={item.wave} className={`${secondaryButton} opacity-40`} aria-disabled="true">
-                  {item.label}
-                </span>
-              ),
-            )}
           </div>
+          <p className="mt-sm max-w-prose text-body-sm text-secondary">
+            Nothing to do in Instantly. Go Live (below) creates the campaign there, adds the contacts each weekday and
+            starts sending, all through the API.
+          </p>
           <details className="mt-sm text-body-sm text-muted">
-            <summary className="cursor-pointer">How to load it into Instantly</summary>
-            <ol className="mt-xs list-decimal space-y-xs pl-lg">
-              <li>One campaign, three steps. Step 1: subject {"{{subject_1}}"}, body {"{{body_1_html}}"}. Steps 2 and 3: the same with _2 and _3; leave their subjects as the variable so a blank one stays in the thread.</li>
-              <li>Upload wave 1 and map every column as a custom variable. Upload wave 2 two or three days later: each fund&apos;s second contact.</li>
-              <li>Turn on Stop on reply and Stop campaign for company on reply.</li>
-              <li>Send yourself a test first: check the line breaks and that follow-ups stay in the thread.</li>
-            </ol>
+            <summary className="cursor-pointer">Backup only: download the contacts as CSV</summary>
+            <p className="mt-xs">Not needed for sending. For your records, or if you ever have to rebuild a campaign by hand.</p>
+            <div className="mt-xs flex flex-wrap gap-sm">
+              {[
+                { wave: "1", label: "Wave 1" },
+                { wave: "2", label: "Wave 2" },
+                { wave: "all", label: "All contacts" },
+              ].map((item) =>
+                exportable ? (
+                  <a key={item.wave} className={secondaryButton} href={`/admin/clients/${clientId}/campaign/export?wave=${item.wave}`}>
+                    {item.label}
+                  </a>
+                ) : (
+                  <span key={item.wave} className={`${secondaryButton} opacity-40`} aria-disabled="true">
+                    {item.label}
+                  </span>
+                ),
+              )}
+            </div>
           </details>
         </div>
       ) : null}
