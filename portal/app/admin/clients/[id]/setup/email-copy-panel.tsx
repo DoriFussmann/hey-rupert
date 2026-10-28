@@ -383,7 +383,14 @@ export function EmailCopyPanel({
         </ol>
 
         </>)}
-        {pushWarning && typedMode ? <p className="mt-md text-body-sm text-warning">Before pushing: {pushWarning}</p> : null}
+        {pushWarning && typedMode ? (
+          <p className="mt-md text-body-sm text-warning">
+            Before pushing: {pushWarning}{" "}
+            <a href="#setup-core-contacts" className="text-primary underline hover:text-primary-hover">
+              Go to Core contacts
+            </a>
+          </p>
+        ) : null}
         {problems.length > 0 ? (
           <p className="mt-md text-body-sm text-muted">
             Before pushing: {problems.join(" ")}

@@ -25,7 +25,7 @@ const NONE: OutreachStep = { done: false, turn: "none" };
 export function coreBlocker(core: Pick<CoreMessage, "status" | "approved_hash" | "emails">[], coreFunds: number): string | null {
   if (coreFunds === 0 && core.length === 0) return null;
   if (core.length === 0) {
-    return "Write and approve the Core contacts first (under Core contacts). The client confirms the copy with the personal Core emails in front of them.";
+    return "Write and approve the Core contacts first, in the Core contacts section below: Line up contacts, then Write, then Approve. The client confirms the copy with the personal Core emails in front of them.";
   }
   const approved = core.filter((m) => isApproved(m)).length;
   if (approved === core.length) return null;

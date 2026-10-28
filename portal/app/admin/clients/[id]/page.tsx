@@ -277,7 +277,11 @@ export default async function ClientDetailPage({
 
   const arranged = arrangeSteps(panels);
   const currentPanel = arranged.current;
-  const upcomingPanels = arranged.open;
+  // Rupert's own open steps stay in view next to the current one (e.g. Core
+  // contacts, which the Email Copy push waits for); only the client's or
+  // not-yet-open steps fold under "Other steps".
+  const alsoYoursPanels = arranged.open.filter((panel) => panel.turn === "admin");
+  const upcomingPanels = arranged.open.filter((panel) => panel.turn !== "admin");
   const completedPanels = arranged.completed;
 
   // A test pilot has no Setup Fee invoice: paying is the "client's" step.
@@ -387,6 +391,9 @@ export default async function ClientDetailPage({
           {currentPanel.node}
         </div>
       ) : null}
+      {alsoYoursPanels.map((panel) => (
+        <Fragment key={panel.key}>{panel.node}</Fragment>
+      ))}
       {completedPanels.length > 0 ? (
         <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
           {completedPanels.map((panel) => (
