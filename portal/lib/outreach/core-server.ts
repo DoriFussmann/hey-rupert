@@ -593,21 +593,33 @@ export async function writeCoreContact(
     .filter(Boolean)
     .join("\n\n");
 
-  const result = await callClaudeAgent<Record<string, unknown>>({
-    system: promptSystem(prompt.value),
-    content: [{ type: "text", text: `${context}\n\nWrite the three emails and call ${EMAILS_TOOL.name}.` }],
-    tool: EMAILS_TOOL,
-    maxTokens: 3000,
-    timeoutMs: STEP_TIMEOUT_MS,
-  });
-  if (!result.ok) {
-    await saveMessage(supabase, id, { status: "error", error: `Writing failed: ${result.reason}`, quick_facts: facts, conflict });
-    return { ok: false, error: `Writing failed: ${result.reason}` };
+  // One retry when an email comes back missing or empty: it's usually a one-off.
+  let emails: CopyEmail[] = [];
+  let missing: number[] = [];
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const ask =
+      attempt === 0
+        ? `Write the three emails and call ${EMAILS_TOOL.name}.`
+        : `Write the three emails and call ${EMAILS_TOOL.name}. Your last answer was missing email ${missing.join(" and ")}: send all three, as an array of three objects, each with a subject and a body (the follow-ups' subjects may be blank).`;
+    const result = await callClaudeAgent<Record<string, unknown>>({
+      system: promptSystem(prompt.value),
+      content: [{ type: "text", text: `${context}\n\n${ask}` }],
+      tool: EMAILS_TOOL,
+      maxTokens: 4000,
+      timeoutMs: STEP_TIMEOUT_MS,
+    });
+    if (!result.ok) {
+      await saveMessage(supabase, id, { status: "error", error: `Writing failed: ${result.reason}`, quick_facts: facts, conflict });
+      return { ok: false, error: `Writing failed: ${result.reason}` };
+    }
+    emails = asCoreEmails(result.input.emails ?? result.input);
+    missing = emails.map((email, index) => (email.body.trim() ? 0 : index + 1)).filter(Boolean);
+    if (missing.length === 0) break;
   }
-  const emails = asCoreEmails(result.input.emails);
-  if (emails.some((email) => !email.body.trim())) {
-    await saveMessage(supabase, id, { status: "error", error: "Claude returned an incomplete sequence.", quick_facts: facts, conflict });
-    return { ok: false, error: "Claude returned an incomplete sequence." };
+  if (missing.length > 0) {
+    const error = `Claude didn't return email ${missing.join(" and ")} of 3, twice. Click Rewrite on this contact to try again.`;
+    await saveMessage(supabase, id, { status: "error", error, quick_facts: facts, conflict });
+    return { ok: false, error };
   }
   return saveMessage(supabase, id, {
     emails,

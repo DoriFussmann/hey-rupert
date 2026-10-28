@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
+  asCoreEmails,
   asQuickFacts,
   coreMessageIssues,
   coreSummary,
@@ -93,4 +94,17 @@ test("the plan's contacts per fund sets how many are active", () => {
   assert.equal(selectCoreContacts(people, () => false, 3).active.length, 3);
   assert.equal(selectCoreContacts(people, () => false, 1).active.length, 1);
   assert.equal(selectCoreContacts(people, () => false).active.length, 2);
+});
+
+test("Core emails are read even when Claude sends the array as text or keyed by number", () => {
+  const three = [
+    { subject: "Hello", body: "One" },
+    { subject: "", body: "Two" },
+    { subject: "", body: "Three" },
+  ];
+  for (const input of [three, JSON.stringify(three), { 0: three[0], 1: three[1], 2: three[2] }, { emails: three }]) {
+    assert.deepEqual(asCoreEmails(input).map((e) => e.body), ["One", "Two", "Three"]);
+  }
+  assert.deepEqual(asCoreEmails("not json").map((e) => e.body), ["", "", ""]);
+  assert.deepEqual(asCoreEmails([three[0]]).map((e) => e.body), ["One", "", ""]);
 });
