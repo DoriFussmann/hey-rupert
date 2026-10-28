@@ -63,7 +63,7 @@ Rupert does not promise that its services, investor database, outreach methods, 
 
 Nothing on the Website is an offer to sell securities, a solicitation to buy securities, or a recommendation that any person invest in a particular security.
 
-**Regulatory boundary:** The precise activities Rupert may perform, including any investor introductions, transaction-related involvement, or compensation arrangements, must be assessed under applicable law. These Terms do not determine Rupert's regulatory status or authorize activities requiring registration, licensing, or other approvals.
+**Regulatory boundary:** The precise activities Rupert may perform, including any investor introductions, transaction-related involvement, or compensation arrangements, are subject to applicable law. These Terms do not determine Rupert's regulatory status or authorize activities requiring registration, licensing, or other approvals.
 
 ## 5. Website Use
 
@@ -144,7 +144,7 @@ This section describes the general framework for paid engagements. The signed St
 
 Rupert will perform the services expressly described in the applicable signed agreement.
 
-The agreement should identify the scope of work, deliverables, responsibilities, fees, payment schedule, commencement date, expected duration, and any agreed limits or dependencies.
+The agreement identifies the scope of work, deliverables, responsibilities, fees, payment schedule, commencement date, expected duration, and any agreed limits or dependencies.
 
 Rupert is not obligated to begin work until the required agreement is signed and any agreed initial payment or onboarding requirements have been satisfied.
 
@@ -195,11 +195,11 @@ Subject to applicable law and any third-party rights, investors contacted or ide
 
 Rupert does not claim ownership of the client's investor relationships merely because Rupert researched an investor or conducted outreach.
 
-This section does not transfer ownership of Rupert's pre-existing database, general research methodology, software, internal tools, or proprietary processes. The specific rights to custom deliverables, research records, campaign data, and copies of correspondence should be defined in the applicable service agreement.
+This section does not transfer ownership of Rupert's pre-existing database, general research methodology, software, internal tools, or proprietary processes. The specific rights to custom deliverables, research records, campaign data, and copies of correspondence are defined in the applicable service agreement.
 
 ### 12.6 Confidentiality
 
-Each party should protect the other party's non-public information received in connection with an engagement and use it only for the agreed purposes, subject to the applicable agreement and law.
+Each party will protect the other party's non-public information received in connection with an engagement and use it only for the agreed purposes, subject to the applicable agreement and law.
 
 A signed confidentiality or non-disclosure agreement, if applicable, governs the parties' detailed confidentiality obligations.
 
@@ -211,13 +211,13 @@ Rupert's fees compensate it for the agreed services, not for a successful financ
 
 Unless expressly agreed otherwise in a signed agreement and permitted by applicable law, fees are not contingent on whether a client receives an investment, reaches a financing milestone, or closes a fundraising round.
 
-The parties should specify in the service agreement how fees are treated if an engagement is paused, terminated early, or affected by a material scope change.
+The service agreement specifies how fees are treated if an engagement is paused, terminated early, or affected by a material scope change.
 
 ### 12.8 Term, renewal, and termination
 
 The term of an engagement, any minimum commitment, renewal mechanics, notice period, and termination rights must be stated in the applicable service agreement.
 
-On termination, the parties should follow that agreement regarding outstanding fees, work in progress, delivery of agreed materials, access to records, return or deletion of confidential information, and any continuing obligations.
+On termination, the parties will follow that agreement regarding outstanding fees, work in progress, delivery of agreed materials, access to records, return or deletion of confidential information, and any continuing obligations.
 
 Termination does not automatically entitle a client to a refund of fees already earned or paid. Refunds, credits, and any applicable exceptions will be governed by the signed agreement and applicable law.
 

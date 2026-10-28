@@ -51,7 +51,7 @@ When you visit our website, certain information may be collected automatically, 
 - Pages visited, referring pages, time spent on pages, and interactions with website content.
 - Diagnostic, security, and website performance information.
 
-We use Google Analytics for website analytics. The precise information collected, cookie configuration, retention settings, and available privacy controls depend on the configuration of our website and analytics account.
+We use Google Analytics for website analytics. The information it collects is limited to website usage and the technical information described above.
 
 ## 3. How We Use Information
 
@@ -81,7 +81,7 @@ These bases may include:
 - **Consent:** processing where consent is required or where we choose to rely on consent.
 - **Legal obligations:** processing necessary to comply with applicable law.
 
-Where Rupert obtains professional contact information from public or third-party sources, the applicable legal basis and any notice obligations must be assessed for the specific processing activity and jurisdiction.
+Where Rupert obtains professional contact information from public or third-party sources, it assesses the applicable legal basis and any notice obligations for the processing activity and jurisdiction concerned.
 
 ## 5. How We Share Information
 
@@ -89,9 +89,17 @@ We may disclose information in the following circumstances.
 
 ### Service providers
 
-We may share information with vendors that help operate our website or deliver our services, such as website hosting, analytics, communications, scheduling, email, data storage, or related technical providers, where those providers are actually used.
+We share information with vendors that help operate our website or deliver our services, only as needed for that purpose. These are:
 
-Our website currently uses Vercel hosting and Google Analytics. Other providers must be identified as they are confirmed.
+- **Vercel:** website and client portal hosting.
+- **Google Analytics:** website analytics.
+- **Cal.com:** scheduling calls booked through the website.
+- **Supabase:** database and file storage for the client portal.
+- **Instantly:** sending investor outreach emails from the client's own inbox and receiving replies.
+- **Resend:** service and notification emails from the client portal.
+- **Stripe:** invoices and payments.
+- **Anthropic:** AI assistance in preparing research, outreach drafts and reply summaries, reviewed by Rupert.
+- **Hunter:** verifying investors' professional email addresses.
 
 ### Investor outreach
 
@@ -113,7 +121,7 @@ We do not sell personal information for money. We do not disclose investor conta
 
 Rupert uses Google Analytics to understand website usage and improve website performance.
 
-Analytics technologies may use cookies or similar identifiers to collect information about website visits and interactions. Depending on configuration, this information may be processed by Google under its applicable terms and privacy practices.
+Analytics technologies may use cookies or similar identifiers to collect information about website visits and interactions. This information is processed by Google under its applicable terms and privacy practices.
 
 You may be able to control cookies through your browser settings. Where applicable law requires consent before non-essential analytics technologies are used, Rupert will implement an appropriate consent mechanism.
 
