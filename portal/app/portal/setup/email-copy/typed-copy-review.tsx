@@ -65,8 +65,12 @@ export type ClientCoreEmail = {
 function CoreEmailsList({ items, optOut }: { items: ClientCoreEmail[]; optOut: string }) {
   return (
     <details className="mt-lg rounded-card border border-border bg-surface">
-      <summary className="cursor-pointer px-lg py-md text-body-sm text-heading">
-        See all {items.length} personal Core emails (optional)
+      <summary className="cursor-pointer px-lg py-md">
+        <span className="text-h4 text-heading">The template, filled in for each Core investor ({items.length})</span>
+        <span className="mt-xs block max-w-prose text-body-sm text-secondary">
+          The emails each Core investor will actually get. Their name, their fund and the fact about them are filled in,
+          using the researched facts shown with each one. Rupert has already reviewed every one.
+        </span>
       </summary>
       <ul className="divide-y divide-border border-t border-border">
         {items.map((item) => (
@@ -184,7 +188,7 @@ export function TypedCopyReview({
 
       <p className="mb-md max-w-prose text-body-sm text-secondary">
         {section === "core"
-          ? "Core investors invest directly in your sector. Each one gets their own version of these emails, written from a few researched facts about their fund and the partner. The highlighted parts change for every investor; Rupert reviews each one before it goes out."
+          ? "Core investors invest directly in your sector. Below is the template every Core email is built on: the highlighted parts, such as [their first name], [fund name] and [a fact about this investor], are filled in for each investor from research on their fund and the partner. Further down, open \"The template, filled in for each Core investor\" to see exactly what each one will get."
           : "These investors have an adjacent or broader link to your sector. They get the same emails per type of investor, with one line explaining why we're writing to them, which changes by tier."}
       </p>
 
@@ -215,6 +219,9 @@ export function TypedCopyReview({
                 · {group.funds} funds{group.merged?.length ? ` (includes ${group.merged.join(", ")})` : ""}
               </span>
             </h2>
+            {section === "core" ? (
+              <p className="mt-xs text-label uppercase tracking-label text-muted">The template: shared by every Core email of this type</p>
+            ) : null}
             {section === "core" && group.approach.trim() ? (
               <p className="mt-sm max-w-prose whitespace-pre-wrap text-body-sm text-body">
                 <span className="text-heading">The approach: </span>
