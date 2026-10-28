@@ -185,7 +185,20 @@ export function researchIsFresh(researchedAt: string | null | undefined, now = D
 // The emails
 
 export function asCoreEmails(value: unknown): CopyEmail[] {
-  const list = Array.isArray(value) ? value : [];
+  // Claude sometimes sends the array as a JSON string, or as an object keyed 0/1/2.
+  let parsed = value;
+  if (typeof parsed === "string") {
+    try {
+      parsed = JSON.parse(parsed);
+    } catch {
+      parsed = [];
+    }
+  }
+  if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+    const record = parsed as Record<string, unknown>;
+    parsed = Array.isArray(record.emails) ? record.emails : Object.keys(record).sort().map((key) => record[key]);
+  }
+  const list = Array.isArray(parsed) ? parsed : [];
   return Array.from({ length: SEQUENCE_LENGTH }, (_, index) => {
     const raw = (list[index] && typeof list[index] === "object" ? list[index] : {}) as Record<string, unknown>;
     return { subject: String(raw.subject ?? "").slice(0, 300), body: String(raw.body ?? "").slice(0, 10000) };
