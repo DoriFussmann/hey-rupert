@@ -2,6 +2,7 @@
 
 import type { PreviewLeads } from "@/lib/outreach/preview";
 import { EmailPreview } from "@/components/email-preview";
+import { ChevronDown } from "@/components/chevron";
 import { Fragment, useState } from "react";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
@@ -64,12 +65,17 @@ export type ClientCoreEmail = {
 
 function CoreEmailsList({ items, optOut }: { items: ClientCoreEmail[]; optOut: string }) {
   return (
-    <details className="mt-lg rounded-card border border-border bg-surface">
-      <summary className="cursor-pointer px-lg py-md">
-        <span className="text-h4 text-heading">The template, filled in for each Core investor ({items.length})</span>
-        <span className="mt-xs block max-w-prose text-body-sm text-secondary">
-          The emails each Core investor will actually get. Their name, their fund and the fact about them are filled in,
-          using the researched facts shown with each one. Rupert has already reviewed every one.
+    <details className="group/core mt-lg rounded-card border border-border bg-surface">
+      <summary className="flex cursor-pointer list-none items-start justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">
+        <span>
+          <span className="block text-h4 text-heading">The template, filled in for each Core investor ({items.length})</span>
+          <span className="mt-xs block max-w-prose text-body-sm text-secondary">
+            The emails each Core investor will actually get. Their name, their fund and the fact about them are filled in,
+            using the researched facts shown with each one. Rupert has already reviewed every one.
+          </span>
+        </span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface text-secondary">
+          <ChevronDown className="h-4 w-4 transition-transform duration-hover group-open/core:rotate-180" />
         </span>
       </summary>
       <ul className="divide-y divide-border border-t border-border">
