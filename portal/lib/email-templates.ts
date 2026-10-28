@@ -143,7 +143,8 @@ export type ClientTurn =
   | "framing_ready"
   | "investor_list_ready"
   | "email_copy_ready"
-  | "go_live_ready";
+  | "go_live_ready"
+  | "campaign_live";
 
 export type AdminEmailType =
   | "framing_question"
@@ -165,6 +166,7 @@ export type AdminEmailType =
   | "investor_list_changes_requested"
   | "email_copy_confirmed"
   | "email_copy_changes_requested"
+  | "launch_requested"
   | "client_stalled";
 
 export type EmailTemplateKey =
@@ -394,13 +396,13 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     group: "client",
     title: "Ready to go live",
     trigger:
-      "Fills the email under Go Live when you push it to the client with the invoice link. You review and edit it, then it goes with Push to client & email.",
+      "Fills the email under Go Live when you send the launch package with the invoice link. You review and edit it, then it goes with Send launch package.",
     subject: "Your investor campaign is ready — you're up",
     body: [
       "{greeting}",
       "Your investor campaign is built and ready to go.{updated_line}",
       "{note}",
-      "Three last steps in your portal:\n1. Connect the inbox you use with investors (you sign in with Google or Microsoft).\n2. Pay the first monthly invoice: {invoice_link}\n3. Send yourself a test if you like, then click Go Live.",
+      "Three last steps in your portal:\n1. Connect the inbox you use with investors (you sign in with Google or Microsoft).\n2. Pay the first monthly invoice: {invoice_link}\n3. Send yourself a test if you like, then approve the launch. Rupert starts sending within 24 hours and tells you when you're live.",
       "Open your portal: {portal_link}",
       "{signature}",
     ].join("\n\n"),
@@ -408,6 +410,15 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     path: "/portal/setup/go-live",
     switchable: true,
   },
+  clientTemplate(
+    "campaign_live",
+    "Campaign is live",
+    "When you click Go Live after the client approved the launch.",
+    "/portal/live-campaign",
+    "Your investor campaign is live",
+    "Your investor campaign is live. The first emails go out from your inbox in the next weekday window, 9am to 5pm Eastern.",
+    "Nothing to do now. Replies that need you appear in your Investor Inbox, and you can follow progress in Campaign Analytics.",
+  ),
 ];
 
 function adminTemplate(
@@ -485,6 +496,10 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
     "Email copy changes requested",
     "asked for changes to the email copy",
   ),
+  {
+    ...adminTemplate("launch_requested", "Launch approved: Go Live within 24 hours", "approved the launch"),
+    trigger: "When a client approves the launch on their Go Live page. They were told it goes live within 24 hours; you click Go Live.",
+  },
   {
     ...adminTemplate(
       "client_stalled",

@@ -14,6 +14,7 @@ function isPublicPath(pathname: string) {
     pathname === "/api/cron/reminders" ||
     pathname === "/api/cron/site-check" ||
     pathname === "/api/cron/outreach" ||
+    pathname === "/api/cron/daily-summary" ||
     // Instantly calls this without a session; it checks INSTANTLY_WEBHOOK_SECRET.
     pathname === "/api/instantly/webhook" ||
     pathname.startsWith("/_next") ||

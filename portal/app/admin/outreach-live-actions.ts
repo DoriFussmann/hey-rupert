@@ -10,6 +10,7 @@ import {
   pollInboxConnect,
   startInboxConnect,
   checkInbox,
+  checkWebhookReachable,
   linkExistingInbox,
   loadLiveState,
   markInvoicePaid,
@@ -22,6 +23,8 @@ import {
   type LiveState,
 } from "@/lib/outreach/live-server";
 import { decideReply } from "@/lib/outreach/replies-server";
+import { notifyAdmin, notifyClient } from "@/lib/notify";
+import { sendDailySummary } from "@/lib/outreach/daily-summary-server";
 import { confirmGoLiveStep, pushGoLive, renderGoLiveEmail, type GoLiveEmail } from "@/lib/outreach/go-live-step-server";
 import { labelReply } from "@/lib/outreach/reply-label-server";
 import type { ReplyVisibility } from "@/lib/outreach/live";
@@ -177,7 +180,7 @@ export async function pollTestInboxAction(clientId: string) {
 export async function goLiveTestAction(clientId: string) {
   const access = await requireTestPilot(clientId);
   if (!access.ok) return access;
-  const launched = await goLive(access.supabase, clientId, access.actor, true);
+  const launched = await goLive(access.supabase, clientId, access.actor);
   if (!launched.ok) return launched;
   await confirmGoLiveStep(access.supabase, clientId, access.actor);
   revalidateClient(clientId);
@@ -191,7 +194,42 @@ function revalidateClient(clientId: string) {
   revalidatePath(`/admin/clients/${clientId}`);
 }
 
-// Setup step 4: Push to client & email, with the first monthly invoice.
+/**
+ * The real Go Live, after the client approved the launch: the campaign is
+ * created and starts, the client is emailed that they're live.
+ */
+export async function goLiveNowAction(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const launched = await goLive(access.supabase, clientId, access.actor);
+  if (!launched.ok) return launched;
+  await confirmGoLiveStep(access.supabase, clientId, access.actor);
+  await notifyAdmin(access.supabase, clientId, "went_live", { email: false });
+  const emailed = await notifyClient(access.supabase, clientId, "campaign_live");
+  revalidateClient(clientId);
+  revalidatePath("/portal/live-campaign");
+  return withState(clientId, access.supabase, { added: launched.value.wave1, emailError: emailed.ok ? null : emailed.reason });
+}
+
+/** Emails Rupert today's daily summary now (it also goes out weekdays at 5pm Eastern). */
+export async function sendSummaryNowAction(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const result = await sendDailySummary(access.supabase, { force: true });
+  if (!result.sent) return { ok: false as const, error: result.email && !result.email.ok ? result.email.reason : `Not sent: ${result.reason ?? "unknown"}.` };
+  return withState(clientId, access.supabase, { clients: result.clients });
+}
+
+/** Checks that Instantly can reach the portal's webhook (reply tracking). */
+export async function checkReplyTrackingAction(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const checked = await checkWebhookReachable();
+  if (!checked.ok) return checked;
+  return withState(clientId, access.supabase);
+}
+
+// Setup step 4: Send launch package (email, with the first monthly invoice).
 
 export async function draftGoLiveEmailAction(clientId: string, invoiceUrl: string) {
   const access = await requireAdmin(clientId);

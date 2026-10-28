@@ -3,9 +3,11 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { goLiveAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
+import { approveLaunchAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
 import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
+import { LaunchTimeline } from "@/components/launch-timeline";
+import { weekLabel, type PlanWeek } from "@/lib/outreach/live";
 
 const POLL_MS = 3000;
 const POLL_LIMIT_MS = 10 * 60 * 1000;
@@ -38,8 +40,10 @@ export function GoLiveView({
   gaps,
   consentText,
   counts,
-  perDay,
   testSentAt,
+  requested,
+  plan,
+  inboxEmail,
 }: {
   readOnly: boolean;
   campaignReady: boolean;
@@ -49,9 +53,11 @@ export function GoLiveView({
   gaps: string[];
   consentText: string | null;
   counts: { funds: number; wave1: number; wave2: number };
-  /** New investors added a day (0: all at once). */
-  perDay: number;
   testSentAt: string | null;
+  /** The client approved the launch; Rupert clicks Go Live within 24 hours. */
+  requested: { at: string } | null;
+  plan: PlanWeek[];
+  inboxEmail: string | null;
 }) {
   const router = useRouter();
   const [connecting, setConnecting] = useState(false);
@@ -118,11 +124,11 @@ export function GoLiveView({
   }
 
   async function launch() {
-    if (!window.confirm("Start sending your investor emails now?")) return;
+    if (!window.confirm("Approve the launch? Rupert runs a final check and starts sending within 24 hours.")) return;
     setLaunching(true);
     setError(null);
     try {
-      const result = await goLiveAction(consent);
+      const result = await approveLaunchAction(consent);
       if (!result.ok) setError(result.error);
       else router.refresh();
     } finally {
@@ -130,17 +136,76 @@ export function GoLiveView({
     }
   }
 
+  const total = counts.wave1 + counts.wave2;
+  const lastFirst = [...plan].reverse().find((w) => w.newInvestors > 0);
+  const lastWeek = plan[plan.length - 1];
+  const planBlock =
+    plan.length > 0 ? (
+      <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
+        <h2 className="text-h3">What happens next</h2>
+        <div className="mt-md grid gap-md sm:grid-cols-3">
+          <div className="rounded-card border border-border px-md py-md">
+            <p className="text-label uppercase tracking-label text-muted">Investors</p>
+            <p className="mt-xs font-mono text-h2 text-heading">{total}</p>
+            <p className="text-body-sm text-muted">at {counts.funds} funds</p>
+          </div>
+          <div className="rounded-card border border-border px-md py-md">
+            <p className="text-label uppercase tracking-label text-muted">First emails done</p>
+            <p className="mt-xs font-mono text-h2 text-heading">Week {lastFirst?.week ?? 1}</p>
+            <p className="text-body-sm text-muted">{lastFirst ? `by ${weekLabel(lastFirst.end, lastFirst.end)}` : ""}</p>
+          </div>
+          <div className="rounded-card border border-border px-md py-md">
+            <p className="text-label uppercase tracking-label text-muted">Last follow-ups</p>
+            <p className="mt-xs font-mono text-h2 text-heading">Week {lastWeek.week}</p>
+            <p className="text-body-sm text-muted">by {weekLabel(lastWeek.end, lastWeek.end)}</p>
+          </div>
+        </div>
+        <p className="mt-md max-w-prose text-body-sm text-secondary">
+          Each investor gets a first email and up to two follow-ups, 5 days apart, in the same thread; anyone who replies gets no more.
+          The pace starts low so your inbox builds a good sending record, and never goes above 30 emails a day.
+          {live ? "" : " Dates assume sending starts the next weekday."}
+        </p>
+        <LaunchTimeline weeks={plan} live={Boolean(live)} requested={Boolean(requested)} />
+      </section>
+    ) : null;
+
   if (live) {
     return (
-      <LiveBanner since={live.at}>
-        <p className="max-w-prose text-body-sm text-secondary">
-          New investors are added each weekday, mixed across your tiers; the second contact at a fund follows a few days
-          after the first. Replies that need you appear in your Investor Inbox.
-        </p>
-        <Link href="/portal/live-campaign" className={`${primary} mt-md inline-block`}>
-          Open Live Campaign
-        </Link>
-      </LiveBanner>
+      <>
+        <LiveBanner since={live.at}>
+          <p className="max-w-prose text-body-sm text-secondary">
+            New investors are added each weekday, mixed across your tiers; the second contact at a fund follows a few days
+            after the first. Replies that need you appear in your Investor Inbox.
+          </p>
+          <Link href="/portal/live-campaign" className={`${primary} mt-md inline-block`}>
+            Open Live Campaign
+          </Link>
+        </LiveBanner>
+        {planBlock}
+      </>
+    );
+  }
+
+  if (requested) {
+    return (
+      <>
+        <LiveBanner since={requested.at} word="Ready" sincePrefix="You approved the launch on">
+          <p className="max-w-prose text-body text-body">
+            Rupert runs a final check and starts sending within 24 hours. You&apos;ll get an email the moment your campaign is
+            live, and this page turns Live.
+          </p>
+        </LiveBanner>
+        <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
+          <h2 className="text-h4">Done</h2>
+          <ul className="mt-sm grid gap-xs text-body-sm">
+            <li>✓ Inbox connected{inboxEmail ? `: ${inboxEmail}` : ""}</li>
+            <li>✓ First monthly invoice paid</li>
+            <li>✓ Launch approved by you</li>
+            <li className="text-muted">○ Rupert starts sending</li>
+          </ul>
+        </section>
+        {planBlock}
+      </>
     );
   }
 
@@ -196,14 +261,14 @@ export function GoLiveView({
             <p>Rupert sends it when your campaign is ready.</p>
           )}
         </Step>
-        <Step n={3} done={false} title="Review and go live">
+        <Step n={3} done={false} title="Review and approve the launch">
           <ul className="mb-md max-w-prose list-disc pl-lg">
             <li>
-              {perDay > 0
-                ? `About ${perDay} new investors a day, on weekdays, mixed across your tiers, until all ${counts.wave1 + counts.wave2} are reached.`
-                : `All ${counts.wave1 + counts.wave2} investors start right away.`}{" "}
-              The second contact at a fund starts a few days after the first.
+              Never more than 30 emails a day from your inbox, follow-ups included, building up from 10 a day. New investors are
+              added each weekday, mixed across your tiers, until all {total} are reached. The second contact at a fund starts a few
+              days after the first.
             </li>
+            <li>Once you approve, Rupert runs a final check and starts sending within 24 hours. You&apos;re emailed when it&apos;s live.</li>
             <li>Each investor gets the first email and up to two follow-ups, as replies in the same thread. Anyone who replies gets no more follow-ups.</li>
             <li>Emails go out from your inbox, in your name. Rupert reads every reply first; the ones that need you appear in your Investor Inbox.</li>
           </ul>
@@ -233,10 +298,11 @@ export function GoLiveView({
             </ul>
           ) : null}
           <button type="button" className={`${primary} mt-md`} disabled={readOnly || !ready || !consent || launching} onClick={launch}>
-            {launching ? "Starting…" : "Go Live"}
+            {launching ? "Approving…" : "Approve launch"}
           </button>
         </Step>
       </ol>
+      {planBlock}
       {error ? <p role="alert" className="mt-md text-body-sm text-error">{error}</p> : null}
     </>
   );

@@ -15,7 +15,7 @@ Model version: `CAPACITY_MODEL_VERSION` in `schedule.ts`, saved with every plan.
 ## Capacity: a day-by-day schedule
 
 - **Campaign length:** `round(months × 365.25 / 12)` calendar days. Day 0 is a Monday, and the first N days of each week are sending days.
-- **Daily capacity:** inboxes × emails per inbox per day. During the warm-up weeks it is `floor(normal × warm-up % / 100)`.
+- **Daily capacity:** inboxes × emails per inbox per day, never more than 30 per inbox (follow-ups included). During the warm-up weeks it ramps evenly from the first week's percentage to full: 2 weeks at 33% of 30 = 10, then 20, then 30 a day, the same ramp the live campaign sends (`lib/outreach/live.ts`).
 - **Starting a firm:**
   - A firm starts on a sending day by emailing each of its contacts.
   - Follow-up k goes `delay` calendar days after the previous email, on the first sending day with room for all the firm's contacts.
@@ -39,7 +39,7 @@ Model version: `CAPACITY_MODEL_VERSION` in `schedule.ts`, saved with every plan.
 - **Default inputs:**
   - Contacts per firm = Primary + Backup (2), from the engine's outreach sequence.
   - Follow-ups = 2, from the Email Copy sequence.
-  - The sending infrastructure isn't stored anywhere in the app, so these are an example: 1 inbox, 35 a day, 1 warm-up week at 50%, Monday to Friday, 7 days between emails. They land within about 6% of each benchmark.
+  - Sending: the client's one inbox, 30 a day, 2 warm-up weeks from 33% (10 → 20 → 30), Monday to Friday, 5 days between emails: how the live campaign sends. With it the capacity lands 10–20% under the benchmarks, which were set at 35 a day.
 
 ## Allocation
 

@@ -44,7 +44,8 @@ const HINT: Partial<Record<keyof CapacityInputs, string>> = {
   followUps: "2 = the Email Copy sequence (first email and two follow-ups).",
   followUpDelayDays: "Calendar days from one email to the next.",
   sendingDaysPerWeek: "5 = Monday to Friday.",
-  warmupPercent: "Share of normal sending during warm-up.",
+  warmupPercent: "Each later warm-up week steps up evenly to full. 2 weeks at 33% of 30 = 10, then 20, then 30 a day.",
+  emailsPerInboxPerDay: "Follow-ups included. Never more than 30 per inbox.",
 };
 
 const BENCHMARK_TEXT = { under: "under", on: "on", over: "over" } as const;

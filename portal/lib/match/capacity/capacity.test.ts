@@ -38,27 +38,31 @@ function sendingDays(months: number, perWeek: number) {
 // ---------------------------------------------------------------------------
 // Capacity
 
-test("1. one- to six-month campaigns: the default inputs land near every planning benchmark", () => {
+test("1. one- to six-month campaigns: the default inputs (30 a day, ramped) sit under the planning benchmarks", () => {
+  // The benchmarks were set at 35 a day; the live cap of 30 a day lands 10–20% under them.
   for (const benchmark of BENCHMARKS) {
     const firms = schedule(inputs({ months: benchmark.months })).firms;
-    assert.ok(Math.abs(firms - benchmark.firms) <= benchmark.firms * 0.1, `${benchmark.months} months: ${firms} vs ${benchmark.firms}`);
+    assert.ok(firms < benchmark.firms && firms >= benchmark.firms * 0.8, `${benchmark.months} months: ${firms} vs ${benchmark.firms}`);
   }
   assert.deepEqual(compareToBenchmark(330, 330), { status: "on", difference: 0 });
   assert.equal(compareToBenchmark(300, 330).status, "under");
   assert.equal(compareToBenchmark(400, 330).status, "over");
   // The benchmarks are references: the capacity always comes from the inputs.
-  assert.ok(schedule(inputs({ months: 3, inboxes: 3 })).firms > 900);
+  assert.ok(schedule(inputs({ months: 3, inboxes: 3 })).firms > 750);
 });
 
-test("2. warm-up: its weeks send at the warm-up percentage, then full capacity", () => {
+test("2. warm-up: ramps evenly from the first week's percentage to full (10, 20, then 30 a day)", () => {
   const full = schedule(inputs({ warmupWeeks: 0 }));
-  assert.equal(full.capacity, sendingDays(3, 5) * 35);
-  const warm = schedule(inputs({ warmupWeeks: 2, warmupPercent: 50 }));
+  assert.equal(full.capacity, sendingDays(3, 5) * 30);
+  const warm = schedule(inputs());
   assert.equal(warm.warmupSendingDays, 10);
-  assert.equal(warm.capacity, full.capacity - 10 * (35 - 17));
-  assert.equal(warm.dailyWarmup, 17); // floor(35 × 50%)
+  assert.deepEqual(warm.weeks.slice(0, 3).map((week) => week.capacity / 5), [10, 20, 30]);
+  assert.equal(warm.dailyWarmup, 10);
+  assert.equal(warm.capacity, full.capacity - 5 * 20 - 5 * 10);
+  assert.equal(warm.warmupLost, 150);
   assert.equal(schedule(inputs({ warmupWeeks: 2, warmupPercent: 100 })).capacity, full.capacity);
-  assert.equal(schedule(inputs({ warmupWeeks: 2, warmupPercent: 0 })).capacity, full.capacity - 10 * 35);
+  // From 0%: week 1 sends nothing, week 2 half.
+  assert.equal(schedule(inputs({ warmupWeeks: 2, warmupPercent: 0 })).capacity, full.capacity - 5 * 30 - 5 * 15);
   assert.ok(warm.firms < full.firms);
   assert.ok(warm.bottlenecks.some((note) => note.startsWith("Warm-up")));
 });
@@ -67,9 +71,9 @@ test("3. inboxes, sending limits and sending days scale the capacity", () => {
   const one = schedule(inputs({ warmupWeeks: 0 }));
   const three = schedule(inputs({ warmupWeeks: 0, inboxes: 3 }));
   assert.equal(three.capacity, one.capacity * 3);
-  assert.equal(schedule(inputs({ warmupWeeks: 0, emailsPerInboxPerDay: 70 })).capacity, one.capacity * 2);
+  assert.equal(schedule(inputs({ warmupWeeks: 0, emailsPerInboxPerDay: 15 })).capacity, one.capacity / 2);
   const seven = schedule(inputs({ warmupWeeks: 0, sendingDaysPerWeek: 7 }));
-  assert.equal(seven.capacity, campaignDays(3) * 35);
+  assert.equal(seven.capacity, campaignDays(3) * 30);
   assert.ok(three.firms > one.firms * 2.5);
   assert.ok(seven.firms > one.firms);
 });
@@ -104,9 +108,9 @@ test("5. unique firms with several contacts per firm", () => {
   const three = schedule(inputs({ warmupWeeks: 0, followUps: 0, contactsPerFirm: 3 }));
   assert.equal(two.contactsReached, two.firms * 2);
   assert.equal(three.contactsReached, three.firms * 3);
-  // 35 a day: 17 firms of 2 (34 sends) or 11 firms of 3 (33 sends) per day.
-  assert.equal(two.firms, sendingDays(3, 5) * 17);
-  assert.equal(three.firms, sendingDays(3, 5) * 11);
+  // 30 a day: 15 firms of 2 or 10 firms of 3 per day.
+  assert.equal(two.firms, sendingDays(3, 5) * 15);
+  assert.equal(three.firms, sendingDays(3, 5) * 10);
 });
 
 test("13. invalid inputs and boundaries", () => {
@@ -117,7 +121,8 @@ test("13. invalid inputs and boundaries", () => {
   assert.ok(inputProblems(inputs({ contactsPerFirm: 5, emailsPerInboxPerDay: 4 })).some((p) => p.includes("same day")));
   assert.ok(inputProblems(inputs({ months: 1, followUps: 5, followUpDelayDays: 7 })).some((p) => p.includes("sequence takes")));
   assert.throws(() => schedule(inputs({ inboxes: -1 })));
-  assert.deepEqual(inputProblems(inputs({ inboxes: 100, emailsPerInboxPerDay: 100, months: 12 })), []);
+  assert.deepEqual(inputProblems(inputs({ inboxes: 100, emailsPerInboxPerDay: 30, months: 12 })), []);
+  assert.ok(inputProblems(inputs({ emailsPerInboxPerDay: 31 })).some((p) => p.startsWith("Emails per inbox")), "never more than 30 per inbox");
   assert.deepEqual(inputProblems(inputs({ inboxes: 1, emailsPerInboxPerDay: 2, contactsPerFirm: 2, months: 1 })), []);
   // Backward: how many inboxes a target needs, or null when none can.
   const needed = inboxesNeeded(inputs(), 1000)!;

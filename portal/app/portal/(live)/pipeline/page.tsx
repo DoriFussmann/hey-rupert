@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { StatusBadge } from "@/components/status-badge";
@@ -19,9 +20,19 @@ const columns: { status: PipelineStage; label: string }[] = [
 
 const TIER: Record<number, string> = { 1: "Core", 2: "Sphere", 3: "Tier 3", 4: "Tier 4" };
 
-export default async function PipelinePage() {
+const FILTERS = [
+  { tier: null, label: "All tiers" },
+  { tier: 1, label: "Core" },
+  { tier: 2, label: "Sphere" },
+  { tier: 3, label: "Tier 3" },
+  { tier: 4, label: "Tier 4" },
+];
+
+export default async function PipelinePage({ searchParams }: { searchParams: { tier?: string } }) {
   const { client } = await getPortalView();
-  const data = client?.id && isServiceRoleConfigured() ? await clientLiveData(createServiceClient(), client.id) : { funds: [] };
+  const all = client?.id && isServiceRoleConfigured() ? await clientLiveData(createServiceClient(), client.id) : { funds: [] };
+  const tier = Number(searchParams?.tier) || null;
+  const data = { funds: tier ? all.funds.filter((fund) => fund.tier === tier) : all.funds };
 
   return (
     <>
@@ -30,6 +41,21 @@ export default async function PipelinePage() {
         title="Engagement Tracker"
         description="Where each fund stands. Funds move as emails go out and as Rupert passes on their replies."
       />
+      <nav aria-label="Tier" className="mb-lg flex w-fit flex-wrap gap-xs rounded-card border border-border bg-surface p-xs">
+        {FILTERS.map((f) => {
+          const on = f.tier === tier;
+          return (
+            <Link
+              key={f.label}
+              href={f.tier ? `/portal/pipeline?tier=${f.tier}` : "/portal/pipeline"}
+              aria-current={on ? "page" : undefined}
+              className={`inline-flex min-h-[40px] items-center rounded-md px-md text-body-sm ${on ? "bg-heading text-white" : "text-secondary hover:text-heading"}`}
+            >
+              {f.label}
+            </Link>
+          );
+        })}
+      </nav>
       <div className="grid gap-md xl:grid-cols-3">
         {columns.map((column) => {
           const items = data.funds.filter((fund) => fund.stage === column.status);

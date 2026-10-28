@@ -580,8 +580,8 @@ export const SETUP_STEPS: SetupStepDefinition[] = [
     title: "Go Live",
     short: "Go Live",
     href: "/portal/setup/go-live",
-    clientTask: "connect your inbox, pay the first monthly invoice and go live",
-    adminAction: "Build the campaign, add the invoice link and push Go Live to the client",
+    clientTask: "connect your inbox, pay the first monthly invoice and approve the launch",
+    adminAction: "Build the campaign and send the launch package (invoice and email)",
     kind: "review",
   },
 ];
@@ -787,9 +787,10 @@ export function getSetupItems(source: SetupSource | null | undefined): SetupItem
     // Went live before this step existed, or outside the portal.
     items.push({ ...goLiveItem, status: "done", detail: "Live", since: null, completedAt: goLive?.completed_at ?? null, visible: true });
   } else if (goLiveItem.status === "done") {
-    items.push({ ...goLiveItem, detail: "Live" });
+    // Confirmed when the client approves the launch; live once Rupert clicks Go Live.
+    items.push({ ...goLiveItem, detail: live ? "Live" : "Approved: going live within 24 hours" });
   } else if (goLiveItem.status === "your_turn") {
-    items.push({ ...goLiveItem, detail: "Connect your inbox, pay and go live" });
+    items.push({ ...goLiveItem, detail: "Connect your inbox, pay and approve the launch" });
   } else {
     items.push(goLiveItem);
   }

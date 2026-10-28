@@ -94,6 +94,16 @@ export function activateCampaign(id: string) {
   return call<unknown>("POST", `/campaigns/${encodeURIComponent(id)}/activate`, {});
 }
 
+/** Changes a campaign's settings, e.g. its daily limit as the weekly cap rises. */
+export function updateCampaign(id: string, body: Record<string, unknown>) {
+  return call<unknown>("PATCH", `/campaigns/${encodeURIComponent(id)}`, body);
+}
+
+/** Changes a sending account's settings: its daily limit applies across every campaign. */
+export function updateAccount(email: string, body: Record<string, unknown>) {
+  return call<unknown>("PATCH", `/accounts/${encodeURIComponent(email)}`, body);
+}
+
 export function pauseCampaign(id: string) {
   return call<unknown>("POST", `/campaigns/${encodeURIComponent(id)}/pause`, {});
 }
