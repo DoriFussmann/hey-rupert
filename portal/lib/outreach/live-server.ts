@@ -29,7 +29,14 @@ import {
   dripQueue,
   leadFor,
   testAddress,
+  addDays,
+  campaignWeek,
+  localDate,
+  nextWeekday,
+  perDayForWeek,
+  sendingPlan,
   type LiveSettings,
+  type PlanWeek,
 } from "@/lib/outreach/live";
 import { PORTAL_URL } from "@/lib/portal-url";
 import { isStripeInvoiceLink, STRIPE_INVOICE_LINK_ERROR } from "@/lib/service-order";
@@ -39,10 +46,10 @@ type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 export const OUTREACH_LIVE_MISSING =
-  "The Go Live columns are missing. Run portal/supabase/outreach_live.sql in the Supabase SQL editor, then try again.";
+  "The Go Live columns are missing. Run portal/supabase/outreach_live.sql and portal/supabase/launch_request.sql in the Supabase SQL editor, then try again.";
 
 function tableError(message: string, code?: string) {
-  return code === "42703" || code === "42P01" || /outreach_replies|outreach_events|inbox_email|instantly_campaign_id|pushed_at/.test(message) || message.toLowerCase().includes("schema cache")
+  return code === "42703" || code === "42P01" || /outreach_replies|outreach_events|inbox_email|instantly_campaign_id|pushed_at|launch_requested/.test(message) || message.toLowerCase().includes("schema cache")
     ? OUTREACH_LIVE_MISSING
     : message;
 }
@@ -74,6 +81,8 @@ export type LiveRow = {
   paused_at: string | null;
   test_campaign_id: string | null;
   test_sent_at: string | null;
+  launch_requested_at: string | null;
+  launch_requested_by: string | null;
 };
 
 const s = (value: unknown) => (value == null || value === "" ? null : String(value));
@@ -103,6 +112,8 @@ async function loadLiveRow(supabase: ServiceClient, clientId: string): Promise<R
       paused_at: s(row.paused_at),
       test_campaign_id: s(row.test_campaign_id),
       test_sent_at: s(row.test_sent_at),
+      launch_requested_at: s(row.launch_requested_at),
+      launch_requested_by: s(row.launch_requested_by),
     },
   };
 }
@@ -132,6 +143,10 @@ export type LiveState = {
   /** Test Pilot client: every email goes to a + address of `testRecipient`. */
   testMode: boolean;
   testRecipient: string;
+  /** The client approved the launch; Rupert clicks Go Live (within 24 hours). */
+  requested: { at: string; by: string | null } | null;
+  /** Week by week: projected before launch, with the current week once live. */
+  plan: PlanWeek[];
 };
 
 export async function loadLiveState(supabase: ServiceClient, clientId: string): Promise<Result<LiveState>> {
@@ -157,6 +172,14 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
   const pushed = messages.value.filter((m) => m.pushed_at).length;
   const testMode = await isTestPilot(supabase, clientId);
   const waiting = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && isApproved(m)).length;
+  const total = (c.summary?.wave1 ?? 0) + (c.summary?.wave2 ?? 0) || messages.value.filter((m) => m.slot === "active" && isApproved(m)).length;
+  const today = localDate(Date.now(), r.settings.timezone);
+  const plan = sendingPlan({
+    total,
+    settings: r.settings,
+    launchDay: r.live_at ? localDate(r.live_at, r.settings.timezone) : nextWeekday(addDays(today, 1)),
+    today: r.live_at ? today : null,
+  });
   const stepRead = await loadSetupStep(supabase, clientId, "go_live");
   const stepRow = stepRead.ok ? stepRead.row : null;
   const step =
@@ -199,6 +222,8 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
       consentText: r.inbox_email ? CONSENT_TEXT(r.inbox_email) : null,
       testMode,
       testRecipient: testMode ? testRecipientOf(r.settings) : "",
+      requested: r.launch_requested_at ? { at: r.launch_requested_at, by: r.launch_requested_by } : null,
+      plan,
     },
   };
 }
@@ -346,7 +371,7 @@ export function testRecipientOf(settings: LiveSettings) {
  * of tiers (dripQueue). `limit` 0 adds everyone eligible. In test mode every
  * address is replaced with a + address of the test inbox.
  */
-async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: string, limit: number): Promise<Result<number>> {
+async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: string): Promise<Result<number>> {
   const [row, messages, testMode] = await Promise.all([
     loadLiveRow(supabase, clientId),
     loadOutreachMessages(supabase, clientId),
@@ -355,6 +380,10 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
   if (!row.ok) return row;
   if (!messages.ok) return messages;
   const settings = row.value.settings;
+  // This week's pace: the ramp's first weeks, then full pace. Before launch: week 1.
+  const tz = settings.timezone;
+  const week = row.value.live_at ? campaignWeek(localDate(row.value.live_at, tz), localDate(Date.now(), tz)) : 1;
+  const limit = perDayForWeek(settings, week);
   const recipient = testMode ? testRecipientOf(settings) : "";
   if (testMode && !recipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
   const leads = dripQueue(messages.value, {
@@ -392,14 +421,61 @@ async function companyName(supabase: ServiceClient, clientId: string) {
 }
 
 /**
- * The client's Go Live: creates the Instantly campaign, its webhook, adds the
- * first wave and starts it. Each step saves its progress, so a retry after a
+ * Instantly reports every send, open and reply to `${PORTAL_URL}/api/instantly/webhook`.
+ * Reachable means the portal answered there: an unsigned request is refused
+ * with 401. A 404 or 405 means the request landed somewhere else (the
+ * marketing site), and no reply would ever reach the portal.
+ */
+export async function checkWebhookReachable(): Promise<Result<null>> {
+  const url = `${PORTAL_URL}/api/instantly/webhook`;
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: "{}",
+      signal: AbortSignal.timeout(10_000),
+      cache: "no-store",
+    });
+    if (response.status === 401 || response.status === 503) return { ok: true, value: null };
+    return {
+      ok: false,
+      error: `Reply tracking is not reachable: ${url} answered ${response.status}. Instantly could not report sends or replies. Check that this address reaches the portal (site/vercel.json forwards /api/* to it), then try again.`,
+    };
+  } catch (err) {
+    return { ok: false, error: `Reply tracking could not be checked (${url}): ${err instanceof Error ? err.message : "network error"}.` };
+  }
+}
+
+/**
+ * The client approves the launch: their consent is recorded, Rupert is told,
+ * and he clicks Go Live (within 24 hours). Nothing is sent yet.
+ */
+export async function requestLaunch(supabase: ServiceClient, clientId: string, actor: string | null, consent: boolean): Promise<Result<{ already: boolean }>> {
+  if (!consent) return { ok: false, error: "Tick the authorization to approve the launch." };
+  const state = await loadLiveState(supabase, clientId);
+  if (!state.ok) return state;
+  if (state.value.live) return { ok: false, error: "Your campaign is already live." };
+  if (state.value.requested) return { ok: true, value: { already: true } };
+  if (state.value.gaps.length > 0) return { ok: false, error: state.value.gaps.join(" ") };
+  const row = await loadLiveRow(supabase, clientId);
+  if (!row.ok) return row;
+  const saved = await saveLive(supabase, clientId, {
+    launch_requested_at: new Date().toISOString(),
+    launch_requested_by: actor,
+    consent_text: CONSENT_TEXT(row.value.inbox_email ?? ""),
+  });
+  return saved.ok ? { ok: true, value: { already: false } } : saved;
+}
+
+/**
+ * Rupert's Go Live, after the client approved the launch (Test Pilot clients
+ * need no approval): creates the Instantly campaign and its webhook, adds the
+ * first batch and starts it. Each step saves its progress, so a retry after a
  * failure continues where it stopped.
  */
-export async function goLive(supabase: ServiceClient, clientId: string, actor: string | null, consent: boolean): Promise<Result<{ wave1: number }>> {
-  if (!consent) return { ok: false, error: "Tick the authorization to go live." };
+export async function goLive(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ wave1: number }>> {
   if (!isInstantlyConfigured() || !process.env.INSTANTLY_WEBHOOK_SECRET) {
-    return { ok: false, error: "Sending isn't set up yet (INSTANTLY_API_KEY, INSTANTLY_WEBHOOK_SECRET). Rupert has been told." };
+    return { ok: false, error: "Sending isn't set up yet (INSTANTLY_API_KEY, INSTANTLY_WEBHOOK_SECRET)." };
   }
   const state = await loadLiveState(supabase, clientId);
   if (!state.ok) return state;
@@ -409,6 +485,11 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   const inbox = row.value.inbox_email!;
   const testMode = state.value.testMode;
   if (testMode && !state.value.testRecipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
+  if (!testMode && !row.value.launch_requested_at) return { ok: false, error: "The client hasn't approved the launch yet." };
+  if (!row.value.instantly_webhook_id) {
+    const reachable = await checkWebhookReachable();
+    if (!reachable.ok) return reachable;
+  }
 
   let campaignId = row.value.instantly_campaign_id;
   if (!campaignId) {
@@ -434,7 +515,7 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   }
 
   // The first daily batch: a proportional mix of first contacts.
-  const wave1 = await pushBatch(supabase, clientId, campaignId, row.value.settings.new_per_day);
+  const wave1 = await pushBatch(supabase, clientId, campaignId);
   if (!wave1.ok) return wave1;
 
   const activated = await activateCampaign(campaignId);
@@ -444,7 +525,7 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   const saved = await saveLive(supabase, clientId, {
     live_at: now,
     live_by: actor,
-    consent_text: CONSENT_TEXT(inbox),
+    ...(row.value.launch_requested_at ? {} : { consent_text: CONSENT_TEXT(inbox) }),
   });
   if (!saved.ok) return saved;
   await advanceStage(supabase, clientId, LIVE_STAGES_FROM, "live");
@@ -465,7 +546,7 @@ export async function startWave2(supabase: ServiceClient, clientId: string): Pro
     const saved = await saveLive(supabase, clientId, { wave2_pushed_at: new Date().toISOString() });
     if (!saved.ok) return saved;
   }
-  return pushBatch(supabase, clientId, row.value.instantly_campaign_id, row.value.settings.new_per_day);
+  return pushBatch(supabase, clientId, row.value.instantly_campaign_id);
 }
 
 /** Adds the next batch now, without waiting for tomorrow's (and any newly approved contacts). */
@@ -474,7 +555,7 @@ export async function pushNewlyApproved(supabase: ServiceClient, clientId: strin
   if (!row.ok) return row;
   const id = row.value.instantly_campaign_id;
   if (!row.value.live_at || !id) return { ok: false, error: "The campaign isn't live." };
-  return pushBatch(supabase, clientId, id, row.value.settings.new_per_day);
+  return pushBatch(supabase, clientId, id);
 }
 
 /** Saturday or Sunday in the campaign's timezone. */
@@ -502,7 +583,7 @@ export async function runDueWaves(supabase: ServiceClient) {
     const settings = asLiveSettings(row.settings);
     // Real campaigns send on weekdays: no new contacts on a weekend, so Monday isn't doubled.
     if (isWeekend(settings.timezone) && !(await isTestPilot(supabase, String(row.client_id)))) continue;
-    const result = await pushBatch(supabase, String(row.client_id), String(row.instantly_campaign_id), settings.new_per_day);
+    const result = await pushBatch(supabase, String(row.client_id), String(row.instantly_campaign_id));
     if (!result.ok) errors.push(`${row.client_id}: ${result.error}`);
     else if (result.value > 0) {
       started += 1;

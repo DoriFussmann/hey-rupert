@@ -44,7 +44,7 @@ export type NextTurn =
   | { owner: "client"; step: string }
   | { owner: "none" };
 
-export const FIRST_INVOICE_ACTION = "Issue the first monthly invoice and launch";
+export const FIRST_INVOICE_ACTION = "Go Live: the client approved the launch";
 
 /** Whose turn it is next, and what the step is. */
 export function nextTurn(source: ProgressSource | null | undefined): NextTurn {

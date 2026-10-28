@@ -64,6 +64,7 @@ export function notificationLabel(type: string) {
   }
   if (type === "email_copy_confirmed") return "Confirmed Email Copy";
   if (type === "went_live") return "Went Live";
+  if (type === "launch_requested") return "Approved the Launch";
   if (type === "email_copy_changes_requested") return "Requested Email Changes";
   if (type === "client_stalled") return "Stalled: No Response After Reminders";
   return statusLabel(type);
@@ -97,7 +98,8 @@ export function notificationAction(type: string) {
     return "asked for changes to the investor list";
   }
   if (type === "email_copy_confirmed") return "confirmed the email copy";
-  if (type === "went_live") return "clicked Go Live: the investor campaign is sending";
+  if (type === "went_live") return "is live: the investor campaign is sending";
+  if (type === "launch_requested") return "approved the launch: click Go Live within 24 hours";
   if (type === "email_copy_changes_requested") {
     return "asked for changes to the email copy";
   }

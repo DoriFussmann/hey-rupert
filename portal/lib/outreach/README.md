@@ -112,11 +112,15 @@ Each Core fund gets 2 active contacts with their own emails, written from the Co
    - Warmup is switched on, and the account status is checked; only Instantly status 1 counts as healthy.
    - If the inbox is already in the workspace, Rupert links it by email.
 2. **The invoice.** Rupert pastes the first monthly invoice link (Service Order 3.4). The Stripe webhook matches it by link before the Setup Fee flow; Rupert can also mark it paid.
-3. **Go Live.** The client ticks the authorization and clicks Go Live. Enabled only when the campaign is built and fully approved, the inbox is healthy and the invoice is paid.
+3. **Approve launch, then Go Live.** The client ticks the authorization and clicks Approve launch (enabled only when the campaign is built and fully approved, the inbox is healthy and the invoice is paid). They see the green Ready banner ("live within 24 hours"); Rupert gets an email and an in-app notification. Rupert clicks **Go Live now** in the admin Go Live panel; the client is emailed (`client:campaign_live`) and both see the Live banner. Run `supabase/launch_request.sql` once.
+   - Go Live first checks that `${NEXT_PUBLIC_PORTAL_URL}/api/instantly/webhook` reaches the portal (`site/vercel.json` forwards `/api/*`), so replies can't silently go missing.
    - Go Live creates the Instantly campaign: three steps whose subject and body are per-lead variables; follow-ups go in the same thread; weekdays; stop on reply and stop for company.
    - It registers a webhook for that campaign with the secret header, adds wave 1, activates the campaign, records the consent and sets the client to Live.
    - Each step saves its progress, so a retry continues where it stopped.
-4. **Wave 2.** Each fund's second contact starts N days later (daily cron), or when Rupert clicks Start wave 2 now.
+4. **Daily batches.** Weekdays 9am–5pm Eastern (`America/Detroit`: Instantly rejects `America/New_York`). New investors a day follow the ramp: 10 in week 1, 20 in week 2, then 30; the email cap is 90 a day (about 3 emails per investor). A campaign week is 5 weekdays from the launch day. The plan (`sendingPlan`) is shown to the client and on Campaign Analytics.
+   - Each fund's second contact starts N days after its first (daily cron), or when Rupert releases them early.
+   - **Daily summary.** `/api/cron/daily-summary`, weekdays 22:00 UTC (5pm Eastern in winter, 6pm in summer), emails Rupert: today's sends, replies to review, bounces with reserves, the campaign so far, tomorrow's batch. "Email me today's summary" in the Go Live panel sends it on demand.
+   - **Analytics** (`analytics.ts`): per campaign week or range, by tier and by fund type, from `outreach_events`. Delivered = sent − bounced; opens are distinct per contact and email; only released replies count for the client.
    - **Add newly approved contacts** pushes reserves activated after launch.
    - Pause and Resume map to Instantly.
 5. **Send test to me.** Before Go Live, a separate test campaign sends one approved contact's three emails to Rupert from the client's inbox, two minutes apart. Use it to confirm formatting and threading.

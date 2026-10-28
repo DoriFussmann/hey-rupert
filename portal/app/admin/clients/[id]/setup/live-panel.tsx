@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import {
   draftGoLiveEmailAction,
+  checkReplyTrackingAction,
+  goLiveNowAction,
+  sendSummaryNowAction,
   goLiveTestAction,
   pushGoLiveAction,
   pollTestInboxAction,
@@ -22,6 +25,8 @@ import { AutoTextarea } from "@/components/email-body-field";
 import type { LiveSettings } from "@/lib/outreach/live";
 import type { LiveState } from "@/lib/outreach/live-server";
 import { formatDateTime } from "@/lib/format";
+import { LiveBanner } from "@/components/live-banner";
+import { SendingPlanTable } from "@/components/sending-plan-table";
 
 type Message = { kind: "ok" | "error"; text: string } | null;
 type StateResult = { ok: true; state: LiveState; [key: string]: unknown } | { ok: false; error: string };
@@ -45,6 +50,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
   const [settings, setSettings] = useState<LiveSettings | null>(null);
   const [invoice, setInvoice] = useState("");
   const [linkEmail, setLinkEmail] = useState("");
+  const [rampText, setRampText] = useState("");
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<Message>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -118,6 +124,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
   function apply(next: LiveState) {
     setState(next);
     setSettings(next.settings);
+    setRampText(next.settings.ramp.join(", "));
     setInvoice(next.invoice.url ?? "");
   }
 
@@ -162,8 +169,9 @@ export function LivePanel({ clientId }: { clientId: string }) {
       <div className="border-b border-border px-lg py-lg">
         <h3 className="text-h4">Go Live</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
-          Setup step 4. Once the campaign is built, paste the first monthly invoice and push Go Live to the client with an
-          email. They connect their inbox, pay and click Go Live; then the daily batches go out on their own.
+          Setup step 4. Once the campaign is built, paste the first monthly invoice and send the launch package (the invoice and
+          an email). The client connects their inbox, pays and approves the launch; you get an email and click Go Live within
+          24 hours. Then the daily batches go out on their own.
         </p>
         {state.testMode ? (
           <p className="mt-sm rounded-card border border-warning/40 px-md py-sm text-body-sm text-warning">
@@ -180,12 +188,45 @@ export function LivePanel({ clientId }: { clientId: string }) {
         ) : null}
       </div>
 
+      {live ? (
+        <div className="px-lg pt-lg">
+          <LiveBanner since={live.at} label="Investor campaign" />
+        </div>
+      ) : state.requested && !state.testMode ? (
+        <div className="px-lg pt-lg">
+          <LiveBanner since={state.requested.at} label="The client approved the launch" word="Ready" sincePrefix="Approved">
+            <p className="text-body text-heading">
+              They were told: live within 24 hours. Due by {formatDateTime(new Date(Date.parse(state.requested.at) + 86_400_000).toISOString())}.
+            </p>
+            <div className="mt-md flex flex-wrap items-center gap-sm">
+              <button
+                type="button"
+                className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
+                style={{ backgroundColor: "#0e816c" }}
+                disabled={busy || state.gaps.length > 0}
+                title={state.gaps.join(" ") || undefined}
+                onClick={() => {
+                  if (!window.confirm("Go Live now? The Instantly campaign is created, the first investors are added and sending starts in the next weekday window. The client is emailed.")) return;
+                  void run(
+                    () => goLiveNowAction(clientId),
+                    (r) => `Live: ${String(r.added)} investors added.${r.emailError ? ` The client email didn't go out: ${String(r.emailError)}` : " The client was emailed."}`,
+                  );
+                }}
+              >
+                {busy ? "Working…" : "Go Live now"}
+              </button>
+              <span className="text-body-sm text-secondary">Send yourself a test first (below) if you haven&apos;t.</span>
+            </div>
+          </LiveBanner>
+        </div>
+      ) : null}
+
       <div className="grid gap-lg px-lg py-md lg:grid-cols-2">
         <ul className="grid gap-sm text-body-sm">
           <Check done={state.campaignReady} label="Campaign built and approved" detail={state.campaignNote ?? undefined} />
           <Check
             done={Boolean(state.step)}
-            label="Pushed to the client, with the invoice"
+            label="Launch package sent (invoice and email)"
             detail={
               state.step
                 ? `Version ${state.step.version} · ${state.step.pushedAt ? formatDateTime(state.step.pushedAt) : ""}${state.step.emailedAt ? " · emailed" : " · not emailed"}`
@@ -214,7 +255,12 @@ export function LivePanel({ clientId }: { clientId: string }) {
             label="First monthly invoice paid"
             detail={state.invoice.paidAt ? `Paid ${formatDateTime(state.invoice.paidAt)}` : state.invoice.url ? "Sent; waiting for payment." : "Paste the Stripe invoice link and push."}
           />
-          <Check done={Boolean(live)} label="Client clicked Go Live" detail={live ? `${formatDateTime(live.at)}${live.by ? ` by ${live.by}` : ""}` : undefined} />
+          <Check
+            done={Boolean(state.requested) || Boolean(live)}
+            label="Client approved the launch"
+            detail={state.requested ? `${formatDateTime(state.requested.at)}${state.requested.by ? ` by ${state.requested.by}` : ""}` : state.testMode ? "Not needed for a Test Pilot." : undefined}
+          />
+          <Check done={Boolean(live)} label="Live" detail={live ? `${formatDateTime(live.at)}${live.by ? ` by ${live.by}` : ""}` : "You click Go Live once the client approves."} />
         </ul>
 
         <div className="grid gap-md text-body-sm">
@@ -236,16 +282,16 @@ export function LivePanel({ clientId }: { clientId: string }) {
                       className={primaryButton}
                       disabled={busy || !state.campaignReady}
                       onClick={() => {
-                        if (!window.confirm(`${state.step ? "Send Go Live again" : "Push Go Live to the client"} and email them?`)) return;
+                        if (!window.confirm(`${state.step ? "Send the launch package again" : "Send the launch package"} and email the client?`)) return;
                         void run(
                           () => pushGoLiveAction(clientId, invoice, email),
-                          (r) => (r.emailError ? `Pushed, but the email didn't go out: ${String(r.emailError)}` : "Pushed and emailed. It's the client's turn."),
+                          (r) => (r.emailError ? `Sent to the portal, but the email didn't go out: ${String(r.emailError)}` : "Launch package sent and emailed. It's the client's turn."),
                         ).then((done) => {
                           if (done) setEmail(null);
                         });
                       }}
                     >
-                      {state.step ? "Send again" : "Push to client & email"}
+                      {state.step ? "Send again" : "Send launch package"}
                     </button>
                     <button type="button" className={secondaryButton} disabled={busy} onClick={() => setEmail(null)}>
                       Cancel
@@ -260,7 +306,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   title={state.campaignReady ? undefined : (state.campaignNote ?? "Build the campaign first.")}
                   onClick={() => void draftEmail()}
                 >
-                  {busy ? "Working…" : state.step ? "Send Go Live again…" : "Push to client & email…"}
+                  {busy ? "Working…" : state.step ? "Send the launch package again…" : "Send launch package…"}
                 </button>
               )}
               <button
@@ -319,7 +365,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
             <div className="grid gap-sm">
               <p className="text-secondary">
                 Live{live.pausedAt ? ` · paused ${formatDateTime(live.pausedAt)}` : ""} · {state.counts.pushed} contacts in Instantly · {state.counts.waiting} waiting
-                {settings.new_per_day > 0 ? ` (${settings.new_per_day} added a day${state.testMode ? "" : ", weekdays"})` : ""} ·{" "}
+                {settings.new_per_day > 0 ? ` (${[...settings.ramp, settings.new_per_day].join(" → ")} added a day${state.testMode ? "" : ", weekdays"})` : ""} ·{" "}
                 {live.wave2PushedAt ? "second contacts released" : `second contacts start ${settings.wave2_delay_days} days after the first`}
               </p>
               <div className="flex flex-wrap gap-sm">
@@ -341,6 +387,9 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   }}
                 >
                   {live.pausedAt ? "Resume" : "Pause"}
+                </button>
+                <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => sendSummaryNowAction(clientId), () => "Today's summary is on its way to your inbox.")}>
+                  Email me today&apos;s summary
                 </button>
               </div>
             </div>
@@ -364,7 +413,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
               </span>
             </label>
             <label>
-              Timezone (Instantly name)
+              Timezone (Instantly name; Eastern = America/Detroit)
               <input className={`${inputClass} mt-xs w-48`} value={settings.timezone} onChange={(e) => field({ timezone: e.target.value })} />
             </label>
             <label>
@@ -379,7 +428,19 @@ export function LivePanel({ clientId }: { clientId: string }) {
               <input type="number" min={0} max={14} className={`${inputClass} mt-xs w-16`} value={settings.wave2_delay_days} onChange={(e) => field({ wave2_delay_days: Number(e.target.value) })} />
             </label>
             <label>
-              New investors a day (0 = all at once)
+              First weeks, new a day (ramp)
+              <input
+                className={`${inputClass} mt-xs w-28`}
+                value={rampText}
+                placeholder="10, 20"
+                onChange={(e) => {
+                  setRampText(e.target.value);
+                  field({ ramp: e.target.value.split(/[\s,]+/).filter(Boolean).map(Number).filter((n) => Number.isFinite(n) && n >= 0) });
+                }}
+              />
+            </label>
+            <label>
+              Then, new a day (0 = all at once)
               <input type="number" min={0} max={500} className={`${inputClass} mt-xs w-20`} value={settings.new_per_day} onChange={(e) => field({ new_per_day: Number(e.target.value) })} />
             </label>
             {state.testMode ? (
@@ -410,11 +471,27 @@ export function LivePanel({ clientId }: { clientId: string }) {
               Send test to me
             </button>
             {state.testSentAt ? <span className="text-body-sm text-muted">Last test {formatDateTime(state.testSentAt)}</span> : null}
+            <button
+              type="button"
+              className={secondaryButton}
+              disabled={busy}
+              title="Checks that Instantly can reach the portal to report sends, opens and replies. Go Live checks it too."
+              onClick={() => run(() => checkReplyTrackingAction(clientId), () => "Reply tracking is reachable.")}
+            >
+              Check reply tracking
+            </button>
           </div>
           <p className="mt-xs text-body-sm text-muted">
             Follow-ups are sent as replies in the same thread. Weekdays only. Each day&apos;s batch mixes Core, Sphere, Tier 3 and
             Tier 4 in proportion; a fund&apos;s second contact starts a few days after its first.
           </p>
+        </div>
+      ) : null}
+
+      {state.plan.length > 0 ? (
+        <div className="border-t border-border px-lg py-md">
+          <p className="text-label uppercase tracking-label text-muted">Sending plan{live ? "" : " (if it starts the next weekday)"}</p>
+          <SendingPlanTable weeks={state.plan} />
         </div>
       ) : null}
 

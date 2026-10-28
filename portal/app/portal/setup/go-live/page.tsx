@@ -18,7 +18,7 @@ export default async function GoLivePage() {
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Go Live"
-        description="Three steps, then your investor emails start going out from your own inbox, in your name. You see every reply that needs you in your Investor Inbox."
+        description="Three steps, then Rupert starts your investor emails from your own inbox, in your name. You see every reply that needs you in your Investor Inbox."
       />
       {state && (state.step || state.live) ? (
         <GoLiveView
@@ -30,8 +30,10 @@ export default async function GoLivePage() {
           gaps={state.gaps}
           consentText={state.consentText}
           counts={state.counts}
-          perDay={state.settings.new_per_day}
           testSentAt={state.testSentAt}
+          requested={state.requested ? { at: state.requested.at } : null}
+          plan={state.plan}
+          inboxEmail={state.inbox?.email ?? null}
         />
       ) : (
         <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">

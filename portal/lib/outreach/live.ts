@@ -23,21 +23,32 @@ export type LiveSettings = {
   /** Days after a fund's first contact is sent before its other contacts start. */
   wave2_delay_days: number;
   track_opens: boolean;
-  /** New investors added to the campaign per day, mixed across tiers. 0: everyone at once. */
+  /** New investors added to the campaign per day at full pace, mixed across tiers. 0: everyone at once. */
   new_per_day: number;
+  /** The first weeks' pace, before full pace: [10, 20] = 10 a day in week 1, 20 in week 2. */
+  ramp: number[];
   /** Test mode (Test Pilot clients only): every email goes to a + address of this inbox. */
   test_recipient: string;
 };
 
+/**
+ * Eastern time. Instantly's timezone list doesn't take America/New_York;
+ * America/Detroit is the same clock (EST/EDT).
+ */
+export const EASTERN = "America/Detroit";
+
 export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
-  daily_limit: 30,
-  timezone: "America/Chicago",
+  // Each investor gets up to 3 emails, so the cap is 3× full pace: 30 new a
+  // day needs up to 90 emails a day once follow-ups overlap.
+  daily_limit: 90,
+  timezone: EASTERN,
   from: "09:00",
   to: "17:00",
   followup_days: [4, 5],
   wave2_delay_days: 3,
   track_opens: true,
-  new_per_day: 10,
+  new_per_day: 30,
+  ramp: [10, 20],
   test_recipient: "",
 };
 
@@ -51,7 +62,12 @@ export function asLiveSettings(value: unknown): LiveSettings {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const d = DEFAULT_LIVE_SETTINGS;
   const followups = Array.isArray(raw.followup_days) ? raw.followup_days : [];
-  const tz = typeof raw.timezone === "string" && /^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/.test(raw.timezone) ? raw.timezone : d.timezone;
+  const tzRaw = typeof raw.timezone === "string" && /^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/.test(raw.timezone) ? raw.timezone : d.timezone;
+  // Instantly rejects America/New_York: same clock, accepted name.
+  const tz = tzRaw === "America/New_York" ? EASTERN : tzRaw;
+  const ramp = Array.isArray(raw.ramp)
+    ? raw.ramp.slice(0, 8).map((n) => int(n, 0, 500, -1)).filter((n) => n >= 0)
+    : d.ramp;
   const from = hhmm(raw.from, d.from);
   const to = hhmm(raw.to, d.to);
   return {
@@ -63,6 +79,7 @@ export function asLiveSettings(value: unknown): LiveSettings {
     wave2_delay_days: int(raw.wave2_delay_days, 0, 14, d.wave2_delay_days),
     track_opens: typeof raw.track_opens === "boolean" ? raw.track_opens : d.track_opens,
     new_per_day: int(raw.new_per_day, 0, 500, d.new_per_day),
+    ramp,
     test_recipient: typeof raw.test_recipient === "string" && EMAIL.test(raw.test_recipient.trim()) ? raw.test_recipient.trim().toLowerCase() : "",
   };
 }
@@ -239,6 +256,140 @@ export function isWave2Due(liveAt: string | null, delayDays: number, now = Date.
   if (!liveAt) return false;
   const at = Date.parse(liveAt);
   return Number.isFinite(at) && now >= at + delayDays * 86_400_000;
+}
+
+// ---------------------------------------------------------------------------
+// Campaign weeks and the sending plan. A campaign week is 5 weekdays counted
+// from the launch day (Week 1 = launch day and the next 4 weekdays). Dates
+// are local calendar days ("YYYY-MM-DD") in the campaign's timezone.
+
+/** The calendar day of an instant in a timezone, as YYYY-MM-DD. */
+export function localDate(at: string | number | Date, timeZone: string) {
+  const date = at instanceof Date ? at : new Date(at);
+  try {
+    return new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+  } catch {
+    return date.toISOString().slice(0, 10);
+  }
+}
+
+const dayMs = 86_400_000;
+const toUtc = (day: string) => Date.parse(`${day}T12:00:00Z`);
+const fromUtc = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+export const isWeekendDay = (day: string) => {
+  const dow = new Date(toUtc(day)).getUTCDay();
+  return dow === 0 || dow === 6;
+};
+export const addDays = (day: string, n: number) => fromUtc(toUtc(day) + n * dayMs);
+
+/** The weekday on or after `day`. */
+export function nextWeekday(day: string) {
+  let d = day;
+  while (isWeekendDay(d)) d = addDays(d, 1);
+  return d;
+}
+
+/** `n` weekdays after `day` (n = 0: `day` itself, moved to a weekday). */
+export function addWeekdays(day: string, n: number) {
+  let d = nextWeekday(day);
+  for (let i = 0; i < n; i += 1) d = nextWeekday(addDays(d, 1));
+  return d;
+}
+
+/** Weekdays after `start`, up to and including `day`. */
+export function weekdaysBetween(start: string, day: string) {
+  if (day <= start) return 0;
+  let n = 0;
+  for (let d = addDays(start, 1); d <= day; d = addDays(d, 1)) if (!isWeekendDay(d)) n += 1;
+  return n;
+}
+
+/** The campaign week (1-based) a day falls in, counted from the launch day. */
+export function campaignWeek(launchDay: string, day: string) {
+  return Math.floor(weekdaysBetween(nextWeekday(launchDay), day) / 5) + 1;
+}
+
+/** The first and last weekday of campaign week `week`. */
+export function weekRange(launchDay: string, week: number) {
+  const start = addWeekdays(launchDay, (week - 1) * 5);
+  return { start, end: addWeekdays(start, 4) };
+}
+
+/** New investors a day in a given campaign week. 0 = everyone at once. */
+export function perDayForWeek(settings: Pick<LiveSettings, "ramp" | "new_per_day">, week: number) {
+  if (settings.new_per_day === 0) return 0;
+  return week >= 1 && week <= settings.ramp.length ? settings.ramp[week - 1] : settings.new_per_day;
+}
+
+export type PlanPhase = "Warm-up" | "Ramp-up" | "Full pace" | "Follow-ups only";
+
+export type PlanWeek = {
+  week: number;
+  start: string;
+  end: string;
+  phase: PlanPhase;
+  perDay: number;
+  newInvestors: number;
+  /** Approximate: first emails plus follow-ups, capped by the daily limit. */
+  emails: number;
+  status: "done" | "current" | "next" | "planned";
+};
+
+/**
+ * The week-by-week sending plan for `total` contacts from `launchDay`.
+ * Follow-up delays are counted in weekdays and each investor is assumed to
+ * get all three emails, so the email counts are an upper estimate. `today`
+ * marks the current week (or, before launch, the first week as next).
+ */
+export function sendingPlan(input: {
+  total: number;
+  settings: Pick<LiveSettings, "ramp" | "new_per_day" | "followup_days" | "daily_limit">;
+  launchDay: string;
+  today: string | null;
+}): PlanWeek[] {
+  const { settings } = input;
+  const start = nextWeekday(input.launchDay);
+  const [f1, f2] = settings.followup_days;
+  const due = new Map<number, number>();
+  let remaining = Math.max(0, Math.floor(input.total));
+  let backlog = 0;
+  const weeks: PlanWeek[] = [];
+  const currentWeek = input.today ? campaignWeek(start, input.today) : 0;
+  for (let w = 1; w <= 26; w += 1) {
+    const perDay = perDayForWeek(settings, w);
+    let newInvestors = 0;
+    let emails = 0;
+    for (let i = 0; i < 5; i += 1) {
+      const day = (w - 1) * 5 + i;
+      const fresh = perDay === 0 ? remaining : Math.min(perDay, remaining);
+      remaining -= fresh;
+      newInvestors += fresh;
+      if (fresh > 0) {
+        due.set(day + f1, (due.get(day + f1) ?? 0) + fresh);
+        due.set(day + f1 + f2, (due.get(day + f1 + f2) ?? 0) + fresh);
+      }
+      backlog += fresh + (due.get(day) ?? 0);
+      due.delete(day);
+      const sent = Math.min(backlog, settings.daily_limit);
+      backlog -= sent;
+      emails += sent;
+    }
+    if (newInvestors === 0 && emails === 0) break;
+    const range = weekRange(start, w);
+    const phase: PlanPhase =
+      newInvestors === 0 ? "Follow-ups only" : w <= settings.ramp.length && settings.new_per_day > 0 ? (w === 1 ? "Warm-up" : "Ramp-up") : "Full pace";
+    const status = !input.today ? (w === 1 ? "next" : "planned") : w < currentWeek ? "done" : w === currentWeek ? "current" : "planned";
+    weeks.push({ week: w, ...range, phase, perDay: newInvestors === 0 ? 0 : perDay === 0 ? newInvestors : perDay, newInvestors, emails, status });
+    if (remaining === 0 && due.size === 0 && backlog === 0) break;
+  }
+  return weeks;
+}
+
+/** "Nov 2 – 6" or "Nov 30 – Dec 4". */
+export function weekLabel(start: string, end: string) {
+  const fmt = (day: string, withMonth: boolean) =>
+    new Intl.DateTimeFormat("en-US", withMonth ? { month: "short", day: "numeric", timeZone: "UTC" } : { day: "numeric", timeZone: "UTC" }).format(new Date(toUtc(day)));
+  return `${fmt(start, true)} – ${fmt(end, start.slice(0, 7) !== end.slice(0, 7))}`;
 }
 
 // ---------------------------------------------------------------------------

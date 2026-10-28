@@ -42,7 +42,7 @@ import {
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import { setWarmIntro } from "@/lib/outreach/campaign-server";
 import { markRepliesRead } from "@/lib/outreach/replies-server";
-import { goLive, loadLiveState, pollInboxConnect, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
+import { loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
 import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
 import { notifyAdmin as notifyGoLive } from "@/lib/notify";
 import {
@@ -786,19 +786,27 @@ export async function pollInboxConnectAction(): Promise<
   return { ok: true, ...polled.value };
 }
 
-/** The client's Go Live: they authorize sending, and the campaign starts. */
-export async function goLiveAction(consent: boolean): Promise<SetupActionResult> {
+/**
+ * The client approves the launch: they authorize sending, Rupert is told by
+ * email and in the app, and he clicks Go Live within 24 hours. Nothing is
+ * sent until then.
+ */
+export async function approveLaunchAction(consent: boolean): Promise<SetupActionResult> {
   const access = await requirePortalService();
   if (!access.ok) return access;
   const opened = await loadSetupStep(access.supabase, access.user.id, "go_live");
   if (!opened.ok) return opened;
   if (!opened.row || opened.row.version === 0) return { ok: false, error: "Go Live opens once Rupert sends you your campaign." };
-  const launched = await goLive(access.supabase, access.user.id, access.user.email ?? null, Boolean(consent));
-  if (!launched.ok) return launched;
-  await confirmGoLiveStep(access.supabase, access.user.id, access.user.email ?? null);
-  await notifyGoLive(access.supabase, access.user.id, "went_live", { email: true });
+  const requested = await requestLaunch(access.supabase, access.user.id, access.user.email ?? null, Boolean(consent));
+  if (!requested.ok) return requested;
+  if (!requested.value.already) {
+    await confirmGoLiveStep(access.supabase, access.user.id, access.user.email ?? null);
+    await notifyGoLive(access.supabase, access.user.id, "launch_requested", {
+      email: true,
+      details: `They were told the campaign goes live within 24 hours, and that they'll be emailed when it does.\n\nGo Live from the client's Setup page, Go Live panel.`,
+    });
+  }
   revalidateSetup(access.user.id);
-  revalidatePath("/portal/live-campaign");
   return { ok: true };
 }
 
