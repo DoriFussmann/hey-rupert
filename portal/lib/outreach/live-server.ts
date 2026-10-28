@@ -447,8 +447,16 @@ export async function checkWebhookReachable(): Promise<Result<null>> {
       body: "{}",
       signal: AbortSignal.timeout(10_000),
       cache: "no-store",
+      // Instantly doesn't follow redirects, so a redirect is a failure here too.
+      redirect: "manual",
     });
     if (response.status === 401 || response.status === 503) return { ok: true, value: null };
+    if (response.status >= 300 && response.status < 400) {
+      return {
+        ok: false,
+        error: `Reply tracking is not reachable: ${url} redirects to ${response.headers.get("location") ?? "another address"}, and Instantly doesn't follow redirects. Set NEXT_PUBLIC_PORTAL_URL in Vercel to the final address.`,
+      };
+    }
     return {
       ok: false,
       error: `Reply tracking is not reachable: ${url} answered ${response.status}. Instantly could not report sends or replies. Check that this address reaches the portal (site/vercel.json forwards /api/* to it), then try again.`,
