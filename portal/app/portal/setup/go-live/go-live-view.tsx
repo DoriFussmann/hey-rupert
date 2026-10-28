@@ -6,8 +6,8 @@ import { useRouter } from "next/navigation";
 import { approveLaunchAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
 import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
-import { SendingPlanTable } from "@/components/sending-plan-table";
-import type { PlanWeek } from "@/lib/outreach/live";
+import { LaunchTimeline } from "@/components/launch-timeline";
+import { weekLabel, type PlanWeek } from "@/lib/outreach/live";
 
 const POLL_MS = 3000;
 const POLL_LIMIT_MS = 10 * 60 * 1000;
@@ -137,15 +137,37 @@ export function GoLiveView({
   }
 
   const total = counts.wave1 + counts.wave2;
-  const planBlock = (
-    <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
-      <h2 className="text-h4">What happens, week by week</h2>
-      <SendingPlanTable
-        weeks={plan}
-        note={`${total} investors at ${counts.funds} funds. Emails go out from your inbox on weekdays, 9am–5pm Eastern, never more than 30 a day: 10 a day in week 1, 20 in week 2, then 30. Each investor gets a first email and up to two follow-ups in the same thread; anyone who replies gets no more. Follow-ups go first each day, and new investors fill the rest.`}
-      />
-    </section>
-  );
+  const lastFirst = [...plan].reverse().find((w) => w.newInvestors > 0);
+  const lastWeek = plan[plan.length - 1];
+  const planBlock =
+    plan.length > 0 ? (
+      <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
+        <h2 className="text-h3">What happens next</h2>
+        <div className="mt-md grid gap-md sm:grid-cols-3">
+          <div className="rounded-card border border-border px-md py-md">
+            <p className="text-label uppercase tracking-label text-muted">Investors</p>
+            <p className="mt-xs font-mono text-h2 text-heading">{total}</p>
+            <p className="text-body-sm text-muted">at {counts.funds} funds</p>
+          </div>
+          <div className="rounded-card border border-border px-md py-md">
+            <p className="text-label uppercase tracking-label text-muted">First emails done</p>
+            <p className="mt-xs font-mono text-h2 text-heading">Week {lastFirst?.week ?? 1}</p>
+            <p className="text-body-sm text-muted">{lastFirst ? `by ${weekLabel(lastFirst.end, lastFirst.end)}` : ""}</p>
+          </div>
+          <div className="rounded-card border border-border px-md py-md">
+            <p className="text-label uppercase tracking-label text-muted">Last follow-ups</p>
+            <p className="mt-xs font-mono text-h2 text-heading">Week {lastWeek.week}</p>
+            <p className="text-body-sm text-muted">by {weekLabel(lastWeek.end, lastWeek.end)}</p>
+          </div>
+        </div>
+        <p className="mt-md max-w-prose text-body-sm text-secondary">
+          Each investor gets a first email and up to two follow-ups, 5 days apart, in the same thread; anyone who replies gets no more.
+          The pace starts low so your inbox builds a good sending record, and never goes above 30 emails a day.
+          {live ? "" : " Dates assume sending starts the next weekday."}
+        </p>
+        <LaunchTimeline weeks={plan} live={Boolean(live)} requested={Boolean(requested)} />
+      </section>
+    ) : null;
 
   if (live) {
     return (

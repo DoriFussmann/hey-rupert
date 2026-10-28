@@ -6,8 +6,12 @@
 //   - Day 0 is a Monday. The first `sendingDaysPerWeek` days of each week are
 //     sending days (5 = Monday to Friday).
 //   - The campaign lasts round(months × 365.25 / 12) calendar days.
-//   - A sending day's capacity is inboxes × emails per inbox per day, times the
-//     warm-up percentage while the day is inside the warm-up weeks.
+//   - A sending day's capacity is inboxes × emails per inbox per day (at most
+//     30 per inbox, follow-ups included). During the warm-up weeks it ramps up
+//     evenly: the first warm-up week sends the warm-up percentage, each later
+//     one steps up by the same amount towards full. With 2 warm-up weeks at
+//     33% of 30: 10 a day in week 1, 20 in week 2, 30 from week 3 — the
+//     same ramp the live campaign sends (lib/outreach/live.ts).
 //   - A firm is started on a day by emailing each of its contacts (one
 //     initial email per contact). Follow-up k goes `followUpDelayDays`
 //     calendar days after the email before it, on the first sending day with
@@ -21,7 +25,10 @@
 
 import { EMAIL_SEQUENCE_LABELS } from "../../setup.ts";
 
-export const CAPACITY_MODEL_VERSION = "capacity-2026-10.1";
+export const CAPACITY_MODEL_VERSION = "capacity-2026-10.2";
+
+/** Never more than this many emails a day from one inbox (lib/outreach/live.ts MAX_DAILY_EMAILS). */
+export const MAX_EMAILS_PER_INBOX = 30;
 
 /** Outreach goes to each fund's Primary and Backup contact (the engine's sequence). */
 export const SEQUENCE_CONTACTS = 2;
@@ -30,7 +37,7 @@ export type CapacityInputs = {
   inboxes: number;
   emailsPerInboxPerDay: number;
   warmupWeeks: number;
-  /** Warm-up capacity as a percentage of normal capacity (0–100). */
+  /** The first warm-up week's capacity as a percentage of normal (0–100); later warm-up weeks step up evenly. */
   warmupPercent: number;
   sendingDaysPerWeek: number;
   months: number;
@@ -43,9 +50,9 @@ export type CapacityInputs = {
 
 export const INPUT_LIMITS: Record<keyof CapacityInputs, { min: number; max: number; label: string; whole: boolean }> = {
   inboxes: { min: 1, max: 100, label: "Sending inboxes", whole: true },
-  emailsPerInboxPerDay: { min: 1, max: 100, label: "Emails per inbox per sending day", whole: true },
+  emailsPerInboxPerDay: { min: 1, max: MAX_EMAILS_PER_INBOX, label: "Emails per inbox per sending day", whole: true },
   warmupWeeks: { min: 0, max: 12, label: "Warm-up weeks", whole: true },
-  warmupPercent: { min: 0, max: 100, label: "Warm-up capacity (%)", whole: true },
+  warmupPercent: { min: 0, max: 100, label: "First warm-up week (%)", whole: true },
   sendingDaysPerWeek: { min: 1, max: 7, label: "Sending days per week", whole: true },
   months: { min: 1, max: 12, label: "Campaign months", whole: true },
   contactsPerFirm: { min: 1, max: 10, label: "Contacts per firm", whole: true },
@@ -54,23 +61,22 @@ export const INPUT_LIMITS: Record<keyof CapacityInputs, { min: number; max: numb
 };
 
 /**
- * Starting values. Contacts per firm and follow-ups come from the app: the
- * engine's Primary + Backup, and the Email Copy sequence (a first email and
- * two follow-ups). The sending infrastructure isn't stored anywhere in the
- * app, so its starting values are an example: one inbox at 35 emails a day,
- * one warm-up week at 50%, Monday to Friday, a week between emails. With
- * them the calculation lands within about 6% of every planning benchmark.
+ * Starting values, matching how the live campaign sends: the client's one
+ * inbox, at most 30 emails a day (follow-ups included), ramping 10 → 20 → 30
+ * over the first two weeks, Monday to Friday, follow-ups 5 days apart.
+ * Contacts per firm and follow-ups come from the app: the engine's Primary +
+ * Backup, and the Email Copy sequence (a first email and two follow-ups).
  */
 export const DEFAULT_INPUTS: CapacityInputs = {
   inboxes: 1,
-  emailsPerInboxPerDay: 35,
-  warmupWeeks: 1,
-  warmupPercent: 50,
+  emailsPerInboxPerDay: MAX_EMAILS_PER_INBOX,
+  warmupWeeks: 2,
+  warmupPercent: 33,
   sendingDaysPerWeek: 5,
   months: 3,
   contactsPerFirm: SEQUENCE_CONTACTS,
   followUps: EMAIL_SEQUENCE_LABELS.length - 1,
-  followUpDelayDays: 7,
+  followUpDelayDays: 5,
 };
 
 /** Problems with the inputs, in words. Empty when the schedule can run. */
@@ -100,9 +106,11 @@ export function campaignDays(months: number) {
   return Math.round((months * 365.25) / 12);
 }
 
-function dailyCapacity(inputs: CapacityInputs, warmup: boolean) {
+function dailyCapacity(inputs: CapacityInputs, warmup: boolean, warmupWeek = 0) {
   const normal = inputs.inboxes * inputs.emailsPerInboxPerDay;
-  return warmup ? Math.floor((normal * inputs.warmupPercent) / 100) : normal;
+  if (!warmup || inputs.warmupWeeks === 0) return normal;
+  const percent = inputs.warmupPercent + ((100 - inputs.warmupPercent) * warmupWeek) / inputs.warmupWeeks;
+  return Math.min(normal, Math.round((normal * percent) / 100));
 }
 
 export type WeekRow = {
@@ -121,7 +129,10 @@ export type CapacityResult = {
   sendingDays: number;
   warmupSendingDays: number;
   dailyNormal: number;
+  /** The first warm-up week's daily capacity. */
   dailyWarmup: number;
+  /** Sends the warm-up costs against full capacity. */
+  warmupLost: number;
   /** Every email the inboxes could send in the campaign. */
   capacity: number;
   warmupCapacity: number;
@@ -163,7 +174,7 @@ export function schedule(inputs: CapacityInputs, stopAtFirms = Number.POSITIVE_I
   const sending = new Array<boolean>(days).fill(false);
   for (let d = 0; d < days; d += 1) {
     sending[d] = d % 7 < inputs.sendingDaysPerWeek;
-    if (sending[d]) cap[d] = dailyCapacity(inputs, d < warmupDays);
+    if (sending[d]) cap[d] = dailyCapacity(inputs, d < warmupDays, Math.floor(d / 7));
   }
   const free = [...cap];
   const initialOn = new Array<number>(days).fill(0);
@@ -243,7 +254,8 @@ export function schedule(inputs: CapacityInputs, stopAtFirms = Number.POSITIVE_I
     sendingDays: sending.filter(Boolean).length,
     warmupSendingDays: sending.slice(0, Math.min(warmupDays, days)).filter(Boolean).length,
     dailyNormal: dailyCapacity(inputs, false),
-    dailyWarmup: warmupDays > 0 ? dailyCapacity(inputs, true) : dailyCapacity(inputs, false),
+    dailyWarmup: warmupDays > 0 ? dailyCapacity(inputs, true, 0) : dailyCapacity(inputs, false),
+    warmupLost: cap.slice(0, Math.min(warmupDays, days)).reduce((lost, value, d) => lost + (sending[d] ? dailyCapacity(inputs, false) - value : 0), 0),
     capacity,
     warmupCapacity,
     initialEmails,
@@ -276,7 +288,7 @@ function bottlenecksOf(inputs: CapacityInputs, r: CapacityResult, stopAt: number
   }
   if (r.capacity === 0) return ["The inboxes send nothing in this campaign."];
   if (r.warmupCapacity > 0 || inputs.warmupWeeks > 0) {
-    const lost = r.warmupSendingDays * (r.dailyNormal - r.dailyWarmup);
+    const lost = r.warmupLost;
     if (lost > 0) notes.push(`Warm-up: ${lost.toLocaleString("en-US")} sends fewer than at full capacity (${pct(lost / (r.capacity + lost))} of the campaign).`);
   }
   if (r.tailUnused > 0) {

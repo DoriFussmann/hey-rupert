@@ -125,7 +125,16 @@ export async function loadCampaignData(supabase: ServiceClient, clientId: string
         fund_name: String(r.fund_name ?? ""),
         label: r.label ? String(r.label) : null,
       })),
-      plan: sendingPlan({ total: activeTotal, settings, launchDay, today }),
+      plan: sendingPlan({
+        total: activeTotal,
+        settings,
+        launchDay,
+        today,
+        tiers: [1, 2, 3, 4].map((tier) => ({
+          label: ["", "Core", "Sphere", "Tier 3", "Tier 4"][tier],
+          count: active.filter((m) => m.tier === tier && isApproved(m)).length,
+        })),
+      }),
       activeTotal,
     },
   };

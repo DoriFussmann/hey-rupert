@@ -45,7 +45,8 @@ export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
   timezone: EASTERN,
   from: "09:00",
   to: "17:00",
-  followup_days: [4, 5],
+  // The same spacing the campaign Plan uses (lib/match/capacity/schedule.ts).
+  followup_days: [5, 5],
   wave2_delay_days: 3,
   track_opens: true,
   ramp: [10, 20],
@@ -376,8 +377,26 @@ export type PlanWeek = {
   newInvestors: number;
   /** Approximate: first emails plus follow-ups, never above the cap. */
   emails: number;
+  /** The week's new investors by tier: every batch mixes the tiers in proportion. */
+  byTier: { label: string; count: number }[];
   status: "done" | "current" | "next" | "planned";
 };
+
+/** `total` split by `counts` in proportion, in whole numbers that add up (largest remainders). */
+export function proportional(total: number, counts: number[]) {
+  const sum = counts.reduce((a, b) => a + b, 0);
+  if (sum <= 0) return counts.map(() => 0);
+  const raw = counts.map((c) => (total * c) / sum);
+  const out = raw.map(Math.floor);
+  let left = total - out.reduce((a, b) => a + b, 0);
+  const order = raw.map((r, i) => [r - Math.floor(r), i] as const).sort((a, b) => b[0] - a[0] || a[1] - b[1]);
+  for (const [, i] of order) {
+    if (left <= 0) break;
+    out[i] += 1;
+    left -= 1;
+  }
+  return out;
+}
 
 /**
  * The week-by-week sending plan for `total` contacts from `launchDay`. Each
@@ -391,8 +410,13 @@ export function sendingPlan(input: {
   settings: Pick<LiveSettings, "ramp" | "followup_days" | "daily_limit">;
   launchDay: string;
   today: string | null;
+  /** Investors per tier (Core, Sphere, …), to show which tiers each week reaches. */
+  tiers?: { label: string; count: number }[];
 }): PlanWeek[] {
   const { settings } = input;
+  const tiers = (input.tiers ?? []).filter((t) => t.count > 0);
+  let cumulative = 0;
+  let cumulativeByTier = tiers.map(() => 0);
   const start = nextWeekday(input.launchDay);
   const due = new Map<string, number>();
   let remaining = Math.max(0, Math.floor(input.total));
@@ -421,7 +445,11 @@ export function sendingPlan(input: {
     const range = weekRange(start, w);
     const phase: PlanPhase = newInvestors === 0 ? "Follow-ups only" : w <= settings.ramp.length ? (w === 1 ? "Warm-up" : "Ramp-up") : "Full pace";
     const status = !input.today ? (w === 1 ? "next" : "planned") : w < currentWeek ? "done" : w === currentWeek ? "current" : "planned";
-    weeks.push({ week: w, ...range, phase, cap, newInvestors, emails, status });
+    cumulative += newInvestors;
+    const nextByTier = proportional(cumulative, tiers.map((t) => t.count));
+    const byTier = tiers.map((t, i) => ({ label: t.label, count: nextByTier[i] - cumulativeByTier[i] })).filter((t) => t.count > 0);
+    cumulativeByTier = nextByTier;
+    weeks.push({ week: w, ...range, phase, cap, newInvestors, emails, byTier, status });
     if (remaining === 0 && due.size === 0 && backlog === 0) break;
   }
   return weeks;

@@ -59,7 +59,7 @@ test("the campaign: three variable steps, follow-ups in the same thread, stop fo
   const steps = body.sequences[0].steps;
   assert.equal(steps.length, 3);
   assert.deepEqual(steps.map((s) => s.variants[0].subject), ["{{subject_1}}", "", ""]);
-  assert.deepEqual(steps.map((s) => s.delay), [4, 5, 0]);
+  assert.deepEqual(steps.map((s) => s.delay), [5, 5, 0]);
   assert.equal(body.stop_for_company, true);
   assert.deepEqual(body.email_list, ["dana@acme.com"]);
   assert.deepEqual(Object.entries(body.campaign_schedule.schedules[0].days).filter(([, on]) => on).map(([d]) => d), ["1", "2", "3", "4", "5"]);
@@ -189,7 +189,7 @@ test("the email cap: 10 a day in week 1, 20 in week 2, then 30, never more", () 
 });
 
 test("new investors fill the room the day's follow-ups and first emails leave", () => {
-  const s = asLiveSettings(null);
+  const s = asLiveSettings({ followup_days: [4, 5] });
   const at = (day: string) => `${day}T15:00:00Z`;
   const contacts = [
     // First email Mon Nov 2: follow-ups Fri Nov 6 and Wed Nov 11.
@@ -224,4 +224,20 @@ test("the sending plan reaches everyone, marks the current week, then follow-ups
   assert.ok(plan.every((w) => w.emails <= w.cap * 5), "never above the day's cap");
   const before = sendingPlan({ total: 40, settings: DEFAULT_LIVE_SETTINGS, launchDay: "2026-11-02", today: null });
   assert.equal(before[0].status, "next");
+});
+
+test("each week's new investors split across tiers in proportion, adding up exactly", () => {
+  const tiers = [
+    { label: "Core", count: 20 },
+    { label: "Sphere", count: 112 },
+    { label: "Tier 3", count: 98 },
+    { label: "Tier 4", count: 70 },
+  ];
+  const plan = sendingPlan({ total: 300, settings: DEFAULT_LIVE_SETTINGS, launchDay: "2026-11-02", today: null, tiers });
+  for (const week of plan) assert.equal(week.byTier.reduce((n, t) => n + t.count, 0), week.newInvestors);
+  for (const tier of tiers) {
+    const sent = plan.reduce((n, w) => n + (w.byTier.find((t) => t.label === tier.label)?.count ?? 0), 0);
+    assert.equal(sent, tier.count, tier.label);
+  }
+  assert.deepEqual(plan[0].byTier.map((t) => t.label), ["Core", "Sphere", "Tier 3", "Tier 4"]);
 });

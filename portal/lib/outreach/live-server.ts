@@ -60,6 +60,8 @@ function tableError(message: string, code?: string) {
 
 const LIVE_STAGES_FROM = ["setup"];
 
+const TIER_NAMES: Record<number, string> = { 1: "Core", 2: "Sphere", 3: "Tier 3", 4: "Tier 4" };
+
 export const CONSENT_TEXT = (inbox: string) =>
   `I authorize Rupert to send the investor emails I approved from ${inbox}, in my name, and to receive the replies so he can pass on the ones that matter.`;
 
@@ -178,8 +180,11 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
   const waiting = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && isApproved(m)).length;
   const total = (c.summary?.wave1 ?? 0) + (c.summary?.wave2 ?? 0) || messages.value.filter((m) => m.slot === "active" && isApproved(m)).length;
   const today = localDate(Date.now(), r.settings.timezone);
+  const approvedActive = messages.value.filter((m) => m.slot === "active" && isApproved(m));
+  const tiers = [1, 2, 3, 4].map((tier) => ({ label: TIER_NAMES[tier], count: approvedActive.filter((m) => m.tier === tier).length }));
   const plan = sendingPlan({
     total,
+    tiers,
     settings: r.settings,
     launchDay: r.live_at ? localDate(r.live_at, r.settings.timezone) : nextWeekday(addDays(today, 1)),
     today: r.live_at ? today : null,
