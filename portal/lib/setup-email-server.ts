@@ -6,6 +6,7 @@ import { loadEmailSettings } from "@/lib/email-settings";
 import {
   QUESTION_ANSWERED_KEY,
   emailTemplate,
+  launchCallText,
   renderEmail,
   tidyBody,
   updatedSubject,
@@ -122,6 +123,7 @@ export async function renderStepEmail(
   const rendered = renderEmail(context.template, {
     ...baseValues(context, version),
     note: "",
+    launch_call: step === "email_copy" ? launchCallText() : "",
   });
   return {
     ok: true,
@@ -146,7 +148,14 @@ export async function composeAiEmail(
 
   const values = baseValues(context, 1);
   const body = tidyBody(
-    [values.greeting, drafted.body, `Open your portal: ${context.portalLink}`, context.signature].join(
+    [
+      values.greeting,
+      drafted.body,
+      `Open your portal: ${context.portalLink}`,
+      // The last step before launch: offer the pre-launch call under the email.
+      step === "email_copy" ? launchCallText() : "",
+      context.signature,
+    ].join(
       "\n\n",
     ),
   );
