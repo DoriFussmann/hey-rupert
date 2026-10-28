@@ -1469,15 +1469,30 @@
       align-items: start;
     }
 
-    /* The text gets the wider column; the company panels stack in one. */
     .founder-grid--about {
+      grid-template-columns: 2fr 3fr;
+    }
+
+    /* About page only: the text gets the wider column. */
+    .founder-grid--about.founder-grid--about-page {
       grid-template-columns: 3fr 2fr;
     }
   }
 
   .founder-grid--about .case-stack--aside {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     align-items: start;
+  }
+
+  @media (max-width: 479px) {
+    .founder-grid--about .case-stack--aside {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* About page only: the company panels stack in one column. */
+  .founder-grid--about-page .case-stack--aside {
+    grid-template-columns: 1fr;
   }
 
   .founder-panel {
