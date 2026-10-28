@@ -76,7 +76,9 @@ Each Core fund gets 2 active contacts with their own emails, written from the Co
   - A fund whose type has no copy group is listed as not written.
 - **Stale:** a newer confirmed copy version, or a different list run, makes the build stale. Export is refused until it's built again.
 
-## Export (Instantly CSV)
+## Export (CSV backup)
+
+Not needed for sending: Go Live pushes everything to Instantly through the API (part 5). The CSV is a backup copy.
 
 - **Which rows:** only active contacts whose text matches its approval hash. Edited text is skipped until it's approved again.
 - **Columns:** email, names, fund, tier, type, wave, then `subject_N`, `body_N` (text) and `body_N_html` for N = 1–3.
