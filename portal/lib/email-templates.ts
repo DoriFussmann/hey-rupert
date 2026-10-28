@@ -30,7 +30,22 @@ export type EmailToken =
   | "portal_host"
   | "question"
   | "answer"
-  | "invoice_link";
+  | "invoice_link"
+  | "launch_call";
+
+/**
+ * The 30-minute pre-launch call, offered under the Email Copy email. The
+ * booking link is NEXT_PUBLIC_LAUNCH_CALL_URL (a 30-minute Cal.com event).
+ */
+export const LAUNCH_CALL_URL = process.env.NEXT_PUBLIC_LAUNCH_CALL_URL || "https://cal.com/team-rupert-2zxrkh/30min";
+
+export function launchCallText(url: string = LAUNCH_CALL_URL) {
+  return [
+    "Before we launch: a 30-minute call",
+    "Once you've confirmed the emails, let's take 30 minutes before anything goes out. We'll walk through the launch plan together: who gets emailed first and when, the weekly pace (it starts at 10 emails a day from your inbox and builds to 30), how the follow-ups work, how replies reach you through Rupert, and what we'll need from you once investors start answering.",
+    `Book a time that suits you: ${url}`,
+  ].join("\n\n");
+}
 
 export const TOKEN_HELP: Record<EmailToken, string> = {
   greeting: '"Hi Maya," (or "Hi," when there is no first name)',
@@ -59,6 +74,7 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   question: "The client's question, as they wrote it",
   answer: "Your answer, as you wrote it",
   invoice_link: "The Stripe link to the client's first monthly invoice",
+  launch_call: "The offer of a 30-minute pre-launch call, with the booking link",
 };
 
 /** Example values for previews and test emails. */
@@ -85,6 +101,7 @@ export const SAMPLE_VALUES: Record<EmailToken, string> = {
   question: "Could we leave out funds that backed our main competitor?",
   answer: "Yes. I've marked them, and they won't be contacted.",
   invoice_link: "https://invoice.stripe.com/i/sample",
+  launch_call: launchCallText(),
 };
 
 const TOKEN_PATTERN = /\{([a-z_]+)\}/g;
@@ -382,15 +399,26 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "Rupert has matched investors for your raise, grouped by fit tier.",
     "You're up: review the list in your portal. Add a note on any fund, ask questions, or confirm.",
   ),
-  clientTemplate(
-    "email_copy_ready",
-    "Outreach emails ready",
-    "Fills Draft Email under Email Copy when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send.",
-    "/portal/setup/email-copy",
-    "Your outreach emails are ready — you're up",
-    "Rupert has written the outreach emails for each investor tier.",
-    "You're up: review them in your portal, then confirm or tell us what to change.",
-  ),
+  {
+    key: "client:email_copy_ready",
+    group: "client",
+    title: "Outreach emails ready",
+    trigger:
+      "Fills Draft Email under Email Copy when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send. When Claude drafts it, the 30-minute call offer is added the same way.",
+    subject: "Your outreach emails are ready — you're up",
+    body: [
+      "{greeting}",
+      "Rupert has written the outreach emails for each investor tier.{updated_line}",
+      "{note}",
+      "You're up: review them in your portal, then confirm or tell us what to change.",
+      "Open your portal: {portal_link}",
+      "{launch_call}",
+      "{signature}",
+    ].join("\n\n"),
+    tokens: [...CLIENT_TOKENS_LIST, "launch_call"],
+    path: "/portal/setup/email-copy",
+    switchable: true,
+  },
   {
     key: "client:go_live_ready",
     group: "client",
