@@ -4,7 +4,8 @@ import {
   DEFAULT_LIVE_SETTINGS,
   asLiveSettings,
   campaignWeek,
-  perDayForWeek,
+  capForWeek,
+  newInvestorRoom,
   sendingPlan,
   weekLabel,
   weekRange,
@@ -46,7 +47,7 @@ function message(id: string, extra: Record<string, unknown> = {}) {
 
 test("settings are cleaned and fall back to safe defaults", () => {
   const s = asLiveSettings({ daily_limit: 999, timezone: "bad tz!", from: "18:00", to: "09:00", followup_days: [0, 3], track_opens: false });
-  assert.equal(s.daily_limit, 200);
+  assert.equal(s.daily_limit, 30, "never more than 30 emails a day");
   assert.equal(s.timezone, "America/Detroit");
   assert.deepEqual([s.from, s.to], ["09:00", "17:00"]);
   assert.deepEqual(s.followup_days, [1, 3]);
@@ -178,13 +179,29 @@ test("test mode campaigns run in minutes, every day, without stop-for-company", 
 test("Eastern by default; America/New_York becomes Instantly's America/Detroit", () => {
   assert.equal(asLiveSettings(null).timezone, "America/Detroit");
   assert.equal(asLiveSettings({ timezone: "America/New_York" }).timezone, "America/Detroit");
-  assert.deepEqual(asLiveSettings({ ramp: [5, "x", 8] }).ramp, [5, 8]);
+  assert.deepEqual(asLiveSettings({ ramp: [5, "x", 80] }).ramp, [5, 30]);
 });
 
-test("the ramp: 10 a day in week 1, 20 in week 2, then 30", () => {
+test("the email cap: 10 a day in week 1, 20 in week 2, then 30, never more", () => {
   const s = asLiveSettings(null);
-  assert.deepEqual([1, 2, 3, 9].map((w) => perDayForWeek(s, w)), [10, 20, 30, 30]);
-  assert.equal(perDayForWeek({ ...s, new_per_day: 0 }, 1), 0);
+  assert.deepEqual([1, 2, 3, 9].map((w) => capForWeek(s, w)), [10, 20, 30, 30]);
+  assert.equal(capForWeek({ ramp: [], daily_limit: 99 }, 1), 30);
+});
+
+test("new investors fill the room the day's follow-ups and first emails leave", () => {
+  const s = asLiveSettings(null);
+  const at = (day: string) => `${day}T15:00:00Z`;
+  const contacts = [
+    // First email Mon Nov 2: follow-ups Fri Nov 6 and Wed Nov 11.
+    { slot: "active", pushed_at: at("2026-11-02") },
+    { slot: "active", pushed_at: at("2026-11-02") },
+    { slot: "active", pushed_at: at("2026-11-02"), replied_at: at("2026-11-03") },
+    { slot: "active", pushed_at: at("2026-11-06") },
+    { slot: "reserve", pushed_at: null },
+  ];
+  assert.equal(newInvestorRoom(contacts, "2026-11-06", s, 10), 7, "2 follow-ups and 1 first email already today");
+  assert.equal(newInvestorRoom(contacts, "2026-11-11", s, 20), 18);
+  assert.equal(newInvestorRoom(contacts, "2026-11-11", s, 1), 0);
 });
 
 test("campaign weeks are 5 weekdays from the launch day", () => {
@@ -198,13 +215,13 @@ test("campaign weeks are 5 weekdays from the launch day", () => {
 test("the sending plan reaches everyone, marks the current week, then follow-ups only", () => {
   const plan = sendingPlan({ total: 300, settings: DEFAULT_LIVE_SETTINGS, launchDay: "2026-11-02", today: "2026-11-17" });
   assert.equal(plan.reduce((n, w) => n + w.newInvestors, 0), 300);
-  assert.deepEqual(plan.slice(0, 3).map((w) => [w.phase, w.perDay, w.status]), [
+  assert.deepEqual(plan.slice(0, 3).map((w) => [w.phase, w.cap, w.status]), [
     ["Warm-up", 10, "done"],
     ["Ramp-up", 20, "done"],
     ["Full pace", 30, "current"],
   ]);
   assert.equal(plan[plan.length - 1].phase, "Follow-ups only");
-  assert.ok(plan.every((w) => w.emails <= DEFAULT_LIVE_SETTINGS.daily_limit * 5));
+  assert.ok(plan.every((w) => w.emails <= w.cap * 5), "never above the day's cap");
   const before = sendingPlan({ total: 40, settings: DEFAULT_LIVE_SETTINGS, launchDay: "2026-11-02", today: null });
   assert.equal(before[0].status, "next");
 });

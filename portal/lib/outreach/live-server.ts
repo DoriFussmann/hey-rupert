@@ -12,6 +12,8 @@ import {
   oauthInit,
   oauthStatus,
   pauseCampaign,
+  updateAccount,
+  updateCampaign,
   type OAuthProvider,
 } from "@/lib/instantly";
 import { advanceStage } from "@/lib/kickoff";
@@ -31,9 +33,11 @@ import {
   testAddress,
   addDays,
   campaignWeek,
+  capForWeek,
   localDate,
+  MAX_DAILY_EMAILS,
+  newInvestorRoom,
   nextWeekday,
-  perDayForWeek,
   sendingPlan,
   type LiveSettings,
   type PlanWeek,
@@ -380,10 +384,13 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
   if (!row.ok) return row;
   if (!messages.ok) return messages;
   const settings = row.value.settings;
-  // This week's pace: the ramp's first weeks, then full pace. Before launch: week 1.
+  // Today's room under this week's email cap (the ramp, then full pace; never
+  // above 30): follow-ups due today and first emails already added come first.
   const tz = settings.timezone;
-  const week = row.value.live_at ? campaignWeek(localDate(row.value.live_at, tz), localDate(Date.now(), tz)) : 1;
-  const limit = perDayForWeek(settings, week);
+  const today = localDate(Date.now(), tz);
+  const week = row.value.live_at ? campaignWeek(localDate(row.value.live_at, tz), today) : 1;
+  const limit = newInvestorRoom(messages.value, today, settings, capForWeek(settings, week));
+  if (limit <= 0) return { ok: true, value: 0 };
   const recipient = testMode ? testRecipientOf(settings) : "";
   if (testMode && !recipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
   const leads = dripQueue(messages.value, {
@@ -494,7 +501,7 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   let campaignId = row.value.instantly_campaign_id;
   if (!campaignId) {
     const name = `${testMode ? "TEST · " : ""}${await companyName(supabase, clientId)} · investor outreach`;
-    const created = await createCampaign(campaignBody(name, inbox, row.value.settings, { testMode }));
+    const created = await createCampaign(campaignBody(name, inbox, { ...row.value.settings, daily_limit: capForWeek(row.value.settings, 1) }, { testMode }));
     if (!created.ok) return created;
     campaignId = created.value.id;
     const saved = await saveLive(supabase, clientId, { instantly_campaign_id: campaignId });
@@ -513,6 +520,10 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
     const saved = await saveLive(supabase, clientId, { instantly_webhook_id: hook.value.id });
     if (!saved.ok) return saved;
   }
+
+  // The inbox itself never sends more than 30 a day, whatever the campaign.
+  const capped = await updateAccount(inbox, { daily_limit: MAX_DAILY_EMAILS });
+  if (!capped.ok) console.error(`Instantly account daily limit not set for ${inbox}: ${capped.error}`);
 
   // The first daily batch: a proportional mix of first contacts.
   const wave1 = await pushBatch(supabase, clientId, campaignId);
@@ -583,6 +594,10 @@ export async function runDueWaves(supabase: ServiceClient) {
     const settings = asLiveSettings(row.settings);
     // Real campaigns send on weekdays: no new contacts on a weekend, so Monday isn't doubled.
     if (isWeekend(settings.timezone) && !(await isTestPilot(supabase, String(row.client_id)))) continue;
+    // This week's email cap in Instantly: 10, then 20, then 30 (never more).
+    const week = campaignWeek(localDate(String(row.live_at), settings.timezone), localDate(Date.now(), settings.timezone));
+    const limited = await updateCampaign(String(row.instantly_campaign_id), { daily_limit: capForWeek(settings, week) });
+    if (!limited.ok) errors.push(`${row.client_id}: daily limit not updated: ${limited.error}`);
     const result = await pushBatch(supabase, String(row.client_id), String(row.instantly_campaign_id));
     if (!result.ok) errors.push(`${row.client_id}: ${result.error}`);
     else if (result.value > 0) {

@@ -28,7 +28,15 @@ export type CampaignData = {
   currentWeek: number;
   settings: LiveSettings;
   pausedAt: string | null;
-  messages: (AnalyticsMessage & { fund_name: string; firm_id: string; pushed_at: string | null; slot: string; bounced_at: string | null })[];
+  messages: (AnalyticsMessage & {
+    fund_name: string;
+    firm_id: string;
+    pushed_at: string | null;
+    slot: string;
+    bounced_at: string | null;
+    replied_at: string | null;
+    unsubscribed_at: string | null;
+  })[];
   events: AnalyticsEvent[];
   /** Every reply, with its visibility. */
   replies: (AnalyticsReply & { visibility: string; fund_name: string; label: string | null })[];
@@ -99,6 +107,8 @@ export async function loadCampaignData(supabase: ServiceClient, clientId: string
         pushed_at: m.pushed_at,
         slot: m.slot,
         bounced_at: m.bounced_at,
+        replied_at: m.replied_at,
+        unsubscribed_at: m.unsubscribed_at,
       })),
       events: events.rows.map((e) => ({
         event_type: String(e.event_type),

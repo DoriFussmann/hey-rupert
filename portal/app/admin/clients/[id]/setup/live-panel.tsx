@@ -365,7 +365,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
             <div className="grid gap-sm">
               <p className="text-secondary">
                 Live{live.pausedAt ? ` · paused ${formatDateTime(live.pausedAt)}` : ""} · {state.counts.pushed} contacts in Instantly · {state.counts.waiting} waiting
-                {settings.new_per_day > 0 ? ` (${[...settings.ramp, settings.new_per_day].join(" → ")} added a day${state.testMode ? "" : ", weekdays"})` : ""} ·{" "}
+                {` (emails a day: ${[...settings.ramp, settings.daily_limit].join(" → ")}, follow-ups first${state.testMode ? "" : ", weekdays"})`} ·{" "}
                 {live.wave2PushedAt ? "second contacts released" : `second contacts start ${settings.wave2_delay_days} days after the first`}
               </p>
               <div className="flex flex-wrap gap-sm">
@@ -401,10 +401,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
         <div className="border-t border-border px-lg py-md">
           <p className="text-label uppercase tracking-label text-muted">Sending settings</p>
           <div className="mt-sm flex flex-wrap gap-md text-body-sm text-secondary">
-            <label>
-              Emails per day
-              <input type="number" min={1} max={200} className={`${inputClass} mt-xs w-24`} value={settings.daily_limit} onChange={(e) => field({ daily_limit: Number(e.target.value) })} />
-            </label>
+
             <label>
               Window
               <span className="mt-xs flex items-center gap-xs">
@@ -428,7 +425,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
               <input type="number" min={0} max={14} className={`${inputClass} mt-xs w-16`} value={settings.wave2_delay_days} onChange={(e) => field({ wave2_delay_days: Number(e.target.value) })} />
             </label>
             <label>
-              First weeks, new a day (ramp)
+              Emails a day, first weeks (ramp)
               <input
                 className={`${inputClass} mt-xs w-28`}
                 value={rampText}
@@ -440,8 +437,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
               />
             </label>
             <label>
-              Then, new a day (0 = all at once)
-              <input type="number" min={0} max={500} className={`${inputClass} mt-xs w-20`} value={settings.new_per_day} onChange={(e) => field({ new_per_day: Number(e.target.value) })} />
+              Then, emails a day (max 30)
+              <input type="number" min={1} max={30} className={`${inputClass} mt-xs w-20`} value={settings.daily_limit} onChange={(e) => field({ daily_limit: Number(e.target.value) })} />
             </label>
             {state.testMode ? (
               <label>

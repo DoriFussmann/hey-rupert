@@ -23,9 +23,9 @@ export function SendingPlanTable({ weeks, note }: { weeks: PlanWeek[]; note?: st
               <th className="py-sm pl-sm pr-sm font-medium">Week</th>
               <th className="px-sm py-sm font-medium">Dates</th>
               <th className="px-sm py-sm font-medium">Phase</th>
-              <th className="px-sm py-sm text-right font-medium">New investors / day</th>
+              <th className="px-sm py-sm text-right font-medium">Emails / day (max)</th>
               <th className="px-sm py-sm text-right font-medium">New investors</th>
-              <th className="px-sm py-sm text-right font-medium">Emails (approx.)</th>
+              <th className="px-sm py-sm text-right font-medium">Emails that week (approx.)</th>
               <th className="py-sm pl-sm pr-sm font-medium">Status</th>
             </tr>
           </thead>
@@ -50,7 +50,7 @@ export function SendingPlanTable({ weeks, note }: { weeks: PlanWeek[]; note?: st
                       {week.phase}
                     </span>
                   </td>
-                  <td className="px-sm py-sm text-right font-mono text-mono">{week.perDay}</td>
+                  <td className="px-sm py-sm text-right font-mono text-mono">{week.cap}</td>
                   <td className="px-sm py-sm text-right font-mono text-mono">{week.newInvestors}</td>
                   <td className="px-sm py-sm text-right font-mono text-mono">~{week.emails}</td>
                   <td className="py-sm pl-sm pr-sm" style={on ? { color: "#0e5e4f", fontWeight: 500 } : { color: "#5f5f5a" }}>

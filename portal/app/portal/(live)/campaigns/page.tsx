@@ -209,7 +209,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: { 
         <h2 className="text-h4">Sending plan</h2>
         <SendingPlanTable
           weeks={data.plan}
-          note={`${data.activeTotal} investors · weekdays only, 9am–5pm Eastern · follow-ups ${data.settings.followup_days[0]} and ${data.settings.followup_days[1]} days apart.`}
+          note={`${data.activeTotal} investors · weekdays only, 9am–5pm Eastern · never more than 30 emails a day, follow-ups included · follow-ups ${data.settings.followup_days[0]} and ${data.settings.followup_days[1]} days apart.`}
         />
       </section>
 

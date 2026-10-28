@@ -11,8 +11,11 @@ import { interleaveByTier } from "./mix.ts";
 // ---------------------------------------------------------------------------
 // Sending settings
 
+/** Never more than this many emails a day from one inbox, follow-ups included. */
+export const MAX_DAILY_EMAILS = 30;
+
 export type LiveSettings = {
-  /** Emails per day from the client's inbox. */
+  /** Emails a day from the client's inbox at full pace, follow-ups included. At most MAX_DAILY_EMAILS. */
   daily_limit: number;
   /** An Instantly timezone name. */
   timezone: string;
@@ -23,9 +26,7 @@ export type LiveSettings = {
   /** Days after a fund's first contact is sent before its other contacts start. */
   wave2_delay_days: number;
   track_opens: boolean;
-  /** New investors added to the campaign per day at full pace, mixed across tiers. 0: everyone at once. */
-  new_per_day: number;
-  /** The first weeks' pace, before full pace: [10, 20] = 10 a day in week 1, 20 in week 2. */
+  /** The first weeks' email caps, before full pace: [10, 20] = 10 emails a day in week 1, 20 in week 2. */
   ramp: number[];
   /** Test mode (Test Pilot clients only): every email goes to a + address of this inbox. */
   test_recipient: string;
@@ -38,16 +39,15 @@ export type LiveSettings = {
 export const EASTERN = "America/Detroit";
 
 export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
-  // Each investor gets up to 3 emails, so the cap is 3× full pace: 30 new a
-  // day needs up to 90 emails a day once follow-ups overlap.
-  daily_limit: 90,
+  // Every email counts: first emails and follow-ups. New investors fill
+  // whatever room the day's follow-ups leave.
+  daily_limit: MAX_DAILY_EMAILS,
   timezone: EASTERN,
   from: "09:00",
   to: "17:00",
   followup_days: [4, 5],
   wave2_delay_days: 3,
   track_opens: true,
-  new_per_day: 30,
   ramp: [10, 20],
   test_recipient: "",
 };
@@ -66,19 +66,18 @@ export function asLiveSettings(value: unknown): LiveSettings {
   // Instantly rejects America/New_York: same clock, accepted name.
   const tz = tzRaw === "America/New_York" ? EASTERN : tzRaw;
   const ramp = Array.isArray(raw.ramp)
-    ? raw.ramp.slice(0, 8).map((n) => int(n, 0, 500, -1)).filter((n) => n >= 0)
+    ? raw.ramp.slice(0, 8).map((n) => int(n, 1, MAX_DAILY_EMAILS, -1)).filter((n) => n >= 1)
     : d.ramp;
   const from = hhmm(raw.from, d.from);
   const to = hhmm(raw.to, d.to);
   return {
-    daily_limit: int(raw.daily_limit, 1, 200, d.daily_limit),
+    daily_limit: int(raw.daily_limit, 1, MAX_DAILY_EMAILS, d.daily_limit),
     timezone: tz,
     from: from < to ? from : d.from,
     to: from < to ? to : d.to,
     followup_days: [int(followups[0], 1, 30, d.followup_days[0]), int(followups[1], 1, 30, d.followup_days[1])],
     wave2_delay_days: int(raw.wave2_delay_days, 0, 14, d.wave2_delay_days),
     track_opens: typeof raw.track_opens === "boolean" ? raw.track_opens : d.track_opens,
-    new_per_day: int(raw.new_per_day, 0, 500, d.new_per_day),
     ramp,
     test_recipient: typeof raw.test_recipient === "string" && EMAIL.test(raw.test_recipient.trim()) ? raw.test_recipient.trim().toLowerCase() : "",
   };
@@ -200,7 +199,7 @@ export function campaignBody(
       },
     ],
     email_list: [inbox],
-    daily_limit: settings.daily_limit,
+    daily_limit: Math.min(MAX_DAILY_EMAILS, settings.daily_limit),
     stop_on_reply: true,
     // Test addresses all share one domain: stopping "for the company" would stop them all.
     stop_for_company: !fast,
@@ -315,10 +314,54 @@ export function weekRange(launchDay: string, week: number) {
   return { start, end: addWeekdays(start, 4) };
 }
 
-/** New investors a day in a given campaign week. 0 = everyone at once. */
-export function perDayForWeek(settings: Pick<LiveSettings, "ramp" | "new_per_day">, week: number) {
-  if (settings.new_per_day === 0) return 0;
-  return week >= 1 && week <= settings.ramp.length ? settings.ramp[week - 1] : settings.new_per_day;
+/** The email cap (first emails and follow-ups) in a campaign week: the ramp, then full pace, never above 30. */
+export function capForWeek(settings: Pick<LiveSettings, "ramp" | "daily_limit">, week: number) {
+  const cap = week >= 1 && week <= settings.ramp.length ? settings.ramp[week - 1] : settings.daily_limit;
+  return Math.max(0, Math.min(MAX_DAILY_EMAILS, cap));
+}
+
+/**
+ * The days an investor's two follow-ups go out, when their first email went
+ * out on `firstDay`: Instantly counts the delays in calendar days and sends
+ * on the next weekday.
+ */
+export function followupDaysFor(firstDay: string, followupDays: [number, number]) {
+  const d1 = nextWeekday(addDays(firstDay, followupDays[0]));
+  return [d1, nextWeekday(addDays(d1, followupDays[1]))] as const;
+}
+
+type PacedContact = {
+  slot: string;
+  pushed_at?: string | null;
+  replied_at?: string | null;
+  bounced_at?: string | null;
+  unsubscribed_at?: string | null;
+};
+
+/**
+ * How many new investors fit on `day`: the cap, minus the follow-ups due that
+ * day, minus first emails already added that day. Contacts who replied,
+ * bounced or unsubscribed get no more follow-ups.
+ */
+export function newInvestorRoom(
+  contacts: PacedContact[],
+  day: string,
+  settings: Pick<LiveSettings, "followup_days" | "timezone">,
+  cap: number,
+) {
+  let used = 0;
+  for (const c of contacts) {
+    if (c.slot !== "active" || !c.pushed_at) continue;
+    const first = localDate(c.pushed_at, settings.timezone);
+    if (first === day) {
+      used += 1;
+      continue;
+    }
+    if (c.replied_at || c.bounced_at || c.unsubscribed_at) continue;
+    const [d1, d2] = followupDaysFor(first, settings.followup_days);
+    if (d1 === day || d2 === day) used += 1;
+  }
+  return Math.max(0, cap - used);
 }
 
 export type PlanPhase = "Warm-up" | "Ramp-up" | "Full pace" | "Follow-ups only";
@@ -328,58 +371,57 @@ export type PlanWeek = {
   start: string;
   end: string;
   phase: PlanPhase;
-  perDay: number;
+  /** Most emails a day this week (first emails and follow-ups). */
+  cap: number;
   newInvestors: number;
-  /** Approximate: first emails plus follow-ups, capped by the daily limit. */
+  /** Approximate: first emails plus follow-ups, never above the cap. */
   emails: number;
   status: "done" | "current" | "next" | "planned";
 };
 
 /**
- * The week-by-week sending plan for `total` contacts from `launchDay`.
- * Follow-up delays are counted in weekdays and each investor is assumed to
- * get all three emails, so the email counts are an upper estimate. `today`
- * marks the current week (or, before launch, the first week as next).
+ * The week-by-week sending plan for `total` contacts from `launchDay`. Each
+ * weekday sends at most that week's cap; follow-ups due go first and new
+ * investors fill the rest. Each investor is assumed to get all three emails,
+ * so the plan is the slower case. `today` marks the current week (or,
+ * before launch, the first week as next).
  */
 export function sendingPlan(input: {
   total: number;
-  settings: Pick<LiveSettings, "ramp" | "new_per_day" | "followup_days" | "daily_limit">;
+  settings: Pick<LiveSettings, "ramp" | "followup_days" | "daily_limit">;
   launchDay: string;
   today: string | null;
 }): PlanWeek[] {
   const { settings } = input;
   const start = nextWeekday(input.launchDay);
-  const [f1, f2] = settings.followup_days;
-  const due = new Map<number, number>();
+  const due = new Map<string, number>();
   let remaining = Math.max(0, Math.floor(input.total));
   let backlog = 0;
   const weeks: PlanWeek[] = [];
   const currentWeek = input.today ? campaignWeek(start, input.today) : 0;
-  for (let w = 1; w <= 26; w += 1) {
-    const perDay = perDayForWeek(settings, w);
+  let day = start;
+  for (let w = 1; w <= 52; w += 1) {
+    const cap = capForWeek(settings, w);
     let newInvestors = 0;
     let emails = 0;
-    for (let i = 0; i < 5; i += 1) {
-      const day = (w - 1) * 5 + i;
-      const fresh = perDay === 0 ? remaining : Math.min(perDay, remaining);
+    for (let i = 0; i < 5; i += 1, day = addWeekdays(day, 1)) {
+      backlog += due.get(day) ?? 0;
+      due.delete(day);
+      const fresh = Math.min(remaining, Math.max(0, cap - backlog));
       remaining -= fresh;
       newInvestors += fresh;
       if (fresh > 0) {
-        due.set(day + f1, (due.get(day + f1) ?? 0) + fresh);
-        due.set(day + f1 + f2, (due.get(day + f1 + f2) ?? 0) + fresh);
+        for (const d of followupDaysFor(day, settings.followup_days)) due.set(d, (due.get(d) ?? 0) + fresh);
       }
-      backlog += fresh + (due.get(day) ?? 0);
-      due.delete(day);
-      const sent = Math.min(backlog, settings.daily_limit);
-      backlog -= sent;
+      const sent = Math.min(cap, backlog + fresh);
+      backlog = backlog + fresh - sent;
       emails += sent;
     }
     if (newInvestors === 0 && emails === 0) break;
     const range = weekRange(start, w);
-    const phase: PlanPhase =
-      newInvestors === 0 ? "Follow-ups only" : w <= settings.ramp.length && settings.new_per_day > 0 ? (w === 1 ? "Warm-up" : "Ramp-up") : "Full pace";
+    const phase: PlanPhase = newInvestors === 0 ? "Follow-ups only" : w <= settings.ramp.length ? (w === 1 ? "Warm-up" : "Ramp-up") : "Full pace";
     const status = !input.today ? (w === 1 ? "next" : "planned") : w < currentWeek ? "done" : w === currentWeek ? "current" : "planned";
-    weeks.push({ week: w, ...range, phase, perDay: newInvestors === 0 ? 0 : perDay === 0 ? newInvestors : perDay, newInvestors, emails, status });
+    weeks.push({ week: w, ...range, phase, cap, newInvestors, emails, status });
     if (remaining === 0 && due.size === 0 && backlog === 0) break;
   }
   return weeks;

@@ -142,7 +142,7 @@ export function GoLiveView({
       <h2 className="text-h4">What happens, week by week</h2>
       <SendingPlanTable
         weeks={plan}
-        note={`${total} investors at ${counts.funds} funds. Emails go out from your inbox on weekdays, 9am–5pm Eastern. Each investor gets a first email and up to two follow-ups in the same thread; anyone who replies gets no more. The pace starts low so your inbox builds a good sending record.`}
+        note={`${total} investors at ${counts.funds} funds. Emails go out from your inbox on weekdays, 9am–5pm Eastern, never more than 30 a day: 10 a day in week 1, 20 in week 2, then 30. Each investor gets a first email and up to two follow-ups in the same thread; anyone who replies gets no more. Follow-ups go first each day, and new investors fill the rest.`}
       />
     </section>
   );
@@ -242,8 +242,9 @@ export function GoLiveView({
         <Step n={3} done={false} title="Review and approve the launch">
           <ul className="mb-md max-w-prose list-disc pl-lg">
             <li>
-              New investors are added each weekday, mixed across your tiers, at the pace in the table below, until all {total} are
-              reached. The second contact at a fund starts a few days after the first.
+              Never more than 30 emails a day from your inbox, follow-ups included, building up from 10 a day. New investors are
+              added each weekday, mixed across your tiers, until all {total} are reached. The second contact at a fund starts a few
+              days after the first.
             </li>
             <li>Once you approve, Rupert runs a final check and starts sending within 24 hours. You&apos;re emailed when it&apos;s live.</li>
             <li>Each investor gets the first email and up to two follow-ups, as replies in the same thread. Anyone who replies gets no more follow-ups.</li>

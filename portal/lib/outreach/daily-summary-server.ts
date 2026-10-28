@@ -7,11 +7,12 @@ import { loadCampaignData, type CampaignData } from "@/lib/outreach/analytics-se
 import {
   addDays,
   campaignWeek,
+  capForWeek,
   inboxStatusText,
   isWeekendDay,
   localDate,
+  newInvestorRoom,
   nextWeekday,
-  perDayForWeek,
   replyLabelText,
   weekLabel,
 } from "@/lib/outreach/live";
@@ -60,9 +61,10 @@ function summarize(data: CampaignData, company: string, test: boolean, inbox: st
   const started = data.messages.filter((m) => m.pushed_at).length;
 
   const tomorrow = nextWeekday(addDays(today, 1));
-  const perDay = perDayForWeek(data.settings, campaignWeek(data.launchDay, tomorrow));
+  const tomorrowCap = capForWeek(data.settings, campaignWeek(data.launchDay, tomorrow));
   const remaining = Math.max(0, data.activeTotal - started);
-  const tomorrowNew = perDay === 0 ? remaining : Math.min(perDay, remaining);
+  const tomorrowRoom = newInvestorRoom(data.messages, tomorrow, data.settings, tomorrowCap);
+  const tomorrowNew = Math.min(tomorrowRoom, remaining);
   const lastFirst = [...data.plan].reverse().find((w) => w.newInvestors > 0);
 
   const needs: string[] = [];
@@ -84,7 +86,7 @@ function summarize(data: CampaignData, company: string, test: boolean, inbox: st
     `So far: ${allTime.sent} sent · ${percent(allTime.sent ? allTime.delivered / allTime.sent : null)} delivered · ${percent(allTime.openRate)} opened · ${plural(allTime.replies, "reply")} · ${plural(allTime.meetings, "meeting")}. ${started} of ${data.activeTotal} investors started${lastFirst && remaining > 0 ? `; first emails done by ${weekLabel(lastFirst.end, lastFirst.end)}` : ""}.`,
     data.pausedAt
       ? "Tomorrow: paused, nothing goes out."
-      : `Tomorrow (${weekLabel(tomorrow, tomorrow)}): ${tomorrowNew} new investor${tomorrowNew === 1 ? "" : "s"} plus follow-ups, ${data.settings.from}–${data.settings.to}.`,
+      : `Tomorrow (${weekLabel(tomorrow, tomorrow)}): up to ${tomorrowCap} emails: ${tomorrowCap - tomorrowRoom} follow-ups and ${tomorrowNew} new investor${tomorrowNew === 1 ? "" : "s"}, ${data.settings.from}–${data.settings.to} Eastern.`,
     `Analytics: ${PORTAL_URL}/admin/clients/${data.clientId}/view`,
   ];
   return { text: lines.join("\n\n"), sent: todayStats.sent, pending: pending.length, bounces: bouncedToday.length };
