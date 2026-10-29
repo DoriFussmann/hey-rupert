@@ -392,7 +392,7 @@ function RemindersCard({
         <p className="mt-xs text-body-sm text-muted">
           While a step waits on the client: the first reminder is due after
           the set number of days, then repeats until the maximum. Due
-          reminders wait under Nudge → Ready to send; nothing goes out until
+          reminders wait under Notify &amp; Nudge → Ready to send; nothing goes out until
           you click Send. With &quot;Alert me&quot; on, you get a stalled
           alert once they run out. Checked once a day.
         </p>

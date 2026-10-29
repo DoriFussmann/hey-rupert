@@ -13,7 +13,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
     items: [
       { href: "/admin", label: "Clients" },
       { href: "/admin/timeline", label: "Timeline" },
-      { href: "/admin/notifications", label: "Notifications" },
+      { href: "/admin/notifications", label: "Notify & Nudge" },
       { href: "/admin/replies", label: "Replies" },
     ],
   },

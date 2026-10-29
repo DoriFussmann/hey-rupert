@@ -24,7 +24,7 @@ export function RunRemindersButton() {
         text:
           result.ready.length === 0 && result.stalled.length === 0
             ? `Checked ${result.checked} client${result.checked === 1 ? "" : "s"} with a turn waiting. No reminders due.`
-            : `Checked ${result.checked}. ${result.ready.length} ready to send under Nudge, stalled alerts ${result.stalled.length}.`,
+            : `Checked ${result.checked}. ${result.ready.length} ready to send above, stalled alerts ${result.stalled.length}.`,
       });
       result.ready.forEach((text) => next.push({ kind: "ok", text: `Ready: ${text}` }));
       result.stalled.forEach((text) => next.push({ kind: "ok", text: `Stalled: ${text}` }));
@@ -45,7 +45,7 @@ export function RunRemindersButton() {
         type="button"
         onClick={onClick}
         disabled={pending}
-        title="Prepares any reminders due now (schedule in Forms → Emails). Nothing is sent: they wait under Nudge → Ready to send."
+        title="Prepares any reminders due now (schedule in Forms → Emails). Nothing is sent: they wait under Ready to send."
         className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
       >
         {pending ? "Checking…" : "Check reminders now"}

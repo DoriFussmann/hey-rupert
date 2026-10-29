@@ -108,7 +108,7 @@ export function notificationAction(type: string) {
     return "has not responded after reminders";
   }
   if (type === "nudge_ready") {
-    return "has a reminder ready to send under Nudge";
+    return "has a reminder ready to send under Notify & Nudge";
   }
   return notificationLabel(type).toLowerCase();
 }
