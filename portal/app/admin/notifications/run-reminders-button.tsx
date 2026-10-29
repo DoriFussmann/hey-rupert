@@ -22,11 +22,11 @@ export function RunRemindersButton() {
       next.push({
         kind: "ok",
         text:
-          result.emailed.length === 0 && result.stalled.length === 0
+          result.ready.length === 0 && result.stalled.length === 0
             ? `Checked ${result.checked} client${result.checked === 1 ? "" : "s"} with a turn waiting. No reminders due.`
-            : `Checked ${result.checked}. Reminded ${result.emailed.length}, stalled alerts ${result.stalled.length}.`,
+            : `Checked ${result.checked}. ${result.ready.length} ready to send under Nudge, stalled alerts ${result.stalled.length}.`,
       });
-      result.emailed.forEach((text) => next.push({ kind: "ok", text: `Reminded ${text}` }));
+      result.ready.forEach((text) => next.push({ kind: "ok", text: `Ready: ${text}` }));
       result.stalled.forEach((text) => next.push({ kind: "ok", text: `Stalled: ${text}` }));
       result.errors.forEach((text) => next.push({ kind: "error", text }));
       setLines(next);
@@ -45,10 +45,10 @@ export function RunRemindersButton() {
         type="button"
         onClick={onClick}
         disabled={pending}
-        title="Sends any reminders that are due now, following the schedule in Forms → Emails."
+        title="Prepares any reminders due now (schedule in Forms → Emails). Nothing is sent: they wait under Nudge → Ready to send."
         className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
       >
-        {pending ? "Checking…" : "Send due reminders"}
+        {pending ? "Checking…" : "Check reminders now"}
       </button>
       {lines.map((line, index) => (
         <p

@@ -67,6 +67,7 @@ export function notificationLabel(type: string) {
   if (type === "launch_requested") return "Approved the Launch";
   if (type === "email_copy_changes_requested") return "Requested Email Changes";
   if (type === "client_stalled") return "Stalled: No Response After Reminders";
+  if (type === "nudge_ready") return "Nudge Ready to Send";
   return statusLabel(type);
 }
 
@@ -105,6 +106,9 @@ export function notificationAction(type: string) {
   }
   if (type === "client_stalled") {
     return "has not responded after reminders";
+  }
+  if (type === "nudge_ready") {
+    return "has a reminder ready to send under Nudge";
   }
   return notificationLabel(type).toLowerCase();
 }

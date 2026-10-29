@@ -390,10 +390,11 @@ function RemindersCard({
       <div className="border-b border-border px-lg py-lg">
         <h3 className="text-h4">Reminder schedule</h3>
         <p className="mt-xs text-body-sm text-muted">
-          While a step waits on the client: the first reminder goes out after
-          the set number of days, then repeats until the maximum. With
-          &quot;Alert me&quot; on, you get a stalled alert once they run out.
-          Reminders are checked once a day.
+          While a step waits on the client: the first reminder is due after
+          the set number of days, then repeats until the maximum. Due
+          reminders wait under Nudge → Ready to send; nothing goes out until
+          you click Send. With &quot;Alert me&quot; on, you get a stalled
+          alert once they run out. Checked once a day.
         </p>
       </div>
       <div className="overflow-x-auto">

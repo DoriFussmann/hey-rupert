@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { draftNudge, sendNudge } from "@/lib/nudge-server";
+import { settleReadyNudge } from "@/lib/reminders";
 import { createServiceClient } from "@/lib/supabase/admin";
 import type { EmailResult } from "@/lib/email";
 import type { ClientEmailDraft } from "@/lib/setup";
@@ -45,4 +46,16 @@ export async function sendClientNudge(
     revalidatePath(`/admin/clients/${clientId}`);
   }
   return result;
+}
+
+/** Sends (or skips) the reminder ready for a client under Nudge → Ready to send. */
+export async function settleReadyNudgeAction(clientId: string, decision: "send" | "skip"): Promise<Result<object>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const settled = await settleReadyNudge(access.supabase, String(clientId), decision === "skip" ? "skip" : "send");
+  if (!settled.ok) return settled;
+  revalidatePath("/admin/nudge");
+  revalidatePath("/admin/notifications");
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true };
 }
