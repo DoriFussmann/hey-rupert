@@ -167,7 +167,7 @@ export type ReminderRun = {
   checked: number;
   /** Always empty now: reminders wait for Rupert to send them. Kept for the run report. */
   emailed: { client: string; turns: string[] }[];
-  /** Clients with a reminder ready to send under Nudge. */
+  /** Clients with a reminder ready to send under Notify & Nudge. */
   ready: { client: string; turns: string[] }[];
   stalled: { client: string; turns: string[] }[];
   errors: string[];
@@ -313,7 +313,7 @@ async function recordReminders(supabase: ServiceClient, clientId: string, due: D
 
 /**
  * The daily check. Nothing goes to a client from here: reminders that are due
- * wait under Nudge → Ready to send until Rupert clicks Send. Rupert gets an
+ * wait under Notify & Nudge → Ready to send until Rupert clicks Send. Rupert gets an
  * in-app notification when a client has one ready, and (unchanged) one
  * "stalled" alert once a step's reminders have run out.
  */

@@ -48,14 +48,15 @@ export async function sendClientNudge(
   return result;
 }
 
-/** Sends (or skips) the reminder ready for a client under Nudge → Ready to send. */
+/** Sends (or skips) the reminder ready for a client under Notify & Nudge → Ready to send. */
 export async function settleReadyNudgeAction(clientId: string, decision: "send" | "skip"): Promise<Result<object>> {
   const access = await requireAdmin();
   if (!access.ok) return access;
   const settled = await settleReadyNudge(access.supabase, String(clientId), decision === "skip" ? "skip" : "send");
   if (!settled.ok) return settled;
-  revalidatePath("/admin/nudge");
   revalidatePath("/admin/notifications");
+  revalidatePath("/admin/nudge");
+  revalidatePath("/admin", "layout");
   revalidatePath(`/admin/clients/${clientId}`);
   return { ok: true };
 }
