@@ -669,7 +669,7 @@ export async function reopenMaterials(
 
 /** Runs the reminder check now (the cron runs the same thing on schedule). */
 export async function runRemindersNow(): Promise<
-  | { ok: true; checked: number; emailed: string[]; stalled: string[]; errors: string[] }
+  | { ok: true; checked: number; ready: string[]; stalled: string[]; errors: string[] }
   | { ok: false; error: string }
 > {
   const access = await requireAdmin();
@@ -678,10 +678,11 @@ export async function runRemindersNow(): Promise<
   const { runClientReminders } = await import("@/lib/reminders");
   const run = await runClientReminders(access.supabase);
   revalidatePath("/admin/notifications");
+  revalidatePath("/admin/nudge");
   return {
     ok: true,
     checked: run.checked,
-    emailed: run.emailed.map(
+    ready: run.ready.map(
       (entry) => `${entry.client}: ${entry.turns.join("; ")}`,
     ),
     stalled: run.stalled.map(

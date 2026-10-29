@@ -2,6 +2,7 @@ import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { loadEmailSettings } from "@/lib/email-settings";
 import {
+  REMINDER_STEPS,
   isReminderTurnKey,
   type ReminderTiming,
   type ReminderTurnKey,
@@ -9,6 +10,8 @@ import {
 import { clientDisplayName, formatDate } from "@/lib/format";
 import {
   notifyAdmin,
+  notifyAdminOnce,
+  renderClientReminder,
   sendClientReminder,
   type PendingClientTurn,
 } from "@/lib/notify";
@@ -162,7 +165,10 @@ export function reminderDueAt(sinceMs: number, count: number, timing: ReminderTi
 
 export type ReminderRun = {
   checked: number;
+  /** Always empty now: reminders wait for Rupert to send them. Kept for the run report. */
   emailed: { client: string; turns: string[] }[];
+  /** Clients with a reminder ready to send under Nudge. */
+  ready: { client: string; turns: string[] }[];
   stalled: { client: string; turns: string[] }[];
   errors: string[];
 };
@@ -191,52 +197,50 @@ export async function activeSendDates(
   return dates;
 }
 
+type DueTurn = Turn & { count: number; max: number };
+
+/** One client's reminders: the ones due now and the ones that ran out (for the stall alert). */
+type ReminderPlan = {
+  clientId: string;
+  name: string;
+  row: Record<string, unknown>;
+  due: DueTurn[];
+  stalled: (Turn & { max: number })[];
+};
+
 /**
- * Sends due reminders. Safe to run as often as you like (hourly or daily):
- * each step follows its own schedule from Forms → Emails (first reminder,
- * repeat interval, maximum), then optionally one "stalled" alert to Rupert.
- * A client with several waiting steps gets one combined email. Clients with
- * automatic emails paused are skipped.
+ * Works out, for every active client (or one), which reminders are due now,
+ * from each step's schedule in Forms → Emails (first reminder, repeat
+ * interval, maximum). Clients with automatic emails paused are left out.
  */
-export async function runClientReminders(
-  supabase: ServiceClient,
-  now = new Date(),
-): Promise<ReminderRun> {
-  const run: ReminderRun = { checked: 0, emailed: [], stalled: [], errors: [] };
+async function planReminders(supabase: ServiceClient, now: Date, onlyClientId?: string) {
+  const errors: string[] = [];
+  const plans: ReminderPlan[] = [];
 
-  const { data: clients, error } = await supabase
-    .from("clients")
-    .select("*")
-    .is("archived_at", null);
-
+  let query = supabase.from("clients").select("*").is("archived_at", null);
+  if (onlyClientId) query = query.eq("id", onlyClientId);
+  const { data: clients, error } = await query;
   if (error) {
-    run.errors.push(`Loading clients failed: ${error.message}`);
-    return run;
+    errors.push(`Loading clients failed: ${error.message}`);
+    return { plans, errors, settings: null };
   }
 
   const active = (clients ?? []).filter((client) => client.emails_paused !== true);
-  if (active.length === 0) return run;
-
   const settings = await loadEmailSettings(supabase);
-  if (settings.error) run.errors.push(`Email settings: ${settings.error}`);
+  if (settings.error) errors.push(`Email settings: ${settings.error}`);
+  if (active.length === 0) return { plans, errors, settings };
 
   const ids = active.map((client) => String(client.id));
   const [setup, sowSends, orderSends] = await Promise.all([
     loadSetupSteps(supabase, ids),
-    activeSendDates(supabase, "statement_of_work_sends", ids, run.errors),
-    activeSendDates(supabase, "service_order_sends", ids, run.errors),
+    activeSendDates(supabase, "statement_of_work_sends", ids, errors),
+    activeSendDates(supabase, "service_order_sends", ids, errors),
   ]);
 
-  const { data: records, error: recordsError } = await supabase
-    .from("turn_reminders")
-    .select("*")
-    .in("client_id", ids);
-
+  const { data: records, error: recordsError } = await supabase.from("turn_reminders").select("*").in("client_id", ids);
   if (recordsError) {
-    run.errors.push(
-      `Loading reminders failed: ${recordsError.message}. Run portal/supabase/setup_phase.sql in Supabase.`,
-    );
-    return run;
+    errors.push(`Loading reminders failed: ${recordsError.message}. Run portal/supabase/setup_phase.sql in Supabase.`);
+    return { plans, errors, settings };
   }
 
   const byClient = new Map<string, Map<string, ReminderRecord>>();
@@ -248,48 +252,35 @@ export async function runClientReminders(
       turn_since: String(record.turn_since),
       sent_count: Number(record.sent_count) || 0,
       last_sent_at: record.last_sent_at ? String(record.last_sent_at) : null,
-      stalled_alert_at: record.stalled_alert_at
-        ? String(record.stalled_alert_at)
-        : null,
+      stalled_alert_at: record.stalled_alert_at ? String(record.stalled_alert_at) : null,
     });
     byClient.set(clientId, map);
   }
 
   const nowMs = now.getTime();
-  const nowIso = now.toISOString();
-
   for (const client of active) {
     const clientId = String(client.id);
-    const row = {
-      ...(client as Record<string, unknown>),
-      setup_steps: setup.get(clientId) ?? [],
-    };
+    const row = { ...(client as Record<string, unknown>), setup_steps: setup.get(clientId) ?? [] };
     const turns = pendingClientTurns(row, {
       sowSentAt: sowSends.get(clientId) ?? null,
       serviceOrderSentAt: orderSends.get(clientId) ?? null,
     }).filter((turn) => settings.timings[turn.key].enabled);
     if (turns.length === 0) continue;
-    run.checked += 1;
 
-    const records = byClient.get(clientId) ?? new Map<string, ReminderRecord>();
-    const due: (Turn & { count: number; max: number })[] = [];
+    const recordsFor = byClient.get(clientId) ?? new Map<string, ReminderRecord>();
+    const due: DueTurn[] = [];
     const stalled: (Turn & { max: number })[] = [];
-
     for (const turn of turns) {
       const timing = settings.timings[turn.key];
-      const record = records.get(turn.key);
+      const record = recordsFor.get(turn.key);
       const current = record && sameInstant(record.turn_since, turn.since);
       const count = current ? record.sent_count : 0;
       const lastSent = current ? record.last_sent_at : null;
       const sinceMs = Date.parse(turn.since);
       if (Number.isNaN(sinceMs)) continue;
-
       if (count < timing.max_reminders) {
-        const gapOk =
-          !lastSent || nowMs - Date.parse(lastSent) >= MIN_GAP_HOURS * HOUR;
-        if (nowMs >= reminderDueAt(sinceMs, count, timing) && gapOk) {
-          due.push({ ...turn, count, max: timing.max_reminders });
-        }
+        const gapOk = !lastSent || nowMs - Date.parse(lastSent) >= MIN_GAP_HOURS * HOUR;
+        if (nowMs >= reminderDueAt(sinceMs, count, timing) && gapOk) due.push({ ...turn, count, max: timing.max_reminders });
       } else if (
         timing.stall_alert &&
         !(current && record.stalled_alert_at) &&
@@ -299,62 +290,131 @@ export async function runClientReminders(
         stalled.push({ ...turn, max: timing.max_reminders });
       }
     }
+    plans.push({ clientId, name: clientDisplayName(row), row, due, stalled });
+  }
+  return { plans, errors, settings };
+}
 
-    const name = clientDisplayName(row);
+async function recordReminders(supabase: ServiceClient, clientId: string, due: DueTurn[], at: string) {
+  const { error } = await supabase.from("turn_reminders").upsert(
+    due.map((turn) => ({
+      client_id: clientId,
+      turn_key: turn.key,
+      turn_since: turn.since,
+      sent_count: turn.count + 1,
+      last_sent_at: at,
+      stalled_alert_at: null,
+      updated_at: at,
+    })),
+    { onConflict: "client_id,turn_key" },
+  );
+  return error ? error.message : null;
+}
 
-    if (due.length > 0) {
-      const result = await sendClientReminder(supabase, settings, row, due, {
-        lastAttempt: due.some((turn) => turn.count + 1 >= turn.max),
-      });
-      if (!result.ok) {
-        run.errors.push(`${name}: ${result.reason}`);
-      } else {
-        run.emailed.push({ client: name, turns: due.map((turn) => turn.task) });
-        const { error: upsertError } = await supabase.from("turn_reminders").upsert(
-          due.map((turn) => ({
-            client_id: clientId,
-            turn_key: turn.key,
-            turn_since: turn.since,
-            sent_count: turn.count + 1,
-            last_sent_at: nowIso,
-            stalled_alert_at: null,
-            updated_at: nowIso,
-          })),
-          { onConflict: "client_id,turn_key" },
-        );
-        if (upsertError) {
-          run.errors.push(`${name}: reminder log failed: ${upsertError.message}`);
-        }
-      }
+/**
+ * The daily check. Nothing goes to a client from here: reminders that are due
+ * wait under Nudge → Ready to send until Rupert clicks Send. Rupert gets an
+ * in-app notification when a client has one ready, and (unchanged) one
+ * "stalled" alert once a step's reminders have run out.
+ */
+export async function runClientReminders(supabase: ServiceClient, now = new Date()): Promise<ReminderRun> {
+  const run: ReminderRun = { checked: 0, emailed: [], ready: [], stalled: [], errors: [] };
+  const planned = await planReminders(supabase, now);
+  run.errors.push(...planned.errors);
+  const nowIso = now.toISOString();
+
+  for (const plan of planned.plans) {
+    run.checked += 1;
+    if (plan.due.length > 0) {
+      run.ready.push({ client: plan.name, turns: plan.due.map((turn) => turn.task) });
+      await notifyAdminOnce(supabase, plan.clientId, "nudge_ready", { email: false });
     }
-
-    if (stalled.length > 0) {
+    if (plan.stalled.length > 0) {
       const details = [
         "Still waiting after the last reminder:",
-        ...stalled.map(
+        ...plan.stalled.map(
           (turn) =>
             `- ${turn.task} (${turn.max} reminder${turn.max === 1 ? "" : "s"}, waiting since ${formatDate(turn.since)})`,
         ),
         "Consider a personal email or a call.",
       ].join("\n");
-      await notifyAdmin(supabase, clientId, "client_stalled", {
-        email: true,
-        details,
-      });
-      run.stalled.push({ client: name, turns: stalled.map((turn) => turn.task) });
+      await notifyAdmin(supabase, plan.clientId, "client_stalled", { email: true, details });
+      run.stalled.push({ client: plan.name, turns: plan.stalled.map((turn) => turn.task) });
       const { error: stallError } = await supabase
         .from("turn_reminders")
         .update({ stalled_alert_at: nowIso, updated_at: nowIso })
-        .eq("client_id", clientId)
+        .eq("client_id", plan.clientId)
         .in(
           "turn_key",
-          stalled.map((turn) => turn.key),
+          plan.stalled.map((turn) => turn.key),
         );
-      if (stallError) {
-        run.errors.push(`${name}: stalled flag failed: ${stallError.message}`);
-      }
+      if (stallError) run.errors.push(`${plan.name}: stalled flag failed: ${stallError.message}`);
     }
   }
-
   return run;
+}
+
+export type ReadyNudge = {
+  clientId: string;
+  name: string;
+  company: string;
+  steps: { label: string; task: string; since: string; reminder: number; max: number }[];
+  /** The email as it will go out. */
+  email: { to: string; subject: string; body: string } | null;
+  problem: string | null;
+};
+
+/** Reminders due now, each ready to send with one click. */
+export async function listReadyNudges(supabase: ServiceClient, now = new Date()) {
+  const planned = await planReminders(supabase, now);
+  const nudges: ReadyNudge[] = [];
+  for (const plan of planned.plans) {
+    if (plan.due.length === 0 || !planned.settings) continue;
+    const rendered = renderClientReminder(planned.settings, plan.row, plan.due, {
+      lastAttempt: plan.due.some((turn) => turn.count + 1 >= turn.max),
+    });
+    nudges.push({
+      clientId: plan.clientId,
+      name: plan.name,
+      company: text(plan.row.company_name),
+      steps: plan.due.map((turn) => ({
+        label: REMINDER_STEPS.find((step) => step.key === turn.key)?.label ?? turn.key,
+        task: turn.task,
+        since: turn.since,
+        reminder: turn.count + 1,
+        max: turn.max,
+      })),
+      email: rendered.ok ? { to: rendered.to, subject: rendered.subject, body: rendered.body } : null,
+      problem: rendered.ok ? null : rendered.reason,
+    });
+  }
+  return { nudges, errors: planned.errors };
+}
+
+/**
+ * Send (or skip) the reminder due now for one client. Worked out again at the
+ * moment of the click, so it is never stale or sent twice. Skip counts it as
+ * done without emailing: the next one follows on the step's schedule.
+ */
+export async function settleReadyNudge(
+  supabase: ServiceClient,
+  clientId: string,
+  decision: "send" | "skip",
+  now = new Date(),
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const planned = await planReminders(supabase, now, clientId);
+  const plan = planned.plans[0];
+  if (!plan || plan.due.length === 0 || !planned.settings) {
+    return { ok: false, error: planned.errors[0] ?? "Nothing is due for this client any more." };
+  }
+  if (decision === "send") {
+    const sent = await sendClientReminder(supabase, planned.settings, plan.row, plan.due, {
+      lastAttempt: plan.due.some((turn) => turn.count + 1 >= turn.max),
+    });
+    if (!sent.ok) return { ok: false, error: sent.reason };
+  }
+  const recordError = await recordReminders(supabase, clientId, plan.due, now.toISOString());
+  await supabase.from("notifications").update({ read: true }).eq("client_id", clientId).eq("type", "nudge_ready");
+  if (recordError) return { ok: false, error: `${decision === "send" ? "Sent, but not" : "Not"} recorded: ${recordError}` };
+  return { ok: true };
 }

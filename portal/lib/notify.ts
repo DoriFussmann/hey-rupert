@@ -214,6 +214,25 @@ export async function sendClientReminder(
   turns: PendingClientTurn[],
   { lastAttempt }: { lastAttempt: boolean },
 ): Promise<EmailResult> {
+  const rendered = renderClientReminder(settings, row, turns, { lastAttempt });
+  if (!rendered.ok) return rendered;
+  return sendClientEmail(supabase, {
+    clientId: String(row.id),
+    kind: "reminder",
+    templateKey: "reminder",
+    to: [rendered.to],
+    subject: rendered.subject,
+    text: rendered.body,
+  });
+}
+
+/** The reminder email as it will go out, without sending it. */
+export function renderClientReminder(
+  settings: EmailSettings,
+  row: Record<string, unknown>,
+  turns: PendingClientTurn[],
+  { lastAttempt }: { lastAttempt: boolean },
+): { ok: true; to: string; subject: string; body: string } | { ok: false; reason: string } {
   const address = clientAddress(row);
   if (!address) return { ok: false, reason: "This client has no email address." };
   if (turns.length === 0) return { ok: false, reason: "Nothing to remind." };
@@ -237,12 +256,5 @@ export async function sendClientReminder(
     signature: settings.signature,
   });
 
-  return sendClientEmail(supabase, {
-    clientId: String(row.id),
-    kind: "reminder",
-    templateKey: "reminder",
-    to: [address],
-    subject: message.subject,
-    text: message.body,
-  });
+  return { ok: true, to: address, subject: message.subject, body: message.body };
 }

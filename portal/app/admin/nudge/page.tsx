@@ -3,6 +3,8 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/page-header";
 import { NudgeClientPicker } from "@/app/admin/nudge/nudge-client-picker";
 import { NudgeWorkspace } from "@/app/admin/nudge/nudge-workspace";
+import { ReadyNudges } from "@/app/admin/nudge/ready-nudges";
+import { listReadyNudges } from "@/lib/reminders";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { daysLabel, type NudgeClientSummary } from "@/lib/nudge";
 import { loadNudgeDetail, loadNudgeOverview } from "@/lib/nudge-server";
@@ -29,7 +31,7 @@ export default async function NudgePage({
   const header = (
     <PageHeader
       title="Nudge"
-      description="Pick a client to see where they stand, whose turn it is, and what was already sent. Draft a nudge, edit it, and send it."
+      description="Scheduled reminders wait here for you to send. Or pick a client to see where they stand, draft a personal nudge, edit it, and send it."
     />
   );
 
@@ -43,7 +45,7 @@ export default async function NudgePage({
   }
 
   const supabase = createServiceClient();
-  const overview = await loadNudgeOverview(supabase);
+  const [overview, ready] = await Promise.all([loadNudgeOverview(supabase), listReadyNudges(supabase)]);
   if (!overview.ok) {
     return (
       <>
@@ -64,6 +66,7 @@ export default async function NudgePage({
   return (
     <>
       {header}
+      <ReadyNudges nudges={ready.nudges} errors={ready.errors} />
       <NudgeClientPicker clients={options} selectedId={detail?.ok ? selectedId : ""} />
       {overview.warnings.length > 0 ? (
         <p className="mb-md text-body-sm text-warning">{overview.warnings.join(" ")}</p>
