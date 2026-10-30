@@ -156,7 +156,7 @@ export function FramingRoom({
                 onClick={() => {
                   if (
                     !window.confirm(
-                      "Start over? This deletes the brief and its history, the chat, the selling points, the deck feedback, the questions, and a narrative draft that was never sent. The intake, materials and links stay.",
+                      "Start over? This deletes the brief and its history, the LinkedIn PDFs, the selling points, the deck feedback, the questions, and a narrative draft that was never sent. The intake, materials and links stay.",
                     )
                   )
                     return;
@@ -175,9 +175,10 @@ export function FramingRoom({
             <button
               type="button"
               className={brief ? secondaryButton : primaryButton}
-              disabled={busy !== null || !canBuild || !claudeReady}
+              disabled={busy !== null || !canBuild || !claudeReady || (!brief && !linkedinReady)}
+              title={!brief && !linkedinReady ? "Upload the founder's LinkedIn PDF, or click Skip, first." : undefined}
               onClick={() => {
-                if (brief && !window.confirm("Rebuild the brief from scratch? The current version stays in the history; the chat is kept.")) return;
+                if (brief && !window.confirm("Rebuild the brief from scratch? The current version stays in the history.")) return;
                 void run("build", () => buildBriefAction(clientId), "Brief rebuilt.");
               }}
             >
