@@ -133,7 +133,7 @@ export function InvestorListPanel({
     >
       <p className="px-lg pt-md text-body-sm text-muted">
         The list comes from Matching (fund names, tiers, websites and contact counts; never people). Push to client
-        there puts it here as a draft. Review it, preview it, draft the email, then Push to Client Portal &amp; Send.{" "}
+        there puts it here as a draft. Review it, preview it, draft the email, then Push to Client Portal &amp; Send Email.{" "}
         {sendStatus(row)}
       </p>
       <ClientAnswer row={row} hideWaiting />
