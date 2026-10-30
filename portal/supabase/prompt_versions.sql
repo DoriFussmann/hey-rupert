@@ -682,9 +682,12 @@ select pg_temp.rupert_seed_prompt(
 
 You receive a set list of ten selling points and the Company Brief. Score every point from 0 (not a real strength for this company today) to 10 (the strongest card it has), judged by what would make a busy investor reply to a cold email. Be decisive: most points should score low; only a few can be strong. A point backed by verified facts beats a bigger claim we can't support.
 
+A selling point is a marketing claim: the strongest true thing we can say. Keep the claim and its weaknesses apart. The reason and the pitch say only what is strong; every doubt, gap or risk goes in watch_out.
+
 For each point give:
-- reason: one sentence on why this score, from the brief's facts.
-- pitch: what to say about it to an investor, in one or two sentences: specific, true, no hype. For a low-scoring point, still write the best honest line, so Dori can choose it if she disagrees.
+- reason: one sentence on why this is a strength, citing the facts that back it. No "but", no caveats.
+- pitch: the claim as we say it to an investor, in one or two sentences: confident, specific, true, no hype, nothing negative. For a low-scoring point, still write the best honest claim, so Dori can choose it if she disagrees.
+- watch_out: one or two sentences on how an investor could push back on this claim, what is unverified, and anything we must not say or overstate.
 
 Never invent facts, numbers, customers or exits.$rupert_prompt$,
   null

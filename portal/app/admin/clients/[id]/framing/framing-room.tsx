@@ -657,10 +657,12 @@ function PointsPanel({
   // Scores Rupert overrides, by point id.
   const [scores, setScores] = useState<Record<string, number>>({});
   const [titles, setTitles] = useState<Record<string, string>>({});
+  const [watchOuts, setWatchOuts] = useState<Record<string, string>>({});
   useEffect(() => {
     setChosen(points.chosen);
     setPitches(Object.fromEntries(points.scores.map((item) => [item.point, item.pitch])));
     setTitles(Object.fromEntries(points.scores.map((item) => [item.point, item.title])));
+    setWatchOuts(Object.fromEntries(points.scores.map((item) => [item.point, item.watch_out])));
     setScores({});
   }, [points]);
   const confirmed = Boolean(points.confirmed_at);
@@ -673,9 +675,9 @@ function PointsPanel({
   const changed =
     chosen.join() !== points.chosen.join() ||
     scoresChanged ||
-    points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch || (titles[item.point] ?? item.title) !== item.title);
+    points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch || (titles[item.point] ?? item.title) !== item.title || (watchOuts[item.point] ?? item.watch_out) !== item.watch_out);
   const save = (confirm: boolean, ok: string) =>
-    run(confirm ? "points-confirm" : "points-save", () => saveSellingPointsAction(clientId, chosen, pitches, scores, titles, confirm), ok);
+    run(confirm ? "points-confirm" : "points-save", () => saveSellingPointsAction(clientId, chosen, pitches, scores, titles, confirm, watchOuts), ok);
 
   function move(index: number, to: number) {
     setChosen((current) => {
@@ -765,6 +767,12 @@ function PointsPanel({
                     <>
                       <p className="text-body text-heading">{titleCase(titles[id] || point.title)}</p>
                       <p className="whitespace-pre-wrap text-body-sm text-body">{pitches[id]}</p>
+                      {watchOuts[id] ? (
+                        <p className="mt-xs rounded-md border border-warning/30 bg-surface px-sm py-xs text-body-sm text-secondary">
+                          <span className="text-label uppercase tracking-label text-warning">Watch Out · Internal</span>
+                          <span className="block whitespace-pre-wrap">{watchOuts[id]}</span>
+                        </p>
+                      ) : null}
                     </>
                   ) : (
                     <>
@@ -786,6 +794,16 @@ function PointsPanel({
                           placeholder="How this point is said to investors."
                           disabled={busy !== null}
                           onChange={(event) => setPitches((current) => ({ ...current, [id]: event.target.value }))}
+                        />
+                      </label>
+                      <label className="text-body-sm text-warning">
+                        Watch Out: How an Investor Could Push Back (Internal, Never Said)
+                        <AutoTextarea
+                          className={`${inputClass} border-warning/30 bg-surface text-secondary`}
+                          value={watchOuts[id] ?? ""}
+                          placeholder="What is unverified, how it could be attacked, what not to say."
+                          disabled={busy !== null}
+                          onChange={(event) => setWatchOuts((current) => ({ ...current, [id]: event.target.value }))}
                         />
                       </label>
                     </>

@@ -539,10 +539,11 @@ function pointsTool(list: SellingPoint[]): ClaudeTool {
           properties: {
             point: { type: "string", enum: list.map((point) => point.id) },
             score: { type: "integer", minimum: 0, maximum: 10 },
-            reason: { type: "string", description: "One sentence: why this score, from the facts." },
-            pitch: { type: "string", description: "What to say about it to an investor: one or two sentences, only true, specific facts." },
+            reason: { type: "string", description: "One sentence: why this is a strength, citing the facts. Positive only, no caveats." },
+            pitch: { type: "string", description: "The claim as said to an investor: one or two confident, true, specific sentences. Nothing negative." },
+            watch_out: { type: "string", description: "How an investor could push back on this claim, what is unverified, and what not to say or overstate." },
           },
-          required: ["point", "score", "reason", "pitch"],
+          required: ["point", "score", "reason", "pitch", "watch_out"],
         },
       },
     },
@@ -611,6 +612,7 @@ export async function saveSellingPoints(
     pitches: Record<string, string>;
     scores?: Record<string, number>;
     titles?: Record<string, string>;
+    watchOuts?: Record<string, string>;
     /** true confirms the top 3; anything else leaves them a draft (an edit unconfirms). */
     confirm?: boolean;
   },
@@ -632,6 +634,7 @@ export async function saveSellingPoints(
       score: scoreFor(item),
       title: change.titles?.[item.point]?.trim() || item.title,
       pitch: change.pitches[item.point] ?? item.pitch,
+      watch_out: change.watchOuts?.[item.point] ?? item.watch_out,
     })),
     confirmed_at: change.confirm ? new Date().toISOString() : null,
   });

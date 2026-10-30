@@ -248,6 +248,7 @@ export async function saveSellingPointsAction(
   scores: Record<string, number> = {},
   titles: Record<string, string> = {},
   confirm = false,
+  watchOuts: Record<string, string> = {},
 ) {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
@@ -260,11 +261,13 @@ export async function saveSellingPointsAction(
   }
   const cleanTitles: Record<string, string> = {};
   for (const [id, text] of Object.entries(titles && typeof titles === "object" ? titles : {})) cleanTitles[String(id)] = String(text ?? "").slice(0, 100);
+  const cleanWatch: Record<string, string> = {};
+  for (const [id, text] of Object.entries(watchOuts && typeof watchOuts === "object" ? watchOuts : {})) cleanWatch[String(id)] = String(text ?? "").slice(0, 1000);
   return withBrief(
     await saveSellingPoints(
       access.supabase,
       clientId,
-      { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean, scores: cleanScores, titles: cleanTitles, confirm: confirm === true },
+      { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean, scores: cleanScores, titles: cleanTitles, watchOuts: cleanWatch, confirm: confirm === true },
       access.actor,
     ),
     clientId,
