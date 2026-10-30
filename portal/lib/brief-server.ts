@@ -30,6 +30,7 @@ import {
   briefText,
   deckTopic,
   emptyDeck,
+  titleCase,
   emptySections,
   stripCitations,
   topTopics,
@@ -48,8 +49,8 @@ import { prepareFiles } from "@/lib/material-files-server";
 import { profileText } from "@/lib/match/shared";
 import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
-import { asMaterials, type MaterialFile } from "@/lib/setup";
-import { loadSetupSteps } from "@/lib/setup-server";
+import { asMaterials, asNarrative, type MaterialFile } from "@/lib/setup";
+import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
 import { attachMaterialFile, detachAdminMaterialFile } from "@/lib/materials-server";
 
 // The Company Brief and the Framing Room, server side: loading and saving
@@ -761,11 +762,23 @@ export async function chooseDeckTopics(supabase: ServiceClient, clientId: string
   return saveBrief(supabase, clientId, { deck, note: `Deck topics: ${deck.chosen.map((id) => deckTopic(id)?.title).join(", ")}.`, actor });
 }
 
-export async function writeDeckFeedback(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<CompanyBrief>> {
+/**
+ * Writes the feedback for the chosen topics. With `onlyMissing`, only the
+ * chosen topics that have no text yet (a point swapped in); the rest are kept.
+ */
+export async function writeDeckFeedback(
+  supabase: ServiceClient,
+  clientId: string,
+  actor: string | null,
+  onlyMissing = false,
+): Promise<Result<CompanyBrief>> {
   const context = await deckContext(supabase, clientId, actor);
   if (!context.ok) return context;
-  const chosen = context.brief?.deck.chosen ?? [];
-  if (chosen.length === 0) return { ok: false, error: "Score the deck, or choose topics, first." };
+  const existing = context.brief?.deck.writeups ?? {};
+  const allChosen = context.brief?.deck.chosen ?? [];
+  const missing = allChosen.filter((id) => !(existing[id] ?? "").trim());
+  const chosen = onlyMissing && missing.length > 0 ? missing : allChosen;
+  if (chosen.length === 0) return { ok: false, error: "Score the feedback, or choose points, first." };
   const scores = context.brief?.deck.scores ?? [];
   const result = await callClaudeAgent<Record<string, unknown>>({
     system: promptSystem(context.prompt),
@@ -794,8 +807,53 @@ export async function writeDeckFeedback(supabase: ServiceClient, clientId: strin
   }
   if (Object.keys(writeups).length === 0) return { ok: false, error: "Claude wrote no feedback. Nothing was saved. Try again." };
   return saveBrief(supabase, clientId, {
-    deck: { ...(context.brief?.deck ?? emptyDeck()), writeups },
-    note: "Deck feedback written.",
+    deck: { ...(context.brief?.deck ?? emptyDeck()), writeups: onlyMissing ? { ...existing, ...writeups } : writeups, confirmed_at: null },
+    note: "Materials feedback written.",
+    actor,
+  });
+}
+
+/**
+ * Rupert's edits to the materials feedback: which points and in what order
+ * (#1 first), scores, text, links and documents. `confirm` finalizes it; any
+ * other save leaves it a draft.
+ */
+export async function saveDeck(
+  supabase: ServiceClient,
+  clientId: string,
+  change: {
+    chosen: string[];
+    writeups: Record<string, string>;
+    scores: Record<string, number>;
+    links: Record<string, unknown>;
+    files: Record<string, unknown>;
+    confirm: boolean;
+  },
+  actor: string | null,
+): Promise<Result<CompanyBrief>> {
+  const brief = await loadBrief(supabase, clientId);
+  if (!brief.ok) return brief;
+  const current = brief.value?.deck ?? emptyDeck();
+  const deck = asDeck({
+    ...current,
+    chosen: change.chosen,
+    writeups: { ...current.writeups, ...change.writeups },
+    scores: current.scores.map((item) => {
+      const value = change.scores[item.topic];
+      return typeof value === "number" && Number.isFinite(value) ? { ...item, score: value } : item;
+    }),
+    links: change.links,
+    files: change.files,
+    confirmed_at: change.confirm ? new Date().toISOString() : null,
+  });
+  if (change.confirm) {
+    if (deck.chosen.length === 0) return { ok: false, error: "Choose the points of feedback first." };
+    const empty = deck.chosen.filter((id) => !(deck.writeups[id] ?? "").trim());
+    if (empty.length > 0) return { ok: false, error: `Write the feedback for ${empty.map((id) => titleCase(deckTopic(id)?.title ?? id)).join(", ")} first.` };
+  }
+  return saveBrief(supabase, clientId, {
+    deck,
+    note: `Materials feedback${deck.confirmed_at ? " confirmed" : ""}: ${deck.chosen.map((id) => deckTopic(id)?.title).join(", ")}.`,
     actor,
   });
 }
@@ -896,7 +954,7 @@ export async function resetBrief(supabase: ServiceClient, clientId: string): Pro
 
 /** Everything the brief step needs on the client page. Never fails: errors come back as text. */
 export async function loadBriefPanel(supabase: ServiceClient, clientId: string) {
-  const [brief, versions, questions, readiness, topics, files, sources, sellingPoints] = await Promise.all([
+  const [brief, versions, questions, readiness, topics, files, sources, sellingPoints, framing] = await Promise.all([
     loadBrief(supabase, clientId),
     listBriefVersions(supabase, clientId),
     loadFounderQuestions(supabase, clientId),
@@ -905,7 +963,22 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     loadBriefFiles(supabase, clientId),
     loadSources(supabase, clientId),
     loadSellingPoints(supabase),
+    loadSetupStep(supabase, clientId, "framing"),
   ]);
+  const framingRow = framing.ok ? framing.row : null;
+  const draft = asNarrative(framingRow?.draft ?? framingRow?.published);
+  const narrative: BriefNarrative = {
+    summary: draft.summary,
+    core: draft.core,
+    key_messages: draft.key_messages,
+    approach: draft.approach,
+    finalized_at: draft.finalized_at ?? null,
+    change_summary: draft.change_summary ?? "",
+    feedback: draft.feedback?.improvements ?? "",
+    asked: (draft.founder_questions ?? []).map((item) => item.question),
+    status: framingRow?.status ?? null,
+    version: framingRow?.version ?? 0,
+  };
   const linkedinUrls = sources.ok ? linkedinLinks(sources.value.text) : [];
   // LinkedIn PDFs added before they were company files: put them in the materials once.
   if (files.ok && sources.ok) {
@@ -924,11 +997,30 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     filesError: files.ok ? null : files.error,
     linkedinUrls,
     sellingPoints,
+    narrative,
     canBuild: readiness.canBuild,
     buildNote: readiness.reason,
     error: failed && !failed.ok ? failed.error : null,
   };
 }
+
+/** The Outreach Narrative as the Company Brief's stages see it. */
+export type BriefNarrative = {
+  summary: string;
+  core: string;
+  key_messages: string;
+  approach: string;
+  finalized_at: string | null;
+  /** How the last rewrite handled the client's requested changes. */
+  change_summary: string;
+  /** The confirmed materials feedback, as it will be sent. */
+  feedback: string;
+  /** The questions chosen for the founder. */
+  asked: string[];
+  /** The send step: null before the first push, then pushed, confirmed, changes_requested… */
+  status: string | null;
+  version: number;
+};
 
 /** LinkedIn profile links found in what the founder shared (links form, intake answers). */
 export function linkedinLinks(text: string): string[] {

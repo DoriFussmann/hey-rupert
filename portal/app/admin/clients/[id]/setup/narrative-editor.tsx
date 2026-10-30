@@ -2,11 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { writeNarrativeFromBriefAction } from "@/app/admin/brief-actions";
 import { saveNarrativeInternalUpdate } from "@/app/admin/setup-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
-import { MarkdownField } from "@/app/admin/clients/[id]/setup/markdown-field";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
   ClientAnswer,
@@ -23,7 +21,6 @@ import {
   internalNarrativeUpdate,
   narrativeHasEarlierDraft,
   narrativeProblem,
-  type MaterialsFeedback,
   type NarrativePayload,
   type SetupItem,
   type SetupStepState,
@@ -31,13 +28,6 @@ import {
 
 const labelClass = "block text-label uppercase tracking-label text-muted";
 
-const EMPTY_FEEDBACK: MaterialsFeedback = {
-  summary: "",
-  improvements: "",
-  generated_at: "",
-  read: [],
-  skipped: [],
-};
 
 type Message = { kind: "ok" | "error"; text: string } | null;
 
@@ -93,7 +83,6 @@ export function NarrativeEditor({
   const changesRequested = row?.status === "changes_requested";
   const confirmed = row?.status === "confirmed";
   const feedback = narrative.feedback;
-  const hasFeedback = Boolean(feedback);
   const hasText = [narrative.summary, narrative.core, narrative.key_messages, narrative.approach].some(
     (value) => value.trim(),
   );
@@ -102,44 +91,7 @@ export function NarrativeEditor({
     setNarrative((current) => ({ ...current, ...patch }));
   }
 
-  function updateFeedback(patch: Partial<MaterialsFeedback>) {
-    setNarrative((current) => ({
-      ...current,
-      feedback: { ...(current.feedback ?? EMPTY_FEEDBACK), ...patch },
-    }));
-  }
 
-  async function onRebuild() {
-    if (
-      hasText &&
-      !window.confirm(
-        changesRequested
-          ? "Rewrite the narrative from the brief with the client's requested changes? It replaces the current narrative."
-          : "Rewrite the narrative from the brief? It replaces the current narrative, deck feedback and questions.",
-      )
-    ) {
-      return;
-    }
-    setPending("build");
-    setMessage(null);
-    try {
-      const result = await writeNarrativeFromBriefAction(
-        clientId,
-        (narrative.founder_questions ?? []).map((item) => item.question),
-      );
-      if (!result.ok) {
-        setMessage({ kind: "error", text: result.error });
-        return;
-      }
-      setNarrative(result.narrative);
-      setSaved(snapshot(result.narrative));
-      setMessage({ kind: "ok", text: "Narrative rewritten from the brief and saved as a draft. Edit it, then draft the email." });
-    } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to write the narrative." });
-    } finally {
-      setPending(null);
-    }
-  }
 
   async function onInternalUpdate() {
     if (
@@ -167,39 +119,34 @@ export function NarrativeEditor({
     }
   }
 
-  const canBuild = claudeReady && pending === null;
+  const finalized = Boolean(narrative.finalized_at);
+  const feedbackReady = Boolean(feedback?.improvements.trim()) || legacyFeedback;
+  // The narrative and the feedback are written and finalized in the Company Brief; this step sends them.
+  const sendProblem = !finalized
+    ? "Finalize the Outreach Narrative in the Company Brief (stage 2) first."
+    : !feedbackReady
+      ? "Confirm the Company Materials Feedback in the Company Brief (stage 3) first."
+      : narrativeProblem(narrative);
 
   return (
     <StepFrame
       item={item}
       action={
-        <div className="flex flex-wrap gap-sm">
-          <Link
-            href={`/admin/clients/${clientId}#setup-brief`}
-            className={`${hasText ? secondaryButton : primaryButton} no-underline`}
-          >
-            Company Brief
-          </Link>
-          {hasText ? (
-            <button type="button" className={changesRequested ? primaryButton : secondaryButton} disabled={!canBuild} onClick={() => void onRebuild()}>
-              {pending === "build" ? "Writing…" : changesRequested ? "Rewrite With Client's Changes" : "Rewrite From Brief"}
-            </button>
-          ) : null}
-        </div>
+        <Link href={`/admin/clients/${clientId}#setup-brief`} className={`${hasText ? secondaryButton : primaryButton} no-underline`}>
+          {changesRequested ? "Rewrite in the Company Brief" : "Edit in the Company Brief"}
+        </Link>
       }
     >
       <p className="px-lg pt-md text-body-sm text-muted" aria-live="polite">
-        {pending === "build"
-          ? "Writing from the brief. Usually under a minute."
-          : !claudeReady
-            ? "Claude is not configured (ANTHROPIC_API_KEY)."
-            : !hasText
-              ? materialsSubmitted || legacyFeedback
-                ? "Start with the Company Brief above: build it, score the selling points, then write the narrative from it."
-                : "The Company Brief opens once the client's intake is in."
-              : changesRequested
-                ? "The client asked for changes. Rewrite with their changes, or edit and send again."
-                : ""}{" "}
+        {!claudeReady
+          ? "Claude is not configured (ANTHROPIC_API_KEY)."
+          : !hasText
+            ? materialsSubmitted || legacyFeedback
+              ? "Stage 4 of the Company Brief: write and finalize the narrative and the feedback there, then draft the email and push here."
+              : "The Company Brief opens once the client's intake is in."
+            : changesRequested
+              ? "The client asked for changes. Unlock the narrative in the Company Brief, Rewrite With Client's Changes, Finalize, then send again here."
+              : sendProblem ?? "Ready: draft the email and push."}{" "}
         {sendStatus(row)}
       </p>
       {message ? (
@@ -245,69 +192,31 @@ export function NarrativeEditor({
       ) : null}
 
       <div className="grid gap-lg px-lg py-md">
-        <section className="grid gap-lg rounded-card border border-border bg-background px-md py-md">
-          <div>
-            <h4 className="text-body text-heading">Deck feedback</h4>
-            <p className="mt-xs text-body-sm text-muted">
-              Sent with the narrative for the client to read: the three topics from the Company Brief.
-              They can comment on it; there is nothing to confirm.
-              {legacyFeedback && !hasFeedback
-                ? " This client already received Analysis & Feedback as its own step; leave this empty to send the narrative alone."
-                : ""}
-            </p>
-          </div>
-          {feedback?.summary.trim() ? (
-          <div>
-            <p className={labelClass}>How Rupert reads the company</p>
-            <div className="mt-sm">
-              <MarkdownField
-                label="How Rupert reads the company"
-                value={feedback?.summary ?? ""}
-                onChange={(value) => updateFeedback({ summary: value })}
-                height={260}
-              />
-            </div>
-          </div>
-          ) : null}
-          <div>
-            <p className={labelClass}>What to improve in your deck</p>
-            <div className="mt-sm">
-              <MarkdownField
-                label="What to improve in your materials"
-                value={feedback?.improvements ?? ""}
-                onChange={(value) => updateFeedback({ improvements: value })}
-                height={260}
-              />
-            </div>
-          </div>
-          {feedback && (feedback.read.length > 0 || feedback.skipped.length > 0) ? (
-            <details className="text-body-sm">
-              <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-                What the AI read ({feedback.read.length})
-                {feedback.skipped.length > 0 ? ` · couldn't read ${feedback.skipped.length}` : ""}
-              </summary>
-              <ul className="mt-sm list-disc space-y-xs pl-md text-body">
-                {feedback.read.map((entry) => (
-                  <li key={entry}>{entry}</li>
-                ))}
-              </ul>
-              {feedback.skipped.length > 0 ? (
-                <ul className="mt-sm list-disc space-y-xs pl-md text-warning">
-                  {feedback.skipped.map((entry) => (
-                    <li key={entry}>{entry}</li>
-                  ))}
-                </ul>
-              ) : null}
+        {hasText ? (
+          <section className="rounded-card border border-border bg-background px-md py-md">
+            <p className={labelClass}>The Outreach Narrative · what the client reads and confirms</p>
+            <MarkdownBody content={narrative.summary} emptyLabel="Not written yet." className="sow-markdown mt-xs text-body-sm" />
+            <details className="mt-sm text-body-sm">
+              <summary className="cursor-pointer text-label uppercase tracking-label text-muted">Core story, key messages and approach · stay with you</summary>
+              <div className="mt-sm grid gap-md">
+                <MarkdownBody content={narrative.core} emptyLabel="" className="sow-markdown" />
+                <MarkdownBody content={narrative.key_messages} emptyLabel="" className="sow-markdown" />
+                <MarkdownBody content={narrative.approach} emptyLabel="" className="sow-markdown" />
+              </div>
             </details>
-          ) : null}
-        </section>
+          </section>
+        ) : null}
+
+        {feedback?.improvements.trim() ? (
+          <section className="rounded-card border border-border bg-background px-md py-md">
+            <p className={labelClass}>Company Materials Feedback · for the client to read</p>
+            <MarkdownBody content={feedback.improvements} emptyLabel="" className="sow-markdown mt-xs text-body-sm" />
+          </section>
+        ) : null}
 
         {narrative.founder_questions && narrative.founder_questions.length > 0 ? (
           <section className="rounded-card border border-border bg-background px-md py-md">
-            <h4 className="text-body text-heading">Questions for the founder</h4>
-            <p className="mt-xs text-body-sm text-muted">
-              Shown with the narrative; the founder answers on the page. Choose them in the Company Brief.
-            </p>
+            <p className={labelClass}>Questions for the founder · answered on their page</p>
             <ul className="mt-sm list-disc space-y-xs pl-md text-body-sm">
               {narrative.founder_questions.map((item) => (
                 <li key={item.id}>{item.question}</li>
@@ -315,53 +224,6 @@ export function NarrativeEditor({
             </ul>
           </section>
         ) : null}
-        <div>
-          <p className={labelClass}>The Outreach Narrative · what the client reads and confirms</p>
-          <p className="mb-sm mt-xs text-body-sm text-muted">
-            150 to 250 words, light and clear, written from the Company Brief.
-          </p>
-          <MarkdownField
-            label="The Outreach Narrative"
-            value={narrative.summary}
-            onChange={(value) => update({ summary: value })}
-            height={280}
-          />
-        </div>
-        <div>
-          <p className={labelClass}>Core story · for Rupert and the emails</p>
-          <div className="mt-sm">
-            <MarkdownField
-              label="Core story"
-              value={narrative.core}
-              onChange={(value) => update({ core: value })}
-              height={320}
-            />
-          </div>
-        </div>
-        <div>
-          <p className={labelClass}>Key messages</p>
-          <p className="mb-sm mt-xs text-body-sm text-muted">
-            3 to 6 messages Rupert will carry into outreach.
-          </p>
-          <MarkdownField
-            label="Key messages"
-            value={narrative.key_messages}
-            onChange={(value) => update({ key_messages: value })}
-            height={240}
-          />
-        </div>
-        <div>
-          <p className={labelClass}>Approach</p>
-          <p className="mb-sm mt-xs text-body-sm text-muted">
-            Positioning by investor type, tone, what leads, and what to hold back.
-          </p>
-          <MarkdownField
-            label="Approach"
-            value={narrative.approach}
-            onChange={(value) => update({ approach: value })}
-            height={240}
-          />
-        </div>
         <div>
           <p className={labelClass}>What happens next</p>
           <p className="mb-sm mt-xs text-body-sm text-muted">
@@ -401,9 +263,9 @@ export function NarrativeEditor({
         initialEmail={initialEmail}
         dirty={snapshot(narrative) !== saved}
         onSaved={() => setSaved(snapshot(narrative))}
-        problem={narrativeProblem(narrative)}
+        problem={sendProblem}
         busy={pending !== null}
-        pushSummary="Pushes The Outreach Narrative (and what happens next), the deck feedback, the questions for the founder, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
+        pushSummary="Pushes The Outreach Narrative (and what happens next), the Company Materials Feedback, the questions for the founder, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
       />
     </StepFrame>
   );

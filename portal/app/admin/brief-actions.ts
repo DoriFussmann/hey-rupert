@@ -7,7 +7,6 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { buildNarrativeFromBrief } from "@/lib/agents-server";
 import {
-  asDeck,
   asSections,
   BRIEF_TOPICS_SLUG,
   SELLING_POINTS_SLUG,
@@ -24,7 +23,7 @@ import {
 } from "@/lib/brief";
 import {
   buildBrief,
-  chooseDeckTopics,
+  saveDeck,
   loadBrief,
   loadBriefTopics,
   loadBriefVersion,
@@ -43,7 +42,7 @@ import {
 } from "@/lib/brief-server";
 import { intakeFileProblem } from "@/lib/intake";
 import { safeFileName } from "@/lib/materials-server";
-import { MATERIALS_BUCKET, asClientEmail, type MaterialFile, type NarrativePayload } from "@/lib/setup";
+import { MATERIALS_BUCKET, asNarrative, narrativeProblem, type MaterialFile, type NarrativePayload } from "@/lib/setup";
 import { loadSetupStep, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -156,26 +155,129 @@ export async function scoreDeckAction(clientId: string) {
   return withBrief(await scoreDeck(access.supabase, clientId, access.actor), clientId);
 }
 
-export async function chooseDeckTopicsAction(clientId: string, chosen: string[]) {
-  const access = await requireAdmin(clientId);
-  if (!access.ok) return access;
-  return withBrief(await chooseDeckTopics(access.supabase, clientId, Array.isArray(chosen) ? chosen.map(String) : [], access.actor), clientId);
-}
-
-export async function writeDeckFeedbackAction(clientId: string) {
+export async function writeDeckFeedbackAction(clientId: string, onlyMissing = false) {
   const access = await requireAdmin(clientId, true);
   if (!access.ok) return access;
-  return withBrief(await writeDeckFeedback(access.supabase, clientId, access.actor), clientId);
+  return withBrief(await writeDeckFeedback(access.supabase, clientId, access.actor, onlyMissing === true), clientId);
 }
 
-/** Dori's edits to the deck feedback writeups. */
-export async function saveDeckWriteupsAction(clientId: string, writeups: Record<string, string>) {
+/**
+ * Rupert's edits to the Company Materials Feedback. Confirming puts it, with
+ * its links and documents, on the narrative's send step.
+ */
+export async function saveDeckAction(
+  clientId: string,
+  change: {
+    chosen: string[];
+    writeups: Record<string, string>;
+    scores: Record<string, number>;
+    links: Record<string, unknown>;
+    files: Record<string, unknown>;
+    confirm: boolean;
+  },
+) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const raw = change && typeof change === "object" ? change : ({} as typeof change);
+  const writeups: Record<string, string> = {};
+  for (const [id, body] of Object.entries(raw.writeups && typeof raw.writeups === "object" ? raw.writeups : {})) writeups[String(id)] = String(body ?? "").slice(0, 20000);
+  const scores: Record<string, number> = {};
+  for (const [id, value] of Object.entries(raw.scores && typeof raw.scores === "object" ? raw.scores : {})) {
+    const number = Number(value);
+    if (Number.isFinite(number)) scores[String(id)] = Math.max(0, Math.min(10, Math.round(number)));
+  }
+  // Documents must be this client's uploads.
+  const files: Record<string, unknown> = {};
+  for (const [id, list] of Object.entries(raw.files && typeof raw.files === "object" ? raw.files : {})) {
+    files[String(id)] = (Array.isArray(list) ? list : []).filter(
+      (item) => item && typeof item === "object" && String((item as Record<string, unknown>).path ?? "").startsWith(`${clientId}/`),
+    );
+  }
+  const before = await loadBrief(access.supabase, clientId);
+  if (!before.ok) return before;
+  const saved = await saveDeck(
+    access.supabase,
+    clientId,
+    {
+      chosen: Array.isArray(raw.chosen) ? raw.chosen.map(String) : [],
+      writeups,
+      scores,
+      links: raw.links && typeof raw.links === "object" ? raw.links : {},
+      files,
+      confirm: raw.confirm === true,
+    },
+    access.actor,
+  );
+  if (!saved.ok) return saved;
+  if (saved.value.deck.confirmed_at) {
+    const deck = saved.value.deck;
+    const previousDeckPaths = new Set(Object.values(before.value?.deck.files ?? {}).flat().map((file) => file.path));
+    const deckFiles = deck.chosen.flatMap((id) => deck.files[id] ?? []);
+    const patched = await patchNarrativeDraft(access.supabase, clientId, (draft) => ({
+      feedback: { summary: "", improvements: deckFeedbackMarkdown(deck), generated_at: nowIso(), read: [], skipped: [] },
+      attachments: [
+        ...draft.attachments.filter((file) => !previousDeckPaths.has(file.path) && !deckFiles.some((item) => item.path === file.path)),
+        ...deckFiles,
+      ],
+    }));
+    if (!patched.ok) return patched;
+  }
+  return withBrief(saved, clientId);
+}
+
+/** Reads the narrative draft, applies a patch and saves it (no push). */
+async function patchNarrativeDraft(
+  supabase: ReturnType<typeof createServiceClient>,
+  clientId: string,
+  patch: (draft: NarrativePayload) => Partial<NarrativePayload> & Record<string, unknown>,
+): Promise<Result<{ narrative: NarrativePayload }>> {
+  const existing = await loadSetupStep(supabase, clientId, "framing");
+  if (!existing.ok) return existing;
+  const previous = existing.row?.draft && typeof existing.row.draft === "object" ? (existing.row.draft as Record<string, unknown>) : {};
+  const draft = { ...previous, ...patch(asNarrative(previous)) };
+  for (const [key, value] of Object.entries(draft)) if (value === undefined) delete draft[key];
+  const { error } = await supabase
+    .from("setup_steps")
+    .upsert({ client_id: clientId, step: "framing", draft, updated_at: nowIso() }, { onConflict: "client_id,step", ignoreDuplicates: false });
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  revalidate(clientId);
+  return { ok: true, narrative: asNarrative(draft) };
+}
+
+/** The Outreach Narrative's text, edited in the Company Brief; `finalize` locks it for the send step. */
+export async function saveNarrativeAction(
+  clientId: string,
+  fields: { summary: string; core: string; key_messages: string; approach: string },
+  finalize: boolean,
+): Promise<Result<{ narrative: NarrativePayload }>> {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const clean = {
+    summary: String(fields?.summary ?? "").slice(0, 10000),
+    core: String(fields?.core ?? "").slice(0, 30000),
+    key_messages: String(fields?.key_messages ?? "").slice(0, 20000),
+    approach: String(fields?.approach ?? "").slice(0, 20000),
+  };
+  if (finalize) {
+    const problem = narrativeProblem({ ...asNarrative({}), ...clean });
+    if (problem) return { ok: false, error: problem };
+  }
+  return patchNarrativeDraft(access.supabase, clientId, () => ({ ...clean, finalized_at: finalize ? nowIso() : undefined }));
+}
+
+/** The brief's questions Rupert sends the founder with the narrative. */
+export async function saveFounderQuestionsAction(clientId: string, questions: string[]): Promise<Result<{ narrative: NarrativePayload }>> {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
   const brief = await loadBrief(access.supabase, clientId);
   if (!brief.ok) return brief;
-  const deck = asDeck({ ...(brief.value?.deck ?? {}), writeups });
-  return withBrief(await saveBrief(access.supabase, clientId, { deck, note: "Deck feedback edited by hand.", actor: access.actor }), clientId);
+  const allowed = new Set(briefQuestions(brief.value?.sections.questions ?? ""));
+  const wanted = (Array.isArray(questions) ? questions.map(String) : []).filter((question) => allowed.has(question));
+  const asked = await setFounderQuestions(access.supabase, clientId, wanted);
+  if (!asked.ok) return asked;
+  return patchNarrativeDraft(access.supabase, clientId, () => ({
+    founder_questions: asked.value.map((item) => ({ id: item.id, question: item.question })),
+  }));
 }
 
 /**
@@ -183,56 +285,29 @@ export async function saveDeckWriteupsAction(clientId: string, writeups: Record<
  * puts it, the deck feedback and the chosen questions on the Outreach
  * Narrative draft. Nothing reaches the founder until Rupert pushes it there.
  */
-export async function writeNarrativeFromBriefAction(
-  clientId: string,
-  questions: string[],
-): Promise<Result<{ narrative: NarrativePayload }>> {
+export async function writeNarrativeFromBriefAction(clientId: string): Promise<Result<{ narrative: NarrativePayload }>> {
   const access = await requireAdmin(clientId, true);
   if (!access.ok) return access;
   const brief = await loadBrief(access.supabase, clientId);
   if (!brief.ok) return brief;
   if (!brief.value) return { ok: false, error: "Build the brief first." };
-
-  const topics = await loadBriefTopics(access.supabase);
   if (!brief.value.points.confirmed_at) {
     return { ok: false, error: "Confirm & Finalize the 3 strongest selling points first: the narrative leads with them." };
   }
+  const topics = await loadBriefTopics(access.supabase);
   const built = await buildNarrativeFromBrief(access.supabase, clientId, briefText(brief.value.sections, topics, brief.value.points));
   if (!built.ok) return built;
-
-  const allowed = new Set(briefQuestions(brief.value.sections.questions));
-  const wanted = (Array.isArray(questions) ? questions.map(String) : []).filter((question) => allowed.has(question));
-  const asked = await setFounderQuestions(access.supabase, clientId, wanted);
-  if (!asked.ok) return asked;
-
-  const improvements = deckFeedbackMarkdown(brief.value.deck);
-  const narrative: NarrativePayload = {
-    ...built.value.narrative,
-    feedback: improvements
-      ? { summary: "", improvements, generated_at: nowIso(), read: [], skipped: [] }
-      : built.value.narrative.feedback,
-    founder_questions: asked.value.map((item) => ({ id: item.id, question: item.question })),
-  };
-
-  const existing = await loadSetupStep(access.supabase, clientId, "framing");
-  if (!existing.ok) return existing;
-  const previous = existing.row?.draft && typeof existing.row.draft === "object" ? (existing.row.draft as Record<string, unknown>) : {};
-  const { error } = await access.supabase.from("setup_steps").upsert(
-    {
-      client_id: clientId,
-      step: "framing",
-      draft: {
-        ...narrative,
-        client_email: asClientEmail(previous.client_email),
-        ...(previous.internal_update ? { internal_update: previous.internal_update } : {}),
-      },
-      updated_at: nowIso(),
-    },
-    { onConflict: "client_id,step", ignoreDuplicates: false },
-  );
-  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
-  revalidate(clientId);
-  return { ok: true, narrative };
+  // The narrative only: feedback, questions, files and the email stay as they are. Rewriting unfinalizes it.
+  const narrative = built.value.narrative;
+  return patchNarrativeDraft(access.supabase, clientId, () => ({
+    summary: narrative.summary,
+    core: narrative.core,
+    key_messages: narrative.key_messages,
+    approach: narrative.approach,
+    change_summary: narrative.change_summary,
+    admin_note: undefined,
+    finalized_at: undefined,
+  }));
 }
 
 export async function scoreSellingPointsAction(clientId: string) {
