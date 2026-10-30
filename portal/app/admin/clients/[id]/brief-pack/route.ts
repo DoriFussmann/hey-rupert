@@ -5,10 +5,9 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import {
   ABSTRACT_HINT,
   QUESTIONS_HINT,
-  SELLING_POINTS,
   briefText,
 } from "@/lib/brief";
-import { loadBrief, loadBriefTopics, loadSources } from "@/lib/brief-server";
+import { loadBrief, loadBriefTopics, loadSellingPoints, loadSources } from "@/lib/brief-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 // "Download for AI": everything an outside AI (ChatGPT, Claude) needs to work
@@ -25,11 +24,12 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Unknown client." }, { status: 400 });
 
   const supabase = createServiceClient();
-  const [client, sources, brief, topics] = await Promise.all([
+  const [client, sources, brief, topics, sellingPoints] = await Promise.all([
     supabase.from("clients").select("company_name").eq("id", params.id).maybeSingle(),
     loadSources(supabase, params.id),
     loadBrief(supabase, params.id),
     loadBriefTopics(supabase),
+    loadSellingPoints(supabase),
   ]);
   if (!client.data) return NextResponse.json({ error: "Client not found." }, { status: 404 });
   if (!sources.ok) return NextResponse.json({ error: sources.error }, { status: 500 });
@@ -56,13 +56,13 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     ...enabled.map((topic) => `- ${topic.title}: ${topic.guidance}`),
     `- Questions for the founder: ${QUESTIONS_HINT}`,
     "",
-    `The three strongest selling points are chosen from this list of ${SELLING_POINTS.length}: ${SELLING_POINTS.map((point) => point.title).join("; ")}. When asked, score each 0 to 10 for this raise, say why, and say what to tell investors about the top three.`,
+    `The three strongest selling points are chosen from this list of ${sellingPoints.length}: ${sellingPoints.map((point) => `${point.title} (${point.guidance})`).join("; ")}. When asked, score each 0 to 10 for this raise, say why, and say what to tell investors about the top three.`,
     "",
     "## The current Company Brief",
     brief.ok && brief.value ? briefText(brief.value.sections, topics, points ?? undefined) : "(not built yet)",
     points && points.scores.length > 0
       ? `\n## Selling point scores\n${points.scores
-          .map((item) => `- ${SELLING_POINTS.find((point) => point.id === item.point)?.title}: ${item.score}/10. ${item.reason}`)
+          .map((item) => `- ${item.title || item.point}: ${item.score}/10. ${item.reason}`)
           .join("\n")}`
       : "",
     "",

@@ -65,7 +65,7 @@ export function parseBriefTopics(value: unknown): BriefTopic[] | null {
 /** The brief's parts besides the topics. */
 const RESERVED_KEYS = ["abstract", "questions"];
 
-export const ABSTRACT_HINT = "5 to 8 bullet points: what the company is, the strongest facts, the biggest gaps. Short, punchy, one line each.";
+export const ABSTRACT_HINT = "5 to 8 bullet points, each written as \"Short title: one line\" (for example \"Founder: former CEO of a collections company\"): what the company is, the strongest facts, the biggest gaps. Short and punchy.";
 export const QUESTIONS_HINT = "Only the questions for the founder whose answers would change the pitch. One per line, starting with \"- \".";
 
 /** The keys a brief holds with these topics, in reading order. */
@@ -80,6 +80,12 @@ export function sectionTitle(key: string, topics: BriefTopic[]) {
 }
 
 export type BriefSections = Record<string, string>;
+
+/** One abstract bullet as a card: "Title: text" splits into its title and text. */
+export function abstractCard(bullet: string): { title: string; text: string } {
+  const match = bullet.match(/^\*{0,2}([^:*]{2,40}?)\*{0,2}\s*:\s*\*{0,2}\s*(.+)$/);
+  return match ? { title: match[1].trim(), text: match[2].trim() } : { title: "", text: bullet };
+}
 
 /** The abstract as bullets, one per line. */
 export function abstractBullets(text: string): string[] {
@@ -96,6 +102,10 @@ export function abstractBullets(text: string): string[] {
 
 export type SellingPoint = { id: string; title: string; guidance: string };
 
+export const SELLING_POINTS_SLUG = "selling_points";
+export const SELLING_POINTS_MAX = 20;
+
+/** The default list. Dori edits it under Agents → Selling points. */
 export const SELLING_POINTS: SellingPoint[] = [
   { id: "founder_fit", title: "Founder-market fit and track record", guidance: "The founders have done this before or know this problem from the inside: companies run, outcomes, years in the industry." },
   { id: "traction", title: "Traction", guidance: "Revenue, paying customers, growth or usage that proves demand, stated honestly." },
@@ -111,12 +121,25 @@ export const SELLING_POINTS: SellingPoint[] = [
 
 export const SELLING_POINTS_CHOSEN = 3;
 
-export type PointScore = { point: string; score: number; reason: string; pitch: string };
+export type PointScore = { point: string; title: string; score: number; reason: string; pitch: string };
 
 export type SellingPoints = { scores: PointScore[]; chosen: string[]; scored_at: string | null };
 
-export function sellingPoint(id: string) {
-  return SELLING_POINTS.find((point) => point.id === id) ?? null;
+/** Saved selling points, or null when they can't be used. */
+export function parseSellingPoints(value: unknown): SellingPoint[] | null {
+  if (!Array.isArray(value)) return null;
+  const seen = new Set<string>();
+  const points: SellingPoint[] = [];
+  for (const item of value) {
+    const raw = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const title = typeof raw.title === "string" ? raw.title.trim().slice(0, 100) : "";
+    if (!title) return null;
+    const id = typeof raw.id === "string" && TOPIC_ID.test(raw.id) ? raw.id : topicIdFor(title);
+    if (seen.has(id)) return null;
+    seen.add(id);
+    points.push({ id, title, guidance: typeof raw.guidance === "string" ? raw.guidance.trim().slice(0, 1000) : "" });
+  }
+  return points.length >= SELLING_POINTS_CHOSEN && points.length <= SELLING_POINTS_MAX ? points : null;
 }
 
 export function emptyPoints(): SellingPoints {
@@ -132,22 +155,23 @@ export function asPoints(value: unknown): SellingPoints {
           const score = Math.round(Number(entry.score));
           return {
             point: typeof entry.point === "string" ? entry.point : "",
+            title: typeof entry.title === "string" ? entry.title.slice(0, 100) : "",
             score: Number.isFinite(score) ? Math.min(10, Math.max(0, score)) : 0,
             reason: stripCitations(typeof entry.reason === "string" ? entry.reason.slice(0, 800) : ""),
             pitch: stripCitations(typeof entry.pitch === "string" ? entry.pitch.slice(0, 2000) : ""),
           };
         })
-        .filter((item) => sellingPoint(item.point))
+        .filter((item) => TOPIC_ID.test(item.point))
     : [];
   const chosen = Array.isArray(raw.chosen)
-    ? Array.from(new Set(raw.chosen.map(String).filter((id) => sellingPoint(id)))).slice(0, SELLING_POINTS_CHOSEN)
+    ? Array.from(new Set(raw.chosen.map(String).filter((id) => TOPIC_ID.test(id)))).slice(0, SELLING_POINTS_CHOSEN)
     : [];
   return { scores, chosen, scored_at: typeof raw.scored_at === "string" ? raw.scored_at : null };
 }
 
 /** The strongest points by score, ties in list order. */
 export function topPoints(scores: PointScore[], count = SELLING_POINTS_CHOSEN) {
-  const order = SELLING_POINTS.map((point) => point.id);
+  const order = scores.map((item) => item.point);
   return [...scores]
     .sort((a, b) => b.score - a.score || order.indexOf(a.point) - order.indexOf(b.point))
     .slice(0, count)
@@ -158,9 +182,8 @@ export function topPoints(scores: PointScore[], count = SELLING_POINTS_CHOSEN) {
 export function chosenPointsText(points: SellingPoints) {
   return points.chosen
     .map((id, index) => {
-      const point = sellingPoint(id);
       const score = points.scores.find((item) => item.point === id);
-      return point ? `${index + 1}. ${point.title}: ${score?.pitch || score?.reason || ""}`.trim() : "";
+      return score ? `${index + 1}. ${score.title || id.replace(/_/g, " ")}: ${score.pitch || score.reason}`.trim() : "";
     })
     .filter(Boolean)
     .join("\n");

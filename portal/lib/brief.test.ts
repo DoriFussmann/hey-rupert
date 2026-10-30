@@ -120,10 +120,10 @@ test("topics saved in the admin are checked: titles, unique ids, reserved keys, 
 test("selling points: all ten scored, top three by score, decided points lead the brief text", () => {
   const points = asPoints({
     scores: [
-      { point: "founder_fit", score: 9, reason: "Ran a collections company.", pitch: "Former CEO of a collections company." },
+      { point: "founder_fit", title: "Founder-market fit and track record", score: 9, reason: "Ran a collections company.", pitch: "Former CEO of a collections company." },
       { point: "category_momentum", score: 7, reason: "AR is funded.", pitch: "AR automation raised big rounds in 2026." },
       { point: "traction", score: 3, reason: "Two customers.", pitch: "" },
-      { point: "nope", score: 10 },
+      { point: "Not An Id", score: 10 },
     ],
   });
   assert.equal(points.scores.length, 3);
@@ -131,4 +131,15 @@ test("selling points: all ten scored, top three by score, decided points lead th
   const text = briefText({ abstract: "- One", purpose: "AR automation." }, DEFAULT_BRIEF_TOPICS.slice(0, 1), { ...points, chosen: ["founder_fit"] });
   assert.match(text, /^## Abstract\n- One\n\n## The three strongest selling points \(decided\)\n1\. Founder-market fit and track record: Former CEO/);
   assert.deepEqual(abstractBullets("- One\n* Two\n\n3) Three"), ["One", "Two", "Three"]);
+});
+
+test("the selling points list saved in the admin: 3 to 20, unique titles; abstract bullets become titled cards", async () => {
+  const { parseSellingPoints, abstractCard } = await import("./brief.ts");
+  const parsed = parseSellingPoints([{ title: "Team" }, { title: "Traction", guidance: "Revenue." }, { title: "Market" }]);
+  assert.deepEqual(parsed?.map((point) => point.id), ["team", "traction", "market"]);
+  assert.equal(parseSellingPoints([{ title: "Team" }, { title: "Market" }]), null);
+  assert.equal(parseSellingPoints([{ title: "Team" }, { title: "team" }, { title: "X" }]), null);
+  assert.deepEqual(abstractCard("Founder: former CEO of a collections company"), { title: "Founder", text: "former CEO of a collections company" });
+  assert.deepEqual(abstractCard("**The round:** $2M seed"), { title: "The round", text: "$2M seed" });
+  assert.deepEqual(abstractCard("Two live customers, $650 MRR"), { title: "", text: "Two live customers, $650 MRR" });
 });
