@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
   buildBriefAction,
+  resetBriefAction,
   chooseDeckTopicsAction,
   restoreBriefVersionAction,
   saveBriefSectionsAction,
@@ -128,6 +129,31 @@ export function FramingRoom({
               </p>
               {!brief && buildNote && canBuild ? <p className="mt-xs text-body-sm text-warning">{buildNote}</p> : null}
             </div>
+            <div className="flex flex-wrap gap-sm">
+            {brief || messages.length > 0 ? (
+              <button
+                type="button"
+                className={secondaryButton}
+                disabled={busy !== null}
+                onClick={() => {
+                  if (
+                    !window.confirm(
+                      "Start over? This deletes the brief and its history, the chat, the selling points, the deck feedback, the questions, and a narrative draft that was never sent. The intake, materials and links stay.",
+                    )
+                  )
+                    return;
+                  setBusy("reset");
+                  void resetBriefAction(clientId)
+                    .then((result) => {
+                      if (!result.ok) setNotice({ kind: "error", text: result.error });
+                      else window.location.reload();
+                    })
+                    .finally(() => setBusy(null));
+                }}
+              >
+                {busy === "reset" ? "Clearing…" : "Start over"}
+              </button>
+            ) : null}
             <button
               type="button"
               className={brief ? secondaryButton : primaryButton}
@@ -139,6 +165,7 @@ export function FramingRoom({
             >
               {building ? "Building…" : brief ? "Rebuild brief" : "Build brief"}
             </button>
+            </div>
           </div>
           {!claudeReady ? <p className="mt-sm text-body-sm text-warning">Claude is not configured (ANTHROPIC_API_KEY).</p> : null}
           {notice ? (
