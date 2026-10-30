@@ -25,9 +25,10 @@ import { MarkdownBody } from "@/components/markdown-body";
 import {
   ABSTRACT_HINT,
   QUESTIONS_HINT,
-  SELLING_POINTS,
   SELLING_POINTS_CHOSEN,
   abstractBullets,
+  abstractCard,
+  type SellingPoint,
   DECK_TOPICS,
   DECK_TOPICS_PER_CLIENT,
   briefQuestions,
@@ -56,6 +57,7 @@ export function FramingRoom({
   initialLinkedin,
   linkedinError,
   linkedinUrls,
+  sellingPoints,
   canBuild,
   buildNote,
   claudeReady,
@@ -69,6 +71,7 @@ export function FramingRoom({
   linkedinError: string | null;
   /** LinkedIn profile links the founder gave, to open and save as PDF. */
   linkedinUrls: string[];
+  sellingPoints: SellingPoint[];
   canBuild: boolean;
   buildNote: string | null;
   claudeReady: boolean;
@@ -230,7 +233,7 @@ export function FramingRoom({
               disabled={busy !== null}
               onSave={(value) => run("abstract", () => saveBriefSectionsAction(clientId, { ...brief.sections, abstract: value }, "Edited the abstract."), "Abstract saved.")}
             />
-            <PointsPanel clientId={clientId} brief={brief} busy={busy} run={run} claudeReady={claudeReady} />
+            <PointsPanel clientId={clientId} brief={brief} list={sellingPoints} busy={busy} run={run} claudeReady={claudeReady} />
             <div className="grid gap-md xl:grid-cols-2">
               {topics
                 .filter((topic) => topic.enabled)
@@ -596,12 +599,16 @@ function AbstractCard({ value, disabled, onSave }: { value: string; disabled: bo
       {editing ? (
         <AutoTextarea className={`${inputClass} mt-md`} value={text} aria-label="Abstract" onChange={(event) => setText(event.target.value)} />
       ) : bullets.length > 0 ? (
-        <ul className="mt-md grid gap-sm sm:grid-cols-2">
-          {bullets.map((bullet, index) => (
-            <li key={index} className="rounded-md border border-border bg-background px-md py-sm text-body-sm text-heading">
-              <MarkdownBody content={bullet} emptyLabel="" className="sow-markdown" />
-            </li>
-          ))}
+        <ul className="mt-md grid gap-sm">
+          {bullets.map((bullet, index) => {
+            const item = abstractCard(bullet);
+            return (
+              <li key={index} className="rounded-md border border-border bg-background px-md py-sm">
+                {item.title ? <p className="text-label uppercase tracking-label text-primary">{item.title}</p> : null}
+                <MarkdownBody content={item.text} emptyLabel="" className="sow-markdown mt-xs text-body-sm text-heading" />
+              </li>
+            );
+          })}
         </ul>
       ) : (
         <p className="mt-md text-body-sm text-muted">Empty. Rebuild the brief to write it.</p>
@@ -614,17 +621,24 @@ function AbstractCard({ value, disabled, onSave }: { value: string; disabled: bo
 function PointsPanel({
   clientId,
   brief,
+  list,
   busy,
   run,
   claudeReady,
 }: {
   clientId: string;
   brief: CompanyBrief;
+  list: SellingPoint[];
   busy: string | null;
   run: (key: string, work: () => Promise<ActionResult>, ok?: string) => Promise<boolean>;
   claudeReady: boolean;
 }) {
   const points = brief.points;
+  // The current list, plus any point a saved score still names.
+  const shown: SellingPoint[] = [
+    ...list,
+    ...points.scores.filter((item) => !list.some((point) => point.id === item.point)).map((item) => ({ id: item.point, title: item.title || item.point, guidance: "" })),
+  ];
   const [chosen, setChosen] = useState<string[]>(points.chosen);
   const [pitches, setPitches] = useState<Record<string, string>>({});
   useEffect(() => {
@@ -633,7 +647,7 @@ function PointsPanel({
   }, [points]);
 
   const scoreOf = (id: string) => points.scores.find((item) => item.point === id);
-  const ordered = [...SELLING_POINTS].sort((a, b) => (scoreOf(b.id)?.score ?? -1) - (scoreOf(a.id)?.score ?? -1));
+  const ordered = [...shown].sort((a, b) => (scoreOf(b.id)?.score ?? -1) - (scoreOf(a.id)?.score ?? -1));
   const changed =
     chosen.join() !== points.chosen.join() || points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch);
 
@@ -649,9 +663,13 @@ function PointsPanel({
         <div>
           <h3 className="text-h4">The 3 strongest selling points</h3>
           <p className="mt-xs max-w-prose text-body-sm text-muted">
-            Rupert scores all {SELLING_POINTS.length} for this raise and picks the top {SELLING_POINTS_CHOSEN}. Swap any of them and edit what to say. The narrative leads with these.
+            Rupert scores all {list.length} for this raise and picks the top {SELLING_POINTS_CHOSEN}. Swap any of them and edit what to say. The narrative leads with these.
           </p>
         </div>
+        <div className="flex flex-wrap gap-sm">
+        <Link href="/admin/forms/selling-points" className={`${secondaryButton} no-underline`}>
+          Edit the list
+        </Link>
         <button
           type="button"
           className={points.scores.length > 0 ? secondaryButton : primaryButton}
@@ -660,13 +678,14 @@ function PointsPanel({
         >
           {busy === "points" ? "Scoring…" : points.scores.length > 0 ? "Score again" : "Score selling points"}
         </button>
+        </div>
       </div>
 
       {points.scores.length > 0 ? (
         <>
           <ol className="mt-md grid gap-sm md:grid-cols-3">
             {chosen.map((id, index) => {
-              const point = SELLING_POINTS.find((item) => item.id === id);
+              const point = shown.find((item) => item.id === id);
               return point ? (
                 <li key={id} className="flex flex-col gap-xs rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
                   <p className="text-label uppercase tracking-label text-primary">
@@ -684,7 +703,7 @@ function PointsPanel({
             })}
           </ol>
           <details className="mt-md text-body-sm" open={chosen.length < SELLING_POINTS_CHOSEN}>
-            <summary className="cursor-pointer text-primary">All {SELLING_POINTS.length} points, by score</summary>
+            <summary className="cursor-pointer text-primary">All {shown.length} points, by score</summary>
             <ul className="mt-sm grid gap-xs">
               {ordered.map((point) => {
                 const score = scoreOf(point.id);

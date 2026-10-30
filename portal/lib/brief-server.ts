@@ -8,6 +8,9 @@ import {
   DEFAULT_BRIEF_TOPICS,
   QUESTIONS_HINT,
   SELLING_POINTS,
+  SELLING_POINTS_SLUG,
+  parseSellingPoints,
+  type SellingPoint,
   asPoints,
   briefKeys,
   emptyPoints,
@@ -520,7 +523,8 @@ export async function pinProposal(
 // ---------------------------------------------------------------------------
 // The three strongest selling points
 
-const POINTS_TOOL: ClaudeTool = {
+function pointsTool(list: SellingPoint[]): ClaudeTool {
+  return {
   name: "submit_points",
   description: "Score every selling point for this raise, with the reason and what to say.",
   input_schema: {
@@ -531,7 +535,7 @@ const POINTS_TOOL: ClaudeTool = {
         items: {
           type: "object",
           properties: {
-            point: { type: "string", enum: SELLING_POINTS.map((point) => point.id) },
+            point: { type: "string", enum: list.map((point) => point.id) },
             score: { type: "integer", minimum: 0, maximum: 10 },
             reason: { type: "string", description: "One sentence: why this score, from the facts." },
             pitch: { type: "string", description: "What to say about it to an investor: one or two sentences, only true, specific facts." },
@@ -543,34 +547,55 @@ const POINTS_TOOL: ClaudeTool = {
     required: ["scores"],
   },
 };
+}
+
+/** The selling points as Dori set them under Agents → Selling points, else the defaults. */
+export async function loadSellingPoints(supabase: ServiceClient): Promise<SellingPoint[]> {
+  const { data } = await supabase.from("form_templates").select("content").eq("slug", SELLING_POINTS_SLUG).maybeSingle();
+  if (!data?.content) return SELLING_POINTS;
+  try {
+    return parseSellingPoints(JSON.parse(String(data.content))) ?? SELLING_POINTS;
+  } catch {
+    return SELLING_POINTS;
+  }
+}
 
 export async function scoreSellingPoints(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<CompanyBrief>> {
-  const [brief, prompt, topics] = await Promise.all([
+  const [brief, prompt, topics, sellingPoints] = await Promise.all([
     loadBrief(supabase, clientId),
     loadPrompt(supabase, "selling_points", { clientId, purpose: "Selling points", actor }),
     loadBriefTopics(supabase),
+    loadSellingPoints(supabase),
   ]);
+  const POINTS_TOOL = pointsTool(sellingPoints);
   if (!brief.ok) return brief;
   if (!prompt.ok) return prompt;
   if (!brief.value) return { ok: false, error: "Build the brief first." };
-  const list = SELLING_POINTS.map((point) => `- ${point.id}: ${point.title}. ${point.guidance}`).join("\n");
+  const list = sellingPoints.map((point) => `- ${point.id}: ${point.title}. ${point.guidance}`).join("\n");
   const result = await callClaudeAgent<Record<string, unknown>>({
     system: promptSystem(prompt.value),
     content: [
       { type: "text", text: `# The selling points\n\n${list}` },
       { type: "text", text: `# The Company Brief\n\n${briefText(brief.value.sections, topics)}` },
-      { type: "text", text: `Score all ${SELLING_POINTS.length} selling points for this raise by calling the ${POINTS_TOOL.name} tool.` },
+      { type: "text", text: `Score all ${sellingPoints.length} selling points for this raise by calling the ${POINTS_TOOL.name} tool.` },
     ],
     tool: POINTS_TOOL,
     maxTokens: 5000,
   });
   if (!result.ok) return { ok: false, error: result.reason };
-  const points = asPoints({ scores: result.input.scores });
-  if (points.scores.length < SELLING_POINTS.length / 2) return { ok: false, error: "Claude scored too few selling points. Nothing was saved. Try again." };
+  const known = new Map(sellingPoints.map((point) => [point.id, point.title]));
+  const scored = (Array.isArray(result.input.scores) ? result.input.scores : [])
+    .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
+    .filter((item) => known.has(String(item.point)))
+    .map((item): Record<string, unknown> => ({ ...item, title: known.get(String(item.point)) }));
+  // In the list's order, so ties go to the earlier point.
+  scored.sort((a, b) => sellingPoints.findIndex((p) => p.id === a.point) - sellingPoints.findIndex((p) => p.id === b.point));
+  const points = asPoints({ scores: scored });
+  if (points.scores.length < sellingPoints.length / 2) return { ok: false, error: "Claude scored too few selling points. Nothing was saved. Try again." };
   const chosen = topPoints(points.scores);
   return saveBrief(supabase, clientId, {
     points: { ...points, chosen, scored_at: new Date().toISOString() },
-    note: `Selling points scored. Top 3: ${chosen.map((id) => SELLING_POINTS.find((point) => point.id === id)?.title).join(", ")}.`,
+    note: `Selling points scored. Top 3: ${chosen.map((id) => known.get(id)).join(", ")}.`,
     actor,
   });
 }
@@ -592,7 +617,7 @@ export async function saveSellingPoints(
   });
   return saveBrief(supabase, clientId, {
     points,
-    note: `Selling points: ${points.chosen.map((id) => SELLING_POINTS.find((point) => point.id === id)?.title).join(", ")}.`,
+    note: `Selling points: ${points.chosen.map((id) => points.scores.find((item) => item.point === id)?.title ?? id).join(", ")}.`,
     actor,
   });
 }
@@ -833,7 +858,7 @@ export async function resetBrief(supabase: ServiceClient, clientId: string): Pro
 
 /** Everything the brief step needs on the client page. Never fails: errors come back as text. */
 export async function loadBriefPanel(supabase: ServiceClient, clientId: string) {
-  const [brief, versions, questions, readiness, topics, files, sources] = await Promise.all([
+  const [brief, versions, questions, readiness, topics, files, sources, sellingPoints] = await Promise.all([
     loadBrief(supabase, clientId),
     listBriefVersions(supabase, clientId),
     loadFounderQuestions(supabase, clientId),
@@ -841,6 +866,7 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     loadBriefTopics(supabase),
     loadBriefFiles(supabase, clientId),
     loadSources(supabase, clientId),
+    loadSellingPoints(supabase),
   ]);
   const linkedinUrls = sources.ok ? linkedinLinks(sources.value.text) : [];
   const failed = [brief, versions, questions].find((item) => !item.ok);
@@ -852,6 +878,7 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     files: files.ok ? files.value : { linkedin: [], skipped: false },
     filesError: files.ok ? null : files.error,
     linkedinUrls,
+    sellingPoints,
     canBuild: readiness.canBuild,
     buildNote: readiness.reason,
     error: failed && !failed.ok ? failed.error : null,

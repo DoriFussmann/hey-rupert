@@ -10,6 +10,9 @@ import {
   asDeck,
   asSections,
   BRIEF_TOPICS_SLUG,
+  SELLING_POINTS_SLUG,
+  parseSellingPoints,
+  type SellingPoint,
   briefQuestions,
   briefText,
   parseBriefTopics,
@@ -320,4 +323,22 @@ export async function removeLinkedinFileAction(clientId: string, path: string) {
   if (!result.ok) return result;
   revalidate(clientId);
   return { ok: true as const, files: result.value };
+}
+
+/** Agents → Selling points: the list Rupert scores for every raise. */
+export async function saveSellingPointsListAction(points: SellingPoint[]): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };
+  if (!isServiceRoleConfigured()) return { ok: false, error: "Service role key is not configured." };
+  const parsed = parseSellingPoints(points);
+  if (!parsed) return { ok: false, error: "Each point needs a unique title, and there must be between 3 and 20 points." };
+  const { error } = await createServiceClient().from("form_templates").upsert({
+    slug: SELLING_POINTS_SLUG,
+    title: "Selling points",
+    content: JSON.stringify(parsed),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/forms/selling-points");
+  return { ok: true };
 }
