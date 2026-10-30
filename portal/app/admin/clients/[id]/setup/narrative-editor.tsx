@@ -6,6 +6,7 @@ import { saveNarrativeInternalUpdate } from "@/app/admin/setup-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
 import { MarkdownBody } from "@/components/markdown-body";
+import { NarrativeStatementView } from "@/components/setup/narrative-statement";
 import {
   ClientAnswer,
   ClientQuestions,
@@ -195,7 +196,14 @@ export function NarrativeEditor({
         {hasText ? (
           <section className="rounded-card border border-border bg-background px-md py-md">
             <p className={labelClass}>The Outreach Narrative · what the client reads and confirms</p>
-            <MarkdownBody content={narrative.summary} emptyLabel="Not written yet." className="sow-markdown mt-xs text-body-sm" />
+            {narrative.statement ? (
+              <div className="mt-sm">
+                <NarrativeStatementView statement={narrative.statement} />
+              </div>
+            ) : (
+              <MarkdownBody content={narrative.summary} emptyLabel="Not written yet." className="sow-markdown mt-xs text-body-sm" />
+            )}
+            {narrative.core.trim() ? (
             <details className="mt-sm text-body-sm">
               <summary className="cursor-pointer text-label uppercase tracking-label text-muted">Core story, key messages and approach · stay with you</summary>
               <div className="mt-sm grid gap-md">
@@ -204,6 +212,7 @@ export function NarrativeEditor({
                 <MarkdownBody content={narrative.approach} emptyLabel="" className="sow-markdown" />
               </div>
             </details>
+            ) : null}
           </section>
         ) : null}
 

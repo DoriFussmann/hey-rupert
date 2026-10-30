@@ -49,7 +49,7 @@ import { prepareFiles } from "@/lib/material-files-server";
 import { profileText } from "@/lib/match/shared";
 import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
-import { asMaterials, asNarrative, type MaterialFile } from "@/lib/setup";
+import { asMaterials, asNarrative, type MaterialFile, type NarrativeStatement } from "@/lib/setup";
 import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
 import { attachMaterialFile, detachAdminMaterialFile } from "@/lib/materials-server";
 
@@ -968,6 +968,8 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
   const framingRow = framing.ok ? framing.row : null;
   const draft = asNarrative(framingRow?.draft ?? framingRow?.published);
   const narrative: BriefNarrative = {
+    statement: draft.statement ?? null,
+    client_note: framingRow?.status === "changes_requested" ? framingRow.response?.note ?? "" : "",
     summary: draft.summary,
     core: draft.core,
     key_messages: draft.key_messages,
@@ -1006,6 +1008,10 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
 
 /** The Outreach Narrative as the Company Brief's stages see it. */
 export type BriefNarrative = {
+  /** The narrative the client confirms: why three, the three points, the ask. */
+  statement: NarrativeStatement | null;
+  /** The client's note when they asked for changes. */
+  client_note: string;
   summary: string;
   core: string;
   key_messages: string;

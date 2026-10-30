@@ -235,7 +235,32 @@ export type FeedbackPublished = {
 
 /** Shown under What happens next unless Rupert edits it for this client. */
 export const NARRATIVE_NEXT_STEPS =
-  "Once you confirm this narrative, Rupert sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
+  "Once you confirm, Rupert matches the investors and sends you the list. After you confirm the list, he writes the emails for each tier, built on these three points. You review them before anything is sent.";
+
+/** The narrative as the client reads it: why three, the three points (in order), and the ask to confirm. */
+export type NarrativeStatement = {
+  intro: string;
+  points: { title: string; claim: string }[];
+  closing: string;
+};
+
+export function asStatement(value: unknown): NarrativeStatement | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const points = (Array.isArray(raw.points) ? raw.points : [])
+    .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
+    .map((item) => ({ title: str(item.title, 200).trim(), claim: str(item.claim, 3000).trim() }))
+    .filter((item) => item.title || item.claim)
+    .slice(0, 5);
+  if (points.length === 0) return undefined;
+  return { intro: str(raw.intro, 3000).trim(), points, closing: str(raw.closing, 3000).trim() };
+}
+
+/** The statement as markdown, kept in `summary` so every reader of the narrative gets the same text. */
+export function statementMarkdown(statement: NarrativeStatement): string {
+  const points = statement.points.map((point, index) => `### ${index + 1}. ${point.title}\n\n${point.claim}`);
+  return [statement.intro, ...points, statement.closing].filter((part) => part.trim()).join("\n\n");
+}
 
 export type NarrativePayload = {
   /**
@@ -277,6 +302,8 @@ export type NarrativePayload = {
   founder_questions?: { id: string; question: string }[];
   /** Set when Rupert finalizes the narrative in the Company Brief; the send step waits for it. */
   finalized_at?: string;
+  /** The narrative as a statement (why three, the three points, the ask). `summary` holds it as markdown. */
+  statement?: NarrativeStatement;
 };
 
 /**
@@ -1125,6 +1152,7 @@ export function asNarrative(value: unknown): NarrativePayload {
     linkedin_followup: optionalText(raw.linkedin_followup, 5000),
     change_summary: optionalText(raw.change_summary, 5000),
     finalized_at: optionalText(raw.finalized_at, 40),
+    statement: asStatement(raw.statement),
     ...withQuestions(asQuestions(raw.questions)),
     ...founderQuestionsOf(raw.founder_questions),
   };
@@ -1187,6 +1215,11 @@ export function narrativeHasEarlierDraft(narrative: NarrativePayload) {
 }
 
 export function narrativeProblem(narrative: NarrativePayload) {
+  // The statement narrative: why three, the three points, the ask. Nothing else is needed.
+  if (narrative.statement) {
+    if (narrative.statement.points.some((point) => !point.title.trim() || !point.claim.trim())) return "Each selling point needs a headline and what we say.";
+    return narrative.summary.trim() ? null : "The narrative is empty.";
+  }
   if (!narrative.summary.trim()) {
     return "Write The Outreach Narrative (what the client reads and confirms) before sending. Rebuild the narrative to have it written for you.";
   }

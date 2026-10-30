@@ -19,10 +19,9 @@ import {
   saveNarrativeAction,
   scoreDeckAction,
   writeDeckFeedbackAction,
-  writeNarrativeFromBriefAction,
+  createNarrativeAction,
 } from "@/app/admin/brief-actions";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
-import { MarkdownField } from "@/app/admin/clients/[id]/setup/markdown-field";
 import { createSetupUpload } from "@/app/admin/agent-actions";
 
 /** Text written as "- " lines shows as a bullet list; anything else as a paragraph. */
@@ -63,6 +62,7 @@ import {
   titleCase,
 } from "@/lib/brief";
 import type { BriefFiles, BriefNarrative, BriefVersionRow } from "@/lib/brief-server";
+import type { NarrativeStatement } from "@/lib/setup";
 import { createClient } from "@/lib/supabase/client";
 import { MATERIALS_BUCKET } from "@/lib/setup";
 import { formatDateAtTime } from "@/lib/format";
@@ -295,7 +295,6 @@ export function FramingRoom({
               clientId={clientId}
               narrative={narrative}
               pointsConfirmed={Boolean(brief.points.confirmed_at)}
-              claudeReady={claudeReady}
               busy={busy}
               setBusy={setBusy}
             />
@@ -412,43 +411,32 @@ function StageHead({
   );
 }
 
-const NARRATIVE_FIELDS = [
-  { key: "summary", title: "The Outreach Narrative", hint: "What the client reads and confirms. 150 to 250 words.", height: 280 },
-  { key: "core", title: "Core Story", hint: "For Rupert and the emails.", height: 300 },
-  { key: "key_messages", title: "Key Messages", hint: "3 to 6 messages carried into outreach.", height: 220 },
-  { key: "approach", title: "Approach", hint: "Positioning by investor type, tone, what leads and what is held back.", height: 220 },
-] as const;
-type NarrativeText = Pick<BriefNarrative, "summary" | "core" | "key_messages" | "approach">;
-
-/** Stage 2: the Outreach Narrative, written from the confirmed points, edited and finalized. Not sent yet. */
+/**
+ * Stage 2: the Outreach Narrative. A short statement to the founder: we
+ * don't pitch ten points, these are the three strongest, in this order; do
+ * you confirm? Made from the confirmed selling points, edited, finalized.
+ */
 function NarrativeStage({
   clientId,
   narrative,
   pointsConfirmed,
-  claudeReady,
   busy,
   setBusy,
 }: {
   clientId: string;
   narrative: BriefNarrative;
   pointsConfirmed: boolean;
-  claudeReady: boolean;
   busy: string | null;
   setBusy: (value: string | null) => void;
 }) {
   const router = useRouter();
-  const pick = (value: BriefNarrative): NarrativeText => ({
-    summary: value.summary,
-    core: value.core,
-    key_messages: value.key_messages,
-    approach: value.approach,
-  });
-  const [text, setText] = useState<NarrativeText>(pick(narrative));
+  const empty: NarrativeStatement = { intro: "", points: [], closing: "" };
+  const [text, setText] = useState<NarrativeStatement>(narrative.statement ?? empty);
   const [notice, setNotice] = useState<Notice>(null);
-  useEffect(() => setText(pick(narrative)), [narrative]);
+  useEffect(() => setText(narrative.statement ?? empty), [narrative.statement]); // eslint-disable-line react-hooks/exhaustive-deps
   const finalized = Boolean(narrative.finalized_at);
-  const hasText = Boolean(narrative.summary.trim() || narrative.core.trim());
-  const changed = JSON.stringify(text) !== JSON.stringify(pick(narrative));
+  const has = Boolean(narrative.statement);
+  const changed = JSON.stringify(text) !== JSON.stringify(narrative.statement ?? empty);
   const changesRequested = narrative.status === "changes_requested";
 
   async function act(key: string, work: () => Promise<{ ok: true } | { ok: false; error: string }>, ok: string) {
@@ -468,62 +456,60 @@ function NarrativeStage({
     }
   }
 
-  function write() {
-    if (hasText && !window.confirm(changesRequested ? "Rewrite the narrative with the client's requested changes? It replaces the current text." : "Rewrite the narrative from the brief? It replaces the current text.")) return;
-    void act("narrative-write", () => writeNarrativeFromBriefAction(clientId), "Narrative written. Edit it, then Finalize.");
+  function create() {
+    if (has && !window.confirm("Make the narrative again from the confirmed selling points? The three points are replaced; your opening and closing stay.")) return;
+    void act("narrative-create", () => createNarrativeAction(clientId), "Narrative made from the selling points. Edit it, then Finalize.");
   }
+
+  const setPoint = (index: number, patch: Partial<{ title: string; claim: string }>) =>
+    setText((current) => ({ ...current, points: current.points.map((point, at) => (at === index ? { ...point, ...patch } : point)) }));
 
   return (
     <section className={`${card} px-lg py-md`}>
       <StageHead
         n={2}
         title="Outreach Narrative"
-        status={finalized ? "Finalized" : hasText ? "Draft" : pointsConfirmed ? "Ready to write" : "After the selling points"}
+        status={finalized ? "Finalized" : has ? "Draft" : pointsConfirmed ? "Ready" : "After the selling points"}
         tone={finalized ? "done" : pointsConfirmed ? "open" : "locked"}
       >
         {!finalized ? (
           <button
             type="button"
-            className={hasText && !changesRequested ? secondaryButton : primaryButton}
-            disabled={busy !== null || !pointsConfirmed || !claudeReady}
+            className={has ? secondaryButton : primaryButton}
+            disabled={busy !== null || !pointsConfirmed}
             title={pointsConfirmed ? undefined : "Confirm & Finalize the selling points first."}
-            onClick={write}
+            onClick={create}
           >
-            {busy === "narrative-write" ? "Writing…" : changesRequested ? "Rewrite With Client's Changes" : hasText ? "Rewrite" : "Write Outreach Narrative"}
+            {busy === "narrative-create" ? "Making…" : has ? "Refresh From Selling Points" : "Create Narrative"}
           </button>
         ) : null}
       </StageHead>
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        Written from the brief, leading with the 3 confirmed selling points in order. Edit it and Finalize. Nothing goes to the client until stage 4.
+        What the founder confirms: we don&apos;t pitch ten points, these are the three strongest, in this order. It&apos;s the positioning, not the pitch or the emails. Nothing goes to the client until stage 4.
       </p>
-      {busy === "narrative-write" ? <p className="mt-sm text-body-sm text-muted">Writing from the brief. Usually under a minute.</p> : null}
-      {changesRequested && narrative.change_summary ? (
-        <div className="mt-md rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
-          <p className={label}>What Changed · only you see this</p>
-          <MarkdownBody content={narrative.change_summary} emptyLabel="" className="sow-markdown mt-xs text-body-sm" />
+      {changesRequested && narrative.client_note ? (
+        <div className="mt-md rounded-md border border-warning/30 bg-surface px-md py-sm">
+          <p className="text-label uppercase tracking-label text-warning">The Client Asked for Changes</p>
+          <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{narrative.client_note}</p>
         </div>
       ) : null}
 
-      {hasText ? (
+      {has ? (
         finalized ? (
-          <div className="mt-md grid gap-md">
-            <div className="rounded-md border border-border bg-background px-md py-sm">
-              <p className={label}>The Outreach Narrative · what the client confirms</p>
-              <MarkdownBody content={narrative.summary} emptyLabel="" className="sow-markdown mt-xs text-body-sm" />
-            </div>
-            <details className="group/drop text-body-sm">
-              <Summary>Core Story, Key Messages and Approach</Summary>
-              <div className="mt-sm grid gap-md">
-                {NARRATIVE_FIELDS.slice(1).map((field) => (
-                  <div key={field.key}>
-                    <p className={label}>{field.title}</p>
-                    <MarkdownBody content={narrative[field.key]} emptyLabel="" className="sow-markdown mt-xs text-body-sm" />
-                  </div>
-                ))}
-              </div>
-            </details>
-            <div className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-success/30 bg-success/10 px-md py-sm">
-              <p className="text-body-sm text-heading">Finalized {formatDateAtTime(narrative.finalized_at ?? "")}. This is what the client will review.</p>
+          <div className="mt-md grid gap-sm">
+            <p className="max-w-prose whitespace-pre-wrap text-body-sm text-body">{text.intro}</p>
+            <ol className="flex flex-col gap-sm">
+              {text.points.map((point, index) => (
+                <li key={index} className="flex flex-col gap-xs rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
+                  <p className="text-label uppercase tracking-label text-primary">#{index + 1}</p>
+                  <p className="text-body text-heading">{titleCase(point.title)}</p>
+                  <Bullets text={point.claim} className="text-body-sm text-body" />
+                </li>
+              ))}
+            </ol>
+            <p className="max-w-prose whitespace-pre-wrap text-body-sm text-body">{text.closing}</p>
+            <div className="mt-xs flex flex-wrap items-center justify-between gap-sm rounded-md border border-success/30 bg-success/10 px-md py-sm">
+              <p className="text-body-sm text-heading">Finalized {formatDateAtTime(narrative.finalized_at ?? "")}. This is what the client will confirm.</p>
               <button
                 type="button"
                 className={secondaryButton}
@@ -535,20 +521,37 @@ function NarrativeStage({
             </div>
           </div>
         ) : (
-          <div className="mt-md grid gap-lg">
-            {NARRATIVE_FIELDS.map((field) => (
-              <div key={field.key}>
-                <p className={label}>{field.title}</p>
-                <p className="mb-sm mt-xs text-body-sm text-muted">{field.hint}</p>
-                <MarkdownField
-                  label={field.title}
-                  value={text[field.key]}
-                  height={field.height}
-                  onChange={(value) => setText((current) => ({ ...current, [field.key]: value }))}
-                />
-              </div>
-            ))}
-            <div className="flex flex-wrap items-center gap-sm">
+          <div className="mt-md grid gap-sm">
+            <label className="text-body-sm text-muted">
+              Opening
+              <AutoTextarea className={`${inputClass} bg-surface`} value={text.intro} disabled={busy !== null} onChange={(event) => setText((current) => ({ ...current, intro: event.target.value }))} />
+            </label>
+            <ol className="flex flex-col gap-sm">
+              {text.points.map((point, index) => (
+                <li key={index} className="flex flex-col gap-xs rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
+                  <p className="text-label uppercase tracking-label text-primary">#{index + 1}</p>
+                  <label className="text-body-sm text-muted">
+                    Headline
+                    <input
+                      className={`${inputClass} bg-surface text-heading`}
+                      value={point.title}
+                      maxLength={200}
+                      disabled={busy !== null}
+                      onChange={(event) => setPoint(index, { title: event.target.value })}
+                    />
+                  </label>
+                  <label className="text-body-sm text-muted">
+                    What We Say
+                    <AutoTextarea className={`${inputClass} bg-surface`} value={point.claim} disabled={busy !== null} onChange={(event) => setPoint(index, { claim: event.target.value })} />
+                  </label>
+                </li>
+              ))}
+            </ol>
+            <label className="text-body-sm text-muted">
+              Closing and the Ask
+              <AutoTextarea className={`${inputClass} bg-surface`} value={text.closing} disabled={busy !== null} onChange={(event) => setText((current) => ({ ...current, closing: event.target.value }))} />
+            </label>
+            <div className="mt-xs flex flex-wrap items-center gap-sm">
               <button
                 type="button"
                 className={primaryButton}
