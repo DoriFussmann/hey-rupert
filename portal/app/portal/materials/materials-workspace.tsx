@@ -222,15 +222,19 @@ export function MaterialsWorkspace({
           </p>
         </div>
 
-        {canAdd ? (
-          <div className="px-lg pt-lg">
+        {/* Shown, greyed, when Rupert views as the client, so he sees what they see. */}
+        <div className="px-lg pt-lg">
             <div
               role="button"
-              tabIndex={0}
+              tabIndex={canAdd ? 0 : -1}
+              aria-disabled={!canAdd}
+              title={canAdd ? undefined : "Disabled while viewing as the client"}
               aria-label="Upload files: drop them here or press Enter to browse"
-              onClick={() => inputRef.current?.click()}
+              onClick={() => {
+                if (canAdd) inputRef.current?.click();
+              }}
               onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
+                if (canAdd && (event.key === "Enter" || event.key === " ")) {
                   event.preventDefault();
                   inputRef.current?.click();
                 }
@@ -243,11 +247,11 @@ export function MaterialsWorkspace({
               onDrop={(event) => {
                 event.preventDefault();
                 setDragging(false);
-                if (event.dataTransfer.files.length > 0) {
+                if (canAdd && event.dataTransfer.files.length > 0) {
                   void addFiles(event.dataTransfer.files);
                 }
               }}
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-card border-2 border-dashed px-lg py-xl text-center transition-colors duration-hover ${
+              className={`flex flex-col items-center justify-center rounded-card border-2 border-dashed px-lg py-xl text-center transition-colors duration-hover ${canAdd ? "cursor-pointer" : "cursor-not-allowed opacity-50"} ${
                 dragging
                   ? "border-primary bg-primary-tint"
                   : "border-border bg-background hover:border-primary/50"
@@ -282,7 +286,6 @@ export function MaterialsWorkspace({
               }}
             />
           </div>
-        ) : null}
 
         <ul className="divide-y divide-border px-lg py-md">
           {files.length === 0 && uploads.length === 0 ? (

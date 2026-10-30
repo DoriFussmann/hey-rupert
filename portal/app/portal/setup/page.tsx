@@ -66,7 +66,7 @@ export default async function SetupPage() {
         <p className="mt-lg text-body-sm text-muted">
           Have an updated deck or something new?{" "}
           <Link
-            href="/portal/materials"
+            href="/portal/what-rupert-knows?open=files#files"
             className="text-primary no-underline hover:text-primary-hover"
           >
             Add it to your company files
