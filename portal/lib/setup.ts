@@ -256,6 +256,23 @@ export function asStatement(value: unknown): NarrativeStatement | undefined {
   return { intro: str(raw.intro, 3000).trim(), points, closing: str(raw.closing, 3000).trim() };
 }
 
+/**
+ * Narratives made before the first-person wording: the default opening and
+ * closing said "we". Rewrites exactly those default sentences to "I"; text
+ * Rupert wrote himself is left alone.
+ */
+export function firstPersonStatement(statement: NarrativeStatement): NarrativeStatement {
+  const intro = statement.intro.replace(
+    /^We've gone through everything you shared with us: the intake, your deck and materials, and our own research\. Investors read fast, so we don't pitch ten points\. We lead with the three that make the strongest case for (.+?)\. Here they are, in the order we'll use them\.$/,
+    "I've been through everything you shared: the intake, your deck and materials, and my own research. Investors read fast, so I don't pitch ten points. I lead with the three that make the strongest case for $1. Here they are, in the order I'll use them.",
+  );
+  const closing = statement.closing.replace(
+    /^This is how we'll position (.+?) with investors\. It's the narrative, not the emails: those come after we've matched the investors\. Do you agree with these three and with the order\? Confirm, or tell us what you'd change\.$/,
+    "This is how I'll position $1 with investors. It's the narrative, not the emails: those come after I've matched the investors. Do you agree with these three and with the order? Confirm, or tell me what you'd change.",
+  );
+  return { ...statement, intro, closing };
+}
+
 /** The statement as markdown, kept in `summary` so every reader of the narrative gets the same text. */
 export function statementMarkdown(statement: NarrativeStatement): string {
   const points = statement.points.map((point, index) => `### ${index + 1}. ${point.title}\n\n${point.claim}`);
@@ -1138,8 +1155,11 @@ export function asNarrative(value: unknown): NarrativePayload {
     unknown
   >;
   const nextSteps = str(raw.next_steps, 2000).trim();
+  const statementRaw = asStatement(raw.statement);
+  const statement = statementRaw ? firstPersonStatement(statementRaw) : undefined;
   return {
-    summary: str(raw.summary, 10000),
+    // The statement is the source; its markdown stays in step with it.
+    summary: statement ? statementMarkdown(statement) : str(raw.summary, 10000),
     core: str(raw.core ?? raw.body, 30000),
     key_messages: str(raw.key_messages, 20000),
     approach: str(raw.approach, 20000),
@@ -1154,7 +1174,7 @@ export function asNarrative(value: unknown): NarrativePayload {
     linkedin_followup: optionalText(raw.linkedin_followup, 5000),
     change_summary: optionalText(raw.change_summary, 5000),
     finalized_at: optionalText(raw.finalized_at, 40),
-    statement: asStatement(raw.statement),
+    statement,
     questions_confirmed_at: optionalText(raw.questions_confirmed_at, 40),
     ...withQuestions(asQuestions(raw.questions)),
     ...founderQuestionsOf(raw.founder_questions),
@@ -1215,6 +1235,17 @@ export function narrativeHasEarlierDraft(narrative: NarrativePayload) {
       narrative.linkedin_note ||
       narrative.linkedin_followup,
   );
+}
+
+/** The line above the client's narrative: what to confirm, and what else is on the page, in order. */
+export function narrativeBanner(narrative: NarrativePayload): string {
+  const extras = [
+    narrative.feedback ? "Rupert's feedback on your materials (nothing to confirm there)" : "",
+    (narrative.founder_questions ?? []).length > 0 ? "a few questions from Rupert" : "",
+  ].filter(Boolean);
+  return extras.length > 0
+    ? `Confirm The Outreach Narrative. Below it: ${extras.join(", then ")}.`
+    : "Confirm The Outreach Narrative, or ask Rupert a question.";
 }
 
 export function narrativeProblem(narrative: NarrativePayload) {

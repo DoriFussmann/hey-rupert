@@ -120,3 +120,25 @@ test("the statement narrative: why three, the points in order, the ask; enough t
   assert.equal(narrativeProblem({ ...asNarrative({}), statement, summary: statementMarkdown(statement) }), null);
   assert.equal(asStatement({ points: [] }), undefined);
 });
+
+test("the line above the client's narrative names what's below it, in order", async () => {
+  const { narrativeBanner, asNarrative } = await import("./setup.ts");
+  const base = asNarrative({});
+  assert.equal(narrativeBanner(base), "Confirm The Outreach Narrative, or ask Rupert a question.");
+  const full = { ...base, feedback: { summary: "", improvements: "x", generated_at: "", read: [], skipped: [] }, founder_questions: [{ id: "q", question: "Which funds?" }] };
+  assert.equal(narrativeBanner(full), "Confirm The Outreach Narrative. Below it: Rupert's feedback on your materials (nothing to confirm there), then a few questions from Rupert.");
+});
+
+test("narratives made with the old 'we' wording read in the first person", async () => {
+  const { asNarrative } = await import("./setup.ts");
+  const narrative = asNarrative({
+    statement: {
+      intro: "We've gone through everything you shared with us: the intake, your deck and materials, and our own research. Investors read fast, so we don't pitch ten points. We lead with the three that make the strongest case for Argentl. Here they are, in the order we'll use them.",
+      points: [{ title: "Founder", claim: "- Ran a collections company" }],
+      closing: "This is how we'll position Argentl with investors. It's the narrative, not the emails: those come after we've matched the investors. Do you agree with these three and with the order? Confirm, or tell us what you'd change.",
+    },
+  });
+  assert.match(narrative.statement!.intro, /^I've been through everything you shared: .* case for Argentl\. Here they are, in the order I'll use them\.$/);
+  assert.match(narrative.statement!.closing, /tell me what you'd change\.$/);
+  assert.match(narrative.summary, /^I've been through/);
+});

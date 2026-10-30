@@ -24,6 +24,7 @@ import {
   asNarrative,
   internalNarrativeUpdate,
   narrativeHasEarlierDraft,
+  narrativeBanner,
   narrativeProblem,
   type NarrativePayload,
   type SetupItem,
@@ -305,11 +306,7 @@ function NarrativeClientPreview({
       <h2 className="text-h3 text-heading">Outreach Narrative</h2>
       <p className="mt-xs text-body-sm text-muted">How Rupert will present your company to investors. With it, his feedback on your materials.</p>
       <div className="mt-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
-        <p className="text-body text-heading">
-          {narrative.feedback
-            ? "Confirm The Outreach Narrative. Rupert's feedback on your materials is below it: nothing to confirm there."
-            : "Confirm The Outreach Narrative, or ask Rupert a question."}
-        </p>
+        <p className="text-body text-heading">{narrativeBanner(narrative)}</p>
       </div>
       <div className="mt-md grid gap-md">
         <NarrativeView

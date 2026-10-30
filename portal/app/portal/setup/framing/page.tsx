@@ -15,6 +15,7 @@ import {
   asNarrative,
   feedbackChecks,
   isSharedWithClient,
+  narrativeBanner,
   questionsOf,
 } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
@@ -71,11 +72,7 @@ export default async function FramingPage() {
       <ReviewStatus
         item={item}
         row={row}
-        clientTitle={
-          narrative.feedback
-            ? "Confirm The Outreach Narrative. Rupert's feedback on your materials is below it: nothing to confirm there."
-            : "Confirm The Outreach Narrative, or ask Rupert a question."
-        }
+        clientTitle={narrativeBanner(narrative)}
         waitingTitle="Rupert has your note."
         waitingDetail="He'll reply and send the narrative back for you to confirm."
       />
