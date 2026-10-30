@@ -351,6 +351,12 @@ export default async function ClientDetailPage({
           <div className="flex flex-wrap items-end gap-md">
             {showWelcome ? <WelcomeEmailButton clientId={client.id} /> : null}
             <Link
+              href={`/admin/clients/${client.id}/framing`}
+              className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+            >
+              Framing Room
+            </Link>
+            <Link
               href={`/admin/clients/${client.id}/profile`}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >

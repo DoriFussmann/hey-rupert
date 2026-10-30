@@ -6,6 +6,8 @@ import { AdminReply } from "@/components/setup/admin-reply";
 import { NarrativeReview } from "@/components/setup/narrative-review";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { QuestionThread } from "@/components/setup/question-thread";
+import { FounderQuestions } from "@/components/setup/founder-questions";
+import { loadFounderQuestions } from "@/lib/brief-server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { getPortalSetup } from "@/lib/portal-setup";
 import {
@@ -48,6 +50,14 @@ export default async function FramingPage() {
         }
       : null;
 
+  // Rupert's questions sent with this version, with any answers already given.
+  const asked = narrative.founder_questions ?? [];
+  const answers = supabase && client && asked.length > 0 ? await loadFounderQuestions(supabase, client.id) : null;
+  const founderQuestions = asked.map((item) => ({
+    ...item,
+    answer: (answers?.ok ? answers.value.find((entry) => entry.id === item.id)?.answer : "") ?? "",
+  }));
+
   const open = row?.status === "with_client";
   const questions = questionsOf(row);
 
@@ -72,6 +82,7 @@ export default async function FramingPage() {
       {visible && row ? (
         <>
           {open ? <AdminReply note={narrative.admin_note} /> : null}
+          <FounderQuestions items={founderQuestions} readOnly={viewAs} />
           <NarrativeView
             narrative={narrative}
             fileLinks={fileLinks}

@@ -132,6 +132,26 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The client record, the confirmed intake summary and the transcript; the answer format (brief, industry, geography, stage, raise).",
     true,
   ),
+  company_brief: agentDetails(
+    "company_brief",
+    "The client record, the intake (transcript, confirmed summary, disagreements), the company profile, the founder's files and links, and web search; the answer format (six sections).",
+    false,
+  ),
+  framing_room: agentDetails(
+    "framing_room",
+    "The brief as it stands, what is known about the company, the conversation so far, attached files and web search; the answer format (a reply, proposed changes to sections, notes on attached files). Nothing changes until you pin a proposal.",
+    false,
+  ),
+  deck_feedback: agentDetails(
+    "deck_feedback",
+    "The 20 topics with their playbooks, the founder's files and the brief; the answer format (a score and reason per topic, or the writeup per chosen topic). You choose the three topics; the code keeps at most three.",
+    false,
+  ),
+  brief_narrative: agentDetails(
+    "brief_narrative",
+    "The Company Brief, the client record, and the founder's change requests; the answer format (The Outreach Narrative the client confirms and three sections, plus changes when revising).",
+    false,
+  ),
   materials_analysis: agentDetails(
     "materials_analysis",
     "The company profile, client record, intake, written answers, readable files and the founder's own links; the answer format (summary and improvements).",

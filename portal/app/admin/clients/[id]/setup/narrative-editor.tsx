@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { analyzeClientMaterials, buildClientNarrative } from "@/app/admin/agent-actions";
+import { writeNarrativeFromBriefAction } from "@/app/admin/brief-actions";
 import { saveNarrativeInternalUpdate } from "@/app/admin/setup-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
@@ -108,51 +109,13 @@ export function NarrativeEditor({
     }));
   }
 
-  /** What is now stored, after a server action replaced one part of the draft. */
-  function markStored(patch: Partial<NarrativePayload>) {
-    setSaved((current) => snapshot({ ...(JSON.parse(current) as NarrativePayload), ...patch }));
-  }
-
-  async function onAnalyze() {
-    if (
-      (feedback?.summary.trim() || feedback?.improvements.trim()) &&
-      !window.confirm(
-        "Run Analyze again? It replaces the Company Materials Feedback, including your edits. The narrative, files, links and the email are kept.",
-      )
-    ) {
-      return;
-    }
-    setPending("analyze");
-    setMessage(null);
-    try {
-      const result = await analyzeClientMaterials(clientId);
-      if (!result.ok) {
-        setMessage({ kind: "error", text: result.error });
-        return;
-      }
-      // Unsaved narrative edits stay; only the feedback is replaced.
-      update({ feedback: result.feedback });
-      markStored({ feedback: result.feedback });
-      setMessage({
-        kind: "ok",
-        text: hasText
-          ? "Feedback ready and saved. Edit it; rebuild the narrative if it should change too."
-          : "Feedback ready and saved. Edit it, then build the narrative.",
-      });
-    } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "The analysis failed." });
-    } finally {
-      setPending(null);
-    }
-  }
-
-  async function onBuild() {
+  async function onRebuild() {
     if (
       hasText &&
       !window.confirm(
         changesRequested
-          ? "Rebuild the narrative with the client's requested changes? It replaces the current narrative. The feedback is kept."
-          : "Build a new narrative? It replaces the current narrative. The feedback is kept.",
+          ? "Rewrite the narrative from the brief with the client's requested changes? It replaces the current narrative."
+          : "Rewrite the narrative from the brief? It replaces the current narrative, deck feedback and questions.",
       )
     ) {
       return;
@@ -160,30 +123,19 @@ export function NarrativeEditor({
     setPending("build");
     setMessage(null);
     try {
-      const result = await buildClientNarrative(clientId);
+      const result = await writeNarrativeFromBriefAction(
+        clientId,
+        (narrative.founder_questions ?? []).map((item) => item.question),
+      );
       if (!result.ok) {
         setMessage({ kind: "error", text: result.error });
         return;
       }
-      // Unsaved feedback edits stay; the narrative sections are replaced.
-      setNarrative({ ...result.narrative, feedback: narrative.feedback });
+      setNarrative(result.narrative);
       setSaved(snapshot(result.narrative));
-      setMessage({
-        kind: "ok",
-        text: [
-          "Narrative ready and saved as a draft. Edit it, then draft the email.",
-          result.kept.length > 0
-            ? `Claude did not rewrite ${result.kept.join(", ")}: kept from the version the client reviewed.`
-            : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-      });
+      setMessage({ kind: "ok", text: "Narrative rewritten from the brief and saved as a draft. Edit it, then draft the email." });
     } catch (err) {
-      setMessage({
-        kind: "error",
-        text: err instanceof Error ? err.message : "Unable to build the narrative.",
-      });
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to write the narrative." });
     } finally {
       setPending(null);
     }
@@ -215,55 +167,39 @@ export function NarrativeEditor({
     }
   }
 
-  const canAnalyze = materialsSubmitted && claudeReady && pending === null;
-  const canBuild = (hasFeedback || legacyFeedback) && claudeReady && pending === null;
+  const canBuild = claudeReady && pending === null;
 
   return (
     <StepFrame
       item={item}
       action={
         <div className="flex flex-wrap gap-sm">
-          <button
-            type="button"
-            className={hasFeedback ? secondaryButton : primaryButton}
-            disabled={!canAnalyze}
-            onClick={onAnalyze}
+          <Link
+            href={`/admin/clients/${clientId}/framing`}
+            className={`${hasText ? secondaryButton : primaryButton} no-underline`}
           >
-            {pending === "analyze" ? "Analyzing…" : hasFeedback ? "Re-analyze" : "Analyze"}
-          </button>
-          <button
-            type="button"
-            className={hasFeedback && !hasText ? primaryButton : secondaryButton}
-            disabled={!canBuild}
-            onClick={onBuild}
-          >
-            {pending === "build"
-              ? "Building…"
-              : changesRequested
-                ? "Rebuild With Client's Changes"
-                : hasText
-                  ? "Rebuild Narrative"
-                  : "Build Narrative"}
-          </button>
+            Framing Room
+          </Link>
+          {hasText ? (
+            <button type="button" className={changesRequested ? primaryButton : secondaryButton} disabled={!canBuild} onClick={() => void onRebuild()}>
+              {pending === "build" ? "Writing…" : changesRequested ? "Rewrite With Client's Changes" : "Rewrite From Brief"}
+            </button>
+          ) : null}
         </div>
       }
     >
       <p className="px-lg pt-md text-body-sm text-muted" aria-live="polite">
-        {pending === "analyze"
-          ? "Reading everything the client shared. This can take 1–3 minutes; keep this page open."
-          : pending === "build"
-            ? "Writing from the feedback and intake. Usually under a minute."
-            : !claudeReady
-              ? "Claude is not configured (ANTHROPIC_API_KEY)."
-              : !materialsSubmitted && !hasFeedback
-                ? "Analyze is available once the client's intake and materials are in."
-                : !hasFeedback && !legacyFeedback
-                  ? "Run Analyze first: the narrative is built from the feedback."
-                  : changesRequested
-                    ? "The client asked for changes. Rebuild, or edit and send again."
-                    : feedback?.generated_at
-                      ? `Last analyzed ${formatDateAtTime(feedback.generated_at)}.`
-                      : ""}{" "}
+        {pending === "build"
+          ? "Writing from the brief. Usually under a minute."
+          : !claudeReady
+            ? "Claude is not configured (ANTHROPIC_API_KEY)."
+            : !hasText
+              ? materialsSubmitted || legacyFeedback
+                ? "Open the Framing Room: build the brief, decide the framing, then write the narrative from it."
+                : "The Framing Room opens once the client's intake is in."
+              : changesRequested
+                ? "The client asked for changes. Rewrite with their changes, or edit and send again."
+                : ""}{" "}
         {sendStatus(row)}
       </p>
       {message ? (
@@ -279,8 +215,8 @@ export function NarrativeEditor({
       {confirmed ? (
         <section className="mx-lg mt-md rounded-md border border-border bg-background px-md py-sm">
           <p className="text-body-sm text-secondary">
-            The client confirmed this narrative. To use new intake info or materials without asking them
-            again: Re-analyze or Rebuild Narrative, edit, then Save as Internal Update. The email copy is
+            The client confirmed this narrative. To use new facts without asking them again: update the
+            brief in the Framing Room, Rewrite From Brief, edit, then Save as Internal Update. The email copy is
             written from it; the client&apos;s page keeps the version they confirmed.
             {internalAt ? ` Internal update saved ${formatDateAtTime(internalAt)}.` : ""}
           </p>
@@ -311,15 +247,16 @@ export function NarrativeEditor({
       <div className="grid gap-lg px-lg py-md">
         <section className="grid gap-lg rounded-card border border-border bg-background px-md py-md">
           <div>
-            <h4 className="text-body text-heading">Company Materials Feedback</h4>
+            <h4 className="text-body text-heading">Deck feedback</h4>
             <p className="mt-xs text-body-sm text-muted">
-              Sent with the narrative for the client to read. They can comment on it; there is
-              nothing to confirm.
+              Sent with the narrative for the client to read: the three topics from the Framing Room.
+              They can comment on it; there is nothing to confirm.
               {legacyFeedback && !hasFeedback
                 ? " This client already received Analysis & Feedback as its own step; leave this empty to send the narrative alone."
                 : ""}
             </p>
           </div>
+          {feedback?.summary.trim() ? (
           <div>
             <p className={labelClass}>How Rupert reads the company</p>
             <div className="mt-sm">
@@ -331,8 +268,9 @@ export function NarrativeEditor({
               />
             </div>
           </div>
+          ) : null}
           <div>
-            <p className={labelClass}>What to improve in your materials</p>
+            <p className={labelClass}>What to improve in your deck</p>
             <div className="mt-sm">
               <MarkdownField
                 label="What to improve in your materials"
@@ -364,11 +302,23 @@ export function NarrativeEditor({
           ) : null}
         </section>
 
+        {narrative.founder_questions && narrative.founder_questions.length > 0 ? (
+          <section className="rounded-card border border-border bg-background px-md py-md">
+            <h4 className="text-body text-heading">Questions for the founder</h4>
+            <p className="mt-xs text-body-sm text-muted">
+              Shown with the narrative; the founder answers on the page. Choose them in the Framing Room.
+            </p>
+            <ul className="mt-sm list-disc space-y-xs pl-md text-body-sm">
+              {narrative.founder_questions.map((item) => (
+                <li key={item.id}>{item.question}</li>
+              ))}
+            </ul>
+          </section>
+        ) : null}
         <div>
           <p className={labelClass}>The Outreach Narrative · what the client reads and confirms</p>
           <p className="mb-sm mt-xs text-body-sm text-muted">
-            150 to 250 words, light and clear, drawn from the three sections below. Build narrative
-            writes it for you.
+            150 to 250 words, light and clear, written from the Company Brief.
           </p>
           <MarkdownField
             label="The Outreach Narrative"
@@ -453,7 +403,7 @@ export function NarrativeEditor({
         onSaved={() => setSaved(snapshot(narrative))}
         problem={narrativeProblem(narrative)}
         busy={pending !== null}
-        pushSummary="Pushes The Outreach Narrative (and what happens next), the Company Materials Feedback, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
+        pushSummary="Pushes The Outreach Narrative (and what happens next), the deck feedback, the questions for the founder, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
       />
     </StepFrame>
   );

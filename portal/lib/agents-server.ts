@@ -727,7 +727,7 @@ const NARRATIVE_FIELDS = [
 
 type NarrativeField = (typeof NARRATIVE_FIELDS)[number]["key"];
 
-function narrativeTool(revising: boolean): ClaudeTool {
+export function narrativeTool(revising: boolean): ClaudeTool {
   return {
     name: "submit_narrative",
     description: revising
@@ -766,7 +766,7 @@ function narrativeTool(revising: boolean): ClaudeTool {
 }
 
 /** Tool text as markdown. A list (Claude sometimes sends one) becomes bullets. */
-function markdownText(value: unknown): string {
+export function markdownText(value: unknown): string {
   if (Array.isArray(value)) {
     return value
       .map((item) => text(item).replace(/^[-*•]\s*/, ""))
@@ -893,6 +893,78 @@ export async function buildNarrative(
       kept: NARRATIVE_FIELDS.filter(({ key }) => kept.includes(key)).map(({ label }) => label),
     },
   };
+}
+
+/**
+ * The narrative written from the Company Brief (the Framing Room's output),
+ * not from the raw intake. Revises with the founder's requested changes when
+ * they asked for some.
+ */
+export async function buildNarrativeFromBrief(
+  supabase: ServiceClient,
+  clientId: string,
+  brief: string,
+): Promise<AgentResult<NarrativeBuild>> {
+  const [loaded, prompt, grouped] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadPrompt(supabase, "brief_narrative", { clientId, purpose: "Narrative from the brief" }),
+    loadSetupSteps(supabase, [clientId]),
+  ]);
+  if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
+  if (!brief.trim()) return { ok: false, error: "The brief is empty. Build it first." };
+
+  const framingRow = (grouped.get(clientId) ?? []).find((item) => item.step === "framing");
+  const reviewed = asNarrative(framingRow?.published ?? framingRow?.draft);
+  const clientAsk = framingRow?.status === "changes_requested" ? earlierNotes([], framingRow.response) : "";
+  const revising = Boolean(clientAsk && reviewed.core.trim());
+  const tool = narrativeTool(revising);
+
+  const context = [
+    "## The Company Brief (the source of truth)",
+    brief,
+    "## Client record",
+    buildClientContext(loaded.client),
+    revising
+      ? `## The version the founder reviewed\n${narrativeSections(reviewed)}\n\n## What the founder asked to change\n${clientAsk}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
+  const instruction = revising
+    ? `Revise the narrative to apply what the founder asked for, keeping everything they did not mention. Deliver it by calling the ${tool.name} tool with the summary and all three sections in full, plus the list of changes.`
+    : `Deliver the narrative by calling the ${tool.name} tool, with the summary and all three sections written out in full.`;
+
+  let raw: Record<string, unknown> = {};
+  let missing: NarrativeField[] = [];
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const result = await callClaudeAgent<Record<string, unknown>>({
+      system: promptSystem(prompt.value),
+      content: [{ type: "text", text: `${context}\n\n${instruction}` }],
+      tool,
+      maxTokens: 8000,
+    });
+    if (!result.ok) return { ok: false, error: result.reason };
+    raw = result.input;
+    missing = NARRATIVE_FIELDS.filter(({ key }) => !markdownText(raw[key])).map(({ key }) => key);
+    if (missing.length === 0) break;
+  }
+  if (missing.length > 0) {
+    const names = NARRATIVE_FIELDS.filter(({ key }) => missing.includes(key)).map(({ label }) => label);
+    return { ok: false, error: `Claude's answer had no ${names.join(", ")}. Nothing was saved. Try again.` };
+  }
+
+  const working = asNarrative(framingRow?.draft ?? framingRow?.published);
+  const narrative = asNarrative({
+    ...working,
+    summary: markdownText(raw.summary),
+    core: markdownText(raw.core),
+    key_messages: markdownText(raw.key_messages),
+    approach: markdownText(raw.approach),
+    admin_note: undefined,
+    change_summary: revising ? markdownText(raw.changes) : undefined,
+  });
+  return { ok: true, value: { narrative, kept: [] } };
 }
 
 // ---------------------------------------------------------------------------
