@@ -11,6 +11,7 @@ import {
   listBriefVersions,
   loadBrief,
   loadFounderQuestions,
+  loadBriefFiles,
   loadBriefTopics,
   loadFramingMessages,
 } from "@/lib/brief-server";
@@ -42,13 +43,14 @@ export default async function FramingRoomPage({ params }: { params: { id: string
   }
 
   const supabase = createServiceClient();
-  const [brief, versions, messages, questions, readiness, topics] = await Promise.all([
+  const [brief, versions, messages, questions, readiness, topics, briefFiles] = await Promise.all([
     loadBrief(supabase, client.id),
     listBriefVersions(supabase, client.id),
     loadFramingMessages(supabase, client.id),
     loadFounderQuestions(supabase, client.id),
     briefReadiness(supabase, client.id),
     loadBriefTopics(supabase),
+    loadBriefFiles(supabase, client.id),
   ]);
   const error = [brief, versions, messages, questions].find((item) => !item.ok);
   if (error && !error.ok) {
@@ -71,6 +73,8 @@ export default async function FramingRoomPage({ params }: { params: { id: string
         initialMessages={messages.ok ? messages.value : []}
         founderQuestions={questions.ok ? questions.value : []}
         topics={topics}
+        initialLinkedin={briefFiles.ok ? briefFiles.value : { linkedin: [], skipped: false }}
+        linkedinError={briefFiles.ok ? null : briefFiles.error}
         canBuild={readiness.canBuild}
         buildNote={readiness.reason}
         claudeReady={isClaudeConfigured()}

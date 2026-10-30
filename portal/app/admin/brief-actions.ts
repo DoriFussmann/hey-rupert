@@ -27,8 +27,11 @@ import {
   loadBriefVersion,
   saveSellingPoints,
   scoreSellingPoints,
+  addLinkedinFile,
   pinProposal,
+  removeLinkedinFile,
   resetBrief,
+  skipLinkedin,
   saveBrief,
   scoreDeck,
   sendFramingMessage,
@@ -271,4 +274,50 @@ export async function resetBriefAction(clientId: string): Promise<{ ok: true } |
   if (!result.ok) return result;
   revalidate(clientId);
   return { ok: true };
+}
+
+/** Step 1 of uploading the founder's LinkedIn PDF: a one-time upload URL in the client's linkedin folder. */
+export async function createLinkedinUploadAction(clientId: string, file: { name: string; size: number }): Promise<Result<{ path: string; token: string }>> {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const name = String(file?.name ?? "").trim();
+  if (!/\.pdf$/i.test(name)) return { ok: false, error: "Upload the LinkedIn profile as a PDF (LinkedIn → More → Save to PDF)." };
+  const problem = intakeFileProblem({ name, size: Number(file?.size) || 0 });
+  if (problem) return { ok: false, error: problem };
+  const path = `${clientId}/linkedin/${randomUUID()}/${safeFileName(name)}`;
+  const { data, error } = await access.supabase.storage.from(MATERIALS_BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: `Upload could not start: ${error?.message ?? "unknown error"}.` };
+  return { ok: true, path: data.path, token: data.token };
+}
+
+export async function addLinkedinFileAction(clientId: string, file: { path: string; name: string; size: number; type: string }) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const result = await addLinkedinFile(
+    access.supabase,
+    clientId,
+    { path: String(file?.path ?? ""), name: String(file?.name ?? "LinkedIn.pdf"), size: Number(file?.size) || 0, type: String(file?.type ?? "application/pdf") },
+    access.actor,
+  );
+  if (!result.ok) return result;
+  revalidate(clientId);
+  return { ok: true as const, files: result.value };
+}
+
+export async function skipLinkedinAction(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const result = await skipLinkedin(access.supabase, clientId, access.actor);
+  if (!result.ok) return result;
+  revalidate(clientId);
+  return { ok: true as const, files: result.value };
+}
+
+export async function removeLinkedinFileAction(clientId: string, path: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const result = await removeLinkedinFile(access.supabase, clientId, String(path ?? ""));
+  if (!result.ok) return result;
+  revalidate(clientId);
+  return { ok: true as const, files: result.value };
 }
