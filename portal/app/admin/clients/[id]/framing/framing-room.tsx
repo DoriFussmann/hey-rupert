@@ -175,7 +175,8 @@ export function FramingRoom({
             <button
               type="button"
               className={brief ? secondaryButton : primaryButton}
-              disabled={busy !== null || !canBuild || !claudeReady}
+              disabled={busy !== null || !canBuild || !claudeReady || (!brief && !linkedinReady)}
+              title={!brief && !linkedinReady ? "Upload the founder's LinkedIn PDF, or click Skip, first." : undefined}
               onClick={() => {
                 if (brief && !window.confirm("Rebuild the brief from scratch? The current version stays in the history; the chat is kept.")) return;
                 void run("build", () => buildBriefAction(clientId), "Brief rebuilt.");
