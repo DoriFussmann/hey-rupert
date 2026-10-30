@@ -50,7 +50,6 @@ import {
   abstractBullets,
   abstractCard,
   type SellingPoint,
-  DECK_TOPICS,
   DECK_TOPICS_PER_CLIENT,
   briefQuestions,
   deckTopic,
@@ -59,6 +58,7 @@ import {
   type FounderQuestion,
   type DeckFile,
   type DeckLink,
+  type DeckTopic,
   titleCase,
 } from "@/lib/brief";
 import type { BriefFiles, BriefNarrative, BriefVersionRow } from "@/lib/brief-server";
@@ -83,6 +83,7 @@ export function FramingRoom({
   linkedinError,
   linkedinUrls,
   sellingPoints,
+  deckTopics,
   narrative,
   canBuild,
   buildNote,
@@ -98,6 +99,7 @@ export function FramingRoom({
   /** LinkedIn profile links the founder gave, to open and save as PDF. */
   linkedinUrls: string[];
   sellingPoints: SellingPoint[];
+  deckTopics: DeckTopic[];
   narrative: BriefNarrative;
   canBuild: boolean;
   buildNote: string | null;
@@ -263,7 +265,7 @@ export function FramingRoom({
             <details className="group/drop">
               <Summary>Full Brief: {topics.filter((topic) => topic.enabled).length} Topics and the Questions</Summary>
               <div className="mt-md grid gap-md">
-            <div className="grid gap-md xl:grid-cols-2">
+            <div className="grid gap-md">
               {topics
                 .filter((topic) => topic.enabled)
                 .map((topic) => (
@@ -301,6 +303,7 @@ export function FramingRoom({
             <FeedbackStage
               clientId={clientId}
               brief={brief}
+              topics={deckTopics}
               narrativeFinalized={Boolean(narrative.finalized_at)}
               busy={busy}
               run={run}
@@ -595,6 +598,7 @@ function NarrativeStage({
 /** One point of feedback's links and documents. */
 function PointAttachments({
   clientId,
+  library,
   links,
   files,
   disabled,
@@ -602,6 +606,8 @@ function PointAttachments({
   onFiles,
 }: {
   clientId: string;
+  /** The topic as set in Agents → Feedback topics, with its preset links and documents. */
+  library: DeckTopic | null;
   links: DeckLink[];
   files: DeckFile[];
   disabled: boolean;
@@ -675,6 +681,26 @@ function PointAttachments({
           ))}
         </ul>
       ) : null}
+      {(() => {
+        const presetLinks = (library?.links ?? []).filter((link) => !links.some((item) => item.url === link.url));
+        const presetFiles = (library?.files ?? []).filter((file) => !files.some((item) => item.path === file.path));
+        if (disabled || (presetLinks.length === 0 && presetFiles.length === 0)) return null;
+        return (
+          <div className="mb-xs flex flex-wrap items-center gap-xs">
+            <span className="text-muted">From the library:</span>
+            {presetLinks.map((link) => (
+              <button key={link.id} type="button" className={smallButton} onClick={() => onLinks([...links, { ...link, id: `l${Date.now().toString(36)}` }])}>
+                + {link.label || link.url}
+              </button>
+            ))}
+            {presetFiles.map((file) => (
+              <button key={file.path} type="button" className={smallButton} onClick={() => onFiles([...files, file])}>
+                + {file.name}
+              </button>
+            ))}
+          </div>
+        );
+      })()}
       {adding ? (
         <div className="flex flex-wrap items-center gap-xs">
           <input className={`${inputClass} mt-0 w-40 bg-surface`} placeholder="Label" value={linkLabel} onChange={(event) => setLinkLabel(event.target.value)} />
@@ -706,6 +732,7 @@ function PointAttachments({
 function FeedbackStage({
   clientId,
   brief,
+  topics,
   narrativeFinalized,
   busy,
   run,
@@ -713,6 +740,7 @@ function FeedbackStage({
 }: {
   clientId: string;
   brief: CompanyBrief;
+  topics: DeckTopic[];
   narrativeFinalized: boolean;
   busy: string | null;
   run: (key: string, work: () => Promise<ActionResult>, ok?: string) => Promise<boolean>;
@@ -736,7 +764,7 @@ function FeedbackStage({
   const locked = confirmed || busy !== null;
   const aiScore = (id: string) => deck.scores.find((item) => item.topic === id);
   const scoreValue = (id: string): number | undefined => scores[id] ?? aiScore(id)?.score;
-  const ordered = [...DECK_TOPICS].sort((a, b) => (scoreValue(b.id) ?? -1) - (scoreValue(a.id) ?? -1));
+  const ordered = [...topics].sort((a, b) => (scoreValue(b.id) ?? -1) - (scoreValue(a.id) ?? -1));
   const changed =
     chosen.join() !== deck.chosen.join() ||
     Object.entries(scores).some(([id, value]) => value !== aiScore(id)?.score) ||
@@ -789,9 +817,12 @@ function FeedbackStage({
         >
           {busy === "score" ? "Scoring…" : busy === "write" ? "Writing…" : deck.scores.length > 0 ? "Score Again" : "Score Feedback"}
         </button>
+        <Link href="/admin/forms/feedback-topics" className={`${secondaryButton} no-underline`}>
+          Edit the List
+        </Link>
       </StageHead>
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        Rupert scores all {DECK_TOPICS.length} topics by how much fixing each would help this raise, and writes the top {DECK_TOPICS_PER_CLIENT}. Edit the text, change scores, re-rank, and add a link or document to any point. The client reads these; there is nothing for them to confirm.
+        Rupert scores all {topics.length} topics by how much fixing each would help this raise, and writes the top {DECK_TOPICS_PER_CLIENT}. Edit the text, change scores, re-rank, and add a link or document to any point. The client reads these; there is nothing for them to confirm.
       </p>
 
       {deck.scores.length > 0 ? (
@@ -817,14 +848,14 @@ function FeedbackStage({
                     </button>
                   </div>
                 </div>
-                <p className="text-body text-heading">{titleCase(deckTopic(id)?.title ?? id)}</p>
+                <p className="text-body text-heading">{titleCase(deckTopic(id, topics)?.title ?? id.replace(/_/g, " "))}</p>
                 {confirmed ? (
                   <MarkdownBody content={writeups[id] ?? ""} emptyLabel="" className="sow-markdown text-body-sm" />
                 ) : (writeups[id] ?? "").trim() || deck.writeups[id] !== undefined ? (
                   <AutoTextarea
                     className={`${inputClass} bg-surface`}
                     value={writeups[id] ?? ""}
-                    aria-label={`Feedback: ${deckTopic(id)?.title ?? id}`}
+                    aria-label={`Feedback: ${deckTopic(id, topics)?.title ?? id}`}
                     disabled={busy !== null}
                     onChange={(event) => setWriteups((current) => ({ ...current, [id]: event.target.value }))}
                   />
@@ -833,6 +864,7 @@ function FeedbackStage({
                 )}
                 <PointAttachments
                   clientId={clientId}
+                  library={deckTopic(id, topics)}
                   links={links[id] ?? []}
                   files={files[id] ?? []}
                   disabled={locked}
@@ -843,7 +875,7 @@ function FeedbackStage({
             ))}
           </ol>
           <details className={`group/drop mt-md text-body-sm ${confirmed ? "hidden" : ""}`} open={chosen.length < DECK_TOPICS_PER_CLIENT}>
-            <Summary>All {DECK_TOPICS.length} Topics, by Score</Summary>
+            <Summary>All {topics.length} Topics, by Score</Summary>
             <p className="mt-xs text-muted">Disagree with a score? Change it. Tick up to {DECK_TOPICS_PER_CLIENT} to give back.</p>
             <ul className="mt-sm grid gap-xs">
               {ordered.map((topic) => {

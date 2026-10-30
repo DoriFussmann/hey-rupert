@@ -22,6 +22,9 @@ import {
   type BriefTopic,
   type SellingPoints,
   DECK_TOPICS,
+  DECK_TOPICS_SLUG,
+  parseDeckTopics,
+  type DeckTopic,
   DECK_TOPICS_PER_CLIENT,
   applyProposal,
   asDeck,
@@ -663,7 +666,8 @@ export async function saveSellingPoints(
 // ---------------------------------------------------------------------------
 // Deck feedback
 
-const SCORE_TOOL: ClaudeTool = {
+function scoreTool(topics: DeckTopic[]): ClaudeTool {
+  return {
   name: "submit_scores",
   description: "Score every topic for this deck.",
   input_schema: {
@@ -674,7 +678,7 @@ const SCORE_TOOL: ClaudeTool = {
         items: {
           type: "object",
           properties: {
-            topic: { type: "string", enum: DECK_TOPICS.map((topic) => topic.id) },
+            topic: { type: "string", enum: topics.map((topic) => topic.id) },
             score: { type: "integer", minimum: 0, maximum: 10 },
             reason: { type: "string", description: "One sentence, citing slides." },
           },
@@ -685,8 +689,10 @@ const SCORE_TOOL: ClaudeTool = {
     required: ["scores"],
   },
 };
+}
 
-const WRITE_TOOL: ClaudeTool = {
+function writeTool(topics: DeckTopic[]): ClaudeTool {
+  return {
   name: "submit_feedback",
   description: "Deliver the founder-facing feedback for each chosen topic.",
   input_schema: {
@@ -697,7 +703,7 @@ const WRITE_TOOL: ClaudeTool = {
         items: {
           type: "object",
           properties: {
-            topic: { type: "string", enum: DECK_TOPICS.map((topic) => topic.id) },
+            topic: { type: "string", enum: topics.map((topic) => topic.id) },
             body: { type: "string", description: "Markdown, 120 to 250 words, to the founder." },
           },
           required: ["topic", "body"],
@@ -708,18 +714,32 @@ const WRITE_TOOL: ClaudeTool = {
   },
 };
 
-function playbooks(ids?: string[]) {
-  return DECK_TOPICS.filter((topic) => !ids || ids.includes(topic.id))
+}
+
+/** The feedback topics as Dori set them under Agents → Feedback topics, else the defaults. */
+export async function loadDeckTopics(supabase: ServiceClient): Promise<DeckTopic[]> {
+  const { data } = await supabase.from("form_templates").select("content").eq("slug", DECK_TOPICS_SLUG).maybeSingle();
+  if (!data?.content) return DECK_TOPICS;
+  try {
+    return parseDeckTopics(JSON.parse(String(data.content))) ?? DECK_TOPICS;
+  } catch {
+    return DECK_TOPICS;
+  }
+}
+
+function playbooks(topicsList: DeckTopic[], ids?: string[]) {
+  return topicsList.filter((topic) => !ids || ids.includes(topic.id))
     .map((topic) => `### ${topic.id}: ${topic.title}\n${topic.playbook}`)
     .join("\n\n");
 }
 
 async function deckContext(supabase: ServiceClient, clientId: string, actor: string | null) {
-  const [sources, brief, prompt, topics] = await Promise.all([
+  const [sources, brief, prompt, topics, deckTopics] = await Promise.all([
     loadSources(supabase, clientId),
     loadBrief(supabase, clientId),
     loadPrompt(supabase, "deck_feedback", { clientId, purpose: "Deck feedback", actor }),
     loadBriefTopics(supabase),
+    loadDeckTopics(supabase),
   ]);
   if (!sources.ok) return sources;
   if (!brief.ok) return brief;
@@ -727,7 +747,7 @@ async function deckContext(supabase: ServiceClient, clientId: string, actor: str
   const files = await prepareFiles(supabase, sources.value.files);
   if (files.blocks.length === 0) return { ok: false as const, error: "There is no readable deck or file to give feedback on." };
   const text = brief.value ? briefText(brief.value.sections, topics, brief.value.points) : "(not built yet)";
-  return { ok: true as const, sources: sources.value, brief: brief.value, briefText: text, prompt: prompt.value, files };
+  return { ok: true as const, sources: sources.value, brief: brief.value, briefText: text, prompt: prompt.value, files, deckTopics };
 }
 
 export async function scoreDeck(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<CompanyBrief>> {
@@ -736,21 +756,23 @@ export async function scoreDeck(supabase: ServiceClient, clientId: string, actor
   const result = await callClaudeAgent<Record<string, unknown>>({
     system: promptSystem(context.prompt),
     content: [
-      { type: "text", text: `# Task: scoring\n\n# The topics and their playbooks\n\n${playbooks()}` },
+      { type: "text", text: `# Task: scoring\n\n# The topics and their playbooks\n\n${playbooks(context.deckTopics)}` },
       { type: "text", text: `# The Company Brief\n\n${context.briefText}` },
       ...context.files.blocks,
-      { type: "text", text: `Score all ${DECK_TOPICS.length} topics for this founder's deck by calling the ${SCORE_TOOL.name} tool.` },
+      { type: "text", text: `Score all ${context.deckTopics.length} topics for this founder's deck by calling the submit_scores tool.` },
     ],
-    tool: SCORE_TOOL,
+    tool: scoreTool(context.deckTopics),
     maxTokens: 6000,
   });
   if (!result.ok) return { ok: false, error: result.reason };
-  const deck = asDeck({ ...(context.brief?.deck ?? emptyDeck()), scores: result.input.scores });
-  if (deck.scores.length < DECK_TOPICS.length / 2) return { ok: false, error: "Claude scored too few topics. Nothing was saved. Try again." };
-  const chosen = topTopics(deck.scores);
+  const ids = context.deckTopics.map((topic) => topic.id);
+  const parsed = asDeck({ ...(context.brief?.deck ?? emptyDeck()), scores: result.input.scores });
+  const deck = { ...parsed, scores: parsed.scores.filter((item) => ids.includes(item.topic)) };
+  if (deck.scores.length < context.deckTopics.length / 2) return { ok: false, error: "Claude scored too few topics. Nothing was saved. Try again." };
+  const chosen = topTopics(deck.scores, DECK_TOPICS_PER_CLIENT, context.deckTopics);
   return saveBrief(supabase, clientId, {
     deck: { ...deck, chosen, writeups: {}, scored_at: new Date().toISOString() },
-    note: `Deck scored. Top ${DECK_TOPICS_PER_CLIENT}: ${chosen.map((id) => deckTopic(id)?.title).join(", ")}.`,
+    note: `Materials feedback scored. Top ${DECK_TOPICS_PER_CLIENT}: ${chosen.map((id) => deckTopic(id, context.deckTopics)?.title).join(", ")}.`,
     actor,
   });
 }
@@ -783,18 +805,18 @@ export async function writeDeckFeedback(
   const result = await callClaudeAgent<Record<string, unknown>>({
     system: promptSystem(context.prompt),
     content: [
-      { type: "text", text: `# Task: writing\n\n# The chosen topics and their playbooks\n\n${playbooks(chosen)}` },
+      { type: "text", text: `# Task: writing\n\n# The chosen topics and their playbooks\n\n${playbooks(context.deckTopics, chosen)}` },
       {
         type: "text",
         text: `# Why these topics (from scoring)\n\n${chosen
-          .map((id) => `- ${deckTopic(id)?.title}: ${scores.find((item) => item.topic === id)?.reason ?? "chosen by Rupert"}`)
+          .map((id) => `- ${deckTopic(id, context.deckTopics)?.title ?? id}: ${scores.find((item) => item.topic === id)?.reason ?? "chosen by Rupert"}`)
           .join("\n")}`,
       },
       { type: "text", text: `# The Company Brief\n\n${context.briefText}` },
       ...context.files.blocks,
-      { type: "text", text: `Write the feedback for these ${chosen.length} topics, in this order: ${chosen.join(", ")}. Deliver it by calling the ${WRITE_TOOL.name} tool.` },
+      { type: "text", text: `Write the feedback for these ${chosen.length} topics, in this order: ${chosen.join(", ")}. Deliver it by calling the submit_feedback tool.` },
     ],
-    tool: WRITE_TOOL,
+    tool: writeTool(context.deckTopics),
     maxTokens: 8000,
   });
   if (!result.ok) return { ok: false, error: result.reason };
@@ -831,7 +853,7 @@ export async function saveDeck(
   },
   actor: string | null,
 ): Promise<Result<CompanyBrief>> {
-  const brief = await loadBrief(supabase, clientId);
+  const [brief, deckTopics] = await Promise.all([loadBrief(supabase, clientId), loadDeckTopics(supabase)]);
   if (!brief.ok) return brief;
   const current = brief.value?.deck ?? emptyDeck();
   const deck = asDeck({
@@ -849,11 +871,11 @@ export async function saveDeck(
   if (change.confirm) {
     if (deck.chosen.length === 0) return { ok: false, error: "Choose the points of feedback first." };
     const empty = deck.chosen.filter((id) => !(deck.writeups[id] ?? "").trim());
-    if (empty.length > 0) return { ok: false, error: `Write the feedback for ${empty.map((id) => titleCase(deckTopic(id)?.title ?? id)).join(", ")} first.` };
+    if (empty.length > 0) return { ok: false, error: `Write the feedback for ${empty.map((id) => titleCase(deckTopic(id, deckTopics)?.title ?? id)).join(", ")} first.` };
   }
   return saveBrief(supabase, clientId, {
     deck,
-    note: `Materials feedback${deck.confirmed_at ? " confirmed" : ""}: ${deck.chosen.map((id) => deckTopic(id)?.title).join(", ")}.`,
+    note: `Materials feedback${deck.confirmed_at ? " confirmed" : ""}: ${deck.chosen.map((id) => deckTopic(id, deckTopics)?.title ?? id).join(", ")}.`,
     actor,
   });
 }
@@ -954,7 +976,7 @@ export async function resetBrief(supabase: ServiceClient, clientId: string): Pro
 
 /** Everything the brief step needs on the client page. Never fails: errors come back as text. */
 export async function loadBriefPanel(supabase: ServiceClient, clientId: string) {
-  const [brief, versions, questions, readiness, topics, files, sources, sellingPoints, framing] = await Promise.all([
+  const [brief, versions, questions, readiness, topics, files, sources, sellingPoints, framing, deckTopics] = await Promise.all([
     loadBrief(supabase, clientId),
     listBriefVersions(supabase, clientId),
     loadFounderQuestions(supabase, clientId),
@@ -964,6 +986,7 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     loadSources(supabase, clientId),
     loadSellingPoints(supabase),
     loadSetupStep(supabase, clientId, "framing"),
+    loadDeckTopics(supabase),
   ]);
   const framingRow = framing.ok ? framing.row : null;
   const draft = asNarrative(framingRow?.draft ?? framingRow?.published);
@@ -1000,6 +1023,7 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     filesError: files.ok ? null : files.error,
     linkedinUrls,
     sellingPoints,
+    deckTopics,
     narrative,
     canBuild: readiness.canBuild,
     buildNote: readiness.reason,

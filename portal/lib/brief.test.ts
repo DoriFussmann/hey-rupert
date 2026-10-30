@@ -46,9 +46,11 @@ test("stored sections and deck feedback are read defensively", () => {
     chosen: ["team", "team", "nope", "evidence", "market", "the_ask"],
     writeups: { team: "Add a team slide.", nope: "x" },
   });
-  assert.deepEqual(deck.scores, [{ topic: "team", score: 10, reason: "No team slide" }]);
-  assert.deepEqual(deck.chosen, ["team", "evidence", "market"]);
-  assert.deepEqual(deck.writeups, { team: "Add a team slide." });
+  // Topics are Dori's list now: any well-formed id is kept; malformed ones are dropped.
+  assert.deepEqual(deck.scores, [{ topic: "team", score: 10, reason: "No team slide" }, { topic: "nope", score: 5, reason: "" }]);
+  assert.deepEqual(deck.chosen, ["team", "nope", "evidence"]);
+  assert.deepEqual(deck.writeups, { team: "Add a team slide.", nope: "x" });
+  assert.deepEqual(asDeck({ chosen: ["Bad Id", "team"] }).chosen, ["team"]);
 });
 
 test("the top three topics are the highest scores, ties in library order", () => {
@@ -168,4 +170,19 @@ test("selling points confirmation is kept only with a choice, and labels the bri
   assert.equal(asPoints({ confirmed_at: "2026-10-30T12:00:00Z" }).confirmed_at, null);
   assert.match(briefText({}, [], points), /selling points \(confirmed, in order: #1 leads\)/);
   assert.match(briefText({}, [], { ...points, confirmed_at: null }), /selling points \(draft\)/);
+});
+
+test("feedback topics saved in the admin: unique titles, 3 to 40, preset documents only from the library", async () => {
+  const { parseDeckTopics, topTopics } = await import("./brief.ts");
+  const topics = parseDeckTopics([
+    { title: "Structure", playbook: "Sequoia order.", files: [{ path: "library/feedback/a/structure.pdf", name: "Structure.pdf" }, { path: "client/x.pdf", name: "x" }], links: [{ label: "YC", url: "https://ycombinator.com" }] },
+    { title: "Team" },
+    { title: "The ask" },
+  ]);
+  assert.ok(topics);
+  assert.deepEqual(topics.map((topic) => topic.id), ["structure", "team", "the_ask"]);
+  assert.equal(topics[0].files?.length, 1);
+  assert.equal(topics[0].links?.[0].label, "YC");
+  assert.equal(parseDeckTopics([{ title: "A" }, { title: "B" }]), null);
+  assert.deepEqual(topTopics([{ topic: "team", score: 5, reason: "" }, { topic: "the_ask", score: 5, reason: "" }, { topic: "gone", score: 9, reason: "" }], 2, topics), ["team", "the_ask"]);
 });
