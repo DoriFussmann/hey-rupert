@@ -306,7 +306,15 @@ export function FramingRoom({
               run={run}
               claudeReady={claudeReady}
             />
-            <SendStage clientId={clientId} brief={brief} narrative={narrative} founderQuestions={founderQuestions} busy={busy} setBusy={setBusy} />
+            <QuestionsStage
+              clientId={clientId}
+              brief={brief}
+              narrative={narrative}
+              feedbackConfirmed={Boolean(brief.deck.confirmed_at)}
+              busy={busy}
+              setBusy={setBusy}
+            />
+            <SendStage clientId={clientId} brief={brief} narrative={narrative} founderQuestions={founderQuestions} />
           </>
         ) : null}
       </div>
@@ -917,57 +925,188 @@ function FeedbackStage({
   );
 }
 
-/** Stage 4: choose the questions, then draft the email and push it all to the client's portal. */
-function SendStage({
+/** Stage 4: the questions for the founder: the brief's, edited, reordered, added to, then confirmed. */
+function QuestionsStage({
   clientId,
   brief,
   narrative,
-  founderQuestions,
+  feedbackConfirmed,
   busy,
   setBusy,
 }: {
   clientId: string;
   brief: CompanyBrief;
   narrative: BriefNarrative;
-  founderQuestions: FounderQuestion[];
+  feedbackConfirmed: boolean;
   busy: string | null;
   setBusy: (value: string | null) => void;
 }) {
   const router = useRouter();
-  const questions = briefQuestions(brief.sections.questions ?? "");
-  const [ask, setAsk] = useState<string[]>(narrative.asked);
+  const fromBrief = briefQuestions(brief.sections.questions ?? "");
+  // Saved questions win; before any save, start from the brief's.
+  const saved = narrative.questions_confirmed_at || narrative.asked.length > 0 ? narrative.asked : fromBrief;
+  const [list, setList] = useState<string[]>(saved);
   const [notice, setNotice] = useState<Notice>(null);
-  useEffect(() => setAsk(narrative.asked), [narrative.asked]);
-  const answered = founderQuestions.filter((item) => item.answer);
-  const ready = Boolean(narrative.finalized_at) && Boolean(brief.deck.confirmed_at);
-  const askChanged = ask.join("\n") !== narrative.asked.join("\n");
-  const sent = narrative.version > 0;
+  useEffect(() => setList(saved), [narrative.asked, narrative.questions_confirmed_at, brief.sections.questions]); // eslint-disable-line react-hooks/exhaustive-deps
+  const confirmed = Boolean(narrative.questions_confirmed_at);
+  const clean = list.map((item) => item.trim()).filter(Boolean);
+  const changed = clean.join("\n") !== narrative.asked.join("\n");
 
-  async function saveQuestions() {
-    setBusy("questions-save");
+  async function save(confirm: boolean, ok: string) {
+    setBusy(confirm ? "questions-confirm" : "questions-save");
     setNotice(null);
     try {
-      const result = await saveFounderQuestionsAction(clientId, ask);
+      const result = await saveFounderQuestionsAction(clientId, clean, confirm);
       if (!result.ok) setNotice({ kind: "error", text: result.error });
       else {
-        setNotice({ kind: "ok", text: "Questions saved. They go with the narrative." });
+        setNotice({ kind: "ok", text: ok });
         router.refresh();
       }
+    } catch (err) {
+      setNotice({ kind: "error", text: err instanceof Error ? err.message : "Something went wrong." });
     } finally {
       setBusy(null);
     }
   }
 
-  const checks = [
-    { label: "3 strongest selling points confirmed", done: Boolean(brief.points.confirmed_at) },
-    { label: "Outreach Narrative finalized", done: Boolean(narrative.finalized_at) },
-    { label: "Company Materials Feedback confirmed", done: Boolean(brief.deck.confirmed_at) },
-  ];
+  function move(index: number, to: number) {
+    setList((current) => {
+      if (to < 0 || to >= current.length) return current;
+      const next = [...current];
+      const [item] = next.splice(index, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  }
 
   return (
     <section className={`${card} px-lg py-md`}>
       <StageHead
         n={4}
+        title="Questions for the Founder"
+        status={confirmed ? "Confirmed" : feedbackConfirmed ? "Draft" : "After the feedback"}
+        tone={confirmed ? "done" : feedbackConfirmed ? "open" : "locked"}
+      />
+      <p className="mt-xs max-w-prose text-body-sm text-muted">
+        Only questions whose answers would change the pitch. They start from the brief; edit, reorder, remove or add, then Confirm &amp; Finalize. The founder answers them on their page. No questions is fine too.
+      </p>
+
+      {confirmed ? (
+        <div className="mt-md grid gap-sm">
+          {narrative.asked.length > 0 ? (
+            <ol className="flex flex-col gap-sm">
+              {narrative.asked.map((question, index) => (
+                <li key={question} className="flex gap-sm rounded-md border border-primary/30 bg-primary-tint px-md py-sm text-body-sm text-heading">
+                  <span className="text-primary">#{index + 1}</span>
+                  <span>{question}</span>
+                </li>
+              ))}
+            </ol>
+          ) : (
+            <p className="text-body-sm text-muted">No questions this time.</p>
+          )}
+          <div className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-success/30 bg-success/10 px-md py-sm">
+            <p className="text-body-sm text-heading">Confirmed {formatDateAtTime(narrative.questions_confirmed_at ?? "")}. They go with the narrative.</p>
+            <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void save(false, "Unlocked. Edit, then Confirm & Finalize again.")}>
+              Unlock to Edit
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-md grid gap-sm">
+          <ol className="flex flex-col gap-sm">
+            {list.map((question, index) => (
+              <li key={index} className="flex flex-col gap-xs rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
+                <div className="flex flex-wrap items-center justify-between gap-sm">
+                  <p className="text-label uppercase tracking-label text-primary">#{index + 1}</p>
+                  <div className="flex gap-xs">
+                    <button type="button" className={smallButton} disabled={busy !== null || index === 0} aria-label="Move up" onClick={() => move(index, index - 1)}>
+                      ↑
+                    </button>
+                    <button type="button" className={smallButton} disabled={busy !== null || index === list.length - 1} aria-label="Move down" onClick={() => move(index, index + 1)}>
+                      ↓
+                    </button>
+                    <button type="button" className={smallButton} disabled={busy !== null} aria-label="Remove question" onClick={() => setList((current) => current.filter((_, at) => at !== index))}>
+                      Remove
+                    </button>
+                  </div>
+                </div>
+                <AutoTextarea
+                  className={`${inputClass} bg-surface`}
+                  value={question}
+                  aria-label={`Question ${index + 1}`}
+                  disabled={busy !== null || !feedbackConfirmed}
+                  onChange={(event) => setList((current) => current.map((item, at) => (at === index ? event.target.value : item)))}
+                />
+              </li>
+            ))}
+          </ol>
+          <div className="flex flex-wrap gap-xs">
+            <button type="button" className={smallButton} disabled={busy !== null || list.length >= 10 || !feedbackConfirmed} onClick={() => setList((current) => [...current, ""])}>
+              + Add Question
+            </button>
+            {fromBrief.length > 0 && fromBrief.join("\n") !== clean.join("\n") ? (
+              <button type="button" className={smallButton} disabled={busy !== null || !feedbackConfirmed} onClick={() => setList(fromBrief)}>
+                Reset to the Brief&apos;s Questions
+              </button>
+            ) : null}
+          </div>
+          <div className="mt-xs flex flex-wrap items-center gap-sm">
+            <button
+              type="button"
+              className={primaryButton}
+              disabled={busy !== null || !feedbackConfirmed}
+              title={feedbackConfirmed ? undefined : "Confirm the Company Materials Feedback first."}
+              onClick={() => void save(true, clean.length > 0 ? "Questions confirmed. Next: send to the client." : "No questions this time. Next: send to the client.")}
+            >
+              {busy === "questions-confirm" ? "Confirming…" : "Confirm & Finalize"}
+            </button>
+            {changed && feedbackConfirmed ? (
+              <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void save(false, "Draft saved.")}>
+                {busy === "questions-save" ? "Saving…" : "Save Draft"}
+              </button>
+            ) : null}
+            <span className="text-body-sm text-muted">
+              {clean.length} question{clean.length === 1 ? "" : "s"} · not confirmed yet
+            </span>
+          </div>
+        </div>
+      )}
+      {notice ? (
+        <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>
+          {notice.text}
+        </p>
+      ) : null}
+    </section>
+  );
+}
+
+/** Stage 5: once stages 1 to 4 are confirmed, draft the email and push it all to the client's portal. */
+function SendStage({
+  clientId,
+  brief,
+  narrative,
+  founderQuestions,
+}: {
+  clientId: string;
+  brief: CompanyBrief;
+  narrative: BriefNarrative;
+  founderQuestions: FounderQuestion[];
+}) {
+  const answered = founderQuestions.filter((item) => item.answer);
+  const checks = [
+    { label: "3 strongest selling points confirmed", done: Boolean(brief.points.confirmed_at) },
+    { label: "Outreach Narrative finalized", done: Boolean(narrative.finalized_at) },
+    { label: "Company Materials Feedback confirmed", done: Boolean(brief.deck.confirmed_at) },
+    { label: "Questions for the founder confirmed", done: Boolean(narrative.questions_confirmed_at) },
+  ];
+  const ready = checks.every((check) => check.done);
+  const sent = narrative.version > 0;
+
+  return (
+    <section className={`${card} px-lg py-md`}>
+      <StageHead
+        n={5}
         title="Send to Client"
         status={
           narrative.status === "confirmed"
@@ -978,12 +1117,12 @@ function SendStage({
                 ? "Sent"
                 : ready
                   ? "Ready to send"
-                  : "After stages 1 to 3"
+                  : "After stages 1 to 4"
         }
         tone={narrative.status === "confirmed" ? "done" : ready ? "open" : "locked"}
       />
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        The client gets the Outreach Narrative to confirm or comment on, the materials feedback to read, and the questions you tick. Draft the email and push it in the Outreach Narrative step below.
+        Draft the email and push to the client&apos;s portal: they confirm or comment on the narrative, read the feedback and answer the questions. Then matching.
       </p>
       <ul className="mt-md grid gap-xs text-body-sm">
         {checks.map((check) => (
@@ -992,34 +1131,6 @@ function SendStage({
           </li>
         ))}
       </ul>
-
-      <div className="mt-md">
-        <p className={label}>Questions for the Founder</p>
-        {questions.length === 0 ? (
-          <p className="mt-xs text-body-sm text-muted">No questions in the brief.</p>
-        ) : (
-          <ul className="mt-xs grid gap-xs text-body-sm">
-            {questions.map((question) => (
-              <li key={question} className="flex items-start gap-sm">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={ask.includes(question)}
-                  disabled={busy !== null}
-                  onChange={() => setAsk((current) => (current.includes(question) ? current.filter((item) => item !== question) : [...current, question]))}
-                  aria-label={question}
-                />
-                <span>{question}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        {askChanged ? (
-          <button type="button" className={`${secondaryButton} mt-sm`} disabled={busy !== null} onClick={() => void saveQuestions()}>
-            {busy === "questions-save" ? "Saving…" : `Save Questions (${ask.length})`}
-          </button>
-        ) : null}
-      </div>
 
       {answered.length > 0 ? (
         <div className="mt-md">
@@ -1046,11 +1157,6 @@ function SendStage({
           </span>
         )}
       </div>
-      {notice ? (
-        <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>
-          {notice.text}
-        </p>
-      ) : null}
     </section>
   );
 }

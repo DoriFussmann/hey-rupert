@@ -127,7 +127,9 @@ export function NarrativeEditor({
     ? "Finalize the Outreach Narrative in the Company Brief (stage 2) first."
     : !feedbackReady
       ? "Confirm the Company Materials Feedback in the Company Brief (stage 3) first."
-      : narrativeProblem(narrative);
+      : narrative.statement && !narrative.questions_confirmed_at
+        ? "Confirm the questions for the founder in the Company Brief (stage 4) first."
+        : narrativeProblem(narrative);
 
   return (
     <StepFrame
@@ -143,7 +145,7 @@ export function NarrativeEditor({
           ? "Claude is not configured (ANTHROPIC_API_KEY)."
           : !hasText
             ? materialsSubmitted || legacyFeedback
-              ? "Stage 4 of the Company Brief: write and finalize the narrative and the feedback there, then draft the email and push here."
+              ? "Stage 5 of the Company Brief: write and finalize the narrative and the feedback there, then draft the email and push here."
               : "The Company Brief opens once the client's intake is in."
             : changesRequested
               ? "The client asked for changes. Unlock the narrative in the Company Brief, Rewrite With Client's Changes, Finalize, then send again here."

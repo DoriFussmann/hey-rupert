@@ -11,7 +11,6 @@ import {
   SELLING_POINTS_SLUG,
   parseSellingPoints,
   type SellingPoint,
-  briefQuestions,
   parseBriefTopics,
   type BriefTopic,
   deckFeedbackMarkdown,
@@ -311,18 +310,26 @@ export async function saveNarrativeAction(
   return patchNarrativeDraft(access.supabase, clientId, () => ({ statement, summary, finalized_at: finalize ? nowIso() : undefined }));
 }
 
-/** The brief's questions Rupert sends the founder with the narrative. */
-export async function saveFounderQuestionsAction(clientId: string, questions: string[]): Promise<Result<{ narrative: NarrativePayload }>> {
+/**
+ * The questions Rupert sends the founder with the narrative: the brief's,
+ * edited, reordered, added to. `confirm` finalizes them (none is fine).
+ */
+export async function saveFounderQuestionsAction(
+  clientId: string,
+  questions: string[],
+  confirm = false,
+): Promise<Result<{ narrative: NarrativePayload }>> {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
-  const brief = await loadBrief(access.supabase, clientId);
-  if (!brief.ok) return brief;
-  const allowed = new Set(briefQuestions(brief.value?.sections.questions ?? ""));
-  const wanted = (Array.isArray(questions) ? questions.map(String) : []).filter((question) => allowed.has(question));
+  const wanted = Array.from(
+    new Set((Array.isArray(questions) ? questions : []).map((question) => String(question ?? "").trim().slice(0, 500)).filter(Boolean)),
+  ).slice(0, 10);
   const asked = await setFounderQuestions(access.supabase, clientId, wanted);
   if (!asked.ok) return asked;
+  const ordered = wanted.map((question) => asked.value.find((item) => item.question === question)).filter((item) => item !== undefined);
   return patchNarrativeDraft(access.supabase, clientId, () => ({
-    founder_questions: asked.value.map((item) => ({ id: item.id, question: item.question })),
+    founder_questions: ordered.map((item) => ({ id: item.id, question: item.question })),
+    questions_confirmed_at: confirm === true ? nowIso() : undefined,
   }));
 }
 
