@@ -553,12 +553,21 @@ function OutputsPanel({
       ) : null}
 
       <div className="mt-md flex flex-wrap items-center gap-sm">
-        <button type="button" className={primaryButton} disabled={busy !== null || !claudeReady} onClick={() => void write()}>
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={busy !== null || !claudeReady || !brief.points.confirmed_at}
+          title={brief.points.confirmed_at ? undefined : "Confirm & Finalize the 3 strongest selling points first."}
+          onClick={() => void write()}
+        >
           {busy === "narrative" ? "Writing…" : "Write Narrative from Brief"}
         </button>
         <Link href={`/admin/clients/${clientId}#setup-framing`} className="text-body-sm text-primary">
           Open the Outreach Narrative →
         </Link>
+        {brief.points.confirmed_at ? null : (
+          <span className="text-body-sm text-muted">Confirm & Finalize the selling points first.</span>
+        )}
       </div>
       {notice ? (
         <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>
@@ -647,11 +656,15 @@ function PointsPanel({
   const [pitches, setPitches] = useState<Record<string, string>>({});
   // Scores Rupert overrides, by point id.
   const [scores, setScores] = useState<Record<string, number>>({});
+  const [titles, setTitles] = useState<Record<string, string>>({});
   useEffect(() => {
     setChosen(points.chosen);
     setPitches(Object.fromEntries(points.scores.map((item) => [item.point, item.pitch])));
+    setTitles(Object.fromEntries(points.scores.map((item) => [item.point, item.title])));
     setScores({});
   }, [points]);
+  const confirmed = Boolean(points.confirmed_at);
+  const locked = confirmed || busy !== null;
 
   const aiScore = (id: string) => points.scores.find((item) => item.point === id);
   const scoreValue = (id: string): number | undefined => scores[id] ?? aiScore(id)?.score;
@@ -660,7 +673,9 @@ function PointsPanel({
   const changed =
     chosen.join() !== points.chosen.join() ||
     scoresChanged ||
-    points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch);
+    points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch || (titles[item.point] ?? item.title) !== item.title);
+  const save = (confirm: boolean, ok: string) =>
+    run(confirm ? "points-confirm" : "points-save", () => saveSellingPointsAction(clientId, chosen, pitches, scores, titles, confirm), ok);
 
   function move(index: number, to: number) {
     setChosen((current) => {
@@ -700,7 +715,8 @@ function PointsPanel({
         <button
           type="button"
           className={points.scores.length > 0 ? secondaryButton : primaryButton}
-          disabled={busy !== null || !claudeReady}
+          disabled={busy !== null || !claudeReady || confirmed}
+          title={confirmed ? "Unlock to edit first." : undefined}
           onClick={() => void run("points", () => scoreSellingPointsAction(clientId), "Selling points scored. The top three are chosen.")}
         >
           {busy === "points" ? "Scoring…" : points.scores.length > 0 ? "Score Again" : "Score Selling Points"}
@@ -719,7 +735,7 @@ function PointsPanel({
                     <p className="text-label uppercase tracking-label text-primary">
                       #{index + 1} · Score {scoreValue(id) ?? "–"}
                     </p>
-                    <div className="flex gap-xs">
+                    <div className={`flex gap-xs ${confirmed ? "hidden" : ""}`}>
                       {index > 0 ? (
                         <button type="button" className={smallButton} disabled={busy !== null} onClick={() => move(index, 0)}>
                           Make #1
@@ -745,18 +761,40 @@ function PointsPanel({
                       </button>
                     </div>
                   </div>
-                  <p className="text-body text-heading">{titleCase(point.title)}</p>
-                  <AutoTextarea
-                    className={`${inputClass} bg-surface`}
-                    value={pitches[id] ?? ""}
-                    aria-label={`What to say: ${point.title}`}
-                    onChange={(event) => setPitches((current) => ({ ...current, [id]: event.target.value }))}
-                  />
+                  {confirmed ? (
+                    <>
+                      <p className="text-body text-heading">{titleCase(titles[id] || point.title)}</p>
+                      <p className="whitespace-pre-wrap text-body-sm text-body">{pitches[id]}</p>
+                    </>
+                  ) : (
+                    <>
+                      <label className="text-body-sm text-muted">
+                        Headline
+                        <input
+                          className={`${inputClass} bg-surface text-heading`}
+                          value={titles[id] ?? point.title}
+                          maxLength={100}
+                          disabled={busy !== null}
+                          onChange={(event) => setTitles((current) => ({ ...current, [id]: event.target.value }))}
+                        />
+                      </label>
+                      <label className="text-body-sm text-muted">
+                        What to Say
+                        <AutoTextarea
+                          className={`${inputClass} bg-surface`}
+                          value={pitches[id] ?? ""}
+                          placeholder="How this point is said to investors."
+                          disabled={busy !== null}
+                          onChange={(event) => setPitches((current) => ({ ...current, [id]: event.target.value }))}
+                        />
+                      </label>
+                    </>
+                  )}
                 </li>
               ) : null;
             })}
           </ol>
-          <details className="mt-md text-body-sm" open={chosen.length < SELLING_POINTS_CHOSEN}>
+          <details className={`mt-md text-body-sm ${confirmed ? "hidden" : ""}`} open={chosen.length < SELLING_POINTS_CHOSEN}>
             <summary className="cursor-pointer text-primary">All {shown.length} Points, by Score</summary>
             <p className="mt-xs text-muted">Disagree with a score? Change it. Tick up to {SELLING_POINTS_CHOSEN} to use.</p>
             <ul className="mt-sm grid gap-xs">
@@ -771,7 +809,7 @@ function PointsPanel({
                       type="checkbox"
                       className="mt-1"
                       checked={on}
-                      disabled={!on && chosen.length >= SELLING_POINTS_CHOSEN}
+                      disabled={locked || (!on && chosen.length >= SELLING_POINTS_CHOSEN)}
                       onChange={() => toggle(point.id)}
                       aria-label={point.title}
                     />
@@ -780,7 +818,7 @@ function PointsPanel({
                       min={0}
                       max={10}
                       value={value ?? ""}
-                      disabled={busy !== null || !score}
+                      disabled={locked || !score}
                       aria-label={`Score for ${point.title}`}
                       title={overridden ? `Rupert's score. AI said ${score?.score}.` : "Score out of 10"}
                       onChange={(event) => setScore(point.id, event.target.value)}
@@ -798,16 +836,41 @@ function PointsPanel({
               })}
             </ul>
           </details>
-          {changed ? (
-            <button
-              type="button"
-              className={`${primaryButton} mt-md`}
-              disabled={busy !== null || chosen.length === 0}
-              onClick={() => void run("points-save", () => saveSellingPointsAction(clientId, chosen, pitches, scores), "Selling points saved.")}
-            >
-              Save Selling Points ({chosen.length} of {SELLING_POINTS_CHOSEN})
-            </button>
-          ) : null}
+          {confirmed ? (
+            <div className="mt-md flex flex-wrap items-center justify-between gap-sm rounded-md border border-success/30 bg-success/10 px-md py-sm">
+              <p className="text-body-sm text-heading">
+                Confirmed {points.confirmed_at ? formatDateAtTime(points.confirmed_at) : ""}. These lead the narrative, the copy and everything after.
+              </p>
+              <button
+                type="button"
+                className={secondaryButton}
+                disabled={busy !== null}
+                onClick={() => void save(false, "Unlocked. Edit, then Confirm & Finalize again.")}
+              >
+                Unlock to Edit
+              </button>
+            </div>
+          ) : (
+            <div className="mt-md flex flex-wrap items-center gap-sm">
+              <button
+                type="button"
+                className={primaryButton}
+                disabled={busy !== null || chosen.length < SELLING_POINTS_CHOSEN}
+                title={chosen.length < SELLING_POINTS_CHOSEN ? `Choose ${SELLING_POINTS_CHOSEN} points first.` : undefined}
+                onClick={() => void save(true, "Selling points confirmed. The narrative and everything after lead with them.")}
+              >
+                {busy === "points-confirm" ? "Confirming…" : "Confirm & Finalize"}
+              </button>
+              {changed ? (
+                <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void save(false, "Draft saved.")}>
+                  {busy === "points-save" ? "Saving…" : "Save Draft"}
+                </button>
+              ) : null}
+              <span className="text-body-sm text-muted">
+                {chosen.length} of {SELLING_POINTS_CHOSEN} chosen · not confirmed yet
+              </span>
+            </div>
+          )}
         </>
       ) : null}
     </section>

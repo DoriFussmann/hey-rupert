@@ -129,7 +129,7 @@ test("selling points: all ten scored, top three by score, decided points lead th
   assert.equal(points.scores.length, 3);
   assert.deepEqual(topPoints(points.scores, 2), ["founder_fit", "category_momentum"]);
   const text = briefText({ abstract: "- One", purpose: "AR automation." }, DEFAULT_BRIEF_TOPICS.slice(0, 1), { ...points, chosen: ["founder_fit"] });
-  assert.match(text, /^## Abstract\n- One\n\n## The three strongest selling points \(decided\)\n1\. Founder-market fit and track record: Former CEO/);
+  assert.match(text, /^## Abstract\n- One\n\n## The three strongest selling points \(draft\)\n1\. Founder-market fit and track record: Former CEO/);
   assert.deepEqual(abstractBullets("- One\n* Two\n\n3) Three"), ["One", "Two", "Three"]);
 });
 
@@ -151,4 +151,12 @@ test("headings are Title Case, small words and acronyms kept", async () => {
   assert.equal(titleCase("Founder-market fit and track record"), "Founder-Market Fit and Track Record");
   assert.equal(titleCase("AI slop"), "AI Slop");
   assert.equal(titleCase("questions for the founder"), "Questions for the Founder");
+});
+
+test("selling points confirmation is kept only with a choice, and labels the brief", () => {
+  const points = asPoints({ scores: [{ point: "traction", score: 8, pitch: "Two customers." }], chosen: ["traction"], confirmed_at: "2026-10-30T12:00:00Z" });
+  assert.equal(points.confirmed_at, "2026-10-30T12:00:00Z");
+  assert.equal(asPoints({ confirmed_at: "2026-10-30T12:00:00Z" }).confirmed_at, null);
+  assert.match(briefText({}, [], points), /selling points \(confirmed, in order: #1 leads\)/);
+  assert.match(briefText({}, [], { ...points, confirmed_at: null }), /selling points \(draft\)/);
 });

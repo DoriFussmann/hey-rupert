@@ -12,6 +12,7 @@ import {
   parseSellingPoints,
   type SellingPoint,
   type PointScore,
+  SELLING_POINTS_CHOSEN,
   asPoints,
   briefKeys,
   emptyPoints,
@@ -605,7 +606,14 @@ export async function scoreSellingPoints(supabase: ServiceClient, clientId: stri
 export async function saveSellingPoints(
   supabase: ServiceClient,
   clientId: string,
-  change: { chosen: string[]; pitches: Record<string, string>; scores?: Record<string, number> },
+  change: {
+    chosen: string[];
+    pitches: Record<string, string>;
+    scores?: Record<string, number>;
+    titles?: Record<string, string>;
+    /** true confirms the top 3; anything else leaves them a draft (an edit unconfirms). */
+    confirm?: boolean;
+  },
   actor: string | null,
 ): Promise<Result<CompanyBrief>> {
   const brief = await loadBrief(supabase, clientId);
@@ -619,11 +627,20 @@ export async function saveSellingPoints(
   const points = asPoints({
     ...current,
     chosen: change.chosen,
-    scores: current.scores.map((item) => ({ ...item, score: scoreFor(item), pitch: change.pitches[item.point] ?? item.pitch })),
+    scores: current.scores.map((item) => ({
+      ...item,
+      score: scoreFor(item),
+      title: change.titles?.[item.point]?.trim() || item.title,
+      pitch: change.pitches[item.point] ?? item.pitch,
+    })),
+    confirmed_at: change.confirm ? new Date().toISOString() : null,
   });
+  if (change.confirm && points.chosen.length < SELLING_POINTS_CHOSEN) {
+    return { ok: false, error: `Choose ${SELLING_POINTS_CHOSEN} selling points before confirming.` };
+  }
   return saveBrief(supabase, clientId, {
     points,
-    note: `Selling points: ${points.chosen.map((id) => points.scores.find((item) => item.point === id)?.title ?? id).join(", ")}.`,
+    note: `Selling points${points.confirmed_at ? " confirmed" : ""}: ${points.chosen.map((id) => points.scores.find((item) => item.point === id)?.title ?? id).join(", ")}.`,
     actor,
   });
 }

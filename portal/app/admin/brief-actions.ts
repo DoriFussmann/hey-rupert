@@ -194,7 +194,9 @@ export async function writeNarrativeFromBriefAction(
   if (!brief.value) return { ok: false, error: "Build the brief first." };
 
   const topics = await loadBriefTopics(access.supabase);
-  if (brief.value.points.chosen.length === 0) return { ok: false, error: "Score the selling points first: the narrative leads with the three chosen." };
+  if (!brief.value.points.confirmed_at) {
+    return { ok: false, error: "Confirm & Finalize the 3 strongest selling points first: the narrative leads with them." };
+  }
   const built = await buildNarrativeFromBrief(access.supabase, clientId, briefText(brief.value.sections, topics, brief.value.points));
   if (!built.ok) return built;
 
@@ -244,6 +246,8 @@ export async function saveSellingPointsAction(
   chosen: string[],
   pitches: Record<string, string>,
   scores: Record<string, number> = {},
+  titles: Record<string, string> = {},
+  confirm = false,
 ) {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
@@ -254,11 +258,13 @@ export async function saveSellingPointsAction(
     const number = Number(value);
     if (Number.isFinite(number)) cleanScores[String(id)] = number;
   }
+  const cleanTitles: Record<string, string> = {};
+  for (const [id, text] of Object.entries(titles && typeof titles === "object" ? titles : {})) cleanTitles[String(id)] = String(text ?? "").slice(0, 100);
   return withBrief(
     await saveSellingPoints(
       access.supabase,
       clientId,
-      { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean, scores: cleanScores },
+      { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean, scores: cleanScores, titles: cleanTitles, confirm: confirm === true },
       access.actor,
     ),
     clientId,

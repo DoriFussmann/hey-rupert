@@ -123,7 +123,13 @@ export const SELLING_POINTS_CHOSEN = 3;
 
 export type PointScore = { point: string; title: string; score: number; reason: string; pitch: string };
 
-export type SellingPoints = { scores: PointScore[]; chosen: string[]; scored_at: string | null };
+export type SellingPoints = {
+  scores: PointScore[];
+  chosen: string[];
+  scored_at: string | null;
+  /** Set when Rupert confirms the top 3. Everything downstream (narrative, copy) waits for it. */
+  confirmed_at: string | null;
+};
 
 /** Saved selling points, or null when they can't be used. */
 export function parseSellingPoints(value: unknown): SellingPoint[] | null {
@@ -143,7 +149,7 @@ export function parseSellingPoints(value: unknown): SellingPoint[] | null {
 }
 
 export function emptyPoints(): SellingPoints {
-  return { scores: [], chosen: [], scored_at: null };
+  return { scores: [], chosen: [], scored_at: null, confirmed_at: null };
 }
 
 export function asPoints(value: unknown): SellingPoints {
@@ -166,7 +172,12 @@ export function asPoints(value: unknown): SellingPoints {
   const chosen = Array.isArray(raw.chosen)
     ? Array.from(new Set(raw.chosen.map(String).filter((id) => TOPIC_ID.test(id)))).slice(0, SELLING_POINTS_CHOSEN)
     : [];
-  return { scores, chosen, scored_at: typeof raw.scored_at === "string" ? raw.scored_at : null };
+  return {
+    scores,
+    chosen,
+    scored_at: typeof raw.scored_at === "string" ? raw.scored_at : null,
+    confirmed_at: typeof raw.confirmed_at === "string" && chosen.length > 0 ? raw.confirmed_at : null,
+  };
 }
 
 /** The strongest points by score, ties in list order. */
@@ -465,7 +476,7 @@ export function briefQuestions(text: string): string[] {
 export function briefText(sections: BriefSections, topics: BriefTopic[], points?: SellingPoints) {
   const parts = briefKeys(topics).map((key) => `## ${sectionTitle(key, topics)}\n${(sections[key] ?? "").trim() || "(empty)"}`);
   const chosen = points ? chosenPointsText(points) : "";
-  if (chosen) parts.splice(1, 0, `## The three strongest selling points (decided)\n${chosen}`);
+  if (chosen) parts.splice(1, 0, `## The three strongest selling points (${points?.confirmed_at ? "confirmed, in order: #1 leads" : "draft"})\n${chosen}`);
   return parts.join("\n\n");
 }
 
