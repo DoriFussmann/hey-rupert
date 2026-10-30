@@ -302,6 +302,8 @@ export type NarrativePayload = {
   founder_questions?: { id: string; question: string }[];
   /** Set when Rupert finalizes the narrative in the Company Brief; the send step waits for it. */
   finalized_at?: string;
+  /** Set when Rupert confirms the questions for the founder in the Company Brief. */
+  questions_confirmed_at?: string;
   /** The narrative as a statement (why three, the three points, the ask). `summary` holds it as markdown. */
   statement?: NarrativeStatement;
 };
@@ -1153,6 +1155,7 @@ export function asNarrative(value: unknown): NarrativePayload {
     change_summary: optionalText(raw.change_summary, 5000),
     finalized_at: optionalText(raw.finalized_at, 40),
     statement: asStatement(raw.statement),
+    questions_confirmed_at: optionalText(raw.questions_confirmed_at, 40),
     ...withQuestions(asQuestions(raw.questions)),
     ...founderQuestionsOf(raw.founder_questions),
   };

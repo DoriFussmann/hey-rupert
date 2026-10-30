@@ -978,6 +978,7 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     change_summary: draft.change_summary ?? "",
     feedback: draft.feedback?.improvements ?? "",
     asked: (draft.founder_questions ?? []).map((item) => item.question),
+    questions_confirmed_at: draft.questions_confirmed_at ?? null,
     status: framingRow?.status ?? null,
     version: framingRow?.version ?? 0,
   };
@@ -1021,8 +1022,9 @@ export type BriefNarrative = {
   change_summary: string;
   /** The confirmed materials feedback, as it will be sent. */
   feedback: string;
-  /** The questions chosen for the founder. */
+  /** The questions chosen for the founder, in order. */
   asked: string[];
+  questions_confirmed_at: string | null;
   /** The send step: null before the first push, then pushed, confirmed, changes_requested… */
   status: string | null;
   version: number;
