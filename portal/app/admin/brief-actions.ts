@@ -14,12 +14,17 @@ import {
   parseBriefTopics,
   type BriefTopic,
   deckFeedbackMarkdown,
+  DECK_TOPICS_MAX,
+  DECK_TOPICS_SLUG,
+  parseDeckTopics,
+  type DeckTopic,
   type BriefSections,
   type CompanyBrief,
   type FramingMessage,
 } from "@/lib/brief";
 import {
   buildBrief,
+  loadDeckTopics,
   saveDeck,
   loadBrief,
   loadBriefVersion,
@@ -196,7 +201,11 @@ export async function saveDeckAction(
   const files: Record<string, unknown> = {};
   for (const [id, list] of Object.entries(raw.files && typeof raw.files === "object" ? raw.files : {})) {
     files[String(id)] = (Array.isArray(list) ? list : []).filter(
-      (item) => item && typeof item === "object" && String((item as Record<string, unknown>).path ?? "").startsWith(`${clientId}/`),
+      (item) => {
+        const path = item && typeof item === "object" ? String((item as Record<string, unknown>).path ?? "") : "";
+        // This client's uploads, or a preset document from the feedback library.
+        return path.startsWith(`${clientId}/`) || path.startsWith("library/");
+      },
     );
   }
   const before = await loadBrief(access.supabase, clientId);
@@ -219,8 +228,9 @@ export async function saveDeckAction(
     const deck = saved.value.deck;
     const previousDeckPaths = new Set(Object.values(before.value?.deck.files ?? {}).flat().map((file) => file.path));
     const deckFiles = deck.chosen.flatMap((id) => deck.files[id] ?? []);
+    const deckTopics = await loadDeckTopics(access.supabase);
     const patched = await patchNarrativeDraft(access.supabase, clientId, (draft) => ({
-      feedback: { summary: "", improvements: deckFeedbackMarkdown(deck), generated_at: nowIso(), read: [], skipped: [] },
+      feedback: { summary: "", improvements: deckFeedbackMarkdown(deck, deckTopics), generated_at: nowIso(), read: [], skipped: [] },
       attachments: [
         ...draft.attachments.filter((file) => !previousDeckPaths.has(file.path) && !deckFiles.some((item) => item.path === file.path)),
         ...deckFiles,
@@ -250,12 +260,12 @@ async function patchNarrativeDraft(
   return { ok: true, narrative: asNarrative(draft) };
 }
 
-/** The opening and the ask, in Rupert's voice. Dori edits them per client. */
+/** The opening and the ask, in the first person: it comes from Rupert, one person. Edited per client. */
 function statementDefaults(company: string) {
   const name = company.trim() || "your company";
   return {
-    intro: `We've gone through everything you shared with us: the intake, your deck and materials, and our own research. Investors read fast, so we don't pitch ten points. We lead with the three that make the strongest case for ${name}. Here they are, in the order we'll use them.`,
-    closing: `This is how we'll position ${name} with investors. It's the narrative, not the emails: those come after we've matched the investors. Do you agree with these three and with the order? Confirm, or tell us what you'd change.`,
+    intro: `I've been through everything you shared: the intake, your deck and materials, and my own research. Investors read fast, so I don't pitch ten points. I lead with the three that make the strongest case for ${name}. Here they are, in the order I'll use them.`,
+    closing: `This is how I'll position ${name} with investors. It's the narrative, not the emails: those come after I've matched the investors. Do you agree with these three and with the order? Confirm, or tell me what you'd change.`,
   };
 }
 
@@ -273,12 +283,13 @@ export async function createNarrativeAction(clientId: string): Promise<Result<{ 
   const previous = asNarrative(existing.row?.draft).statement;
   const defaults = statementDefaults(String(client?.company_name ?? ""));
   const statement: NarrativeStatement = {
-    intro: previous?.intro || defaults.intro,
+    // An opening or closing still in the old "we" wording is replaced by the new default.
+    intro: previous?.intro && !previous.intro.startsWith("We've gone through") ? previous.intro : defaults.intro,
     points: points.chosen.map((id) => {
       const score = points.scores.find((item) => item.point === id);
       return { title: score?.title || id.replace(/_/g, " "), claim: score?.pitch || "" };
     }),
-    closing: previous?.closing || defaults.closing,
+    closing: previous?.closing && !previous.closing.startsWith("This is how we'll position") ? previous.closing : defaults.closing,
   };
   const OLD_NEXT_STEPS =
     "Once you confirm this narrative, Rupert sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
@@ -453,6 +464,38 @@ export async function removeLinkedinFileAction(clientId: string, path: string) {
 }
 
 /** Agents → Selling points: the list Rupert scores for every raise. */
+/** Agents → Feedback topics: the preset list of materials feedback, with preset links and documents. */
+export async function saveDeckTopicsAction(topics: DeckTopic[]): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };
+  if (!isServiceRoleConfigured()) return { ok: false, error: "Service role key is not configured." };
+  const parsed = parseDeckTopics(topics);
+  if (!parsed) return { ok: false, error: `Each topic needs a unique title, and there must be between 3 and ${DECK_TOPICS_MAX} topics.` };
+  const { error } = await createServiceClient().from("form_templates").upsert({
+    slug: DECK_TOPICS_SLUG,
+    title: "Feedback topics",
+    content: JSON.stringify(parsed),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/forms/feedback-topics");
+  return { ok: true };
+}
+
+/** A signed upload for a preset document in the feedback library (shared across clients). */
+export async function createLibraryUploadAction(file: { name: string; size: number }): Promise<Result<{ path: string; token: string }>> {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };
+  if (!isServiceRoleConfigured()) return { ok: false, error: "Service role key is not configured." };
+  const name = String(file?.name ?? "").trim();
+  const problem = intakeFileProblem({ name, size: Number(file?.size) || 0 });
+  if (problem) return { ok: false, error: problem };
+  const path = `library/feedback/${randomUUID()}/${safeFileName(name)}`;
+  const { data, error } = await createServiceClient().storage.from(MATERIALS_BUCKET).createSignedUploadUrl(path);
+  if (error || !data) return { ok: false, error: `Upload could not start: ${error?.message ?? "unknown error"}.` };
+  return { ok: true, path: data.path, token: data.token };
+}
+
 export async function saveSellingPointsListAction(points: SellingPoint[]): Promise<{ ok: true } | { ok: false; error: string }> {
   const { user, role } = await getAuthContext();
   if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };

@@ -224,6 +224,10 @@ export type DeckTopic = {
   title: string;
   /** What good looks like, the references, the common mistakes and the checklist. Given to the AI. */
   playbook: string;
+  /** Preset links Rupert can add when this point is chosen for a client (Agents → Feedback topics). */
+  links?: DeckLink[];
+  /** Preset documents (e.g. the presentation-structure PDF), stored under library/. */
+  files?: DeckFile[];
 };
 
 export const DECK_TOPICS: DeckTopic[] = [
@@ -377,8 +381,53 @@ Checklist: give it to someone who doesn't know the company for two minutes, then
 
 export const DECK_TOPIC_IDS = DECK_TOPICS.map((topic) => topic.id);
 
-export function deckTopic(id: string) {
-  return DECK_TOPICS.find((topic) => topic.id === id) ?? null;
+/** A topic by id, from the list in use (Dori's, else the defaults). */
+export function deckTopic(id: string, topics: DeckTopic[] = DECK_TOPICS) {
+  return topics.find((topic) => topic.id === id) ?? null;
+}
+
+export const DECK_TOPICS_SLUG = "deck_topics";
+export const DECK_TOPICS_MAX = 40;
+
+function cleanLinks(value: unknown): DeckLink[] {
+  return (Array.isArray(value) ? value : [])
+    .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
+    .map((item) => ({ id: str(item.id, 40) || Math.random().toString(36).slice(2, 10), label: str(item.label, 200).trim(), url: str(item.url, 2000).trim() }))
+    .filter((item) => /^https?:\/\//i.test(item.url))
+    .slice(0, 5);
+}
+
+function cleanFiles(value: unknown, prefix?: string): DeckFile[] {
+  return (Array.isArray(value) ? value : [])
+    .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
+    .map((item) => ({ path: str(item.path, 500), name: str(item.name, 255) || "file", size: Number(item.size) || 0, type: str(item.type, 120), uploaded_at: str(item.uploaded_at, 40) }))
+    .filter((item) => item.path && !item.path.includes("..") && (!prefix || item.path.startsWith(prefix)))
+    .slice(0, 5);
+}
+
+/** The feedback topics saved in the admin: 3 to 40, unique titles; preset files must live under library/. */
+export function parseDeckTopics(value: unknown): DeckTopic[] | null {
+  if (!Array.isArray(value)) return null;
+  const seen = new Set<string>();
+  const topics: DeckTopic[] = [];
+  for (const item of value) {
+    const raw = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const title = typeof raw.title === "string" ? raw.title.trim().slice(0, 100) : "";
+    if (!title) return null;
+    const id = typeof raw.id === "string" && TOPIC_ID.test(raw.id) ? raw.id : topicIdFor(title);
+    if (seen.has(id)) return null;
+    seen.add(id);
+    const links = cleanLinks(raw.links);
+    const files = cleanFiles(raw.files, "library/");
+    topics.push({
+      id,
+      title,
+      playbook: typeof raw.playbook === "string" ? raw.playbook.trim().slice(0, 20000) : "",
+      ...(links.length > 0 ? { links } : {}),
+      ...(files.length > 0 ? { files } : {}),
+    });
+  }
+  return topics.length >= DECK_TOPICS_PER_CLIENT && topics.length <= DECK_TOPICS_MAX ? topics : null;
 }
 
 /** How much a topic needs work in this deck: 0 (fine) to 10 (most important to fix). */
@@ -405,19 +454,20 @@ export type DeckFile = { path: string; name: string; size: number; type: string;
 export const DECK_TOPICS_PER_CLIENT = 3;
 
 /** The top three topics by score, most in need first. */
-export function topTopics(scores: DeckScore[], count = DECK_TOPICS_PER_CLIENT) {
+export function topTopics(scores: DeckScore[], count = DECK_TOPICS_PER_CLIENT, topics: DeckTopic[] = DECK_TOPICS) {
+  const ids = topics.map((topic) => topic.id);
   return [...scores]
-    .filter((item) => deckTopic(item.topic))
-    .sort((a, b) => b.score - a.score || DECK_TOPIC_IDS.indexOf(a.topic) - DECK_TOPIC_IDS.indexOf(b.topic))
+    .filter((item) => ids.includes(item.topic))
+    .sort((a, b) => b.score - a.score || ids.indexOf(a.topic) - ids.indexOf(b.topic))
     .slice(0, count)
     .map((item) => item.topic);
 }
 
 /** The chosen topics' writeups as one markdown document, in the order chosen. */
-export function deckFeedbackMarkdown(deck: DeckFeedback) {
+export function deckFeedbackMarkdown(deck: DeckFeedback, topics: DeckTopic[] = DECK_TOPICS) {
   return deck.chosen
     .map((id, index) => {
-      const topic = deckTopic(id);
+      const topic = deckTopic(id, topics);
       const body = (deck.writeups[id] ?? "").trim();
       if (!topic || !body) return "";
       const extras = [
@@ -480,34 +530,24 @@ export function asDeck(value: unknown): DeckFeedback {
             reason: str(entry.reason, 600),
           };
         })
-        .filter((item) => deckTopic(item.topic))
+        .filter((item) => TOPIC_ID.test(item.topic))
     : [];
   const chosen = Array.isArray(raw.chosen)
-    ? Array.from(new Set(raw.chosen.map((id) => str(id, 60)).filter((id) => deckTopic(id)))).slice(0, DECK_TOPICS_PER_CLIENT)
+    ? Array.from(new Set(raw.chosen.map((id) => str(id, 60)).filter((id) => TOPIC_ID.test(id)))).slice(0, DECK_TOPICS_PER_CLIENT)
     : [];
   const writeupsRaw = (raw.writeups && typeof raw.writeups === "object" ? raw.writeups : {}) as Record<string, unknown>;
   const writeups: Record<string, string> = {};
-  for (const [id, body] of Object.entries(writeupsRaw)) if (deckTopic(id)) writeups[id] = str(body, SECTION_MAX);
+  for (const [id, body] of Object.entries(writeupsRaw)) if (TOPIC_ID.test(id)) writeups[id] = str(body, SECTION_MAX);
   const linksRaw = (raw.links && typeof raw.links === "object" ? raw.links : {}) as Record<string, unknown>;
   const links: Record<string, DeckLink[]> = {};
   for (const [id, list] of Object.entries(linksRaw)) {
-    if (!deckTopic(id) || !Array.isArray(list)) continue;
-    const clean = list
-      .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
-      .map((item) => ({ id: str(item.id, 40) || Math.random().toString(36).slice(2, 10), label: str(item.label, 200).trim(), url: str(item.url, 2000).trim() }))
-      .filter((item) => /^https?:\/\//i.test(item.url))
-      .slice(0, 5);
+    const clean = TOPIC_ID.test(id) ? cleanLinks(list) : [];
     if (clean.length > 0) links[id] = clean;
   }
   const filesRaw = (raw.files && typeof raw.files === "object" ? raw.files : {}) as Record<string, unknown>;
   const files: Record<string, DeckFile[]> = {};
   for (const [id, list] of Object.entries(filesRaw)) {
-    if (!deckTopic(id) || !Array.isArray(list)) continue;
-    const clean = list
-      .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
-      .map((item) => ({ path: str(item.path, 500), name: str(item.name, 255) || "file", size: Number(item.size) || 0, type: str(item.type, 120), uploaded_at: str(item.uploaded_at, 40) }))
-      .filter((item) => item.path && !item.path.includes(".."))
-      .slice(0, 5);
+    const clean = TOPIC_ID.test(id) ? cleanFiles(list) : [];
     if (clean.length > 0) files[id] = clean;
   }
   return {

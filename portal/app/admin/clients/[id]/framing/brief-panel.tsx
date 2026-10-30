@@ -1,5 +1,5 @@
 import { FramingRoom } from "@/app/admin/clients/[id]/framing/framing-room";
-import type { CompanyBrief, BriefTopic, FounderQuestion, SellingPoint } from "@/lib/brief";
+import type { CompanyBrief, BriefTopic, DeckTopic, FounderQuestion, SellingPoint } from "@/lib/brief";
 import type { BriefFiles, BriefNarrative, BriefVersionRow } from "@/lib/brief-server";
 
 export type BriefPanelData = {
@@ -11,6 +11,7 @@ export type BriefPanelData = {
   filesError: string | null;
   linkedinUrls: string[];
   sellingPoints: SellingPoint[];
+  deckTopics: DeckTopic[];
   narrative: BriefNarrative;
   canBuild: boolean;
   buildNote: string | null;
@@ -41,6 +42,7 @@ export function BriefPanel({ clientId, data, claudeReady }: { clientId: string; 
             linkedinError={data.filesError}
             linkedinUrls={data.linkedinUrls}
             sellingPoints={data.sellingPoints}
+            deckTopics={data.deckTopics}
             narrative={data.narrative}
             canBuild={data.canBuild}
             buildNote={data.buildNote}
