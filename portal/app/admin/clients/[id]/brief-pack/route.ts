@@ -62,7 +62,7 @@ export async function GET(_request: Request, { params }: { params: { id: string 
     brief.ok && brief.value ? briefText(brief.value.sections, topics, points ?? undefined) : "(not built yet)",
     points && points.scores.length > 0
       ? `\n## Selling point scores\n${points.scores
-          .map((item) => `- ${item.title || item.point}: ${item.score}/10. ${item.reason}`)
+          .map((item) => `- ${item.title || item.point}: ${item.score}/10. ${item.reason}${item.pitch ? ` Claim: ${item.pitch}` : ""}${item.watch_out ? ` Watch out: ${item.watch_out}` : ""}`)
           .join("\n")}`
       : "",
     "",

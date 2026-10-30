@@ -121,7 +121,17 @@ export const SELLING_POINTS: SellingPoint[] = [
 
 export const SELLING_POINTS_CHOSEN = 3;
 
-export type PointScore = { point: string; title: string; score: number; reason: string; pitch: string };
+export type PointScore = {
+  point: string;
+  title: string;
+  score: number;
+  /** Why it is a strength. */
+  reason: string;
+  /** The claim, as said to investors. */
+  pitch: string;
+  /** How an investor could push back; what not to say. Internal. */
+  watch_out: string;
+};
 
 export type SellingPoints = {
   scores: PointScore[];
@@ -165,6 +175,7 @@ export function asPoints(value: unknown): SellingPoints {
             score: Number.isFinite(score) ? Math.min(10, Math.max(0, score)) : 0,
             reason: stripCitations(typeof entry.reason === "string" ? entry.reason.slice(0, 800) : ""),
             pitch: stripCitations(typeof entry.pitch === "string" ? entry.pitch.slice(0, 2000) : ""),
+            watch_out: stripCitations(typeof entry.watch_out === "string" ? entry.watch_out.slice(0, 1000) : ""),
           };
         })
         .filter((item) => TOPIC_ID.test(item.point))
@@ -194,7 +205,10 @@ export function chosenPointsText(points: SellingPoints) {
   return points.chosen
     .map((id, index) => {
       const score = points.scores.find((item) => item.point === id);
-      return score ? `${index + 1}. ${score.title || id.replace(/_/g, " ")}: ${score.pitch || score.reason}`.trim() : "";
+      if (!score) return "";
+      const line = `${index + 1}. ${score.title || id.replace(/_/g, " ")}: ${score.pitch || score.reason}`.trim();
+      // Internal only: what not to claim, so the narrative doesn't overstate it.
+      return score.watch_out ? `${line}\n   Don't overstate (internal, never say): ${score.watch_out}` : line;
     })
     .filter(Boolean)
     .join("\n");
