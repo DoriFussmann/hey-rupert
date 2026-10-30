@@ -756,6 +756,7 @@ function LinkedinCard({
     if (picked.length === 0) return;
     setBusy(true);
     setNotice(null);
+    let latest: BriefFiles | null = null;
     try {
       for (const file of picked.slice(0, 6)) {
         const ticket = await createLinkedinUploadAction(clientId, { name: file.name, size: file.size });
@@ -766,11 +767,13 @@ function LinkedinCard({
         if (uploadError) throw new Error(`${file.name}: upload failed (${uploadError.message}).`);
         const saved = await addLinkedinFileAction(clientId, { path: ticket.path, name: file.name, size: file.size, type: file.type || "application/pdf" });
         if (!saved.ok) throw new Error(saved.error);
-        onChange(saved.files);
+        latest = saved.files;
       }
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Upload failed.");
     } finally {
+      // Build brief turns on only once every file picked is in.
+      if (latest) onChange(latest);
       setBusy(false);
     }
   }
