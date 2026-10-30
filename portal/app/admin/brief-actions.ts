@@ -239,13 +239,28 @@ export async function scoreSellingPointsAction(clientId: string) {
   return withBrief(await scoreSellingPoints(access.supabase, clientId, access.actor), clientId);
 }
 
-export async function saveSellingPointsAction(clientId: string, chosen: string[], pitches: Record<string, string>) {
+export async function saveSellingPointsAction(
+  clientId: string,
+  chosen: string[],
+  pitches: Record<string, string>,
+  scores: Record<string, number> = {},
+) {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
   const clean: Record<string, string> = {};
   for (const [id, text] of Object.entries(pitches && typeof pitches === "object" ? pitches : {})) clean[String(id)] = String(text ?? "").slice(0, 2000);
+  const cleanScores: Record<string, number> = {};
+  for (const [id, value] of Object.entries(scores && typeof scores === "object" ? scores : {})) {
+    const number = Number(value);
+    if (Number.isFinite(number)) cleanScores[String(id)] = number;
+  }
   return withBrief(
-    await saveSellingPoints(access.supabase, clientId, { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean }, access.actor),
+    await saveSellingPoints(
+      access.supabase,
+      clientId,
+      { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean, scores: cleanScores },
+      access.actor,
+    ),
     clientId,
   );
 }

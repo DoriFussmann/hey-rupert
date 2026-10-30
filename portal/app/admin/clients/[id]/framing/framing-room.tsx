@@ -20,6 +20,9 @@ import {
   writeNarrativeFromBriefAction,
 } from "@/app/admin/brief-actions";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
+
+const smallButton =
+  "rounded-md border border-border bg-surface px-sm py-px text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 import { AutoTextarea } from "@/components/email-body-field";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
@@ -36,6 +39,7 @@ import {
   type BriefTopic,
   type CompanyBrief,
   type FounderQuestion,
+  titleCase,
 } from "@/lib/brief";
 import type { BriefFiles, BriefVersionRow } from "@/lib/brief-server";
 import { createClient } from "@/lib/supabase/client";
@@ -128,7 +132,7 @@ export function FramingRoom({
                   : building
                     ? "Rupert is reading everything and researching the founder and company. This takes 1–4 minutes; keep this page open."
                     : canBuild && !linkedinReady
-                      ? "Upload the founder's LinkedIn PDFs below (or skip), then click Build brief."
+                      ? "Upload the founder's LinkedIn PDFs below (or skip), then click Build Brief."
                       : canBuild
                       ? "Not built yet."
                       : (buildNote ?? "Not available yet.")}
@@ -164,7 +168,7 @@ export function FramingRoom({
                     .finally(() => setBusy(null));
                 }}
               >
-                {busy === "reset" ? "Clearing…" : "Start over"}
+                {busy === "reset" ? "Clearing…" : "Start Over"}
               </button>
             ) : null}
             <button
@@ -177,7 +181,7 @@ export function FramingRoom({
                 void run("build", () => buildBriefAction(clientId), "Brief rebuilt.");
               }}
             >
-              {building ? "Building…" : brief ? "Rebuild brief" : "Build brief"}
+              {building ? "Building…" : brief ? "Rebuild Brief" : "Build Brief"}
             </button>
             </div>
           </div>
@@ -189,7 +193,7 @@ export function FramingRoom({
           ) : null}
           {versions.length > 1 ? (
             <details className="mt-sm text-body-sm">
-              <summary className="cursor-pointer text-primary">History ({versions.length} versions)</summary>
+              <summary className="cursor-pointer text-primary">History ({versions.length} Versions)</summary>
               <ul className="mt-sm grid gap-xs">
                 {versions.map((row) => (
                   <li key={row.version} className="flex flex-wrap items-baseline gap-sm">
@@ -253,7 +257,7 @@ export function FramingRoom({
             </div>
             <SectionCard
               sectionKey="questions"
-              title="Questions for the founder"
+              title="Questions for the Founder"
               hint={QUESTIONS_HINT}
               value={brief.sections.questions ?? ""}
               disabled={busy !== null}
@@ -300,7 +304,7 @@ function SectionCard({
     <section id={`brief-${sectionKey}`} className={`${card} px-lg py-md`}>
       <div className="flex flex-wrap items-start justify-between gap-sm">
         <div className="min-w-0">
-          <h3 className="text-h4">{title}</h3>
+          <h3 className="text-h4">{titleCase(title)}</h3>
           <p className="mt-xs text-body-sm text-muted" title={hint}>
             {hint.length > 90 ? `${hint.slice(0, 88)}…` : hint}
           </p>
@@ -370,7 +374,7 @@ function DeckPanel({
     <section className={`${card} px-lg py-md`}>
       <div className="flex flex-wrap items-start justify-between gap-sm">
         <div>
-          <h3 className="text-h4">Deck feedback for the founder</h3>
+          <h3 className="text-h4">Deck Feedback for the Founder</h3>
           <p className="mt-xs max-w-prose text-body-sm text-muted">
             Rupert scores the deck on {DECK_TOPICS.length} topics and picks the {DECK_TOPICS_PER_CLIENT} that matter most. Swap any of them, then write them. The founder gets these three with the narrative.
           </p>
@@ -381,7 +385,7 @@ function DeckPanel({
           disabled={busy !== null || !claudeReady}
           onClick={() => void run("score", () => scoreDeckAction(clientId), "Deck scored. The top three are chosen; swap any, then write them.")}
         >
-          {busy === "score" ? "Scoring…" : deck.scores.length > 0 ? "Score again" : "Score deck"}
+          {busy === "score" ? "Scoring…" : deck.scores.length > 0 ? "Score Again" : "Score Deck"}
         </button>
       </div>
 
@@ -405,7 +409,7 @@ function DeckPanel({
                     {score?.score ?? "–"}
                   </span>
                   <span>
-                    <span className="text-heading">{topic.title}</span>
+                    <span className="text-heading">{titleCase(topic.title)}</span>
                     {score?.reason ? <span className="text-muted"> · {score.reason}</span> : null}
                   </span>
                 </li>
@@ -430,7 +434,7 @@ function DeckPanel({
               title={choiceChanged ? "Save the choice first." : undefined}
               onClick={() => void run("write", () => writeDeckFeedbackAction(clientId), "Feedback written. Edit it if you like.")}
             >
-              {busy === "write" ? "Writing…" : Object.keys(deck.writeups).length > 0 ? "Rewrite feedback" : "Write feedback"}
+              {busy === "write" ? "Writing…" : Object.keys(deck.writeups).length > 0 ? "Rewrite Feedback" : "Write Feedback"}
             </button>
           </div>
         </>
@@ -442,7 +446,7 @@ function DeckPanel({
             deck.writeups[id] !== undefined ? (
               <div key={id}>
                 <p className={label}>
-                  {index + 1}. {deckTopic(id)?.title}
+                  {index + 1}. {titleCase(deckTopic(id)?.title ?? id)}
                 </p>
                 <AutoTextarea
                   className={`${inputClass} mt-xs`}
@@ -460,7 +464,7 @@ function DeckPanel({
               disabled={busy !== null}
               onClick={() => void run("writeups", () => saveDeckWriteupsAction(clientId, writeups), "Feedback saved.")}
             >
-              Save feedback
+              Save Feedback
             </button>
           ) : null}
         </div>
@@ -506,7 +510,7 @@ function OutputsPanel({
 
   return (
     <section className={`${card} px-lg py-md`}>
-      <h3 className="text-h4">For the founder</h3>
+      <h3 className="text-h4">For the Founder</h3>
       <p className="mt-xs max-w-prose text-body-sm text-muted">
         Rupert writes the Outreach Narrative from this brief and puts it on the client page with the deck feedback and the questions you tick. Nothing reaches the founder until you push it there.
       </p>
@@ -550,7 +554,7 @@ function OutputsPanel({
 
       <div className="mt-md flex flex-wrap items-center gap-sm">
         <button type="button" className={primaryButton} disabled={busy !== null || !claudeReady} onClick={() => void write()}>
-          {busy === "narrative" ? "Writing…" : "Write narrative from brief"}
+          {busy === "narrative" ? "Writing…" : "Write Narrative from Brief"}
         </button>
         <Link href={`/admin/clients/${clientId}#setup-framing`} className="text-body-sm text-primary">
           Open the Outreach Narrative →
@@ -604,7 +608,7 @@ function AbstractCard({ value, disabled, onSave }: { value: string; disabled: bo
             const item = abstractCard(bullet);
             return (
               <li key={index} className="rounded-md border border-border bg-background px-md py-sm">
-                {item.title ? <p className="text-label uppercase tracking-label text-primary">{item.title}</p> : null}
+                {item.title ? <p className="text-label uppercase tracking-label text-primary">{titleCase(item.title)}</p> : null}
                 <MarkdownBody content={item.text} emptyLabel="" className="sow-markdown mt-xs text-body-sm text-heading" />
               </li>
             );
@@ -641,15 +645,38 @@ function PointsPanel({
   ];
   const [chosen, setChosen] = useState<string[]>(points.chosen);
   const [pitches, setPitches] = useState<Record<string, string>>({});
+  // Scores Rupert overrides, by point id.
+  const [scores, setScores] = useState<Record<string, number>>({});
   useEffect(() => {
     setChosen(points.chosen);
     setPitches(Object.fromEntries(points.scores.map((item) => [item.point, item.pitch])));
+    setScores({});
   }, [points]);
 
-  const scoreOf = (id: string) => points.scores.find((item) => item.point === id);
-  const ordered = [...shown].sort((a, b) => (scoreOf(b.id)?.score ?? -1) - (scoreOf(a.id)?.score ?? -1));
+  const aiScore = (id: string) => points.scores.find((item) => item.point === id);
+  const scoreValue = (id: string): number | undefined => scores[id] ?? aiScore(id)?.score;
+  const ordered = [...shown].sort((a, b) => (scoreValue(b.id) ?? -1) - (scoreValue(a.id) ?? -1));
+  const scoresChanged = Object.entries(scores).some(([id, value]) => value !== aiScore(id)?.score);
   const changed =
-    chosen.join() !== points.chosen.join() || points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch);
+    chosen.join() !== points.chosen.join() ||
+    scoresChanged ||
+    points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch);
+
+  function move(index: number, to: number) {
+    setChosen((current) => {
+      if (to < 0 || to >= current.length) return current;
+      const next = [...current];
+      const [item] = next.splice(index, 1);
+      next.splice(to, 0, item);
+      return next;
+    });
+  }
+
+  function setScore(id: string, raw: string) {
+    const number = Math.max(0, Math.min(10, Math.round(Number(raw))));
+    if (raw === "" || !Number.isFinite(number)) return;
+    setScores((current) => ({ ...current, [id]: number }));
+  }
 
   function toggle(id: string) {
     setChosen((current) =>
@@ -661,14 +688,14 @@ function PointsPanel({
     <section className={`${card} px-lg py-md`}>
       <div className="flex flex-wrap items-start justify-between gap-sm">
         <div>
-          <h3 className="text-h4">The 3 strongest selling points</h3>
+          <h3 className="text-h4">The 3 Strongest Selling Points</h3>
           <p className="mt-xs max-w-prose text-body-sm text-muted">
-            Rupert scores all {list.length} for this raise and picks the top {SELLING_POINTS_CHOSEN}. Swap any of them and edit what to say. The narrative leads with these.
+            Rupert scores all {list.length} for this raise and picks the top {SELLING_POINTS_CHOSEN}. Change any score, swap points, set the order (#1 leads) and edit what to say. The narrative leads with these.
           </p>
         </div>
         <div className="flex flex-wrap gap-sm">
         <Link href="/admin/forms/selling-points" className={`${secondaryButton} no-underline`}>
-          Edit the list
+          Edit the List
         </Link>
         <button
           type="button"
@@ -676,22 +703,49 @@ function PointsPanel({
           disabled={busy !== null || !claudeReady}
           onClick={() => void run("points", () => scoreSellingPointsAction(clientId), "Selling points scored. The top three are chosen.")}
         >
-          {busy === "points" ? "Scoring…" : points.scores.length > 0 ? "Score again" : "Score selling points"}
+          {busy === "points" ? "Scoring…" : points.scores.length > 0 ? "Score Again" : "Score Selling Points"}
         </button>
         </div>
       </div>
 
       {points.scores.length > 0 ? (
         <>
-          <ol className="mt-md grid gap-sm md:grid-cols-3">
+          <ol className="mt-md flex flex-col gap-sm">
             {chosen.map((id, index) => {
               const point = shown.find((item) => item.id === id);
               return point ? (
                 <li key={id} className="flex flex-col gap-xs rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
-                  <p className="text-label uppercase tracking-label text-primary">
-                    {index + 1} · score {scoreOf(id)?.score ?? "–"}
-                  </p>
-                  <p className="text-body text-heading">{point.title}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-sm">
+                    <p className="text-label uppercase tracking-label text-primary">
+                      #{index + 1} · Score {scoreValue(id) ?? "–"}
+                    </p>
+                    <div className="flex gap-xs">
+                      {index > 0 ? (
+                        <button type="button" className={smallButton} disabled={busy !== null} onClick={() => move(index, 0)}>
+                          Make #1
+                        </button>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={smallButton}
+                        disabled={busy !== null || index === 0}
+                        aria-label={`Move ${point.title} up`}
+                        onClick={() => move(index, index - 1)}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className={smallButton}
+                        disabled={busy !== null || index === chosen.length - 1}
+                        aria-label={`Move ${point.title} down`}
+                        onClick={() => move(index, index + 1)}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  </div>
+                  <p className="text-body text-heading">{titleCase(point.title)}</p>
                   <AutoTextarea
                     className={`${inputClass} bg-surface`}
                     value={pitches[id] ?? ""}
@@ -703,10 +757,13 @@ function PointsPanel({
             })}
           </ol>
           <details className="mt-md text-body-sm" open={chosen.length < SELLING_POINTS_CHOSEN}>
-            <summary className="cursor-pointer text-primary">All {shown.length} points, by score</summary>
+            <summary className="cursor-pointer text-primary">All {shown.length} Points, by Score</summary>
+            <p className="mt-xs text-muted">Disagree with a score? Change it. Tick up to {SELLING_POINTS_CHOSEN} to use.</p>
             <ul className="mt-sm grid gap-xs">
               {ordered.map((point) => {
-                const score = scoreOf(point.id);
+                const score = aiScore(point.id);
+                const value = scoreValue(point.id);
+                const overridden = scores[point.id] !== undefined && scores[point.id] !== score?.score;
                 const on = chosen.includes(point.id);
                 return (
                   <li key={point.id} className="flex items-start gap-sm">
@@ -718,11 +775,22 @@ function PointsPanel({
                       onChange={() => toggle(point.id)}
                       aria-label={point.title}
                     />
-                    <span className={`w-6 shrink-0 text-right ${score && score.score >= 7 ? "text-success" : score && score.score >= 4 ? "text-warning" : "text-muted"}`}>
-                      {score?.score ?? "–"}
-                    </span>
+                    <input
+                      type="number"
+                      min={0}
+                      max={10}
+                      value={value ?? ""}
+                      disabled={busy !== null || !score}
+                      aria-label={`Score for ${point.title}`}
+                      title={overridden ? `Rupert's score. AI said ${score?.score}.` : "Score out of 10"}
+                      onChange={(event) => setScore(point.id, event.target.value)}
+                      className={`w-12 shrink-0 rounded-md border bg-background px-xs py-px text-right ${overridden ? "border-primary" : "border-border"} ${
+                        value !== undefined && value >= 7 ? "text-success" : value !== undefined && value >= 4 ? "text-warning" : "text-muted"
+                      }`}
+                    />
                     <span>
-                      <span className="text-heading">{point.title}</span>
+                      <span className="text-heading">{titleCase(point.title)}</span>
+                      {overridden ? <span className="text-primary"> · AI said {score?.score}</span> : null}
                       {score?.reason ? <span className="text-muted"> · {score.reason}</span> : null}
                     </span>
                   </li>
@@ -735,9 +803,9 @@ function PointsPanel({
               type="button"
               className={`${primaryButton} mt-md`}
               disabled={busy !== null || chosen.length === 0}
-              onClick={() => void run("points-save", () => saveSellingPointsAction(clientId, chosen, pitches), "Selling points saved.")}
+              onClick={() => void run("points-save", () => saveSellingPointsAction(clientId, chosen, pitches, scores), "Selling points saved.")}
             >
-              Save selling points ({chosen.length} of {SELLING_POINTS_CHOSEN})
+              Save Selling Points ({chosen.length} of {SELLING_POINTS_CHOSEN})
             </button>
           ) : null}
         </>
@@ -816,7 +884,7 @@ function LinkedinCard({
         <button type="button" className="text-primary disabled:opacity-40" disabled={disabled || busy} onClick={() => input.current?.click()}>
           {busy ? "Uploading…" : "Add a PDF"}
         </button>
-        {done ? " (then Rebuild brief, or attach it in the chat)" : ""}
+        {done ? " (then Rebuild Brief)" : ""}
         <input ref={input} type="file" accept=".pdf" multiple className="hidden" onChange={(event) => void upload(event.target.files)} />
         {notice ? <span className="block text-error">{notice}</span> : null}
       </p>
@@ -863,11 +931,11 @@ function LinkedinCard({
       ) : null}
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={primaryButton} disabled={disabled || busy} onClick={() => input.current?.click()}>
-          {busy ? "Uploading…" : done ? "Add more PDFs" : "Upload LinkedIn PDFs"}
+          {busy ? "Uploading…" : done ? "Add More PDFs" : "Upload LinkedIn PDFs"}
         </button>
         {!done && !files.skipped ? (
           <button type="button" className={secondaryButton} disabled={disabled || busy} onClick={() => void act(() => skipLinkedinAction(clientId))}>
-            Skip, build without it
+            Skip, Build Without It
           </button>
         ) : null}
         <input ref={input} type="file" accept=".pdf" multiple className="hidden" onChange={(event) => void upload(event.target.files)} />

@@ -143,3 +143,12 @@ test("the selling points list saved in the admin: 3 to 20, unique titles; abstra
   assert.deepEqual(abstractCard("**The round:** $2M seed"), { title: "The round", text: "$2M seed" });
   assert.deepEqual(abstractCard("Two live customers, $650 MRR"), { title: "", text: "Two live customers, $650 MRR" });
 });
+
+test("headings are Title Case, small words and acronyms kept", async () => {
+  const { titleCase } = await import("./brief.ts");
+  assert.equal(titleCase("The 3 strongest selling points"), "The 3 Strongest Selling Points");
+  assert.equal(titleCase("Go-to-market"), "Go-to-Market");
+  assert.equal(titleCase("Founder-market fit and track record"), "Founder-Market Fit and Track Record");
+  assert.equal(titleCase("AI slop"), "AI Slop");
+  assert.equal(titleCase("questions for the founder"), "Questions for the Founder");
+});
