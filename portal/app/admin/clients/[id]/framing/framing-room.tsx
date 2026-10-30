@@ -77,7 +77,6 @@ export function FramingRoom({
   const [versions, setVersions] = useState<BriefVersionRow[]>(initialVersions);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
-  const autoStarted = useRef(false);
   const [linkedin, setLinkedin] = useState<BriefFiles>(initialLinkedin);
   const linkedinReady = linkedin.linkedin.length > 0 || linkedin.skipped;
 
@@ -110,13 +109,6 @@ export function FramingRoom({
   }
 
   // The first time the room opens after the intake, Rupert builds the brief on his own.
-  // It waits for the founder's LinkedIn PDF (or for Dori to skip it).
-  useEffect(() => {
-    if (autoStarted.current || brief || !canBuild || !claudeReady || !linkedinReady) return;
-    autoStarted.current = true;
-    void run("build", () => buildBriefAction(clientId), "Brief built. Read the abstract, then score the selling points.");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [linkedinReady]);
 
   const building = busy === "build";
 
@@ -133,7 +125,7 @@ export function FramingRoom({
                   : building
                     ? "Rupert is reading everything and researching the founder and company. This takes 1–4 minutes; keep this page open."
                     : canBuild && !linkedinReady
-                      ? "Waiting for the founder's LinkedIn PDF (below), or skip it."
+                      ? "Upload the founder's LinkedIn PDFs below (or skip), then click Build brief."
                       : canBuild
                       ? "Not built yet."
                       : (buildNote ?? "Not available yet.")}
@@ -764,6 +756,7 @@ function LinkedinCard({
     if (picked.length === 0) return;
     setBusy(true);
     setNotice(null);
+    let latest: BriefFiles | null = null;
     try {
       for (const file of picked.slice(0, 6)) {
         const ticket = await createLinkedinUploadAction(clientId, { name: file.name, size: file.size });
@@ -774,11 +767,13 @@ function LinkedinCard({
         if (uploadError) throw new Error(`${file.name}: upload failed (${uploadError.message}).`);
         const saved = await addLinkedinFileAction(clientId, { path: ticket.path, name: file.name, size: file.size, type: file.type || "application/pdf" });
         if (!saved.ok) throw new Error(saved.error);
-        onChange(saved.files);
+        latest = saved.files;
       }
     } catch (err) {
       setNotice(err instanceof Error ? err.message : "Upload failed.");
     } finally {
+      // Build brief turns on only once every file picked is in.
+      if (latest) onChange(latest);
       setBusy(false);
     }
   }
@@ -813,7 +808,7 @@ function LinkedinCard({
     <section className={`${card} border-primary/30 px-lg py-md`}>
       <h3 className="text-h4">Founder&apos;s LinkedIn</h3>
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        AI can&apos;t open LinkedIn. Open each founder&apos;s profile, choose More → Save to PDF, and upload them here (you can pick several at once). The brief builds as soon as one is in.
+        AI can&apos;t open LinkedIn. Open each founder&apos;s profile, choose More → Save to PDF, and upload them here (you can pick several at once). When they&apos;re all in, click Build brief.
       </p>
       {urls.length > 0 ? (
         <p className="mt-sm text-body-sm">
