@@ -235,7 +235,7 @@ export async function buildBrief(supabase: ServiceClient, clientId: string, acto
       ...(files.skipped.length > 0 ? [{ type: "text", text: `Files that couldn't be read: ${files.skipped.join(" ")}` }] : []),
       {
         type: "text",
-        text: `Read everything above. Research the founder and the company on the web where it helps (prior companies, exits, press, competitors).${links.length > 0 ? " You may open the founder's links with web_fetch." : ""} Then deliver the brief by calling the ${BRIEF_TOOL.name} tool with all six sections in full.`,
+        text: `Read everything above. Research the founder and the company on the web: always search the founder by full name (alone, and with words from their background such as their prior companies, industry or city) to find each prior company, role, years and outcome (acquirer, scale run); then the company, its press and its competitors.${links.length > 0 ? " You may open the founder's links with web_fetch." : ""} Then deliver the brief by calling the ${BRIEF_TOOL.name} tool with all six sections in full.`,
       },
     ],
     tool: BRIEF_TOOL,
