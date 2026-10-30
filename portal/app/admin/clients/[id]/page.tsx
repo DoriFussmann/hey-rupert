@@ -20,6 +20,8 @@ import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
 import { MaterialsPanel } from "@/app/admin/clients/[id]/setup/materials-panel";
 import { setupPanels, type WorkPanel } from "@/app/admin/clients/[id]/setup/setup-workspace";
+import { BriefPanel } from "@/app/admin/clients/[id]/framing/brief-panel";
+import { loadBriefPanel } from "@/lib/brief-server";
 import { arrangeSteps } from "@/lib/step-order";
 import { outreachSteps } from "@/lib/outreach/progress-server";
 import { copyTierOf } from "@/lib/outreach/copy";
@@ -259,6 +261,17 @@ export default async function ClientDetailPage({
           goLivePushed: (setupSource.setup_steps.find((row) => row.step === "go_live")?.version ?? 0) > 0,
         })
       : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const }, coreWarning: null };
+    if (service) {
+      const briefData = await loadBriefPanel(service, client.id);
+      const framingRow = setupSource.setup_steps.find((row) => row.step === "framing");
+      const briefDone = (framingRow?.version ?? 0) > 0;
+      panels.push({
+        key: "brief",
+        done: briefDone,
+        turn: briefDone || !briefData.canBuild ? "none" : "admin",
+        node: <BriefPanel clientId={client.id} data={briefData} claudeReady={claudeReady} />,
+      });
+    }
     panels.push(
       ...setupPanels({
         clientId: client.id,
@@ -351,10 +364,10 @@ export default async function ClientDetailPage({
           <div className="flex flex-wrap items-end gap-md">
             {showWelcome ? <WelcomeEmailButton clientId={client.id} /> : null}
             <Link
-              href={`/admin/clients/${client.id}/framing`}
+              href={`/admin/clients/${client.id}#setup-brief`}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >
-              Framing Room
+              Company Brief
             </Link>
             <Link
               href={`/admin/clients/${client.id}/profile`}

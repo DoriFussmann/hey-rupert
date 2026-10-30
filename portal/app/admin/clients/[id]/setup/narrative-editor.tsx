@@ -175,10 +175,10 @@ export function NarrativeEditor({
       action={
         <div className="flex flex-wrap gap-sm">
           <Link
-            href={`/admin/clients/${clientId}/framing`}
+            href={`/admin/clients/${clientId}#setup-brief`}
             className={`${hasText ? secondaryButton : primaryButton} no-underline`}
           >
-            Framing Room
+            Company Brief
           </Link>
           {hasText ? (
             <button type="button" className={changesRequested ? primaryButton : secondaryButton} disabled={!canBuild} onClick={() => void onRebuild()}>
@@ -195,8 +195,8 @@ export function NarrativeEditor({
             ? "Claude is not configured (ANTHROPIC_API_KEY)."
             : !hasText
               ? materialsSubmitted || legacyFeedback
-                ? "Open the Framing Room: build the brief, decide the framing, then write the narrative from it."
-                : "The Framing Room opens once the client's intake is in."
+                ? "Start with the Company Brief above: build it, score the selling points, then write the narrative from it."
+                : "The Company Brief opens once the client's intake is in."
               : changesRequested
                 ? "The client asked for changes. Rewrite with their changes, or edit and send again."
                 : ""}{" "}
@@ -216,7 +216,7 @@ export function NarrativeEditor({
         <section className="mx-lg mt-md rounded-md border border-border bg-background px-md py-sm">
           <p className="text-body-sm text-secondary">
             The client confirmed this narrative. To use new facts without asking them again: update the
-            brief in the Framing Room, Rewrite From Brief, edit, then Save as Internal Update. The email copy is
+            Company Brief, Rewrite From Brief, edit, then Save as Internal Update. The email copy is
             written from it; the client&apos;s page keeps the version they confirmed.
             {internalAt ? ` Internal update saved ${formatDateAtTime(internalAt)}.` : ""}
           </p>
@@ -249,7 +249,7 @@ export function NarrativeEditor({
           <div>
             <h4 className="text-body text-heading">Deck feedback</h4>
             <p className="mt-xs text-body-sm text-muted">
-              Sent with the narrative for the client to read: the three topics from the Framing Room.
+              Sent with the narrative for the client to read: the three topics from the Company Brief.
               They can comment on it; there is nothing to confirm.
               {legacyFeedback && !hasFeedback
                 ? " This client already received Analysis & Feedback as its own step; leave this empty to send the narrative alone."
@@ -306,7 +306,7 @@ export function NarrativeEditor({
           <section className="rounded-card border border-border bg-background px-md py-md">
             <h4 className="text-body text-heading">Questions for the founder</h4>
             <p className="mt-xs text-body-sm text-muted">
-              Shown with the narrative; the founder answers on the page. Choose them in the Framing Room.
+              Shown with the narrative; the founder answers on the page. Choose them in the Company Brief.
             </p>
             <ul className="mt-sm list-disc space-y-xs pl-md text-body-sm">
               {narrative.founder_questions.map((item) => (

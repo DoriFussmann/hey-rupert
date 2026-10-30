@@ -110,10 +110,10 @@ export function notificationAction(type: string) {
     return "has not responded after reminders";
   }
   if (type === "linkedin_needed") {
-    return "finished the intake: upload the founder's LinkedIn PDF in the Framing Room";
+    return "finished the intake: upload the founder's LinkedIn PDF in the Company Brief";
   }
   if (type === "founder_answered") {
-    return "answered Rupert's questions (see the Framing Room)";
+    return "answered Rupert's questions (see the Company Brief)";
   }
   if (type === "nudge_ready") {
     return "has a reminder ready to send under Notify & Nudge";

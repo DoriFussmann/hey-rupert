@@ -19,7 +19,6 @@ import {
   writeDeckFeedbackAction,
   writeNarrativeFromBriefAction,
 } from "@/app/admin/brief-actions";
-import { FramingChat } from "@/app/admin/clients/[id]/framing/framing-chat";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
 import { AutoTextarea } from "@/components/email-body-field";
 import { MarkdownBody } from "@/components/markdown-body";
@@ -36,7 +35,6 @@ import {
   type BriefTopic,
   type CompanyBrief,
   type FounderQuestion,
-  type FramingMessage,
 } from "@/lib/brief";
 import type { BriefFiles, BriefVersionRow } from "@/lib/brief-server";
 import { createClient } from "@/lib/supabase/client";
@@ -51,34 +49,32 @@ const label = "text-label uppercase tracking-label text-muted";
 
 export function FramingRoom({
   clientId,
-  company,
   initialBrief,
   initialVersions,
-  initialMessages,
   founderQuestions,
   topics,
   initialLinkedin,
   linkedinError,
+  linkedinUrls,
   canBuild,
   buildNote,
   claudeReady,
 }: {
   clientId: string;
-  company: string;
   initialBrief: CompanyBrief | null;
   initialVersions: BriefVersionRow[];
-  initialMessages: FramingMessage[];
   founderQuestions: FounderQuestion[];
   topics: BriefTopic[];
   initialLinkedin: BriefFiles;
   linkedinError: string | null;
+  /** LinkedIn profile links the founder gave, to open and save as PDF. */
+  linkedinUrls: string[];
   canBuild: boolean;
   buildNote: string | null;
   claudeReady: boolean;
 }) {
   const [brief, setBrief] = useState<CompanyBrief | null>(initialBrief);
   const [versions, setVersions] = useState<BriefVersionRow[]>(initialVersions);
-  const [messages, setMessages] = useState<FramingMessage[]>(initialMessages);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const autoStarted = useRef(false);
@@ -125,7 +121,7 @@ export function FramingRoom({
   const building = busy === "build";
 
   return (
-    <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+    <div className="grid gap-lg">
       <div className="grid min-w-0 content-start gap-lg">
         <section className={`${card} px-lg py-md`}>
           <div className="flex flex-wrap items-center justify-between gap-sm">
@@ -145,7 +141,14 @@ export function FramingRoom({
               {!brief && buildNote && canBuild ? <p className="mt-xs text-body-sm text-warning">{buildNote}</p> : null}
             </div>
             <div className="flex flex-wrap gap-sm">
-            {brief || messages.length > 0 ? (
+            <a
+              href={`/admin/clients/${clientId}/brief-pack`}
+              className={`${secondaryButton} no-underline`}
+              title="Everything an AI needs, with instructions, as one Markdown file. Attach the deck and LinkedIn PDFs alongside it."
+            >
+              Download for AI
+            </a>
+            {brief || linkedin.linkedin.length > 0 || linkedin.skipped ? (
               <button
                 type="button"
                 className={secondaryButton}
@@ -221,6 +224,7 @@ export function FramingRoom({
           clientId={clientId}
           files={linkedin}
           error={linkedinError}
+          urls={linkedinUrls}
           hasBrief={Boolean(brief)}
           disabled={busy !== null}
           onChange={setLinkedin}
@@ -270,15 +274,7 @@ export function FramingRoom({
         ) : null}
       </div>
 
-      <FramingChat
-        clientId={clientId}
-        company={company}
-        messages={messages}
-        onMessages={setMessages}
-        onBrief={adopt}
-        topics={topics}
-        disabled={!claudeReady || building}
-      />
+
     </div>
   );
 }
@@ -743,6 +739,7 @@ function LinkedinCard({
   clientId,
   files,
   error,
+  urls,
   hasBrief,
   disabled,
   onChange,
@@ -750,6 +747,7 @@ function LinkedinCard({
   clientId: string;
   files: BriefFiles;
   error: string | null;
+  urls: string[];
   hasBrief: boolean;
   disabled: boolean;
   onChange: (files: BriefFiles) => void;
@@ -766,7 +764,7 @@ function LinkedinCard({
     setBusy(true);
     setNotice(null);
     try {
-      for (const file of picked.slice(0, 3)) {
+      for (const file of picked.slice(0, 6)) {
         const ticket = await createLinkedinUploadAction(clientId, { name: file.name, size: file.size });
         if (!ticket.ok) throw new Error(ticket.error);
         const { error: uploadError } = await createClient()
@@ -814,8 +812,23 @@ function LinkedinCard({
     <section className={`${card} border-primary/30 px-lg py-md`}>
       <h3 className="text-h4">Founder&apos;s LinkedIn</h3>
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        AI can&apos;t open LinkedIn. Open the founder&apos;s profile, choose More → Save to PDF, and upload it here (co-founders too). The brief builds as soon as it&apos;s in.
+        AI can&apos;t open LinkedIn. Open each founder&apos;s profile, choose More → Save to PDF, and upload them here (you can pick several at once). The brief builds as soon as one is in.
       </p>
+      {urls.length > 0 ? (
+        <p className="mt-sm text-body-sm">
+          From the intake:{" "}
+          {urls.map((url, index) => (
+            <span key={url}>
+              {index > 0 ? " · " : ""}
+              <a href={url} target="_blank" rel="noopener noreferrer" className="text-primary underline">
+                {url.replace(/^https?:\/\/(www\.)?/, "")}
+              </a>
+            </span>
+          ))}
+        </p>
+      ) : (
+        <p className="mt-sm text-body-sm text-muted">No LinkedIn link in the intake.</p>
+      )}
       {done ? (
         <ul className="mt-sm grid gap-xs text-body-sm">
           {files.linkedin.map((file) => (
@@ -835,7 +848,7 @@ function LinkedinCard({
       ) : null}
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={primaryButton} disabled={disabled || busy} onClick={() => input.current?.click()}>
-          {busy ? "Uploading…" : done ? "Add another PDF" : "Upload LinkedIn PDF"}
+          {busy ? "Uploading…" : done ? "Add more PDFs" : "Upload LinkedIn PDFs"}
         </button>
         {!done && !files.skipped ? (
           <button type="button" className={secondaryButton} disabled={disabled || busy} onClick={() => void act(() => skipLinkedinAction(clientId))}>
