@@ -170,7 +170,7 @@ export function FramingRoom({
                 onClick={() => {
                   if (
                     !window.confirm(
-                      "Start over? This deletes the brief and its history, the LinkedIn PDFs, the selling points, the deck feedback, the questions, and a narrative draft that was never sent. The intake, materials and links stay.",
+                      "Start over? This deletes the brief and its history, the selling points, the deck feedback, the questions, and a narrative draft that was never sent. The intake, company materials (including the LinkedIn PDFs) and links stay.",
                     )
                   )
                     return;
