@@ -82,11 +82,11 @@ export default async function FramingPage() {
       {visible && row ? (
         <>
           {open ? <AdminReply note={narrative.admin_note} /> : null}
-          <FounderQuestions items={founderQuestions} readOnly={viewAs} />
           <NarrativeView
             narrative={narrative}
             fileLinks={fileLinks}
             feedback={feedback}
+            questions={<FounderQuestions items={founderQuestions} readOnly={viewAs} />}
             actions={
               open ? (
                 <>
