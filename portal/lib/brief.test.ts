@@ -10,6 +10,7 @@ import {
   briefQuestions,
   deckFeedbackMarkdown,
   emptySections,
+  stripCitations,
   topTopics,
 } from "./brief.ts";
 
@@ -80,4 +81,12 @@ test("pinning a proposal replaces or appends to one section", () => {
   const appended = applyProposal({ ...sections, objections: "- Thin traction." }, append);
   assert.equal(appended.objections, "- Thin traction.\n\n- No CTO: defendable.");
   assert.equal(applyProposal(sections, append).objections, "- No CTO: defendable.");
+});
+
+test("citation markup from web search is removed, the cited text kept", () => {
+  assert.equal(
+    stripCitations('ACT was sold in 2021 (<cite index="7-2">TSI announced it had completed the acquisition</cite>).'),
+    "ACT was sold in 2021 (TSI announced it had completed the acquisition).",
+  );
+  assert.equal(asSections({ facts: 'Founded <cite index="1-1">2026</cite>.' }).facts, "Founded 2026.");
 });

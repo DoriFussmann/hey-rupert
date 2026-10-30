@@ -274,7 +274,7 @@ function str(value: unknown, max: number) {
 export function asSections(value: unknown): BriefSections {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
   const sections = emptySections();
-  for (const key of BRIEF_SECTION_KEYS) sections[key] = str(raw[key], SECTION_MAX);
+  for (const key of BRIEF_SECTION_KEYS) sections[key] = stripCitations(str(raw[key], SECTION_MAX));
   return sections;
 }
 
@@ -341,8 +341,8 @@ export function asProposals(value: unknown): BriefProposal[] {
         id: str(raw.id, 40) || `p${index + 1}`,
         section: raw.section,
         mode: raw.mode === "append" ? "append" : "replace",
-        content: str(raw.content, SECTION_MAX).trim(),
-        why: str(raw.why, 600).trim(),
+        content: stripCitations(str(raw.content, SECTION_MAX)).trim(),
+        why: stripCitations(str(raw.why, 600)).trim(),
       };
     })
     .filter((item): item is BriefProposal => isSectionKey(item.section) && Boolean(item.content))
@@ -371,3 +371,8 @@ export type FramingMessage = {
 
 /** A question Rupert asked the founder with the narrative, and their answer. */
 export type FounderQuestion = { id: string; question: string; answer: string; answeredAt: string | null };
+
+/** Web search answers can carry citation markup (<cite index="…">…</cite>): keep the text, drop the tags. */
+export function stripCitations(value: string) {
+  return value.replace(/<\/?cite\b[^>]*>/gi, "").replace(/[ \t]{2,}/g, " ");
+}
