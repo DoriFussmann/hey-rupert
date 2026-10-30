@@ -21,9 +21,24 @@ import {
 } from "@/app/admin/brief-actions";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
 
+/** Text written as "- " lines shows as a bullet list; anything else as a paragraph. */
+function Bullets({ text, className = "" }: { text: string; className?: string }) {
+  const lines = text.split("\n").map((line) => line.trim()).filter(Boolean);
+  const bulleted = lines.length > 0 && lines.every((line) => /^([-*•]|\d+[.)])\s+/.test(line));
+  if (!bulleted) return <p className={`whitespace-pre-wrap ${className}`}>{text}</p>;
+  return (
+    <ul className={`list-disc space-y-xs pl-lg ${className}`}>
+      {lines.map((line, index) => (
+        <li key={index}>{line.replace(/^([-*•]|\d+[.)])\s+/, "")}</li>
+      ))}
+    </ul>
+  );
+}
+
 const smallButton =
   "rounded-md border border-border bg-surface px-sm py-px text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 import { AutoTextarea } from "@/components/email-body-field";
+import { DropSummary as Summary } from "@/components/drop-summary";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
   ABSTRACT_HINT,
@@ -192,8 +207,8 @@ export function FramingRoom({
             </p>
           ) : null}
           {versions.length > 1 ? (
-            <details className="mt-sm text-body-sm">
-              <summary className="cursor-pointer text-primary">History ({versions.length} Versions)</summary>
+            <details className="group/drop mt-sm text-body-sm">
+              <Summary>History ({versions.length} Versions)</Summary>
               <ul className="mt-sm grid gap-xs">
                 {versions.map((row) => (
                   <li key={row.version} className="flex flex-wrap items-baseline gap-sm">
@@ -766,12 +781,12 @@ function PointsPanel({
                   {confirmed ? (
                     <>
                       <p className="text-body text-heading">{titleCase(titles[id] || point.title)}</p>
-                      <p className="whitespace-pre-wrap text-body-sm text-body">{pitches[id]}</p>
+                      <Bullets text={pitches[id] ?? ""} className="text-body-sm text-body" />
                       {watchOuts[id] ? (
-                        <p className="mt-xs rounded-md border border-warning/30 bg-surface px-sm py-xs text-body-sm text-secondary">
+                        <div className="mt-xs rounded-md border border-warning/30 bg-surface px-sm py-xs text-body-sm text-secondary">
                           <span className="text-label uppercase tracking-label text-warning">Watch Out · Internal</span>
-                          <span className="block whitespace-pre-wrap">{watchOuts[id]}</span>
-                        </p>
+                          <Bullets text={watchOuts[id]} className="mt-xs" />
+                        </div>
                       ) : null}
                     </>
                   ) : (
@@ -812,8 +827,8 @@ function PointsPanel({
               ) : null;
             })}
           </ol>
-          <details className={`mt-md text-body-sm ${confirmed ? "hidden" : ""}`} open={chosen.length < SELLING_POINTS_CHOSEN}>
-            <summary className="cursor-pointer text-primary">All {shown.length} Points, by Score</summary>
+          <details className={`group/drop mt-md text-body-sm ${confirmed ? "hidden" : ""}`} open={chosen.length < SELLING_POINTS_CHOSEN}>
+            <Summary>All {shown.length} Points, by Score</Summary>
             <p className="mt-xs text-muted">Disagree with a score? Change it. Tick up to {SELLING_POINTS_CHOSEN} to use.</p>
             <ul className="mt-sm grid gap-xs">
               {ordered.map((point) => {

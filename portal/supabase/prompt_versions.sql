@@ -686,8 +686,8 @@ A selling point is a marketing claim: the strongest true thing we can say. Keep 
 
 For each point give:
 - reason: one sentence on why this is a strength, citing the facts that back it. No "but", no caveats.
-- pitch: the claim as we say it to an investor, in one or two sentences: confident, specific, true, no hype, nothing negative. For a low-scoring point, still write the best honest claim, so Dori can choose it if she disagrees.
-- watch_out: one or two sentences on how an investor could push back on this claim, what is unverified, and anything we must not say or overstate.
+- pitch: the claim as we say it to an investor, as 2 to 3 short bullets, each on its own line starting with "- ": the claim first, then the proof. Confident, specific, true, no hype, nothing negative. For a low-scoring point, still write the best honest claim, so Dori can choose it if she disagrees.
+- watch_out: 1 to 3 short bullets, each on its own line starting with "- ": how an investor could push back on this claim, what is unverified, and anything we must not say or overstate.
 
 Never invent facts, numbers, customers or exits.$rupert_prompt$,
   null
