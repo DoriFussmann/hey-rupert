@@ -5,7 +5,6 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
-import { buildNarrativeFromBrief } from "@/lib/agents-server";
 import {
   asSections,
   BRIEF_TOPICS_SLUG,
@@ -13,7 +12,6 @@ import {
   parseSellingPoints,
   type SellingPoint,
   briefQuestions,
-  briefText,
   parseBriefTopics,
   type BriefTopic,
   deckFeedbackMarkdown,
@@ -25,7 +23,6 @@ import {
   buildBrief,
   saveDeck,
   loadBrief,
-  loadBriefTopics,
   loadBriefVersion,
   saveSellingPoints,
   scoreSellingPoints,
@@ -42,7 +39,17 @@ import {
 } from "@/lib/brief-server";
 import { intakeFileProblem } from "@/lib/intake";
 import { safeFileName } from "@/lib/materials-server";
-import { MATERIALS_BUCKET, asNarrative, narrativeProblem, type MaterialFile, type NarrativePayload } from "@/lib/setup";
+import {
+  MATERIALS_BUCKET,
+  NARRATIVE_NEXT_STEPS,
+  asNarrative,
+  asStatement,
+  narrativeProblem,
+  statementMarkdown,
+  type MaterialFile,
+  type NarrativePayload,
+  type NarrativeStatement,
+} from "@/lib/setup";
 import { loadSetupStep, nowIso, setupTableError } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -244,25 +251,64 @@ async function patchNarrativeDraft(
   return { ok: true, narrative: asNarrative(draft) };
 }
 
-/** The Outreach Narrative's text, edited in the Company Brief; `finalize` locks it for the send step. */
+/** The opening and the ask, in Rupert's voice. Dori edits them per client. */
+function statementDefaults(company: string) {
+  const name = company.trim() || "your company";
+  return {
+    intro: `We've gone through everything you shared with us: the intake, your deck and materials, and our own research. Investors read fast, so we don't pitch ten points. We lead with the three that make the strongest case for ${name}. Here they are, in the order we'll use them.`,
+    closing: `This is how we'll position ${name} with investors. It's the narrative, not the emails: those come after we've matched the investors. Do you agree with these three and with the order? Confirm, or tell us what you'd change.`,
+  };
+}
+
+/** Stage 2: the narrative as a statement, made from the 3 confirmed selling points. No AI. */
+export async function createNarrativeAction(clientId: string): Promise<Result<{ narrative: NarrativePayload }>> {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const brief = await loadBrief(access.supabase, clientId);
+  if (!brief.ok) return brief;
+  const points = brief.value?.points;
+  if (!points?.confirmed_at) return { ok: false, error: "Confirm & Finalize the 3 strongest selling points first." };
+  const { data: client } = await access.supabase.from("clients").select("company_name").eq("id", clientId).maybeSingle();
+  const existing = await loadSetupStep(access.supabase, clientId, "framing");
+  if (!existing.ok) return existing;
+  const previous = asNarrative(existing.row?.draft).statement;
+  const defaults = statementDefaults(String(client?.company_name ?? ""));
+  const statement: NarrativeStatement = {
+    intro: previous?.intro || defaults.intro,
+    points: points.chosen.map((id) => {
+      const score = points.scores.find((item) => item.point === id);
+      return { title: score?.title || id.replace(/_/g, " "), claim: score?.pitch || "" };
+    }),
+    closing: previous?.closing || defaults.closing,
+  };
+  const OLD_NEXT_STEPS =
+    "Once you confirm this narrative, Rupert sends your matched investor list. After you confirm the list, he writes the email copy and sequence for each tier from these messages. You review those before anything is sent.";
+  return patchNarrativeDraft(access.supabase, clientId, (draft) => ({
+    statement,
+    summary: statementMarkdown(statement),
+    // The narrative is now three points, not "messages": refresh the old default wording.
+    ...(draft.next_steps.trim() === OLD_NEXT_STEPS ? { next_steps: NARRATIVE_NEXT_STEPS } : {}),
+    finalized_at: undefined,
+    change_summary: undefined,
+  }));
+}
+
+/** Dori's edits to the narrative statement; `finalize` locks it for the send step. */
 export async function saveNarrativeAction(
   clientId: string,
-  fields: { summary: string; core: string; key_messages: string; approach: string },
+  input: NarrativeStatement,
   finalize: boolean,
 ): Promise<Result<{ narrative: NarrativePayload }>> {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
-  const clean = {
-    summary: String(fields?.summary ?? "").slice(0, 10000),
-    core: String(fields?.core ?? "").slice(0, 30000),
-    key_messages: String(fields?.key_messages ?? "").slice(0, 20000),
-    approach: String(fields?.approach ?? "").slice(0, 20000),
-  };
+  const statement = asStatement(input);
+  if (!statement) return { ok: false, error: "The narrative needs the selling points." };
+  const summary = statementMarkdown(statement);
   if (finalize) {
-    const problem = narrativeProblem({ ...asNarrative({}), ...clean });
+    const problem = narrativeProblem({ ...asNarrative({}), statement, summary });
     if (problem) return { ok: false, error: problem };
   }
-  return patchNarrativeDraft(access.supabase, clientId, () => ({ ...clean, finalized_at: finalize ? nowIso() : undefined }));
+  return patchNarrativeDraft(access.supabase, clientId, () => ({ statement, summary, finalized_at: finalize ? nowIso() : undefined }));
 }
 
 /** The brief's questions Rupert sends the founder with the narrative. */
@@ -285,31 +331,6 @@ export async function saveFounderQuestionsAction(clientId: string, questions: st
  * puts it, the deck feedback and the chosen questions on the Outreach
  * Narrative draft. Nothing reaches the founder until Rupert pushes it there.
  */
-export async function writeNarrativeFromBriefAction(clientId: string): Promise<Result<{ narrative: NarrativePayload }>> {
-  const access = await requireAdmin(clientId, true);
-  if (!access.ok) return access;
-  const brief = await loadBrief(access.supabase, clientId);
-  if (!brief.ok) return brief;
-  if (!brief.value) return { ok: false, error: "Build the brief first." };
-  if (!brief.value.points.confirmed_at) {
-    return { ok: false, error: "Confirm & Finalize the 3 strongest selling points first: the narrative leads with them." };
-  }
-  const topics = await loadBriefTopics(access.supabase);
-  const built = await buildNarrativeFromBrief(access.supabase, clientId, briefText(brief.value.sections, topics, brief.value.points));
-  if (!built.ok) return built;
-  // The narrative only: feedback, questions, files and the email stay as they are. Rewriting unfinalizes it.
-  const narrative = built.value.narrative;
-  return patchNarrativeDraft(access.supabase, clientId, () => ({
-    summary: narrative.summary,
-    core: narrative.core,
-    key_messages: narrative.key_messages,
-    approach: narrative.approach,
-    change_summary: narrative.change_summary,
-    admin_note: undefined,
-    finalized_at: undefined,
-  }));
-}
-
 export async function scoreSellingPointsAction(clientId: string) {
   const access = await requireAdmin(clientId, true);
   if (!access.ok) return access;

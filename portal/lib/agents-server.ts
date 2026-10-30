@@ -777,6 +777,20 @@ export function markdownText(value: unknown): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
+/**
+ * The confirmed narrative for the copy writers: the statement narrative (the
+ * three selling points the founder confirmed), or the older core story, key
+ * messages and approach.
+ */
+function narrativeForCopy(narrative: NarrativePayload) {
+  if (narrative.statement) {
+    return `### The positioning the founder confirmed: lead with these three selling points, in this order\n${narrative.statement.points
+      .map((point, index) => `${index + 1}. ${point.title}\n${point.claim}`)
+      .join("\n\n")}`;
+  }
+  return [`### Core story\n${narrative.core}`, `### Key messages\n${narrative.key_messages}`, `### Approach\n${narrative.approach}`].join("\n");
+}
+
 function narrativeSections(narrative: NarrativePayload) {
   return NARRATIVE_FIELDS.map(
     ({ key, label }) => `### ${label}\n${narrative[key].trim() || "(empty)"}`,
@@ -1095,10 +1109,10 @@ export async function draftEmailCopy(
   }
   // Rupert's internal update to the confirmed narrative, when he made one.
   const narrative = workingNarrative(framingRow);
-  if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
+  if (!narrative.core.trim() && !narrative.statement) {
     return {
       ok: false,
-      error: "The confirmed narrative needs a core story, key messages and an approach. Rebuild it and confirm it again.",
+      error: "The confirmed narrative is empty. Make it in the Company Brief and send it again.",
     };
   }
 
@@ -1122,9 +1136,7 @@ export async function draftEmailCopy(
     `Founder first name (sign the emails with this): ${firstName}`,
     `Company: ${text(loaded.client.company_name)}`,
     "## Outreach narrative",
-    `### Core story\n${narrative.core}`,
-    `### Key messages\n${narrative.key_messages}`,
-    `### Approach\n${narrative.approach}`,
+    narrativeForCopy(narrative),
     "## Investor list (types and counts only — do not name people)",
     listBrief(list),
     "## Intake summary",
@@ -1253,8 +1265,8 @@ export async function draftTypedEmailCopy(
 
   if (framingRow?.status !== "confirmed") return { ok: false, error: "Confirm the outreach narrative first." };
   const narrative = workingNarrative(framingRow);
-  if (!narrative.core.trim() || !narrative.key_messages.trim() || !narrative.approach.trim()) {
-    return { ok: false, error: "The confirmed narrative needs a core story, key messages and an approach. Rebuild it and confirm it again." };
+  if (!narrative.core.trim() && !narrative.statement) {
+    return { ok: false, error: "The confirmed narrative is empty. Make it in the Company Brief and send it again." };
   }
   if (listRow?.status !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
   const list = asInvestorList(listRow.published);
@@ -1285,9 +1297,7 @@ export async function draftTypedEmailCopy(
     `Founder first name (sign the emails with this): ${firstName}`,
     `Company: ${text(loaded.client.company_name)}`,
     "## Outreach narrative",
-    `### Core story\n${narrative.core}`,
-    `### Key messages\n${narrative.key_messages}`,
-    `### Approach\n${narrative.approach}`,
+    narrativeForCopy(narrative),
     "## Intake summary",
     intakeSummaryText(interviewResult.ok ? interviewResult.interview : null),
     "## Materials analysis",
@@ -1434,9 +1444,7 @@ export async function outreachCompanyContext(
     `Founder first name (sign the emails with this): ${firstName}`,
     `Company: ${company}`,
     "## Outreach narrative",
-    `### Core story\n${narrative.core}`,
-    `### Key messages\n${narrative.key_messages}`,
-    `### Approach\n${narrative.approach}`,
+    narrativeForCopy(narrative),
     "## Intake summary",
     intake,
     "## Materials analysis",

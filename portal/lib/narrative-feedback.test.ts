@@ -110,3 +110,13 @@ test("Go Live opens after the copy is confirmed, is the client's turn once pushe
   // A client already live before the step existed counts as done.
   assert.equal(getSetupItems({ ...source(confirmed), stage: "live" })[3].status, "done");
 });
+
+test("the statement narrative: why three, the points in order, the ask; enough to send on its own", async () => {
+  const { asStatement, statementMarkdown, narrativeProblem, asNarrative } = await import("./setup.ts");
+  const statement = asStatement({ intro: "We lead with three.", points: [{ title: "Founder", claim: "- Ran a collections company" }, { title: "", claim: "" }], closing: "Confirm?" });
+  assert.ok(statement);
+  assert.equal(statement.points.length, 1);
+  assert.equal(statementMarkdown(statement), "We lead with three.\n\n### 1. Founder\n\n- Ran a collections company\n\nConfirm?");
+  assert.equal(narrativeProblem({ ...asNarrative({}), statement, summary: statementMarkdown(statement) }), null);
+  assert.equal(asStatement({ points: [] }), undefined);
+});

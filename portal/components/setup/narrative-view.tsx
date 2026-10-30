@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { NarrativeStatementView } from "@/components/setup/narrative-statement";
 import { CollapsiblePanel } from "@/components/setup/collapsible-panel";
 import { FilesLinksView } from "@/components/setup/files-links-view";
 import { MarkdownBody } from "@/components/markdown-body";
@@ -179,7 +180,13 @@ export function NarrativeView({
           <h2 id="outreach-narrative-title" className="text-h3 text-heading">
             The Outreach Narrative
           </h2>
-          <MarkdownBody content={narrative.summary} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
+          {narrative.statement ? (
+            <div className="mt-sm">
+              <NarrativeStatementView statement={narrative.statement} />
+            </div>
+          ) : (
+            <MarkdownBody content={narrative.summary} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
+          )}
         </section>
       ) : (
         <>
