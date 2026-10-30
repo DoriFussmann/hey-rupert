@@ -95,6 +95,13 @@ export default async function CompanyProfilePage({ params }: { params: { id: str
             >
               Download as Markdown
             </a>
+            <a
+              href={`/admin/clients/${client.id}/profile/framing-pack`}
+              title="The profile, the full intake transcript, the materials, and the analysis and narrative, in one file."
+              className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+            >
+              Download everything (framing pack)
+            </a>
             <Link
               href={`/admin/clients/${client.id}`}
               className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
