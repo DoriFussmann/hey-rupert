@@ -50,6 +50,7 @@ import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
 import { asMaterials, type MaterialFile } from "@/lib/setup";
 import { loadSetupSteps } from "@/lib/setup-server";
+import { attachMaterialFile, detachAdminMaterialFile } from "@/lib/materials-server";
 
 // The Company Brief and the Framing Room, server side: loading and saving
 // brief versions, building the brief, the chat, pinning, deck feedback and
@@ -112,6 +113,9 @@ export async function addLinkedinFile(
     created_by: actor,
   });
   if (error) return { ok: false, error: tableError(error.message, error.code) };
+  // The PDF is a company file too: it joins the materials (marked added by Rupert),
+  // so Start over, which only redoes the analysis, never asks for it again.
+  await attachMaterialFile(supabase, clientId, file, "admin");
   await supabase.from("brief_files").delete().eq("client_id", clientId).eq("kind", "linkedin_skipped");
   await supabase.from("notifications").update({ read: true }).eq("client_id", clientId).eq("type", "linkedin_needed");
   return loadBriefFiles(supabase, clientId);
@@ -127,6 +131,7 @@ export async function skipLinkedin(supabase: ServiceClient, clientId: string, ac
 export async function removeLinkedinFile(supabase: ServiceClient, clientId: string, path: string): Promise<Result<BriefFiles>> {
   const { error } = await supabase.from("brief_files").delete().eq("client_id", clientId).eq("kind", "linkedin").eq("path", path);
   if (error) return { ok: false, error: tableError(error.message, error.code) };
+  await detachAdminMaterialFile(supabase, clientId, path);
   return loadBriefFiles(supabase, clientId);
 }
 
@@ -225,6 +230,8 @@ export async function loadBriefVersion(supabase: ServiceClient, clientId: string
 type Sources = {
   text: string;
   files: MaterialFile[];
+  /** Every file path in the materials, LinkedIn PDFs included. */
+  allFilePaths: string[];
   linkedin: MaterialFile[];
   links: string[];
   hasIntake: boolean;
@@ -246,7 +253,10 @@ export async function loadSources(supabase: ServiceClient, clientId: string): Pr
   if (!client.data) return { ok: false, error: "Client not found." };
   const interview = interviewResult.ok ? interviewResult.interview : null;
   const materialsRow = (grouped.get(clientId) ?? []).find((row) => row.step === "materials");
-  const materials = asMaterials(materialsRow?.published ?? materialsRow?.draft);
+  const allMaterials = asMaterials(materialsRow?.published ?? materialsRow?.draft);
+  // LinkedIn PDFs sit in the materials too; they are listed (and attached) once, as LinkedIn.
+  const linkedinPaths = new Set(linkedin.map((file) => file.path));
+  const materials = { ...allMaterials, files: allMaterials.files.filter((file) => !linkedinPaths.has(file.path)) };
   const links = clientLinks(materials.fields);
   const written = labelledAnswers(fields, materials.fields);
   const answered = answers.ok ? answers.value.filter((item) => item.answer) : [];
@@ -281,6 +291,7 @@ export async function loadSources(supabase: ServiceClient, clientId: string): Pr
     value: {
       text: parts.filter(Boolean).join("\n\n"),
       files: materials.files,
+      allFilePaths: allMaterials.files.map((file) => file.path),
       linkedin,
       links,
       hasIntake: Boolean(interview?.completed_at || interview?.messages?.length),
@@ -873,7 +884,8 @@ export async function briefReadiness(supabase: ServiceClient, clientId: string) 
  * the founder is kept too.
  */
 export async function resetBrief(supabase: ServiceClient, clientId: string): Promise<Result<null>> {
-  for (const table of ["company_briefs", "framing_messages", "founder_questions", "brief_files"] as const) {
+  // The analysis only. The LinkedIn PDFs (and a Skip) are company materials and stay.
+  for (const table of ["company_briefs", "framing_messages", "founder_questions"] as const) {
     const { error } = await supabase.from(table).delete().eq("client_id", clientId);
     if (error) return { ok: false, error: tableError(error.message, error.code) };
   }
@@ -895,6 +907,13 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     loadSellingPoints(supabase),
   ]);
   const linkedinUrls = sources.ok ? linkedinLinks(sources.value.text) : [];
+  // LinkedIn PDFs added before they were company files: put them in the materials once.
+  if (files.ok && sources.ok) {
+    const inMaterials = new Set(sources.value.allFilePaths);
+    for (const file of files.value.linkedin.filter((item) => !inMaterials.has(item.path))) {
+      await attachMaterialFile(supabase, clientId, file, "admin");
+    }
+  }
   const failed = [brief, versions, questions].find((item) => !item.ok);
   return {
     brief: brief.ok ? brief.value : null,

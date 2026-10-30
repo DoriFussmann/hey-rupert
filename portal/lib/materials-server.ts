@@ -126,6 +126,36 @@ export async function attachMaterialFile(
   return { ok: true, file: entry, late };
 }
 
+/**
+ * Takes a file Rupert added back out of the client's materials (draft and,
+ * once submitted, what Rupert has). Used when he removes a LinkedIn PDF.
+ */
+export async function detachAdminMaterialFile(
+  supabase: ServiceClient,
+  clientId: string,
+  path: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const loaded = await loadOrCreateMaterials(supabase, clientId);
+  if (!loaded.ok) return loaded;
+  const row = loaded.row;
+  const without = (value: unknown): MaterialsPayload => {
+    const payload = asMaterials(value);
+    return { ...payload, files: payload.files.filter((item) => !(item.path === path && item.added_by === "admin")) };
+  };
+  const { error } = await supabase
+    .from("setup_steps")
+    .update({
+      draft: without(row.draft),
+      ...(row.status === "submitted" ? { published: without(row.published) } : {}),
+      updated_at: nowIso(),
+    })
+    .eq("client_id", clientId)
+    .eq("step", "materials")
+    .eq("updated_at", row.updated_at);
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  return { ok: true };
+}
+
 /** Records the founder's reason for having no deck yet, on the draft. */
 export async function saveNoDeckNote(
   supabase: ServiceClient,
