@@ -4,44 +4,167 @@
 // from it. Pure module (no server code), shared by the server and the admin.
 // See claude/rupert-company-brief-spec.md in the project.
 
-export const BRIEF_SECTIONS = [
-  {
-    key: "matching",
-    title: "Matching inputs",
-    hint: "Sector (core and secondary), stage and round size, HQ, markets, the investor types to target, exclusions.",
-  },
-  {
-    key: "facts",
-    title: "Fact sheet",
-    hint: "Every pitchable fact with its source. The founder's record as company, role, outcome. Mark what not to use and what is missing.",
-  },
-  {
-    key: "framing",
-    title: "Framing",
-    hint: "The lead angle, what each investor type hears first, tone, what to hold back.",
-  },
-  {
-    key: "objections",
-    title: "Objections and answers",
-    hint: "What investors will push on, and the honest answer to each.",
-  },
-  {
-    key: "questions",
-    title: "Questions for the founder",
-    hint: "Only the ones that change the pitch. One per line, starting with \"- \".",
-  },
-  {
-    key: "fit",
-    title: "Fit read",
-    hint: "How fundable this is by cold outreach right now, and what to expect.",
-  },
-] as const;
+// ---------------------------------------------------------------------------
+// Topics: the brief summarises the company topic by topic, in the order of a
+// classic pitch deck (YC, Sequoia, 500, Guy Kawasaki, Founder Institute).
+// Dori controls the list in the admin (on/off, title, guidance); these are
+// the defaults. Each topic's guidance tells the AI exactly what to summarise.
 
-export type BriefSectionKey = (typeof BRIEF_SECTIONS)[number]["key"];
+export type BriefTopic = { id: string; title: string; guidance: string; enabled: boolean };
 
-export const BRIEF_SECTION_KEYS: BriefSectionKey[] = BRIEF_SECTIONS.map((section) => section.key);
+export const BRIEF_TOPICS_SLUG = "brief_topics";
+export const BRIEF_TOPICS_MAX = 20;
 
-export type BriefSections = Record<BriefSectionKey, string>;
+export const DEFAULT_BRIEF_TOPICS: BriefTopic[] = [
+  { id: "purpose", title: "Company purpose", guidance: "One sentence: what the company does and for whom. No adjectives.", enabled: true },
+  { id: "problem", title: "Problem", guidance: "Whose pain, how often, how they handle it today, and what that costs them (time, money, risk).", enabled: true },
+  { id: "solution", title: "Solution", guidance: "What the product does for the customer, the value in their terms, and the insight behind it.", enabled: true },
+  { id: "why_now", title: "Why now", guidance: "The specific change (technology, regulation, behaviour, cost) that makes this possible or necessary now, and why it wasn't built before.", enabled: true },
+  { id: "market", title: "Market", guidance: "The target customer, how many there are, what each pays, a bottom-up size, the first segment, and the sources. Flag top-down or unsourced figures.", enabled: true },
+  { id: "competition", title: "Competition", guidance: "Direct and indirect competitors and the status quo, named, with their funding where known; why customers pick this company.", enabled: true },
+  { id: "product", title: "Product", guidance: "What is live today, how it works in a few steps, integrations, and what's next. Mark what is planned versus shipped.", enabled: true },
+  { id: "business_model", title: "Business model", guidance: "Who pays, pricing and pricing unit, average contract size, margin and its main costs, how revenue per customer grows.", enabled: true },
+  { id: "go_to_market", title: "Go-to-market", guidance: "Channels, sales motion and cycle, pipeline (with stages if known), partnerships.", enabled: true },
+  { id: "traction", title: "Traction", guidance: "Revenue (MRR or ARR, what customers actually pay), customers, growth, retention, customer outcomes. Dated, exact numbers.", enabled: true },
+  { id: "team", title: "Team", guidance: "Each founder's record as company, role, years and outcome (checked against dates: did the exit happen on their watch?). Key hires, advisors, and the obvious gaps.", enabled: true },
+  { id: "financials", title: "Financials", guidance: "Cash, burn and runway if known; projections and whether they follow from the inputs; numbers that don't add up.", enabled: true },
+  { id: "round", title: "The round", guidance: "Amount, instrument, valuation or cap, committed and from whom, lead or not, use of funds, milestones it buys, target close.", enabled: true },
+  { id: "vision", title: "Vision", guidance: "What the company becomes in five years if it works, as the founder describes it.", enabled: true },
+];
+
+const TOPIC_ID = /^[a-z][a-z0-9_]{0,39}$/;
+
+export function topicIdFor(title: string) {
+  const id = title.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, "").slice(0, 40);
+  return /^[a-z]/.test(id) ? id : `t_${id}`.slice(0, 40);
+}
+
+/** Saved topics, or null when they can't be used. */
+export function parseBriefTopics(value: unknown): BriefTopic[] | null {
+  if (!Array.isArray(value)) return null;
+  const seen = new Set<string>();
+  const topics: BriefTopic[] = [];
+  for (const item of value) {
+    const raw = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+    const title = typeof raw.title === "string" ? raw.title.trim().slice(0, 80) : "";
+    if (!title) return null;
+    let id = typeof raw.id === "string" && TOPIC_ID.test(raw.id) ? raw.id : topicIdFor(title);
+    if (RESERVED_KEYS.includes(id)) id = `${id}_topic`;
+    if (seen.has(id)) return null;
+    seen.add(id);
+    topics.push({
+      id,
+      title,
+      guidance: typeof raw.guidance === "string" ? raw.guidance.trim().slice(0, 1000) : "",
+      enabled: raw.enabled !== false,
+    });
+  }
+  return topics.length > 0 && topics.length <= BRIEF_TOPICS_MAX ? topics : null;
+}
+
+/** The brief's parts besides the topics. */
+const RESERVED_KEYS = ["abstract", "questions"];
+
+export const ABSTRACT_HINT = "5 to 8 bullet points: what the company is, the strongest facts, the biggest gaps. Short, punchy, one line each.";
+export const QUESTIONS_HINT = "Only the questions for the founder whose answers would change the pitch. One per line, starting with \"- \".";
+
+/** The keys a brief holds with these topics, in reading order. */
+export function briefKeys(topics: BriefTopic[]) {
+  return ["abstract", ...topics.filter((topic) => topic.enabled).map((topic) => topic.id), "questions"];
+}
+
+export function sectionTitle(key: string, topics: BriefTopic[]) {
+  if (key === "abstract") return "Abstract";
+  if (key === "questions") return "Questions for the founder";
+  return topics.find((topic) => topic.id === key)?.title ?? key.replace(/_/g, " ");
+}
+
+export type BriefSections = Record<string, string>;
+
+/** The abstract as bullets, one per line. */
+export function abstractBullets(text: string): string[] {
+  return text
+    .split("\n")
+    .map((line) => line.replace(/^\s*(?:[-*•]|\d+[.)])\s*/, "").trim())
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+// ---------------------------------------------------------------------------
+// Selling points: Rupert scores a set list of ten for this raise, picks the
+// three strongest (Dori can swap) and says what to say about each.
+
+export type SellingPoint = { id: string; title: string; guidance: string };
+
+export const SELLING_POINTS: SellingPoint[] = [
+  { id: "founder_fit", title: "Founder-market fit and track record", guidance: "The founders have done this before or know this problem from the inside: companies run, outcomes, years in the industry." },
+  { id: "traction", title: "Traction", guidance: "Revenue, paying customers, growth or usage that proves demand, stated honestly." },
+  { id: "customers", title: "Notable customers", guidance: "Recognisable or strategic customers, pilots or partners that lend credibility." },
+  { id: "why_now", title: "Why now", guidance: "A specific change that makes this the moment, which investors can see too." },
+  { id: "category_momentum", title: "Category momentum", guidance: "The space is being funded: comparable companies raised recently, so investors are looking." },
+  { id: "product_edge", title: "Product or technical edge", guidance: "Something built that is hard to copy: technology, data, integrations, IP." },
+  { id: "capital_efficiency", title: "Capital efficiency", guidance: "A lot achieved with little money: product shipped, customers won, on a small budget." },
+  { id: "backers", title: "Backers already in", guidance: "Investors, studios, angels or advisors already committed whose names carry weight." },
+  { id: "business_model", title: "Business model and unit economics", guidance: "Pricing, contract size, margins or expansion that make the economics attractive." },
+  { id: "distribution", title: "Distribution advantage", guidance: "A channel, network or audience that gets customers cheaper or faster than rivals." },
+];
+
+export const SELLING_POINTS_CHOSEN = 3;
+
+export type PointScore = { point: string; score: number; reason: string; pitch: string };
+
+export type SellingPoints = { scores: PointScore[]; chosen: string[]; scored_at: string | null };
+
+export function sellingPoint(id: string) {
+  return SELLING_POINTS.find((point) => point.id === id) ?? null;
+}
+
+export function emptyPoints(): SellingPoints {
+  return { scores: [], chosen: [], scored_at: null };
+}
+
+export function asPoints(value: unknown): SellingPoints {
+  const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
+  const scores: PointScore[] = Array.isArray(raw.scores)
+    ? raw.scores
+        .map((item) => {
+          const entry = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+          const score = Math.round(Number(entry.score));
+          return {
+            point: typeof entry.point === "string" ? entry.point : "",
+            score: Number.isFinite(score) ? Math.min(10, Math.max(0, score)) : 0,
+            reason: stripCitations(typeof entry.reason === "string" ? entry.reason.slice(0, 800) : ""),
+            pitch: stripCitations(typeof entry.pitch === "string" ? entry.pitch.slice(0, 2000) : ""),
+          };
+        })
+        .filter((item) => sellingPoint(item.point))
+    : [];
+  const chosen = Array.isArray(raw.chosen)
+    ? Array.from(new Set(raw.chosen.map(String).filter((id) => sellingPoint(id)))).slice(0, SELLING_POINTS_CHOSEN)
+    : [];
+  return { scores, chosen, scored_at: typeof raw.scored_at === "string" ? raw.scored_at : null };
+}
+
+/** The strongest points by score, ties in list order. */
+export function topPoints(scores: PointScore[], count = SELLING_POINTS_CHOSEN) {
+  const order = SELLING_POINTS.map((point) => point.id);
+  return [...scores]
+    .sort((a, b) => b.score - a.score || order.indexOf(a.point) - order.indexOf(b.point))
+    .slice(0, count)
+    .map((item) => item.point);
+}
+
+/** The chosen points with what to say, for the narrative. */
+export function chosenPointsText(points: SellingPoints) {
+  return points.chosen
+    .map((id, index) => {
+      const point = sellingPoint(id);
+      const score = points.scores.find((item) => item.point === id);
+      return point ? `${index + 1}. ${point.title}: ${score?.pitch || score?.reason || ""}`.trim() : "";
+    })
+    .filter(Boolean)
+    .join("\n");
+}
 
 // ---------------------------------------------------------------------------
 // Deck feedback: a library of topics with a playbook each. Rupert scores the
@@ -251,6 +374,7 @@ export function deckFeedbackMarkdown(deck: DeckFeedback) {
 export type CompanyBrief = {
   version: number;
   sections: BriefSections;
+  points: SellingPoints;
   deck: DeckFeedback;
   note: string;
   createdBy: string | null;
@@ -260,7 +384,7 @@ export type CompanyBrief = {
 export const SECTION_MAX = 20000;
 
 export function emptySections(): BriefSections {
-  return Object.fromEntries(BRIEF_SECTION_KEYS.map((key) => [key, ""])) as BriefSections;
+  return {};
 }
 
 export function emptyDeck(): DeckFeedback {
@@ -271,10 +395,13 @@ function str(value: unknown, max: number) {
   return typeof value === "string" ? value.slice(0, max) : "";
 }
 
+/** Stored sections: any well-formed key (topics can change), citation markup removed. */
 export function asSections(value: unknown): BriefSections {
   const raw = (value && typeof value === "object" ? value : {}) as Record<string, unknown>;
-  const sections = emptySections();
-  for (const key of BRIEF_SECTION_KEYS) sections[key] = stripCitations(str(raw[key], SECTION_MAX));
+  const sections: BriefSections = {};
+  for (const [key, text] of Object.entries(raw)) {
+    if (TOPIC_ID.test(key) && typeof text === "string") sections[key] = stripCitations(text.slice(0, SECTION_MAX));
+  }
   return sections;
 }
 
@@ -312,8 +439,11 @@ export function briefQuestions(text: string): string[] {
 }
 
 /** The brief as text, for the AI calls that read it. */
-export function briefText(sections: BriefSections) {
-  return BRIEF_SECTIONS.map((section) => `## ${section.title}\n${sections[section.key].trim() || "(empty)"}`).join("\n\n");
+export function briefText(sections: BriefSections, topics: BriefTopic[], points?: SellingPoints) {
+  const parts = briefKeys(topics).map((key) => `## ${sectionTitle(key, topics)}\n${(sections[key] ?? "").trim() || "(empty)"}`);
+  const chosen = points ? chosenPointsText(points) : "";
+  if (chosen) parts.splice(1, 0, `## The three strongest selling points (decided)\n${chosen}`);
+  return parts.join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -321,15 +451,16 @@ export function briefText(sections: BriefSections) {
 
 export type BriefProposal = {
   id: string;
-  section: BriefSectionKey;
+  /** "abstract", a topic id, or "questions". */
+  section: string;
   /** replace: the section's new full text. append: added at the end. */
   mode: "replace" | "append";
   content: string;
   why: string;
 };
 
-export function isSectionKey(value: unknown): value is BriefSectionKey {
-  return typeof value === "string" && (BRIEF_SECTION_KEYS as string[]).includes(value);
+export function isSectionKey(value: unknown): value is string {
+  return typeof value === "string" && TOPIC_ID.test(value);
 }
 
 export function asProposals(value: unknown): BriefProposal[] {
@@ -351,7 +482,7 @@ export function asProposals(value: unknown): BriefProposal[] {
 
 /** The sections after pinning a proposal. */
 export function applyProposal(sections: BriefSections, proposal: BriefProposal): BriefSections {
-  const current = sections[proposal.section].trim();
+  const current = (sections[proposal.section] ?? "").trim();
   const next =
     proposal.mode === "append" && current ? `${current}\n\n${proposal.content.trim()}` : proposal.content.trim();
   return { ...sections, [proposal.section]: next.slice(0, SECTION_MAX) };

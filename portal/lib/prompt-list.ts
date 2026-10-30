@@ -11,6 +11,7 @@ export const PROMPT_LIST = [
   { key: "intake_brief", title: "Intake brief (for Rupert)", group: "Intake" },
   { key: "company_brief", title: "Company brief", group: "Company and narrative" },
   { key: "framing_room", title: "Framing Room chat", group: "Company and narrative" },
+  { key: "selling_points", title: "Selling points", group: "Company and narrative" },
   { key: "deck_feedback", title: "Deck feedback", group: "Company and narrative" },
   { key: "brief_narrative", title: "Narrative from the brief", group: "Company and narrative" },
   { key: "materials_analysis", title: "Materials analysis (before the brief)", group: "Company and narrative" },

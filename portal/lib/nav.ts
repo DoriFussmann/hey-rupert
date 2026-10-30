@@ -43,6 +43,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
     items: [
       { href: "/admin/forms/agents", label: "All prompts", exact: true },
       { href: "/admin/forms/intake", label: "Intake topics" },
+      { href: "/admin/forms/brief-topics", label: "Brief topics" },
       ...PROMPT_LIST.map((prompt) => ({ href: promptPath(prompt.key), label: prompt.title })),
     ],
   },

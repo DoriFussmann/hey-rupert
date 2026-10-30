@@ -9,8 +9,11 @@ import { buildNarrativeFromBrief } from "@/lib/agents-server";
 import {
   asDeck,
   asSections,
+  BRIEF_TOPICS_SLUG,
   briefQuestions,
   briefText,
+  parseBriefTopics,
+  type BriefTopic,
   deckFeedbackMarkdown,
   type BriefSections,
   type CompanyBrief,
@@ -20,7 +23,10 @@ import {
   buildBrief,
   chooseDeckTopics,
   loadBrief,
+  loadBriefTopics,
   loadBriefVersion,
+  saveSellingPoints,
+  scoreSellingPoints,
   pinProposal,
   saveBrief,
   scoreDeck,
@@ -86,6 +92,7 @@ export async function restoreBriefVersionAction(clientId: string, version: numbe
     await saveBrief(access.supabase, clientId, {
       sections: earlier.value.sections,
       deck: earlier.value.deck,
+      points: earlier.value.points,
       note: `Restored version ${earlier.value.version}.`,
       actor: access.actor,
     }),
@@ -179,7 +186,9 @@ export async function writeNarrativeFromBriefAction(
   if (!brief.ok) return brief;
   if (!brief.value) return { ok: false, error: "Build the brief first." };
 
-  const built = await buildNarrativeFromBrief(access.supabase, clientId, briefText(brief.value.sections));
+  const topics = await loadBriefTopics(access.supabase);
+  if (brief.value.points.chosen.length === 0) return { ok: false, error: "Score the selling points first: the narrative leads with the three chosen." };
+  const built = await buildNarrativeFromBrief(access.supabase, clientId, briefText(brief.value.sections, topics, brief.value.points));
   if (!built.ok) return built;
 
   const allowed = new Set(briefQuestions(brief.value.sections.questions));
@@ -215,4 +224,40 @@ export async function writeNarrativeFromBriefAction(
   if (error) return { ok: false, error: setupTableError(error.message, error.code) };
   revalidate(clientId);
   return { ok: true, narrative };
+}
+
+export async function scoreSellingPointsAction(clientId: string) {
+  const access = await requireAdmin(clientId, true);
+  if (!access.ok) return access;
+  return withBrief(await scoreSellingPoints(access.supabase, clientId, access.actor), clientId);
+}
+
+export async function saveSellingPointsAction(clientId: string, chosen: string[], pitches: Record<string, string>) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const clean: Record<string, string> = {};
+  for (const [id, text] of Object.entries(pitches && typeof pitches === "object" ? pitches : {})) clean[String(id)] = String(text ?? "").slice(0, 2000);
+  return withBrief(
+    await saveSellingPoints(access.supabase, clientId, { chosen: Array.isArray(chosen) ? chosen.map(String) : [], pitches: clean }, access.actor),
+    clientId,
+  );
+}
+
+/** Forms → Brief topics: the topics every brief is written by. */
+export async function saveBriefTopicsAction(topics: BriefTopic[]): Promise<{ ok: true } | { ok: false; error: string }> {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };
+  if (!isServiceRoleConfigured()) return { ok: false, error: "Service role key is not configured." };
+  const parsed = parseBriefTopics(topics);
+  if (!parsed) return { ok: false, error: "Each topic needs a unique title, and there must be between 1 and 20 topics." };
+  if (!parsed.some((topic) => topic.enabled)) return { ok: false, error: "Keep at least one topic on." };
+  const { error } = await createServiceClient().from("form_templates").upsert({
+    slug: BRIEF_TOPICS_SLUG,
+    title: "Company Brief topics",
+    content: JSON.stringify(parsed),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath("/admin/forms/brief-topics");
+  return { ok: true };
 }

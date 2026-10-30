@@ -3,7 +3,19 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeAgent, webFetchTool, webSearchTool, type ClaudeContentBlock, type ClaudeTool } from "@/lib/anthropic";
 import { clientLinks } from "@/lib/agents-server";
 import {
-  BRIEF_SECTIONS,
+  ABSTRACT_HINT,
+  BRIEF_TOPICS_SLUG,
+  DEFAULT_BRIEF_TOPICS,
+  QUESTIONS_HINT,
+  SELLING_POINTS,
+  asPoints,
+  briefKeys,
+  emptyPoints,
+  parseBriefTopics,
+  sectionTitle,
+  topPoints,
+  type BriefTopic,
+  type SellingPoints,
   DECK_TOPICS,
   DECK_TOPICS_PER_CLIENT,
   applyProposal,
@@ -61,6 +73,7 @@ function asBrief(row: Record<string, unknown>): CompanyBrief {
   return {
     version: Number(row.version) || 0,
     sections: asSections(row.sections),
+    points: asPoints(row.points),
     deck: asDeck(row.deck),
     note: text(row.note),
     createdBy: row.created_by ? String(row.created_by) : null,
@@ -105,7 +118,7 @@ export async function listBriefVersions(supabase: ServiceClient, clientId: strin
 export async function saveBrief(
   supabase: ServiceClient,
   clientId: string,
-  change: { sections?: BriefSections; deck?: DeckFeedback; note: string; actor: string | null },
+  change: { sections?: BriefSections; points?: SellingPoints; deck?: DeckFeedback; note: string; actor: string | null },
 ): Promise<Result<CompanyBrief>> {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const latest = await loadBrief(supabase, clientId);
@@ -114,6 +127,7 @@ export async function saveBrief(
       client_id: clientId,
       version: (latest.value?.version ?? 0) + 1,
       sections: change.sections ?? latest.value?.sections ?? emptySections(),
+      points: change.points ?? latest.value?.points ?? emptyPoints(),
       deck: change.deck ?? latest.value?.deck ?? emptyDeck(),
       note: change.note.slice(0, 300),
       created_by: change.actor,
@@ -203,25 +217,44 @@ async function loadSources(supabase: ServiceClient, clientId: string): Promise<R
 // ---------------------------------------------------------------------------
 // Build the brief
 
-const SECTION_SCHEMA = Object.fromEntries(
-  BRIEF_SECTIONS.map((section) => [section.key, { type: "string", description: `${section.title} (markdown). ${section.hint}` }]),
-);
+/** The brief's topics as Dori set them under Forms → Brief topics, else the defaults. */
+export async function loadBriefTopics(supabase: ServiceClient): Promise<BriefTopic[]> {
+  const { data } = await supabase.from("form_templates").select("content").eq("slug", BRIEF_TOPICS_SLUG).maybeSingle();
+  if (!data?.content) return DEFAULT_BRIEF_TOPICS;
+  try {
+    return parseBriefTopics(JSON.parse(String(data.content))) ?? DEFAULT_BRIEF_TOPICS;
+  } catch {
+    return DEFAULT_BRIEF_TOPICS;
+  }
+}
 
-const BRIEF_TOOL: ClaudeTool = {
-  name: "submit_brief",
-  description: "Deliver the Company Brief: all six sections in full, in markdown.",
-  input_schema: {
-    type: "object",
-    properties: SECTION_SCHEMA,
-    required: BRIEF_SECTIONS.map((section) => section.key),
-  },
-};
+function briefTool(topics: BriefTopic[]): ClaudeTool {
+  const properties: Record<string, unknown> = { abstract: { type: "string", description: `Abstract (markdown bullets). ${ABSTRACT_HINT}` } };
+  for (const topic of topics.filter((item) => item.enabled)) {
+    properties[topic.id] = { type: "string", description: `${topic.title} (markdown, brief and punchy). ${topic.guidance}` };
+  }
+  properties.questions = { type: "string", description: QUESTIONS_HINT };
+  return {
+    name: "submit_brief",
+    description: "Deliver the Company Brief: the abstract, every topic, and the questions, in markdown.",
+    input_schema: { type: "object", properties, required: Object.keys(properties) },
+  };
+}
+
+function topicsGuide(topics: BriefTopic[]) {
+  return topics
+    .filter((topic) => topic.enabled)
+    .map((topic) => `- ${topic.title} (${topic.id}): ${topic.guidance}`)
+    .join("\n");
+}
 
 export async function buildBrief(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<CompanyBrief>> {
-  const [sources, prompt] = await Promise.all([
+  const [sources, prompt, topics] = await Promise.all([
     loadSources(supabase, clientId),
     loadPrompt(supabase, "company_brief", { clientId, purpose: "Company brief", actor }),
+    loadBriefTopics(supabase),
   ]);
+  const tool = briefTool(topics);
   if (!sources.ok) return sources;
   if (!prompt.ok) return prompt;
   if (!sources.value.hasIntake) return { ok: false, error: "The intake hasn't started yet: there is nothing to build the brief from." };
@@ -236,17 +269,17 @@ export async function buildBrief(supabase: ServiceClient, clientId: string, acto
       ...(files.skipped.length > 0 ? [{ type: "text", text: `Files that couldn't be read: ${files.skipped.join(" ")}` }] : []),
       {
         type: "text",
-        text: `Read everything above. Research the founder and the company on the web: always search the founder by full name (alone, and with words from their background such as their prior companies, industry or city) to find each prior company, role, years and outcome (acquirer, scale run); then the company, its press and its competitors.${links.length > 0 ? " You may open the founder's links with web_fetch." : ""} Then deliver the brief by calling the ${BRIEF_TOOL.name} tool with all six sections in full.`,
+        text: `Read everything above. Research the founder and the company on the web: always search the founder by full name (alone, and with words from their background such as their prior companies, industry or city) to find each prior company, role, years and outcome (acquirer, scale run); then the company, its press and its competitors.${links.length > 0 ? " You may open the founder's links with web_fetch." : ""} Then deliver the brief by calling the ${tool.name} tool: the abstract, then each topic below (what to summarise for each), then the questions.\n\n# The topics\n${topicsGuide(topics)}`,
       },
     ],
-    tool: BRIEF_TOOL,
+    tool,
     serverTools: [webSearchTool(8), ...(links.length > 0 ? [webFetchTool(Math.min(links.length, 6))] : [])],
     maxTokens: 16000,
   });
   if (!result.ok) return { ok: false, error: result.reason };
   const sections = asSections(result.input);
-  const empty = BRIEF_SECTIONS.filter((section) => !sections[section.key].trim()).map((section) => section.title);
-  if (empty.length > 2) return { ok: false, error: `Claude's brief had no ${empty.join(", ")}. Nothing was saved. Try again.` };
+  const empty = briefKeys(topics).filter((key) => !(sections[key] ?? "").trim()).map((key) => sectionTitle(key, topics));
+  if (empty.length > 3) return { ok: false, error: `Claude's brief had no ${empty.join(", ")}. Nothing was saved. Try again.` };
   return saveBrief(supabase, clientId, {
     sections,
     note: result.serverToolsSkipped ? "Built from the intake and files (web search unavailable)." : "Built from the intake, files and web research.",
@@ -288,7 +321,8 @@ export async function loadFramingMessages(supabase: ServiceClient, clientId: str
   return { ok: true, value: (data ?? []).map((row) => asMessage(row as Record<string, unknown>)) };
 }
 
-const CHAT_TOOL: ClaudeTool = {
+function chatTool(keys: string[]): ClaudeTool {
+  return {
   name: "reply",
   description: "Answer Dori, and propose changes to the brief worth keeping.",
   input_schema: {
@@ -301,7 +335,7 @@ const CHAT_TOOL: ClaudeTool = {
         items: {
           type: "object",
           properties: {
-            section: { type: "string", enum: BRIEF_SECTIONS.map((section) => section.key) },
+            section: { type: "string", enum: keys, description: "abstract, a topic id, or questions." },
             mode: { type: "string", enum: ["replace", "append"], description: "replace: the section's full new text. append: added at the end." },
             content: { type: "string", description: "The text (markdown), in the brief's style." },
             why: { type: "string", description: "One short sentence on why." },
@@ -313,6 +347,7 @@ const CHAT_TOOL: ClaudeTool = {
     required: ["reply", "proposals"],
   },
 };
+}
 
 const HISTORY_MESSAGES = 30;
 
@@ -325,12 +360,14 @@ export async function sendFramingMessage(
   const content = input.content.trim().slice(0, 8000);
   if (!content && input.attachments.length === 0) return { ok: false, error: "Write a message first." };
 
-  const [sources, brief, history, prompt] = await Promise.all([
+  const [sources, brief, history, prompt, topics] = await Promise.all([
     loadSources(supabase, clientId),
     loadBrief(supabase, clientId),
     loadFramingMessages(supabase, clientId),
     loadPrompt(supabase, "framing_room", { clientId, purpose: "Framing Room", actor: input.actor }),
+    loadBriefTopics(supabase),
   ]);
+  const CHAT_TOOL = chatTool(briefKeys(topics));
   if (!sources.ok) return sources;
   if (!brief.ok) return brief;
   if (!history.ok) return history;
@@ -353,7 +390,7 @@ export async function sendFramingMessage(
   const result = await callClaudeAgent<Record<string, unknown>>({
     system: promptSystem(prompt.value),
     content: [
-      { type: "text", text: `# The Company Brief as it stands\n\n${brief.value ? briefText(brief.value.sections) : "(not built yet)"}` },
+      { type: "text", text: `# The Company Brief as it stands\n\n${brief.value ? briefText(brief.value.sections, topics, brief.value.points) : "(not built yet)"}` },
       { type: "text", text: `# What Rupert knows\n\n${sources.value.text}` },
       { type: "text", text: `# The conversation so far\n\n${earlier.length > 0 ? earlier.join("\n\n") : "(none)"}` },
       ...files.blocks,
@@ -397,15 +434,97 @@ export async function pinProposal(
   const message = asMessage(data as Record<string, unknown>);
   const proposal = message.proposals.find((item) => item.id === proposalId);
   if (!proposal) return { ok: false, error: "That proposal is gone." };
+  const topics = await loadBriefTopics(supabase);
+  if (!briefKeys(topics).includes(proposal.section)) return { ok: false, error: "That part of the brief no longer exists." };
   if (message.pinned.includes(proposalId)) return { ok: false, error: "Already pinned." };
   const brief = await loadBrief(supabase, clientId);
   if (!brief.ok) return brief;
   const sections = applyProposal(brief.value?.sections ?? emptySections(), proposal);
-  const title = BRIEF_SECTIONS.find((section) => section.key === proposal.section)?.title ?? proposal.section;
+  const title = sectionTitle(proposal.section, topics);
   const saved = await saveBrief(supabase, clientId, { sections, note: `Pinned to ${title}: ${proposal.why}`.slice(0, 300), actor });
   if (!saved.ok) return saved;
   await supabase.from("framing_messages").update({ pinned: [...message.pinned, proposalId] }).eq("id", messageId);
   return saved;
+}
+
+// ---------------------------------------------------------------------------
+// The three strongest selling points
+
+const POINTS_TOOL: ClaudeTool = {
+  name: "submit_points",
+  description: "Score every selling point for this raise, with the reason and what to say.",
+  input_schema: {
+    type: "object",
+    properties: {
+      scores: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            point: { type: "string", enum: SELLING_POINTS.map((point) => point.id) },
+            score: { type: "integer", minimum: 0, maximum: 10 },
+            reason: { type: "string", description: "One sentence: why this score, from the facts." },
+            pitch: { type: "string", description: "What to say about it to an investor: one or two sentences, only true, specific facts." },
+          },
+          required: ["point", "score", "reason", "pitch"],
+        },
+      },
+    },
+    required: ["scores"],
+  },
+};
+
+export async function scoreSellingPoints(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<CompanyBrief>> {
+  const [brief, prompt, topics] = await Promise.all([
+    loadBrief(supabase, clientId),
+    loadPrompt(supabase, "selling_points", { clientId, purpose: "Selling points", actor }),
+    loadBriefTopics(supabase),
+  ]);
+  if (!brief.ok) return brief;
+  if (!prompt.ok) return prompt;
+  if (!brief.value) return { ok: false, error: "Build the brief first." };
+  const list = SELLING_POINTS.map((point) => `- ${point.id}: ${point.title}. ${point.guidance}`).join("\n");
+  const result = await callClaudeAgent<Record<string, unknown>>({
+    system: promptSystem(prompt.value),
+    content: [
+      { type: "text", text: `# The selling points\n\n${list}` },
+      { type: "text", text: `# The Company Brief\n\n${briefText(brief.value.sections, topics)}` },
+      { type: "text", text: `Score all ${SELLING_POINTS.length} selling points for this raise by calling the ${POINTS_TOOL.name} tool.` },
+    ],
+    tool: POINTS_TOOL,
+    maxTokens: 5000,
+  });
+  if (!result.ok) return { ok: false, error: result.reason };
+  const points = asPoints({ scores: result.input.scores });
+  if (points.scores.length < SELLING_POINTS.length / 2) return { ok: false, error: "Claude scored too few selling points. Nothing was saved. Try again." };
+  const chosen = topPoints(points.scores);
+  return saveBrief(supabase, clientId, {
+    points: { ...points, chosen, scored_at: new Date().toISOString() },
+    note: `Selling points scored. Top 3: ${chosen.map((id) => SELLING_POINTS.find((point) => point.id === id)?.title).join(", ")}.`,
+    actor,
+  });
+}
+
+/** Dori's choice of the three points, and her edits to what to say. */
+export async function saveSellingPoints(
+  supabase: ServiceClient,
+  clientId: string,
+  change: { chosen: string[]; pitches: Record<string, string> },
+  actor: string | null,
+): Promise<Result<CompanyBrief>> {
+  const brief = await loadBrief(supabase, clientId);
+  if (!brief.ok) return brief;
+  const current = brief.value?.points ?? emptyPoints();
+  const points = asPoints({
+    ...current,
+    chosen: change.chosen,
+    scores: current.scores.map((item) => ({ ...item, pitch: change.pitches[item.point] ?? item.pitch })),
+  });
+  return saveBrief(supabase, clientId, {
+    points,
+    note: `Selling points: ${points.chosen.map((id) => SELLING_POINTS.find((point) => point.id === id)?.title).join(", ")}.`,
+    actor,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -463,17 +582,19 @@ function playbooks(ids?: string[]) {
 }
 
 async function deckContext(supabase: ServiceClient, clientId: string, actor: string | null) {
-  const [sources, brief, prompt] = await Promise.all([
+  const [sources, brief, prompt, topics] = await Promise.all([
     loadSources(supabase, clientId),
     loadBrief(supabase, clientId),
     loadPrompt(supabase, "deck_feedback", { clientId, purpose: "Deck feedback", actor }),
+    loadBriefTopics(supabase),
   ]);
   if (!sources.ok) return sources;
   if (!brief.ok) return brief;
   if (!prompt.ok) return prompt;
   const files = await prepareFiles(supabase, sources.value.files);
   if (files.blocks.length === 0) return { ok: false as const, error: "There is no readable deck or file to give feedback on." };
-  return { ok: true as const, sources: sources.value, brief: brief.value, prompt: prompt.value, files };
+  const text = brief.value ? briefText(brief.value.sections, topics, brief.value.points) : "(not built yet)";
+  return { ok: true as const, sources: sources.value, brief: brief.value, briefText: text, prompt: prompt.value, files };
 }
 
 export async function scoreDeck(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<CompanyBrief>> {
@@ -483,7 +604,7 @@ export async function scoreDeck(supabase: ServiceClient, clientId: string, actor
     system: promptSystem(context.prompt),
     content: [
       { type: "text", text: `# Task: scoring\n\n# The topics and their playbooks\n\n${playbooks()}` },
-      { type: "text", text: `# The Company Brief\n\n${context.brief ? briefText(context.brief.sections) : "(not built yet)"}` },
+      { type: "text", text: `# The Company Brief\n\n${context.briefText}` },
       ...context.files.blocks,
       { type: "text", text: `Score all ${DECK_TOPICS.length} topics for this founder's deck by calling the ${SCORE_TOOL.name} tool.` },
     ],
@@ -524,7 +645,7 @@ export async function writeDeckFeedback(supabase: ServiceClient, clientId: strin
           .map((id) => `- ${deckTopic(id)?.title}: ${scores.find((item) => item.topic === id)?.reason ?? "chosen by Rupert"}`)
           .join("\n")}`,
       },
-      { type: "text", text: `# The Company Brief\n\n${context.brief ? briefText(context.brief.sections) : "(not built yet)"}` },
+      { type: "text", text: `# The Company Brief\n\n${context.briefText}` },
       ...context.files.blocks,
       { type: "text", text: `Write the feedback for these ${chosen.length} topics, in this order: ${chosen.join(", ")}. Deliver it by calling the ${WRITE_TOOL.name} tool.` },
     ],

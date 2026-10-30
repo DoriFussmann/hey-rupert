@@ -1,8 +1,15 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
-  BRIEF_SECTION_KEYS,
   DECK_TOPICS,
+  DEFAULT_BRIEF_TOPICS,
+  SELLING_POINTS,
+  abstractBullets,
+  asPoints,
+  briefKeys,
+  briefText,
+  parseBriefTopics,
+  topPoints,
   applyProposal,
   asDeck,
   asProposals,
@@ -14,8 +21,12 @@ import {
   topTopics,
 } from "./brief.ts";
 
-test("the brief has six sections and twenty deck topics, each with a playbook", () => {
-  assert.deepEqual(BRIEF_SECTION_KEYS, ["matching", "facts", "framing", "objections", "questions", "fit"]);
+test("the brief: abstract, fourteen deck-structure topics, questions; ten selling points; twenty deck topics", () => {
+  assert.equal(DEFAULT_BRIEF_TOPICS.length, 14);
+  assert.deepEqual(briefKeys(DEFAULT_BRIEF_TOPICS).slice(0, 3), ["abstract", "purpose", "problem"]);
+  assert.equal(briefKeys(DEFAULT_BRIEF_TOPICS).at(-1), "questions");
+  for (const topic of DEFAULT_BRIEF_TOPICS) assert.ok(topic.guidance.length > 20, topic.id);
+  assert.equal(SELLING_POINTS.length, 10);
   assert.equal(DECK_TOPICS.length, 20);
   assert.equal(new Set(DECK_TOPICS.map((topic) => topic.id)).size, 20);
   for (const topic of DECK_TOPICS) assert.ok(topic.playbook.length > 200, topic.id);
@@ -25,10 +36,10 @@ test("the brief has six sections and twenty deck topics, each with a playbook", 
 });
 
 test("stored sections and deck feedback are read defensively", () => {
-  const sections = asSections({ framing: "Founder-led.", junk: "x", facts: 42 });
-  assert.equal(sections.framing, "Founder-led.");
-  assert.equal(sections.facts, "");
-  assert.ok(!("junk" in sections));
+  const sections = asSections({ team: "Founder-led.", "Bad Key": "x", market: 42 });
+  assert.equal(sections.team, "Founder-led.");
+  assert.equal(sections.market, undefined);
+  assert.ok(!("Bad Key" in sections));
 
   const deck = asDeck({
     scores: [{ topic: "team", score: 14, reason: "No team slide" }, { topic: "nope", score: 5 }],
@@ -70,17 +81,17 @@ test("questions are read one per line, bullets or numbers stripped", () => {
 });
 
 test("pinning a proposal replaces or appends to one section", () => {
-  const sections = { ...emptySections(), framing: "Product-led." };
+  const sections = { ...emptySections(), team: "Product-led." };
   const [replace, append, bad] = asProposals([
-    { section: "framing", mode: "replace", content: "Founder-led.", why: "His exit." },
-    { section: "objections", mode: "append", content: "- No CTO: defendable." },
-    { section: "nowhere", content: "x" },
+    { section: "team", mode: "replace", content: "Founder-led.", why: "His record." },
+    { section: "questions", mode: "append", content: "- May we name them?" },
+    { section: "Not A Key", content: "x" },
   ]);
   assert.equal(bad, undefined);
-  assert.equal(applyProposal(sections, replace).framing, "Founder-led.");
-  const appended = applyProposal({ ...sections, objections: "- Thin traction." }, append);
-  assert.equal(appended.objections, "- Thin traction.\n\n- No CTO: defendable.");
-  assert.equal(applyProposal(sections, append).objections, "- No CTO: defendable.");
+  assert.equal(applyProposal(sections, replace).team, "Founder-led.");
+  const appended = applyProposal({ ...sections, questions: "- Which funds?" }, append);
+  assert.equal(appended.questions, "- Which funds?\n\n- May we name them?");
+  assert.equal(applyProposal(sections, append).questions, "- May we name them?");
 });
 
 test("citation markup from web search is removed, the cited text kept", () => {
@@ -89,4 +100,35 @@ test("citation markup from web search is removed, the cited text kept", () => {
     "ACT was sold in 2021 (TSI announced it had completed the acquisition).",
   );
   assert.equal(asSections({ facts: 'Founded <cite index="1-1">2026</cite>.' }).facts, "Founded 2026.");
+});
+
+test("topics saved in the admin are checked: titles, unique ids, reserved keys, limits", () => {
+  const parsed = parseBriefTopics([
+    { title: "Market", guidance: "Size it.", enabled: true },
+    { title: "Abstract", guidance: "" },
+    { id: "team", title: "Team", enabled: false },
+  ]);
+  assert.ok(parsed);
+  assert.deepEqual(parsed.map((topic) => topic.id), ["market", "abstract_topic", "team"]);
+  assert.equal(parsed[2].enabled, false);
+  assert.deepEqual(briefKeys(parsed), ["abstract", "market", "abstract_topic", "questions"]);
+  assert.equal(parseBriefTopics([{ title: "" }]), null);
+  assert.equal(parseBriefTopics([{ title: "Team" }, { title: "team" }]), null);
+  assert.equal(parseBriefTopics([]), null);
+});
+
+test("selling points: all ten scored, top three by score, decided points lead the brief text", () => {
+  const points = asPoints({
+    scores: [
+      { point: "founder_fit", score: 9, reason: "Ran a collections company.", pitch: "Former CEO of a collections company." },
+      { point: "category_momentum", score: 7, reason: "AR is funded.", pitch: "AR automation raised big rounds in 2026." },
+      { point: "traction", score: 3, reason: "Two customers.", pitch: "" },
+      { point: "nope", score: 10 },
+    ],
+  });
+  assert.equal(points.scores.length, 3);
+  assert.deepEqual(topPoints(points.scores, 2), ["founder_fit", "category_momentum"]);
+  const text = briefText({ abstract: "- One", purpose: "AR automation." }, DEFAULT_BRIEF_TOPICS.slice(0, 1), { ...points, chosen: ["founder_fit"] });
+  assert.match(text, /^## Abstract\n- One\n\n## The three strongest selling points \(decided\)\n1\. Founder-market fit and track record: Former CEO/);
+  assert.deepEqual(abstractBullets("- One\n* Two\n\n3) Three"), ["One", "Two", "Three"]);
 });
