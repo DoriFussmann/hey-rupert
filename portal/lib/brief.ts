@@ -530,3 +530,23 @@ export type FounderQuestion = { id: string; question: string; answer: string; an
 export function stripCitations(value: string) {
   return value.replace(/<\/?cite\b[^>]*>/gi, "").replace(/[ \t]{2,}/g, " ");
 }
+
+const SMALL_WORDS = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "in", "nor", "of", "on", "or", "per", "the", "to", "vs", "via", "with"]);
+
+/** Title Case for headings: "The round" → "The Round", "go-to-market" → "Go-to-Market". Keeps acronyms (AI, MRR). */
+export function titleCase(text: string): string {
+  const words = text.trim().split(/\s+/);
+  return words
+    .map((word, index) =>
+      word
+        .split("-")
+        .map((part, partIndex, parts) => {
+          if (!part || /[A-Z]/.test(part.slice(1)) || /^[^a-z]/.test(part)) return part;
+          const first = index === 0 && partIndex === 0;
+          const last = index === words.length - 1 && partIndex === parts.length - 1;
+          return !first && !last && SMALL_WORDS.has(part) ? part : part[0].toUpperCase() + part.slice(1);
+        })
+        .join("-"),
+    )
+    .join(" ");
+}

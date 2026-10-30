@@ -11,6 +11,7 @@ import {
   SELLING_POINTS_SLUG,
   parseSellingPoints,
   type SellingPoint,
+  type PointScore,
   asPoints,
   briefKeys,
   emptyPoints,
@@ -604,16 +605,21 @@ export async function scoreSellingPoints(supabase: ServiceClient, clientId: stri
 export async function saveSellingPoints(
   supabase: ServiceClient,
   clientId: string,
-  change: { chosen: string[]; pitches: Record<string, string> },
+  change: { chosen: string[]; pitches: Record<string, string>; scores?: Record<string, number> },
   actor: string | null,
 ): Promise<Result<CompanyBrief>> {
   const brief = await loadBrief(supabase, clientId);
   if (!brief.ok) return brief;
   const current = brief.value?.points ?? emptyPoints();
+  // Scores Rupert overrides replace the AI's; the order of chosen is the order he set (#1 first).
+  const scoreFor = (item: PointScore) => {
+    const value = change.scores?.[item.point];
+    return typeof value === "number" && Number.isFinite(value) ? Math.max(0, Math.min(10, Math.round(value))) : item.score;
+  };
   const points = asPoints({
     ...current,
     chosen: change.chosen,
-    scores: current.scores.map((item) => ({ ...item, pitch: change.pitches[item.point] ?? item.pitch })),
+    scores: current.scores.map((item) => ({ ...item, score: scoreFor(item), pitch: change.pitches[item.point] ?? item.pitch })),
   });
   return saveBrief(supabase, clientId, {
     points,
