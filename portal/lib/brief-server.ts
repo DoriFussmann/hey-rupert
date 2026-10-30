@@ -57,9 +57,72 @@ export const BRIEF_MIGRATION_MISSING =
   "The Company Brief tables aren't set up yet: run supabase/company_brief.sql in Supabase.";
 
 function tableError(message: string, code?: string) {
+  if (/brief_files/i.test(message)) return "The LinkedIn upload isn't set up yet: run supabase/brief_linkedin.sql in Supabase.";
   return code === "42P01" || /company_briefs|framing_messages|founder_questions|schema cache/i.test(message)
     ? BRIEF_MIGRATION_MISSING
     : message;
+}
+
+// ---------------------------------------------------------------------------
+// The founder's LinkedIn: uploaded by Rupert as a PDF (AI can't read LinkedIn)
+
+export type BriefFiles = { linkedin: MaterialFile[]; skipped: boolean };
+
+export async function loadBriefFiles(supabase: ServiceClient, clientId: string): Promise<Result<BriefFiles>> {
+  const { data, error } = await supabase.from("brief_files").select("*").eq("client_id", clientId).order("created_at", { ascending: true });
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  const rows = data ?? [];
+  return {
+    ok: true,
+    value: {
+      linkedin: rows
+        .filter((row) => row.kind === "linkedin")
+        .map((row) => ({
+          path: String(row.path),
+          name: String(row.name),
+          size: Number(row.size) || 0,
+          type: String(row.type),
+          uploaded_at: String(row.created_at),
+          added_by: "admin" as const,
+        })),
+      skipped: rows.some((row) => row.kind === "linkedin_skipped"),
+    },
+  };
+}
+
+export async function addLinkedinFile(
+  supabase: ServiceClient,
+  clientId: string,
+  file: { path: string; name: string; size: number; type: string },
+  actor: string | null,
+): Promise<Result<BriefFiles>> {
+  if (!file.path.startsWith(`${clientId}/linkedin/`)) return { ok: false, error: "That upload doesn't belong to this client." };
+  const { error } = await supabase.from("brief_files").insert({
+    client_id: clientId,
+    kind: "linkedin",
+    path: file.path,
+    name: file.name.slice(0, 200),
+    size: file.size,
+    type: file.type.slice(0, 100),
+    created_by: actor,
+  });
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  await supabase.from("brief_files").delete().eq("client_id", clientId).eq("kind", "linkedin_skipped");
+  await supabase.from("notifications").update({ read: true }).eq("client_id", clientId).eq("type", "linkedin_needed");
+  return loadBriefFiles(supabase, clientId);
+}
+
+export async function skipLinkedin(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<BriefFiles>> {
+  const { error } = await supabase.from("brief_files").insert({ client_id: clientId, kind: "linkedin_skipped", created_by: actor });
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  await supabase.from("notifications").update({ read: true }).eq("client_id", clientId).eq("type", "linkedin_needed");
+  return loadBriefFiles(supabase, clientId);
+}
+
+export async function removeLinkedinFile(supabase: ServiceClient, clientId: string, path: string): Promise<Result<BriefFiles>> {
+  const { error } = await supabase.from("brief_files").delete().eq("client_id", clientId).eq("kind", "linkedin").eq("path", path);
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  return loadBriefFiles(supabase, clientId);
 }
 
 function text(value: unknown) {
@@ -157,6 +220,7 @@ export async function loadBriefVersion(supabase: ServiceClient, clientId: string
 type Sources = {
   text: string;
   files: MaterialFile[];
+  linkedin: MaterialFile[];
   links: string[];
   hasIntake: boolean;
   materialsIn: boolean;
@@ -171,6 +235,8 @@ async function loadSources(supabase: ServiceClient, clientId: string): Promise<R
     supabase.from("match_profiles").select("answers").eq("client_id", clientId).maybeSingle(),
     loadFounderQuestions(supabase, clientId),
   ]);
+  const briefFiles = await loadBriefFiles(supabase, clientId);
+  const linkedin = briefFiles.ok ? briefFiles.value.linkedin : [];
   if (client.error) return { ok: false, error: client.error.message };
   if (!client.data) return { ok: false, error: "Client not found." };
   const interview = interviewResult.ok ? interviewResult.interview : null;
@@ -198,6 +264,9 @@ async function loadSources(supabase: ServiceClient, clientId: string): Promise<R
     materials.no_deck ? `## No deck yet\n${materials.no_deck}` : "",
     `## Files the founder shared\n${materials.files.length > 0 ? materials.files.map((file) => `- ${file.name}`).join("\n") : "None."}`,
     `## Links the founder provided\n${links.length > 0 ? links.join("\n") : "None."}`,
+    linkedin.length > 0
+      ? `## The founder's LinkedIn profile\nAttached as PDF, added by Rupert (LinkedIn can't be opened from here): ${linkedin.map((file) => file.name).join(", ")}. Self-reported: check outcomes against dates.`
+      : "",
     answered.length > 0
       ? `## The founder's answers to Rupert's questions\n${answered.map((item) => `Q: ${item.question}\nA: ${item.answer}`).join("\n\n")}`
       : "",
@@ -207,6 +276,7 @@ async function loadSources(supabase: ServiceClient, clientId: string): Promise<R
     value: {
       text: parts.filter(Boolean).join("\n\n"),
       files: materials.files,
+      linkedin,
       links,
       hasIntake: Boolean(interview?.completed_at || interview?.messages?.length),
       materialsIn: materialsRow?.status === "submitted",
@@ -259,7 +329,7 @@ export async function buildBrief(supabase: ServiceClient, clientId: string, acto
   if (!prompt.ok) return prompt;
   if (!sources.value.hasIntake) return { ok: false, error: "The intake hasn't started yet: there is nothing to build the brief from." };
 
-  const files = await prepareFiles(supabase, sources.value.files);
+  const files = await prepareFiles(supabase, [...sources.value.files, ...sources.value.linkedin]);
   const links = sources.value.links;
   const result = await callClaudeAgent<Record<string, unknown>>({
     system: promptSystem(prompt.value),
@@ -736,11 +806,12 @@ export async function answerFounderQuestion(
 /** Whether the brief can be built yet (the Framing Room builds it the first time it opens). */
 export async function briefReadiness(supabase: ServiceClient, clientId: string) {
   const sources = await loadSources(supabase, clientId);
-  if (!sources.ok) return { canBuild: false, reason: sources.error };
-  if (!sources.value.hasIntake) return { canBuild: false, reason: "The intake hasn't started yet." };
+  if (!sources.ok) return { canBuild: false, reason: sources.error, linkedinReady: false };
+  if (!sources.value.hasIntake) return { canBuild: false, reason: "The intake hasn't started yet.", linkedinReady: false };
   return {
     canBuild: true,
     reason: sources.value.materialsIn ? null : "The materials aren't submitted yet; the brief will use what's there.",
+    linkedinReady: sources.value.linkedin.length > 0,
   };
 }
 
@@ -751,7 +822,7 @@ export async function briefReadiness(supabase: ServiceClient, clientId: string) 
  * the founder is kept too.
  */
 export async function resetBrief(supabase: ServiceClient, clientId: string): Promise<Result<null>> {
-  for (const table of ["company_briefs", "framing_messages", "founder_questions"] as const) {
+  for (const table of ["company_briefs", "framing_messages", "founder_questions", "brief_files"] as const) {
     const { error } = await supabase.from(table).delete().eq("client_id", clientId);
     if (error) return { ok: false, error: tableError(error.message, error.code) };
   }

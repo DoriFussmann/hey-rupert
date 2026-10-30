@@ -3,8 +3,12 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import {
+  addLinkedinFileAction,
   buildBriefAction,
+  createLinkedinUploadAction,
+  removeLinkedinFileAction,
   resetBriefAction,
+  skipLinkedinAction,
   chooseDeckTopicsAction,
   restoreBriefVersionAction,
   saveBriefSectionsAction,
@@ -34,7 +38,9 @@ import {
   type FounderQuestion,
   type FramingMessage,
 } from "@/lib/brief";
-import type { BriefVersionRow } from "@/lib/brief-server";
+import type { BriefFiles, BriefVersionRow } from "@/lib/brief-server";
+import { createClient } from "@/lib/supabase/client";
+import { MATERIALS_BUCKET } from "@/lib/setup";
 import { formatDateAtTime } from "@/lib/format";
 
 type Notice = { kind: "ok" | "error"; text: string } | null;
@@ -51,6 +57,8 @@ export function FramingRoom({
   initialMessages,
   founderQuestions,
   topics,
+  initialLinkedin,
+  linkedinError,
   canBuild,
   buildNote,
   claudeReady,
@@ -62,6 +70,8 @@ export function FramingRoom({
   initialMessages: FramingMessage[];
   founderQuestions: FounderQuestion[];
   topics: BriefTopic[];
+  initialLinkedin: BriefFiles;
+  linkedinError: string | null;
   canBuild: boolean;
   buildNote: string | null;
   claudeReady: boolean;
@@ -72,6 +82,8 @@ export function FramingRoom({
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
   const autoStarted = useRef(false);
+  const [linkedin, setLinkedin] = useState<BriefFiles>(initialLinkedin);
+  const linkedinReady = linkedin.linkedin.length > 0 || linkedin.skipped;
 
   function adopt(next: CompanyBrief) {
     setBrief(next);
@@ -102,12 +114,13 @@ export function FramingRoom({
   }
 
   // The first time the room opens after the intake, Rupert builds the brief on his own.
+  // It waits for the founder's LinkedIn PDF (or for Dori to skip it).
   useEffect(() => {
-    if (autoStarted.current || brief || !canBuild || !claudeReady) return;
+    if (autoStarted.current || brief || !canBuild || !claudeReady || !linkedinReady) return;
     autoStarted.current = true;
-    void run("build", () => buildBriefAction(clientId), "Brief built. Read it, then use the chat to decide the framing.");
+    void run("build", () => buildBriefAction(clientId), "Brief built. Read the abstract, then score the selling points.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [linkedinReady]);
 
   const building = busy === "build";
 
@@ -123,7 +136,9 @@ export function FramingRoom({
                   ? `Version ${brief.version} · ${formatDateAtTime(brief.createdAt)}${brief.note ? ` · ${brief.note}` : ""}`
                   : building
                     ? "Rupert is reading everything and researching the founder and company. This takes 1–4 minutes; keep this page open."
-                    : canBuild
+                    : canBuild && !linkedinReady
+                      ? "Waiting for the founder's LinkedIn PDF (below), or skip it."
+                      : canBuild
                       ? "Not built yet."
                       : (buildNote ?? "Not available yet.")}
               </p>
@@ -201,6 +216,15 @@ export function FramingRoom({
             </details>
           ) : null}
         </section>
+
+        <LinkedinCard
+          clientId={clientId}
+          files={linkedin}
+          error={linkedinError}
+          hasBrief={Boolean(brief)}
+          disabled={busy !== null}
+          onChange={setLinkedin}
+        />
 
         {brief ? (
           <>
@@ -710,6 +734,117 @@ function PointsPanel({
           ) : null}
         </>
       ) : null}
+    </section>
+  );
+}
+
+/** The founder's LinkedIn, as a PDF Dori uploads: AI can't open LinkedIn. The first brief waits for it. */
+function LinkedinCard({
+  clientId,
+  files,
+  error,
+  hasBrief,
+  disabled,
+  onChange,
+}: {
+  clientId: string;
+  files: BriefFiles;
+  error: string | null;
+  hasBrief: boolean;
+  disabled: boolean;
+  onChange: (files: BriefFiles) => void;
+}) {
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState<string | null>(error);
+  const done = files.linkedin.length > 0;
+
+  async function upload(list: FileList | null) {
+    const picked = Array.from(list ?? []);
+    if (input.current) input.current.value = "";
+    if (picked.length === 0) return;
+    setBusy(true);
+    setNotice(null);
+    try {
+      for (const file of picked.slice(0, 3)) {
+        const ticket = await createLinkedinUploadAction(clientId, { name: file.name, size: file.size });
+        if (!ticket.ok) throw new Error(ticket.error);
+        const { error: uploadError } = await createClient()
+          .storage.from(MATERIALS_BUCKET)
+          .uploadToSignedUrl(ticket.path, ticket.token, file, { contentType: "application/pdf" });
+        if (uploadError) throw new Error(`${file.name}: upload failed (${uploadError.message}).`);
+        const saved = await addLinkedinFileAction(clientId, { path: ticket.path, name: file.name, size: file.size, type: file.type || "application/pdf" });
+        if (!saved.ok) throw new Error(saved.error);
+        onChange(saved.files);
+      }
+    } catch (err) {
+      setNotice(err instanceof Error ? err.message : "Upload failed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function act(work: () => Promise<{ ok: true; files: BriefFiles } | { ok: false; error: string }>) {
+    setBusy(true);
+    setNotice(null);
+    try {
+      const result = await work();
+      if (!result.ok) setNotice(result.error);
+      else onChange(result.files);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (hasBrief && (done || files.skipped)) {
+    return (
+      <p className="text-body-sm text-muted">
+        Founder&apos;s LinkedIn: {done ? files.linkedin.map((file) => file.name).join(", ") : "skipped"} ·{" "}
+        <button type="button" className="text-primary disabled:opacity-40" disabled={disabled || busy} onClick={() => input.current?.click()}>
+          {busy ? "Uploading…" : "Add a PDF"}
+        </button>
+        {done ? " (then Rebuild brief, or attach it in the chat)" : ""}
+        <input ref={input} type="file" accept=".pdf" multiple className="hidden" onChange={(event) => void upload(event.target.files)} />
+        {notice ? <span className="block text-error">{notice}</span> : null}
+      </p>
+    );
+  }
+
+  return (
+    <section className={`${card} border-primary/30 px-lg py-md`}>
+      <h3 className="text-h4">Founder&apos;s LinkedIn</h3>
+      <p className="mt-xs max-w-prose text-body-sm text-muted">
+        AI can&apos;t open LinkedIn. Open the founder&apos;s profile, choose More → Save to PDF, and upload it here (co-founders too). The brief builds as soon as it&apos;s in.
+      </p>
+      {done ? (
+        <ul className="mt-sm grid gap-xs text-body-sm">
+          {files.linkedin.map((file) => (
+            <li key={file.path} className="flex items-center gap-sm">
+              <span className="text-heading">{file.name}</span>
+              <button
+                type="button"
+                className="text-primary disabled:opacity-40"
+                disabled={disabled || busy}
+                onClick={() => void act(() => removeLinkedinFileAction(clientId, file.path))}
+              >
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="mt-sm flex flex-wrap items-center gap-sm">
+        <button type="button" className={primaryButton} disabled={disabled || busy} onClick={() => input.current?.click()}>
+          {busy ? "Uploading…" : done ? "Add another PDF" : "Upload LinkedIn PDF"}
+        </button>
+        {!done && !files.skipped ? (
+          <button type="button" className={secondaryButton} disabled={disabled || busy} onClick={() => void act(() => skipLinkedinAction(clientId))}>
+            Skip, build without it
+          </button>
+        ) : null}
+        <input ref={input} type="file" accept=".pdf" multiple className="hidden" onChange={(event) => void upload(event.target.files)} />
+      </div>
+      {notice ? <p role="alert" className="mt-sm text-body-sm text-error">{notice}</p> : null}
     </section>
   );
 }
