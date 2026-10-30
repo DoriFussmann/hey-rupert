@@ -294,11 +294,11 @@ export function DocumentStep({
             {pending === "send"
               ? "Sending…"
               : nextVersion > 1
-                ? `Push to Client Portal & Send (v${nextVersion})`
-                : "Push to Client Portal & Send"}
+                ? `Push to Client Portal & Send Email (v${nextVersion})`
+                : "Push to Client Portal & Send Email"}
           </button>
           <button type="button" className={secondaryButton} disabled={locked} onClick={onSave}>
-            {pending === "save" ? "Saving…" : "Save draft"}
+            {pending === "save" ? "Saving…" : "Save Draft"}
           </button>
           {clientPreview ? (
             <button
@@ -308,11 +308,14 @@ export function DocumentStep({
               aria-controls={`${step}-client-preview`}
               onClick={() => setPreviewing((current) => !current)}
             >
-              {previewing ? "Close preview" : "Preview as client"}
+              {previewing ? "Close Preview" : "Preview as Client"}
             </button>
           ) : null}
           {unsaved ? <p className="text-body-sm text-warning">Unsaved changes</p> : null}
         </div>
+        {clientPreview && email.body.trim() && !previewing && !row?.version ? (
+          <p className="mt-sm text-body-sm text-muted">Before you send: Preview as Client shows their portal page and the email exactly as they&apos;ll get them.</p>
+        ) : null}
         {!reachable ? (
           <p className="mt-sm text-body-sm text-muted">{ADMIN_BLOCKED[step]}. You can draft now.</p>
         ) : null}
@@ -332,7 +335,7 @@ export function DocumentStep({
           aria-label="Preview as client"
           className="border-t border-border bg-background px-lg py-md"
         >
-          <p className={labelClass}>Preview · nothing is saved or sent</p>
+          <p className={labelClass}>Preview as the Client · nothing is saved or sent</p>
           <div className="mt-md rounded-card border border-border bg-surface px-lg py-md">
             <p className="text-body-sm text-muted">Their portal, after you push version {nextVersion}</p>
             <div className="mt-md">{clientPreview}</div>

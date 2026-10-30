@@ -7,6 +7,9 @@ import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/documen
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
 import { MarkdownBody } from "@/components/markdown-body";
 import { NarrativeStatementView } from "@/components/setup/narrative-statement";
+import { NarrativeView } from "@/components/setup/narrative-view";
+import { NarrativeReview } from "@/components/setup/narrative-review";
+import { FounderQuestions } from "@/components/setup/founder-questions";
 import {
   ClientAnswer,
   ClientQuestions,
@@ -275,9 +278,47 @@ export function NarrativeEditor({
         dirty={snapshot(narrative) !== saved}
         onSaved={() => setSaved(snapshot(narrative))}
         problem={sendProblem}
+        clientPreview={hasText ? <NarrativeClientPreview narrative={narrative} fileLinks={fileLinks} version={(row?.version ?? 0) + 1} /> : undefined}
         busy={pending !== null}
         pushSummary="Pushes The Outreach Narrative (and what happens next), the Company Materials Feedback, the questions for the founder, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
       />
     </StepFrame>
+  );
+}
+
+/**
+ * The client's Outreach Narrative page as it will look after this push, built
+ * from the draft with the same components the portal uses. Read only.
+ */
+function NarrativeClientPreview({
+  narrative,
+  fileLinks,
+  version,
+}: {
+  narrative: NarrativePayload;
+  fileLinks: Record<string, string>;
+  version: number;
+}) {
+  const questions = (narrative.founder_questions ?? []).map((item) => ({ ...item, answer: "" }));
+  return (
+    <div aria-label="The client's Outreach Narrative page">
+      <h2 className="text-h3 text-heading">Outreach Narrative</h2>
+      <p className="mt-xs text-body-sm text-muted">How Rupert will present your company to investors. With it, his feedback on your materials.</p>
+      <div className="mt-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md">
+        <p className="text-body text-heading">
+          {narrative.feedback
+            ? "Confirm The Outreach Narrative. Rupert's feedback on your materials is below it: nothing to confirm there."
+            : "Confirm The Outreach Narrative, or ask Rupert a question."}
+        </p>
+      </div>
+      <div className="mt-md grid gap-md">
+        <FounderQuestions items={questions} readOnly />
+        <NarrativeView
+          narrative={narrative}
+          fileLinks={fileLinks}
+          actions={<NarrativeReview version={version} hasFeedback={Boolean(narrative.feedback)} readOnly />}
+        />
+      </div>
+    </div>
   );
 }
