@@ -11,6 +11,7 @@ import { loadIntakeSettings, loadInterview } from "@/lib/intake-server";
 import { fileExtension, formatBytes, websiteHref } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { AddFiles } from "./add-files";
 
 const label = "text-label uppercase tracking-label text-muted";
 const link = "text-body-sm text-primary no-underline hover:text-primary-hover";
@@ -24,8 +25,13 @@ const actionButton =
  * told him in the intake, and every file. Only what was already shared
  * with the founder appears here.
  */
-export default async function WhatRupertKnowsPage() {
-  const { client } = await getPortalView();
+export default async function WhatRupertKnowsPage({
+  searchParams,
+}: {
+  searchParams?: { open?: string };
+}) {
+  const { client, viewAs } = await getPortalView();
+  const filesOpen = searchParams?.open === "files";
 
   if (!client?.intake_completed_at) {
     return (
@@ -66,7 +72,10 @@ export default async function WhatRupertKnowsPage() {
             <Link href="/portal/intake" className={actionButton}>
               Tell Rupert
             </Link>
-            <Link href="/portal/materials" className={actionButton}>
+            <Link
+              href="/portal/what-rupert-knows?open=files#files"
+              className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
+            >
               Add Files
             </Link>
           </div>
@@ -157,7 +166,14 @@ export default async function WhatRupertKnowsPage() {
           </p>
         </CollapsiblePanel>
 
-        <CollapsiblePanel title="Your Files" meta={`${files.length} file${files.length === 1 ? "" : "s"}`}>
+        <div id="files" className="scroll-mt-lg">
+        <CollapsiblePanel
+          key={filesOpen ? "files-open" : "files"}
+          title="Your Files"
+          meta={`${files.length} file${files.length === 1 ? "" : "s"} · Add an updated deck or anything new`}
+          defaultOpen={filesOpen}
+        >
+          <AddFiles count={files.length} readOnly={viewAs} />
           {files.length === 0 ? (
             <p className="text-body-sm text-muted">No files shared yet.</p>
           ) : (
@@ -187,12 +203,8 @@ export default async function WhatRupertKnowsPage() {
               ))}
             </ul>
           )}
-          <p className="mt-md">
-            <Link href="/portal/materials" className={link}>
-              Add Files
-            </Link>
-          </p>
         </CollapsiblePanel>
+        </div>
       </div>
     </>
   );
