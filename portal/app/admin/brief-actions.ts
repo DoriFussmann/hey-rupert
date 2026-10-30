@@ -28,6 +28,7 @@ import {
   saveSellingPoints,
   scoreSellingPoints,
   pinProposal,
+  resetBrief,
   saveBrief,
   scoreDeck,
   sendFramingMessage,
@@ -259,5 +260,15 @@ export async function saveBriefTopicsAction(topics: BriefTopic[]): Promise<{ ok:
   });
   if (error) return { ok: false, error: error.message };
   revalidatePath("/admin/forms/brief-topics");
+  return { ok: true };
+}
+
+/** Start over: the brief, chat, questions and an unsent narrative draft go; the intake and materials stay. */
+export async function resetBriefAction(clientId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const result = await resetBrief(access.supabase, clientId);
+  if (!result.ok) return result;
+  revalidate(clientId);
   return { ok: true };
 }

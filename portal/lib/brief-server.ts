@@ -743,3 +743,19 @@ export async function briefReadiness(supabase: ServiceClient, clientId: string) 
     reason: sources.value.materialsIn ? null : "The materials aren't submitted yet; the brief will use what's there.",
   };
 }
+
+/**
+ * Start over: removes the brief (every version), the Framing Room chat, the
+ * questions for the founder and a narrative draft that was never sent. The
+ * intake, the materials and the links are kept. A narrative already sent to
+ * the founder is kept too.
+ */
+export async function resetBrief(supabase: ServiceClient, clientId: string): Promise<Result<null>> {
+  for (const table of ["company_briefs", "framing_messages", "founder_questions"] as const) {
+    const { error } = await supabase.from(table).delete().eq("client_id", clientId);
+    if (error) return { ok: false, error: tableError(error.message, error.code) };
+  }
+  const { error } = await supabase.from("setup_steps").delete().eq("client_id", clientId).eq("step", "framing").eq("version", 0);
+  if (error) return { ok: false, error: error.message };
+  return { ok: true, value: null };
+}
