@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { DropSummary } from "@/components/drop-summary";
 import { useRouter } from "next/navigation";
 import { settleReadyNudgeAction } from "@/app/admin/nudge-actions";
 import { daysLabel } from "@/lib/nudge";
@@ -99,8 +100,8 @@ export function ReadyNudges({ nudges, errors }: { nudges: ReadyNudge[]; errors: 
                 </div>
               </div>
               {nudge.email ? (
-                <details className="mt-sm text-body-sm">
-                  <summary className="cursor-pointer text-primary">Preview: {nudge.email.subject}</summary>
+                <details className="group/drop mt-sm text-body-sm">
+                  <DropSummary>Preview: {nudge.email.subject}</DropSummary>
                   <div className="mt-sm rounded-md border border-border bg-background px-md py-sm">
                     <p className="text-muted">To: {nudge.email.to}</p>
                     <p className="mt-xs text-heading">{nudge.email.subject}</p>
