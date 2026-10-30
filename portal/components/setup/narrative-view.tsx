@@ -157,6 +157,7 @@ export function NarrativeView({
   fileLinks,
   feedback,
   actions,
+  questions,
 }: {
   narrative: NarrativePayload;
   /** Signed download links by file path. */
@@ -165,6 +166,8 @@ export function NarrativeView({
   feedback?: NarrativeFeedback | null;
   /** Confirm and the rest, shown right under the narrative, above the feedback. */
   actions?: React.ReactNode;
+  /** Rupert's questions for the founder, after the feedback. */
+  questions?: React.ReactNode;
 }) {
   const materialsFeedback = narrative.feedback;
   const showFeedback =
@@ -204,6 +207,7 @@ export function NarrativeView({
       {actions}
       {materialsFeedback ? <MaterialsFeedbackPanel feedback={materialsFeedback} /> : null}
       {showFeedback && feedback ? <FeedbackPanel feedback={feedback} /> : null}
+      {questions}
       {narrativeHasEarlierDraft(narrative) ? (
         <CollapsiblePanel
           title="Earlier Draft"

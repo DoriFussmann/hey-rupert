@@ -312,10 +312,10 @@ function NarrativeClientPreview({
         </p>
       </div>
       <div className="mt-md grid gap-md">
-        <FounderQuestions items={questions} readOnly />
         <NarrativeView
           narrative={narrative}
           fileLinks={fileLinks}
+          questions={<FounderQuestions items={questions} readOnly />}
           actions={<NarrativeReview version={version} hasFeedback={Boolean(narrative.feedback)} readOnly />}
         />
       </div>

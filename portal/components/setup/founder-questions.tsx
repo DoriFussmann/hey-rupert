@@ -31,8 +31,8 @@ export function FounderQuestions({ items, readOnly }: { items: Item[]; readOnly:
   }
 
   return (
-    <section className="mb-lg rounded-card border border-border bg-surface px-lg py-lg">
-      <h2 className="text-h4">A few questions from Rupert</h2>
+    <section className="rounded-card border border-border bg-surface px-lg py-lg">
+      <h2 className="text-h4">A Few Questions From Rupert</h2>
       <p className="mt-xs max-w-prose text-body-sm text-muted">
         {open > 0
           ? "Your answers sharpen the pitch and the investor emails. A line or two each is plenty."
