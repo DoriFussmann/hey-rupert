@@ -134,12 +134,17 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   company_brief: agentDetails(
     "company_brief",
-    "The client record, the intake (transcript, confirmed summary, disagreements), the company profile, the founder's files and links, and web search; the answer format (six sections).",
+    "The client record, the intake (transcript, confirmed summary, disagreements), the company profile, the founder's files (including the LinkedIn PDF you added) and links, the topics and their guidance (Forms → Brief topics), and web search; the answer format (abstract, a section per topic, questions).",
     false,
   ),
   framing_room: agentDetails(
     "framing_room",
     "The brief as it stands, what is known about the company, the conversation so far, attached files and web search; the answer format (a reply, proposed changes to sections, notes on attached files). Nothing changes until you pin a proposal.",
+    false,
+  ),
+  selling_points: agentDetails(
+    "selling_points",
+    "The ten selling points (fixed in code) and the Company Brief; the answer format (a score, reason and what to say per point). The code picks the top three; you can swap them.",
     false,
   ),
   deck_feedback: agentDetails(
@@ -149,7 +154,7 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
   ),
   brief_narrative: agentDetails(
     "brief_narrative",
-    "The Company Brief, the client record, and the founder's change requests; the answer format (The Outreach Narrative the client confirms and three sections, plus changes when revising).",
+    "The Company Brief with its three chosen selling points, the client record, and the founder's change requests; the answer format (The Outreach Narrative the client confirms and three sections, plus changes when revising).",
     false,
   ),
   materials_analysis: agentDetails(

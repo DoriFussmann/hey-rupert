@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createFramingUploadAction, pinProposalAction, sendFramingMessageAction } from "@/app/admin/brief-actions";
 import { AutoTextarea } from "@/components/email-body-field";
 import { MarkdownBody } from "@/components/markdown-body";
-import { BRIEF_SECTIONS, type CompanyBrief, type FramingMessage } from "@/lib/brief";
+import { sectionTitle, type BriefTopic, type CompanyBrief, type FramingMessage } from "@/lib/brief";
 import { INTAKE_FILE_EXTENSIONS, intakeFileProblem } from "@/lib/intake";
 import { MATERIALS_BUCKET } from "@/lib/setup";
 import { createClient } from "@/lib/supabase/client";
@@ -14,10 +14,6 @@ const ACCEPT = INTAKE_FILE_EXTENSIONS.map((extension) => `.${extension}`).join("
 
 type Attachment = { path: string; name: string; size: number; type: string };
 
-function sectionTitle(key: string) {
-  return BRIEF_SECTIONS.find((section) => section.key === key)?.title ?? key;
-}
-
 /** The chat: Dori asks and decides; Rupert answers, researches and proposes changes she pins. */
 export function FramingChat({
   clientId,
@@ -26,6 +22,7 @@ export function FramingChat({
   onMessages,
   onBrief,
   disabled,
+  topics,
 }: {
   clientId: string;
   company: string;
@@ -33,6 +30,7 @@ export function FramingChat({
   onMessages: (messages: FramingMessage[]) => void;
   onBrief: (brief: CompanyBrief) => void;
   disabled: boolean;
+  topics: BriefTopic[];
 }) {
   const [draft, setDraft] = useState("");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -143,7 +141,7 @@ export function FramingChat({
                         <li key={proposal.id} className="rounded-md border border-border bg-background px-md py-sm">
                           <div className="flex flex-wrap items-center justify-between gap-sm">
                             <p className="text-body-sm text-heading">
-                              {proposal.mode === "append" ? "Add to" : "Replace"} {sectionTitle(proposal.section)}
+                              {proposal.mode === "append" ? "Add to" : "Replace"} {sectionTitle(proposal.section, topics)}
                             </p>
                             {pinned ? (
                               <span className="text-body-sm text-success">Pinned ✓</span>

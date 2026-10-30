@@ -7,6 +7,8 @@ import {
   chooseDeckTopicsAction,
   restoreBriefVersionAction,
   saveBriefSectionsAction,
+  saveSellingPointsAction,
+  scoreSellingPointsAction,
   saveDeckWriteupsAction,
   scoreDeckAction,
   writeDeckFeedbackAction,
@@ -17,12 +19,16 @@ import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/
 import { AutoTextarea } from "@/components/email-body-field";
 import { MarkdownBody } from "@/components/markdown-body";
 import {
-  BRIEF_SECTIONS,
+  ABSTRACT_HINT,
+  QUESTIONS_HINT,
+  SELLING_POINTS,
+  SELLING_POINTS_CHOSEN,
+  abstractBullets,
   DECK_TOPICS,
   DECK_TOPICS_PER_CLIENT,
   briefQuestions,
   deckTopic,
-  type BriefSectionKey,
+  type BriefTopic,
   type CompanyBrief,
   type FounderQuestion,
   type FramingMessage,
@@ -43,6 +49,7 @@ export function FramingRoom({
   initialVersions,
   initialMessages,
   founderQuestions,
+  topics,
   canBuild,
   buildNote,
   claudeReady,
@@ -53,6 +60,7 @@ export function FramingRoom({
   initialVersions: BriefVersionRow[];
   initialMessages: FramingMessage[];
   founderQuestions: FounderQuestion[];
+  topics: BriefTopic[];
   canBuild: boolean;
   buildNote: string | null;
   claudeReady: boolean;
@@ -167,21 +175,41 @@ export function FramingRoom({
           ) : null}
         </section>
 
-        {brief
-          ? BRIEF_SECTIONS.map((section) => (
-              <SectionCard
-                key={section.key}
-                sectionKey={section.key}
-                title={section.title}
-                hint={section.hint}
-                value={brief.sections[section.key]}
-                disabled={busy !== null}
-                onSave={(value) =>
-                  run(section.key, () => saveBriefSectionsAction(clientId, { ...brief.sections, [section.key]: value }, `Edited ${section.title}.`), `${section.title} saved.`)
-                }
-              />
-            ))
-          : null}
+        {brief ? (
+          <>
+            <AbstractCard
+              value={brief.sections.abstract ?? ""}
+              disabled={busy !== null}
+              onSave={(value) => run("abstract", () => saveBriefSectionsAction(clientId, { ...brief.sections, abstract: value }, "Edited the abstract."), "Abstract saved.")}
+            />
+            <PointsPanel clientId={clientId} brief={brief} busy={busy} run={run} claudeReady={claudeReady} />
+            <div className="grid gap-md xl:grid-cols-2">
+              {topics
+                .filter((topic) => topic.enabled)
+                .map((topic) => (
+                  <SectionCard
+                    key={topic.id}
+                    sectionKey={topic.id}
+                    title={topic.title}
+                    hint={topic.guidance}
+                    value={brief.sections[topic.id] ?? ""}
+                    disabled={busy !== null}
+                    onSave={(value) =>
+                      run(topic.id, () => saveBriefSectionsAction(clientId, { ...brief.sections, [topic.id]: value }, `Edited ${topic.title}.`), `${topic.title} saved.`)
+                    }
+                  />
+                ))}
+            </div>
+            <SectionCard
+              sectionKey="questions"
+              title="Questions for the founder"
+              hint={QUESTIONS_HINT}
+              value={brief.sections.questions ?? ""}
+              disabled={busy !== null}
+              onSave={(value) => run("questions", () => saveBriefSectionsAction(clientId, { ...brief.sections, questions: value }, "Edited the questions."), "Questions saved.")}
+            />
+          </>
+        ) : null}
 
         {brief ? (
           <>
@@ -197,6 +225,7 @@ export function FramingRoom({
         messages={messages}
         onMessages={setMessages}
         onBrief={adopt}
+        topics={topics}
         disabled={!claudeReady || building}
       />
     </div>
@@ -211,7 +240,7 @@ function SectionCard({
   disabled,
   onSave,
 }: {
-  sectionKey: BriefSectionKey;
+  sectionKey: string;
   title: string;
   hint: string;
   value: string;
@@ -227,9 +256,11 @@ function SectionCard({
   return (
     <section id={`brief-${sectionKey}`} className={`${card} px-lg py-md`}>
       <div className="flex flex-wrap items-start justify-between gap-sm">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-h4">{title}</h3>
-          <p className="mt-xs text-body-sm text-muted">{hint}</p>
+          <p className="mt-xs text-body-sm text-muted" title={hint}>
+            {hint.length > 90 ? `${hint.slice(0, 88)}…` : hint}
+          </p>
         </div>
         {editing ? (
           <div className="flex gap-sm">
@@ -486,6 +517,171 @@ function OutputsPanel({
         <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>
           {notice.text}
         </p>
+      ) : null}
+    </section>
+  );
+}
+
+/** The abstract: one card per bullet, so it reads at a glance. */
+function AbstractCard({ value, disabled, onSave }: { value: string; disabled: boolean; onSave: (value: string) => Promise<boolean> }) {
+  const [editing, setEditing] = useState(false);
+  const [text, setText] = useState(value);
+  useEffect(() => {
+    if (!editing) setText(value);
+  }, [value, editing]);
+  const bullets = abstractBullets(value);
+
+  return (
+    <section id="brief-abstract" className={`${card} px-lg py-md`}>
+      <div className="flex flex-wrap items-start justify-between gap-sm">
+        <div>
+          <h3 className="text-h4">Abstract</h3>
+          <p className="mt-xs text-body-sm text-muted">{ABSTRACT_HINT}</p>
+        </div>
+        {editing ? (
+          <div className="flex gap-sm">
+            <button type="button" className={secondaryButton} onClick={() => { setText(value); setEditing(false); }}>
+              Cancel
+            </button>
+            <button type="button" className={primaryButton} disabled={disabled || text === value} onClick={() => void onSave(text).then((saved) => saved && setEditing(false))}>
+              Save
+            </button>
+          </div>
+        ) : (
+          <button type="button" className={secondaryButton} disabled={disabled} onClick={() => setEditing(true)}>
+            Edit
+          </button>
+        )}
+      </div>
+      {editing ? (
+        <AutoTextarea className={`${inputClass} mt-md`} value={text} aria-label="Abstract" onChange={(event) => setText(event.target.value)} />
+      ) : bullets.length > 0 ? (
+        <ul className="mt-md grid gap-sm sm:grid-cols-2">
+          {bullets.map((bullet, index) => (
+            <li key={index} className="rounded-md border border-border bg-background px-md py-sm text-body-sm text-heading">
+              <MarkdownBody content={bullet} emptyLabel="" className="sow-markdown" />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <p className="mt-md text-body-sm text-muted">Empty. Rebuild the brief to write it.</p>
+      )}
+    </section>
+  );
+}
+
+/** The ten selling points: all scored, the top three chosen (swappable), with what to say. */
+function PointsPanel({
+  clientId,
+  brief,
+  busy,
+  run,
+  claudeReady,
+}: {
+  clientId: string;
+  brief: CompanyBrief;
+  busy: string | null;
+  run: (key: string, work: () => Promise<ActionResult>, ok?: string) => Promise<boolean>;
+  claudeReady: boolean;
+}) {
+  const points = brief.points;
+  const [chosen, setChosen] = useState<string[]>(points.chosen);
+  const [pitches, setPitches] = useState<Record<string, string>>({});
+  useEffect(() => {
+    setChosen(points.chosen);
+    setPitches(Object.fromEntries(points.scores.map((item) => [item.point, item.pitch])));
+  }, [points]);
+
+  const scoreOf = (id: string) => points.scores.find((item) => item.point === id);
+  const ordered = [...SELLING_POINTS].sort((a, b) => (scoreOf(b.id)?.score ?? -1) - (scoreOf(a.id)?.score ?? -1));
+  const changed =
+    chosen.join() !== points.chosen.join() || points.scores.some((item) => (pitches[item.point] ?? item.pitch) !== item.pitch);
+
+  function toggle(id: string) {
+    setChosen((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : current.length >= SELLING_POINTS_CHOSEN ? current : [...current, id],
+    );
+  }
+
+  return (
+    <section className={`${card} px-lg py-md`}>
+      <div className="flex flex-wrap items-start justify-between gap-sm">
+        <div>
+          <h3 className="text-h4">The 3 strongest selling points</h3>
+          <p className="mt-xs max-w-prose text-body-sm text-muted">
+            Rupert scores all {SELLING_POINTS.length} for this raise and picks the top {SELLING_POINTS_CHOSEN}. Swap any of them and edit what to say. The narrative leads with these.
+          </p>
+        </div>
+        <button
+          type="button"
+          className={points.scores.length > 0 ? secondaryButton : primaryButton}
+          disabled={busy !== null || !claudeReady}
+          onClick={() => void run("points", () => scoreSellingPointsAction(clientId), "Selling points scored. The top three are chosen.")}
+        >
+          {busy === "points" ? "Scoring…" : points.scores.length > 0 ? "Score again" : "Score selling points"}
+        </button>
+      </div>
+
+      {points.scores.length > 0 ? (
+        <>
+          <ol className="mt-md grid gap-sm md:grid-cols-3">
+            {chosen.map((id, index) => {
+              const point = SELLING_POINTS.find((item) => item.id === id);
+              return point ? (
+                <li key={id} className="flex flex-col gap-xs rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
+                  <p className="text-label uppercase tracking-label text-primary">
+                    {index + 1} · score {scoreOf(id)?.score ?? "–"}
+                  </p>
+                  <p className="text-body text-heading">{point.title}</p>
+                  <AutoTextarea
+                    className={`${inputClass} bg-surface`}
+                    value={pitches[id] ?? ""}
+                    aria-label={`What to say: ${point.title}`}
+                    onChange={(event) => setPitches((current) => ({ ...current, [id]: event.target.value }))}
+                  />
+                </li>
+              ) : null;
+            })}
+          </ol>
+          <details className="mt-md text-body-sm" open={chosen.length < SELLING_POINTS_CHOSEN}>
+            <summary className="cursor-pointer text-primary">All {SELLING_POINTS.length} points, by score</summary>
+            <ul className="mt-sm grid gap-xs">
+              {ordered.map((point) => {
+                const score = scoreOf(point.id);
+                const on = chosen.includes(point.id);
+                return (
+                  <li key={point.id} className="flex items-start gap-sm">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      checked={on}
+                      disabled={!on && chosen.length >= SELLING_POINTS_CHOSEN}
+                      onChange={() => toggle(point.id)}
+                      aria-label={point.title}
+                    />
+                    <span className={`w-6 shrink-0 text-right ${score && score.score >= 7 ? "text-success" : score && score.score >= 4 ? "text-warning" : "text-muted"}`}>
+                      {score?.score ?? "–"}
+                    </span>
+                    <span>
+                      <span className="text-heading">{point.title}</span>
+                      {score?.reason ? <span className="text-muted"> · {score.reason}</span> : null}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+          </details>
+          {changed ? (
+            <button
+              type="button"
+              className={`${primaryButton} mt-md`}
+              disabled={busy !== null || chosen.length === 0}
+              onClick={() => void run("points-save", () => saveSellingPointsAction(clientId, chosen, pitches), "Selling points saved.")}
+            >
+              Save selling points ({chosen.length} of {SELLING_POINTS_CHOSEN})
+            </button>
+          ) : null}
+        </>
       ) : null}
     </section>
   );
