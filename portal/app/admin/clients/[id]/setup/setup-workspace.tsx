@@ -76,6 +76,7 @@ export function setupPanels({
       ...step("framing"),
       node: (
         <NarrativeEditor
+          key={row("framing")?.updated_at ?? "new"}
           clientId={clientId}
           item={item("framing")}
           row={row("framing")}

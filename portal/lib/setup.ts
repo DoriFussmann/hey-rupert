@@ -275,6 +275,8 @@ export type NarrativePayload = {
   questions?: SetupQuestion[];
   /** Questions Rupert asks the founder with this version; answered on the page (founder_questions). */
   founder_questions?: { id: string; question: string }[];
+  /** Set when Rupert finalizes the narrative in the Company Brief; the send step waits for it. */
+  finalized_at?: string;
 };
 
 /**
@@ -1122,6 +1124,7 @@ export function asNarrative(value: unknown): NarrativePayload {
     linkedin_note: optionalText(raw.linkedin_note, 2000),
     linkedin_followup: optionalText(raw.linkedin_followup, 5000),
     change_summary: optionalText(raw.change_summary, 5000),
+    finalized_at: optionalText(raw.finalized_at, 40),
     ...withQuestions(asQuestions(raw.questions)),
     ...founderQuestionsOf(raw.founder_questions),
   };

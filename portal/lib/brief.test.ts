@@ -68,8 +68,17 @@ test("the founder's feedback is the chosen topics, numbered, in the chosen order
     chosen: ["team", "the_ask", "market"],
     writeups: { team: "Name the exits.", the_ask: "Say the instrument.", market: "  " },
     scored_at: null,
+    links: { the_ask: [{ id: "l1", label: "SAFE primer", url: "https://example.com/safe" }] },
+    files: { team: [{ path: "c/x.pdf", name: "Team slide.pdf", size: 1, type: "application/pdf", uploaded_at: "" }] },
+    confirmed_at: null,
   });
-  assert.equal(md, "### 1. Team\n\nName the exits.\n\n### 2. No clear ask\n\nSay the instrument.");
+  assert.equal(
+    md,
+    "### 1. Team\n\nName the exits.\n\n- Attached: Team slide.pdf\n\n### 2. No Clear Ask\n\nSay the instrument.\n\n- [SAFE primer](https://example.com/safe)",
+  );
+  const kept = asDeck({ chosen: ["team"], confirmed_at: "2026-10-30T12:00:00Z", links: { team: [{ label: "x", url: "javascript:alert(1)" }] } });
+  assert.equal(kept.confirmed_at, "2026-10-30T12:00:00Z");
+  assert.deepEqual(kept.links, {});
 });
 
 test("questions are read one per line, bullets or numbers stripped", () => {

@@ -1,6 +1,6 @@
 import { FramingRoom } from "@/app/admin/clients/[id]/framing/framing-room";
 import type { CompanyBrief, BriefTopic, FounderQuestion, SellingPoint } from "@/lib/brief";
-import type { BriefFiles, BriefVersionRow } from "@/lib/brief-server";
+import type { BriefFiles, BriefNarrative, BriefVersionRow } from "@/lib/brief-server";
 
 export type BriefPanelData = {
   brief: CompanyBrief | null;
@@ -11,6 +11,7 @@ export type BriefPanelData = {
   filesError: string | null;
   linkedinUrls: string[];
   sellingPoints: SellingPoint[];
+  narrative: BriefNarrative;
   canBuild: boolean;
   buildNote: string | null;
   error: string | null;
@@ -23,7 +24,7 @@ export function BriefPanel({ clientId, data, claudeReady }: { clientId: string; 
       <div className="border-b border-border px-lg py-lg">
         <h3 className="text-h4">Company Brief</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
-          Rupert&apos;s summary of the company, topic by topic, and the three selling points the narrative leads with. The founder never sees it. To dig deeper, Download for AI, work it in ChatGPT, and paste the results back with Edit.
+          Rupert&apos;s read of the company, then four stages: the 3 strongest selling points, the Outreach Narrative, the Company Materials Feedback, and sending them to the client. The brief itself never reaches the founder. To dig deeper, Download for AI, work it in ChatGPT, and paste the results back with Edit.
         </p>
       </div>
       <div className="px-lg py-md">
@@ -40,6 +41,7 @@ export function BriefPanel({ clientId, data, claudeReady }: { clientId: string; 
             linkedinError={data.filesError}
             linkedinUrls={data.linkedinUrls}
             sellingPoints={data.sellingPoints}
+            narrative={data.narrative}
             canBuild={data.canBuild}
             buildNote={data.buildNote}
             claudeReady={claudeReady}

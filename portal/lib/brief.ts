@@ -391,7 +391,16 @@ export type DeckFeedback = {
   /** What Rupert writes for each chosen topic (markdown). */
   writeups: Record<string, string>;
   scored_at: string | null;
+  /** Links Rupert adds to a point of feedback, by topic. */
+  links: Record<string, DeckLink[]>;
+  /** Documents Rupert adds to a point of feedback, by topic (private storage). */
+  files: Record<string, DeckFile[]>;
+  /** Set when Rupert confirms the feedback; it then goes into the narrative's send step. */
+  confirmed_at: string | null;
 };
+
+export type DeckLink = { id: string; label: string; url: string };
+export type DeckFile = { path: string; name: string; size: number; type: string; uploaded_at: string };
 
 export const DECK_TOPICS_PER_CLIENT = 3;
 
@@ -410,7 +419,12 @@ export function deckFeedbackMarkdown(deck: DeckFeedback) {
     .map((id, index) => {
       const topic = deckTopic(id);
       const body = (deck.writeups[id] ?? "").trim();
-      return topic && body ? `### ${index + 1}. ${topic.title}\n\n${body}` : "";
+      if (!topic || !body) return "";
+      const extras = [
+        ...(deck.links?.[id] ?? []).map((link) => `- [${link.label || link.url}](${link.url})`),
+        ...(deck.files?.[id] ?? []).map((file) => `- Attached: ${file.name}`),
+      ];
+      return `### ${index + 1}. ${titleCase(topic.title)}\n\n${body}${extras.length > 0 ? `\n\n${extras.join("\n")}` : ""}`;
     })
     .filter(Boolean)
     .join("\n\n");
@@ -436,7 +450,7 @@ export function emptySections(): BriefSections {
 }
 
 export function emptyDeck(): DeckFeedback {
-  return { scores: [], chosen: [], writeups: {}, scored_at: null };
+  return { scores: [], chosen: [], writeups: {}, scored_at: null, links: {}, files: {}, confirmed_at: null };
 }
 
 function str(value: unknown, max: number) {
@@ -474,7 +488,37 @@ export function asDeck(value: unknown): DeckFeedback {
   const writeupsRaw = (raw.writeups && typeof raw.writeups === "object" ? raw.writeups : {}) as Record<string, unknown>;
   const writeups: Record<string, string> = {};
   for (const [id, body] of Object.entries(writeupsRaw)) if (deckTopic(id)) writeups[id] = str(body, SECTION_MAX);
-  return { scores, chosen, writeups, scored_at: str(raw.scored_at, 40) || null };
+  const linksRaw = (raw.links && typeof raw.links === "object" ? raw.links : {}) as Record<string, unknown>;
+  const links: Record<string, DeckLink[]> = {};
+  for (const [id, list] of Object.entries(linksRaw)) {
+    if (!deckTopic(id) || !Array.isArray(list)) continue;
+    const clean = list
+      .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
+      .map((item) => ({ id: str(item.id, 40) || Math.random().toString(36).slice(2, 10), label: str(item.label, 200).trim(), url: str(item.url, 2000).trim() }))
+      .filter((item) => /^https?:\/\//i.test(item.url))
+      .slice(0, 5);
+    if (clean.length > 0) links[id] = clean;
+  }
+  const filesRaw = (raw.files && typeof raw.files === "object" ? raw.files : {}) as Record<string, unknown>;
+  const files: Record<string, DeckFile[]> = {};
+  for (const [id, list] of Object.entries(filesRaw)) {
+    if (!deckTopic(id) || !Array.isArray(list)) continue;
+    const clean = list
+      .map((item) => (item && typeof item === "object" ? (item as Record<string, unknown>) : {}))
+      .map((item) => ({ path: str(item.path, 500), name: str(item.name, 255) || "file", size: Number(item.size) || 0, type: str(item.type, 120), uploaded_at: str(item.uploaded_at, 40) }))
+      .filter((item) => item.path && !item.path.includes(".."))
+      .slice(0, 5);
+    if (clean.length > 0) files[id] = clean;
+  }
+  return {
+    scores,
+    chosen,
+    writeups,
+    scored_at: str(raw.scored_at, 40) || null,
+    links,
+    files,
+    confirmed_at: chosen.length > 0 ? str(raw.confirmed_at, 40) || null : null,
+  };
 }
 
 /** The questions section as a list: one question per "- " line (or per line). */
