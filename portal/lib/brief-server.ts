@@ -14,6 +14,7 @@ import {
   deckTopic,
   emptyDeck,
   emptySections,
+  stripCitations,
   topTopics,
   type BriefProposal,
   type BriefSections,
@@ -267,7 +268,7 @@ function asMessage(row: Record<string, unknown>): FramingMessage {
   return {
     id: String(row.id),
     role: row.role === "assistant" ? "assistant" : "user",
-    content: String(row.content ?? ""),
+    content: stripCitations(String(row.content ?? "")),
     proposals: asProposals(row.proposals),
     pinned,
     attachments,
@@ -364,7 +365,7 @@ export async function sendFramingMessage(
     maxTokens: 8000,
   });
   const reply = result.ok
-    ? { content: text(result.input.reply) || "(no reply)", proposals: asProposals(result.input.proposals) }
+    ? { content: stripCitations(text(result.input.reply)) || "(no reply)", proposals: asProposals(result.input.proposals) }
     : { content: `I couldn't answer: ${result.reason}`, proposals: [] as BriefProposal[] };
   const stored = await supabase.from("framing_messages").insert({
     client_id: clientId,
