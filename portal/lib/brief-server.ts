@@ -226,7 +226,7 @@ type Sources = {
   materialsIn: boolean;
 };
 
-async function loadSources(supabase: ServiceClient, clientId: string): Promise<Result<Sources>> {
+export async function loadSources(supabase: ServiceClient, clientId: string): Promise<Result<Sources>> {
   const [client, interviewResult, grouped, fields, profile, answers] = await Promise.all([
     supabase.from("clients").select("*").eq("id", clientId).maybeSingle(),
     loadInterview(supabase, clientId),
@@ -829,4 +829,38 @@ export async function resetBrief(supabase: ServiceClient, clientId: string): Pro
   const { error } = await supabase.from("setup_steps").delete().eq("client_id", clientId).eq("step", "framing").eq("version", 0);
   if (error) return { ok: false, error: error.message };
   return { ok: true, value: null };
+}
+
+/** Everything the brief step needs on the client page. Never fails: errors come back as text. */
+export async function loadBriefPanel(supabase: ServiceClient, clientId: string) {
+  const [brief, versions, questions, readiness, topics, files, sources] = await Promise.all([
+    loadBrief(supabase, clientId),
+    listBriefVersions(supabase, clientId),
+    loadFounderQuestions(supabase, clientId),
+    briefReadiness(supabase, clientId),
+    loadBriefTopics(supabase),
+    loadBriefFiles(supabase, clientId),
+    loadSources(supabase, clientId),
+  ]);
+  const linkedinUrls = sources.ok ? linkedinLinks(sources.value.text) : [];
+  const failed = [brief, versions, questions].find((item) => !item.ok);
+  return {
+    brief: brief.ok ? brief.value : null,
+    versions: versions.ok ? versions.value : [],
+    questions: questions.ok ? questions.value : [],
+    topics,
+    files: files.ok ? files.value : { linkedin: [], skipped: false },
+    filesError: files.ok ? null : files.error,
+    linkedinUrls,
+    canBuild: readiness.canBuild,
+    buildNote: readiness.reason,
+    error: failed && !failed.ok ? failed.error : null,
+  };
+}
+
+/** LinkedIn profile links found in what the founder shared (links form, intake answers). */
+export function linkedinLinks(text: string): string[] {
+  const found = text.match(/(?:https?:\/\/)?(?:[a-z]{2,3}\.)?linkedin\.com\/in\/[A-Za-z0-9_%-]+\/?/gi) ?? [];
+  const urls = found.map((url) => (url.startsWith("http") ? url : `https://${url}`).replace(/\/$/, ""));
+  return Array.from(new Set(urls.map((url) => url.toLowerCase()))).slice(0, 6);
 }

@@ -185,7 +185,7 @@ async function completeIfReady(
 
   await notifyAdmin(supabase, user.id, "intake_completed", {
     email: true,
-    details: `${completionDetails(topics, topicStatus, view, conflicts)}\n\nNext: upload the founder's LinkedIn PDF in the Framing Room (LinkedIn → More → Save to PDF). The brief waits for it.`,
+    details: `${completionDetails(topics, topicStatus, view, conflicts)}\n\nNext: upload the founder's LinkedIn PDF in the Company Brief step on the client page (LinkedIn → More → Save to PDF). The brief waits for it.`,
   });
   await notifyAdminOnce(supabase, user.id, "linkedin_needed", { email: false });
   revalidateIntake(user.id);
@@ -631,7 +631,7 @@ export async function confirmIntake(
     if (completed.completed) {
       await notifyAdmin(supabase, user.id, "intake_completed", {
         email: true,
-        details: `${completionDetails(settings.topics, interview.topic_status, view, interview.conflicts)}\n\nNext: upload the founder's LinkedIn PDF in the Framing Room (LinkedIn → More → Save to PDF). The brief waits for it.`,
+        details: `${completionDetails(settings.topics, interview.topic_status, view, interview.conflicts)}\n\nNext: upload the founder's LinkedIn PDF in the Company Brief step on the client page (LinkedIn → More → Save to PDF). The brief waits for it.`,
       });
       await notifyAdminOnce(supabase, user.id, "linkedin_needed", { email: false });
     }
