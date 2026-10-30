@@ -44,6 +44,7 @@ import { setWarmIntro } from "@/lib/outreach/campaign-server";
 import { markRepliesRead } from "@/lib/outreach/replies-server";
 import { loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
 import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
+import { answerFounderQuestion } from "@/lib/brief-server";
 import { notifyAdmin as notifyGoLive } from "@/lib/notify";
 import {
   loadSetupStep,
@@ -828,4 +829,16 @@ export async function sendMeTestAction(): Promise<{ ok: true; to: string; fund: 
   if (!sent.ok) return sent;
   revalidatePath("/portal/setup/go-live");
   return { ok: true, to, fund: sent.value.fund };
+}
+
+/** The founder answers one of Rupert's questions on the Outreach Narrative page. */
+export async function answerFounderQuestionAction(questionId: string, answer: string): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const saved = await answerFounderQuestion(access.supabase, access.user.id, String(questionId ?? ""), String(answer ?? ""));
+  if (!saved.ok) return saved;
+  await notifyAdminOnce(access.supabase, access.user.id, "founder_answered", { email: false });
+  revalidatePath("/portal/setup/framing");
+  revalidatePath(`/admin/clients/${access.user.id}/framing`);
+  return { ok: true };
 }

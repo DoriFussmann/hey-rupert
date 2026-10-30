@@ -273,6 +273,8 @@ export type NarrativePayload = {
    */
   change_summary?: string;
   questions?: SetupQuestion[];
+  /** Questions Rupert asks the founder with this version; answered on the page (founder_questions). */
+  founder_questions?: { id: string; question: string }[];
 };
 
 /**
@@ -1121,7 +1123,20 @@ export function asNarrative(value: unknown): NarrativePayload {
     linkedin_followup: optionalText(raw.linkedin_followup, 5000),
     change_summary: optionalText(raw.change_summary, 5000),
     ...withQuestions(asQuestions(raw.questions)),
+    ...founderQuestionsOf(raw.founder_questions),
   };
+}
+
+function founderQuestionsOf(value: unknown): { founder_questions?: { id: string; question: string }[] } {
+  if (!Array.isArray(value)) return {};
+  const items = value
+    .map((item) => {
+      const raw = (item && typeof item === "object" ? item : {}) as Record<string, unknown>;
+      return { id: str(raw.id, 40).trim(), question: str(raw.question, 1000).trim() };
+    })
+    .filter((item) => item.id && item.question)
+    .slice(0, 12);
+  return items.length > 0 ? { founder_questions: items } : {};
 }
 
 /** The internal update stored with a narrative draft, if there is one. */
