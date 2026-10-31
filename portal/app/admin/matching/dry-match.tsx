@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { loadDryMatch } from "@/app/admin/dry-match-actions";
+import { confirmDryMatch, loadDryMatch, startOverDryMatch, type DryFacts, type SavedDryList } from "@/app/admin/dry-match-actions";
 import { DRY_STEPS, DRY_STEP_LABEL, expandStage, funnel, type DryData, type DryFund, type DryStep } from "@/lib/match/dry/core";
 import { primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
 
@@ -99,11 +99,6 @@ function MultiSelect({
   );
 }
 
-function labelsOf(data: DryData, step: DryStep, ids: string[]) {
-  const shown = step === "stage" ? expandStage(ids) : ids;
-  return data.options[step].filter((o) => shown.includes(o.id)).map((o) => o.label).join(", ");
-}
-
 function fundCells(data: DryData, fund: DryFund) {
   const pick = (list: { label: string }[], at: number[]) => at.map((i) => list[i]?.label ?? "").join("; ");
   return {
@@ -133,14 +128,86 @@ function download(data: DryData, funds: DryFund[], clientName: string) {
   URL.revokeObjectURL(url);
 }
 
+type Row = { label: string; chosen: string; before: number; removed: number; left: number };
+
+/** The bottom line: the funnel table. Used for the live result and the saved list. */
+function Summary({
+  total,
+  rows,
+  generalists,
+  children,
+}: {
+  total: number;
+  rows: Row[];
+  generalists: number | null;
+  children?: React.ReactNode;
+}) {
+  const final = rows.length ? rows[rows.length - 1].left : total;
+  return (
+    <>
+      <table className="mt-md w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="py-xs pr-md font-medium">Step</th>
+            <th className="py-xs pr-md font-medium">Chosen</th>
+            <th className="py-xs pr-md text-right font-medium">In</th>
+            <th className="py-xs pr-md text-right font-medium">Removed</th>
+            <th className="py-xs pr-md text-right font-medium">Left</th>
+            <th className="py-xs text-right font-medium">Kept</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr className="border-t border-border">
+            <td className="py-xs pr-md text-heading">Fund Database</td>
+            <td className="py-xs pr-md text-secondary">All funds</td>
+            <td className="py-xs pr-md text-right">–</td>
+            <td className="py-xs pr-md text-right">–</td>
+            <td className="py-xs pr-md text-right text-heading">{n(total)}</td>
+            <td className="py-xs text-right">100%</td>
+          </tr>
+          {rows.map((r, i) => (
+            <tr key={r.label} className="border-t border-border">
+              <td className="py-xs pr-md text-heading">
+                {i + 1}. {r.label}
+              </td>
+              <td className="py-xs pr-md text-secondary">{r.chosen}</td>
+              <td className="py-xs pr-md text-right">{n(r.before)}</td>
+              <td className="py-xs pr-md text-right text-error">−{n(r.removed)}</td>
+              <td className="py-xs pr-md text-right text-heading">{n(r.left)}</td>
+              <td className="py-xs text-right">{pct(r.left, r.before)}</td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-primary">
+            <td className="py-xs pr-md text-heading" colSpan={4}>
+              Dry Match Short List
+            </td>
+            <td className="py-xs pr-md text-right text-heading">{n(final)}</td>
+            <td className="py-xs text-right">{pct(final, total)} of all</td>
+          </tr>
+        </tbody>
+      </table>
+      <p className="mt-md text-body-sm text-muted">
+        {generalists !== null ? `Generalists in the list: ${n(generalists)}. ` : ""}Exclusions, contacts and duplicates are not applied yet.
+      </p>
+      {children}
+    </>
+  );
+}
+
+const when = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
+
 /**
- * Dry Match: the new step-by-step shortlist. Each step shows the company's
- * own choice (from the profile), lets the admin change it, and on Confirm
- * shows how many funds it removed and how many are left. Nothing is saved.
+ * Dry Match: the step-by-step shortlist. Each step shows the company's own
+ * choice (from the profile), lets the admin change it, and on Confirm shows
+ * how many funds it removed and how many are left. Confirming the summary
+ * saves the list for the next steps; Start over sets it aside.
  */
 export function DryMatch({ clientId, clientName }: { clientId: string; clientName: string }) {
   const [data, setData] = useState<DryData | null>(null);
+  const [facts, setFacts] = useState<DryFacts | null>(null);
+  const [saved, setSaved] = useState<SavedDryList | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
   const [choices, setChoices] = useState<Partial<Record<DryStep, string[]>>>({});
   const [confirmed, setConfirmed] = useState<Partial<Record<DryStep, string[]>>>({});
   /** How many steps are open: 0 = only the total; a step opens on Next. */
@@ -152,6 +219,7 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
     let live = true;
     setData(null);
     setError(null);
+    setSaved(null);
     setConfirmed({});
     setOpen(0);
     setDone(false);
@@ -159,6 +227,8 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
       if (!live) return;
       if (!result.ok) return setError(result.error);
       setData(result.data);
+      setFacts(result.facts);
+      setSaved(result.saved);
       setChoices({ ...result.data.defaults });
       setOpen(1);
     });
@@ -169,10 +239,67 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
 
   const steps = useMemo(() => (data ? funnel(data, confirmed) : []), [data, confirmed]);
 
-  if (error) return <p className="rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">{error}</p>;
+  if (error && !data) return <p className="rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">{error}</p>;
   if (!data) return <p className="text-body-sm text-muted">Loading the Fund Database…</p>;
 
   const total = data.funds.length;
+  const errorLine = error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null;
+
+  const startOver = async () => {
+    if (!window.confirm("Start over? The confirmed list is set aside (kept on record) and the steps open again from the company's profile.")) return;
+    setBusy("start");
+    setError(null);
+    const result = await startOverDryMatch(clientId);
+    setBusy(null);
+    if (!result.ok) return setError(result.error);
+    setSaved(null);
+    setConfirmed({});
+    setChoices({ ...data.defaults });
+    setOpen(1);
+    setDone(false);
+  };
+
+  if (saved) {
+    const byId = new Map(data.funds.map((f) => [f.id, f]));
+    const funds = saved.fundIds.map((id) => byId.get(id)).filter((f): f is DryFund => !!f);
+    const changed: string[] = [];
+    if (facts && saved.facts.fundDbVersion && facts.fundDbVersion !== saved.facts.fundDbVersion) changed.push("the Fund Database");
+    if (facts && saved.facts.taxonomyRevision && facts.taxonomyRevision !== saved.facts.taxonomyRevision) changed.push("the taxonomy");
+    if (facts && saved.facts.profileVersion && facts.profileVersion !== saved.facts.profileVersion) changed.push("the company profile");
+    return (
+      <Card tone="final">
+        <div className="flex flex-wrap items-end justify-between gap-md">
+          <div>
+            <BigNumber value={saved.fundCount} label="Dry Match Short List: confirmed" />
+            <p className="text-body-sm text-secondary">
+              Confirmed {when(saved.confirmedAt)}
+              {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}. Saved for the next steps.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-sm">
+            <button type="button" className={secondaryButton} disabled={funds.length === 0} onClick={() => download(data, funds, clientName)}>
+              Download the list (CSV)
+            </button>
+            <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
+              {busy === "start" ? "Starting over…" : "Start over"}
+            </button>
+          </div>
+        </div>
+        {changed.length ? (
+          <p className="mt-sm rounded-md border border-warning/40 bg-surface px-md py-sm text-body-sm text-warning">
+            Since this list was confirmed, {changed.join(" and ")} changed. Start over to rebuild it on the current data.
+          </p>
+        ) : null}
+        <Summary
+          total={saved.totalFunds}
+          generalists={funds.length === saved.fundIds.length ? funds.filter((f) => f.generalist).length : null}
+          rows={saved.steps.map((s) => ({ label: DRY_STEP_LABEL[s.step], chosen: s.chosenLabels.join(", "), before: s.before, removed: s.removed, left: s.left }))}
+        />
+        {errorLine}
+      </Card>
+    );
+  }
+
   const resetFrom = (i: number) => {
     const keep: Partial<Record<DryStep, string[]>> = {};
     DRY_STEPS.slice(0, i).forEach((s) => {
@@ -183,6 +310,18 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
     setDone(false);
   };
   const final = steps.length === DRY_STEPS.length ? steps[steps.length - 1] : null;
+  const confirmList = async () => {
+    setBusy("confirm");
+    setError(null);
+    const result = await confirmDryMatch(clientId, confirmed);
+    setBusy(null);
+    if (!result.ok) return setError(result.error);
+    setSaved(result.saved);
+  };
+  const chosenText = (step: DryStep) => {
+    const ids = step === "stage" ? expandStage(confirmed[step] ?? []) : confirmed[step] ?? [];
+    return data.options[step].filter((o) => ids.includes(o.id)).map((o) => o.label).join(", ");
+  };
 
   return (
     <div className="space-y-md">
@@ -241,7 +380,7 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
                   <p className="text-body-sm text-secondary">
                     {n(result.before)} in · <span className="text-error">−{n(result.removed)} removed</span> · {pct(result.left, result.before)} kept
                   </p>
-                  {open === i + 1 ? (
+                  {open === i + 1 && !done ? (
                     <button
                       type="button"
                       className={primaryButton}
@@ -261,54 +400,23 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
         <Card tone="final">
           <div className="flex flex-wrap items-end justify-between gap-md">
             <BigNumber value={final.left} label="Dry Match Short List" />
-            <button type="button" className={secondaryButton} onClick={() => download(data, final.funds, clientName)}>
-              Download the list (CSV)
-            </button>
+            <div className="flex flex-wrap gap-sm">
+              <button type="button" className={secondaryButton} onClick={() => download(data, final.funds, clientName)}>
+                Download the list (CSV)
+              </button>
+              <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void confirmList()}>
+                {busy === "confirm" ? "Saving…" : "Confirm list"}
+              </button>
+            </div>
           </div>
-          <table className="mt-md w-full text-left text-body-sm">
-            <thead className="text-label uppercase tracking-label text-muted">
-              <tr>
-                <th className="py-xs pr-md font-medium">Step</th>
-                <th className="py-xs pr-md font-medium">Chosen</th>
-                <th className="py-xs pr-md text-right font-medium">In</th>
-                <th className="py-xs pr-md text-right font-medium">Removed</th>
-                <th className="py-xs pr-md text-right font-medium">Left</th>
-                <th className="py-xs text-right font-medium">Kept</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-t border-border">
-                <td className="py-xs pr-md text-heading">Fund Database</td>
-                <td className="py-xs pr-md text-secondary">All funds</td>
-                <td className="py-xs pr-md text-right">–</td>
-                <td className="py-xs pr-md text-right">–</td>
-                <td className="py-xs pr-md text-right text-heading">{n(total)}</td>
-                <td className="py-xs text-right">100%</td>
-              </tr>
-              {steps.map((s, i) => (
-                <tr key={s.step} className="border-t border-border">
-                  <td className="py-xs pr-md text-heading">
-                    {i + 1}. {DRY_STEP_LABEL[s.step]}
-                  </td>
-                  <td className="py-xs pr-md text-secondary">{labelsOf(data, s.step, confirmed[s.step] ?? [])}</td>
-                  <td className="py-xs pr-md text-right">{n(s.before)}</td>
-                  <td className="py-xs pr-md text-right text-error">−{n(s.removed)}</td>
-                  <td className="py-xs pr-md text-right text-heading">{n(s.left)}</td>
-                  <td className="py-xs text-right">{pct(s.left, s.before)}</td>
-                </tr>
-              ))}
-              <tr className="border-t-2 border-primary">
-                <td className="py-xs pr-md text-heading" colSpan={4}>
-                  Dry Match Short List
-                </td>
-                <td className="py-xs pr-md text-right text-heading">{n(final.left)}</td>
-                <td className="py-xs text-right">{pct(final.left, total)} of all</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="mt-md text-body-sm text-muted">
-            Generalists in the list: {n(final.funds.filter((f) => f.generalist).length)}. Exclusions, contacts and duplicates are not applied yet.
-          </p>
+          <Summary
+            total={total}
+            generalists={final.funds.filter((f) => f.generalist).length}
+            rows={steps.map((s) => ({ label: DRY_STEP_LABEL[s.step], chosen: chosenText(s.step), before: s.before, removed: s.removed, left: s.left }))}
+          >
+            <p className="mt-xs text-body-sm text-muted">Confirm list saves it as the base for the next steps. Start over is always available.</p>
+          </Summary>
+          {errorLine}
         </Card>
       ) : null}
     </div>
