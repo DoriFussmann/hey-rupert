@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
 import type { Competitor, LinkState } from "@/lib/match/landscape/core";
 import { MAX_COMPETITORS } from "@/lib/match/landscape/core";
@@ -185,6 +185,74 @@ function Row({
   );
 }
 
+/** The confirmed list: one short row per competitor; click a row for the details. */
+function ConfirmedTable({ items }: { items: Competitor[] }) {
+  const [open, setOpen] = useState<string | null>(null);
+  const mark = (state: LinkState) => <span className={LINK_LOOK[state].tone}>{state === "live" ? "✓" : state === "broken" ? "✗" : "?"}</span>;
+  return (
+    <div className="overflow-hidden rounded-card border border-border">
+      <table className="w-full text-left text-body-sm">
+        <thead className="bg-background text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="px-sm py-xs font-medium">#</th>
+            <th className="px-sm py-xs font-medium">Competitor</th>
+            <th className="px-sm py-xs font-medium">Last round</th>
+            <th className="px-sm py-xs font-medium">Total raised</th>
+            <th className="px-sm py-xs font-medium">HQ</th>
+            <th className="px-sm py-xs font-medium">Source</th>
+            <th className="px-sm py-xs text-right font-medium">Links</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((c, i) => {
+            const expanded = open === c.id;
+            return (
+              <Fragment key={c.id}>
+                <tr
+                  className="cursor-pointer border-t border-border hover:bg-background"
+                  onClick={() => setOpen(expanded ? null : c.id)}
+                  aria-expanded={expanded}
+                >
+                  <td className="px-sm py-xs text-muted">{i + 1}</td>
+                  <td className="px-sm py-xs text-heading">
+                    <span className={`mr-xs inline-block text-muted transition-transform duration-hover ${expanded ? "rotate-90" : ""}`}>›</span>
+                    {c.name}
+                  </td>
+                  <td className="px-sm py-xs text-secondary">{[c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ") || "–"}</td>
+                  <td className="px-sm py-xs text-secondary">{c.funding.totalRaised || "–"}</td>
+                  <td className="px-sm py-xs text-secondary">{c.hq || "–"}</td>
+                  <td className="px-sm py-xs text-secondary">{c.source === "client" ? "Client" : "Web"}</td>
+                  <td className="px-sm py-xs text-right" title="Website · funding news">
+                    {mark(c.links.website)} · {mark(c.links.news)}
+                  </td>
+                </tr>
+                {expanded ? (
+                  <tr className="bg-background">
+                    <td colSpan={7} className="px-md py-sm">
+                      <div className="space-y-xs">
+                        {c.oneLiner ? <p className="text-body-sm text-secondary">{c.oneLiner}</p> : null}
+                        {c.funding.investors.length ? (
+                          <p className="text-body-sm text-secondary">
+                            <span className="text-muted">Investors named: </span>
+                            {c.funding.investors.join(", ")}
+                          </p>
+                        ) : null}
+                        <LinkLine label="Website" url={c.website} state={c.links.website} />
+                        <LinkLine label="Funding news" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
+                        {c.why ? <p className="text-body-sm text-muted">{c.why}</p> : null}
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /**
  * Step 2A: the top funded direct competitors, most relevant first. Opens
  * once Step 1 is confirmed. Show Competitors searches the web; the admin
@@ -276,6 +344,9 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
             {landscape.unfundedNamed.length ? ` Named by the client but no funding found (left out): ${landscape.unfundedNamed.join(", ")}.` : ""}
           </p>
           {items.length === 0 ? <p className="text-body-sm text-warning">No funded direct competitors found.</p> : null}
+          {locked ? (
+            <ConfirmedTable items={items} />
+          ) : (
           <ol className="space-y-sm">
             {items.map((c, i) => (
               <Row
@@ -304,6 +375,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
               />
             ))}
           </ol>
+          )}
           <div className="flex flex-wrap gap-sm">
             {locked ? null : (
               <>
