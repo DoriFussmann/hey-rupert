@@ -309,34 +309,6 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
           <p className="mt-md text-body-sm text-muted">
             Generalists in the list: {n(final.funds.filter((f) => f.generalist).length)}. Exclusions, contacts and duplicates are not applied yet.
           </p>
-          <div className="mt-md max-h-[480px] overflow-auto rounded-md border border-border bg-surface">
-            <table className="w-full text-left text-body-sm">
-              <thead className="sticky top-0 bg-surface text-label uppercase tracking-label text-muted">
-                <tr>
-                  <th className="px-sm py-xs font-medium">Fund</th>
-                  <th className="px-sm py-xs font-medium">Stage</th>
-                  <th className="px-sm py-xs font-medium">Geography</th>
-                  <th className="px-sm py-xs font-medium">Sectors</th>
-                </tr>
-              </thead>
-              <tbody>
-                {final.funds.map((fund) => {
-                  const c = fundCells(data, fund);
-                  return (
-                    <tr key={`${fund.id}-${c.name}`} className="border-t border-border align-top">
-                      <td className="px-sm py-xs text-heading">
-                        {c.name}
-                        {fund.generalist ? <span className="ml-xs text-label uppercase text-muted">generalist</span> : null}
-                      </td>
-                      <td className="px-sm py-xs text-secondary">{c.stage}</td>
-                      <td className="px-sm py-xs text-secondary">{c.geography}</td>
-                      <td className="px-sm py-xs text-secondary">{c.sectors}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
         </Card>
       ) : null}
     </div>
