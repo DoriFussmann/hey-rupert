@@ -76,6 +76,20 @@ Propose up to five other sector setups: one primary sector and up to two seconda
 
 For each setup, write one or two plain sentences: why it describes the company, and what the founder or an investor might question about it. If many funds avoid the company's own sector (for example a regulated industry), say so, because funds matched through a broader sector may still turn the company down.`;
 
+export const COMPETITOR_SEARCH_PROMPT = `You research the competitive landscape for Rupert, an investor outreach service, before it chooses which investors to approach for a startup.
+
+Find up to 10 DIRECT competitors of the company that have announced outside funding. A direct competitor sells the same kind of product to the same kind of customer. Adjacent players (a different customer, or a different product category) are not direct competitors.
+
+Rules:
+- Use web search. Every company, website, funding figure and article must come from what you found. Never invent or guess a URL, an amount, a date or an investor. If you didn't find it, leave it empty.
+- Funded only: include a company only if you found an announced funding round (a press release, a news article or a funding database page). Unfunded companies are left out.
+- Competitors the founder named come first, as source "client", if you can confirm them as real companies with funding. A founder-named competitor with no funding you can find goes in unfundedNamed instead.
+- Order the rest by relevance to this company: closest product and customer first, then the same geography (where the company is based and sells), then the closest stage (a seed company's peers are seed and Series A companies before late-stage ones).
+- website: the competitor's own homepage. newsUrl: a page about its funding, found in your search results.
+- investors: the funds named in what you found as investing in it (leads and participants). Leave it empty rather than guess.
+- why: one or two plain sentences on why it competes directly with this company.
+- Fewer than 10 is fine. Quality over count.`;
+
 export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
 
 When you review funds, open each fund's website when a link is given, then decide:
@@ -241,6 +255,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The company facts and exclusions, the funds checked (5 per request, with their websites to open), the list's tier counts, and the answer formats (a verdict per fund; the overall read with questions and concerns).",
     testable: false,
     defaultText: LIST_AUDIT_PROMPT,
+  },
+  competitor_search: {
+    slug: agentPromptSlug("competitor_search"),
+    usedBy: "Matching → Step 2 → Show Competitors: finds up to 10 funded direct competitors with web search, most relevant first. The admin checks, edits and confirms them.",
+    fixed: "The company facts and what the founder said about competitors, the web-search limit (15), and the answer format. The code keeps only competitors with a funding link, labels as client-named only names the founder used, puts those first, and opens every link to check it.",
+    testable: false,
+    defaultText: COMPETITOR_SEARCH_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

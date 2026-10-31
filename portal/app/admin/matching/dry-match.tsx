@@ -202,7 +202,15 @@ const when = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle:
  * how many funds it removed and how many are left. Confirming the summary
  * saves the list for the next steps; Start over sets it aside.
  */
-export function DryMatch({ clientId, clientName }: { clientId: string; clientName: string }) {
+export function DryMatch({
+  clientId,
+  clientName,
+  onSavedChange,
+}: {
+  clientId: string;
+  clientName: string;
+  onSavedChange?: (saved: boolean) => void;
+}) {
   const [data, setData] = useState<DryData | null>(null);
   const [facts, setFacts] = useState<DryFacts | null>(null);
   const [saved, setSaved] = useState<SavedDryList | null>(null);
@@ -238,6 +246,10 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
   }, [clientId]);
 
   const steps = useMemo(() => (data ? funnel(data, confirmed) : []), [data, confirmed]);
+  const hasSaved = saved !== null;
+  useEffect(() => {
+    onSavedChange?.(hasSaved);
+  }, [hasSaved, onSavedChange]);
 
   if (error && !data) return <p className="rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">{error}</p>;
   if (!data) return <p className="text-body-sm text-muted">Loading the Fund Database…</p>;

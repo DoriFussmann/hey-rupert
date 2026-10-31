@@ -8,7 +8,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import { ClientPicker } from "@/app/admin/matching/client-picker";
 import { ClientMatching } from "@/app/admin/matching/client-matching";
 import { TestClientTools } from "@/app/admin/matching/test-client-tools";
-import { DryMatch } from "@/app/admin/matching/dry-match";
+import { MatchingSteps } from "@/app/admin/matching/matching-steps";
 
 // Running the match and saving the run happen in server actions here.
 export const dynamic = "force-dynamic";
@@ -52,10 +52,9 @@ export default async function MatchingPage({
         {picked?.is_match_sandbox || !testClientId ? <TestClientTools testClientId={testClientId} clients={real} /> : null}
       </section>
       {picked ? (
-        <section className="mb-xl" aria-label="Dry Match">
-          <h2 className="mb-md text-h3 text-heading">Dry Match</h2>
-          <DryMatch key={picked.id} clientId={picked.id} clientName={picked.company_name} />
-        </section>
+        <div className="mb-xl">
+          <MatchingSteps key={picked.id} clientId={picked.id} clientName={picked.company_name} />
+        </div>
       ) : null}
       {picked ? (
         <ClientMatching
