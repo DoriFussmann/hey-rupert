@@ -9,6 +9,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import { ClientPicker } from "@/app/admin/matching/client-picker";
 import { ClientMatching } from "@/app/admin/matching/client-matching";
 import { TestClientTools } from "@/app/admin/matching/test-client-tools";
+import { DryMatch } from "@/app/admin/matching/dry-match";
 
 // Running the match and saving the run happen in server actions here.
 export const dynamic = "force-dynamic";
@@ -67,6 +68,15 @@ export default async function MatchingPage({
         ) : null}
         {picked?.is_match_sandbox || !testClientId ? <TestClientTools testClientId={testClientId} clients={real} /> : null}
       </section>
+      {picked ? (
+        <section className="mb-xl" aria-label="Dry Match">
+          <h2 className="mb-xs text-h3 text-heading">Dry Match (new)</h2>
+          <p className="mb-md max-w-prose text-body-sm text-secondary">
+            The new matching, step by step: financing, stage, geography, then primary sector. Each step starts from the company&apos;s profile; change it if needed and confirm. Nothing is saved, and the tools below are unchanged.
+          </p>
+          <DryMatch key={picked.id} clientId={picked.id} clientName={picked.company_name} />
+        </section>
+      ) : null}
       {picked ? (
         <ClientMatching
           key={picked.id}

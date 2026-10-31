@@ -96,6 +96,15 @@ const config: Config = {
       transitionDuration: {
         hover: "150ms",
       },
+      keyframes: {
+        "slide-in": {
+          from: { opacity: "0", transform: "translateX(32px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+      },
+      animation: {
+        "slide-in": "slide-in 450ms cubic-bezier(0.22, 1, 0.36, 1) both",
+      },
     },
   },
   plugins: [],
