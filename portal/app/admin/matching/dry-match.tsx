@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { loadDryMatch } from "@/app/admin/dry-match-actions";
 import { DRY_STEPS, DRY_STEP_LABEL, expandStage, funnel, type DryData, type DryFund, type DryStep } from "@/lib/match/dry/core";
 import { primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
@@ -9,10 +9,10 @@ const n = (value: number) => value.toLocaleString("en-US");
 const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
 
 /** A card that slides in from the side when it appears. */
-function Card({ children, tone = "plain" }: { children: React.ReactNode; tone?: "plain" | "result" | "final" }) {
+function Card({ children, tone = "plain", raised = false }: { children: React.ReactNode; tone?: "plain" | "result" | "final"; raised?: boolean }) {
   const look =
     tone === "result" ? "border-primary/40 bg-primary-tint/40" : tone === "final" ? "border-primary bg-primary-tint/60" : "border-border bg-surface";
-  return <section className={`animate-slide-in rounded-card border px-lg py-md ${look}`}>{children}</section>;
+  return <section className={`relative animate-slide-in rounded-card border px-lg py-md ${raised ? "z-30" : "z-0"} ${look}`}>{children}</section>;
 }
 
 function BigNumber({ value, label }: { value: number; label: string }) {
@@ -24,41 +24,78 @@ function BigNumber({ value, label }: { value: number; label: string }) {
   );
 }
 
-/** A dropdown of checkboxes, in the house style. */
+/** A dropdown of checkboxes, in the house style. Closes on an outside click, Escape, or when it is locked. */
 function MultiSelect({
   options,
   value,
   onChange,
   disabled,
+  onOpenChange,
 }: {
   options: { id: string; label: string }[];
   value: string[];
   onChange: (next: string[]) => void;
   disabled?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
+  const [open, setOpenState] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const setOpen = (next: boolean) => {
+    setOpenState(next);
+    onOpenChange?.(next);
+  };
+  const close = useRef(() => setOpen(false));
+  close.current = () => setOpen(false);
+
+  useEffect(() => {
+    if (disabled) close.current();
+  }, [disabled]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (box.current && !box.current.contains(event.target as Node)) close.current();
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") close.current();
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
   const picked = options.filter((o) => value.includes(o.id)).map((o) => o.label);
   return (
-    <details className="group/drop relative w-full max-w-md">
-      <summary
-        className={`flex min-h-[44px] list-none items-center justify-between gap-md rounded-md border border-border bg-background px-md py-sm text-body-sm [&::-webkit-details-marker]:hidden ${disabled ? "pointer-events-none opacity-60" : "cursor-pointer"}`}
+    <div ref={box} className="relative w-full max-w-md">
+      <button
+        type="button"
+        disabled={disabled}
+        aria-expanded={open}
+        onClick={() => setOpen(!open)}
+        className="flex min-h-[44px] w-full items-center justify-between gap-md rounded-md border border-border bg-background px-md py-sm text-left text-body-sm disabled:cursor-default disabled:opacity-60"
       >
         <span className="text-heading">{picked.length ? picked.join(", ") : "Choose…"}</span>
-        <span className="text-muted transition-transform duration-hover group-open/drop:rotate-180">▾</span>
-      </summary>
-      <div className="absolute z-20 mt-xs max-h-72 w-full overflow-auto rounded-md border border-border bg-surface p-xs shadow-lg">
-        {options.map((option) => (
-          <label key={option.id} className="flex cursor-pointer items-center gap-sm rounded px-sm py-xs text-body-sm text-body hover:bg-background">
-            <input
-              type="checkbox"
-              className="accent-primary"
-              checked={value.includes(option.id)}
-              onChange={(event) => onChange(event.target.checked ? [...value, option.id] : value.filter((id) => id !== option.id))}
-            />
-            {option.label}
-          </label>
-        ))}
-      </div>
-    </details>
+        {disabled ? null : <span className={`text-muted transition-transform duration-hover ${open ? "rotate-180" : ""}`}>▾</span>}
+      </button>
+      {open ? (
+        <div className="absolute left-0 right-0 top-full z-40 mt-xs max-h-72 overflow-auto rounded-md border border-border bg-surface p-xs shadow-lg">
+          {options.map((option) => (
+            <label key={option.id} className="flex cursor-pointer items-center gap-sm rounded px-sm py-xs text-body-sm text-body hover:bg-background">
+              <input
+                type="checkbox"
+                className="accent-primary"
+                checked={value.includes(option.id)}
+                onChange={(event) => onChange(event.target.checked ? [...value, option.id] : value.filter((id) => id !== option.id))}
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+      ) : null}
+    </div>
   );
 }
 
@@ -109,6 +146,7 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
   /** How many steps are open: 0 = only the total; a step opens on Next. */
   const [open, setOpen] = useState(0);
   const [done, setDone] = useState(false);
+  const [openMenu, setOpenMenu] = useState<DryStep | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -158,7 +196,7 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
         const value = choices[step] ?? [];
         return (
           <div key={step} className="space-y-md">
-            <Card>
+            <Card raised={openMenu === step}>
               <div className="flex flex-wrap items-baseline justify-between gap-sm">
                 <h3 className="text-h4 text-heading">
                   Filter {i + 1}: {DRY_STEP_LABEL[step]}
@@ -171,6 +209,7 @@ export function DryMatch({ clientId, clientName }: { clientId: string; clientNam
                   value={value}
                   disabled={isConfirmed}
                   onChange={(next) => setChoices((c) => ({ ...c, [step]: next }))}
+                  onOpenChange={(isOpen) => setOpenMenu((current) => (isOpen ? step : current === step ? null : current))}
                 />
                 {isConfirmed ? (
                   <button type="button" className={smallButton} onClick={() => resetFrom(i)}>

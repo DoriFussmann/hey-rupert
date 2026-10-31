@@ -99,7 +99,7 @@ const config: Config = {
       keyframes: {
         "slide-in": {
           from: { opacity: "0", transform: "translateX(32px)" },
-          to: { opacity: "1", transform: "translateX(0)" },
+          to: { opacity: "1", transform: "none" },
         },
       },
       animation: {
