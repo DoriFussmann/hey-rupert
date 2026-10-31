@@ -511,6 +511,29 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   };
 }
 
+/**
+ * Exactly what a run for this client would read, without running anything:
+ * the corrected live Fund Database, the taxonomy, the profile and the
+ * exclusions. For the "Download match data" export. Read only.
+ */
+export async function matchDataSnapshot(supabase: ServiceClient, clientId: string) {
+  const prepared = await prepare(supabase, clientId, null);
+  if (!prepared.ok) return prepared;
+  const { db, index, input, common, profileInputs } = prepared.value;
+  return {
+    ok: true as const,
+    value: {
+      db,
+      index,
+      common,
+      profileInputs,
+      exclusions: input.legacy.exclusions ?? "",
+      suppressed: input.suppressed ?? {},
+      corrections: prepared.value.run.corrections.size,
+    },
+  };
+}
+
 /** The four-tier run, with each tier's top funds checked against their stored website results. */
 async function runFourTierEngine(supabase: ServiceClient, prepared: Prepared): Promise<Result<TierRun>> {
   const { run, db, input } = prepared;

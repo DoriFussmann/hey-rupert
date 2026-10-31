@@ -101,6 +101,13 @@ export function MatchControls({
           <Link href={matchPath(clientId, "verify")} className={`${secondaryButton} no-underline`}>
             Verify Emails
           </Link>
+          <a
+            href={`/admin/clients/${clientId}/match/data`}
+            className={`${secondaryButton} no-underline`}
+            title="The live Fund Database with each fund's raw values and taxonomy categories, the taxonomy revision and this client's profile. Runs nothing."
+          >
+            Download match data
+          </a>
           <button type="button" className={primaryButton} disabled={!runId || Boolean(pushBlocked) || Boolean(busy)} onClick={push}>
             Push to client
           </button>
