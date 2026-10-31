@@ -5,7 +5,7 @@ import { DEFAULT_INTAKE_TOPICS, MATCHING_TOPICS, matchingUse, withMatchingTopics
 test("every matching topic is a default topic", () => {
   const ids = new Set(DEFAULT_INTAKE_TOPICS.map((topic) => topic.id));
   for (const id of Object.keys(MATCHING_TOPICS)) assert.ok(ids.has(id), id);
-  assert.equal(matchingUse("competitors"), null);
+  assert.equal(matchingUse("competitors"), "Competitive landscape (Step 2)");
   assert.equal(matchingUse("raise"), "Stage");
   // Financing and investor types use the defaults: not asked, not locked.
   for (const id of ["round_terms", "investor_preferences"]) {
@@ -31,4 +31,12 @@ test("matching topics can't be removed or made optional; others are kept as they
   assert.equal(kept.find((topic) => topic.id === "traction")!.required, false);
   assert.equal(kept.at(-1)!.id, "sector");
   assert.deepEqual(withMatchingTopics(DEFAULT_INTAKE_TOPICS), DEFAULT_INTAKE_TOPICS);
+});
+
+test("competitors: removed from a saved list, it comes back required", () => {
+  const saved = DEFAULT_INTAKE_TOPICS.filter((topic) => topic.id !== "competitors" && topic.id !== "founder_links");
+  const kept = withMatchingTopics(saved);
+  const competitors = kept.find((topic) => topic.id === "competitors");
+  assert.ok(competitors);
+  assert.equal(competitors.required, true);
 });

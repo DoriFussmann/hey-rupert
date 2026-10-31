@@ -313,7 +313,7 @@ export const DEFAULT_INTAKE_TOPICS: IntakeTopic[] = [
     id: "competitors",
     title: "Competitors",
     guidance:
-      "Direct competitors investors would compare them to, so Rupert avoids funds backing a competitor. \"None\" is a valid answer.",
+      "Direct competitors investors would compare them to, by name, so Rupert can map the competitive landscape and avoid funds backing a competitor. \"None\" is a valid answer.",
     required: true,
   },
   {
@@ -453,6 +453,7 @@ export const MATCHING_TOPICS: Record<string, string> = {
   sector: "Primary and secondary sectors",
   raise: "Stage",
   existing_and_exclusions: "Funds to exclude",
+  competitors: "Competitive landscape (Step 2)",
 };
 
 /** What matching uses a topic for, or null for topics used only in outreach and writing. */
