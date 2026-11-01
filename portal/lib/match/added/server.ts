@@ -12,6 +12,7 @@ import { cleanUrl } from "@/lib/match/landscape/core";
 import { loadLiveDb } from "@/lib/match/db-server";
 import { domainOf } from "@/lib/match/landscape/check";
 import {
+  addedRevision,
   ownSite,
   rawForFn,
   onlyLabels,
@@ -158,17 +159,21 @@ export async function addedForLandscape(supabase: ServiceClient, landscapeId: st
  * for this client (they count for it until reviewed). Empty before the
  * migration, so matching never breaks.
  */
-export async function addedAsDb(supabase: ServiceClient, index: TaxIndex, clientId: string): Promise<Pick<FundDb, "firms" | "contacts">> {
-  if (!/^[0-9a-f-]{36}$/i.test(clientId)) return { firms: [], contacts: [] };
+export async function addedAsDb(
+  supabase: ServiceClient,
+  index: TaxIndex,
+  clientId: string,
+): Promise<Pick<FundDb, "firms" | "contacts"> & { revision: string }> {
+  if (!/^[0-9a-f-]{36}$/i.test(clientId)) return { firms: [], contacts: [], revision: "" };
   const { data, error } = await supabase
     .from("added_funds")
     .select("*")
     .or(`status.eq.approved,and(status.eq.pending,found_for_client.eq.${clientId})`)
     .range(0, 9999);
-  if (error || !data) return { firms: [], contacts: [] };
+  if (error || !data) return { firms: [], contacts: [], revision: "" };
   const rawFor = rawForFn(index);
   const funds = (data as Row[]).map(fromRow);
-  return { firms: funds.map((f) => toFirm(f, rawFor)), contacts: funds.flatMap(toContacts) };
+  return { firms: funds.map((f) => toFirm(f, rawFor)), contacts: funds.flatMap(toContacts), revision: addedRevision(funds) };
 }
 
 /** The live database with added funds appended (never replacing a provider record). */

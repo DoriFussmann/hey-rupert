@@ -58,7 +58,8 @@ async function build(supabase: ServiceClient, clientId: string): Promise<Result<
     ok: true,
     data,
     facts: {
-      fundDbVersion: String(common.fund_db_version ?? ""),
+      // The Fund Database version plus the Rupert-added funds: a change to either shows as "changed since".
+      fundDbVersion: snapshot.value.dataVersion,
       taxonomyRevision: Number(common.taxonomy_revision ?? 0),
       profileVersion: common.profile_version == null ? "legacy" : String(common.profile_version),
     },

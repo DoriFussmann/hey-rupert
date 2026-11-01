@@ -287,15 +287,15 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
   if (locked) {
     return (
       <Card tone="final">
-        <div className="flex flex-wrap items-start justify-between gap-md">
-          <div>
+        <div className="flex items-start justify-between gap-md">
+          <div className="min-w-0 flex-1">
             <BigNumber value={items.length} label="Investors in the competitors: confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(landscape.investorsConfirmedAt)}
               {landscape.investorsConfirmedBy ? ` by ${landscape.investorsConfirmedBy}` : ""}.
             </p>
           </div>
-          <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
             {busy === "start" ? "Starting over…" : "Start over"}
           </button>
         </div>
@@ -315,7 +315,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
           <p className="text-body-sm text-muted">Researched one competitor at a time. No cap.</p>
         </div>
         {landscape.investorsStatus !== "none" ? (
-          <button type="button" className={secondaryButton} disabled={running !== null || busy !== null} onClick={() => void startOver()}>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={running !== null || busy !== null} onClick={() => void startOver()}>
             {busy === "start" ? "Starting over…" : "Start over"}
           </button>
         ) : null}

@@ -277,20 +277,20 @@ export function DryMatch({
     const byId = new Map(data.funds.map((f) => [f.id, f]));
     const funds = saved.fundIds.map((id) => byId.get(id)).filter((f): f is DryFund => !!f);
     const changed: string[] = [];
-    if (facts && saved.facts.fundDbVersion && facts.fundDbVersion !== saved.facts.fundDbVersion) changed.push("the Fund Database");
+    if (facts && saved.facts.fundDbVersion && facts.fundDbVersion !== saved.facts.fundDbVersion) changed.push("the Fund Database (or the funds added by Rupert)");
     if (facts && saved.facts.taxonomyRevision && facts.taxonomyRevision !== saved.facts.taxonomyRevision) changed.push("the taxonomy");
     if (facts && saved.facts.profileVersion && facts.profileVersion !== saved.facts.profileVersion) changed.push("the company profile");
     return (
       <Card tone="final">
-        <div className="flex flex-wrap items-start justify-between gap-md">
-          <div>
+        <div className="flex items-start justify-between gap-md">
+          <div className="min-w-0 flex-1">
             <BigNumber value={saved.fundCount} label="Dry Match Short List: confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(saved.confirmedAt)}
               {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}. Saved for the next steps.
             </p>
           </div>
-          <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
             {busy === "start" ? "Starting over…" : "Start over"}
           </button>
         </div>

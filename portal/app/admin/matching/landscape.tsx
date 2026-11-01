@@ -273,15 +273,15 @@ function ConfirmedSummary({
   const close = useCallback(() => setOpen(null), []);
   return (
     <Card tone="final">
-      <div className="flex flex-wrap items-start justify-between gap-md">
-        <div>
+      <div className="flex items-start justify-between gap-md">
+        <div className="min-w-0 flex-1">
           <BigNumber value={items.length} label="Funded competitors: confirmed" />
           <p className="text-body-sm text-secondary">
             Confirmed {when(landscape.confirmedAt)}
             {landscape.confirmedBy ? ` by ${landscape.confirmedBy}` : ""}.
           </p>
         </div>
-        <button type="button" className={secondaryButton} disabled={busy} onClick={onStartOver}>
+        <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy} onClick={onStartOver}>
           {busy ? "Starting over…" : "Start over"}
         </button>
       </div>
@@ -458,7 +458,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
         website and funding article, then confirm.
       </p>
         {landscape ? (
-          <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
             {busy === "start" ? "Starting over…" : "Start over"}
           </button>
         ) : null}

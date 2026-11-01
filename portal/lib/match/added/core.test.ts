@@ -119,3 +119,15 @@ test("raw values: the alias that maps only to the label's category wins; the lab
   assert.equal(rawFor("stage", "Seed"), "Seed");
   assert.equal(rawFor("vertical", "Nothing"), "Nothing");
 });
+
+test("fingerprint of the added funds: empty when none; changes on approve, on an edit, on a new fund; order doesn't matter", async () => {
+  const { addedRevision } = await import("./core.ts");
+  assert.equal(addedRevision([]), "");
+  const a = { ...fund };
+  const b = { ...fund, id: "u2", firmId: "RUP-ZZZ00001", name: "Other" };
+  const base = addedRevision([a, b]);
+  assert.equal(addedRevision([b, a]), base);
+  assert.notEqual(addedRevision([{ ...a, status: "pending" }, b]), base);
+  assert.notEqual(addedRevision([{ ...a, stages: ["Seed"] }, b]), base);
+  assert.notEqual(addedRevision([a]), base);
+});

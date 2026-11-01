@@ -718,7 +718,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   if (!dry) return { ok: false, error: "Confirm Step 1 first." };
   const snapshot = await matchDataSnapshot(supabase, clientId);
   if (!snapshot.ok) return snapshot;
-  const { db, index, common, profileInputs } = snapshot.value;
+  const { db, index, profileInputs } = snapshot.value;
   const data = buildDryData(db, index, { financing: [], stage: null, hqCountry: null, primarySector: null });
   type Named = { label?: string | null } | null | undefined;
   const clientSectors = [profileInputs.primarySector as Named, ...((profileInputs.secondarySectors as Named[]) ?? [])]
@@ -748,7 +748,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
-    value: { confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
+    value: { confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: snapshot.value.dataVersion },
   };
 }
 

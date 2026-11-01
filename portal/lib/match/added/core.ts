@@ -242,3 +242,39 @@ export function rawForFn(index: TaxIndex) {
   };
 }
 
+
+/**
+ * A fingerprint of the added funds merged into a client's database: which
+ * ones, their status, and every detail matching reads. "" when there are
+ * none. Saved with runs and Step 1 lists, so a change (approved, back to
+ * pending, edited, a new one) shows as "the data changed since".
+ */
+export function addedRevision(funds: AddedFund[]): string {
+  if (!funds.length) return "";
+  const parts = [...funds]
+    .sort((a, b) => a.firmId.localeCompare(b.firmId))
+    .map((f) =>
+      JSON.stringify([
+        f.firmId,
+        f.status,
+        f.name,
+        f.website,
+        f.firmType,
+        f.stages,
+        f.geographies,
+        f.industries,
+        f.verticals,
+        f.financing,
+        f.hqCountry,
+        f.contacts.map((c) => c.email),
+      ]),
+    );
+  // FNV-1a, 32-bit: short and stable; a fingerprint, not security.
+  let hash = 0x811c9dc5;
+  const text = parts.join("|");
+  for (let i = 0; i < text.length; i += 1) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193) >>> 0;
+  }
+  return `${funds.length}-${hash.toString(16).padStart(8, "0")}`;
+}

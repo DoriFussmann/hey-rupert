@@ -402,6 +402,8 @@ export function profileBasis(state: MatchProfileState) {
 }
 
 type Prepared = {
+  /** Fingerprint of the Rupert-added funds merged in ("" when none). */
+  addedRevision: string;
   run: MatchContext;
   db: FundDb;
   index: TaxIndex;
@@ -435,7 +437,8 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
 
   // Funds added by Rupert join the provider records (approved ones for every client, pending ones for the
   // client they were found for); corrections then apply to all of them alike.
-  const db = applyCorrections(withAdded(run.live.db, await addedAsDb(supabase, index, clientId)), run.corrections, run.decisions);
+  const added = await addedAsDb(supabase, index, clientId);
+  const db = applyCorrections(withAdded(run.live.db, added), run.corrections, run.decisions);
   const rejected: Record<string, string> = {};
   run.reviews.forEach((review, firmId) => {
     if (review.status === "no") rejected[firmId] = review.reason || "Rejected";
@@ -458,6 +461,7 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   return {
     ok: true,
     value: {
+      addedRevision: added.revision,
       run,
       db,
       index,
@@ -509,6 +513,8 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
         // The identity groups this run applied, with their decisions.
         identities: groups,
         fofExceptions: Array.from(fof.value.values()).filter((e) => e.status === "approved").map((e) => e.firmId),
+        // The Rupert-added funds this run used ("" when none).
+        addedFunds: added.revision,
       },
     },
   };
@@ -522,12 +528,15 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
 export async function matchDataSnapshot(supabase: ServiceClient, clientId: string) {
   const prepared = await prepare(supabase, clientId, null);
   if (!prepared.ok) return prepared;
-  const { db, index, input, common, profileInputs } = prepared.value;
+  const { db, index, input, common, profileInputs, addedRevision } = prepared.value;
   return {
     ok: true as const,
     value: {
       db,
       index,
+      addedRevision,
+      /** The Fund Database version plus the added funds' fingerprint: what Step 1 and Step 2 record. */
+      dataVersion: addedRevision ? `${String(common.fund_db_version ?? "")}+added:${addedRevision}` : String(common.fund_db_version ?? ""),
       common,
       profileInputs,
       exclusions: input.legacy.exclusions ?? "",
@@ -709,6 +718,12 @@ export async function staleReasons(
   }
   if (live.value.version.id !== header.fundDbVersion) {
     reasons.push(`The Fund Database changed since this run (now ${live.value.version.fileName}).`);
+  }
+  const taxonomyNow = await loadTaxonomy(supabase);
+  if (taxonomyNow.ok) {
+    const addedNow = (await addedAsDb(supabase, taxonomyNow.value, clientId)).revision;
+    const addedThen = typeof header.settings.addedFunds === "string" ? header.settings.addedFunds : "";
+    if (addedNow !== addedThen) reasons.push("Funds added by Rupert were added, approved or changed since this run.");
   }
   if (!header.settings.basis) {
     reasons.push("This run was made before runs recorded the profile they used.");

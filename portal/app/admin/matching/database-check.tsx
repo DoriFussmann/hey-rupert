@@ -657,17 +657,17 @@ function ReviewAndConfirm({
   const locked = !!check.confirmedAt;
   return (
     <section className="mt-xl border-t border-border pt-md">
-      <div className="flex flex-wrap items-start justify-between gap-md">
-        <div>
+      <div className="flex items-start justify-between gap-md">
+        <div className="min-w-0 flex-1">
           <h4 className="text-h4 text-heading">Your decisions</h4>
           <p className="text-body-sm text-muted">Newest first. Undo puts an investor back to its automatic match.</p>
         </div>
         {locked ? (
-          <button type="button" className={secondaryButton} disabled={busy} onClick={() => onConfirm(false)}>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy} onClick={() => onConfirm(false)}>
             Reopen
           </button>
         ) : (
-          <button type="button" className={primaryButton} disabled={busy || !ready} onClick={() => onConfirm(true)}>
+          <button type="button" className={`${primaryButton} shrink-0`} disabled={busy || !ready} onClick={() => onConfirm(true)}>
             Confirm the check
           </button>
         )}
@@ -755,8 +755,8 @@ function OutcomeCard({
   ];
   return (
     <Card tone="final">
-      <div className="flex flex-wrap items-start justify-between gap-md">
-        <div>
+      <div className="flex items-start justify-between gap-md">
+        <div className="min-w-0 flex-1">
           <BigNumber value={inList + back + added} label={locked ? "Investors in the competitors: check confirmed" : "Investors in the competitors: checked"} />
           <p className="text-body-sm text-secondary">
             {n(inList + back + added)} of {n(total)} go forward with this client ({n(inList)} already in the shortlist, {n(back)} brought back
@@ -767,11 +767,11 @@ function OutcomeCard({
           </p>
         </div>
         {locked ? (
-          <button type="button" className={secondaryButton} disabled={busy} onClick={() => onConfirm(false)}>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy} onClick={() => onConfirm(false)}>
             Reopen
           </button>
         ) : (
-          <button type="button" className={primaryButton} disabled={busy} onClick={() => onConfirm(true)}>
+          <button type="button" className={`${primaryButton} shrink-0`} disabled={busy} onClick={() => onConfirm(true)}>
             Confirm the check
           </button>
         )}
