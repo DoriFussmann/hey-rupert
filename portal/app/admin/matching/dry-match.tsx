@@ -148,6 +148,7 @@ function Summary({
       <table className="mt-md w-full text-left text-body-sm">
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
+            <th className="py-xs pr-md font-medium">#</th>
             <th className="py-xs pr-md font-medium">Step</th>
             <th className="py-xs pr-md font-medium">Chosen</th>
             <th className="py-xs pr-md text-right font-medium">In</th>
@@ -158,6 +159,7 @@ function Summary({
         </thead>
         <tbody>
           <tr className="border-t border-border">
+            <td className="py-xs pr-md text-muted" />
             <td className="py-xs pr-md text-heading">Fund Database</td>
             <td className="py-xs pr-md text-secondary">All funds</td>
             <td className="py-xs pr-md text-right">–</td>
@@ -167,9 +169,8 @@ function Summary({
           </tr>
           {rows.map((r, i) => (
             <tr key={r.label} className="border-t border-border">
-              <td className="py-xs pr-md text-heading">
-                {i + 1}. {r.label}
-              </td>
+              <td className="py-xs pr-md text-muted">{i + 1}</td>
+              <td className="py-xs pr-md text-heading">{r.label}</td>
               <td className="py-xs pr-md text-secondary">{r.chosen}</td>
               <td className="py-xs pr-md text-right">{n(r.before)}</td>
               <td className="py-xs pr-md text-right text-error">−{n(r.removed)}</td>
@@ -178,6 +179,7 @@ function Summary({
             </tr>
           ))}
           <tr className="border-t-2 border-primary">
+            <td className="py-xs pr-md" />
             <td className="py-xs pr-md text-heading" colSpan={4}>
               Dry Match Short List
             </td>
