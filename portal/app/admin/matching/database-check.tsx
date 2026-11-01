@@ -410,7 +410,7 @@ function DecisionSummary({
         </span>
         <span className="text-muted">
           {" "}
-          · Bring back and Leave out counts include defaults; a fund counts as decided once you choose (one by one or with &ldquo;all&rdquo;). Click a row to see its funds.
+          · Click a row to see its funds.
         </span>
       </p>
       <table className="mt-xs w-full text-left text-body-sm">
@@ -433,7 +433,7 @@ function DecisionSummary({
               <tr
                 key={r.key}
                 tabIndex={0}
-                className="cursor-pointer border-t border-border align-top hover:bg-background focus:bg-background focus:outline-none"
+                className={`cursor-pointer border-t border-border align-top hover:bg-background focus:bg-background focus:outline-none ${mine(r.rows) === r.rows.length ? "bg-success/5" : ""}`}
                 onClick={() => onOpen(r.key)}
                 onKeyDown={(event) => {
                   if (event.key === "Enter") onOpen(r.key);
@@ -451,19 +451,41 @@ function DecisionSummary({
                   {r.rows.length - mine(r.rows) ? n(r.rows.length - mine(r.rows)) : "✓"}
                 </td>
                 <td className="py-xs text-right" onClick={(event) => event.stopPropagation()}>
-                  <div className="flex flex-wrap justify-end gap-xs">
-                    <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, "bring_back")}>
-                      Bring back all
-                    </button>
-                    <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, "leave_out")}>
-                      Leave out all
-                    </button>
-                    {mine(r.rows) ? (
-                      <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, null)}>
-                        Back to default
-                      </button>
-                    ) : null}
-                  </div>
+                  {(() => {
+                    const decidedAll = mine(r.rows) === r.rows.length;
+                    const allBack = decidedAll && count(r.rows, "bring_back") === r.rows.length;
+                    const allOut = decidedAll && count(r.rows, "leave_out") === r.rows.length;
+                    const seg = "px-sm py-[3px] text-body-sm transition-colors duration-hover disabled:cursor-default";
+                    return (
+                      <div className="inline-flex flex-col items-end gap-xs">
+                        <div className="inline-flex overflow-hidden rounded-md border border-border">
+                          <button
+                            type="button"
+                            disabled={busy || allBack}
+                            aria-pressed={allBack}
+                            className={`${seg} ${allBack ? "bg-primary text-white" : "bg-surface text-secondary hover:text-heading"}`}
+                            onClick={() => onGroup(ids, "bring_back")}
+                          >
+                            {allBack ? "✓ All brought back" : "Bring back all"}
+                          </button>
+                          <button
+                            type="button"
+                            disabled={busy || allOut}
+                            aria-pressed={allOut}
+                            className={`${seg} border-l border-border ${allOut ? "bg-primary text-white" : "bg-surface text-secondary hover:text-heading"}`}
+                            onClick={() => onGroup(ids, "leave_out")}
+                          >
+                            {allOut ? "✓ All left out" : "Leave out all"}
+                          </button>
+                        </div>
+                        {mine(r.rows) ? (
+                          <button type="button" disabled={busy} className="text-body-sm text-muted underline hover:text-heading" onClick={() => onGroup(ids, null)}>
+                            Back to default
+                          </button>
+                        ) : null}
+                      </div>
+                    );
+                  })()}
                 </td>
               </tr>
             );
@@ -546,6 +568,14 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   };
 
   const group = async (ids: string[], action: "bring_back" | "leave_out" | null) => {
+    const targets = (check?.rows ?? []).filter((r) => ids.includes(r.investor.id));
+    const already = targets.filter((r) => (action ? !r.defaulted && r.action === action : r.defaulted)).length;
+    if (targets.length && already === targets.length) {
+      const text = `Already ${action === "bring_back" ? "brought back" : action === "leave_out" ? "left out" : "on the default"}: ${n(targets.length)} ${targets.length === 1 ? "fund" : "funds"}. Nothing to change.`;
+      setNotice(text);
+      setToast(text);
+      return;
+    }
     setBusy(true);
     setError(null);
     setNotice(null);
@@ -553,7 +583,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
-    const text = `${n(result.changed)} ${result.changed === 1 ? "fund" : "funds"} ${
+    const changedNow = targets.length - already;
+    const text = `${n(changedNow)} ${changedNow === 1 ? "fund" : "funds"} ${
       action === "bring_back" ? "brought back" : action === "leave_out" ? "left out" : "back to the default (to decide)"
     }. Saved.`;
     setNotice(text);
