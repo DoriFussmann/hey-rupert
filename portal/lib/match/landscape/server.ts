@@ -697,7 +697,7 @@ export async function decideInvestor(
   supabase: ServiceClient,
   clientId: string,
   investorId: string,
-  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean },
+  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean; clear?: boolean },
   actor: string | null,
 ): Promise<Result<null>> {
   const current = await currentLandscape(supabase, clientId);
@@ -708,6 +708,16 @@ export async function decideInvestor(
   const decisions = await loadDecisions(supabase, land.id);
   if (!decisions.ok) return decisions;
   const previous = decisions.value[investorId];
+  // Undo: the investor goes back to its automatic match, as if never decided.
+  if (patch.clear) {
+    const rest = { ...decisions.value };
+    delete rest[investorId];
+    const { error } = await supabase
+      .from("competitor_landscapes")
+      .update({ investor_decisions: rest, updated_at: new Date().toISOString() })
+      .eq("id", land.id);
+    return error ? { ok: false, error: landscapeTableError(error.message, error.code) } : { ok: true, value: null };
+  }
   const next: InvestorDecision = { ...(previous ?? {}), by: actor, at: new Date().toISOString() };
   if (patch.firmId !== undefined) {
     next.firmId = patch.firmId;

@@ -147,7 +147,7 @@ export async function runInvestorCheck(clientId: string): Promise<Result<{ check
 export async function decideOnInvestor(
   clientId: string,
   investorId: string,
-  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean },
+  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean; clear?: boolean },
 ): Promise<Result<{ check: CheckResult }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
@@ -159,6 +159,7 @@ export async function decideOnInvestor(
   if (typeof patch?.lesson === "boolean") clean.lesson = patch.lesson;
   if (typeof patch?.website === "string") clean.website = patch.website.slice(0, 500);
   if (patch?.resetMatch === true) clean.resetMatch = true;
+  if (patch?.clear === true) clean.clear = true;
   try {
     const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email);
     if (!saved.ok) return { ok: false, error: saved.error };

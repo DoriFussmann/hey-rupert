@@ -30,6 +30,20 @@ const TONE: Record<Bucket, string> = {
 
 const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
 
+/** Undo the admin's decision on this investor: back to its automatic match. */
+function UndoLink({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+  if (!row.decision) return null;
+  const at = row.decision.at ? new Date(row.decision.at).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "";
+  return (
+    <p className="mt-xs text-body-sm text-muted">
+      Your decision{at ? ` (${at})` : ""}.{" "}
+      <button type="button" disabled={busy} className="underline hover:text-heading" onClick={() => onDecide({ clear: true })}>
+        Undo
+      </button>
+    </p>
+  );
+}
+
 /** Inline website entry: the admin's own research. */
 function WebsiteInput({ initial, busy, label, onSave }: { initial: string; busy: boolean; label: string; onSave: (url: string) => void }) {
   const [value, setValue] = useState(initial);
@@ -62,8 +76,9 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
         <p className="text-muted">Backed {backedText(row)}</p>
         <p className="text-muted">
           Database: {row.firmName}
-          {row.match.how === "website" ? " (same website)" : row.match.how === "name" ? " (same name)" : " (chosen by you)"}
+          {row.decision?.firmId ? " (chosen by you)" : row.match.how === "website" ? " (same website)" : " (same name)"}
         </p>
+        <UndoLink row={row} busy={busy} onDecide={onDecide} />
       </td>
       <td className="py-sm pr-md">
         {row.failure ? (
@@ -158,7 +173,10 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
   const missing = row.bucket === "missing_fund" || row.bucket === "missing_angel";
   return (
     <tr className="border-t border-border align-top">
-      <td className="py-xs pr-md text-heading">{row.investor.name}</td>
+      <td className="py-xs pr-md text-heading">
+        {row.investor.name}
+        <UndoLink row={row} busy={busy} onDecide={onDecide} />
+      </td>
       <td className="py-xs pr-md text-secondary">{KIND_LABEL[row.investor.kind]}</td>
       <td className="py-xs pr-md text-secondary">{backedText(row)}</td>
       <td className="py-xs text-secondary">
