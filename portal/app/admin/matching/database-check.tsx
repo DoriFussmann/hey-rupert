@@ -752,7 +752,7 @@ function OutcomeCard({
     { label: "Added to the database", value: added, note: "Try and Add to DB: for this client now; for everyone once you approve.", tone: "text-success" },
     { label: "Not in the database: funds", value: funds, note: "Not added yet: Try and Add to DB in the details." },
     { label: "Not in the database: angels", value: angels, note: "Not added yet: Try and Add to DB in the details." },
-  ];
+  ].filter((r) => r.label !== "Added to the database" || r.value > 0);
   return (
     <Card tone="final">
       <div className="flex items-start justify-between gap-md">
@@ -1073,7 +1073,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </tr>
         </thead>
         <tbody>
-          {ORDER.map((b) => (
+          {ORDER.filter((b) => b !== "added" || check.counts.added > 0).map((b) => (
             <tr
               key={b}
               tabIndex={0}
