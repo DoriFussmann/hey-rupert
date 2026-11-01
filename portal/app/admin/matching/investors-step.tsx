@@ -78,8 +78,23 @@ function InvestorModal({ inv, onClose }: { inv: Investor; onClose: () => void })
   );
 }
 
-function InvestorTable({ items, onOpen, onRemove }: { items: Investor[]; onOpen: (i: number) => void; onRemove?: (id: string) => void }) {
+function InvestorTable({
+  items,
+  onOpen,
+  onRemove,
+  limit,
+}: {
+  items: Investor[];
+  onOpen: (i: number) => void;
+  onRemove?: (id: string) => void;
+  /** Show only the first rows; a panel at the bottom opens the rest. */
+  limit?: number;
+}) {
+  const [all, setAll] = useState(false);
+  const shown = limit && !all ? items.slice(0, limit) : items;
+  const hidden = items.length - shown.length;
   return (
+    <>
     <table className="mt-md w-full text-left text-body-sm">
       <thead className="text-label uppercase tracking-label text-muted">
         <tr>
@@ -91,7 +106,7 @@ function InvestorTable({ items, onOpen, onRemove }: { items: Investor[]; onOpen:
         </tr>
       </thead>
       <tbody>
-        {items.map((inv, i) => (
+        {shown.map((inv, i) => (
           <tr
             key={inv.id}
             tabIndex={0}
@@ -126,6 +141,18 @@ function InvestorTable({ items, onOpen, onRemove }: { items: Investor[]; onOpen:
         ))}
       </tbody>
     </table>
+    {limit && items.length > limit ? (
+      <button
+        type="button"
+        aria-expanded={all}
+        onClick={() => setAll(!all)}
+        className="mt-xs flex w-full items-center justify-center gap-sm rounded-md border border-border bg-surface/70 px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
+      >
+        {all ? "Show the top " + limit + " only" : `Show all ${items.length} (${hidden} more)`}
+        <span className={`transition-transform duration-hover ${all ? "rotate-180" : ""}`}>▾</span>
+      </button>
+    ) : null}
+    </>
   );
 }
 
@@ -272,8 +299,8 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
             {busy === "start" ? "Starting over…" : "Start over"}
           </button>
         </div>
-        <InvestorTable items={items} onOpen={setOpen} />
-        <p className="mt-md text-body-sm text-muted">Click an investor for the rounds and sources.</p>
+        <InvestorTable items={items} onOpen={setOpen} limit={10} />
+        <p className="mt-md text-body-sm text-muted">Most competitors backed first. Click an investor for the rounds and sources.</p>
         {errorLine}
         {modal}
       </Card>
