@@ -268,7 +268,9 @@ export async function addFund(
   if (elsewhere) {
     return {
       ok: false,
-      error: `${elsewhere.name} was already added (${elsewhere.status === "pending" ? "pending review" : elsewhere.status}) while researching another client. ${
+      error: `${elsewhere.name} was already added (${elsewhere.status === "pending" ? "pending review" : elsewhere.status})${
+        elsewhere.landscapeId === input.landscapeId ? " for another investor on this list" : " while researching another client"
+      }. ${
         elsewhere.status === "pending" ? "Approve it on the Fund Database page to use it for every client." : ""
       }`.trim(),
     };
