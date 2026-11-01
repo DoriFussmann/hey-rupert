@@ -6,7 +6,7 @@ import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult } from "@/lib/match/landscape/server";
 import { inputClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
-import { Card } from "@/app/admin/matching/dry-match";
+import { BigNumber, Card } from "@/app/admin/matching/dry-match";
 
 const n = (value: number) => value.toLocaleString("en-US");
 const backedText = (row: CheckRow) => Array.from(new Set(row.investor.backed.map((b) => b.competitor))).join(", ");
@@ -682,6 +682,86 @@ function ReviewAndConfirm({
 }
 
 /**
+ * The outcome, once nothing is left open: like Step 1, a summary card on
+ * top with Confirm in the corner. The details stay below, folded away.
+ */
+function OutcomeCard({
+  check,
+  busy,
+  onConfirm,
+}: {
+  check: CheckResult;
+  busy: boolean;
+  onConfirm: (confirm: boolean) => void;
+}) {
+  const by = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
+  const inList = by("in_list").length;
+  const back = by("not_in_list").filter((r) => r.action === "bring_back").length;
+  const out = by("not_in_list").filter((r) => r.action === "leave_out").length;
+  const funds = by("missing_fund").length;
+  const angels = by("missing_angel").length;
+  const total = check.rows.length;
+  const locked = !!check.confirmedAt;
+  const rows: { label: string; value: number; note: string; tone?: string }[] = [
+    { label: "Already in the shortlist", value: inList, note: "In the database and in Step 1's list.", tone: "text-success" },
+    { label: "Brought back", value: back, note: "In the database; added to this client's list.", tone: "text-success" },
+    { label: "Left out", value: out, note: "In the database; a real misfit (stage, geography…)." },
+    { label: "Not in the database: funds", value: funds, note: "To add (Try and Add to DB, next)." },
+    { label: "Not in the database: angels", value: angels, note: "To add, as their own list (next)." },
+  ];
+  return (
+    <Card tone="final">
+      <div className="flex flex-wrap items-start justify-between gap-md">
+        <div>
+          <BigNumber value={inList + back} label={locked ? "Investors in the competitors: check confirmed" : "Investors in the competitors: checked"} />
+          <p className="text-body-sm text-secondary">
+            {n(inList + back)} of {n(total)} go forward with this client ({n(inList)} already in the shortlist, {n(back)} brought back).
+            {locked
+              ? ` Confirmed ${new Date(check.confirmedAt!).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}${check.confirmedBy ? ` by ${check.confirmedBy}` : ""}.`
+              : ""}
+          </p>
+        </div>
+        {locked ? (
+          <button type="button" className={secondaryButton} disabled={busy} onClick={() => onConfirm(false)}>
+            Reopen
+          </button>
+        ) : (
+          <button type="button" className={primaryButton} disabled={busy} onClick={() => onConfirm(true)}>
+            Confirm the check
+          </button>
+        )}
+      </div>
+      <table className="mt-md w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="py-xs pr-md font-medium">Outcome</th>
+            <th className="py-xs pr-md text-right font-medium">Investors</th>
+            <th className="py-xs pr-md text-right font-medium">Share</th>
+            <th className="py-xs font-medium" />
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr key={r.label} className="border-t border-border">
+              <td className={`py-xs pr-md ${r.tone ?? "text-heading"}`}>{r.label}</td>
+              <td className="py-xs pr-md text-right text-heading">{n(r.value)}</td>
+              <td className="py-xs pr-md text-right text-secondary">{pct(r.value, total)}</td>
+              <td className="py-xs text-muted">{r.note}</td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-primary">
+            <td className="py-xs pr-md text-heading">All investors</td>
+            <td className="py-xs pr-md text-right text-heading">{n(total)}</td>
+            <td className="py-xs pr-md text-right text-secondary">100%</td>
+            <td />
+          </tr>
+        </tbody>
+      </table>
+    </Card>
+  );
+}
+
+/**
  * Step 2C: each confirmed investor against the Fund Database and the Step 1
  * shortlist. Unclear matches are confirmed by the admin; funds in the
  * database but not in the shortlist show the Step 1 filter that removed them,
@@ -715,6 +795,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const [toast, setToast] = useState<string | null>(null);
   const [finding, setFinding] = useState<{ done: number; total: number } | null>(null);
   const [recorded, setRecorded] = useState<number | null>(null);
+  const [showDetails, setShowDetails] = useState(false);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3500);
@@ -820,11 +901,15 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const byBucket = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const total = check.rows.length;
   const notInList = byBucket("not_in_list");
+  const settled =
+    !check.rows.some((r) => r.unsure) &&
+    !check.rows.some((r) => r.bucket === "confirm") &&
+    !check.rows.some((r) => r.bucket === "not_in_list" && r.defaulted);
   /** Confirmed: every decision button is off until Reopen. */
   const frozen = busy || !!check.confirmedAt;
   const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
 
-  return (
+  const details = (
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
         <h3 className="text-h4 text-heading">Check against the fund database</h3>
@@ -938,8 +1023,33 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         </section>
       ) : null}
       <ReviewAndConfirm check={check} busy={busy} onDecide={(id, p) => void decide(id, p)} onConfirm={(c) => void confirmCheck(c)} />
-      {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
-      <Toast text={toast} />
     </Card>
+  );
+
+  if (!settled) {
+    return (
+      <>
+        {details}
+        {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
+        <Toast text={toast} />
+      </>
+    );
+  }
+  return (
+    <div className="space-y-md">
+      <OutcomeCard check={check} busy={busy} onConfirm={(c) => void confirmCheck(c)} />
+      {error ? <p className="text-body-sm text-error">{error}</p> : null}
+      <button
+        type="button"
+        aria-expanded={showDetails}
+        onClick={() => setShowDetails(!showDetails)}
+        className="flex w-full items-center justify-center gap-sm rounded-md border border-border bg-surface px-md py-[6px] text-body-sm text-secondary hover:text-heading"
+      >
+        {showDetails ? "Hide the details" : "Show the details: groups, decisions and websites"}
+        <span className={`transition-transform duration-hover ${showDetails ? "rotate-180" : ""}`}>▾</span>
+      </button>
+      {showDetails ? details : null}
+      <Toast text={toast} />
+    </div>
   );
 }
