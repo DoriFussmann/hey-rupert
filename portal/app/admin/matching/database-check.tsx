@@ -109,6 +109,8 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
             <p className="text-secondary">Fund lists: {row.failure.fundValues}</p>
             {row.overlap.client.length ? (
               <p className="text-success">Lists {row.overlap.client.join(", ")}: the client&apos;s sector.</p>
+            ) : row.failure.step === "sector" ? (
+              <p className="text-warning">Backed a competitor, but lists none of the client&apos;s sectors.</p>
             ) : null}
             {row.overlap.competitor.length ? (
               <p className="text-secondary">Shares {row.overlap.competitor.join(", ")} with the competitor it backed.</p>
@@ -252,13 +254,21 @@ function DecisionSummary({
   onGroup: (ids: string[], action: "bring_back" | "leave_out" | null) => void;
 }) {
   const reasons: Reason[] = [
-    { key: "sector", label: "Sector only", note: "Backed a direct competitor: brought back by default." },
+    { key: "sector_shared", label: "Sector only, lists the client's sector", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
+    { key: "sector_none", label: "Sector only, no shared sector", note: "Backed a direct competitor, but lists none of the client's sectors: left out by default." },
     { key: "stage", label: "Stage", note: "A different stage: left out by default." },
     { key: "geography", label: "Geography", note: "Another geography: left out by default." },
     { key: "financing", label: "Financing", note: "Another financing type: left out by default." },
     { key: "none", label: "Passes Step 1 today", note: "The database changed after Step 1: left out by default." },
   ]
-    .map((r) => ({ ...r, rows: rows.filter((x) => (x.failure?.step ?? "none") === r.key) }))
+    .map((r) => ({
+      ...r,
+      rows: rows.filter((x) => {
+        const step = x.failure?.step ?? "none";
+        if (step === "sector") return r.key === (x.overlap.client.length ? "sector_shared" : "sector_none");
+        return step === r.key;
+      }),
+    }))
     .filter((r) => r.rows.length);
   if (!reasons.length) return null;
   const count = (list: CheckRow[], a: "bring_back" | "leave_out") => list.filter((x) => x.action === a).length;
@@ -280,13 +290,12 @@ function DecisionSummary({
         <tbody>
           {reasons.map((r) => {
             const ids = r.rows.map((x) => x.investor.id);
-            const withClient = r.key === "sector" ? r.rows.filter((x) => x.overlap.client.length).length : 0;
+
             return (
               <tr key={r.key} className="border-t border-border align-top">
                 <td className="py-xs pr-md">
                   <p className="text-heading">{r.label}</p>
                   <p className="text-muted">{r.note}</p>
-                  {r.key === "sector" && withClient ? <p className="text-success">{n(withClient)} list one of the client&apos;s sectors.</p> : null}
                 </td>
                 <td className="py-xs pr-md text-right text-heading">{n(r.rows.length)}</td>
                 <td className="py-xs pr-md text-right">{n(count(r.rows, "bring_back"))}</td>

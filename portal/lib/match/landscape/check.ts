@@ -128,12 +128,14 @@ export const BUCKET_LABEL: Record<Bucket, string> = {
 export type Action = "bring_back" | "leave_out";
 
 /**
- * The default: a fund removed only by the sector filter backed a direct
- * competitor, which is evidence it invests in this space: brought back. A
- * fund removed by stage, geography or financing is a real misfit: left out.
+ * The default. Removed only by the sector filter, it backed a direct
+ * competitor: brought back only when it also lists one of the client's own
+ * sectors (in practice its secondary sectors, since the primary failed),
+ * by exact label. Otherwise, and when removed by stage, geography or
+ * financing: left out.
  */
-export function defaultAction(failure: { step: DryStep } | null): Action {
-  return failure?.step === "sector" ? "bring_back" : "leave_out";
+export function defaultAction(failure: { step: DryStep } | null, clientOverlap: string[] = []): Action {
+  return failure?.step === "sector" && clientOverlap.length > 0 ? "bring_back" : "leave_out";
 }
 
 export type CheckRow = {
@@ -207,7 +209,7 @@ export function checkInvestors(input: {
       client: fundSectors.filter((x) => clientSet.has(x.toLowerCase())),
       competitor: fundSectors.filter((x) => competitorSet.has(x.toLowerCase())),
     };
-    const action: Action | null = bucket === "not_in_list" ? decision?.action ?? defaultAction(failure) : null;
+    const action: Action | null = bucket === "not_in_list" ? decision?.action ?? defaultAction(failure, overlap.client) : null;
     return {
       investor,
       match,

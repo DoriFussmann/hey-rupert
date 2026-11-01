@@ -125,3 +125,28 @@ test("defaults: removed by sector only is brought back, removed by stage is left
   assert.equal(decided[0].action, "leave_out");
   assert.equal(decided[0].defaulted, false);
 });
+
+test("sector-only: brought back only when the fund lists the client's sector (exact label); otherwise left out", () => {
+  const sectorData: DryData = {
+    ...data,
+    labels: { geo: ["United States"], sector: ["AI/ML", "SaaS", "Consumer Tech"] },
+    funds: [
+      { id: "F2", name: "Footwork VC", fin: [0], stage: [1], geo: [0], bucket: [0], sector: [0, 1], group: [], generalist: false },
+      { id: "F5", name: "Better Tomorrow Ventures", fin: [0], stage: [1], geo: [0], bucket: [0], sector: [1, 2], group: [], generalist: false },
+    ],
+  };
+  const rows = checkInvestors({
+    firms,
+    data: sectorData,
+    steps,
+    shortlist: new Set<string>(),
+    clientSectors: ["Fintech", "AI/ML"],
+    competitorSectors: { c1: ["Fintech", "AI/ML"] },
+    investors: [inv("i1", "Footwork"), inv("i2", "Better Tomorrow Ventures")],
+    decisions: {},
+  });
+  assert.equal(rows[0].action, "bring_back");
+  // SaaS and Consumer Tech: none is the client's sector, so not brought back blind.
+  assert.deepEqual(rows[1].overlap.client, []);
+  assert.equal(rows[1].action, "leave_out");
+});
