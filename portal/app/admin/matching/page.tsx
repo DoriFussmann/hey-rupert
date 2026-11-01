@@ -1,4 +1,3 @@
-import { PageHeader } from "@/components/page-header";
 import { requireAdmin } from "@/lib/auth";
 import { getAdminClient, listClients } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
@@ -41,16 +40,20 @@ export default async function MatchingPage({
 
   return (
     <>
-      <PageHeader title="Matching" description="Pick a client, check the profile is ready, run the match and push the list to the client's page." />
-      <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
+      <header className="mb-lg flex flex-wrap items-center justify-between gap-md">
+        <h1 className="text-h1 font-light">Matching</h1>
         <ClientPicker clients={options} selectedId={picked?.id ?? null} />
-        {clientId && !picked ? (
-          <p role="alert" className="mt-sm text-body-sm text-error">
-            That client was not found.
-          </p>
-        ) : null}
-        {picked?.is_match_sandbox || !testClientId ? <TestClientTools testClientId={testClientId} clients={real} /> : null}
-      </section>
+      </header>
+      {clientId && !picked ? (
+        <p role="alert" className="mb-md text-body-sm text-error">
+          That client was not found.
+        </p>
+      ) : null}
+      {picked?.is_match_sandbox || !testClientId ? (
+        <section className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
+          <TestClientTools testClientId={testClientId} clients={real} />
+        </section>
+      ) : null}
       {picked ? (
         <div className="mb-xl">
           <MatchingSteps key={picked.id} clientId={picked.id} clientName={picked.company_name} />

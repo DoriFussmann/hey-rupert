@@ -287,7 +287,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
   if (locked) {
     return (
       <Card tone="final">
-        <div className="flex flex-wrap items-end justify-between gap-md">
+        <div className="flex flex-wrap items-start justify-between gap-md">
           <div>
             <BigNumber value={items.length} label="Investors in the competitors: confirmed" />
             <p className="text-body-sm text-secondary">
@@ -309,9 +309,16 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
 
   return (
     <Card>
-      <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <h3 className="text-h4 text-heading">Investors in the competitors</h3>
-        <p className="text-body-sm text-muted">Researched one competitor at a time. No cap.</p>
+      <div className="flex flex-wrap items-start justify-between gap-sm">
+        <div>
+          <h3 className="text-h4 text-heading">Investors in the competitors</h3>
+          <p className="text-body-sm text-muted">Researched one competitor at a time. No cap.</p>
+        </div>
+        {landscape.investorsStatus !== "none" ? (
+          <button type="button" className={secondaryButton} disabled={running !== null || busy !== null} onClick={() => void startOver()}>
+            {busy === "start" ? "Starting over…" : "Start over"}
+          </button>
+        ) : null}
       </div>
 
       {landscape.investorsStatus === "none" && running === null ? (
@@ -379,9 +386,6 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
               onClick={() => void save(true)}
             >
               {busy === "confirm" ? "Confirming…" : "Confirm list"}
-            </button>
-            <button type="button" className={secondaryButton} disabled={running !== null || busy !== null} onClick={() => void startOver()}>
-              {busy === "start" ? "Starting over…" : "Start over"}
             </button>
           </div>
         </>

@@ -12,11 +12,11 @@ export type RunAction = <T extends ActionResult>(
 ) => Promise<void>;
 
 export const primaryButton =
-  "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
+  "rounded-md bg-primary px-md py-[6px] text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
 export const secondaryButton =
-  "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
+  "rounded-md border border-border bg-surface px-md py-[6px] text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 export const smallButton =
-  "rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
+  "rounded-md border border-border bg-surface px-sm py-[3px] text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 export const inputClass =
   "w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary";
 export const labelClass = "block text-label uppercase tracking-label text-muted";

@@ -6,10 +6,11 @@ const selectClassName =
 
 export function Select({
   className,
+  wrapperClassName,
   ...props
-}: SelectHTMLAttributes<HTMLSelectElement>) {
+}: SelectHTMLAttributes<HTMLSelectElement> & { wrapperClassName?: string }) {
   return (
-    <span className="relative mt-sm block">
+    <span className={["relative mt-sm block", wrapperClassName].filter(Boolean).join(" ")}>
       <select
         className={[selectClassName, className].filter(Boolean).join(" ")}
         {...props}

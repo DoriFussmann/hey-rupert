@@ -273,7 +273,7 @@ function ConfirmedSummary({
   const close = useCallback(() => setOpen(null), []);
   return (
     <Card tone="final">
-      <div className="flex flex-wrap items-end justify-between gap-md">
+      <div className="flex flex-wrap items-start justify-between gap-md">
         <div>
           <BigNumber value={items.length} label="Funded competitors: confirmed" />
           <p className="text-body-sm text-secondary">
@@ -452,10 +452,17 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
 
   return (
     <section className="animate-slide-in space-y-md rounded-card border border-border bg-surface px-lg py-md">
-      <p className="text-body-sm text-secondary">
+      <div className="flex flex-wrap items-start justify-between gap-md">
+      <p className="max-w-prose text-body-sm text-secondary">
         Top {MAX_COMPETITORS} <strong className="font-medium text-heading">funded</strong> direct competitors, most relevant first. Check each
         website and funding article, then confirm.
       </p>
+        {landscape ? (
+          <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
+            {busy === "start" ? "Starting over…" : "Start over"}
+          </button>
+        ) : null}
+      </div>
 
       {!landscape ? (
         <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void run("find", () => showCompetitors(clientId))}>
@@ -532,9 +539,6 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
                 </button>
               </>
             )}
-            <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
-              {busy === "start" ? "Starting over…" : "Start over"}
-            </button>
           </div>
           {!locked ? <p className="text-body-sm text-muted">Edits are kept once you save or confirm; every link is opened again when you do.</p> : null}
         </>

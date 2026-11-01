@@ -16,7 +16,7 @@ export function ClientPicker({
   const listed = clients.some((client) => client.id === selectedId);
 
   return (
-    <label className="block max-w-md text-label uppercase tracking-label text-muted">
+    <label className="flex w-full items-center gap-sm text-label uppercase tracking-label text-muted sm:w-80">
       Client
       <Select
         value={listed && selectedId ? selectedId : ""}
@@ -24,7 +24,8 @@ export function ClientPicker({
           const id = event.target.value;
           router.push(id ? `/admin/matching?client=${encodeURIComponent(id)}` : "/admin/matching");
         }}
-        className="normal-case tracking-normal"
+        className="normal-case tracking-normal !py-[6px]"
+        wrapperClassName="!mt-0 flex-1"
       >
         <option value="">{clients.length > 0 ? "Choose a client…" : "No active clients"}</option>
         {clients.map((client) => (

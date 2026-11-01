@@ -75,7 +75,7 @@ function MultiSelect({
         disabled={disabled}
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className="flex min-h-[44px] w-full items-center justify-between gap-md rounded-md border border-border bg-background px-md py-sm text-left text-body-sm disabled:cursor-default disabled:opacity-60"
+        className="flex min-h-[38px] w-full items-center justify-between gap-md rounded-md border border-border bg-background px-md py-sm text-left text-body-sm disabled:cursor-default disabled:opacity-60"
       >
         <span className="text-heading">{picked.length ? picked.join(", ") : "Choose…"}</span>
         {disabled ? null : <span className={`text-muted transition-transform duration-hover ${open ? "rotate-180" : ""}`}>▾</span>}
@@ -282,7 +282,7 @@ export function DryMatch({
     if (facts && saved.facts.profileVersion && facts.profileVersion !== saved.facts.profileVersion) changed.push("the company profile");
     return (
       <Card tone="final">
-        <div className="flex flex-wrap items-end justify-between gap-md">
+        <div className="flex flex-wrap items-start justify-between gap-md">
           <div>
             <BigNumber value={saved.fundCount} label="Dry Match Short List: confirmed" />
             <p className="text-body-sm text-secondary">
@@ -290,14 +290,9 @@ export function DryMatch({
               {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}. Saved for the next steps.
             </p>
           </div>
-          <div className="flex flex-wrap gap-sm">
-            <button type="button" className={secondaryButton} disabled={funds.length === 0} onClick={() => download(data, funds, clientName)}>
-              Download the list (CSV)
-            </button>
-            <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
-              {busy === "start" ? "Starting over…" : "Start over"}
-            </button>
-          </div>
+          <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void startOver()}>
+            {busy === "start" ? "Starting over…" : "Start over"}
+          </button>
         </div>
         {changed.length ? (
           <p className="mt-sm rounded-md border border-warning/40 bg-surface px-md py-sm text-body-sm text-warning">
@@ -309,6 +304,11 @@ export function DryMatch({
           generalists={funds.length === saved.fundIds.length ? funds.filter((f) => f.generalist).length : null}
           rows={saved.steps.map((s) => ({ label: DRY_STEP_LABEL[s.step], chosen: s.chosenLabels.join(", "), before: s.before, removed: s.removed, left: s.left }))}
         />
+        <div className="mt-md flex justify-end">
+          <button type="button" className={secondaryButton} disabled={funds.length === 0} onClick={() => download(data, funds, clientName)}>
+            Download the list (CSV)
+          </button>
+        </div>
         {errorLine}
       </Card>
     );
@@ -412,16 +412,11 @@ export function DryMatch({
 
       {done && final ? (
         <Card tone="final">
-          <div className="flex flex-wrap items-end justify-between gap-md">
+          <div className="flex flex-wrap items-start justify-between gap-md">
             <BigNumber value={final.left} label="Dry Match Short List" />
-            <div className="flex flex-wrap gap-sm">
-              <button type="button" className={secondaryButton} onClick={() => download(data, final.funds, clientName)}>
-                Download the list (CSV)
-              </button>
-              <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void confirmList()}>
-                {busy === "confirm" ? "Saving…" : "Confirm list"}
-              </button>
-            </div>
+            <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void confirmList()}>
+              {busy === "confirm" ? "Saving…" : "Confirm list"}
+            </button>
           </div>
           <Summary
             total={total}
@@ -430,6 +425,11 @@ export function DryMatch({
           >
             <p className="mt-xs text-body-sm text-muted">Confirm list saves it as the base for the next steps. Start over is always available.</p>
           </Summary>
+          <div className="mt-md flex justify-end">
+            <button type="button" className={secondaryButton} onClick={() => download(data, final.funds, clientName)}>
+              Download the list (CSV)
+            </button>
+          </div>
           {errorLine}
         </Card>
       ) : null}
