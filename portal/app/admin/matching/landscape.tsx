@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
+import { fillCompetitorSectors, loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
+import { InvestorsStep } from "@/app/admin/matching/investors-step";
 import type { Competitor, LinkState } from "@/lib/match/landscape/core";
 import { MAX_COMPETITORS } from "@/lib/match/landscape/core";
 import type { Landscape } from "@/lib/match/landscape/server";
@@ -255,11 +256,13 @@ function ConfirmedSummary({
   items,
   busy,
   onStartOver,
+  sectorNote,
 }: {
   landscape: Landscape;
   items: Competitor[];
   busy: boolean;
   onStartOver: () => void;
+  sectorNote: React.ReactNode;
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const close = useCallback(() => setOpen(null), []);
@@ -311,6 +314,7 @@ function ConfirmedSummary({
         </tbody>
       </table>
       <p className="mt-md text-body-sm text-muted">Click a competitor for its funding, investors and links.</p>
+      {sectorNote}
       {open !== null && items[open] ? <DetailsModal c={items[open]} rank={open + 1} onClose={close} /> : null}
     </Card>
   );
@@ -329,6 +333,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<string | null>(null);
   const [dirty, setDirty] = useState(false);
+  const [sectorTry, setSectorTry] = useState<"idle" | "running" | "done" | "failed">("idle");
 
   useEffect(() => {
     let live = true;
@@ -345,6 +350,23 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
       live = false;
     };
   }, [clientId, stepOneConfirmed]);
+
+  // A confirmed list with empty primary sectors gets them filled once, automatically.
+  const needsSectors = landscape?.status === "confirmed" && landscape.competitors.some((c) => !c.primarySector);
+  useEffect(() => {
+    if (!needsSectors || sectorTry !== "idle") return;
+    setSectorTry("running");
+    void fillCompetitorSectors(clientId).then((result) => {
+      if (!result.ok) {
+        setSectorTry("failed");
+        setError(result.error);
+        return;
+      }
+      setSectorTry("done");
+      setLandscape(result.landscape);
+      setItems(result.landscape.competitors);
+    });
+  }, [needsSectors, sectorTry, clientId]);
 
   const take = (next: Landscape) => {
     setLandscape(next);
@@ -385,11 +407,36 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
     setDirty(false);
   };
 
+  async function fillSectors() {
+    setSectorTry("running");
+    setError(null);
+    const result = await fillCompetitorSectors(clientId);
+    if (!result.ok) {
+      setSectorTry("failed");
+      return setError(result.error);
+    }
+    setSectorTry("done");
+    take(result.landscape);
+  }
+
   if (landscape && locked) {
+    const missingSectors = items.filter((c) => !c.primarySector).length;
+    const sectorNote =
+      sectorTry === "running" ? (
+        <p className="mt-xs text-body-sm text-primary">Filling the primary sectors…</p>
+      ) : missingSectors > 0 ? (
+        <p className="mt-xs text-body-sm text-warning">
+          {missingSectors} without a primary sector.{" "}
+          <button type="button" className="underline" onClick={() => void fillSectors()}>
+            Fill primary sectors
+          </button>
+        </p>
+      ) : null;
     return (
-      <div className="space-y-sm">
-        <ConfirmedSummary landscape={landscape} items={items} busy={busy === "start"} onStartOver={() => void startOver()} />
+      <div className="space-y-md">
+        <ConfirmedSummary landscape={landscape} items={items} busy={busy === "start"} onStartOver={() => void startOver()} sectorNote={sectorNote} />
         {error ? <p className="text-body-sm text-error">{error}</p> : null}
+        <InvestorsStep clientId={clientId} landscape={landscape} onChange={take} />
       </div>
     );
   }

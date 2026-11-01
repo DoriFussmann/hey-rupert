@@ -5,11 +5,15 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { createServiceClient } from "@/lib/supabase/admin";
 import {
+  clearInvestors,
   clearLandscape,
   confirmedDryList,
   currentLandscape,
+  fillSectors,
   findCompetitors,
+  researchInvestors,
   saveCompetitors,
+  saveInvestors,
   type Landscape,
 } from "@/lib/match/landscape/server";
 
@@ -73,4 +77,53 @@ export async function startOverLandscape(clientId: string): Promise<Result<objec
   if (!a.ok) return a;
   const cleared = await clearLandscape(a.supabase, a.clientId, a.email);
   return cleared.ok ? { ok: true } : { ok: false, error: cleared.error };
+}
+
+type LandscapeResult = Result<{ landscape: Landscape }>;
+
+function wrap(value: { ok: true; value: Landscape } | { ok: false; error: string }): LandscapeResult {
+  return value.ok ? { ok: true, landscape: value.value } : { ok: false, error: value.error };
+}
+
+/** Fills the empty primary sectors of the confirmed competitors. */
+export async function fillCompetitorSectors(clientId: string): Promise<LandscapeResult> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
+  try {
+    return wrap(await fillSectors(a.supabase, a.clientId));
+  } catch (err) {
+    return fail(err, "The sectors were not filled.");
+  }
+}
+
+/** Step 2B: researches one competitor's investors and merges them into the list. The page calls it once per competitor. */
+export async function findInvestorsFor(clientId: string, competitorId: string): Promise<LandscapeResult> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
+  if (typeof competitorId !== "string" || !competitorId || competitorId.length > 64) return { ok: false, error: "Unknown competitor." };
+  try {
+    return wrap(await researchInvestors(a.supabase, a.clientId, competitorId));
+  } catch (err) {
+    return fail(err, "The investor research failed.");
+  }
+}
+
+/** Saves edits to the investor list; with confirm, locks it. */
+export async function saveInvestorList(clientId: string, investors: unknown[], confirm: boolean): Promise<LandscapeResult> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    return wrap(await saveInvestors(a.supabase, a.clientId, investors, confirm === true, a.email));
+  } catch (err) {
+    return fail(err, "The investor list was not saved.");
+  }
+}
+
+/** Start over for the investor list only; the confirmed competitors stay. */
+export async function startOverInvestors(clientId: string): Promise<LandscapeResult> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  return wrap(await clearInvestors(a.supabase, a.clientId));
 }

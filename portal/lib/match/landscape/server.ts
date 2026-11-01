@@ -1,12 +1,13 @@
 import "server-only";
 import { randomUUID } from "node:crypto";
-import { callClaudeAgent, webSearchTool, type ClaudeUsage } from "@/lib/anthropic";
+import { callClaudeAgent, callClaudeTool, webSearchTool, type ClaudeUsage } from "@/lib/anthropic";
 import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
 import { loadCompanyProfile } from "@/lib/company-profile/server";
 import { loadProfileState } from "@/lib/match/profile-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { MAX_COMPETITORS, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
+import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type Investor, type ResearchState } from "./investors.ts";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -29,6 +30,12 @@ export type Landscape = {
   searchedBy: string | null;
   confirmedAt: string | null;
   confirmedBy: string | null;
+  /** Step 2B. */
+  investors: Investor[];
+  research: Record<string, ResearchState>;
+  investorsStatus: "none" | "draft" | "confirmed";
+  investorsConfirmedAt: string | null;
+  investorsConfirmedBy: string | null;
 };
 
 type Row = {
@@ -41,9 +48,15 @@ type Row = {
   searched_by: string | null;
   confirmed_at: string | null;
   confirmed_by: string | null;
+  investors: unknown[] | null;
+  investor_research: Record<string, ResearchState> | null;
+  investors_status: "none" | "draft" | "confirmed" | null;
+  investors_confirmed_at: string | null;
+  investors_confirmed_by: string | null;
 };
 
-const COLUMNS = "id, status, competitors, unfunded_named, client_named, searched_at, searched_by, confirmed_at, confirmed_by";
+const COLUMNS =
+  "id, status, competitors, unfunded_named, client_named, searched_at, searched_by, confirmed_at, confirmed_by, investors, investor_research, investors_status, investors_confirmed_at, investors_confirmed_by";
 
 function fromRow(row: Row): Landscape {
   return {
@@ -56,6 +69,11 @@ function fromRow(row: Row): Landscape {
     searchedBy: row.searched_by,
     confirmedAt: row.confirmed_at,
     confirmedBy: row.confirmed_by,
+    investors: cleanInvestorList(row.investors ?? [], () => randomUUID()),
+    research: row.investor_research ?? {},
+    investorsStatus: row.investors_status ?? "none",
+    investorsConfirmedAt: row.investors_confirmed_at,
+    investorsConfirmedBy: row.investors_confirmed_by,
   };
 }
 
@@ -364,4 +382,250 @@ export async function clearLandscape(supabase: ServiceClient, clientId: string, 
     .is("cleared_at", null);
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: null };
+}
+
+// ---------------------------------------------------------------------------
+// Primary sectors of the confirmed competitors
+
+async function sectorLabels(supabase: ServiceClient, clientId: string): Promise<Result<string[]>> {
+  const facts = await companyFacts(supabase, clientId);
+  return facts.ok ? { ok: true, value: facts.value.sectorLabels } : facts;
+}
+
+const SECTOR_TOOL = {
+  name: "submit_sectors",
+  description: "Deliver each competitor's primary sector.",
+  input_schema: {
+    type: "object",
+    properties: {
+      sectors: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { id: { type: "string" }, primarySector: { type: "string" } },
+          required: ["id", "primarySector"],
+        },
+      },
+    },
+    required: ["sectors"],
+  },
+};
+
+/** Fills the empty primary sectors of the confirmed competitors. Nothing else on the list changes. */
+export async function fillSectors(supabase: ServiceClient, clientId: string): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land) return { ok: false, error: "Run Show Competitors first." };
+  const missing = land.competitors.filter((c) => !c.primarySector);
+  if (missing.length === 0) return { ok: true, value: land };
+  const labels = await sectorLabels(supabase, clientId);
+  if (!labels.ok) return labels;
+  const prompt = await loadPrompt(supabase, "competitor_sector", { clientId, purpose: "Step 2: competitors' primary sector" });
+  if (!prompt.ok) return prompt;
+  const result = await callClaudeTool<{ sectors?: { id?: string; primarySector?: string }[] }>({
+    system: promptSystem(
+      prompt.value,
+      "## Sector labels",
+      labels.value.join(", "),
+      "## Competitors (id: name, what it does, why it competes)",
+      missing.map((c) => `${c.id}: ${c.name}. ${c.oneLiner} ${c.why}`.trim()).join("\n"),
+    ),
+    messages: [{ role: "user", content: `Classify each competitor by calling the ${SECTOR_TOOL.name} tool.` }],
+    tool: SECTOR_TOOL,
+    maxTokens: 2000,
+  });
+  if (!result.ok) return { ok: false, error: `The sectors were not filled: ${result.reason}` };
+  const allowed = new Map(labels.value.map((l) => [l.toLowerCase(), l]));
+  const found = new Map(
+    (result.input.sectors ?? []).flatMap((x) => {
+      const label = allowed.get(String(x.primarySector ?? "").toLowerCase());
+      return x.id && label ? [[x.id, label] as const] : [];
+    }),
+  );
+  const competitors = land.competitors.map((c) => (!c.primarySector && found.has(c.id) ? { ...c, primarySector: found.get(c.id)! } : c));
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .update({ competitors, updated_at: new Date().toISOString() })
+    .eq("id", land.id)
+    .select(COLUMNS)
+    .single<Row>();
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: fromRow(data) };
+}
+
+// ---------------------------------------------------------------------------
+// Step 2B: investors in the confirmed competitors
+
+const INVESTOR_TOOL = {
+  name: "submit_investors",
+  description: "Deliver every confirmed investor in this competitor.",
+  input_schema: {
+    type: "object",
+    properties: {
+      investors: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            name: { type: "string" },
+            website: { type: "string" },
+            kind: { type: "string", enum: ["fund", "angel", "corporate", "accelerator", "other"] },
+            round: { type: "string" },
+            lead: { type: "boolean" },
+            sourceUrl: { type: "string" },
+          },
+          required: ["name", "kind", "round", "lead", "sourceUrl"],
+        },
+      },
+    },
+    required: ["investors"],
+  },
+};
+
+/**
+ * Researches one confirmed competitor's investors and merges them into the
+ * list. The investors already named in Step 2A are added too, with the
+ * funding article as their source. Run once per competitor.
+ */
+export async function researchInvestors(supabase: ServiceClient, clientId: string, competitorId: string): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.status !== "confirmed") return { ok: false, error: "Confirm the competitors first." };
+  if (land.investorsStatus === "confirmed") return { ok: false, error: "The investor list is confirmed. Start over to research again." };
+  const c = land.competitors.find((x) => x.id === competitorId);
+  if (!c) return { ok: false, error: "That competitor is not on the confirmed list." };
+
+  const prompt = await loadPrompt(supabase, "competitor_investors", { clientId, purpose: `Step 2: investors in ${c.name}` });
+  if (!prompt.ok) return prompt;
+  const facts = [
+    `Competitor: ${c.name}${c.website ? ` (${c.website})` : ""}`,
+    c.oneLiner && `What it does: ${c.oneLiner}`,
+    c.hq && `HQ: ${c.hq}`,
+    [c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).length && `Latest round: ${[c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ")}`,
+    c.funding.totalRaised && `Total raised: ${c.funding.totalRaised}`,
+    c.newsUrl && `Funding article: ${c.newsUrl}`,
+    c.funding.investors.length ? `Investors already named: ${c.funding.investors.join(", ")}` : "No investors named yet.",
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  const result = await callClaudeAgent<{ investors?: unknown[] }>({
+    system: promptSystem(prompt.value, "## The competitor", facts),
+    content: [{ type: "text", text: `Find every investor in ${c.name} and deliver them by calling the ${INVESTOR_TOOL.name} tool.` }],
+    tool: INVESTOR_TOOL,
+    serverTools: [webSearchTool(10)],
+    requireServerTools: true,
+    maxTokens: 10_000,
+  });
+
+  const now = new Date().toISOString();
+  let list = land.investors;
+  // Step 2A already named these, from the competitor's funding article.
+  for (const name of c.funding.investors) {
+    const seed = cleanInvestor(
+      { name, kind: "fund", source: "step2a", backed: [{ competitorId: c.id, competitor: c.name, round: c.funding.lastRound, lead: false, sourceUrl: c.newsUrl }] },
+      randomUUID(),
+    );
+    if (seed) list = mergeInvestor(list, seed);
+  }
+  let state: ResearchState;
+  if (result.ok) {
+    let found = 0;
+    for (const raw of result.input.investors ?? []) {
+      const r = (raw ?? {}) as Record<string, unknown>;
+      const inv = cleanInvestor(
+        {
+          name: r.name,
+          website: r.website,
+          kind: r.kind,
+          source: "research",
+          backed: [{ competitorId: c.id, competitor: c.name, round: r.round, lead: r.lead === true, sourceUrl: r.sourceUrl }],
+        },
+        randomUUID(),
+      );
+      // A source link is required: no link, no investor.
+      if (!inv || !inv.backed[0]?.sourceUrl) continue;
+      list = mergeInvestor(list, inv);
+      found += 1;
+    }
+    state = { status: "done", at: now, found };
+  } else {
+    state = { status: "failed", at: now, found: 0, error: result.reason.slice(0, 300) };
+  }
+
+  // Read again just before writing, so two runs never overwrite each other's findings.
+  const fresh = await currentLandscape(supabase, clientId);
+  if (!fresh.ok) return fresh;
+  if (!fresh.value || fresh.value.id !== land.id) return { ok: false, error: "The competitor list changed. Reload the page." };
+  let merged = fresh.value.investors;
+  for (const inv of list) merged = mergeInvestor(merged, inv);
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .update({
+      investors: orderInvestors(merged),
+      investor_research: { ...fresh.value.research, [c.id]: state },
+      investors_status: "draft",
+      updated_at: now,
+    })
+    .eq("id", land.id)
+    .neq("investors_status", "confirmed")
+    .select(COLUMNS)
+    .single<Row>();
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: fromRow(data) };
+}
+
+/** Saves the admin's edits to the investor list; with confirm, locks it. */
+export async function saveInvestors(
+  supabase: ServiceClient,
+  clientId: string,
+  items: unknown[],
+  confirm: boolean,
+  actor: string | null,
+): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus === "none") return { ok: false, error: "Run Find Investors first." };
+  if (land.investorsStatus === "confirmed") return { ok: false, error: "The investor list is confirmed. Start over to change it." };
+  const list = cleanInvestorList(Array.isArray(items) ? items : [], () => randomUUID());
+  if (confirm && list.length === 0) return { ok: false, error: "The list is empty." };
+  const now = new Date().toISOString();
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .update({
+      investors: list,
+      updated_at: now,
+      ...(confirm ? { investors_status: "confirmed", investors_confirmed_at: now, investors_confirmed_by: actor } : {}),
+    })
+    .eq("id", land.id)
+    .eq("investors_status", "draft")
+    .select(COLUMNS)
+    .single<Row>();
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: fromRow(data) };
+}
+
+/** Start over for Step 2B only: the confirmed competitors stay. */
+export async function clearInvestors(supabase: ServiceClient, clientId: string): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  if (!current.value) return { ok: false, error: "Nothing to start over." };
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .update({
+      investors: [],
+      investor_research: {},
+      investors_status: "none",
+      investors_confirmed_at: null,
+      investors_confirmed_by: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", current.value.id)
+    .select(COLUMNS)
+    .single<Row>();
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: fromRow(data) };
 }

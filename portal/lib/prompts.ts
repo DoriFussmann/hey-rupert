@@ -90,6 +90,20 @@ Rules:
 - why: one or two plain sentences on why it competes directly with this company.
 - Fewer than 10 is fine. Quality over count.`;
 
+export const COMPETITOR_SECTOR_PROMPT = `You classify startups for Rupert, an investor outreach service. For each competitor below, choose its primary sector: the one sector an investor would file it under, from the sector labels given. Base it on what the company sells and to whom, as described. Use only the labels given, spelled exactly. If none fits, leave it empty.`;
+
+export const COMPETITOR_INVESTORS_PROMPT = `You research who has invested in a startup, for Rupert, an investor outreach service. Rupert uses the result to find investors who back companies like its client.
+
+Find every investor in the competitor named below, across all its funding rounds: venture funds, angels, corporate investors and accelerators.
+
+Rules:
+- Use web search: press releases, news articles, the company's own announcements, and funding database pages. Every investor must come from a page you found; give that page as sourceUrl. Never guess or invent an investor, a round or a URL.
+- Investors already named are a starting point: include each one you can confirm, with its source.
+- round: the round they joined, as reported (for example "Seed", "$25M Series A"). lead: true only if a source says they led it.
+- website: the investor's own homepage, only if you found it.
+- kind: fund, angel (a person), corporate, accelerator or other.
+- No limit on how many. Include everyone you can confirm, and no one you can't.`;
+
 export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
 
 When you review funds, open each fund's website when a link is given, then decide:
@@ -262,6 +276,20 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The company facts and what the founder said about competitors, the web-search limit (15), and the answer format. The code keeps only competitors with a funding link, labels as client-named only names the founder used, puts those first, and opens every link to check it.",
     testable: false,
     defaultText: COMPETITOR_SEARCH_PROMPT,
+  },
+  competitor_sector: {
+    slug: agentPromptSlug("competitor_sector"),
+    usedBy: "Matching → Step 2 → Fill primary sectors: gives each confirmed competitor its primary sector, for the summary table.",
+    fixed: "The competitors (name, what they do, why they compete) and the sector labels allowed; a label outside the taxonomy is dropped. Only empty sectors are filled.",
+    testable: false,
+    defaultText: COMPETITOR_SECTOR_PROMPT,
+  },
+  competitor_investors: {
+    slug: agentPromptSlug("competitor_investors"),
+    usedBy: "Matching → Step 2 → Find Investors: for each confirmed competitor in turn, finds every investor in it with web search. The results are merged into one list for the admin to check and confirm.",
+    fixed: "The competitor, its funding article and the investors already named, the web-search limit (10 per competitor), and the answer format. The code keeps only investors with a source link and merges the same investor across competitors.",
+    testable: false,
+    defaultText: COMPETITOR_INVESTORS_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

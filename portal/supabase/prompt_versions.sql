@@ -502,6 +502,30 @@ Rules:
 );
 
 select pg_temp.rupert_seed_prompt(
+  'agent_prompt:competitor_sector',
+  $rupert_prompt$AI prompt: Step 2: competitors' primary sector$rupert_prompt$,
+  $rupert_prompt$You classify startups for Rupert, an investor outreach service. For each competitor below, choose its primary sector: the one sector an investor would file it under, from the sector labels given. Base it on what the company sells and to whom, as described. Use only the labels given, spelled exactly. If none fits, leave it empty.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
+  'agent_prompt:competitor_investors',
+  $rupert_prompt$AI prompt: Step 2: competitors' investors$rupert_prompt$,
+  $rupert_prompt$You research who has invested in a startup, for Rupert, an investor outreach service. Rupert uses the result to find investors who back companies like its client.
+
+Find every investor in the competitor named below, across all its funding rounds: venture funds, angels, corporate investors and accelerators.
+
+Rules:
+- Use web search: press releases, news articles, the company's own announcements, and funding database pages. Every investor must come from a page you found; give that page as sourceUrl. Never guess or invent an investor, a round or a URL.
+- Investors already named are a starting point: include each one you can confirm, with its source.
+- round: the round they joined, as reported (for example "Seed", "$25M Series A"). lead: true only if a source says they led it.
+- website: the investor's own homepage, only if you found it.
+- kind: fund, angel (a person), corporate, accelerator or other.
+- No limit on how many. Include everyone you can confirm, and no one you can't.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
   'agent_prompt:list_audit',
   $rupert_prompt$AI prompt: Investor list audit$rupert_prompt$,
   $rupert_prompt$You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
