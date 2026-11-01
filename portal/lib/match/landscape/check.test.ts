@@ -150,3 +150,21 @@ test("sector-only: brought back only when the fund lists the client's sector (ex
   assert.deepEqual(rows[1].overlap.client, []);
   assert.equal(rows[1].action, "leave_out");
 });
+
+test("a suggested website: the database record that has it, if exactly one", () => {
+  const rows = checkInvestors({
+    firms,
+    data,
+    steps,
+    shortlist: new Set(["F2"]),
+    investors: [inv("i5", "Acme"), inv("i6", "Nobody Fund")],
+    decisions: {},
+    suggestions: {
+      i5: { website: "https://acme.vc", confidence: "high", foundIn: "", portfolioUrl: "", note: "", link: "live", at: "" },
+      i6: { website: "https://nobody.fund", confidence: "medium", foundIn: "", portfolioUrl: "", note: "", link: "live", at: "" },
+    },
+  });
+  assert.deepEqual(rows[0].suggestion?.firm, { id: "F3", name: "Acme Ventures" });
+  assert.equal(rows[1].suggestion?.firm, null);
+  assert.equal(rows[1].suggestion?.firmCount, 0);
+});

@@ -114,6 +114,17 @@ export type InvestorDecision = {
   at: string;
 };
 
+/** A website found for an investor by Find websites, for the admin to accept. */
+export type WebsiteSuggestion = {
+  website: string;
+  confidence: "high" | "medium" | "low";
+  foundIn: string;
+  portfolioUrl: string;
+  note: string;
+  link: "live" | "broken" | "unchecked";
+  at: string;
+};
+
 export type Bucket = "confirm" | "in_list" | "not_in_list" | "missing_fund" | "missing_angel";
 
 export const BUCKET_LABEL: Record<Bucket, string> = {
@@ -157,6 +168,8 @@ export type CheckRow = {
   defaulted: boolean;
   /** For a sector failure: the fund's sectors that are the client's (e.g. its secondary) or the competitors' it backed. */
   overlap: { client: string[]; competitor: string[] };
+  /** Find websites' suggestion, and the database record with that website, if exactly one. */
+  suggestion: (WebsiteSuggestion & { firm: { id: string; name: string } | null; firmCount: number }) | null;
 };
 
 export function checkInvestors(input: {
@@ -170,6 +183,7 @@ export function checkInvestors(input: {
   clientSectors?: string[];
   /** Each competitor's sector labels, by competitor id. */
   competitorSectors?: Record<string, string[]>;
+  suggestions?: Record<string, WebsiteSuggestion>;
 }): CheckRow[] {
   const index = indexFirms(input.firms);
   const firmById = new Map(input.firms.map((f) => [f.id, f]));
@@ -223,6 +237,13 @@ export function checkInvestors(input: {
       action,
       defaulted: bucket === "not_in_list" && !decision?.action,
       overlap,
+      suggestion: (() => {
+        const sug = input.suggestions?.[original.id];
+        if (!sug?.website) return null;
+        const ids = index.byDomain.get(domainOf(sug.website)) ?? [];
+        const one = ids.length === 1 ? firmById.get(ids[0]) : undefined;
+        return { ...sug, firm: one ? { id: one.id, name: one.name } : null, firmCount: ids.length };
+      })(),
     };
   });
 }

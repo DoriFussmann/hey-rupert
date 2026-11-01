@@ -8,6 +8,7 @@ import {
   checkAgainstDatabase,
   decideInvestor,
   decideMany,
+  findWebsites,
   recordInvestments,
   type CheckResult,
   clearInvestors,
@@ -202,5 +203,21 @@ export async function recordInvestmentsInDb(clientId: string): Promise<Result<{ 
     return check.ok ? { ok: true, check: check.check, recorded: done.value } : check;
   } catch (err) {
     return fail(err, "The investments were not recorded.");
+  }
+}
+
+/** Find websites for a few investors (the page calls it batch by batch), then the check again. */
+export async function findWebsitesFor(clientId: string, investorIds: string[]): Promise<Result<{ check: CheckResult; found: number }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
+  if (!Array.isArray(investorIds) || investorIds.length > 20) return { ok: false, error: "Unknown investors." };
+  try {
+    const done = await findWebsites(a.supabase, a.clientId, investorIds.filter((id) => typeof id === "string").map((id) => id.slice(0, 64)));
+    if (!done.ok) return { ok: false, error: done.error };
+    const check = await runInvestorCheck(clientId);
+    return check.ok ? { ok: true, check: check.check, found: done.value } : check;
+  } catch (err) {
+    return fail(err, "Find websites failed.");
   }
 }

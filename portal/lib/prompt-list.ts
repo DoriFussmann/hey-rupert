@@ -34,6 +34,7 @@ export const PROMPT_LIST = [
   { key: "competitor_search", title: "Step 2: funded competitors", group: "Matching" },
   { key: "competitor_sector", title: "Step 2: competitors' primary sector", group: "Matching" },
   { key: "competitor_investors", title: "Step 2: competitors' investors", group: "Matching" },
+  { key: "investor_website", title: "Step 2: investors' websites", group: "Matching" },
   { key: "taxonomy_mapping", title: "Taxonomy: map raw labels", group: "Taxonomy" },
   { key: "taxonomy_relationships", title: "Taxonomy: suggest relationships", group: "Taxonomy" },
   { key: "test_pilot_intake", title: "Test Pilot: intake answers", group: "Test Pilot" },

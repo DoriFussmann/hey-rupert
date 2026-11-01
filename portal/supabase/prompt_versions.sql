@@ -526,6 +526,23 @@ Rules:
 );
 
 select pg_temp.rupert_seed_prompt(
+  'agent_prompt:investor_website',
+  $rupert_prompt$AI prompt: Step 2: investors' websites$rupert_prompt$,
+  $rupert_prompt$You find the official website of investors for Rupert, an investor outreach service, so each investor can be matched to Rupert's fund database without doubt.
+
+For each investor below you get its name, what kind of investor it is, the startup it invested in, and the article where that investment was found.
+
+For each one:
+- Start from the source article: funding announcements usually link to, or name, each investor. Then confirm with web search.
+- website: the investor's own homepage. For an angel (a person), their personal site or the fund they run, if any.
+- Make sure it is the same investor: the same name AND the investment in this startup. Look for the startup on the investor's portfolio page; if you find it, give that page as portfolioUrl. A firm with a similar name elsewhere is not a match.
+- confidence: high when the portfolio lists the startup or the article links to the site; medium when the name and focus clearly fit but you couldn't confirm the investment on their site; low otherwise.
+- foundIn: the page where you found or confirmed the website.
+- Never guess or invent a URL. If you can't find it, leave website empty.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
   'agent_prompt:list_audit',
   $rupert_prompt$AI prompt: Investor list audit$rupert_prompt$,
   $rupert_prompt$You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.

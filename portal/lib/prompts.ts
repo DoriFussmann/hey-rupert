@@ -104,6 +104,18 @@ Rules:
 - kind: fund, angel (a person), corporate, accelerator or other.
 - No limit on how many. Include everyone you can confirm, and no one you can't.`;
 
+export const INVESTOR_WEBSITE_PROMPT = `You find the official website of investors for Rupert, an investor outreach service, so each investor can be matched to Rupert's fund database without doubt.
+
+For each investor below you get its name, what kind of investor it is, the startup it invested in, and the article where that investment was found.
+
+For each one:
+- Start from the source article: funding announcements usually link to, or name, each investor. Then confirm with web search.
+- website: the investor's own homepage. For an angel (a person), their personal site or the fund they run, if any.
+- Make sure it is the same investor: the same name AND the investment in this startup. Look for the startup on the investor's portfolio page; if you find it, give that page as portfolioUrl. A firm with a similar name elsewhere is not a match.
+- confidence: high when the portfolio lists the startup or the article links to the site; medium when the name and focus clearly fit but you couldn't confirm the investment on their site; low otherwise.
+- foundIn: the page where you found or confirmed the website.
+- Never guess or invent a URL. If you can't find it, leave website empty.`;
+
 export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
 
 When you review funds, open each fund's website when a link is given, then decide:
@@ -290,6 +302,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The competitor, its funding article and the investors already named, the web-search limit (10 per competitor), and the answer format. The code keeps only investors with a source link and merges the same investor across competitors.",
     testable: false,
     defaultText: COMPETITOR_INVESTORS_PROMPT,
+  },
+  investor_website: {
+    slug: agentPromptSlug("investor_website"),
+    usedBy: "Matching → Step 2 → Check against the fund database → Find websites: finds each unclear or missing investor's official website from its source article, and its portfolio page. The admin accepts it with one click.",
+    fixed: "The investors (name, kind, the startup and the source article), the web-search limit, and the answer format. The code keeps only real web addresses and opens each website to check it.",
+    testable: false,
+    defaultText: INVESTOR_WEBSITE_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

@@ -8,7 +8,7 @@ import { loadProfileState } from "@/lib/match/profile-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { MAX_COMPETITORS, cleanUrl, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
 import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type Investor, type ResearchState } from "./investors.ts";
-import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision } from "./check.ts";
+import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision, type WebsiteSuggestion } from "./check.ts";
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 
@@ -661,6 +661,8 @@ export async function clearInvestors(supabase: ServiceClient, clientId: string):
 
 export type CheckResult = {
   rows: CheckRow[];
+  /** Whether Find websites can run (its column exists). */
+  websitesReady: boolean;
   clientSectors: string[];
   /** Investments of this landscape already recorded in the database (null: the table isn't there yet). */
   recorded: number | null;
@@ -678,6 +680,19 @@ async function loadDecisions(supabase: ServiceClient, landscapeId: string): Prom
     .maybeSingle<{ investor_decisions: Record<string, InvestorDecision> | null }>();
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: data?.investor_decisions ?? {} };
+}
+
+export const WEBSITES_MIGRATION = "The suggested-websites column is missing. Run portal/supabase/investor_websites.sql in the Supabase SQL editor.";
+
+/** Find websites' suggestions; empty (not an error) before the migration, so the check still runs. */
+async function loadSuggestions(supabase: ServiceClient, landscapeId: string): Promise<{ value: Record<string, WebsiteSuggestion>; missing: boolean }> {
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .select("website_suggestions")
+    .eq("id", landscapeId)
+    .maybeSingle<{ website_suggestions: Record<string, WebsiteSuggestion> | null }>();
+  if (error) return { value: {}, missing: true };
+  return { value: data?.website_suggestions ?? {}, missing: false };
 }
 
 /** Checks every confirmed investor against the live Fund Database and the confirmed Step 1 list. Reads only. */
@@ -707,7 +722,9 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   const competitorSectors = Object.fromEntries(land.competitors.map((c) => [c.id, [c.primarySector, ...c.secondarySectors].filter(Boolean)]));
   const decisions = await loadDecisions(supabase, land.id);
   if (!decisions.ok) return decisions;
+  const suggestions = await loadSuggestions(supabase, land.id);
   const rows = checkInvestors({
+    suggestions: suggestions.value,
     investors: land.investors,
     firms: db.firms.map((f) => ({ id: f.id, name: f.name, web: f.web })),
     data,
@@ -721,7 +738,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
-    value: { rows, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
+    value: { rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
   };
 }
 
@@ -862,4 +879,103 @@ export async function recordInvestments(supabase: ServiceClient, clientId: strin
 export async function recordedCount(supabase: ServiceClient, landscapeId: string): Promise<number | null> {
   const { count, error } = await supabase.from("fund_investments").select("id", { count: "exact", head: true }).eq("landscape_id", landscapeId);
   return error ? null : count ?? 0;
+}
+
+// ---------------------------------------------------------------------------
+// Find websites: the official website of unclear and missing investors
+
+/** Investors per Find websites request: small enough to finish in one call. */
+export const WEBSITE_BATCH = 4;
+
+const WEBSITE_TOOL = {
+  name: "submit_websites",
+  description: "Deliver each investor's official website.",
+  input_schema: {
+    type: "object",
+    properties: {
+      investors: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            id: { type: "string" },
+            website: { type: "string" },
+            confidence: { type: "string", enum: ["high", "medium", "low"] },
+            foundIn: { type: "string" },
+            portfolioUrl: { type: "string" },
+            note: { type: "string", description: "One short sentence: how you know it is this investor." },
+          },
+          required: ["id", "website", "confidence", "foundIn", "portfolioUrl", "note"],
+        },
+      },
+    },
+    required: ["investors"],
+  },
+};
+
+/** Finds the official website of a few investors (at most WEBSITE_BATCH) and saves the suggestions. */
+export async function findWebsites(supabase: ServiceClient, clientId: string, investorIds: string[]): Promise<Result<number>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  const targets = land.investors.filter((i) => investorIds.includes(i.id)).slice(0, WEBSITE_BATCH);
+  if (!targets.length) return { ok: true, value: 0 };
+  const prompt = await loadPrompt(supabase, "investor_website", { clientId, purpose: "Step 2: investors' websites" });
+  if (!prompt.ok) return prompt;
+  const list = targets
+    .map((i) => {
+      const b = i.backed[0];
+      return [
+        `id: ${i.id}`,
+        `name: ${i.name}`,
+        `kind: ${i.kind}`,
+        `invested in: ${Array.from(new Set(i.backed.map((x) => x.competitor))).join(", ")}${b?.round ? ` (${b.round})` : ""}`,
+        `source article: ${i.backed.map((x) => x.sourceUrl).filter(Boolean)[0] ?? "none"}`,
+        i.website ? `website found earlier (check it): ${i.website}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n");
+    })
+    .join("\n\n");
+  const result = await callClaudeAgent<{ investors?: Record<string, unknown>[] }>({
+    system: promptSystem(prompt.value, "## The investors", list),
+    content: [{ type: "text", text: `Find each investor's website and deliver them by calling the ${WEBSITE_TOOL.name} tool.` }],
+    tool: WEBSITE_TOOL,
+    serverTools: [webSearchTool(4 * targets.length)],
+    requireServerTools: true,
+    maxTokens: 6000,
+  });
+  if (!result.ok) return { ok: false, error: `Find websites did not finish: ${result.reason}` };
+  const now = new Date().toISOString();
+  const found: Record<string, WebsiteSuggestion> = {};
+  await Promise.all(
+    (result.input.investors ?? []).map(async (raw) => {
+      const id = typeof raw.id === "string" ? raw.id : "";
+      if (!targets.some((t) => t.id === id)) return;
+      const website = cleanUrl(raw.website);
+      const confidence = raw.confidence === "high" || raw.confidence === "medium" ? raw.confidence : "low";
+      found[id] = {
+        website,
+        confidence: website ? confidence : "low",
+        foundIn: cleanUrl(raw.foundIn),
+        portfolioUrl: cleanUrl(raw.portfolioUrl),
+        note: typeof raw.note === "string" ? raw.note.trim().slice(0, 300) : "",
+        link: website ? await checkLink(website) : "broken",
+        at: now,
+      };
+    }),
+  );
+  // Investors the answer skipped are recorded as "not found", so they aren't asked again blindly.
+  for (const t of targets) {
+    if (!found[t.id]) found[t.id] = { website: "", confidence: "low", foundIn: "", portfolioUrl: "", note: "Not found.", link: "broken", at: now };
+  }
+  const existing = await loadSuggestions(supabase, land.id);
+  if (existing.missing) return { ok: false, error: WEBSITES_MIGRATION };
+  const { error } = await supabase
+    .from("competitor_landscapes")
+    .update({ website_suggestions: { ...existing.value, ...found }, updated_at: now })
+    .eq("id", land.id);
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: Object.values(found).filter((f) => f.website).length };
 }

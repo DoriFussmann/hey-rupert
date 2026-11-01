@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { decideForGroup, decideOnInvestor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult } from "@/lib/match/landscape/server";
@@ -78,6 +78,39 @@ function WebsiteInput({ initial, busy, label, onSave }: { initial: string; busy:
         {label}
       </button>
     </form>
+  );
+}
+
+const CONFIDENCE_TONE = { high: "text-success", medium: "text-warning", low: "text-error" } as const;
+
+/** Find websites' answer, first: the website, how sure, where it was found, the portfolio page, and one click to accept. */
+function SuggestionBlock({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+  const s = row.suggestion;
+  if (!s) return null;
+  if (!s.website) return <p className="mb-sm text-body-sm text-muted">Find websites: no website found{s.note && s.note !== "Not found." ? ` (${s.note})` : ""}.</p>;
+  return (
+    <div className="mb-sm rounded-md border border-primary/30 bg-primary-tint/40 px-md py-sm">
+      <p className="flex flex-wrap items-center gap-x-md gap-y-xs text-body-sm">
+        <span className="text-muted">Suggested website</span>
+        <Site url={s.website} />
+        <span className={CONFIDENCE_TONE[s.confidence]}>{s.confidence} confidence</span>
+        {s.link === "broken" ? <span className="text-error">site didn&apos;t open</span> : null}
+        {s.portfolioUrl ? <Site url={s.portfolioUrl} label="Portfolio" /> : <span className="text-muted">portfolio not found</span>}
+        {s.foundIn ? <Site url={s.foundIn} label="Found in" /> : null}
+      </p>
+      {s.note ? <p className="mt-xs text-body-sm text-secondary">{s.note}</p> : null}
+      <div className="mt-sm flex flex-wrap gap-xs">
+        {s.firm ? (
+          <button type="button" disabled={busy} className={primaryButton} onClick={() => onDecide({ firmId: s.firm!.id })}>
+            Yes, it&apos;s {s.firm.name} (in the database)
+          </button>
+        ) : (
+          <button type="button" disabled={busy} className={primaryButton} onClick={() => onDecide({ website: s.website, resetMatch: true })}>
+            {s.firmCount > 1 ? `Use this website (${s.firmCount} database records have it: you'll pick one)` : "Use this website (not in the database)"}
+          </button>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -179,6 +212,8 @@ function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onD
         <p className="text-muted">{row.match.how === "ambiguous" ? "More than one database record has this name or website." : "Similar names in the database."}</p>
       </td>
       <td className="py-sm" colSpan={2}>
+        <SuggestionBlock row={row} busy={busy} onDecide={onDecide} />
+        {row.suggestion?.website ? <p className="mb-xs text-body-sm text-muted">Other options</p> : null}
         <div className="flex flex-wrap gap-xs">
           {row.candidates.map((c) => (
             <span key={c.id} className="inline-flex items-center gap-xs rounded-md border border-border bg-surface pl-xs">
@@ -218,6 +253,8 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
             <span>{row.firmName}</span>
             <Site url={row.firmWeb ?? row.investor.website} />
           </span>
+        ) : row.suggestion?.website && row.suggestion.website !== row.investor.website ? (
+          <SuggestionBlock row={row} busy={busy} onDecide={onDecide} />
         ) : editing ? (
           <WebsiteInput
             initial={row.investor.website ? host(row.investor.website) : ""}
@@ -528,6 +565,10 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
       if (!live) return;
       if (!result.ok) return setError(result.error);
       setCheck(result.check);
+      // The matched investors' investments are saved to the funds' records, quietly (no decision in it).
+      void recordInvestmentsInDb(clientId).then((saved) => {
+        if (live && saved.ok) setRecorded(saved.recorded);
+      });
     });
     return () => {
       live = false;
@@ -535,6 +576,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   }, [clientId]);
 
   const [toast, setToast] = useState<string | null>(null);
+  const [finding, setFinding] = useState<{ done: number; total: number } | null>(null);
+  const [recorded, setRecorded] = useState<number | null>(null);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3500);
@@ -591,13 +634,26 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(text);
   };
 
-  const record = async () => {
-    setBusy(true);
+  /** Find websites for the unclear and missing investors that have no suggestion yet, a few at a time. */
+  const findWebsites = async (ids: string[]) => {
     setError(null);
-    const result = await recordInvestmentsInDb(clientId);
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    setCheck(result.check);
+    let done = 0;
+    let found = 0;
+    setFinding({ done, total: ids.length });
+    for (let i = 0; i < ids.length; i += 4) {
+      const batch = ids.slice(i, i + 4);
+      const result = await findWebsitesFor(clientId, batch);
+      done += batch.length;
+      setFinding({ done, total: ids.length });
+      if (!result.ok) {
+        setError(result.error);
+        break;
+      }
+      found += result.found;
+      setCheck(result.check);
+    }
+    setFinding(null);
+    setToast(`Find websites: ${n(found)} found for ${n(done)} investors. Saved.`);
   };
 
   if (!check) {
@@ -612,7 +668,6 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const byBucket = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const total = check.rows.length;
   const notInList = byBucket("not_in_list");
-  const matchedInvestors = check.rows.filter((r) => r.firmId && (r.bucket === "in_list" || r.bucket === "not_in_list")).length;
   const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
 
   return (
@@ -670,16 +725,11 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         />
       ) : null}
 
-      <div className="mt-lg flex flex-wrap items-center justify-between gap-sm rounded-md border border-border bg-background px-md py-sm text-body-sm">
-        <p className="text-secondary">
-          <span className="text-heading">Investments, company-wide:</span> {n(matchedInvestors)} investors here are in the database. Recording saves
-          which competitor each backed (round, lead, source) to the fund, as a portfolio fact. The fund&apos;s sectors don&apos;t change.
-          {check.recorded === null ? " (Run supabase/fund_investments.sql first.)" : check.recorded ? ` ${n(check.recorded)} recorded so far.` : ""}
+      {recorded ? (
+        <p className="mt-md text-body-sm text-muted">
+          {n(recorded)} investments (which fund backed which competitor) saved to the funds&apos; records for future clients.
         </p>
-        <button type="button" className={smallButton} disabled={busy || !matchedInvestors} onClick={() => void record()}>
-          {check.recorded ? "Record again" : "Record in the database"}
-        </button>
-      </div>
+      ) : null}
 
       {current && byBucket(current).length ? (
         <section className="mt-lg">
@@ -689,6 +739,33 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           {current === "missing_fund" || current === "missing_angel" ? (
             <p className="mt-xs text-body-sm text-muted">Add the website where you have it. Try and Add to DB comes next: web search and Hunter.io, up to 5 contacts each.</p>
           ) : null}
+          {current === "confirm" || current === "missing_fund" || current === "missing_angel"
+            ? (() => {
+                const pending = byBucket(current).filter((r) => !r.suggestion).map((r) => r.investor.id);
+                return (
+                  <div className="mt-sm flex flex-wrap items-center gap-sm">
+                    {finding ? (
+                      <p className="text-body-sm text-primary">
+                        Finding websites… {n(finding.done)} of {n(finding.total)}
+                      </p>
+                    ) : pending.length ? (
+                      <>
+                        <button type="button" className={primaryButton} disabled={busy || !check.websitesReady} onClick={() => void findWebsites(pending)}>
+                          Find websites ({n(pending.length)})
+                        </button>
+                        <p className="text-body-sm text-muted">
+                          {check.websitesReady
+                            ? "Reads each investor's funding article, finds its website and portfolio page. About 30 seconds per 4 investors."
+                            : "Run supabase/investor_websites.sql first."}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-body-sm text-success">✓ Websites looked up for all in this group.</p>
+                    )}
+                  </div>
+                );
+              })()
+            : null}
           {current === "not_in_list" ? (
             <DecisionQueue rows={byBucket(current)} busy={busy} onDecide={(row, p) => void decide(row.investor.id, p)} />
           ) : (
