@@ -19,7 +19,7 @@ function host(url: string) {
   }
 }
 
-const ORDER: Bucket[] = ["confirm", "not_in_list", "missing_fund", "missing_angel", "in_list"];
+const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel"];
 const TONE: Record<Bucket, string> = {
   confirm: "text-warning",
   in_list: "text-success",
@@ -28,16 +28,24 @@ const TONE: Record<Bucket, string> = {
   missing_angel: "text-heading",
 };
 
-function Stat({ bucket, value, active, onClick }: { bucket: Bucket; value: number; active: boolean; onClick: () => void }) {
+const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
+
+/** Inline website entry: the admin's own research. */
+function WebsiteInput({ initial, busy, label, onSave }: { initial: string; busy: boolean; label: string; onSave: (url: string) => void }) {
+  const [value, setValue] = useState(initial);
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`rounded-md border px-md py-sm text-left transition-colors duration-hover ${active ? "border-primary bg-primary-tint/60" : "border-border bg-surface hover:bg-background"}`}
+    <form
+      className="flex flex-wrap items-center gap-xs"
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (value.trim()) onSave(value.trim());
+      }}
     >
-      <p className="text-label uppercase tracking-label text-muted">{BUCKET_LABEL[bucket]}</p>
-      <p className={`text-h2 font-light ${TONE[bucket]}`}>{n(value)}</p>
-    </button>
+      <input className={`${inputClass} max-w-xs`} placeholder="e.g. fundname.com" value={value} onChange={(e) => setValue(e.target.value)} />
+      <button type="submit" disabled={busy || !value.trim() || value.trim() === initial} className={smallButton}>
+        {label}
+      </button>
+    </form>
   );
 }
 
@@ -136,18 +144,45 @@ function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onD
             Not in the database
           </button>
         </div>
+        <div className="mt-sm">
+          <p className="mb-xs text-body-sm text-muted">Neither? Give the correct website: it is matched again, and kept for adding it to the database.</p>
+          <WebsiteInput initial="" busy={busy} label="Use this website" onSave={(url) => onDecide({ website: url, resetMatch: true })} />
+        </div>
       </td>
     </tr>
   );
 }
 
-function SimpleRow({ row }: { row: CheckRow }) {
+function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+  const [editing, setEditing] = useState(false);
+  const missing = row.bucket === "missing_fund" || row.bucket === "missing_angel";
   return (
     <tr className="border-t border-border align-top">
       <td className="py-xs pr-md text-heading">{row.investor.name}</td>
       <td className="py-xs pr-md text-secondary">{KIND_LABEL[row.investor.kind]}</td>
       <td className="py-xs pr-md text-secondary">{backedText(row)}</td>
-      <td className="py-xs text-secondary">{row.firmName ?? (row.investor.website ? host(row.investor.website) : "–")}</td>
+      <td className="py-xs text-secondary">
+        {!missing ? (
+          row.firmName
+        ) : editing ? (
+          <WebsiteInput
+            initial={row.investor.website ? host(row.investor.website) : ""}
+            busy={busy}
+            label="Save"
+            onSave={(url) => {
+              setEditing(false);
+              onDecide({ website: url, resetMatch: true });
+            }}
+          />
+        ) : (
+          <span>
+            {row.investor.website ? host(row.investor.website) : <span className="text-muted">No website</span>}{" "}
+            <button type="button" className="underline" onClick={() => setEditing(true)}>
+              {row.investor.website ? "Edit" : "Add"}
+            </button>
+          </span>
+        )}
+      </td>
     </tr>
   );
 }
@@ -162,7 +197,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const [check, setCheck] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [show, setShow] = useState<Bucket | null>(null);
+  /** The group open below the table: null = the default (what needs action), "none" = all closed. */
+  const [show, setShow] = useState<Bucket | "none" | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -195,9 +231,10 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   }
 
   const byBucket = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
+  const total = check.rows.length;
   const notInList = byBucket("not_in_list");
   const decided = notInList.filter((r) => r.decision?.action).length;
-  const visible = show ? [show] : ORDER.filter((b) => b !== "in_list");
+  const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
 
   return (
     <Card>
@@ -207,51 +244,69 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           {n(check.rows.length)} investors · Step 1 list confirmed {new Date(check.dryConfirmedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
         </p>
       </div>
-      <div className="mt-md grid gap-sm sm:grid-cols-2 lg:grid-cols-5">
-        {ORDER.map((b) => (
-          <Stat key={b} bucket={b} value={check.counts[b]} active={show === b} onClick={() => setShow(show === b ? null : b)} />
-        ))}
-      </div>
+      <table className="mt-md w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="py-xs pr-md font-medium">Group</th>
+            <th className="py-xs pr-md text-right font-medium">Investors</th>
+            <th className="py-xs pr-md text-right font-medium">Share</th>
+            <th className="py-xs font-medium" />
+          </tr>
+        </thead>
+        <tbody>
+          {ORDER.map((b) => (
+            <tr
+              key={b}
+              tabIndex={0}
+              aria-expanded={current === b}
+              className={`cursor-pointer border-t border-border hover:bg-background ${current === b ? "bg-primary-tint/50" : ""}`}
+              onClick={() => setShow(current === b ? "none" : b)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") setShow(current === b ? "none" : b);
+              }}
+            >
+              <td className={`py-xs pr-md ${TONE[b]}`}>{BUCKET_LABEL[b]}</td>
+              <td className="py-xs pr-md text-right text-heading">{n(check.counts[b])}</td>
+              <td className="py-xs pr-md text-right text-secondary">{pct(check.counts[b], total)}</td>
+              <td className="py-xs text-right text-muted">{check.counts[b] ? (current === b ? "Hide ▴" : "Show ▾") : ""}</td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-primary">
+            <td className="py-xs pr-md text-heading">All investors</td>
+            <td className="py-xs pr-md text-right text-heading">{n(total)}</td>
+            <td className="py-xs pr-md text-right text-secondary">100%</td>
+            <td />
+          </tr>
+        </tbody>
+      </table>
       {notInList.length ? (
         <p className="mt-sm text-body-sm text-secondary">
           Decided {n(decided)} of {n(notInList.length)} in the database but not in the shortlist.
         </p>
       ) : null}
 
-      {visible.map((b) => {
-        const rows = byBucket(b);
-        if (!rows.length) return null;
-        return (
-          <section key={b} className="mt-lg">
-            <h4 className="text-label uppercase tracking-label text-muted">
-              {BUCKET_LABEL[b]} · {n(rows.length)}
-            </h4>
-            {b === "missing_fund" || b === "missing_angel" ? (
-              <p className="mt-xs text-body-sm text-muted">Try and Add to DB comes next: web search and Hunter.io, up to 5 contacts each.</p>
-            ) : null}
-            <table className="mt-xs w-full text-left text-body-sm">
-              <tbody>
-                {rows.map((row) =>
-                  b === "not_in_list" ? (
-                    <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
-                  ) : b === "confirm" ? (
-                    <ConfirmRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
-                  ) : (
-                    <SimpleRow key={row.investor.id} row={row} />
-                  ),
-                )}
-              </tbody>
-            </table>
-          </section>
-        );
-      })}
-      {!show ? (
-        <p className="mt-lg text-body-sm text-muted">
-          {n(check.counts.in_list)} are already in the shortlist.{" "}
-          <button type="button" className="underline" onClick={() => setShow("in_list")}>
-            Show them
-          </button>
-        </p>
+      {current && byBucket(current).length ? (
+        <section className="mt-lg">
+          <h4 className="text-label uppercase tracking-label text-muted">
+            {BUCKET_LABEL[current]} · {n(byBucket(current).length)}
+          </h4>
+          {current === "missing_fund" || current === "missing_angel" ? (
+            <p className="mt-xs text-body-sm text-muted">Add the website where you have it. Try and Add to DB comes next: web search and Hunter.io, up to 5 contacts each.</p>
+          ) : null}
+          <table className="mt-xs w-full text-left text-body-sm">
+            <tbody>
+              {byBucket(current).map((row) =>
+                current === "not_in_list" ? (
+                  <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
+                ) : current === "confirm" ? (
+                  <ConfirmRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
+                ) : (
+                  <SimpleRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
+                ),
+              )}
+            </tbody>
+          </table>
+        </section>
       ) : null}
       {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
     </Card>

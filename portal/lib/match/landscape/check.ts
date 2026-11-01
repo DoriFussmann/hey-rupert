@@ -105,6 +105,8 @@ export type InvestorDecision = {
   firmId?: string | null;
   /** For a fund in the database but not in the shortlist. */
   action?: "bring_back" | "leave_out";
+  /** The investor's correct website, from the admin's research. Matching uses it. */
+  website?: string;
   /** Why, and whether it is a lesson for Rupert (the database or the taxonomy needs fixing), not just this client. */
   note?: string;
   lesson?: boolean;
@@ -147,9 +149,18 @@ export function checkInvestors(input: {
   const index = indexFirms(input.firms);
   const firmById = new Map(input.firms.map((f) => [f.id, f]));
   const fundById = new Map(input.data.funds.map((f) => [f.id, f]));
-  return input.investors.map((investor) => {
-    const match = matchInvestor(investor, index);
-    const decision = input.decisions[investor.id] ?? null;
+  return input.investors.map((original) => {
+    const decision = input.decisions[original.id] ?? null;
+    const investor = decision?.website ? { ...original, website: decision.website } : original;
+    // The admin's website is their research: it alone decides (one record with it, or none).
+    const byAdminSite = decision?.website ? index.byDomain.get(domainOf(decision.website)) ?? [] : null;
+    const match: FirmMatch = byAdminSite
+      ? byAdminSite.length === 1
+        ? { how: "website", firmIds: byAdminSite }
+        : byAdminSite.length > 1
+          ? { how: "ambiguous", firmIds: byAdminSite }
+          : { how: "none", firmIds: [] }
+      : matchInvestor(investor, index);
     let firmId: string | null = null;
     let bucket: Bucket;
     if (decision && decision.firmId !== undefined) firmId = decision.firmId && firmById.has(decision.firmId) ? decision.firmId : null;

@@ -78,3 +78,20 @@ test("decisions: the admin's record choice settles an unclear match; 'not in the
   const none = checkInvestors({ ...base, investors: [inv("i2", "Insight Partners")], decisions: { i2: { firmId: null, by: null, at: "" } } });
   assert.equal(none[0].bucket, "missing_fund");
 });
+
+test("the admin's website: matched again by it; no record with it leaves the investor missing, with the website kept", () => {
+  const base = { firms, data, steps, shortlist: new Set(["F2"]) };
+  const found = checkInvestors({ ...base, investors: [inv("i5", "Acme")], decisions: { i5: { website: "https://acme.vc", by: null, at: "" } } });
+  assert.equal(found[0].bucket, "not_in_list");
+  assert.equal(found[0].firmName, "Acme Ventures");
+  const missing = checkInvestors({ ...base, investors: [inv("i5", "Acme")], decisions: { i5: { website: "https://acme-ventures.io", by: null, at: "" } } });
+  assert.equal(missing[0].bucket, "missing_fund");
+  assert.equal(missing[0].investor.website, "https://acme-ventures.io");
+  const settled = checkInvestors({
+    ...base,
+    investors: [inv("i5", "Acme")],
+    decisions: { i5: { website: "https://acme-ventures.io", firmId: null, by: null, at: "" } },
+  });
+  assert.equal(settled[0].bucket, "missing_fund");
+  assert.equal(settled[0].investor.website, "https://acme-ventures.io");
+});

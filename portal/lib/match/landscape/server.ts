@@ -6,7 +6,7 @@ import { loadPrompt } from "@/lib/prompts-server";
 import { loadCompanyProfile } from "@/lib/company-profile/server";
 import { loadProfileState } from "@/lib/match/profile-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
-import { MAX_COMPETITORS, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
+import { MAX_COMPETITORS, cleanUrl, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
 import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type Investor, type ResearchState } from "./investors.ts";
 import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision } from "./check.ts";
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
@@ -697,7 +697,7 @@ export async function decideInvestor(
   supabase: ServiceClient,
   clientId: string,
   investorId: string,
-  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean },
+  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean },
   actor: string | null,
 ): Promise<Result<null>> {
   const current = await currentLandscape(supabase, clientId);
@@ -717,6 +717,17 @@ export async function decideInvestor(
   if (patch.action !== undefined) {
     if (patch.action === null) delete next.action;
     else next.action = patch.action;
+  }
+  if (patch.website !== undefined) {
+    const url = cleanUrl(patch.website);
+    if (patch.website.trim() && !url) return { ok: false, error: "That is not a website address." };
+    if (url) next.website = url;
+    else delete next.website;
+  }
+  // Match again automatically (e.g. by the new website): the earlier record choice and decision go.
+  if (patch.resetMatch) {
+    delete next.firmId;
+    delete next.action;
   }
   if (patch.note !== undefined) next.note = patch.note.trim().slice(0, 1000);
   if (patch.lesson !== undefined) next.lesson = patch.lesson === true;
