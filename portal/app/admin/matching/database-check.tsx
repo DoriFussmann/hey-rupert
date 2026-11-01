@@ -241,6 +241,81 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
   );
 }
 
+/**
+ * Funds in the database but not in the shortlist, as a queue: those still to
+ * decide on top; a fund leaves the queue the moment it is decided and goes
+ * to "Decided" below, folded away.
+ */
+function DecisionQueue({
+  rows,
+  busy,
+  onDecide,
+}: {
+  rows: CheckRow[];
+  busy: boolean;
+  onDecide: (row: CheckRow, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+}) {
+  const [showDecided, setShowDecided] = useState(false);
+  const todo = rows.filter((r) => r.defaulted);
+  const done = rows.filter((r) => !r.defaulted);
+  const head = (
+    <thead className="text-label uppercase tracking-label text-muted">
+      <tr>
+        <th className="py-xs pr-md font-medium">Investor</th>
+        <th className="py-xs pr-md font-medium">Why it isn&apos;t in the shortlist</th>
+        <th className="py-xs font-medium">Decision</th>
+      </tr>
+    </thead>
+  );
+  return (
+    <>
+      {todo.length ? (
+        <>
+          <p className="mt-md text-body-sm text-warning">{n(todo.length)} to decide</p>
+          <table className="mt-xs w-full text-left text-body-sm">
+            {head}
+            <tbody>
+              {todo.map((row) => (
+                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} />
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <p className="mt-md text-body-sm text-success">✓ Nothing left to decide here.</p>
+      )}
+      {done.length ? (
+        <div className="mt-md border-t border-border pt-sm">
+          <button type="button" className="text-body-sm text-secondary underline hover:text-heading" onClick={() => setShowDecided(!showDecided)}>
+            {showDecided ? "Hide" : "Show"} decided ({n(done.length)}: {n(done.filter((r) => r.action === "bring_back").length)} brought back,{" "}
+            {n(done.filter((r) => r.action === "leave_out").length)} left out)
+          </button>
+          {showDecided ? (
+            <table className="mt-xs w-full text-left text-body-sm opacity-80">
+              {head}
+              <tbody>
+                {done.map((row) => (
+                  <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} />
+                ))}
+              </tbody>
+            </table>
+          ) : null}
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+/** A short confirmation in the corner after every saved decision. */
+function Toast({ text }: { text: string | null }) {
+  if (!text) return null;
+  return (
+    <div role="status" aria-live="polite" className="animate-slide-in fixed bottom-lg right-lg z-[60] rounded-md border border-success/40 bg-surface px-md py-sm text-body-sm text-success shadow-lg">
+      ✓ {text}
+    </div>
+  );
+}
+
 type Reason = { key: string; label: string; rows: CheckRow[]; note: string };
 
 const REASONS: Omit<Reason, "rows">[] = [
@@ -300,20 +375,7 @@ function ReasonModal({
           </button>
         </div>
         {rows.length ? (
-          <table className="mt-md w-full text-left text-body-sm">
-            <thead className="text-label uppercase tracking-label text-muted">
-              <tr>
-                <th className="py-xs pr-md font-medium">Investor</th>
-                <th className="py-xs pr-md font-medium">Why it isn&apos;t in the shortlist</th>
-                <th className="py-xs font-medium">Decision</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row.investor.id, p)} />
-              ))}
-            </tbody>
-          </table>
+          <DecisionQueue rows={rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} />
         ) : (
           <p className="mt-md text-body-sm text-muted">No funds left in this group.</p>
         )}
@@ -450,13 +512,37 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     };
   }, [clientId]);
 
+  const [toast, setToast] = useState<string | null>(null);
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 3500);
+    return () => clearTimeout(t);
+  }, [toast]);
+
   const decide = async (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => {
     setBusy(true);
     setError(null);
+    const name = check?.rows.find((r) => r.investor.id === investorId)?.investor.name ?? "Investor";
     const result = await decideOnInvestor(clientId, investorId, patch);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
+    const what = patch.clear
+      ? "decision undone"
+      : patch.action === "bring_back"
+        ? "brought back"
+        : patch.action === "leave_out"
+          ? "left out"
+          : patch.firmId === null
+            ? "marked not in the database"
+            : typeof patch.firmId === "string"
+              ? "matched"
+              : patch.website !== undefined
+                ? "website saved, matched again"
+                : patch.note !== undefined || patch.lesson !== undefined
+                  ? "note saved"
+                  : "saved";
+    setToast(`${name}: ${what}. Saved.`);
   };
 
   const group = async (ids: string[], action: "bring_back" | "leave_out" | null) => {
@@ -467,11 +553,11 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
-    setNotice(
-      `Saved: ${n(result.changed)} ${result.changed === 1 ? "fund" : "funds"} ${
-        action === "bring_back" ? "brought back" : action === "leave_out" ? "left out" : "back to the default (to decide)"
-      }.`,
-    );
+    const text = `${n(result.changed)} ${result.changed === 1 ? "fund" : "funds"} ${
+      action === "bring_back" ? "brought back" : action === "leave_out" ? "left out" : "back to the default (to decide)"
+    }. Saved.`;
+    setNotice(text);
+    setToast(text);
   };
 
   const record = async () => {
@@ -572,12 +658,13 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           {current === "missing_fund" || current === "missing_angel" ? (
             <p className="mt-xs text-body-sm text-muted">Add the website where you have it. Try and Add to DB comes next: web search and Hunter.io, up to 5 contacts each.</p>
           ) : null}
+          {current === "not_in_list" ? (
+            <DecisionQueue rows={byBucket(current)} busy={busy} onDecide={(row, p) => void decide(row.investor.id, p)} />
+          ) : (
           <table className="mt-xs w-full text-left text-body-sm">
             <tbody>
               {byBucket(current).map((row) =>
-                current === "not_in_list" ? (
-                  <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
-                ) : current === "confirm" ? (
+                current === "confirm" ? (
                   <ConfirmRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
                 ) : (
                   <SimpleRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
@@ -585,9 +672,11 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
               )}
             </tbody>
           </table>
+          )}
         </section>
       ) : null}
       {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
+      <Toast text={toast} />
     </Card>
   );
 }
