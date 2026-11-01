@@ -342,7 +342,15 @@ function DecisionSummary({
   return (
     <div className="mt-lg">
       <h4 className="text-label uppercase tracking-label text-muted">In the database, not in the shortlist: decisions</h4>
-      <p className="text-body-sm text-muted">Click a row to see its funds and decide one by one.</p>
+      <p className="text-body-sm">
+        <span className={rows.length - mine(rows) ? "text-warning" : "text-success"}>
+          {rows.length - mine(rows) ? `${n(rows.length - mine(rows))} of ${n(rows.length)} still to decide` : `All ${n(rows.length)} decided`}
+        </span>
+        <span className="text-muted">
+          {" "}
+          · Bring back and Leave out counts include defaults; a fund counts as decided once you choose (one by one or with &ldquo;all&rdquo;). Click a row to see its funds.
+        </span>
+      </p>
       <table className="mt-xs w-full text-left text-body-sm">
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
@@ -350,7 +358,8 @@ function DecisionSummary({
             <th className="py-xs pr-md text-right font-medium">Funds</th>
             <th className="py-xs pr-md text-right font-medium">Bring back</th>
             <th className="py-xs pr-md text-right font-medium">Leave out</th>
-            <th className="py-xs pr-md text-right font-medium">Decided by you</th>
+            <th className="py-xs pr-md text-right font-medium">Decided</th>
+            <th className="py-xs pr-md text-right font-medium">To decide</th>
             <th className="py-xs font-medium" />
           </tr>
         </thead>
@@ -376,6 +385,9 @@ function DecisionSummary({
                 <td className="py-xs pr-md text-right">{n(count(r.rows, "bring_back"))}</td>
                 <td className="py-xs pr-md text-right">{n(count(r.rows, "leave_out"))}</td>
                 <td className="py-xs pr-md text-right text-secondary">{n(mine(r.rows))}</td>
+                <td className={`py-xs pr-md text-right ${r.rows.length - mine(r.rows) ? "text-warning" : "text-success"}`}>
+                  {r.rows.length - mine(r.rows) ? n(r.rows.length - mine(r.rows)) : "✓"}
+                </td>
                 <td className="py-xs text-right" onClick={(event) => event.stopPropagation()}>
                   <div className="flex flex-wrap justify-end gap-xs">
                     <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, "bring_back")}>
@@ -400,6 +412,9 @@ function DecisionSummary({
             <td className="py-xs pr-md text-right text-heading">{n(count(rows, "bring_back"))}</td>
             <td className="py-xs pr-md text-right text-heading">{n(count(rows, "leave_out"))}</td>
             <td className="py-xs pr-md text-right text-secondary">{n(mine(rows))}</td>
+            <td className={`py-xs pr-md text-right ${rows.length - mine(rows) ? "text-warning" : "text-success"}`}>
+              {rows.length - mine(rows) ? n(rows.length - mine(rows)) : "✓"}
+            </td>
             <td />
           </tr>
         </tbody>
@@ -421,6 +436,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   /** The group open below the table: null = the default (what needs action), "none" = all closed. */
   const [show, setShow] = useState<Bucket | "none" | null>(null);
   const [openReason, setOpenReason] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -446,10 +462,16 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const group = async (ids: string[], action: "bring_back" | "leave_out" | null) => {
     setBusy(true);
     setError(null);
+    setNotice(null);
     const result = await decideForGroup(clientId, ids, action);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
+    setNotice(
+      `Saved: ${n(result.changed)} ${result.changed === 1 ? "fund" : "funds"} ${
+        action === "bring_back" ? "brought back" : action === "leave_out" ? "left out" : "back to the default (to decide)"
+      }.`,
+    );
   };
 
   const record = async () => {
@@ -520,6 +542,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         </tbody>
       </table>
       <DecisionSummary rows={notInList} busy={busy} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} />
+      {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
       {openReason ? (
         <ReasonModal
           reason={REASONS.find((r) => r.key === openReason) ?? REASONS[0]}
