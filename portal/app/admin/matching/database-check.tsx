@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { confirmInvestorCheck, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult } from "@/lib/match/landscape/server";
@@ -175,6 +175,14 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
           <button type="button" disabled={busy} className={smallButton} onClick={() => onDecide({ firmId: null })} title="This database record is a different firm">
             Wrong match
           </button>
+          <button
+            type="button"
+            disabled={busy}
+            className={row.unsure ? `${smallButton} !border-warning text-warning` : smallButton}
+            onClick={() => onDecide({ unsure: !row.unsure })}
+          >
+            {row.unsure ? "Not sure ✓" : "Not sure"}
+          </button>
         </div>
         <textarea
           className={`${inputClass} mt-xs`}
@@ -225,6 +233,14 @@ function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onD
           ))}
           <button type="button" disabled={busy} className={secondaryButton} onClick={() => onDecide({ firmId: null })}>
             Not in the database
+          </button>
+          <button
+            type="button"
+            disabled={busy}
+            className={row.unsure ? `${secondaryButton} !border-warning text-warning` : secondaryButton}
+            onClick={() => onDecide({ unsure: !row.unsure })}
+          >
+            {row.unsure ? "Not sure ✓ (later)" : "Not sure"}
           </button>
         </div>
         <div className="mt-sm">
@@ -293,7 +309,8 @@ function DecisionQueue({
   onDecide: (row: CheckRow, patch: Parameters<typeof decideOnInvestor>[2]) => void;
 }) {
   const [showDecided, setShowDecided] = useState(false);
-  const todo = rows.filter((r) => r.defaulted);
+  const todo = rows.filter((r) => r.defaulted && !r.unsure);
+  const later = rows.filter((r) => r.unsure);
   const done = rows.filter((r) => !r.defaulted);
   const head = (
     <thead className="text-label uppercase tracking-label text-muted">
@@ -321,6 +338,19 @@ function DecisionQueue({
       ) : (
         <p className="mt-md text-body-sm text-success">✓ Nothing left to decide here.</p>
       )}
+      {later.length ? (
+        <div className="mt-md border-t border-border pt-sm">
+          <p className="text-body-sm text-warning">Not sure · {n(later.length)} (decide later)</p>
+          <table className="mt-xs w-full text-left text-body-sm">
+            {head}
+            <tbody>
+              {later.map((row) => (
+                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} />
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
       {done.length ? (
         <div className="mt-md border-t border-border pt-sm">
           <button type="button" className="text-body-sm text-secondary underline hover:text-heading" onClick={() => setShowDecided(!showDecided)}>
@@ -544,6 +574,113 @@ function DecisionSummary({
   );
 }
 
+/** What the admin decided on one investor, in words. */
+function describeDecision(row: CheckRow) {
+  const d = row.decision;
+  if (!d) return "";
+  const parts: string[] = [];
+  if (d.unsure) parts.push("Not sure (later)");
+  if (typeof d.firmId === "string") parts.push(`Matched to ${row.firmName ?? d.firmId}`);
+  if (d.firmId === null) parts.push("Not in the database");
+  if (d.website) parts.push(`Website ${host(d.website)}`);
+  if (d.action === "bring_back") parts.push("Brought back");
+  if (d.action === "leave_out") parts.push("Left out");
+  if (d.note) parts.push("Note");
+  if (d.lesson) parts.push("Lesson for Rupert");
+  return parts.join(" · ") || "Saved";
+}
+
+/**
+ * The end of the check: every decision, newest first, with Undo, and the
+ * final confirmation. Confirming locks the decisions; Reopen unlocks them.
+ */
+function ReviewAndConfirm({
+  check,
+  busy,
+  onDecide,
+  onConfirm,
+}: {
+  check: CheckResult;
+  busy: boolean;
+  onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  onConfirm: (confirm: boolean) => void;
+}) {
+  const [showAll, setShowAll] = useState(false);
+  const decided = check.rows.filter((r) => r.decision).sort((a, b) => (b.decision!.at || "").localeCompare(a.decision!.at || ""));
+  const shown = showAll ? decided : decided.slice(0, 10);
+  const unsure = check.rows.filter((r) => r.unsure).length;
+  const open = check.rows.filter((r) => r.bucket === "confirm" && !r.unsure).length;
+  const todo = check.rows.filter((r) => r.bucket === "not_in_list" && r.defaulted && !r.unsure).length;
+  const ready = !open && !todo && !unsure;
+  const locked = !!check.confirmedAt;
+  return (
+    <section className="mt-xl border-t border-border pt-md">
+      <div className="flex flex-wrap items-start justify-between gap-md">
+        <div>
+          <h4 className="text-h4 text-heading">Your decisions</h4>
+          <p className="text-body-sm text-muted">Newest first. Undo puts an investor back to its automatic match.</p>
+        </div>
+        {locked ? (
+          <button type="button" className={secondaryButton} disabled={busy} onClick={() => onConfirm(false)}>
+            Reopen
+          </button>
+        ) : (
+          <button type="button" className={primaryButton} disabled={busy || !ready} onClick={() => onConfirm(true)}>
+            Confirm the check
+          </button>
+        )}
+      </div>
+      {locked ? (
+        <p className="mt-sm text-body-sm text-success">
+          ✓ Confirmed {new Date(check.confirmedAt!).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+          {check.confirmedBy ? ` by ${check.confirmedBy}` : ""}. Decisions are locked; Reopen to change one.
+        </p>
+      ) : (
+        <p className={`mt-sm text-body-sm ${ready ? "text-success" : "text-warning"}`}>
+          {ready ? "✓ Everything is settled. Confirm when you're happy with the list below." : `Before confirming: ${n(open)} to confirm, ${n(todo)} to decide, ${n(unsure)} marked Not sure.`}
+        </p>
+      )}
+      {decided.length ? (
+        <table className="mt-sm w-full text-left text-body-sm">
+          <thead className="text-label uppercase tracking-label text-muted">
+            <tr>
+              <th className="py-xs pr-md font-medium">When</th>
+              <th className="py-xs pr-md font-medium">Investor</th>
+              <th className="py-xs pr-md font-medium">Decision</th>
+              <th className="py-xs pr-md font-medium">Now in</th>
+              <th className="py-xs font-medium" />
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map((row) => (
+              <tr key={row.investor.id} className={`border-t border-border align-top ${row.unsure ? "bg-warning/5" : ""}`}>
+                <td className="py-xs pr-md whitespace-nowrap text-muted">
+                  {row.decision!.at ? new Date(row.decision!.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}
+                </td>
+                <td className="py-xs pr-md text-heading">{row.investor.name}</td>
+                <td className={`py-xs pr-md ${row.unsure ? "text-warning" : "text-secondary"}`}>{describeDecision(row)}</td>
+                <td className="py-xs pr-md text-secondary">{BUCKET_LABEL[row.bucket]}</td>
+                <td className="py-xs text-right">
+                  <button type="button" disabled={busy || locked} className={smallButton} onClick={() => onDecide(row.investor.id, { clear: true })}>
+                    Undo
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p className="mt-sm text-body-sm text-muted">No decisions yet.</p>
+      )}
+      {decided.length > 10 ? (
+        <button type="button" className="mt-xs text-body-sm text-secondary underline hover:text-heading" onClick={() => setShowAll(!showAll)}>
+          {showAll ? "Show the latest 10" : `Show all ${n(decided.length)}`}
+        </button>
+      ) : null}
+    </section>
+  );
+}
+
 /**
  * Step 2C: each confirmed investor against the Fund Database and the Step 1
  * shortlist. Unclear matches are confirmed by the admin; funds in the
@@ -594,6 +731,10 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setCheck(result.check);
     const what = patch.clear
       ? "decision undone"
+      : patch.unsure === true
+        ? "marked Not sure (later)"
+        : patch.unsure === false
+          ? "back in the queue"
       : patch.action === "bring_back"
         ? "brought back"
         : patch.action === "leave_out"
@@ -634,6 +775,17 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(text);
   };
 
+  const confirmCheck = async (confirm: boolean) => {
+    if (confirm && !window.confirm("Confirm the check? Decisions are locked until you reopen it.")) return;
+    setBusy(true);
+    setError(null);
+    const result = await confirmInvestorCheck(clientId, confirm);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setCheck(result.check);
+    setToast(confirm ? "Check confirmed. Saved." : "Check reopened.");
+  };
+
   /** Find websites for the unclear and missing investors that have no suggestion yet, a few at a time. */
   const findWebsites = async (ids: string[]) => {
     setError(null);
@@ -668,6 +820,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const byBucket = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const total = check.rows.length;
   const notInList = byBucket("not_in_list");
+  /** Confirmed: every decision button is off until Reopen. */
+  const frozen = busy || !!check.confirmedAt;
   const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
 
   return (
@@ -713,13 +867,13 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </tr>
         </tbody>
       </table>
-      <DecisionSummary rows={notInList} busy={busy} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} />
+      <DecisionSummary rows={notInList} busy={frozen} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} />
       {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
       {openReason ? (
         <ReasonModal
           reason={REASONS.find((r) => r.key === openReason) ?? REASONS[0]}
           rows={notInList.filter((r) => reasonOf(r) === openReason)}
-          busy={busy}
+          busy={frozen}
           onDecide={(id, patch) => void decide(id, patch)}
           onClose={() => setOpenReason(null)}
         />
@@ -767,15 +921,15 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
               })()
             : null}
           {current === "not_in_list" ? (
-            <DecisionQueue rows={byBucket(current)} busy={busy} onDecide={(row, p) => void decide(row.investor.id, p)} />
+            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} />
           ) : (
           <table className="mt-xs w-full text-left text-body-sm">
             <tbody>
-              {byBucket(current).map((row) =>
+              {[...byBucket(current)].sort((a, b) => Number(a.unsure) - Number(b.unsure)).map((row) =>
                 current === "confirm" ? (
-                  <ConfirmRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
+                  <ConfirmRow key={row.investor.id} row={row} busy={frozen} onDecide={(p) => void decide(row.investor.id, p)} />
                 ) : (
-                  <SimpleRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => void decide(row.investor.id, p)} />
+                  <SimpleRow key={row.investor.id} row={row} busy={frozen} onDecide={(p) => void decide(row.investor.id, p)} />
                 ),
               )}
             </tbody>
@@ -783,6 +937,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           )}
         </section>
       ) : null}
+      <ReviewAndConfirm check={check} busy={busy} onDecide={(id, p) => void decide(id, p)} onConfirm={(c) => void confirmCheck(c)} />
       {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
       <Toast text={toast} />
     </Card>

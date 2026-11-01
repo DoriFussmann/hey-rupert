@@ -105,6 +105,8 @@ export type InvestorDecision = {
   firmId?: string | null;
   /** For a fund in the database but not in the shortlist. */
   action?: "bring_back" | "leave_out";
+  /** Parked for later: out of the queue, back in the "Not sure" pile. Any real decision clears it. */
+  unsure?: boolean;
   /** The investor's correct website, from the admin's research. Matching uses it. */
   website?: string;
   /** Why, and whether it is a lesson for Rupert (the database or the taxonomy needs fixing), not just this client. */
@@ -163,6 +165,8 @@ export type CheckRow = {
   /** Candidate records to choose from, for confirm. */
   candidates: { id: string; name: string; web: string }[];
   decision: InvestorDecision | null;
+  /** Marked "Not sure" by the admin: decide later. */
+  unsure: boolean;
   /** For not_in_list: the action that applies (the admin's, or the default) and whether it is the default. */
   action: Action | null;
   defaulted: boolean;
@@ -235,6 +239,7 @@ export function checkInvestors(input: {
       candidates: match.firmIds.map((id) => firmById.get(id)).filter((f): f is DbFirm => !!f),
       decision,
       action,
+      unsure: !!decision?.unsure && (bucket === "confirm" || (bucket === "not_in_list" && !decision?.action)),
       defaulted: bucket === "not_in_list" && !decision?.action,
       overlap,
       suggestion: (() => {

@@ -168,3 +168,12 @@ test("a suggested website: the database record that has it, if exactly one", () 
   assert.equal(rows[1].suggestion?.firm, null);
   assert.equal(rows[1].suggestion?.firmCount, 0);
 });
+
+test("Not sure: parked for later; a real decision settles it", () => {
+  const base = { firms, data, steps, shortlist: new Set(["F2"]) };
+  const parked = checkInvestors({ ...base, investors: [inv("i5", "Acme")], decisions: { i5: { unsure: true, by: null, at: "" } } });
+  assert.equal(parked[0].bucket, "confirm");
+  assert.equal(parked[0].unsure, true);
+  const matched = checkInvestors({ ...base, investors: [inv("i5", "Acme")], decisions: { i5: { firmId: "F3", by: null, at: "" } } });
+  assert.equal(matched[0].unsure, false);
+});

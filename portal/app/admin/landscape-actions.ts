@@ -7,6 +7,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import {
   checkAgainstDatabase,
   decideInvestor,
+  confirmCheck,
   decideMany,
   findWebsites,
   recordInvestments,
@@ -150,7 +151,16 @@ export async function runInvestorCheck(clientId: string): Promise<Result<{ check
 export async function decideOnInvestor(
   clientId: string,
   investorId: string,
-  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean; clear?: boolean },
+  patch: {
+    firmId?: string | null;
+    action?: "bring_back" | "leave_out" | null;
+    note?: string;
+    lesson?: boolean;
+    website?: string;
+    resetMatch?: boolean;
+    clear?: boolean;
+    unsure?: boolean;
+  },
 ): Promise<Result<{ check: CheckResult }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
@@ -163,6 +173,7 @@ export async function decideOnInvestor(
   if (typeof patch?.website === "string") clean.website = patch.website.slice(0, 500);
   if (patch?.resetMatch === true) clean.resetMatch = true;
   if (patch?.clear === true) clean.clear = true;
+  if (typeof patch?.unsure === "boolean") clean.unsure = patch.unsure;
   try {
     const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email);
     if (!saved.ok) return { ok: false, error: saved.error };
@@ -219,5 +230,18 @@ export async function findWebsitesFor(clientId: string, investorIds: string[]): 
     return check.ok ? { ok: true, check: check.check, found: done.value } : check;
   } catch (err) {
     return fail(err, "Find websites failed.");
+  }
+}
+
+/** The final confirmation of the check, or reopening it. */
+export async function confirmInvestorCheck(clientId: string, confirm: boolean): Promise<Result<{ check: CheckResult }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const done = await confirmCheck(a.supabase, a.clientId, confirm === true, a.email);
+    if (!done.ok) return { ok: false, error: done.error };
+    return runInvestorCheck(clientId);
+  } catch (err) {
+    return fail(err, "The check was not confirmed.");
   }
 }

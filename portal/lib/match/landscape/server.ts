@@ -660,6 +660,9 @@ export async function clearInvestors(supabase: ServiceClient, clientId: string):
 // Step 2C: the confirmed investors against the Fund Database and the shortlist
 
 export type CheckResult = {
+  /** The final confirmation of the check, if given. */
+  confirmedAt: string | null;
+  confirmedBy: string | null;
   rows: CheckRow[];
   /** Whether Find websites can run (its column exists). */
   websitesReady: boolean;
@@ -723,6 +726,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   const decisions = await loadDecisions(supabase, land.id);
   if (!decisions.ok) return decisions;
   const suggestions = await loadSuggestions(supabase, land.id);
+  const confirmation = await loadCheckConfirmation(supabase, land.id);
   const rows = checkInvestors({
     suggestions: suggestions.value,
     investors: land.investors,
@@ -738,7 +742,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
-    value: { rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
+    value: { confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
   };
 }
 
@@ -747,7 +751,16 @@ export async function decideInvestor(
   supabase: ServiceClient,
   clientId: string,
   investorId: string,
-  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean; website?: string; resetMatch?: boolean; clear?: boolean },
+  patch: {
+    firmId?: string | null;
+    action?: "bring_back" | "leave_out" | null;
+    note?: string;
+    lesson?: boolean;
+    website?: string;
+    resetMatch?: boolean;
+    clear?: boolean;
+    unsure?: boolean;
+  },
   actor: string | null,
 ): Promise<Result<null>> {
   const current = await currentLandscape(supabase, clientId);
@@ -755,6 +768,7 @@ export async function decideInvestor(
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
   if (!land.investors.some((i) => i.id === investorId)) return { ok: false, error: "That investor is not on the confirmed list." };
+  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to change a decision." };
   const decisions = await loadDecisions(supabase, land.id);
   if (!decisions.ok) return decisions;
   const previous = decisions.value[investorId];
@@ -790,6 +804,12 @@ export async function decideInvestor(
     delete next.action;
   }
   if (patch.note !== undefined) next.note = patch.note.trim().slice(0, 1000);
+  // A real decision (a record, a website, an action) settles a "Not sure".
+  if (patch.firmId !== undefined || patch.website !== undefined || patch.action) delete next.unsure;
+  if (patch.unsure !== undefined) {
+    if (patch.unsure) next.unsure = true;
+    else delete next.unsure;
+  }
   if (patch.lesson !== undefined) next.lesson = patch.lesson === true;
   const { error } = await supabase
     .from("competitor_landscapes")
@@ -811,6 +831,7 @@ export async function decideMany(
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to change a decision." };
   const known = new Set(land.investors.map((i) => i.id));
   const ids = investorIds.filter((id) => known.has(id));
   const decisions = await loadDecisions(supabase, land.id);
@@ -978,4 +999,46 @@ export async function findWebsites(supabase: ServiceClient, clientId: string, in
     .eq("id", land.id);
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: Object.values(found).filter((f) => f.website).length };
+}
+
+// ---------------------------------------------------------------------------
+// The final confirmation of the check
+
+export const CHECK_CONFIRM_MIGRATION = "The confirmation columns are missing. Run portal/supabase/check_confirmation.sql in the Supabase SQL editor.";
+
+async function loadCheckConfirmation(supabase: ServiceClient, landscapeId: string): Promise<{ at: string | null; by: string | null }> {
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .select("check_confirmed_at, check_confirmed_by")
+    .eq("id", landscapeId)
+    .maybeSingle<{ check_confirmed_at: string | null; check_confirmed_by: string | null }>();
+  if (error || !data) return { at: null, by: null };
+  return { at: data.check_confirmed_at, by: data.check_confirmed_by };
+}
+
+/** Confirms the check (every match settled, every fund decided), or reopens it. While confirmed, decisions can't change. */
+export async function confirmCheck(supabase: ServiceClient, clientId: string, confirm: boolean, actor: string | null): Promise<Result<null>> {
+  const check = await checkAgainstDatabase(supabase, clientId);
+  if (!check.ok) return check;
+  if (confirm) {
+    const unsure = check.value.rows.filter((r) => r.unsure).length;
+    const open = check.value.counts.confirm - check.value.rows.filter((r) => r.unsure && r.bucket === "confirm").length;
+    const todo = check.value.rows.filter((r) => r.bucket === "not_in_list" && r.defaulted && !r.unsure).length;
+    if (open || todo || unsure) {
+      return { ok: false, error: `Not yet: ${open} to confirm, ${todo} to decide, ${unsure} marked Not sure.` };
+    }
+  }
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok || !current.value) return { ok: false, error: "Nothing to confirm." };
+  const { error } = await supabase
+    .from("competitor_landscapes")
+    .update(confirm ? { check_confirmed_at: new Date().toISOString(), check_confirmed_by: actor } : { check_confirmed_at: null, check_confirmed_by: null })
+    .eq("id", current.value.id);
+  if (error) return { ok: false, error: /check_confirmed/.test(error.message) ? CHECK_CONFIRM_MIGRATION : error.message };
+  return { ok: true, value: null };
+}
+
+/** Whether the check is confirmed (decisions locked). */
+export async function checkLocked(supabase: ServiceClient, landscapeId: string) {
+  return !!(await loadCheckConfirmation(supabase, landscapeId)).at;
 }
