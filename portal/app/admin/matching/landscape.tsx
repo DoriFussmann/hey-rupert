@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fillCompetitorSectors, loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
 import { InvestorsStep } from "@/app/admin/matching/investors-step";
+import { DatabaseCheck } from "@/app/admin/matching/database-check";
 import type { Competitor, LinkState } from "@/lib/match/landscape/core";
 import { MAX_COMPETITORS } from "@/lib/match/landscape/core";
 import type { Landscape } from "@/lib/match/landscape/server";
@@ -437,6 +438,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
         <ConfirmedSummary landscape={landscape} items={items} busy={busy === "start"} onStartOver={() => void startOver()} sectorNote={sectorNote} />
         {error ? <p className="text-body-sm text-error">{error}</p> : null}
         <InvestorsStep clientId={clientId} landscape={landscape} onChange={take} />
+        {landscape.investorsStatus === "confirmed" ? <DatabaseCheck key={landscape.investorsConfirmedAt ?? ""} clientId={clientId} /> : null}
       </div>
     );
   }

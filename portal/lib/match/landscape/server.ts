@@ -8,6 +8,9 @@ import { loadProfileState } from "@/lib/match/profile-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { MAX_COMPETITORS, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
 import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type Investor, type ResearchState } from "./investors.ts";
+import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision } from "./check.ts";
+import { buildDryData, type DryStep } from "@/lib/match/dry/core";
+import { matchDataSnapshot } from "@/lib/match/tiers/server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -628,4 +631,99 @@ export async function clearInvestors(supabase: ServiceClient, clientId: string):
     .single<Row>();
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: fromRow(data) };
+}
+
+// ---------------------------------------------------------------------------
+// Step 2C: the confirmed investors against the Fund Database and the shortlist
+
+export type CheckResult = {
+  rows: CheckRow[];
+  counts: Record<Bucket, number>;
+  dryListId: string;
+  dryConfirmedAt: string;
+  fundDbVersion: string;
+};
+
+async function loadDecisions(supabase: ServiceClient, landscapeId: string): Promise<Result<Record<string, InvestorDecision>>> {
+  const { data, error } = await supabase
+    .from("competitor_landscapes")
+    .select("investor_decisions")
+    .eq("id", landscapeId)
+    .maybeSingle<{ investor_decisions: Record<string, InvestorDecision> | null }>();
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: data?.investor_decisions ?? {} };
+}
+
+/** Checks every confirmed investor against the live Fund Database and the confirmed Step 1 list. Reads only. */
+export async function checkAgainstDatabase(supabase: ServiceClient, clientId: string): Promise<Result<CheckResult>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  const { data: dry, error: dryError } = await supabase
+    .from("dry_match_lists")
+    .select("id, steps, fund_ids, confirmed_at")
+    .eq("client_id", clientId)
+    .is("cleared_at", null)
+    .order("confirmed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string; steps: { step: DryStep; chosen: string[] }[]; fund_ids: string[]; confirmed_at: string }>();
+  if (dryError) return { ok: false, error: dryError.message };
+  if (!dry) return { ok: false, error: "Confirm Step 1 first." };
+  const snapshot = await matchDataSnapshot(supabase, clientId);
+  if (!snapshot.ok) return snapshot;
+  const { db, index, common } = snapshot.value;
+  const data = buildDryData(db, index, { financing: [], stage: null, hqCountry: null, primarySector: null });
+  const decisions = await loadDecisions(supabase, land.id);
+  if (!decisions.ok) return decisions;
+  const rows = checkInvestors({
+    investors: land.investors,
+    firms: db.firms.map((f) => ({ id: f.id, name: f.name, web: f.web })),
+    data,
+    steps: dry.steps.map((s) => ({ step: s.step, chosen: s.chosen })),
+    shortlist: new Set(dry.fund_ids),
+    decisions: decisions.value,
+  });
+  const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0 } as Record<Bucket, number>;
+  rows.forEach((r) => (counts[r.bucket] += 1));
+  return {
+    ok: true,
+    value: { rows, counts, dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
+  };
+}
+
+/** Records the admin's decision on one investor: the record it is, bring back or leave out, and a note. */
+export async function decideInvestor(
+  supabase: ServiceClient,
+  clientId: string,
+  investorId: string,
+  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean },
+  actor: string | null,
+): Promise<Result<null>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  if (!land.investors.some((i) => i.id === investorId)) return { ok: false, error: "That investor is not on the confirmed list." };
+  const decisions = await loadDecisions(supabase, land.id);
+  if (!decisions.ok) return decisions;
+  const previous = decisions.value[investorId];
+  const next: InvestorDecision = { ...(previous ?? {}), by: actor, at: new Date().toISOString() };
+  if (patch.firmId !== undefined) {
+    next.firmId = patch.firmId;
+    // A different record means a different reason: the earlier choice no longer applies.
+    if (previous?.firmId !== patch.firmId) delete next.action;
+  }
+  if (patch.action !== undefined) {
+    if (patch.action === null) delete next.action;
+    else next.action = patch.action;
+  }
+  if (patch.note !== undefined) next.note = patch.note.trim().slice(0, 1000);
+  if (patch.lesson !== undefined) next.lesson = patch.lesson === true;
+  const { error } = await supabase
+    .from("competitor_landscapes")
+    .update({ investor_decisions: { ...decisions.value, [investorId]: next }, updated_at: next.at })
+    .eq("id", land.id);
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: null };
 }

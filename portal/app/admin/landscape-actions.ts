@@ -5,6 +5,9 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { createServiceClient } from "@/lib/supabase/admin";
 import {
+  checkAgainstDatabase,
+  decideInvestor,
+  type CheckResult,
   clearInvestors,
   clearLandscape,
   confirmedDryList,
@@ -126,4 +129,39 @@ export async function startOverInvestors(clientId: string): Promise<LandscapeRes
   const a = await access(clientId);
   if (!a.ok) return a;
   return wrap(await clearInvestors(a.supabase, a.clientId));
+}
+
+/** Step 2C: the confirmed investors checked against the Fund Database and the shortlist. Reads only. */
+export async function runInvestorCheck(clientId: string): Promise<Result<{ check: CheckResult }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const result = await checkAgainstDatabase(a.supabase, a.clientId);
+    return result.ok ? { ok: true, check: result.value } : { ok: false, error: result.error };
+  } catch (err) {
+    return fail(err, "The check did not run.");
+  }
+}
+
+/** Records a decision on one investor, then returns the check again. */
+export async function decideOnInvestor(
+  clientId: string,
+  investorId: string,
+  patch: { firmId?: string | null; action?: "bring_back" | "leave_out" | null; note?: string; lesson?: boolean },
+): Promise<Result<{ check: CheckResult }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (typeof investorId !== "string" || !investorId || investorId.length > 64) return { ok: false, error: "Unknown investor." };
+  const clean: typeof patch = {};
+  if (patch?.firmId === null || typeof patch?.firmId === "string") clean.firmId = patch.firmId === null ? null : patch.firmId.slice(0, 64);
+  if (patch?.action === null || patch?.action === "bring_back" || patch?.action === "leave_out") clean.action = patch.action;
+  if (typeof patch?.note === "string") clean.note = patch.note;
+  if (typeof patch?.lesson === "boolean") clean.lesson = patch.lesson;
+  try {
+    const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email);
+    if (!saved.ok) return { ok: false, error: saved.error };
+    return runInvestorCheck(clientId);
+  } catch (err) {
+    return fail(err, "The decision was not saved.");
+  }
 }
