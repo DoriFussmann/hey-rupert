@@ -130,6 +130,8 @@ export type CheckRow = {
   /** The record it is, once settled (automatic or the admin's). */
   firmId: string | null;
   firmName: string | null;
+  /** The record's website in the Fund Database. */
+  firmWeb: string | null;
   bucket: Bucket;
   /** For not_in_list: the Step 1 filter that removed it. */
   failure: ReturnType<typeof firstFailure>;
@@ -180,6 +182,7 @@ export function checkInvestors(input: {
       match,
       firmId,
       firmName: firmId ? firmById.get(firmId)?.name ?? null : null,
+      firmWeb: firmId ? firmById.get(firmId)?.web || null : null,
       bucket,
       failure,
       candidates: match.firmIds.map((id) => firmById.get(id)).filter((f): f is DbFirm => !!f),

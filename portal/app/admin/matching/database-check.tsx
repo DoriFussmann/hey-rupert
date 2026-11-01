@@ -19,6 +19,24 @@ function host(url: string) {
   }
 }
 
+/** A website, opened in a new tab. */
+function Site({ url, label }: { url: string | null | undefined; label?: string }) {
+  if (!url) return null;
+  const href = url.startsWith("http") ? url : `https://${url}`;
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noreferrer noopener"
+      onClick={(event) => event.stopPropagation()}
+      className="text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover"
+    >
+      {label ? `${label}: ` : ""}
+      {host(url)} ↗
+    </a>
+  );
+}
+
 const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel"];
 const TONE: Record<Bucket, string> = {
   confirm: "text-warning",
@@ -77,6 +95,10 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
         <p className="text-muted">
           Database: {row.firmName}
           {row.decision?.firmId ? " (chosen by you)" : row.match.how === "website" ? " (same website)" : " (same name)"}
+        </p>
+        <p className="flex flex-wrap gap-x-md">
+          <Site url={row.firmWeb} label="Database" />
+          {row.investor.website && host(row.investor.website) !== host(row.firmWeb ?? "") ? <Site url={row.investor.website} label="Research" /> : null}
         </p>
         <UndoLink row={row} busy={busy} onDecide={onDecide} />
       </td>
@@ -143,17 +165,19 @@ function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onD
         <p className="text-heading">{row.investor.name}</p>
         <p className="text-muted">
           {KIND_LABEL[row.investor.kind]} · backed {backedText(row)}
-          {row.investor.website ? ` · ${host(row.investor.website)}` : ""}
         </p>
+        <Site url={row.investor.website} label="Research" />
         <p className="text-muted">{row.match.how === "ambiguous" ? "More than one database record has this name or website." : "Similar names in the database."}</p>
       </td>
       <td className="py-sm" colSpan={2}>
         <div className="flex flex-wrap gap-xs">
           {row.candidates.map((c) => (
-            <button key={c.id} type="button" disabled={busy} className={secondaryButton} onClick={() => onDecide({ firmId: c.id })}>
-              It&apos;s {c.name}
-              {c.web ? <span className="text-muted"> · {host(c.web)}</span> : null}
-            </button>
+            <span key={c.id} className="inline-flex items-center gap-xs rounded-md border border-border bg-surface pl-xs">
+              <Site url={c.web} />
+              <button type="button" disabled={busy} className={secondaryButton} onClick={() => onDecide({ firmId: c.id })}>
+                It&apos;s {c.name}
+              </button>
+            </span>
           ))}
           <button type="button" disabled={busy} className={secondaryButton} onClick={() => onDecide({ firmId: null })}>
             Not in the database
@@ -181,7 +205,10 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
       <td className="py-xs pr-md text-secondary">{backedText(row)}</td>
       <td className="py-xs text-secondary">
         {!missing ? (
-          row.firmName
+          <span className="flex flex-col">
+            <span>{row.firmName}</span>
+            <Site url={row.firmWeb ?? row.investor.website} />
+          </span>
         ) : editing ? (
           <WebsiteInput
             initial={row.investor.website ? host(row.investor.website) : ""}
@@ -194,7 +221,7 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
           />
         ) : (
           <span>
-            {row.investor.website ? host(row.investor.website) : <span className="text-muted">No website</span>}{" "}
+            {row.investor.website ? <Site url={row.investor.website} /> : <span className="text-muted">No website</span>}{" "}
             <button type="button" className="underline" onClick={() => setEditing(true)}>
               {row.investor.website ? "Edit" : "Add"}
             </button>
