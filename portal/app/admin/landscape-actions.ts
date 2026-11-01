@@ -9,6 +9,8 @@ import {
   decideInvestor,
   addMissingInvestor,
   confirmCheck,
+  lookAlikePreview,
+  type LookAlikePreview,
   decideMany,
   findWebsites,
   recordInvestments,
@@ -259,5 +261,17 @@ export async function addInvestorToDb(clientId: string, investorId: string): Pro
     return runInvestorCheck(clientId);
   } catch (err) {
     return fail(err, "Try and Add to DB failed.");
+  }
+}
+
+/** Look-alike funds (preview): the shortlist ranked by resemblance to the competitors' investors. Reads only. */
+export async function loadLookAlikes(clientId: string): Promise<Result<{ preview: LookAlikePreview }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const result = await lookAlikePreview(a.supabase, a.clientId);
+    return result.ok ? { ok: true, preview: result.value } : { ok: false, error: result.error };
+  } catch (err) {
+    return fail(err, "The look-alike preview did not load.");
   }
 }

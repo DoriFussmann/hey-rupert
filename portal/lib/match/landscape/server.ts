@@ -12,6 +12,7 @@ import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision, type
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addFund, addedForLandscape } from "@/lib/match/added/server";
+import { lookAlikes } from "./lookalike.ts";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -1082,4 +1083,41 @@ export async function addMissingInvestor(supabase: ServiceClient, clientId: stri
     actor,
   );
   return added.ok ? { ok: true, value: null } : { ok: false, error: added.error };
+}
+
+// ---------------------------------------------------------------------------
+// Look-alike funds (preview)
+
+export type LookAlikePreview = {
+  seeds: number;
+  shortlist: number;
+  profile: { sector: string; share: number }[];
+  funds: { id: string; name: string; score: number; shares: string[]; sectorCount: number }[];
+};
+
+/**
+ * The Step 1 shortlist ranked by how much each fund resembles the
+ * competitors' investors found in the database (their stated sectors). Reads only.
+ */
+export async function lookAlikePreview(supabase: ServiceClient, clientId: string): Promise<Result<LookAlikePreview>> {
+  const check = await checkAgainstDatabase(supabase, clientId);
+  if (!check.ok) return check;
+  const seedIds = new Set(
+    check.value.rows.filter((r) => r.firmId && (r.bucket === "in_list" || r.bucket === "not_in_list")).map((r) => r.firmId!),
+  );
+  const { data: dry, error } = await supabase
+    .from("dry_match_lists")
+    .select("fund_ids")
+    .eq("id", check.value.dryListId)
+    .maybeSingle<{ fund_ids: string[] }>();
+  if (error || !dry) return { ok: false, error: error?.message ?? "Confirm Step 1 first." };
+  const snapshot = await matchDataSnapshot(supabase, clientId);
+  if (!snapshot.ok) return snapshot;
+  const data = buildDryData(snapshot.value.db, snapshot.value.index, { financing: [], stage: null, hqCountry: null, primarySector: null });
+  const asSector = (f: (typeof data.funds)[number]) => ({ id: f.id, name: f.name, sectors: f.sector.map((i) => data.labels.sector[i]).filter(Boolean) });
+  const shortlist = new Set(dry.fund_ids);
+  const seeds = data.funds.filter((f) => seedIds.has(f.id)).map(asSector);
+  const candidates = data.funds.filter((f) => shortlist.has(f.id)).map(asSector);
+  const result = lookAlikes(seeds, candidates, 25);
+  return { ok: true, value: { seeds: seeds.length, shortlist: candidates.length, profile: result.profile.slice(0, 10), funds: result.funds } };
 }

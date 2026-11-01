@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addInvestorToDb, confirmInvestorCheck, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
-import type { CheckResult } from "@/lib/match/landscape/server";
+import type { CheckResult, LookAlikePreview } from "@/lib/match/landscape/server";
 import { inputClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
 import { BigNumber, Card } from "@/app/admin/matching/dry-match";
 
@@ -807,6 +807,74 @@ function OutcomeCard({
 }
 
 /**
+ * Look-alike funds (preview): the Step 1 shortlist ranked by how much each
+ * fund resembles the competitors' investors found in the database (by their
+ * stated sectors). Reads only; loads when opened.
+ */
+function LookAlikePanel({ clientId }: { clientId: string }) {
+  const [open, setOpen] = useState(false);
+  const [preview, setPreview] = useState<LookAlikePreview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!open || preview) return;
+    void loadLookAlikes(clientId).then((result) => (result.ok ? setPreview(result.preview) : setError(result.error)));
+  }, [open, preview, clientId]);
+  return (
+    <Card>
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-md text-left">
+        <span>
+          <span className="text-h4 text-heading">Look-alike funds</span>
+          <span className="ml-sm text-label uppercase tracking-label text-muted">Preview</span>
+          <span className="block text-body-sm text-muted">
+            Shortlist funds that look like the funds that backed the competitors (by stated sectors). For ranking later; changes nothing.
+          </span>
+        </span>
+        <span className={`text-muted transition-transform duration-hover ${open ? "rotate-180" : ""}`}>▾</span>
+      </button>
+      {open ? (
+        error ? (
+          <p className="mt-sm text-body-sm text-error">{error}</p>
+        ) : !preview ? (
+          <p className="mt-sm text-body-sm text-muted">Scoring the shortlist…</p>
+        ) : (
+          <div className="mt-md space-y-md">
+            <p className="text-body-sm text-secondary">
+              Profile from {n(preview.seeds)} competitor investors in the database:{" "}
+              {preview.profile.map((p) => `${p.sector} ${Math.round(p.share * 100)}%`).join(" · ")}
+            </p>
+            <table className="w-full text-left text-body-sm">
+              <thead className="text-label uppercase tracking-label text-muted">
+                <tr>
+                  <th className="py-xs pr-md font-medium">#</th>
+                  <th className="py-xs pr-md font-medium">Fund</th>
+                  <th className="py-xs pr-md text-right font-medium">Look-alike</th>
+                  <th className="py-xs pr-md font-medium">Shares with the profile</th>
+                  <th className="py-xs text-right font-medium">Sectors listed</th>
+                </tr>
+              </thead>
+              <tbody>
+                {preview.funds.map((f, i) => (
+                  <tr key={f.id} className="border-t border-border">
+                    <td className="py-xs pr-md text-muted">{i + 1}</td>
+                    <td className="py-xs pr-md text-heading">{f.name}</td>
+                    <td className="py-xs pr-md text-right text-heading">{Math.round(f.score * 100)}%</td>
+                    <td className="py-xs pr-md text-secondary">{f.shares.join(", ")}</td>
+                    <td className="py-xs text-right text-muted">{n(f.sectorCount)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="text-body-sm text-muted">
+              Top 25 of {n(preview.shortlist)} shortlist funds. A fund listing many sectors scores lower than one focused on the same ones.
+            </p>
+          </div>
+        )
+      ) : null}
+    </Card>
+  );
+}
+
+/**
  * Step 2C: each confirmed investor against the Fund Database and the Step 1
  * shortlist. Unclear matches are confirmed by the admin; funds in the
  * database but not in the shortlist show the Step 1 filter that removed them,
@@ -1136,6 +1204,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-md">
       <OutcomeCard check={check} busy={busy} onConfirm={(c) => void confirmCheck(c)} />
+      <LookAlikePanel clientId={clientId} />
       {error ? <p className="text-body-sm text-error">{error}</p> : null}
       <button
         type="button"
