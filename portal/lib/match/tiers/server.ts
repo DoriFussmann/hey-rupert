@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
 import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
+import { approvedAsDb, withAdded } from "@/lib/match/added/server";
 import { MATCH_MIGRATION_MISSING, loadLiveDb, selectAll } from "@/lib/match/db-server";
 import type { PeopleStates } from "@/lib/match/list-snapshot";
 import { buildProfile, loadProfileState, matchBasis } from "@/lib/match/profile-server";
@@ -432,7 +433,8 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   if (blocked) return { ok: false, error: blocked };
   const profile = { ...matchingProfile(canonical, index), issues, readiness };
 
-  const db = applyCorrections(run.live.db, run.corrections, run.decisions);
+  // Approved funds added by Rupert join the provider records (pending ones never do).
+  const db = withAdded(applyCorrections(run.live.db, run.corrections, run.decisions), await approvedAsDb(supabase, index));
   const rejected: Record<string, string> = {};
   run.reviews.forEach((review, firmId) => {
     if (review.status === "no") rejected[firmId] = review.reason || "Rejected";

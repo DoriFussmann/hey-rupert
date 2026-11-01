@@ -111,3 +111,44 @@ export async function findEmail(input: {
     value: { email: data.email, score: typeof data.score === "number" ? data.score : null },
   };
 }
+
+export type HunterPerson = {
+  email: string;
+  firstName: string;
+  lastName: string;
+  position: string;
+  seniority: string;
+  department: string;
+  confidence: number | null;
+  linkedin: string;
+};
+
+/**
+ * The people Hunter knows at a domain (personal addresses only). One credit
+ * for 1 to 10 addresses returned; nothing when none is found.
+ */
+export async function domainSearch(domain: string, limit = 10): Promise<HunterResult<{ people: HunterPerson[]; organization: string }>> {
+  if (!domain) return { ok: true, value: { people: [], organization: "" } };
+  const result = await get("domain-search", { domain, limit: String(Math.min(Math.max(limit, 1), 10)), type: "personal" });
+  if (!result.ok) {
+    return result.status === 404 ? { ok: true, value: { people: [], organization: "" } } : { ok: false, reason: result.reason };
+  }
+  const data = (result.data ?? {}) as { emails?: unknown; organization?: unknown };
+  const text = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const people = (Array.isArray(data.emails) ? data.emails : [])
+    .map((raw) => {
+      const e = (raw ?? {}) as Record<string, unknown>;
+      return {
+        email: text(e.value),
+        firstName: text(e.first_name),
+        lastName: text(e.last_name),
+        position: text(e.position),
+        seniority: text(e.seniority),
+        department: text(e.department),
+        confidence: typeof e.confidence === "number" ? e.confidence : null,
+        linkedin: text(e.linkedin),
+      };
+    })
+    .filter((p) => p.email);
+  return { ok: true, value: { people, organization: text(data.organization) } };
+}

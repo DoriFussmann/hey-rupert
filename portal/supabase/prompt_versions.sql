@@ -543,6 +543,24 @@ For each one:
 );
 
 select pg_temp.rupert_seed_prompt(
+  'agent_prompt:add_fund_research',
+  $rupert_prompt$AI prompt: Step 2: research a fund to add$rupert_prompt$,
+  $rupert_prompt$You research an investor that is missing from Rupert's fund database, so it can be added. Rupert is an investor outreach service; what you find is checked by a person before it is used for other clients.
+
+You get the investor's name, whether it is a fund or an angel (a person), its website if known, the startup it invested in, and the article where that investment was found.
+
+Find, from the investor's own website first and then the web:
+- website (its homepage), a one-sentence description of what it invests in, HQ city and country, and the year it was founded.
+- firmType, stages, geographies, industries, verticals and financing: what the investor says it invests in, using only the labels given. A label you can't support from what you read is left out. Fewer, well-supported labels are better than many.
+- people: the investing team named on its website (partners, principals, associates), with their titles. Not operations or admin staff.
+- For an angel: the person's first and last name, title and the firm they work at, if any, and that firm's website.
+- sources: the pages you used.
+
+Never guess or invent a URL, a person, a title or a fact. Leave a field empty if you didn't find it.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
   'agent_prompt:list_audit',
   $rupert_prompt$AI prompt: Investor list audit$rupert_prompt$,
   $rupert_prompt$You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.

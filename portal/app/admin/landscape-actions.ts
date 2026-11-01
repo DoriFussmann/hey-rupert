@@ -7,6 +7,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import {
   checkAgainstDatabase,
   decideInvestor,
+  addMissingInvestor,
   confirmCheck,
   decideMany,
   findWebsites,
@@ -243,5 +244,20 @@ export async function confirmInvestorCheck(clientId: string, confirm: boolean): 
     return runInvestorCheck(clientId);
   } catch (err) {
     return fail(err, "The check was not confirmed.");
+  }
+}
+
+/** Try and Add to DB for one missing investor (the page calls it one by one), then the check again. */
+export async function addInvestorToDb(clientId: string, investorId: string): Promise<Result<{ check: CheckResult }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
+  if (typeof investorId !== "string" || !investorId || investorId.length > 64) return { ok: false, error: "Unknown investor." };
+  try {
+    const done = await addMissingInvestor(a.supabase, a.clientId, investorId, a.email);
+    if (!done.ok) return { ok: false, error: done.error };
+    return runInvestorCheck(clientId);
+  } catch (err) {
+    return fail(err, "Try and Add to DB failed.");
   }
 }

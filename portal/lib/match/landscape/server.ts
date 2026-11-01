@@ -11,6 +11,8 @@ import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type I
 import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision, type WebsiteSuggestion } from "./check.ts";
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
+import { addFund, addedForLandscape } from "@/lib/match/added/server";
+import { loadTaxonomy } from "@/lib/taxonomy/server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -727,7 +729,11 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   if (!decisions.ok) return decisions;
   const suggestions = await loadSuggestions(supabase, land.id);
   const confirmation = await loadCheckConfirmation(supabase, land.id);
+  const addedFunds = await addedForLandscape(supabase, land.id);
   const rows = checkInvestors({
+    added: Object.fromEntries(
+      Object.entries(addedFunds).map(([id, f]) => [id, { id: f.id, firmId: f.firmId, status: f.status, contacts: f.contacts.length, website: f.website }]),
+    ),
     suggestions: suggestions.value,
     investors: land.investors,
     firms: db.firms.map((f) => ({ id: f.id, name: f.name, web: f.web })),
@@ -738,7 +744,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
     clientSectors,
     competitorSectors,
   });
-  const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0 } as Record<Bucket, number>;
+  const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0, added: 0 } as Record<Bucket, number>;
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
@@ -1041,4 +1047,39 @@ export async function confirmCheck(supabase: ServiceClient, clientId: string, co
 /** Whether the check is confirmed (decisions locked). */
 export async function checkLocked(supabase: ServiceClient, landscapeId: string) {
   return !!(await loadCheckConfirmation(supabase, landscapeId)).at;
+}
+
+// ---------------------------------------------------------------------------
+// Step 2D: Try and Add to DB
+
+/** Adds one missing investor (research, then Hunter) as a pending fund for this client. */
+export async function addMissingInvestor(supabase: ServiceClient, clientId: string, investorId: string, actor: string | null): Promise<Result<null>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  const check = await checkAgainstDatabase(supabase, clientId);
+  if (!check.ok) return check;
+  const row = check.value.rows.find((r) => r.investor.id === investorId);
+  if (!row) return { ok: false, error: "That investor is not on the confirmed list." };
+  if (row.bucket === "added") return { ok: true, value: null };
+  if (row.bucket !== "missing_fund" && row.bucket !== "missing_angel") return { ok: false, error: "Only investors not in the database can be added." };
+  const taxonomy = await loadTaxonomy(supabase);
+  if (!taxonomy.ok) return { ok: false, error: taxonomy.error };
+  const added = await addFund(
+    supabase,
+    taxonomy.value,
+    {
+      clientId,
+      landscapeId: land.id,
+      investorId,
+      name: row.investor.name,
+      kind: row.bucket === "missing_angel" ? "angel" : "fund",
+      website: row.investor.website || row.suggestion?.website || "",
+      competitors: Array.from(new Set(row.investor.backed.map((b) => b.competitor))),
+      sourceUrl: row.investor.backed.map((b) => b.sourceUrl).find(Boolean) ?? "",
+    },
+    actor,
+  );
+  return added.ok ? { ok: true, value: null } : { ok: false, error: added.error };
 }

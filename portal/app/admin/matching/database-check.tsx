@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { confirmInvestorCheck, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, confirmInvestorCheck, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult } from "@/lib/match/landscape/server";
@@ -37,13 +37,14 @@ function Site({ url, label }: { url: string | null | undefined; label?: string }
   );
 }
 
-const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel"];
+const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel", "added"];
 const TONE: Record<Bucket, string> = {
   confirm: "text-warning",
   in_list: "text-success",
   not_in_list: "text-heading",
   missing_fund: "text-heading",
   missing_angel: "text-heading",
+  added: "text-success",
 };
 
 const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
@@ -252,9 +253,43 @@ function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onD
   );
 }
 
-function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+function SimpleRow({
+  row,
+  busy,
+  onDecide,
+  onAdd,
+  adding,
+  addDisabled,
+}: {
+  row: CheckRow;
+  busy: boolean;
+  onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  onAdd?: () => void;
+  adding?: boolean;
+  /** Adding stays available after the check is confirmed (it's the next step). */
+  addDisabled?: boolean;
+}) {
   const [editing, setEditing] = useState(false);
   const missing = row.bucket === "missing_fund" || row.bucket === "missing_angel";
+  if (row.bucket === "added" && row.added) {
+    return (
+      <tr className="border-t border-border align-top">
+        <td className="py-xs pr-md text-heading">{row.investor.name}</td>
+        <td className="py-xs pr-md text-secondary">{KIND_LABEL[row.investor.kind]}</td>
+        <td className="py-xs pr-md text-secondary">{backedText(row)}</td>
+        <td className="py-xs text-secondary">
+          <span className={row.added.status === "approved" ? "text-success" : "text-warning"}>
+            {row.added.status === "approved" ? "Approved: in the shared database" : "Pending review"}
+          </span>
+          {" · "}
+          {n(row.added.contacts)} {row.added.contacts === 1 ? "contact" : "contacts"} · <Site url={row.added.website} />{" "}
+          <a href="/admin/fund-database#added-by-rupert" className="underline">
+            Review
+          </a>
+        </td>
+      </tr>
+    );
+  }
   return (
     <tr className="border-t border-border align-top">
       <td className="py-xs pr-md text-heading">
@@ -290,6 +325,13 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
           </span>
         )}
       </td>
+      {missing && onAdd ? (
+        <td className="py-xs pl-md text-right">
+          <button type="button" disabled={addDisabled || adding} className={smallButton} onClick={onAdd}>
+            {adding ? "Adding…" : "Try and Add to DB"}
+          </button>
+        </td>
+      ) : null}
     </tr>
   );
 }
@@ -700,22 +742,25 @@ function OutcomeCard({
   const out = by("not_in_list").filter((r) => r.action === "leave_out").length;
   const funds = by("missing_fund").length;
   const angels = by("missing_angel").length;
+  const added = by("added").length;
   const total = check.rows.length;
   const locked = !!check.confirmedAt;
   const rows: { label: string; value: number; note: string; tone?: string }[] = [
     { label: "Already in the shortlist", value: inList, note: "In the database and in Step 1's list.", tone: "text-success" },
     { label: "Brought back", value: back, note: "In the database; added to this client's list.", tone: "text-success" },
     { label: "Left out", value: out, note: "In the database; a real misfit (stage, geography…)." },
-    { label: "Not in the database: funds", value: funds, note: "To add (Try and Add to DB, next)." },
-    { label: "Not in the database: angels", value: angels, note: "To add, as their own list (next)." },
+    { label: "Added to the database", value: added, note: "Try and Add to DB: for this client now; for everyone once you approve.", tone: "text-success" },
+    { label: "Not in the database: funds", value: funds, note: "Not added yet: Try and Add to DB in the details." },
+    { label: "Not in the database: angels", value: angels, note: "Not added yet: Try and Add to DB in the details." },
   ];
   return (
     <Card tone="final">
       <div className="flex flex-wrap items-start justify-between gap-md">
         <div>
-          <BigNumber value={inList + back} label={locked ? "Investors in the competitors: check confirmed" : "Investors in the competitors: checked"} />
+          <BigNumber value={inList + back + added} label={locked ? "Investors in the competitors: check confirmed" : "Investors in the competitors: checked"} />
           <p className="text-body-sm text-secondary">
-            {n(inList + back)} of {n(total)} go forward with this client ({n(inList)} already in the shortlist, {n(back)} brought back).
+            {n(inList + back + added)} of {n(total)} go forward with this client ({n(inList)} already in the shortlist, {n(back)} brought back
+            {added ? `, ${n(added)} added` : ""}).
             {locked
               ? ` Confirmed ${new Date(check.confirmedAt!).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}${check.confirmedBy ? ` by ${check.confirmedBy}` : ""}.`
               : ""}
@@ -796,6 +841,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const [finding, setFinding] = useState<{ done: number; total: number } | null>(null);
   const [recorded, setRecorded] = useState<number | null>(null);
   const [showDetails, setShowDetails] = useState(false);
+  /** Try and Add to DB in progress: the investor being added now, and the queue. */
+  const [adding, setAdding] = useState<{ current: string; done: number; total: number } | null>(null);
   useEffect(() => {
     if (!toast) return;
     const t = setTimeout(() => setToast(null), 3500);
@@ -865,6 +912,26 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
     setToast(confirm ? "Check confirmed. Saved." : "Check reopened.");
+  };
+
+  /** Try and Add to DB, one investor at a time (about a minute each: research, then Hunter). */
+  const addToDb = async (ids: string[]) => {
+    setError(null);
+    let done = 0;
+    let added = 0;
+    for (const id of ids) {
+      setAdding({ current: id, done, total: ids.length });
+      const result = await addInvestorToDb(clientId, id);
+      done += 1;
+      if (!result.ok) {
+        setError(result.error);
+        break;
+      }
+      added += 1;
+      setCheck(result.check);
+    }
+    setAdding(null);
+    setToast(`Try and Add to DB: ${n(added)} added, pending your review on the Fund Database page. Saved.`);
   };
 
   /** Find websites for the unclear and missing investors that have no suggestion yet, a few at a time. */
@@ -976,7 +1043,30 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
             {BUCKET_LABEL[current]} · {n(byBucket(current).length)}
           </h4>
           {current === "missing_fund" || current === "missing_angel" ? (
-            <p className="mt-xs text-body-sm text-muted">Add the website where you have it. Try and Add to DB comes next: web search and Hunter.io, up to 5 contacts each.</p>
+            <div className="mt-xs flex flex-wrap items-center gap-sm">
+              {adding ? (
+                <p className="text-body-sm text-primary">
+                  Adding {n(adding.done + 1)} of {n(adding.total)}: researching the fund, then finding its investing team with Hunter…
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className={primaryButton}
+                    disabled={busy || !byBucket(current).length}
+                    onClick={() => {
+                      const ids = byBucket(current).map((r) => r.investor.id);
+                      if (window.confirm(`Try and Add to DB for all ${ids.length}? About a minute each, and about 1 Hunter credit per fund with a website. Each waits for your review before other clients see it.`)) void addToDb(ids);
+                    }}
+                  >
+                    Try and Add to DB: all {n(byBucket(current).length)}
+                  </button>
+                  <p className="text-body-sm text-muted">
+                    Research (website, what it invests in, team), then up to {current === "missing_angel" ? "1 email (the angel)" : "5 investing contacts"} from Hunter. Added as pending: for this client now, for everyone after you approve it.
+                  </p>
+                </>
+              )}
+            </div>
           ) : null}
           {current === "confirm" || current === "missing_fund" || current === "missing_angel"
             ? (() => {
@@ -1014,7 +1104,15 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
                 current === "confirm" ? (
                   <ConfirmRow key={row.investor.id} row={row} busy={frozen} onDecide={(p) => void decide(row.investor.id, p)} />
                 ) : (
-                  <SimpleRow key={row.investor.id} row={row} busy={frozen} onDecide={(p) => void decide(row.investor.id, p)} />
+                  <SimpleRow
+                    key={row.investor.id}
+                    row={row}
+                    busy={frozen || !!adding}
+                    onDecide={(p) => void decide(row.investor.id, p)}
+                    onAdd={() => void addToDb([row.investor.id])}
+                    adding={adding?.current === row.investor.id}
+                    addDisabled={busy || !!adding}
+                  />
                 ),
               )}
             </tbody>

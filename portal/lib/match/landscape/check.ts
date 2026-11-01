@@ -127,7 +127,7 @@ export type WebsiteSuggestion = {
   at: string;
 };
 
-export type Bucket = "confirm" | "in_list" | "not_in_list" | "missing_fund" | "missing_angel";
+export type Bucket = "confirm" | "in_list" | "not_in_list" | "missing_fund" | "missing_angel" | "added";
 
 export const BUCKET_LABEL: Record<Bucket, string> = {
   confirm: "Needs your confirmation",
@@ -135,7 +135,11 @@ export const BUCKET_LABEL: Record<Bucket, string> = {
   not_in_list: "In the database, not in the shortlist",
   missing_fund: "Not in the database: funds",
   missing_angel: "Not in the database: angels",
+  added: "Added to the database (Rupert)",
 };
+
+/** A fund added by Try and Add to DB, as the check shows it. */
+export type AddedSummary = { id: string; firmId: string; status: "pending" | "approved" | "rejected"; contacts: number; website: string };
 
 /** What happens to a fund in the database but not in the shortlist, unless the admin decides otherwise. */
 export type Action = "bring_back" | "leave_out";
@@ -172,6 +176,8 @@ export type CheckRow = {
   defaulted: boolean;
   /** For a sector failure: the fund's sectors that are the client's (e.g. its secondary) or the competitors' it backed. */
   overlap: { client: string[]; competitor: string[] };
+  /** When Try and Add to DB added it: the added fund. */
+  added: AddedSummary | null;
   /** Find websites' suggestion, and the database record with that website, if exactly one. */
   suggestion: (WebsiteSuggestion & { firm: { id: string; name: string } | null; firmCount: number }) | null;
 };
@@ -188,6 +194,8 @@ export function checkInvestors(input: {
   /** Each competitor's sector labels, by competitor id. */
   competitorSectors?: Record<string, string[]>;
   suggestions?: Record<string, WebsiteSuggestion>;
+  /** Funds added from this landscape, by investor id (any status but rejected). */
+  added?: Record<string, AddedSummary>;
 }): CheckRow[] {
   const index = indexFirms(input.firms);
   const firmById = new Map(input.firms.map((f) => [f.id, f]));
@@ -211,7 +219,10 @@ export function checkInvestors(input: {
     const settled = (decision && decision.firmId !== undefined) || match.how === "website" || match.how === "name" || match.how === "none";
     let failure: CheckRow["failure"] = null;
     let fundSectors: string[] = [];
-    if (!settled) bucket = "confirm";
+    const added = input.added?.[original.id] ?? null;
+    // Added by Rupert: its own group, whatever the matching says now (it may match its own new record).
+    if (added && added.status !== "rejected") bucket = "added";
+    else if (!settled) bucket = "confirm";
     else if (!firmId) bucket = investor.kind === "angel" ? "missing_angel" : "missing_fund";
     else if (input.shortlist.has(firmId)) bucket = "in_list";
     else {
@@ -238,6 +249,7 @@ export function checkInvestors(input: {
       failure,
       candidates: match.firmIds.map((id) => firmById.get(id)).filter((f): f is DbFirm => !!f),
       decision,
+      added,
       action,
       unsure: !!decision?.unsure && (bucket === "confirm" || (bucket === "not_in_list" && !decision?.action)),
       defaulted: bucket === "not_in_list" && !decision?.action,

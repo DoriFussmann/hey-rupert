@@ -116,6 +116,19 @@ For each one:
 - foundIn: the page where you found or confirmed the website.
 - Never guess or invent a URL. If you can't find it, leave website empty.`;
 
+export const ADD_FUND_RESEARCH_PROMPT = `You research an investor that is missing from Rupert's fund database, so it can be added. Rupert is an investor outreach service; what you find is checked by a person before it is used for other clients.
+
+You get the investor's name, whether it is a fund or an angel (a person), its website if known, the startup it invested in, and the article where that investment was found.
+
+Find, from the investor's own website first and then the web:
+- website (its homepage), a one-sentence description of what it invests in, HQ city and country, and the year it was founded.
+- firmType, stages, geographies, industries, verticals and financing: what the investor says it invests in, using only the labels given. A label you can't support from what you read is left out. Fewer, well-supported labels are better than many.
+- people: the investing team named on its website (partners, principals, associates), with their titles. Not operations or admin staff.
+- For an angel: the person's first and last name, title and the firm they work at, if any, and that firm's website.
+- sources: the pages you used.
+
+Never guess or invent a URL, a person, a title or a fact. Leave a field empty if you didn't find it.`;
+
 export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
 
 When you review funds, open each fund's website when a link is given, then decide:
@@ -309,6 +322,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The investors (name, kind, the startup and the source article), the web-search limit, and the answer format. The code keeps only real web addresses and opens each website to check it.",
     testable: false,
     defaultText: INVESTOR_WEBSITE_PROMPT,
+  },
+  add_fund_research: {
+    slug: agentPromptSlug("add_fund_research"),
+    usedBy: "Matching → Step 2 → Check against the fund database → Try and Add to DB: researches a missing fund or angel (website, what it invests in, team) before Hunter finds the emails. The fund waits for review on the Fund Database page.",
+    fixed: "The investor, its known website, the startup and the source article; the taxonomy labels allowed (others are dropped); the web-search limit; and the answer format. Contacts and emails come from Hunter, not the AI.",
+    testable: false,
+    defaultText: ADD_FUND_RESEARCH_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

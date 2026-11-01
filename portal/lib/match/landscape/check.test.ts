@@ -177,3 +177,13 @@ test("Not sure: parked for later; a real decision settles it", () => {
   const matched = checkInvestors({ ...base, investors: [inv("i5", "Acme")], decisions: { i5: { firmId: "F3", by: null, at: "" } } });
   assert.equal(matched[0].unsure, false);
 });
+
+test("added by Rupert: its own group, ahead of any match; a rejected one goes back to missing", () => {
+  const base = { firms, data, steps, shortlist: new Set(["F2"]), decisions: {} };
+  const added = { firmId: "RUP-1", contacts: 3, website: "https://nobody.fund", id: "a1" };
+  const rows = checkInvestors({ ...base, investors: [inv("i6", "Nobody Fund")], added: { i6: { ...added, status: "pending" } } });
+  assert.equal(rows[0].bucket, "added");
+  assert.equal(rows[0].added?.contacts, 3);
+  const rejected = checkInvestors({ ...base, investors: [inv("i6", "Nobody Fund")], added: { i6: { ...added, status: "rejected" } } });
+  assert.equal(rejected[0].bucket, "missing_fund");
+});
