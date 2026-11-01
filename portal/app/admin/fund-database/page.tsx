@@ -5,6 +5,7 @@ import { formatDate } from "@/lib/format";
 import { newRawValues } from "@/lib/taxonomy/core";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
 import { ContactCorrections } from "@/app/admin/fund-database/contact-corrections";
+import { AddedFundsReview } from "@/app/admin/fund-database/added-funds-review";
 import { ContactImport } from "@/app/admin/fund-database/contact-import";
 import { DatabaseHistory } from "@/app/admin/fund-database/database-history";
 import { FundDatabaseManager } from "@/app/admin/fund-database/fund-database-manager";
@@ -188,6 +189,9 @@ export default async function FundDatabasePage({
       ) : null}
       <FundDatabaseManager versions={versions} sites={sites} />
       <ContactImport staged={contactImport.staged} error={contactImport.error} />
+      <Disclosure id="added-by-rupert" title="Added by Rupert" meta="Funds and angels found while researching competitors: review, then approve for every client" defaultOpen>
+        <AddedFundsReview />
+      </Disclosure>
       <Disclosure
         id="contact-fixes"
         title="Contact fixes and leads"
