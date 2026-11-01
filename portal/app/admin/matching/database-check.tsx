@@ -243,32 +243,98 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
 
 type Reason = { key: string; label: string; rows: CheckRow[]; note: string };
 
+const REASONS: Omit<Reason, "rows">[] = [
+  { key: "sector_shared", label: "Sector only, lists the client's sector", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
+  { key: "sector_none", label: "Sector only, no shared sector", note: "Backed a direct competitor, but lists none of the client's sectors: left out by default." },
+  { key: "stage", label: "Stage", note: "A different stage: left out by default." },
+  { key: "geography", label: "Geography", note: "Another geography: left out by default." },
+  { key: "financing", label: "Financing", note: "Another financing type: left out by default." },
+  { key: "none", label: "Passes Step 1 today", note: "The database changed after Step 1: left out by default." },
+];
+
+/** Which reason group a fund in the database but not in the shortlist falls in. */
+function reasonOf(row: CheckRow) {
+  const step = row.failure?.step ?? "none";
+  return step === "sector" ? (row.overlap.client.length ? "sector_shared" : "sector_none") : step;
+}
+
+/** The funds of one reason group, in a modal, each with its details and decision. */
+function ReasonModal({
+  reason,
+  rows,
+  busy,
+  onDecide,
+  onClose,
+}: {
+  reason: Omit<Reason, "rows">;
+  rows: CheckRow[];
+  busy: boolean;
+  onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  onClose: () => void;
+}) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-heading/40 p-md" onClick={onClose} role="presentation">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={reason.label}
+        className="animate-slide-in max-h-[88vh] w-full max-w-5xl overflow-auto rounded-card border border-border bg-surface px-lg py-md shadow-lg"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-md">
+          <div>
+            <h3 className="text-h3 text-heading">
+              {reason.label} · {n(rows.length)}
+            </h3>
+            <p className="text-body-sm text-muted">{reason.note}</p>
+          </div>
+          <button type="button" className={smallButton} onClick={onClose}>
+            Close
+          </button>
+        </div>
+        {rows.length ? (
+          <table className="mt-md w-full text-left text-body-sm">
+            <thead className="text-label uppercase tracking-label text-muted">
+              <tr>
+                <th className="py-xs pr-md font-medium">Investor</th>
+                <th className="py-xs pr-md font-medium">Why it isn&apos;t in the shortlist</th>
+                <th className="py-xs font-medium">Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row) => (
+                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row.investor.id, p)} />
+              ))}
+            </tbody>
+          </table>
+        ) : (
+          <p className="mt-md text-body-sm text-muted">No funds left in this group.</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 /** Funds in the database but not in the shortlist, by the Step 1 filter that removed them: the defaults, and "apply to all". */
 function DecisionSummary({
   rows,
   busy,
   onGroup,
+  onOpen,
 }: {
   rows: CheckRow[];
   busy: boolean;
   onGroup: (ids: string[], action: "bring_back" | "leave_out" | null) => void;
+  onOpen: (key: string) => void;
 }) {
-  const reasons: Reason[] = [
-    { key: "sector_shared", label: "Sector only, lists the client's sector", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
-    { key: "sector_none", label: "Sector only, no shared sector", note: "Backed a direct competitor, but lists none of the client's sectors: left out by default." },
-    { key: "stage", label: "Stage", note: "A different stage: left out by default." },
-    { key: "geography", label: "Geography", note: "Another geography: left out by default." },
-    { key: "financing", label: "Financing", note: "Another financing type: left out by default." },
-    { key: "none", label: "Passes Step 1 today", note: "The database changed after Step 1: left out by default." },
-  ]
-    .map((r) => ({
-      ...r,
-      rows: rows.filter((x) => {
-        const step = x.failure?.step ?? "none";
-        if (step === "sector") return r.key === (x.overlap.client.length ? "sector_shared" : "sector_none");
-        return step === r.key;
-      }),
-    }))
+  const reasons: Reason[] = REASONS.map((r) => ({ ...r, rows: rows.filter((x) => reasonOf(x) === r.key) }))
     .filter((r) => r.rows.length);
   if (!reasons.length) return null;
   const count = (list: CheckRow[], a: "bring_back" | "leave_out") => list.filter((x) => x.action === a).length;
@@ -276,6 +342,7 @@ function DecisionSummary({
   return (
     <div className="mt-lg">
       <h4 className="text-label uppercase tracking-label text-muted">In the database, not in the shortlist: decisions</h4>
+      <p className="text-body-sm text-muted">Click a row to see its funds and decide one by one.</p>
       <table className="mt-xs w-full text-left text-body-sm">
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
@@ -292,16 +359,24 @@ function DecisionSummary({
             const ids = r.rows.map((x) => x.investor.id);
 
             return (
-              <tr key={r.key} className="border-t border-border align-top">
+              <tr
+                key={r.key}
+                tabIndex={0}
+                className="cursor-pointer border-t border-border align-top hover:bg-background focus:bg-background focus:outline-none"
+                onClick={() => onOpen(r.key)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter") onOpen(r.key);
+                }}
+              >
                 <td className="py-xs pr-md">
-                  <p className="text-heading">{r.label}</p>
+                  <p className="text-heading underline decoration-border underline-offset-4">{r.label}</p>
                   <p className="text-muted">{r.note}</p>
                 </td>
                 <td className="py-xs pr-md text-right text-heading">{n(r.rows.length)}</td>
                 <td className="py-xs pr-md text-right">{n(count(r.rows, "bring_back"))}</td>
                 <td className="py-xs pr-md text-right">{n(count(r.rows, "leave_out"))}</td>
                 <td className="py-xs pr-md text-right text-secondary">{n(mine(r.rows))}</td>
-                <td className="py-xs text-right">
+                <td className="py-xs text-right" onClick={(event) => event.stopPropagation()}>
                   <div className="flex flex-wrap justify-end gap-xs">
                     <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, "bring_back")}>
                       Bring back all
@@ -345,6 +420,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const [busy, setBusy] = useState(false);
   /** The group open below the table: null = the default (what needs action), "none" = all closed. */
   const [show, setShow] = useState<Bucket | "none" | null>(null);
+  const [openReason, setOpenReason] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -443,7 +519,16 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </tr>
         </tbody>
       </table>
-      <DecisionSummary rows={notInList} busy={busy} onGroup={(ids, action) => void group(ids, action)} />
+      <DecisionSummary rows={notInList} busy={busy} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} />
+      {openReason ? (
+        <ReasonModal
+          reason={REASONS.find((r) => r.key === openReason) ?? REASONS[0]}
+          rows={notInList.filter((r) => reasonOf(r) === openReason)}
+          busy={busy}
+          onDecide={(id, patch) => void decide(id, patch)}
+          onClose={() => setOpenReason(null)}
+        />
+      ) : null}
 
       <div className="mt-lg flex flex-wrap items-center justify-between gap-sm rounded-md border border-border bg-background px-md py-sm text-body-sm">
         <p className="text-secondary">
