@@ -7,9 +7,13 @@ import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import type { TaxIndex } from "@/lib/taxonomy/core";
+import { investorKey } from "@/lib/match/landscape/investors";
 import { cleanUrl } from "@/lib/match/landscape/core";
+import { loadLiveDb } from "@/lib/match/db-server";
 import { domainOf } from "@/lib/match/landscape/check";
 import {
+  ownSite,
+  rawForFn,
   onlyLabels,
   pickContacts,
   splitName,
@@ -26,7 +30,13 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 export const ADDED_MIGRATION = "The added-funds table is missing. Run portal/supabase/added_funds.sql in the Supabase SQL editor.";
 
 function tableError(message: string, code?: string) {
-  return code === "42P01" || code === "PGRST205" || /added_funds/.test(message) ? ADDED_MIGRATION : message;
+  return code === "42P01" || code === "PGRST205" ? ADDED_MIGRATION : message;
+}
+
+/** Whether the table exists. Checked before any paid call (research, Hunter). */
+async function tableReady(supabase: ServiceClient): Promise<boolean> {
+  const { error } = await supabase.from("added_funds").select("id").limit(1);
+  return !error;
 }
 
 type Row = {
@@ -91,6 +101,7 @@ function fromRow(r: Row): AddedFund {
   };
 }
 
+
 // ---------------------------------------------------------------------------
 // The taxonomy's labels, and the raw value a provider record would carry
 
@@ -123,39 +134,11 @@ export function labelLists(index: TaxIndex): LabelLists {
   };
 }
 
-const FIELD_DIMENSION: Record<string, string> = {
-  stage: "stage",
-  geography: "geography",
-  industry: "sector",
-  vertical: "sector",
-  financing: "financing",
-  firm_type: "firm_type",
-  hq_country: "geography",
-};
-
-/** A raw value the taxonomy already maps (approved) to this label, in this field; the label itself when there is none. */
-export function rawForFn(index: TaxIndex) {
-  const cache = new Map<string, string>();
-  return (field: string, label: string) => {
-    const key = `${field}|${label}`;
-    const hit = cache.get(key);
-    if (hit !== undefined) return hit;
-    const dimension = FIELD_DIMENSION[field];
-    const node = Array.from(index.nodes.values()).find((n) => n.dimension === dimension && n.label.toLowerCase() === label.toLowerCase());
-    const alias = node
-      ? index.taxonomy.aliases.find((a) => a.field === field && a.state === "mapped" && a.review === "approved" && a.nodeIds.includes(node.id))
-      : undefined;
-    const raw = alias?.rawValue ?? label;
-    cache.set(key, raw);
-    return raw;
-  };
-}
-
 // ---------------------------------------------------------------------------
 // Reading
 
 export async function listAddedFunds(supabase: ServiceClient, status?: AddedStatus): Promise<Result<AddedFund[]>> {
-  let query = supabase.from("added_funds").select("*").order("created_at", { ascending: false }).limit(1000);
+  let query = supabase.from("added_funds").select("*").order("created_at", { ascending: false }).range(0, 4999);
   if (status) query = query.eq("status", status);
   const { data, error } = await query;
   if (error) return { ok: false, error: tableError(error.message, error.code) };
@@ -170,18 +153,25 @@ export async function addedForLandscape(supabase: ServiceClient, landscapeId: st
 }
 
 /**
- * Approved added funds as Fund Database records and contacts, to merge into
- * the live database. Empty before the migration, so matching never breaks.
+ * Added funds as Fund Database records and contacts, to merge into the live
+ * database for one client: every approved fund, plus the pending ones found
+ * for this client (they count for it until reviewed). Empty before the
+ * migration, so matching never breaks.
  */
-export async function approvedAsDb(supabase: ServiceClient, index: TaxIndex): Promise<Pick<FundDb, "firms" | "contacts">> {
-  const { data, error } = await supabase.from("added_funds").select("*").eq("status", "approved");
+export async function addedAsDb(supabase: ServiceClient, index: TaxIndex, clientId: string): Promise<Pick<FundDb, "firms" | "contacts">> {
+  if (!/^[0-9a-f-]{36}$/i.test(clientId)) return { firms: [], contacts: [] };
+  const { data, error } = await supabase
+    .from("added_funds")
+    .select("*")
+    .or(`status.eq.approved,and(status.eq.pending,found_for_client.eq.${clientId})`)
+    .range(0, 9999);
   if (error || !data) return { firms: [], contacts: [] };
   const rawFor = rawForFn(index);
   const funds = (data as Row[]).map(fromRow);
   return { firms: funds.map((f) => toFirm(f, rawFor)), contacts: funds.flatMap(toContacts) };
 }
 
-/** The live database with the approved added funds appended (never replacing a provider record). */
+/** The live database with added funds appended (never replacing a provider record). */
 export function withAdded(db: FundDb, added: Pick<FundDb, "firms" | "contacts">): FundDb {
   if (!added.firms.length) return db;
   const ids = new Set(db.firms.map((f) => f.id));
@@ -254,9 +244,39 @@ const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slic
  * Hunter, and saves it as pending. Pending: used for this client only, until
  * an admin approves it for the shared database.
  */
-export async function addFund(supabase: ServiceClient, index: TaxIndex, input: AddInput, actor: string | null): Promise<Result<AddedFund>> {
+export type AddOutcome =
+  | { kind: "added"; fund: AddedFund }
+  | { kind: "existing"; fund: AddedFund }
+  /** Its website belongs to a record already in the database: match it instead of adding. */
+  | { kind: "in_database"; firm: { id: string; name: string }; website: string };
+
+export async function addFund(
+  supabase: ServiceClient,
+  index: TaxIndex,
+  input: AddInput,
+  actor: string | null,
+  /** The database record with this website, if any (provider or added). */
+  inDatabase: (website: string) => { id: string; name: string } | null,
+): Promise<Result<AddOutcome>> {
+  // Before any paid call: the table, and whether this investor is already added (here or for another client).
+  if (!(await tableReady(supabase))) return { ok: false, error: ADDED_MIGRATION };
   const existing = await addedForLandscape(supabase, input.landscapeId);
-  if (existing[input.investorId]) return { ok: true, value: existing[input.investorId] };
+  const mine = existing[input.investorId];
+  if (mine && mine.status !== "rejected") return { ok: true, value: { kind: "existing", fund: mine } };
+  const known = cleanUrl(input.website) ? ownSite(input.website) : "";
+  const elsewhere = await findAddedElsewhere(supabase, input.name, known);
+  if (elsewhere) {
+    return {
+      ok: false,
+      error: `${elsewhere.name} was already added (${elsewhere.status === "pending" ? "pending review" : elsewhere.status}) while researching another client. ${
+        elsewhere.status === "pending" ? "Approve it on the Fund Database page to use it for every client." : ""
+      }`.trim(),
+    };
+  }
+  if (known) {
+    const firm = inDatabase(known);
+    if (firm) return { ok: true, value: { kind: "in_database", firm, website: known } };
+  }
   const prompt = await loadPrompt(supabase, "add_fund_research", { clientId: input.clientId, purpose: `Step 2: add ${input.name}` });
   if (!prompt.ok) return { ok: false, error: prompt.error };
   const labels = labelLists(index);
@@ -292,8 +312,14 @@ export async function addFund(supabase: ServiceClient, index: TaxIndex, input: A
   if (!result.ok) return { ok: false, error: `The research did not finish: ${result.reason}` };
   const r = result.input;
   const angel = (r.angel && typeof r.angel === "object" ? r.angel : {}) as Record<string, unknown>;
-  const website = cleanUrl(r.website) || cleanUrl(input.website) || (input.kind === "angel" ? cleanUrl(angel.firmWebsite) : "");
-  const domain = website ? domainOf(website) : "";
+  // The admin's (or accepted) website wins over the research's; platforms (LinkedIn…) are never a fund's site.
+  // An angel's employer's site is used to look up their email, never stored as the angel's own.
+  const website = known || ownSite(text(r.website, 500));
+  const domain = input.kind === "fund" && website ? domainOf(website) : "";
+  if (website) {
+    const firm = inDatabase(website);
+    if (firm) return { ok: true, value: { kind: "in_database", firm, website } };
+  }
 
   // Contacts: Hunter only (the AI never supplies an email).
   const contacts: AddedContact[] = [];
@@ -303,7 +329,7 @@ export async function addFund(supabase: ServiceClient, index: TaxIndex, input: A
   else if (input.kind === "angel") {
     const first = text(angel.firstName, 60) || splitName(input.name).first;
     const last = text(angel.lastName, 80) || splitName(input.name).last;
-    const angelDomain = domainOf(cleanUrl(angel.firmWebsite) || website);
+    const angelDomain = domainOf(ownSite(text(angel.firmWebsite, 500)) || website);
     if (first && last && angelDomain) {
       const found = await findEmail({ domain: angelDomain, firstName: first, lastName: last });
       if (found.ok && found.value) {
@@ -329,7 +355,9 @@ export async function addFund(supabase: ServiceClient, index: TaxIndex, input: A
       }
       // Hunter knew nobody investing: look up the investing team the research named, one by one.
       if (!contacts.length) {
-        const people = (Array.isArray(r.people) ? r.people : []) as { name?: string; title?: string }[];
+        const people = (Array.isArray(r.people) ? r.people : []).filter(
+          (x): x is { name?: string; title?: string } => !!x && typeof x === "object",
+        );
         const ranked = pickContacts(
           people.map((x) => ({ ...x, position: text(x.title, 120), confidence: null, email: text(x.name, 120) })),
           RME.roleOf,
@@ -358,6 +386,8 @@ export async function addFund(supabase: ServiceClient, index: TaxIndex, input: A
     .slice(0, 10);
   if (input.sourceUrl && !sources.some((s) => s.url === input.sourceUrl)) sources.unshift({ url: input.sourceUrl, label: "Funding article" });
   const [firmType] = onlyLabels([r.firmType], labels.firmTypes, 1);
+  const country = text(r.hqCountry, 80);
+  if (country && !onlyLabels([country], countryLabels(index), 1).length) notes.push(`HQ country as found: ${country}.`);
 
   const row = {
     firm_id: `RUP-${randomUUID().slice(0, 8).toUpperCase()}`,
@@ -367,7 +397,7 @@ export async function addFund(supabase: ServiceClient, index: TaxIndex, input: A
     website,
     description: text(r.description, 400),
     hq_city: text(r.hqCity, 80),
-    hq_country: onlyLabels([r.hqCountry], labels.geographies, 1)[0] ?? text(r.hqCountry, 80),
+    hq_country: onlyLabels([r.hqCountry], countryLabels(index), 1)[0] ?? "",
     founded_year: year,
     firm_type: firmType ?? "",
     stages: onlyLabels(r.stages, labels.stages),
@@ -385,9 +415,34 @@ export async function addFund(supabase: ServiceClient, index: TaxIndex, input: A
     usage: result.usage,
     created_by: actor,
   };
+  // A rejected earlier attempt for this investor makes way for the new one.
+  if (mine && mine.status === "rejected") await supabase.from("added_funds").delete().eq("id", mine.id).eq("status", "rejected");
   const { data, error } = await supabase.from("added_funds").insert(row).select("*").single<Row>();
-  if (error) return { ok: false, error: tableError(error.message, error.code) };
-  return { ok: true, value: fromRow(data) };
+  if (error) {
+    if (error.code === "23505") {
+      const again = await addedForLandscape(supabase, input.landscapeId);
+      if (again[input.investorId]) return { ok: true, value: { kind: "existing", fund: again[input.investorId] } };
+    }
+    return { ok: false, error: tableError(error.message, error.code) };
+  }
+  return { ok: true, value: { kind: "added", fund: fromRow(data) } };
+}
+
+/** The country labels (for an HQ country). */
+function countryLabels(index: TaxIndex) {
+  return Array.from(index.nodes.values())
+    .filter((n) => n.status === "active" && n.dimension === "geography" && n.kind === "country")
+    .map((n) => n.label);
+}
+
+/** An added fund (not rejected) for another landscape with the same name or website, if any. */
+async function findAddedElsewhere(supabase: ServiceClient, name: string, website: string): Promise<AddedFund | null> {
+  const { data, error } = await supabase.from("added_funds").select("*").neq("status", "rejected").range(0, 4999);
+  if (error || !data) return null;
+  const key = investorKey(name);
+  const domain = website ? domainOf(website) : "";
+  const hit = (data as Row[]).find((r) => (key && investorKey(r.name) === key) || (domain && r.website && domainOf(r.website) === domain));
+  return hit ? fromRow(hit) : null;
 }
 
 // ---------------------------------------------------------------------------
@@ -402,10 +457,10 @@ export async function editAddedFund(supabase: ServiceClient, index: TaxIndex, id
   const labels = labelLists(index);
   const patch: Record<string, unknown> = {};
   if (edits.name !== undefined) patch.name = text(edits.name, 120);
-  if (edits.website !== undefined) patch.website = cleanUrl(edits.website);
+  if (edits.website !== undefined) patch.website = ownSite(edits.website);
   if (edits.description !== undefined) patch.description = text(edits.description, 400);
   if (edits.hqCity !== undefined) patch.hq_city = text(edits.hqCity, 80);
-  if (edits.hqCountry !== undefined) patch.hq_country = onlyLabels([edits.hqCountry], labels.geographies, 1)[0] ?? "";
+  if (edits.hqCountry !== undefined) patch.hq_country = onlyLabels([edits.hqCountry], countryLabels(index), 1)[0] ?? "";
   if (edits.firmType !== undefined) patch.firm_type = onlyLabels([edits.firmType], labels.firmTypes, 1)[0] ?? "";
   if (edits.stages !== undefined) patch.stages = onlyLabels(edits.stages, labels.stages);
   if (edits.geographies !== undefined) patch.geographies = onlyLabels(edits.geographies, labels.geographies);
@@ -426,6 +481,23 @@ export async function reviewAddedFund(
   note: string,
   actor: string | null,
 ): Promise<Result<AddedFund>> {
+  if (status === "approved") {
+    // Never a second record for a fund the provider already has (same website).
+    const { data: current } = await supabase.from("added_funds").select("*").eq("id", id).maybeSingle<Row>();
+    if (current?.website) {
+      const live = await loadLiveDb(supabase);
+      if (live.ok) {
+        const domain = domainOf(current.website);
+        const clash = live.value.db.firms.find((f) => f.web && domainOf(f.web) === domain);
+        if (clash) {
+          return {
+            ok: false,
+            error: `${clash.name} (${clash.id}) is already in the Fund Database with this website. Reject this one, or correct its website if it's a different fund.`,
+          };
+        }
+      }
+    }
+  }
   const { data, error } = await supabase
     .from("added_funds")
     .update({
@@ -440,3 +512,5 @@ export async function reviewAddedFund(
   if (error) return { ok: false, error: tableError(error.message, error.code) };
   return { ok: true, value: fromRow(data) };
 }
+
+export { ownSite, rawForFn };

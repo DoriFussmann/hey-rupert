@@ -129,6 +129,7 @@ function Details({ fund, labels, onChange }: { fund: AddedView; labels: LabelLis
   const [error, setError] = useState<string | null>(null);
   const review = async (status: AddedStatus) => {
     if (status === "approved" && !window.confirm(`Approve ${fund.name}? It joins the shared Fund Database and can match every client.`)) return;
+    if (status === "pending" && fund.status === "approved" && !window.confirm(`Move ${fund.name} back to pending? It leaves the shared Fund Database for every client except ${fund.clientName ?? "the one it was found for"}.`)) return;
     setBusy(true);
     setError(null);
     const result = await reviewAdded(fund.id, status, note);
@@ -242,13 +243,13 @@ export function AddedFundsReview() {
   if (!funds || !labels) return <p className="text-body-sm text-muted">Loading…</p>;
   const count = (s: AddedStatus) => funds.filter((f) => f.status === s).length;
   const shown = funds.filter((f) => f.status === filter);
-  const update = (f: AddedView) => setFunds(funds.map((x) => (x.id === f.id ? f : x)));
+  const update = (f: AddedView) => setFunds((prev) => (prev ?? []).map((x) => (x.id === f.id ? f : x)));
 
   return (
     <div className="space-y-md">
       <p className="text-body-sm text-secondary">
-        Funds and angels Rupert added while researching a client&apos;s competitors. A pending one counts only for the client it was found for; approve it
-        to add it to the shared database for every client. Check the details (in the taxonomy&apos;s labels) and the contacts first.
+        Funds and angels Rupert added while researching a client&apos;s competitors. A pending one already counts for the client it was found for;
+        approve it to add it to the shared database for every client. Check the details (in the taxonomy&apos;s labels) and the contacts first.
       </p>
       <div className="flex flex-wrap gap-xs">
         {(["pending", "approved", "rejected"] as AddedStatus[]).map((s) => (

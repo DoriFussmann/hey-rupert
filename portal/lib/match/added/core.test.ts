@@ -83,3 +83,39 @@ test("an approved fund as a database record: raw values the taxonomy maps; Equit
   assert.equal(contacts.length, 1);
   assert.equal(contacts[0].fid, "RUP-ABC12345");
 });
+
+test("a fund's own website: platforms (LinkedIn, Crunchbase…) are never one", async () => {
+  const { ownSite } = await import("./core.ts");
+  assert.equal(ownSite("https://www.linkedin.com/in/someone"), "");
+  assert.equal(ownSite("crunchbase.com/organization/footwork"), "");
+  assert.equal(ownSite("https://uk.linkedin.com/company/x"), "");
+  assert.equal(ownSite("footwork.vc"), "https://footwork.vc/");
+  assert.equal(ownSite("not a url"), "");
+});
+
+test("raw values: the alias that maps only to the label's category wins; the label itself when there is none", async () => {
+  const { rawForFn } = await import("./core.ts");
+  const { indexTaxonomy, rawKey } = await import("../../taxonomy/core.ts");
+  const node = (id: string, dimension: "sector" | "stage", label: string, kind = "sector") =>
+    ({ id, dimension, label, parentId: null, kind, description: "", synonyms: [], attrs: {}, status: "active" as const, sort: 0 });
+  const alias = (field: "vertical" | "stage", value: string, nodeIds: string[], review: "approved" | "needs_review" = "approved") => ({
+    field, rawKey: rawKey(value), rawValue: value, nodeIds, state: "mapped" as const, review, method: "seed" as const,
+    rationale: "", aiProposal: null, reviewedBy: null, reviewedAt: null, updatedAt: "",
+  });
+  const index = indexTaxonomy({
+    revision: 1,
+    nodes: [node("sector.fintech", "sector", "Fintech"), node("sector.insurtech", "sector", "Insurtech"), node("stage.seed", "stage", "Seed", "stage")],
+    aliases: [
+      alias("vertical", "Fintech & Insurtech", ["sector.fintech", "sector.insurtech"]),
+      alias("vertical", "FinTech (Financial Technology)", ["sector.fintech"]),
+      alias("stage", "Seed Round", ["stage.seed"], "needs_review"),
+    ],
+    edges: [],
+  });
+  const rawFor = rawForFn(index);
+  // Not the combined value, which would also tag Insurtech.
+  assert.equal(rawFor("vertical", "Fintech"), "FinTech (Financial Technology)");
+  // Only a needs-review alias: the label itself.
+  assert.equal(rawFor("stage", "Seed"), "Seed");
+  assert.equal(rawFor("vertical", "Nothing"), "Nothing");
+});

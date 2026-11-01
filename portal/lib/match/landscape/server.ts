@@ -8,12 +8,11 @@ import { loadProfileState } from "@/lib/match/profile-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { MAX_COMPETITORS, cleanUrl, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
 import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type Investor, type ResearchState } from "./investors.ts";
-import { checkInvestors, type Bucket, type CheckRow, type InvestorDecision, type WebsiteSuggestion } from "./check.ts";
+import { checkInvestors, domainOf, type Bucket, type CheckRow, type InvestorDecision, type WebsiteSuggestion } from "./check.ts";
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addFund, addedForLandscape } from "@/lib/match/added/server";
 import { lookAlikes } from "./lookalike.ts";
-import { loadTaxonomy } from "@/lib/taxonomy/server";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -1053,8 +1052,18 @@ export async function checkLocked(supabase: ServiceClient, landscapeId: string) 
 // ---------------------------------------------------------------------------
 // Step 2D: Try and Add to DB
 
-/** Adds one missing investor (research, then Hunter) as a pending fund for this client. */
-export async function addMissingInvestor(supabase: ServiceClient, clientId: string, investorId: string, actor: string | null): Promise<Result<null>> {
+/**
+ * Adds one missing investor (research, then Hunter) as a pending fund for
+ * this client. If its website turns out to belong to a record already in the
+ * database, nothing is added: the website is saved on the investor, so it
+ * matches that record instead.
+ */
+export async function addMissingInvestor(
+  supabase: ServiceClient,
+  clientId: string,
+  investorId: string,
+  actor: string | null,
+): Promise<Result<{ created: boolean; message: string }>> {
   const current = await currentLandscape(supabase, clientId);
   if (!current.ok) return current;
   const land = current.value;
@@ -1063,26 +1072,54 @@ export async function addMissingInvestor(supabase: ServiceClient, clientId: stri
   if (!check.ok) return check;
   const row = check.value.rows.find((r) => r.investor.id === investorId);
   if (!row) return { ok: false, error: "That investor is not on the confirmed list." };
-  if (row.bucket === "added") return { ok: true, value: null };
-  if (row.bucket !== "missing_fund" && row.bucket !== "missing_angel") return { ok: false, error: "Only investors not in the database can be added." };
-  const taxonomy = await loadTaxonomy(supabase);
-  if (!taxonomy.ok) return { ok: false, error: taxonomy.error };
+  if (row.bucket === "added" && row.added?.status !== "rejected") return { ok: true, value: { created: false, message: `${row.investor.name} was already added.` } };
+  if (row.bucket !== "missing_fund" && row.bucket !== "missing_angel" && row.bucket !== "added") {
+    return { ok: false, error: "Only investors not in the database can be added." };
+  }
+  const snapshot = await matchDataSnapshot(supabase, clientId);
+  if (!snapshot.ok) return snapshot;
+  const byDomain = new Map<string, { id: string; name: string }[]>();
+  for (const f of snapshot.value.db.firms) {
+    const d = f.web ? domainOf(f.web) : "";
+    if (!d) continue;
+    byDomain.set(d, [...(byDomain.get(d) ?? []), { id: f.id, name: f.name }]);
+  }
+  const inDatabase = (website: string) => {
+    const hits = byDomain.get(domainOf(website)) ?? [];
+    return hits.length ? hits[0] : null;
+  };
   const added = await addFund(
     supabase,
-    taxonomy.value,
+    snapshot.value.index,
     {
       clientId,
       landscapeId: land.id,
       investorId,
       name: row.investor.name,
-      kind: row.bucket === "missing_angel" ? "angel" : "fund",
+      kind: row.bucket === "missing_angel" || row.investor.kind === "angel" ? "angel" : "fund",
       website: row.investor.website || row.suggestion?.website || "",
       competitors: Array.from(new Set(row.investor.backed.map((b) => b.competitor))),
       sourceUrl: row.investor.backed.map((b) => b.sourceUrl).find(Boolean) ?? "",
     },
     actor,
+    inDatabase,
   );
-  return added.ok ? { ok: true, value: null } : { ok: false, error: added.error };
+  if (!added.ok) return { ok: false, error: added.error };
+  const outcome = added.value;
+  if (outcome.kind === "in_database") {
+    const saved = await decideInvestor(supabase, clientId, investorId, { website: outcome.website, resetMatch: true }, actor);
+    if (!saved.ok) return saved;
+    return { ok: true, value: { created: false, message: `${row.investor.name} is already in the database as ${outcome.firm.name} (same website): matched to it, not added.` } };
+  }
+  if (outcome.kind === "existing") return { ok: true, value: { created: false, message: `${row.investor.name} was already added.` } };
+  const f = outcome.fund;
+  return {
+    ok: true,
+    value: {
+      created: true,
+      message: `${f.name} added (pending review), ${f.contacts.length} ${f.contacts.length === 1 ? "contact" : "contacts"}${f.contacts.length ? "" : `: ${f.notes || "none found"}`}.`,
+    },
+  };
 }
 
 // ---------------------------------------------------------------------------

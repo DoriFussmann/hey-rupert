@@ -986,20 +986,31 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const addToDb = async (ids: string[]) => {
     setError(null);
     let done = 0;
-    let added = 0;
-    for (const id of ids) {
-      setAdding({ current: id, done, total: ids.length });
-      const result = await addInvestorToDb(clientId, id);
-      done += 1;
-      if (!result.ok) {
-        setError(result.error);
-        break;
+    let created = 0;
+    let last = "";
+    let failed = false;
+    try {
+      for (const id of ids) {
+        setAdding({ current: id, done, total: ids.length });
+        const result = await addInvestorToDb(clientId, id);
+        done += 1;
+        if (!result.ok) {
+          setError(result.error);
+          failed = true;
+          break;
+        }
+        if (result.created) created += 1;
+        last = result.message;
+        setCheck(result.check);
       }
-      added += 1;
-      setCheck(result.check);
+    } catch (err) {
+      failed = true;
+      setError(err instanceof Error ? err.message : "Try and Add to DB stopped. Reload the page to see what was added.");
+    } finally {
+      setAdding(null);
     }
-    setAdding(null);
-    setToast(`Try and Add to DB: ${n(added)} added, pending your review on the Fund Database page. Saved.`);
+    if (ids.length === 1 && last) setToast(last);
+    else if (!failed || created) setToast(`Try and Add to DB: ${n(created)} added (pending your review on the Fund Database page)${failed ? ", then it stopped" : ""}.`);
   };
 
   /** Find websites for the unclear and missing investors that have no suggestion yet, a few at a time. */
@@ -1121,7 +1132,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
                   <button
                     type="button"
                     className={primaryButton}
-                    disabled={busy || !byBucket(current).length}
+                    disabled={busy || !!finding || !byBucket(current).length}
                     onClick={() => {
                       const ids = byBucket(current).map((r) => r.investor.id);
                       if (window.confirm(`Try and Add to DB for all ${ids.length}? About a minute each, and about 1 Hunter credit per fund with a website. Each waits for your review before other clients see it.`)) void addToDb(ids);

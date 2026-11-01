@@ -250,7 +250,7 @@ export async function confirmInvestorCheck(clientId: string, confirm: boolean): 
 }
 
 /** Try and Add to DB for one missing investor (the page calls it one by one), then the check again. */
-export async function addInvestorToDb(clientId: string, investorId: string): Promise<Result<{ check: CheckResult }>> {
+export async function addInvestorToDb(clientId: string, investorId: string): Promise<Result<{ check: CheckResult; created: boolean; message: string }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
@@ -258,7 +258,8 @@ export async function addInvestorToDb(clientId: string, investorId: string): Pro
   try {
     const done = await addMissingInvestor(a.supabase, a.clientId, investorId, a.email);
     if (!done.ok) return { ok: false, error: done.error };
-    return runInvestorCheck(clientId);
+    const check = await runInvestorCheck(clientId);
+    return check.ok ? { ok: true, check: check.check, created: done.value.created, message: done.value.message } : check;
   } catch (err) {
     return fail(err, "Try and Add to DB failed.");
   }

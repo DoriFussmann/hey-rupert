@@ -5,6 +5,9 @@
 // joins the shared database for every client once an admin approves it.
 
 import type { Contact, Firm } from "../engine/index.mjs";
+import { findAlias, type FieldKey, type TaxIndex } from "../../taxonomy/core.ts";
+import { cleanUrl } from "../landscape/core.ts";
+import { domainOf } from "../landscape/check.ts";
 
 export type AddedStatus = "pending" | "approved" | "rejected";
 
@@ -137,3 +140,105 @@ export function toContacts(fund: AddedFund): Contact[] {
       matchQ: "added by Rupert",
     }));
 }
+
+/**
+ * Websites that are never a fund's own: profiles and listings on other
+ * platforms. A fund "website" on one of these would send Hunter to the
+ * platform's own staff and, once approved, match every investor whose
+ * website is any page there.
+ */
+const NOT_A_FUND_SITE = [
+  "linkedin.com",
+  "crunchbase.com",
+  "twitter.com",
+  "x.com",
+  "facebook.com",
+  "instagram.com",
+  "angel.co",
+  "wellfound.com",
+  "pitchbook.com",
+  "cbinsights.com",
+  "tracxn.com",
+  "dealroom.co",
+  "medium.com",
+  "substack.com",
+  "github.com",
+  "youtube.com",
+  "gmail.com",
+  "google.com",
+  "wikipedia.org",
+  "bloomberg.com",
+  "techcrunch.com",
+  "prnewswire.com",
+  "businesswire.com",
+  "globenewswire.com",
+  "signal.nfx.com",
+  "nfx.com",
+  "f6s.com",
+  "golden.com",
+  "zoominfo.com",
+  "apollo.io",
+  "rocketreach.co",
+];
+
+/** A usable fund website: a real address, not a profile on another platform. */
+export function ownSite(url: string): string {
+  const clean = cleanUrl(url);
+  if (!clean) return "";
+  const domain = domainOf(clean);
+  return NOT_A_FUND_SITE.some((d) => domain === d || domain.endsWith(`.${d}`)) ? "" : clean;
+}
+
+const FIELD_DIMENSION: Record<string, string> = {
+  stage: "stage",
+  geography: "geography",
+  industry: "sector",
+  vertical: "sector",
+  financing: "financing",
+  firm_type: "firm_type",
+  hq_country: "geography",
+};
+
+const FIELD_KINDS: Record<string, string[] | null> = {
+  stage: ["stage"],
+  geography: ["region", "subregion", "country", "us_region"],
+  industry: ["sector"],
+  vertical: ["sector"],
+  financing: null,
+  firm_type: null,
+  hq_country: ["country"],
+};
+
+/**
+ * A raw value the taxonomy already maps (approved) to exactly this label's
+ * category in this field, so an approved fund is classified like a provider
+ * record: the label itself when it is such a value, else an alias mapping
+ * only to that category, else any approved alias including it; the label
+ * when there is none (it then shows as unmapped in the taxonomy).
+ */
+export function rawForFn(index: TaxIndex) {
+  const cache = new Map<string, string>();
+  return (field: string, label: string) => {
+    const key = `${field}|${label}`;
+    const hit = cache.get(key);
+    if (hit !== undefined) return hit;
+    const dimension = FIELD_DIMENSION[field];
+    const kinds = FIELD_KINDS[field];
+    const node = Array.from(index.nodes.values()).find(
+      (n) => n.status === "active" && n.dimension === dimension && (!kinds || kinds.includes(n.kind)) && n.label.toLowerCase() === label.toLowerCase(),
+    );
+    let raw = label;
+    if (node) {
+      const approved = (a: { state: string; review: string }) => a.state === "mapped" && a.review === "approved";
+      const own = findAlias(index, field as FieldKey, label);
+      if (own && approved(own) && own.nodeIds.length === 1 && own.nodeIds[0] === node.id) raw = own.rawValue;
+      else {
+        const aliases = index.taxonomy.aliases.filter((a) => a.field === field && approved(a) && a.nodeIds.includes(node.id));
+        raw = (aliases.find((a) => a.nodeIds.length === 1) ?? aliases[0])?.rawValue ?? label;
+      }
+    }
+    cache.set(key, raw);
+    return raw;
+  };
+}
+

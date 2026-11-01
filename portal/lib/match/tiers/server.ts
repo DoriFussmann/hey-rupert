@@ -2,7 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
 import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
-import { approvedAsDb, withAdded } from "@/lib/match/added/server";
+import { addedAsDb, withAdded } from "@/lib/match/added/server";
 import { MATCH_MIGRATION_MISSING, loadLiveDb, selectAll } from "@/lib/match/db-server";
 import type { PeopleStates } from "@/lib/match/list-snapshot";
 import { buildProfile, loadProfileState, matchBasis } from "@/lib/match/profile-server";
@@ -433,8 +433,9 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   if (blocked) return { ok: false, error: blocked };
   const profile = { ...matchingProfile(canonical, index), issues, readiness };
 
-  // Approved funds added by Rupert join the provider records (pending ones never do).
-  const db = withAdded(applyCorrections(run.live.db, run.corrections, run.decisions), await approvedAsDb(supabase, index));
+  // Funds added by Rupert join the provider records (approved ones for every client, pending ones for the
+  // client they were found for); corrections then apply to all of them alike.
+  const db = applyCorrections(withAdded(run.live.db, await addedAsDb(supabase, index, clientId)), run.corrections, run.decisions);
   const rejected: Record<string, string> = {};
   run.reviews.forEach((review, firmId) => {
     if (review.status === "no") rejected[firmId] = review.reason || "Rejected";
