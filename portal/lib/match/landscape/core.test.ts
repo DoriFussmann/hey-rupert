@@ -31,3 +31,21 @@ test("names: matching ignores case and punctuation; 'None' gives no names", () =
   assert.deepEqual(namesFromText("None"), []);
   assert.deepEqual(namesFromText("- Tesorio\n- Upflow, Monk"), ["Tesorio", "Upflow", "Monk"]);
 });
+
+test("matching fields: the stage comes from the round's name, the country from the HQ", async () => {
+  const { stageFromRound, countryFromHq, cleanCompetitor } = await import("./core.ts");
+  assert.equal(stageFromRound("$25M Series A"), "Series A");
+  assert.equal(stageFromRound("$4M pre-seed"), "Pre-Seed");
+  assert.equal(stageFromRound("€1M seed round"), "Seed");
+  assert.equal(stageFromRound("$52.5M Series B"), "Series B");
+  assert.equal(stageFromRound("Series D"), "Series C and Beyond");
+  assert.equal(stageFromRound("$9M"), "");
+  assert.equal(countryFromHq("San Francisco, CA"), "United States");
+  assert.equal(countryFromHq("New York, USA"), "United States");
+  assert.equal(countryFromHq("London, UK"), "United Kingdom");
+  assert.equal(countryFromHq("Malmö, Sweden"), "Sweden");
+  assert.equal(countryFromHq(""), "");
+  // A list saved before these fields existed gets them from its round and HQ; the sector stays empty.
+  const old = cleanCompetitor({ name: "Monk", hq: "New York, NY", funding: { lastRound: "$25M Series A" } }, "x")!;
+  assert.deepEqual([old.stage, old.geography, old.primarySector], ["Series A", "United States", ""]);
+});

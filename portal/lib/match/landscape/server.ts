@@ -103,6 +103,9 @@ type CompanyFacts = {
   /** The founder's own words about competitors: profile list and intake note. */
   clientText: string;
   clientList: string[];
+  /** Taxonomy labels the competitors' fields must use. */
+  sectorLabels: string[];
+  stageLabels: string[];
 };
 
 async function companyFacts(supabase: ServiceClient, clientId: string): Promise<Result<CompanyFacts>> {
@@ -112,6 +115,12 @@ async function companyFacts(supabase: ServiceClient, clientId: string): Promise<
   const loaded = await loadCompanyProfile(supabase, clientId, state.value);
   if (!loaded.ok) return { ok: false, error: loaded.error };
   const p = loaded.value.profile;
+  const nodes = Array.from(loaded.value.index.nodes.values()).filter((node) => node.status === "active");
+  const sectorLabels = nodes.filter((node) => node.dimension === "sector" && node.kind === "sector").map((node) => node.label).sort();
+  const stageLabels = nodes
+    .filter((node) => node.dimension === "stage" && node.kind === "stage")
+    .sort((a, b) => Number(a.attrs.ladder ?? 99) - Number(b.attrs.ladder ?? 99))
+    .map((node) => node.label);
   const { data: interview } = await supabase
     .from("intake_interviews")
     .select("topic_status")
@@ -136,6 +145,8 @@ async function companyFacts(supabase: ServiceClient, clientId: string): Promise<
         .filter(Boolean)
         .join("\n"),
       clientList,
+      sectorLabels,
+      stageLabels,
     },
   };
 }
@@ -160,6 +171,9 @@ const TOOL = {
             website: { type: "string" },
             oneLiner: { type: "string" },
             hq: { type: "string", description: "City and country" },
+            stage: { type: "string", description: "The stage of its latest round, one of the stage labels given" },
+            geography: { type: "string", description: "Its HQ country, e.g. United States" },
+            primarySector: { type: "string", description: "Its primary sector, one of the sector labels given" },
             source: { type: "string", enum: ["client", "web"] },
             why: { type: "string" },
             funding: {
@@ -175,7 +189,7 @@ const TOOL = {
             newsUrl: { type: "string" },
             newsTitle: { type: "string" },
           },
-          required: ["name", "website", "source", "why", "funding", "newsUrl"],
+          required: ["name", "website", "source", "why", "funding", "newsUrl", "stage", "geography", "primarySector"],
         },
       },
       unfundedNamed: { type: "array", items: { type: "string" }, description: "Founder-named competitors with no funding found" },
@@ -248,7 +262,13 @@ export async function findCompetitors(
 
   let usage: ClaudeUsage = { inputTokens: 0, outputTokens: 0, webSearches: 0 };
   const result = await callClaudeAgent<{ competitors?: unknown[]; unfundedNamed?: unknown[] }>({
-    system: promptSystem(prompt.value, "## The company", brief),
+    system: promptSystem(
+      prompt.value,
+      "## The company",
+      brief,
+      "## Fields for matching",
+      `For each competitor also give stage (the stage of its latest round), geography (its HQ country) and primarySector, using these exact labels. Leave a field empty if you can't tell.\nStages: ${f.stageLabels.join(", ")}\nSectors: ${f.sectorLabels.join(", ")}`,
+    ),
     content: [{ type: "text", text: `Find the funded direct competitors and deliver them by calling the ${TOOL.name} tool.` }],
     tool: TOOL,
     serverTools: [webSearchTool(15)],
@@ -266,7 +286,15 @@ export async function findCompetitors(
     const named = !!name && (clientWords.includes(name.toLowerCase()) || f.clientList.some((n) => sameName(n, name)));
     return { ...c, source: named ? "client" : "web" };
   });
-  const ordered = orderCompetitors(raw, () => randomUUID()).filter((c) => c.newsUrl);
+  const sectorSet = new Map(f.sectorLabels.map((l) => [l.toLowerCase(), l]));
+  const stageSet = new Map(f.stageLabels.map((l) => [l.toLowerCase(), l]));
+  const ordered = orderCompetitors(raw, () => randomUUID())
+    .filter((c) => c.newsUrl)
+    .map((c) => ({
+      ...c,
+      primarySector: sectorSet.get(c.primarySector.toLowerCase()) ?? "",
+      stage: stageSet.get(c.stage.toLowerCase()) ?? c.stage,
+    }));
   const checked = await withLinkChecks(ordered);
   const unfunded = (result.input.unfundedNamed ?? [])
     .filter((n): n is string => typeof n === "string" && !!n.trim())

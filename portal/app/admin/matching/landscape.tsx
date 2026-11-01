@@ -1,11 +1,12 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
 import type { Competitor, LinkState } from "@/lib/match/landscape/core";
 import { MAX_COMPETITORS } from "@/lib/match/landscape/core";
 import type { Landscape } from "@/lib/match/landscape/server";
 import { inputClass, labelClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
+import { BigNumber, Card } from "@/app/admin/matching/dry-match";
 
 const when = (iso: string | null) => (iso ? new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" }) : "");
 
@@ -41,6 +42,9 @@ const blank = (): Competitor => ({
   website: "",
   oneLiner: "",
   hq: "",
+  stage: "",
+  geography: "",
+  primarySector: "",
   source: "web",
   why: "",
   funding: { totalRaised: "", lastRound: "", lastRoundDate: "", investors: [] },
@@ -58,7 +62,7 @@ function EditForm({ value, onSave, onCancel }: { value: Competitor; onSave: (c: 
       <div className="mt-xs">{input}</div>
     </label>
   );
-  const text = (key: "name" | "website" | "hq" | "newsUrl" | "newsTitle" | "oneLiner") => (
+  const text = (key: "name" | "website" | "hq" | "newsUrl" | "newsTitle" | "oneLiner" | "stage" | "geography" | "primarySector") => (
     <input className={inputClass} value={c[key]} onChange={(e) => setC({ ...c, [key]: e.target.value })} />
   );
   const fund = (key: "totalRaised" | "lastRound" | "lastRoundDate") => (
@@ -74,6 +78,9 @@ function EditForm({ value, onSave, onCancel }: { value: Competitor; onSave: (c: 
       {field("Last round date", fund("lastRoundDate"))}
       {field("Total raised", fund("totalRaised"))}
       {field("HQ", text("hq"))}
+      {field("Stage (latest round)", text("stage"))}
+      {field("Geography (HQ country)", text("geography"))}
+      {field("Primary sector", text("primarySector"))}
       {field("Investors (comma separated)", <input className={inputClass} value={investors} onChange={(e) => setInvestors(e.target.value)} />, true)}
       {field("What it does", text("oneLiner"), true)}
       {field(
@@ -185,71 +192,127 @@ function Row({
   );
 }
 
-/** The confirmed list: one short row per competitor; click a row for the details. */
-function ConfirmedTable({ items }: { items: Competitor[] }) {
-  const [open, setOpen] = useState<string | null>(null);
-  const mark = (state: LinkState) => <span className={LINK_LOOK[state].tone}>{state === "live" ? "✓" : state === "broken" ? "✗" : "?"}</span>;
+/** The details of one competitor, in a modal. Closes on the backdrop, the button or Escape. */
+function DetailsModal({ c, rank, onClose }: { c: Competitor; rank: number; onClose: () => void }) {
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [onClose]);
+  const funding = [c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ");
   return (
-    <div className="overflow-hidden rounded-card border border-border">
-      <table className="w-full text-left text-body-sm">
-        <thead className="bg-background text-label uppercase tracking-label text-muted">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-heading/40 p-md" onClick={onClose} role="presentation">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={c.name}
+        className="animate-slide-in max-h-[85vh] w-full max-w-xl overflow-auto rounded-card border border-border bg-surface px-lg py-md shadow-lg"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <div className="flex items-start justify-between gap-md">
+          <h3 className="text-h3 text-heading">
+            <span className="mr-sm text-muted">{rank}.</span>
+            {c.name}
+          </h3>
+          <button type="button" className={smallButton} onClick={onClose}>
+            Close
+          </button>
+        </div>
+        {c.oneLiner ? <p className="mt-xs text-body-sm text-secondary">{c.oneLiner}</p> : null}
+        <dl className="mt-md grid grid-cols-[140px_1fr] gap-x-md gap-y-xs text-body-sm">
+          <dt className="text-muted">Stage</dt>
+          <dd className="text-heading">{c.stage || "–"}</dd>
+          <dt className="text-muted">Geography</dt>
+          <dd className="text-heading">{c.geography || "–"}</dd>
+          <dt className="text-muted">Primary sector</dt>
+          <dd className="text-heading">{c.primarySector || "–"}</dd>
+          <dt className="text-muted">Latest round</dt>
+          <dd className="text-body">{funding || "–"}</dd>
+          <dt className="text-muted">Total raised</dt>
+          <dd className="text-body">{c.funding.totalRaised || "–"}</dd>
+          <dt className="text-muted">HQ</dt>
+          <dd className="text-body">{c.hq || "–"}</dd>
+          <dt className="text-muted">Investors named</dt>
+          <dd className="text-body">{c.funding.investors.length ? c.funding.investors.join(", ") : "–"}</dd>
+          <dt className="text-muted">Source</dt>
+          <dd className="text-body">{c.source === "client" ? "Named by the client" : "Web search"}</dd>
+        </dl>
+        <div className="mt-md space-y-xs">
+          <LinkLine label="Website" url={c.website} state={c.links.website} />
+          <LinkLine label="Funding news" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
+        </div>
+        {c.why ? <p className="mt-md text-body-sm text-muted">{c.why}</p> : null}
+      </div>
+    </div>
+  );
+}
+
+/** The confirmed list, summarized like Step 1: one row per competitor; click a row for the details. */
+function ConfirmedSummary({
+  landscape,
+  items,
+  busy,
+  onStartOver,
+}: {
+  landscape: Landscape;
+  items: Competitor[];
+  busy: boolean;
+  onStartOver: () => void;
+}) {
+  const [open, setOpen] = useState<number | null>(null);
+  const close = useCallback(() => setOpen(null), []);
+  return (
+    <Card tone="final">
+      <div className="flex flex-wrap items-end justify-between gap-md">
+        <div>
+          <BigNumber value={items.length} label="Funded competitors: confirmed" />
+          <p className="text-body-sm text-secondary">
+            Confirmed {when(landscape.confirmedAt)}
+            {landscape.confirmedBy ? ` by ${landscape.confirmedBy}` : ""}.
+          </p>
+        </div>
+        <button type="button" className={secondaryButton} disabled={busy} onClick={onStartOver}>
+          {busy ? "Starting over…" : "Start over"}
+        </button>
+      </div>
+      <table className="mt-md w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
           <tr>
-            <th className="px-sm py-xs font-medium">#</th>
-            <th className="px-sm py-xs font-medium">Competitor</th>
-            <th className="px-sm py-xs font-medium">Last round</th>
-            <th className="px-sm py-xs font-medium">Total raised</th>
-            <th className="px-sm py-xs font-medium">HQ</th>
-            <th className="px-sm py-xs font-medium">Source</th>
-            <th className="px-sm py-xs text-right font-medium">Links</th>
+            <th className="py-xs pr-md font-medium">#</th>
+            <th className="py-xs pr-md font-medium">Competitor</th>
+            <th className="py-xs pr-md font-medium">Stage</th>
+            <th className="py-xs pr-md font-medium">Geography</th>
+            <th className="py-xs font-medium">Primary sector</th>
           </tr>
         </thead>
         <tbody>
-          {items.map((c, i) => {
-            const expanded = open === c.id;
-            return (
-              <Fragment key={c.id}>
-                <tr
-                  className="cursor-pointer border-t border-border hover:bg-background"
-                  onClick={() => setOpen(expanded ? null : c.id)}
-                  aria-expanded={expanded}
-                >
-                  <td className="px-sm py-xs text-muted">{i + 1}</td>
-                  <td className="px-sm py-xs text-heading">
-                    <span className={`mr-xs inline-block text-muted transition-transform duration-hover ${expanded ? "rotate-90" : ""}`}>›</span>
-                    {c.name}
-                  </td>
-                  <td className="px-sm py-xs text-secondary">{[c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ") || "–"}</td>
-                  <td className="px-sm py-xs text-secondary">{c.funding.totalRaised || "–"}</td>
-                  <td className="px-sm py-xs text-secondary">{c.hq || "–"}</td>
-                  <td className="px-sm py-xs text-secondary">{c.source === "client" ? "Client" : "Web"}</td>
-                  <td className="px-sm py-xs text-right" title="Website · funding news">
-                    {mark(c.links.website)} · {mark(c.links.news)}
-                  </td>
-                </tr>
-                {expanded ? (
-                  <tr className="bg-background">
-                    <td colSpan={7} className="px-md py-sm">
-                      <div className="space-y-xs">
-                        {c.oneLiner ? <p className="text-body-sm text-secondary">{c.oneLiner}</p> : null}
-                        {c.funding.investors.length ? (
-                          <p className="text-body-sm text-secondary">
-                            <span className="text-muted">Investors named: </span>
-                            {c.funding.investors.join(", ")}
-                          </p>
-                        ) : null}
-                        <LinkLine label="Website" url={c.website} state={c.links.website} />
-                        <LinkLine label="Funding news" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
-                        {c.why ? <p className="text-body-sm text-muted">{c.why}</p> : null}
-                      </div>
-                    </td>
-                  </tr>
-                ) : null}
-              </Fragment>
-            );
-          })}
+          {items.map((c, i) => (
+            <tr
+              key={c.id}
+              tabIndex={0}
+              className="cursor-pointer border-t border-border hover:bg-surface/70 focus:bg-surface/70 focus:outline-none"
+              onClick={() => setOpen(i)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  setOpen(i);
+                }
+              }}
+            >
+              <td className="py-xs pr-md text-muted">{i + 1}</td>
+              <td className="py-xs pr-md text-heading underline decoration-border underline-offset-4">{c.name}</td>
+              <td className="py-xs pr-md text-secondary">{c.stage || "–"}</td>
+              <td className="py-xs pr-md text-secondary">{c.geography || "–"}</td>
+              <td className="py-xs text-secondary">{c.primarySector || "–"}</td>
+            </tr>
+          ))}
         </tbody>
       </table>
-    </div>
+      <p className="mt-md text-body-sm text-muted">Click a competitor for its funding, investors and links.</p>
+      {open !== null && items[open] ? <DetailsModal c={items[open]} rank={open + 1} onClose={close} /> : null}
+    </Card>
   );
 }
 
@@ -322,12 +385,20 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
     setDirty(false);
   };
 
+  if (landscape && locked) {
+    return (
+      <div className="space-y-sm">
+        <ConfirmedSummary landscape={landscape} items={items} busy={busy === "start"} onStartOver={() => void startOver()} />
+        {error ? <p className="text-body-sm text-error">{error}</p> : null}
+      </div>
+    );
+  }
+
   return (
     <section className="animate-slide-in space-y-md rounded-card border border-border bg-surface px-lg py-md">
       <p className="text-body-sm text-secondary">
-        Only the top {MAX_COMPETITORS} <strong className="font-medium text-heading">funded</strong> direct competitors are shown, most relevant
-        first: named by the client, then closest product and customer, then geography, then stage. Check each website and funding article before
-        confirming.
+        Top {MAX_COMPETITORS} <strong className="font-medium text-heading">funded</strong> direct competitors, most relevant first. Check each
+        website and funding article, then confirm.
       </p>
 
       {!landscape ? (
@@ -344,9 +415,6 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
             {landscape.unfundedNamed.length ? ` Named by the client but no funding found (left out): ${landscape.unfundedNamed.join(", ")}.` : ""}
           </p>
           {items.length === 0 ? <p className="text-body-sm text-warning">No funded direct competitors found.</p> : null}
-          {locked ? (
-            <ConfirmedTable items={items} />
-          ) : (
           <ol className="space-y-sm">
             {items.map((c, i) => (
               <Row
@@ -375,7 +443,6 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
               />
             ))}
           </ol>
-          )}
           <div className="flex flex-wrap gap-sm">
             {locked ? null : (
               <>

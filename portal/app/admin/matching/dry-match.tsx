@@ -9,13 +9,13 @@ const n = (value: number) => value.toLocaleString("en-US");
 const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
 
 /** A card that slides in from the side when it appears. */
-function Card({ children, tone = "plain", raised = false }: { children: React.ReactNode; tone?: "plain" | "result" | "final"; raised?: boolean }) {
+export function Card({ children, tone = "plain", raised = false }: { children: React.ReactNode; tone?: "plain" | "result" | "final"; raised?: boolean }) {
   const look =
     tone === "result" ? "border-primary/40 bg-primary-tint/40" : tone === "final" ? "border-primary bg-primary-tint/60" : "border-border bg-surface";
   return <section className={`relative animate-slide-in rounded-card border px-lg py-md ${raised ? "z-30" : "z-0"} ${look}`}>{children}</section>;
 }
 
-function BigNumber({ value, label }: { value: number; label: string }) {
+export function BigNumber({ value, label }: { value: number; label: string }) {
   return (
     <div>
       <p className="text-label uppercase tracking-label text-muted">{label}</p>

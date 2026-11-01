@@ -12,6 +12,10 @@ export type Competitor = {
   oneLiner: string;
   /** HQ city and country, as found. */
   hq: string;
+  /** For matching: its latest round's stage, its HQ country, and its primary sector (taxonomy labels). */
+  stage: string;
+  geography: string;
+  primarySector: string;
   /** "client": the founder named it. "web": found by the search. */
   source: "client" | "web";
   /** Why it is a direct competitor, in one or two sentences. */
@@ -55,6 +59,9 @@ export function cleanCompetitor(value: unknown, fallbackId: string): Competitor 
     website: cleanUrl(v.website),
     oneLiner: text(v.oneLiner, 300),
     hq: text(v.hq, 120),
+    stage: text(v.stage, 60) || stageFromRound(text((v.funding as Record<string, unknown> | undefined)?.lastRound, 80)),
+    geography: text(v.geography, 80) || countryFromHq(text(v.hq, 120)),
+    primarySector: text(v.primarySector, 80),
     source: v.source === "client" ? "client" : "web",
     why: text(v.why, 600),
     funding: {
@@ -101,4 +108,36 @@ export function namesFromText(value: string): string[] {
     .map((s) => s.replace(/^[-•*\d.)\s]+/, "").trim())
     .filter((s) => s && !/^(none|n\/a|no|nothing|-)\.?$/i.test(s))
     .slice(0, 20);
+}
+
+/** The stage of a round, read from its name ("$25M Series A" → Series A). "" when it doesn't say. */
+export function stageFromRound(round: string): string {
+  const r = round.toLowerCase();
+  if (/pre[-\s]?seed/.test(r)) return "Pre-Seed";
+  if (/\bseed\b/.test(r)) return "Seed";
+  if (/series\s*a\b/.test(r)) return "Series A";
+  if (/series\s*b\b/.test(r)) return "Series B";
+  if (/series\s*[c-z]\b/.test(r)) return "Series C and Beyond";
+  if (/growth/.test(r)) return "Growth Equity";
+  return "";
+}
+
+const COUNTRY_ALIASES: Record<string, string> = {
+  us: "United States",
+  usa: "United States",
+  "u.s.": "United States",
+  "united states of america": "United States",
+  uk: "United Kingdom",
+  "u.k.": "United Kingdom",
+};
+
+/** The country from an HQ ("San Francisco, CA, USA" → United States). "" when there is no HQ. */
+export function countryFromHq(hq: string): string {
+  const parts = hq.split(",").map((s) => s.trim()).filter(Boolean);
+  if (!parts.length) return "";
+  const last = parts[parts.length - 1];
+  const alias = COUNTRY_ALIASES[last.toLowerCase()];
+  if (alias) return alias;
+  // A US state code (e.g. "NY") as the last part means the United States.
+  return /^[A-Z]{2}$/.test(last) && parts.length > 1 ? "United States" : last;
 }
