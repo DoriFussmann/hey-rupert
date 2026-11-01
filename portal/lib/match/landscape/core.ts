@@ -16,6 +16,10 @@ export type Competitor = {
   stage: string;
   geography: string;
   primarySector: string;
+  /** Up to two more sectors (e.g. AI/ML for an AI-native fintech). */
+  secondarySectors: string[];
+  /** Whether the sectors were classified (so an empty secondary list means "none", not "not yet"). */
+  sectorsChecked: boolean;
   /** "client": the founder named it. "web": found by the search. */
   source: "client" | "web";
   /** Why it is a direct competitor, in one or two sentences. */
@@ -62,6 +66,10 @@ export function cleanCompetitor(value: unknown, fallbackId: string): Competitor 
     stage: text(v.stage, 60) || stageFromRound(text((v.funding as Record<string, unknown> | undefined)?.lastRound, 80)),
     geography: text(v.geography, 80) || countryFromHq(text(v.hq, 120)),
     primarySector: text(v.primarySector, 80),
+    secondarySectors: Array.isArray(v.secondarySectors)
+      ? Array.from(new Set(v.secondarySectors.map((x) => text(x, 80)).filter(Boolean))).slice(0, 2)
+      : [],
+    sectorsChecked: v.sectorsChecked === true,
     source: v.source === "client" ? "client" : "web",
     why: text(v.why, 600),
     funding: {

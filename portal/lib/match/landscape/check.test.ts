@@ -95,3 +95,33 @@ test("the admin's website: matched again by it; no record with it leaves the inv
   assert.equal(settled[0].bucket, "missing_fund");
   assert.equal(settled[0].investor.website, "https://acme-ventures.io");
 });
+
+test("defaults: removed by sector only is brought back, removed by stage is left out; the admin's choice wins", () => {
+  const sectorData: DryData = {
+    ...data,
+    labels: { geo: ["United States"], sector: ["AI/ML", "SaaS"] },
+    funds: [
+      // Footwork: Seed, US, Equity, but AI/ML and SaaS only: fails the Financial services group.
+      { id: "F2", name: "Footwork VC", fin: [0], stage: [1], geo: [0], bucket: [0], sector: [0, 1], group: [], generalist: false },
+      { id: "F1", name: "Insight Partners", fin: [0], stage: [2], geo: [0], bucket: [0], sector: [], group: [0], generalist: false },
+    ],
+  };
+  const base = {
+    firms,
+    data: sectorData,
+    steps,
+    shortlist: new Set<string>(),
+    clientSectors: ["Fintech", "AI/ML"],
+    competitorSectors: { c1: ["Fintech", "AI/ML"] },
+  };
+  const rows = checkInvestors({ ...base, investors: [inv("i1", "Footwork"), inv("i2", "Insight Partners")], decisions: {} });
+  assert.equal(rows[0].failure?.step, "sector");
+  assert.equal(rows[0].action, "bring_back");
+  assert.equal(rows[0].defaulted, true);
+  assert.deepEqual(rows[0].overlap, { client: ["AI/ML"], competitor: ["AI/ML"] });
+  assert.equal(rows[1].failure?.step, "stage");
+  assert.equal(rows[1].action, "leave_out");
+  const decided = checkInvestors({ ...base, investors: [inv("i1", "Footwork")], decisions: { i1: { action: "leave_out", by: null, at: "" } } });
+  assert.equal(decided[0].action, "leave_out");
+  assert.equal(decided[0].defaulted, false);
+});

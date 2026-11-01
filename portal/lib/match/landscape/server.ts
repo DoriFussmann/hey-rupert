@@ -314,6 +314,8 @@ export async function findCompetitors(
     .map((c) => ({
       ...c,
       primarySector: sectorSet.get(c.primarySector.toLowerCase()) ?? "",
+      secondarySectors: [],
+      sectorsChecked: false,
       stage: stageSet.get(c.stage.toLowerCase()) ?? c.stage,
     }));
   const checked = await withLinkChecks(ordered);
@@ -405,8 +407,12 @@ const SECTOR_TOOL = {
         type: "array",
         items: {
           type: "object",
-          properties: { id: { type: "string" }, primarySector: { type: "string" } },
-          required: ["id", "primarySector"],
+          properties: {
+            id: { type: "string" },
+            primarySector: { type: "string" },
+            secondarySectors: { type: "array", items: { type: "string" }, maxItems: 2 },
+          },
+          required: ["id", "primarySector", "secondarySectors"],
         },
       },
     },
@@ -420,15 +426,17 @@ export async function fillSectors(supabase: ServiceClient, clientId: string): Pr
   if (!current.ok) return current;
   const land = current.value;
   if (!land) return { ok: false, error: "Run Show Competitors first." };
-  const missing = land.competitors.filter((c) => !c.primarySector);
+  const missing = land.competitors.filter((c) => !c.primarySector || !c.sectorsChecked);
   if (missing.length === 0) return { ok: true, value: land };
   const labels = await sectorLabels(supabase, clientId);
   if (!labels.ok) return labels;
   const prompt = await loadPrompt(supabase, "competitor_sector", { clientId, purpose: "Step 2: competitors' primary sector" });
   if (!prompt.ok) return prompt;
-  const result = await callClaudeTool<{ sectors?: { id?: string; primarySector?: string }[] }>({
+  const result = await callClaudeTool<{ sectors?: { id?: string; primarySector?: string; secondarySectors?: unknown }[] }>({
     system: promptSystem(
       prompt.value,
+      "## Secondary sectors",
+      "Also give up to two secondary sectors, when the company clearly belongs to them too (for example AI/ML for an AI-native fintech). Same labels; none is fine.",
       "## Sector labels",
       labels.value.join(", "),
       "## Competitors (id: name, what it does, why it competes)",
@@ -442,11 +450,26 @@ export async function fillSectors(supabase: ServiceClient, clientId: string): Pr
   const allowed = new Map(labels.value.map((l) => [l.toLowerCase(), l]));
   const found = new Map(
     (result.input.sectors ?? []).flatMap((x) => {
-      const label = allowed.get(String(x.primarySector ?? "").toLowerCase());
-      return x.id && label ? [[x.id, label] as const] : [];
+      if (!x.id) return [];
+      const primary = allowed.get(String(x.primarySector ?? "").toLowerCase()) ?? "";
+      const secondary = (Array.isArray(x.secondarySectors) ? x.secondarySectors : [])
+        .map((v) => allowed.get(String(v).toLowerCase()))
+        .filter((v): v is string => !!v);
+      return [[x.id, { primary, secondary }] as const];
     }),
   );
-  const competitors = land.competitors.map((c) => (!c.primarySector && found.has(c.id) ? { ...c, primarySector: found.get(c.id)! } : c));
+  // Only empty fields are filled; a sector already set (by the search or the admin) stays.
+  const competitors = land.competitors.map((c) => {
+    const f = found.get(c.id);
+    if (!f) return c;
+    const primary = c.primarySector || f.primary;
+    return {
+      ...c,
+      primarySector: primary,
+      secondarySectors: c.secondarySectors.length ? c.secondarySectors : f.secondary.filter((v) => v !== primary).slice(0, 2),
+      sectorsChecked: true,
+    };
+  });
   const { data, error } = await supabase
     .from("competitor_landscapes")
     .update({ competitors, updated_at: new Date().toISOString() })
@@ -638,6 +661,9 @@ export async function clearInvestors(supabase: ServiceClient, clientId: string):
 
 export type CheckResult = {
   rows: CheckRow[];
+  clientSectors: string[];
+  /** Investments of this landscape already recorded in the database (null: the table isn't there yet). */
+  recorded: number | null;
   counts: Record<Bucket, number>;
   dryListId: string;
   dryConfirmedAt: string;
@@ -672,8 +698,13 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   if (!dry) return { ok: false, error: "Confirm Step 1 first." };
   const snapshot = await matchDataSnapshot(supabase, clientId);
   if (!snapshot.ok) return snapshot;
-  const { db, index, common } = snapshot.value;
+  const { db, index, common, profileInputs } = snapshot.value;
   const data = buildDryData(db, index, { financing: [], stage: null, hqCountry: null, primarySector: null });
+  type Named = { label?: string | null } | null | undefined;
+  const clientSectors = [profileInputs.primarySector as Named, ...((profileInputs.secondarySectors as Named[]) ?? [])]
+    .map((x) => x?.label ?? "")
+    .filter(Boolean);
+  const competitorSectors = Object.fromEntries(land.competitors.map((c) => [c.id, [c.primarySector, ...c.secondarySectors].filter(Boolean)]));
   const decisions = await loadDecisions(supabase, land.id);
   if (!decisions.ok) return decisions;
   const rows = checkInvestors({
@@ -683,12 +714,14 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
     steps: dry.steps.map((s) => ({ step: s.step, chosen: s.chosen })),
     shortlist: new Set(dry.fund_ids),
     decisions: decisions.value,
+    clientSectors,
+    competitorSectors,
   });
   const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0 } as Record<Bucket, number>;
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
-    value: { rows, counts, dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
+    value: { rows, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: String(common.fund_db_version ?? "") },
   };
 }
 
@@ -747,4 +780,86 @@ export async function decideInvestor(
     .eq("id", land.id);
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: null };
+}
+
+/** Sets the same action on many investors at once (the summary table's "apply to all"). */
+export async function decideMany(
+  supabase: ServiceClient,
+  clientId: string,
+  investorIds: string[],
+  action: "bring_back" | "leave_out" | null,
+  actor: string | null,
+): Promise<Result<number>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  const known = new Set(land.investors.map((i) => i.id));
+  const ids = investorIds.filter((id) => known.has(id));
+  const decisions = await loadDecisions(supabase, land.id);
+  if (!decisions.ok) return decisions;
+  const at = new Date().toISOString();
+  const next = { ...decisions.value };
+  for (const id of ids) {
+    const d: InvestorDecision = { ...(next[id] ?? {}), by: actor, at };
+    if (action) d.action = action;
+    else delete d.action;
+    next[id] = d;
+  }
+  const { error } = await supabase.from("competitor_landscapes").update({ investor_decisions: next, updated_at: at }).eq("id", land.id);
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: ids.length };
+}
+
+export const INVESTMENTS_MIGRATION = "The investments table is missing. Run portal/supabase/fund_investments.sql in the Supabase SQL editor.";
+
+/**
+ * Records, company-wide, each matched investor's investment in each
+ * competitor: the fund, the company, its sectors, the round, whether it led,
+ * and the source. A fact about the fund's portfolio, never a change to its
+ * sectors. Recording again updates the same rows.
+ */
+export async function recordInvestments(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<number>> {
+  const check = await checkAgainstDatabase(supabase, clientId);
+  if (!check.ok) return check;
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value!;
+  const byId = new Map(land.competitors.map((c) => [c.id, c]));
+  const rows = check.value.rows
+    .filter((r) => r.firmId && (r.bucket === "in_list" || r.bucket === "not_in_list"))
+    .flatMap((r) =>
+      r.investor.backed.map((b) => {
+        const c = byId.get(b.competitorId);
+        return {
+          firm_id: r.firmId!,
+          investor_name: r.investor.name,
+          company: b.competitor,
+          company_website: c?.website ?? "",
+          company_sectors: c ? [c.primarySector, ...c.secondarySectors].filter(Boolean) : [],
+          round: b.round ?? "",
+          lead: b.lead,
+          source_url: b.sourceUrl ?? "",
+          found_for_client: clientId,
+          landscape_id: land.id,
+          recorded_by: actor,
+          recorded_at: new Date().toISOString(),
+        };
+      }),
+    );
+  if (!rows.length) return { ok: true, value: 0 };
+  // One row per fund, company and round.
+  const unique = Array.from(new Map(rows.map((r) => [`${r.firm_id}|${r.company.toLowerCase()}|${r.round.toLowerCase()}`, r])).values());
+  const { error } = await supabase.from("fund_investments").upsert(unique, { onConflict: "firm_id,company_key,round_key", ignoreDuplicates: false });
+  if (error) {
+    const missing = error.code === "42P01" || error.code === "PGRST205" || /fund_investments/.test(error.message);
+    return { ok: false, error: missing ? INVESTMENTS_MIGRATION : error.message };
+  }
+  return { ok: true, value: unique.length };
+}
+
+/** How many of this landscape's investments are already recorded. */
+export async function recordedCount(supabase: ServiceClient, landscapeId: string): Promise<number | null> {
+  const { count, error } = await supabase.from("fund_investments").select("id", { count: "exact", head: true }).eq("landscape_id", landscapeId);
+  return error ? null : count ?? 0;
 }

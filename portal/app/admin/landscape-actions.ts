@@ -7,6 +7,8 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import {
   checkAgainstDatabase,
   decideInvestor,
+  decideMany,
+  recordInvestments,
   type CheckResult,
   clearInvestors,
   clearLandscape,
@@ -166,5 +168,39 @@ export async function decideOnInvestor(
     return runInvestorCheck(clientId);
   } catch (err) {
     return fail(err, "The decision was not saved.");
+  }
+}
+
+/** The same action on many investors (the summary table's "apply to all"), then the check again. */
+export async function decideForGroup(
+  clientId: string,
+  investorIds: string[],
+  action: "bring_back" | "leave_out" | null,
+): Promise<Result<{ check: CheckResult; changed: number }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!Array.isArray(investorIds) || investorIds.length > 2000) return { ok: false, error: "Unknown investors." };
+  if (action !== null && action !== "bring_back" && action !== "leave_out") return { ok: false, error: "Unknown action." };
+  try {
+    const done = await decideMany(a.supabase, a.clientId, investorIds.filter((id) => typeof id === "string").map((id) => id.slice(0, 64)), action, a.email);
+    if (!done.ok) return { ok: false, error: done.error };
+    const check = await runInvestorCheck(clientId);
+    return check.ok ? { ok: true, check: check.check, changed: done.value } : check;
+  } catch (err) {
+    return fail(err, "The decisions were not saved.");
+  }
+}
+
+/** Records the matched investors' investments in the database, company-wide. */
+export async function recordInvestmentsInDb(clientId: string): Promise<Result<{ check: CheckResult; recorded: number }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const done = await recordInvestments(a.supabase, a.clientId, a.email);
+    if (!done.ok) return { ok: false, error: done.error };
+    const check = await runInvestorCheck(clientId);
+    return check.ok ? { ok: true, check: check.check, recorded: done.value } : check;
+  } catch (err) {
+    return fail(err, "The investments were not recorded.");
   }
 }

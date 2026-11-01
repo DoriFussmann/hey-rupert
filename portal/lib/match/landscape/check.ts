@@ -124,6 +124,18 @@ export const BUCKET_LABEL: Record<Bucket, string> = {
   missing_angel: "Not in the database: angels",
 };
 
+/** What happens to a fund in the database but not in the shortlist, unless the admin decides otherwise. */
+export type Action = "bring_back" | "leave_out";
+
+/**
+ * The default: a fund removed only by the sector filter backed a direct
+ * competitor, which is evidence it invests in this space: brought back. A
+ * fund removed by stage, geography or financing is a real misfit: left out.
+ */
+export function defaultAction(failure: { step: DryStep } | null): Action {
+  return failure?.step === "sector" ? "bring_back" : "leave_out";
+}
+
 export type CheckRow = {
   investor: Investor;
   match: FirmMatch;
@@ -138,6 +150,11 @@ export type CheckRow = {
   /** Candidate records to choose from, for confirm. */
   candidates: { id: string; name: string; web: string }[];
   decision: InvestorDecision | null;
+  /** For not_in_list: the action that applies (the admin's, or the default) and whether it is the default. */
+  action: Action | null;
+  defaulted: boolean;
+  /** For a sector failure: the fund's sectors that are the client's (e.g. its secondary) or the competitors' it backed. */
+  overlap: { client: string[]; competitor: string[] };
 };
 
 export function checkInvestors(input: {
@@ -147,6 +164,10 @@ export function checkInvestors(input: {
   steps: SavedStepChoice[];
   shortlist: Set<string>;
   decisions: Record<string, InvestorDecision>;
+  /** The client's sector labels (primary and secondary). */
+  clientSectors?: string[];
+  /** Each competitor's sector labels, by competitor id. */
+  competitorSectors?: Record<string, string[]>;
 }): CheckRow[] {
   const index = indexFirms(input.firms);
   const firmById = new Map(input.firms.map((f) => [f.id, f]));
@@ -169,6 +190,7 @@ export function checkInvestors(input: {
     else if (match.how === "website" || match.how === "name") firmId = match.firmIds[0];
     const settled = (decision && decision.firmId !== undefined) || match.how === "website" || match.how === "name" || match.how === "none";
     let failure: CheckRow["failure"] = null;
+    let fundSectors: string[] = [];
     if (!settled) bucket = "confirm";
     else if (!firmId) bucket = investor.kind === "angel" ? "missing_angel" : "missing_fund";
     else if (input.shortlist.has(firmId)) bucket = "in_list";
@@ -176,7 +198,16 @@ export function checkInvestors(input: {
       bucket = "not_in_list";
       const fund = fundById.get(firmId);
       failure = fund ? firstFailure(input.data, fund, input.steps) : null;
+      fundSectors = fund ? fund.sector.map((i) => input.data.labels.sector[i]).filter(Boolean) : [];
     }
+    const lower = (list: string[]) => new Set(list.map((x) => x.toLowerCase()));
+    const clientSet = lower(input.clientSectors ?? []);
+    const competitorSet = lower(investor.backed.flatMap((b) => input.competitorSectors?.[b.competitorId] ?? []));
+    const overlap = {
+      client: fundSectors.filter((x) => clientSet.has(x.toLowerCase())),
+      competitor: fundSectors.filter((x) => competitorSet.has(x.toLowerCase())),
+    };
+    const action: Action | null = bucket === "not_in_list" ? decision?.action ?? defaultAction(failure) : null;
     return {
       investor,
       match,
@@ -187,6 +218,9 @@ export function checkInvestors(input: {
       failure,
       candidates: match.firmIds.map((id) => firmById.get(id)).filter((f): f is DbFirm => !!f),
       decision,
+      action,
+      defaulted: bucket === "not_in_list" && !decision?.action,
+      overlap,
     };
   });
 }

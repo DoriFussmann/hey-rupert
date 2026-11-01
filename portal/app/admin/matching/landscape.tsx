@@ -47,6 +47,8 @@ const blank = (): Competitor => ({
   stage: "",
   geography: "",
   primarySector: "",
+  secondarySectors: [],
+  sectorsChecked: false,
   source: "web",
   why: "",
   funding: { totalRaised: "", lastRound: "", lastRoundDate: "", investors: [] },
@@ -230,6 +232,8 @@ function DetailsModal({ c, rank, onClose }: { c: Competitor; rank: number; onClo
           <dd className="text-heading">{c.geography || "–"}</dd>
           <dt className="text-muted">Primary sector</dt>
           <dd className="text-heading">{c.primarySector || "–"}</dd>
+          <dt className="text-muted">Secondary sectors</dt>
+          <dd className="text-heading">{c.secondarySectors.length ? c.secondarySectors.join(", ") : "–"}</dd>
           <dt className="text-muted">Latest round</dt>
           <dd className="text-body">{funding || "–"}</dd>
           <dt className="text-muted">Total raised</dt>
@@ -309,7 +313,10 @@ function ConfirmedSummary({
               <td className="py-xs pr-md text-heading underline decoration-border underline-offset-4">{c.name}</td>
               <td className="py-xs pr-md text-secondary">{c.stage || "–"}</td>
               <td className="py-xs pr-md text-secondary">{c.geography || "–"}</td>
-              <td className="py-xs text-secondary">{c.primarySector || "–"}</td>
+              <td className="py-xs text-secondary">
+                {c.primarySector || "–"}
+                {c.secondarySectors.length ? <span className="text-muted"> · {c.secondarySectors.join(", ")}</span> : null}
+              </td>
             </tr>
           ))}
         </tbody>
@@ -353,7 +360,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
   }, [clientId, stepOneConfirmed]);
 
   // A confirmed list with empty primary sectors gets them filled once, automatically.
-  const needsSectors = landscape?.status === "confirmed" && landscape.competitors.some((c) => !c.primarySector);
+  const needsSectors = landscape?.status === "confirmed" && landscape.competitors.some((c) => !c.primarySector || !c.sectorsChecked);
   useEffect(() => {
     if (!needsSectors || sectorTry !== "idle") return;
     setSectorTry("running");
@@ -421,15 +428,15 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
   }
 
   if (landscape && locked) {
-    const missingSectors = items.filter((c) => !c.primarySector).length;
+    const missingSectors = items.filter((c) => !c.primarySector || !c.sectorsChecked).length;
     const sectorNote =
       sectorTry === "running" ? (
-        <p className="mt-xs text-body-sm text-primary">Filling the primary sectors…</p>
+        <p className="mt-xs text-body-sm text-primary">Classifying the sectors…</p>
       ) : missingSectors > 0 ? (
         <p className="mt-xs text-body-sm text-warning">
-          {missingSectors} without a primary sector.{" "}
+          {missingSectors} not yet classified by sector.{" "}
           <button type="button" className="underline" onClick={() => void fillSectors()}>
-            Fill primary sectors
+            Classify sectors
           </button>
         </p>
       ) : null;

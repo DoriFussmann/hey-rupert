@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { decideOnInvestor, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { decideForGroup, decideOnInvestor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult } from "@/lib/match/landscape/server";
@@ -85,7 +85,7 @@ function WebsiteInput({ initial, busy, label, onSave }: { initial: string; busy:
 function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
   const [note, setNote] = useState(row.decision?.note ?? "");
   const [lesson, setLesson] = useState(row.decision?.lesson ?? false);
-  const action = row.decision?.action;
+  const action = row.action;
   const noteChanged = note !== (row.decision?.note ?? "") || lesson !== (row.decision?.lesson ?? false);
   return (
     <tr className="border-t border-border align-top">
@@ -107,18 +107,25 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
           <>
             <p className="text-heading">Removed at {row.failure.label}</p>
             <p className="text-secondary">Fund lists: {row.failure.fundValues}</p>
+            {row.overlap.client.length ? (
+              <p className="text-success">Lists {row.overlap.client.join(", ")}: the client&apos;s sector.</p>
+            ) : null}
+            {row.overlap.competitor.length ? (
+              <p className="text-secondary">Shares {row.overlap.competitor.join(", ")} with the competitor it backed.</p>
+            ) : null}
           </>
         ) : (
           <p className="text-warning">Passes Step 1 today: the database changed after Step 1 was confirmed.</p>
         )}
       </td>
       <td className="py-sm">
+        <p className="mb-xs text-body-sm text-muted">{row.defaulted ? "Default (not decided by you yet)" : "Your decision"}</p>
         <div className="flex flex-wrap gap-xs">
           <button
             type="button"
             disabled={busy}
             className={action === "bring_back" ? primaryButton : secondaryButton}
-            onClick={() => onDecide({ action: action === "bring_back" ? null : "bring_back" })}
+            onClick={() => onDecide({ action: "bring_back" })}
           >
             Bring back
           </button>
@@ -126,7 +133,7 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
             type="button"
             disabled={busy}
             className={action === "leave_out" ? primaryButton : secondaryButton}
-            onClick={() => onDecide({ action: action === "leave_out" ? null : "leave_out" })}
+            onClick={() => onDecide({ action: "leave_out" })}
           >
             Leave out
           </button>
@@ -232,6 +239,91 @@ function SimpleRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDe
   );
 }
 
+type Reason = { key: string; label: string; rows: CheckRow[]; note: string };
+
+/** Funds in the database but not in the shortlist, by the Step 1 filter that removed them: the defaults, and "apply to all". */
+function DecisionSummary({
+  rows,
+  busy,
+  onGroup,
+}: {
+  rows: CheckRow[];
+  busy: boolean;
+  onGroup: (ids: string[], action: "bring_back" | "leave_out" | null) => void;
+}) {
+  const reasons: Reason[] = [
+    { key: "sector", label: "Sector only", note: "Backed a direct competitor: brought back by default." },
+    { key: "stage", label: "Stage", note: "A different stage: left out by default." },
+    { key: "geography", label: "Geography", note: "Another geography: left out by default." },
+    { key: "financing", label: "Financing", note: "Another financing type: left out by default." },
+    { key: "none", label: "Passes Step 1 today", note: "The database changed after Step 1: left out by default." },
+  ]
+    .map((r) => ({ ...r, rows: rows.filter((x) => (x.failure?.step ?? "none") === r.key) }))
+    .filter((r) => r.rows.length);
+  if (!reasons.length) return null;
+  const count = (list: CheckRow[], a: "bring_back" | "leave_out") => list.filter((x) => x.action === a).length;
+  const mine = (list: CheckRow[]) => list.filter((x) => !x.defaulted).length;
+  return (
+    <div className="mt-lg">
+      <h4 className="text-label uppercase tracking-label text-muted">In the database, not in the shortlist: decisions</h4>
+      <table className="mt-xs w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="py-xs pr-md font-medium">Removed at</th>
+            <th className="py-xs pr-md text-right font-medium">Funds</th>
+            <th className="py-xs pr-md text-right font-medium">Bring back</th>
+            <th className="py-xs pr-md text-right font-medium">Leave out</th>
+            <th className="py-xs pr-md text-right font-medium">Decided by you</th>
+            <th className="py-xs font-medium" />
+          </tr>
+        </thead>
+        <tbody>
+          {reasons.map((r) => {
+            const ids = r.rows.map((x) => x.investor.id);
+            const withClient = r.key === "sector" ? r.rows.filter((x) => x.overlap.client.length).length : 0;
+            return (
+              <tr key={r.key} className="border-t border-border align-top">
+                <td className="py-xs pr-md">
+                  <p className="text-heading">{r.label}</p>
+                  <p className="text-muted">{r.note}</p>
+                  {r.key === "sector" && withClient ? <p className="text-success">{n(withClient)} list one of the client&apos;s sectors.</p> : null}
+                </td>
+                <td className="py-xs pr-md text-right text-heading">{n(r.rows.length)}</td>
+                <td className="py-xs pr-md text-right">{n(count(r.rows, "bring_back"))}</td>
+                <td className="py-xs pr-md text-right">{n(count(r.rows, "leave_out"))}</td>
+                <td className="py-xs pr-md text-right text-secondary">{n(mine(r.rows))}</td>
+                <td className="py-xs text-right">
+                  <div className="flex flex-wrap justify-end gap-xs">
+                    <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, "bring_back")}>
+                      Bring back all
+                    </button>
+                    <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, "leave_out")}>
+                      Leave out all
+                    </button>
+                    {mine(r.rows) ? (
+                      <button type="button" disabled={busy} className={smallButton} onClick={() => onGroup(ids, null)}>
+                        Back to default
+                      </button>
+                    ) : null}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
+          <tr className="border-t-2 border-primary">
+            <td className="py-xs pr-md text-heading">All</td>
+            <td className="py-xs pr-md text-right text-heading">{n(rows.length)}</td>
+            <td className="py-xs pr-md text-right text-heading">{n(count(rows, "bring_back"))}</td>
+            <td className="py-xs pr-md text-right text-heading">{n(count(rows, "leave_out"))}</td>
+            <td className="py-xs pr-md text-right text-secondary">{n(mine(rows))}</td>
+            <td />
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 /**
  * Step 2C: each confirmed investor against the Fund Database and the Step 1
  * shortlist. Unclear matches are confirmed by the admin; funds in the
@@ -266,6 +358,24 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setCheck(result.check);
   };
 
+  const group = async (ids: string[], action: "bring_back" | "leave_out" | null) => {
+    setBusy(true);
+    setError(null);
+    const result = await decideForGroup(clientId, ids, action);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setCheck(result.check);
+  };
+
+  const record = async () => {
+    setBusy(true);
+    setError(null);
+    const result = await recordInvestmentsInDb(clientId);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setCheck(result.check);
+  };
+
   if (!check) {
     return (
       <Card>
@@ -278,7 +388,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const byBucket = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const total = check.rows.length;
   const notInList = byBucket("not_in_list");
-  const decided = notInList.filter((r) => r.decision?.action).length;
+  const matchedInvestors = check.rows.filter((r) => r.firmId && (r.bucket === "in_list" || r.bucket === "not_in_list")).length;
   const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
 
   return (
@@ -324,11 +434,18 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </tr>
         </tbody>
       </table>
-      {notInList.length ? (
-        <p className="mt-sm text-body-sm text-secondary">
-          Decided {n(decided)} of {n(notInList.length)} in the database but not in the shortlist.
+      <DecisionSummary rows={notInList} busy={busy} onGroup={(ids, action) => void group(ids, action)} />
+
+      <div className="mt-lg flex flex-wrap items-center justify-between gap-sm rounded-md border border-border bg-background px-md py-sm text-body-sm">
+        <p className="text-secondary">
+          <span className="text-heading">Investments, company-wide:</span> {n(matchedInvestors)} investors here are in the database. Recording saves
+          which competitor each backed (round, lead, source) to the fund, as a portfolio fact. The fund&apos;s sectors don&apos;t change.
+          {check.recorded === null ? " (Run supabase/fund_investments.sql first.)" : check.recorded ? ` ${n(check.recorded)} recorded so far.` : ""}
         </p>
-      ) : null}
+        <button type="button" className={smallButton} disabled={busy || !matchedInvestors} onClick={() => void record()}>
+          {check.recorded ? "Record again" : "Record in the database"}
+        </button>
+      </div>
 
       {current && byBucket(current).length ? (
         <section className="mt-lg">
