@@ -770,13 +770,15 @@ export async function decideInvestor(
     unsure?: boolean;
   },
   actor: string | null,
+  /** A system write (Try and Add to DB found the fund's website in the database), allowed after the check is confirmed. */
+  system = false,
 ): Promise<Result<null>> {
   const current = await currentLandscape(supabase, clientId);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
   if (!land.investors.some((i) => i.id === investorId)) return { ok: false, error: "That investor is not on the confirmed list." };
-  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to change a decision." };
+  if (!system && (await checkLocked(supabase, land.id))) return { ok: false, error: "The check is confirmed. Reopen it to change a decision." };
   const decisions = await loadDecisions(supabase, land.id);
   if (!decisions.ok) return decisions;
   const previous = decisions.value[investorId];
@@ -1139,7 +1141,7 @@ export async function addMissingInvestor(
   if (!added.ok) return { ok: false, error: added.error };
   const outcome = added.value;
   if (outcome.kind === "in_database") {
-    const saved = await decideInvestor(supabase, clientId, investorId, { website: outcome.website, resetMatch: true }, actor);
+    const saved = await decideInvestor(supabase, clientId, investorId, { website: outcome.website, resetMatch: true }, actor, true);
     if (!saved.ok) return saved;
     return { ok: true, value: { created: false, message: `${row.investor.name} is already in the database as ${outcome.firm.name} (same website): matched to it, not added.` } };
   }

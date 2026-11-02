@@ -1193,35 +1193,41 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(confirm ? "Step 2D confirmed. Saved." : "Step 2D reopened.");
   };
 
-  /** Try and Add to DB, one investor at a time (about a minute each: research, then Hunter). */
+  /** Try and Add to DB, one investor at a time (about a minute each: research, then Hunter). A problem with one never stops the rest. */
   const addToDb = async (ids: string[]) => {
     setError(null);
     let done = 0;
     let created = 0;
+    let matched = 0;
     let last = "";
-    let failed = false;
+    const problems: string[] = [];
     try {
       for (const id of ids) {
         setAdding({ current: id, done, total: ids.length });
-        const result = await addInvestorToDb(clientId, id);
-        done += 1;
-        if (!result.ok) {
-          setError(result.error);
-          failed = true;
-          break;
+        const name = check?.rows.find((r) => r.investor.id === id)?.investor.name ?? "An investor";
+        try {
+          const result = await addInvestorToDb(clientId, id);
+          if (!result.ok) problems.push(`${name}: ${result.error}`);
+          else {
+            if (result.created) created += 1;
+            else if (/already in the database/.test(result.message)) matched += 1;
+            last = result.message;
+            setCheck(result.check);
+          }
+        } catch (err) {
+          problems.push(`${name}: ${err instanceof Error ? err.message : "failed"}`);
         }
-        if (result.created) created += 1;
-        last = result.message;
-        setCheck(result.check);
+        done += 1;
       }
-    } catch (err) {
-      failed = true;
-      setError(err instanceof Error ? err.message : "Try and Add to DB stopped. Reload the page to see what was added.");
     } finally {
       setAdding(null);
     }
-    if (ids.length === 1 && last) setToast(last);
-    else if (!failed || created) setToast(`Try and Add to DB: ${n(created)} added (pending your review on the Fund Database page)${failed ? ", then it stopped" : ""}.`);
+    if (problems.length) setError(`Not added (${problems.length}):\n${problems.join("\n")}`);
+    if (ids.length === 1 && last && !problems.length) setToast(last);
+    else
+      setToast(
+        `Try and Add to DB: ${n(created)} added${matched ? `, ${n(matched)} already in the database (matched)` : ""}${problems.length ? `, ${n(problems.length)} not added (see the list)` : ""}.`,
+      );
   };
 
   /** Find websites for the unclear and missing investors that have no suggestion yet, a few at a time. */
@@ -1439,7 +1445,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           2D). Open the details to see {openNow === 1 ? "it" : "them"}; Reopen to decide.
         </p>
       ) : null}
-      {error ? <p className="text-body-sm text-error">{error}</p> : null}
+      {error ? <p className="whitespace-pre-line rounded-md border border-error/40 bg-surface px-md py-sm text-body-sm text-error">{error}</p> : null}
       <button
         type="button"
         aria-expanded={showDetails}
@@ -1469,6 +1475,9 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
             />
           )}
         />
+      ) : null}
+      {error && check.confirmedAt ? (
+        <p className="whitespace-pre-line rounded-md border border-error/40 bg-surface px-md py-sm text-body-sm text-error">{error}</p>
       ) : null}
       {check.addedConfirmedAt ? <NextStepCard /> : null}
       <Toast text={toast} />
