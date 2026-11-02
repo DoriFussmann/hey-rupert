@@ -3,6 +3,9 @@ import type { AuthorPath, SiteIdentity } from "seo-core";
 export const SITE_URL = "https://www.heyrupert.com";
 export const SITE_NAME = "Rupert";
 
+/** Short positioning line. Used as the summary in llms.txt, llms-full.txt and RSS. */
+export const SITE_TAGLINE = "The right investors. Reached right.";
+
 /** URL segment for articles. Changing it requires redirects for every article. */
 export const ARTICLES_BASE = "articles";
 

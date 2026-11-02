@@ -26,7 +26,7 @@
 ## Global — Footer
 
 - Brand: **Rupert** (logo, links home)
-- Tagline: Expert-managed investor outreach for founders raising capital.
+- Tagline: The right investors. Reached right.
 - Links: How It Works · Our Database · Articles · About · Request a Discovery Call · Privacy · Terms
 - Copyright: © Rupert 2026
 - RSS
