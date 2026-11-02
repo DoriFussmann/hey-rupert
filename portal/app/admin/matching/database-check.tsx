@@ -877,6 +877,124 @@ function LookAlikePanel({ clientId }: { clientId: string }) {
 }
 
 /**
+ * Step 2D: Try and Add to DB, as its own card once the check is confirmed:
+ * the investors not in the database, funds and angels, with "Add all" per
+ * kind, the list per kind, and what's been added so far.
+ */
+function AddMissingCard({
+  check,
+  busy,
+  adding,
+  onAdd,
+  renderRow,
+}: {
+  check: CheckResult;
+  busy: boolean;
+  adding: { current: string; done: number; total: number } | null;
+  onAdd: (ids: string[]) => void;
+  renderRow: (row: CheckRow) => React.ReactNode;
+}) {
+  const [open, setOpen] = useState<"missing_fund" | "missing_angel" | "added" | null>(null);
+  const rows = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
+  const funds = rows("missing_fund");
+  const angels = rows("missing_angel");
+  const added = rows("added");
+  const pending = added.filter((r) => r.added?.status === "pending").length;
+  const approved = added.filter((r) => r.added?.status === "approved").length;
+  const kinds = [
+    { key: "missing_fund" as const, label: "Funds not in the database", list: funds, what: "research, then up to 5 investing contacts from Hunter (about 1 credit each)" },
+    { key: "missing_angel" as const, label: "Angels not in the database", list: angels, what: "research, then the angel's email from Hunter (1 credit if found)" },
+  ];
+  return (
+    <Card>
+      <div className="flex items-start justify-between gap-md">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-h4 text-heading">Step 2D: Try and Add to DB</h3>
+          <p className="text-body-sm text-muted">
+            The competitors&apos; investors your database doesn&apos;t have. Each one added is researched, gets its contacts from Hunter, and waits for
+            your review on the Fund Database page (Added by Rupert). It counts for this client right away, and for every client once you approve it.
+          </p>
+        </div>
+      </div>
+      {adding ? (
+        <p className="mt-sm text-body-sm text-primary">
+          Adding {n(adding.done + 1)} of {n(adding.total)}: researching, then finding contacts with Hunter… (about a minute each; keep this page open)
+        </p>
+      ) : null}
+      <table className="mt-md w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="py-xs pr-md font-medium">Group</th>
+            <th className="py-xs pr-md text-right font-medium">Investors</th>
+            <th className="py-xs font-medium" />
+          </tr>
+        </thead>
+        <tbody>
+          {kinds.map((k) => (
+            <tr key={k.key} className="border-t border-border align-top">
+              <td className="py-xs pr-md">
+                <p className="text-heading">{k.label}</p>
+                <p className="text-muted">Each: {k.what}.</p>
+              </td>
+              <td className="py-xs pr-md text-right text-heading">{n(k.list.length)}</td>
+              <td className="py-xs text-right">
+                <div className="inline-flex flex-wrap justify-end gap-xs">
+                  <button type="button" className={smallButton} disabled={!k.list.length} onClick={() => setOpen(open === k.key ? null : k.key)}>
+                    {open === k.key ? "Hide list" : "Show list"}
+                  </button>
+                  <button
+                    type="button"
+                    className={primaryButton}
+                    disabled={busy || !!adding || !k.list.length}
+                    onClick={() => {
+                      if (window.confirm(`Try and Add to DB for all ${k.list.length}? About a minute each. Each waits for your review before other clients see it.`)) {
+                        onAdd(k.list.map((r) => r.investor.id));
+                      }
+                    }}
+                  >
+                    Add all {n(k.list.length)}
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-primary align-top">
+            <td className="py-xs pr-md">
+              <p className="text-success">Added so far</p>
+              <p className="text-muted">
+                {n(pending)} pending review · {n(approved)} approved.{" "}
+                <a href="/admin/fund-database#added-by-rupert" className="underline">
+                  Review on the Fund Database page
+                </a>
+              </p>
+            </td>
+            <td className="py-xs pr-md text-right text-heading">{n(added.length)}</td>
+            <td className="py-xs text-right">
+              <button type="button" className={smallButton} disabled={!added.length} onClick={() => setOpen(open === "added" ? null : "added")}>
+                {open === "added" ? "Hide list" : "Show list"}
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      {open ? (
+        <div className="mt-md">
+          <p className="text-label uppercase tracking-label text-muted">
+            {open === "added" ? "Added so far" : kinds.find((k) => k.key === open)?.label} · {n(rows(open).length)}
+          </p>
+          {open !== "added" ? (
+            <p className="text-body-sm text-muted">The research finds each website itself. To give one yourself first, Reopen the check and set it in the details.</p>
+          ) : null}
+          <table className="mt-xs w-full text-left text-body-sm">
+            <tbody>{rows(open).map((row) => renderRow(row))}</tbody>
+          </table>
+        </div>
+      ) : null}
+    </Card>
+  );
+}
+
+/**
  * Step 2C: each confirmed investor against the Fund Database and the Step 1
  * shortlist. Unclear matches are confirmed by the admin; funds in the
  * database but not in the shortlist show the Step 1 filter that removed them,
@@ -1228,6 +1346,25 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         <span className={`transition-transform duration-hover ${showDetails ? "rotate-180" : ""}`}>▾</span>
       </button>
       {showDetails ? details : null}
+      {check.confirmedAt ? (
+        <AddMissingCard
+          check={check}
+          busy={busy || !!finding}
+          adding={adding}
+          onAdd={(ids) => void addToDb(ids)}
+          renderRow={(row) => (
+            <SimpleRow
+              key={row.investor.id}
+              row={row}
+              busy={frozen || !!adding}
+              onDecide={(p) => void decide(row.investor.id, p)}
+              onAdd={() => void addToDb([row.investor.id])}
+              adding={adding?.current === row.investor.id}
+              addDisabled={busy || !!adding}
+            />
+          )}
+        />
+      ) : null}
       <Toast text={toast} />
     </div>
   );
