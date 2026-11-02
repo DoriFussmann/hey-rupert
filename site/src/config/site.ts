@@ -19,9 +19,11 @@ export const DORI_LINKEDIN =
 /**
  * Organization `sameAs` profiles. Only include verified company URLs.
  * Dori's personal LinkedIn belongs on Person schema, not here.
- * TODO: add the Rupert LinkedIn company page and Crunchbase URLs (the audit warns while empty).
+ * TODO: add the Rupert Crunchbase URL when there is one.
  */
-export const SAME_AS: string[] = [];
+export const RUPERT_LINKEDIN = "https://www.linkedin.com/company/heyrupert/";
+
+export const SAME_AS: string[] = [RUPERT_LINKEDIN];
 
 /** Organization logo (512×512 PNG of the Rupert portrait). */
 export const LOGO_PATH = "/logo.png";

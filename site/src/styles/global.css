@@ -1979,6 +1979,32 @@
     opacity: 0.72;
   }
 
+  .footer-social {
+    display: flex;
+    align-items: center;
+    gap: theme("spacing.md");
+  }
+
+  .footer-linkedin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    text-decoration: none;
+  }
+
+  .footer-linkedin img {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+    border-radius: 4px;
+  }
+
+  .footer-linkedin:hover {
+    opacity: 0.8;
+  }
+
   .author-card {
     border-top: 1px solid theme("colors.border");
     padding-top: theme("spacing.xl");

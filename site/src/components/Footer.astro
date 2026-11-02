@@ -1,8 +1,9 @@
 ---
 import { Image } from "astro:assets";
-import { SITE_NAME } from "../config/site";
+import { RUPERT_LINKEDIN, SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
 import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
+import linkedinLogo from "../assets/brand/linkedin.png";
 ---
 
 <footer class="mt-auto border-t border-border">
@@ -24,6 +25,16 @@ import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
     </nav>
     <div class="mt-xl flex min-h-11 flex-wrap items-center justify-between gap-md">
       <p class="type-body-sm">© {SITE_NAME} 2026</p>
+      <div class="footer-social">
+        <a
+          class="footer-linkedin"
+          href={RUPERT_LINKEDIN}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Rupert on LinkedIn"
+        >
+          <Image src={linkedinLogo} alt="" width={20} height={20} />
+        </a>
       <p class="footer-rss">
         <a class="nav-link gap-sm type-body-sm" href="/rss.xml">
           <svg
@@ -45,6 +56,7 @@ import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
           RSS
         </a>
       </p>
+      </div>
     </div>
   </div>
 </footer>
