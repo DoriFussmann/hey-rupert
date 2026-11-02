@@ -1,5 +1,5 @@
 import type { ImageMetadata } from "astro";
-import cornellTechLogo from "../assets/logos/cornell-tech.avif";
+import cornellTechLogo from "../assets/logos/cornell-tech.png";
 
 const logoFiles = import.meta.glob<{ default: ImageMetadata }>(
   "../assets/logos/*.png",
