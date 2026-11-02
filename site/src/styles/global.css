@@ -458,6 +458,120 @@
     border: 0;
   }
 
+  /* Home hero: matching-step cards, sliding in from the right. */
+  .hero-steps__viewport {
+    position: relative;
+    aspect-ratio: 6 / 5;
+    overflow: hidden;
+  }
+
+  .hero-steps__slide {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: translateX(14%) scale(0.97);
+    transition:
+      opacity 600ms cubic-bezier(0.22, 1, 0.36, 1),
+      transform 700ms cubic-bezier(0.22, 1, 0.36, 1);
+    pointer-events: none;
+  }
+
+  .hero-steps__slide.is-active {
+    opacity: 1;
+    transform: none;
+    pointer-events: auto;
+  }
+
+  .hero-steps__slide.is-leaving {
+    opacity: 0;
+    transform: translateX(-14%) scale(0.97);
+  }
+
+  .hero-steps__slide img {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    display: block;
+  }
+
+  .hero-steps__footer {
+    margin-top: theme("spacing.md");
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: theme("spacing.md");
+  }
+
+  .hero-steps__caption {
+    font-size: theme("fontSize.body-sm[0]");
+    color: theme("colors.foreground");
+    min-height: 1.5em;
+  }
+
+  .hero-steps__step {
+    color: theme("colors.accent.text");
+    font-weight: 500;
+    margin-right: theme("spacing.xs");
+  }
+
+  .hero-steps__dots {
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .hero-steps__dot {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-steps__dot::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    border-radius: 999px;
+    background: theme("colors.border");
+    transition:
+      width 300ms ease,
+      background-color 300ms ease;
+  }
+
+  .hero-steps__dot.is-active::before {
+    width: 20px;
+    background: theme("colors.primary");
+  }
+
+  .hero-steps__dot:focus-visible {
+    outline: 2px solid theme("colors.primary");
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+
+  .hero-steps__note {
+    margin-top: theme("spacing.xs");
+    font-size: 12px;
+    color: theme("colors.muted.text");
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-steps__slide,
+    .hero-steps__slide.is-leaving {
+      transform: none;
+      transition: opacity 200ms linear;
+    }
+  }
+
   .hero-photo {
     overflow: hidden;
     border-radius: theme("borderRadius.card");

@@ -1,0 +1,160 @@
+---
+// Home hero: the matching steps, one summary card per slide. Slides move in
+// from the right and out to the left; autoplay pauses on hover, focus or a
+// hidden tab, and stays off under prefers-reduced-motion.
+import { Image } from "astro:assets";
+import type { ImageMetadata } from "astro";
+
+export interface HeroStep {
+  src: ImageMetadata;
+  step: string;
+  title: string;
+  alt: string;
+}
+
+interface Props {
+  steps: HeroStep[];
+  intervalMs?: number;
+}
+
+const { steps, intervalMs = 4500 } = Astro.props;
+---
+
+<div
+  class="hero-steps"
+  data-interval={intervalMs}
+  role="region"
+  aria-roledescription="carousel"
+  aria-label="How Rupert narrows the investor list, step by step"
+>
+  <div class="hero-steps__viewport">
+    {
+      steps.map((s, i) => (
+        <figure
+          class:list={["hero-steps__slide", { "is-active": i === 0 }]}
+          aria-roledescription="slide"
+          aria-label={`${i + 1} of ${steps.length}: ${s.title}`}
+          aria-hidden={i === 0 ? "false" : "true"}
+        >
+          <Image
+            src={s.src}
+            alt={s.alt}
+            widths={[640, 960, 1280]}
+            sizes="(min-width: 768px) 46vw, 92vw"
+            loading={i === 0 ? "eager" : "lazy"}
+            fetchpriority={i === 0 ? "high" : "auto"}
+          />
+        </figure>
+      ))
+    }
+  </div>
+  <div class="hero-steps__footer">
+    <p class="hero-steps__caption" aria-live="polite">
+      <span class="hero-steps__step" data-step>{steps[0]?.step}</span>
+      <span data-title>{steps[0]?.title}</span>
+    </p>
+    <div class="hero-steps__dots">
+      {
+        steps.map((s, i) => (
+          <button
+            type="button"
+            class:list={["hero-steps__dot", { "is-active": i === 0 }]}
+            data-go={i}
+            aria-label={`Show ${s.step}: ${s.title}`}
+            aria-current={i === 0 ? "true" : undefined}
+          />
+        ))
+      }
+    </div>
+  </div>
+  <p class="hero-steps__note">Sample run, illustrative data.</p>
+  <script type="application/json" data-steps set:html={JSON.stringify(steps.map((s) => ({ step: s.step, title: s.title })))} />
+</div>
+
+<script>
+  document.querySelectorAll<HTMLElement>(".hero-steps").forEach((root) => {
+    const slides = Array.from(root.querySelectorAll<HTMLElement>(".hero-steps__slide"));
+    const dots = Array.from(root.querySelectorAll<HTMLButtonElement>(".hero-steps__dot"));
+    const meta = JSON.parse(root.querySelector("[data-steps]")?.textContent || "[]") as { step: string; title: string }[];
+    const stepEl = root.querySelector<HTMLElement>("[data-step]");
+    const titleEl = root.querySelector<HTMLElement>("[data-title]");
+    if (slides.length < 2) return;
+
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const interval = Number(root.dataset.interval || "4500");
+    let index = 0;
+    let timer: number | undefined;
+    let paused = false;
+
+    const show = (next: number) => {
+      const target = (next + slides.length) % slides.length;
+      if (target === index) return;
+      const leaving = slides[index];
+      leaving.classList.remove("is-active");
+      leaving.classList.add("is-leaving");
+      leaving.setAttribute("aria-hidden", "true");
+      window.setTimeout(() => leaving.classList.remove("is-leaving"), 700);
+      index = target;
+      slides[index].classList.add("is-active");
+      slides[index].setAttribute("aria-hidden", "false");
+      dots.forEach((dot, i) => {
+        dot.classList.toggle("is-active", i === index);
+        if (i === index) dot.setAttribute("aria-current", "true");
+        else dot.removeAttribute("aria-current");
+      });
+      if (stepEl) stepEl.textContent = meta[index]?.step || "";
+      if (titleEl) titleEl.textContent = meta[index]?.title || "";
+    };
+
+    const stop = () => {
+      if (timer !== undefined) window.clearInterval(timer);
+      timer = undefined;
+    };
+    const start = () => {
+      stop();
+      if (reduceMotion || paused || document.hidden) return;
+      timer = window.setInterval(() => show(index + 1), interval);
+    };
+
+    dots.forEach((dot) =>
+      dot.addEventListener("click", () => {
+        show(Number(dot.dataset.go));
+        start();
+      }),
+    );
+    root.addEventListener("mouseenter", () => {
+      paused = true;
+      stop();
+    });
+    root.addEventListener("mouseleave", () => {
+      paused = false;
+      start();
+    });
+    root.addEventListener("focusin", () => {
+      paused = true;
+      stop();
+    });
+    root.addEventListener("focusout", (event) => {
+      if (!root.contains(event.relatedTarget as Node | null)) {
+        paused = false;
+        start();
+      }
+    });
+    document.addEventListener("visibilitychange", start);
+
+    // Swipe on touch screens.
+    let startX: number | null = null;
+    root.addEventListener("touchstart", (e) => (startX = e.touches[0]?.clientX ?? null), { passive: true });
+    root.addEventListener("touchend", (e) => {
+      if (startX === null) return;
+      const dx = (e.changedTouches[0]?.clientX ?? startX) - startX;
+      if (Math.abs(dx) > 40) {
+        show(index + (dx < 0 ? 1 : -1));
+        start();
+      }
+      startX = null;
+    });
+
+    start();
+  });
+</script>
