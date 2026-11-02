@@ -34,15 +34,7 @@ import { caseStudies } from "../lib/caseStudies";
                 {item.href &&
                 item.linkLabel &&
                 item.body.includes(item.linkLabel) ? (
-                  <>
-                    {item.body.slice(0, item.body.indexOf(item.linkLabel))}
-                    <a href={item.href} rel="noopener noreferrer">
-                      {item.linkLabel}
-                    </a>
-                    {item.body.slice(
-                      item.body.indexOf(item.linkLabel) + item.linkLabel.length,
-                    )}
-                  </>
+                  <>{item.body.slice(0, item.body.indexOf(item.linkLabel))}<a href={item.href} rel="noopener noreferrer">{item.linkLabel}</a>{item.body.slice(item.body.indexOf(item.linkLabel) + item.linkLabel.length)}</>
                 ) : (
                   item.body
                 )}

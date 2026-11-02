@@ -1534,6 +1534,20 @@
     align-items: start;
   }
 
+  /* With every card open (Expand all), every card has the same height. */
+  .founder-grid--about .case-stack--aside:not(:has(details:not([open]))) {
+    align-items: stretch;
+    grid-auto-rows: 1fr;
+  }
+
+  .founder-grid--about .case-stack--aside:not(:has(details:not([open]))) > li {
+    display: flex;
+  }
+
+  .founder-grid--about .case-stack--aside:not(:has(details:not([open]))) .case-card {
+    flex: 1;
+  }
+
   @media (max-width: 479px) {
     .founder-grid--about .case-stack--aside {
       grid-template-columns: 1fr;
@@ -1769,7 +1783,6 @@
   .case-card__body p {
     margin: 0;
     padding: 0 theme("spacing.md") theme("spacing.md");
-    padding-left: calc(3.96rem + theme("spacing.md") + theme("spacing.sm"));
     opacity: 0;
     transform: translateY(-4px);
     transition:
