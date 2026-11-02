@@ -23,7 +23,9 @@ keywords:
   - fundraising pipeline
   - investor outreach
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
+    anchor: investor outreach
 externalLinks:
   - label: "🌱 Seed Got Smaller: Q3 2026 PitchBook-NVCA Venture Monitor Data"
     url: "https://scalable.news/p/seed-got-smaller"
@@ -100,7 +102,7 @@ Track conversion at each stage. Outreach-to-meeting conversion should be above 1
 
 ## Follow-Up Cadence: The Discipline That Separates Good Pipelines from Great Ones
 
-Building the list and defining the stages gets a pipeline started. Executing follow-up consistently is what keeps it moving. Most investor outreach fails not because the initial email was poor but because the follow-up never came, or came at the wrong time, or contained nothing new.
+Building the list and defining the stages gets a pipeline started. Executing follow-up consistently is what keeps it moving. Most [investor outreach](/articles/where-to-find-startup-investors-warm-intros-vs-cold-outreach/) fails not because the initial email was poor but because the follow-up never came, or came at the wrong time, or contained nothing new.
 
 The optimal follow-up sequence is: initial outreach, then a follow-up 5 to 7 days later with a new data point or piece of news, then a final follow-up 10 to 14 days after that. Three touches total. More than three and you are hurting your brand. That structure works because it keeps you in front of the investor at regular intervals without becoming a nuisance, and because the second message—when it carries something genuinely new, like a customer win, a metric milestone, or a press mention—demonstrates that the business is moving forward.
 
@@ -126,7 +128,7 @@ The median seed deal fell from $3.4M in 2025 to $3.0M this year, while the media
 
 This is why many founders at the Seed and Series A stages work with experienced operators who can run the pipeline on their behalf—handling research, building the target list, drafting and executing personalized outreach, managing follow-up cadence, and delivering clear reporting on every contact, every response, and every conversation. The critical distinction from a traditional placement agent is what the founder retains: every investor relationship, every email thread, every data room access—all of it remains in the founder's hands. The operator runs the process; the founder owns the relationship.
 
-Rupert is built to do exactly this. Every outreach campaign is researched, personalized, and managed by experienced operators with backgrounds spanning investment banking, founding, and CFO work. Founders get complete visibility into who is being contacted, what is being sent, and what comes back—with no black box and no success fee. The investor relationships stay with the founder permanently, regardless of how the raise unfolds. If you want to see how a managed pipeline would work for your specific raise, the right next step is to book a call.
+Rupert is built to do exactly this. Every outreach campaign is researched, personalized, and managed by experienced operators with backgrounds spanning investment banking, founding, and CFO work. Founders get complete visibility into who is being contacted, what is being sent, and what comes back—with no black box and no success fee. The investor relationships stay with the founder permanently, regardless of how the raise unfolds. If you want to see how a managed pipeline would work for your specific raise, the right next step is to [book a call.](/book-call/)
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
