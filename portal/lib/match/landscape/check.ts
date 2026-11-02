@@ -219,8 +219,11 @@ export function checkInvestors(input: {
     const settled = (decision && decision.firmId !== undefined) || match.how === "website" || match.how === "name" || match.how === "none";
     let failure: CheckRow["failure"] = null;
     let fundSectors: string[] = [];
-    const added = input.added?.[original.id] ?? null;
-    // Added by Rupert: its own group, whatever the matching says now (it may match its own new record).
+    // Added by Rupert: its own group, whatever the matching says now. That covers the investor that was
+    // added, and any other investor that matches a fund added for this client (e.g. a partner of it).
+    const ownAdded = input.added?.[original.id] ?? null;
+    const viaFirm = firmId ? Object.values(input.added ?? {}).find((a) => a.firmId === firmId && a.status !== "rejected") ?? null : null;
+    const added = ownAdded && ownAdded.status !== "rejected" ? ownAdded : viaFirm;
     if (added && added.status !== "rejected") bucket = "added";
     else if (!settled) bucket = "confirm";
     else if (!firmId) bucket = investor.kind === "angel" ? "missing_angel" : "missing_fund";
@@ -249,7 +252,7 @@ export function checkInvestors(input: {
       failure,
       candidates: match.firmIds.map((id) => firmById.get(id)).filter((f): f is DbFirm => !!f),
       decision,
-      added,
+      added: added ?? ownAdded,
       action,
       unsure: !!decision?.unsure && (bucket === "confirm" || (bucket === "not_in_list" && !decision?.action)),
       defaulted: bucket === "not_in_list" && !decision?.action,

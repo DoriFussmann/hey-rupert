@@ -187,3 +187,19 @@ test("added by Rupert: its own group, ahead of any match; a rejected one goes ba
   const rejected = checkInvestors({ ...base, investors: [inv("i6", "Nobody Fund")], added: { i6: { ...added, status: "rejected" } } });
   assert.equal(rejected[0].bucket, "missing_fund");
 });
+
+test("an investor matching a fund added for this client (e.g. its partner) counts as added, not 'not in the shortlist'", () => {
+  const addedFirm = { id: "RUP-K", name: "Kima Ventures", web: "https://kimaventures.com" };
+  const rows = checkInvestors({
+    firms: [...firms, addedFirm],
+    data,
+    steps,
+    shortlist: new Set(["F2"]),
+    investors: [inv("kima", "Kima Ventures"), inv("jean", "Jean de La Rochebrochard", "angel")],
+    decisions: { jean: { website: "https://kimaventures.com", by: null, at: "" } },
+    added: { kima: { id: "a1", firmId: "RUP-K", status: "pending", contacts: 2, website: "https://kimaventures.com" } },
+  });
+  assert.equal(rows[0].bucket, "added");
+  assert.equal(rows[1].firmId, "RUP-K");
+  assert.equal(rows[1].bucket, "added");
+});

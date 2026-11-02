@@ -982,7 +982,7 @@ function AddMissingCard({
           <p className="text-body-sm text-muted">
             The competitors&apos; investors your database doesn&apos;t have. Each one added is researched, gets its contacts from Hunter, and waits for
             your review on the Fund Database page (Added by Rupert). It counts for this client right away, and for every client once you approve it.
-            Confirm when done: whatever isn&apos;t added is skipped.
+            When you&apos;re done adding, &ldquo;Done adding&rdquo; closes this step: whatever isn&apos;t added counts as skipped (Reopen to add more).
           </p>
         </div>
         <button
@@ -994,7 +994,7 @@ function AddMissingCard({
             if (!left || window.confirm(`Confirm Step 2D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
           }}
         >
-          Confirm Step 2D
+          Done adding: confirm 2D
         </button>
       </div>
       {adding ? (
@@ -1258,10 +1258,12 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const byBucket = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const total = check.rows.length;
   const notInList = byBucket("not_in_list");
-  const settled =
-    !check.rows.some((r) => r.unsure) &&
-    !check.rows.some((r) => r.bucket === "confirm") &&
-    !check.rows.some((r) => r.bucket === "not_in_list" && r.defaulted);
+  const openNow =
+    check.rows.filter((r) => r.unsure).length +
+    check.rows.filter((r) => r.bucket === "confirm").length +
+    check.rows.filter((r) => r.bucket === "not_in_list" && r.defaulted && !r.unsure).length;
+  // Confirmed stays confirmed on the page: later changes (e.g. funds added in 2D) show as a note, never hide 2D.
+  const settled = !!check.confirmedAt || openNow === 0;
   /** Confirmed: every decision button is off until Reopen. */
   const frozen = busy || !!check.confirmedAt;
   const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
@@ -1426,6 +1428,17 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-md">
       <OutcomeCard check={check} busy={busy} onConfirm={(c) => void confirmCheck(c)} />
+      {adding ? (
+        <p className="rounded-md border border-primary/40 bg-surface px-md py-sm text-body-sm text-primary">
+          Try and Add to DB: adding {n(adding.done + 1)} of {n(adding.total)}… keep this page open (closing it stops after the current one).
+        </p>
+      ) : null}
+      {check.confirmedAt && openNow ? (
+        <p className="rounded-md border border-warning/40 bg-surface px-md py-sm text-body-sm text-warning">
+          {n(openNow)} {openNow === 1 ? "investor needs" : "investors need"} a decision since the check was confirmed (the database changed, e.g. funds added in
+          2D). Open the details to see {openNow === 1 ? "it" : "them"}; Reopen to decide.
+        </p>
+      ) : null}
       {error ? <p className="text-body-sm text-error">{error}</p> : null}
       <button
         type="button"
