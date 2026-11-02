@@ -8,7 +8,7 @@ export function AuthBrandPanel() {
 
       <div className="bp-panel__middle">
         <p className="bp-panel__title">Rupert</p>
-        <p className="bp-panel__subcopy">Investor outreach, managed for you.</p>
+        <p className="bp-panel__subcopy">The right investors. Reached right.</p>
       </div>
 
       <p className="bp-panel__footer">
