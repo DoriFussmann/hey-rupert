@@ -289,7 +289,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={items.length} label="Investors in the competitors: confirmed" />
+            <BigNumber value={items.length} label="Step 2B · Investors in the competitors: confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(landscape.investorsConfirmedAt)}
               {landscape.investorsConfirmedBy ? ` by ${landscape.investorsConfirmedBy}` : ""}.
@@ -311,7 +311,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-sm">
         <div>
-          <h3 className="text-h4 text-heading">Investors in the competitors</h3>
+          <h3 className="text-h4 text-heading">Step 2B: Investors in the competitors</h3>
           <p className="text-body-sm text-muted">Researched one competitor at a time. No cap.</p>
         </div>
         {landscape.investorsStatus !== "none" ? (

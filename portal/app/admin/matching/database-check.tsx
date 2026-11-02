@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addInvestorToDb, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult, LookAlikePreview } from "@/lib/match/landscape/server";
@@ -757,7 +757,7 @@ function OutcomeCard({
     <Card tone="final">
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
-          <BigNumber value={inList + back + added} label={locked ? "Investors in the competitors: check confirmed" : "Investors in the competitors: checked"} />
+          <BigNumber value={inList + back + added} label={locked ? "Step 2C · Check against the database: confirmed" : "Step 2C · Check against the database: ready to confirm"} />
           <p className="text-body-sm text-secondary">
             {n(inList + back + added)} of {n(total)} go forward with this client ({n(inList)} already in the shortlist, {n(back)} brought back
             {added ? `, ${n(added)} added` : ""}).
@@ -876,6 +876,19 @@ function LookAlikePanel({ clientId }: { clientId: string }) {
   );
 }
 
+/** What comes after Step 2: the next step of the flow, once it exists. */
+export function NextStepCard({ note }: { note?: string }) {
+  return (
+    <section className="rounded-card border border-dashed border-border bg-surface px-lg py-md">
+      <h3 className="text-h4 text-heading">Next: Step 3, the working list</h3>
+      <p className="text-body-sm text-muted">
+        {note ? `${note} ` : ""}The Step 1 shortlist plus the funds brought back and added in Step 2, minus exclusions. Not built yet: designed in the project doc
+        &ldquo;rupert-matching-next-stage&rdquo;.
+      </p>
+    </section>
+  );
+}
+
 /**
  * Step 2D: Try and Add to DB, as its own card once the check is confirmed:
  * the investors not in the database, funds and angels, with "Add all" per
@@ -886,12 +899,14 @@ function AddMissingCard({
   busy,
   adding,
   onAdd,
+  onConfirm,
   renderRow,
 }: {
   check: CheckResult;
   busy: boolean;
   adding: { current: string; done: number; total: number } | null;
   onAdd: (ids: string[]) => void;
+  onConfirm: (confirm: boolean) => void;
   renderRow: (row: CheckRow) => React.ReactNode;
 }) {
   const [open, setOpen] = useState<"missing_fund" | "missing_angel" | "added" | null>(null);
@@ -905,6 +920,60 @@ function AddMissingCard({
     { key: "missing_fund" as const, label: "Funds not in the database", list: funds, what: "research, then up to 5 investing contacts from Hunter (about 1 credit each)" },
     { key: "missing_angel" as const, label: "Angels not in the database", list: angels, what: "research, then the angel's email from Hunter (1 credit if found)" },
   ];
+  const confirmed = !!check.addedConfirmedAt;
+  const contacts = added.reduce((sum, r) => sum + (r.added?.contacts ?? 0), 0);
+  if (confirmed) {
+    return (
+      <Card tone="final">
+        <div className="flex items-start justify-between gap-md">
+          <div className="min-w-0 flex-1">
+            <BigNumber value={added.length} label="Step 2D · Try and Add to DB: confirmed" />
+            <p className="text-body-sm text-secondary">
+              {n(added.length)} added ({n(pending)} pending review, {n(approved)} approved), with {n(contacts)} contacts. Skipped: {n(funds.length)} funds and{" "}
+              {n(angels.length)} angels. Confirmed {new Date(check.addedConfirmedAt!).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
+              {check.addedConfirmedBy ? ` by ${check.addedConfirmedBy}` : ""}.
+            </p>
+          </div>
+          <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy} onClick={() => onConfirm(false)}>
+            Reopen
+          </button>
+        </div>
+        <table className="mt-md w-full text-left text-body-sm">
+          <thead className="text-label uppercase tracking-label text-muted">
+            <tr>
+              <th className="py-xs pr-md font-medium">Outcome</th>
+              <th className="py-xs pr-md text-right font-medium">Investors</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="border-t border-border">
+              <td className="py-xs pr-md text-success">Added, pending your review</td>
+              <td className="py-xs pr-md text-right text-heading">{n(pending)}</td>
+            </tr>
+            <tr className="border-t border-border">
+              <td className="py-xs pr-md text-success">Added and approved (every client)</td>
+              <td className="py-xs pr-md text-right text-heading">{n(approved)}</td>
+            </tr>
+            <tr className="border-t border-border">
+              <td className="py-xs pr-md text-heading">Skipped: funds</td>
+              <td className="py-xs pr-md text-right text-heading">{n(funds.length)}</td>
+            </tr>
+            <tr className="border-t border-border">
+              <td className="py-xs pr-md text-heading">Skipped: angels</td>
+              <td className="py-xs pr-md text-right text-heading">{n(angels.length)}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="mt-md text-body-sm text-muted">
+          Pending funds count for this client now.{" "}
+          <a href="/admin/fund-database#added-by-rupert" className="underline">
+            Review them on the Fund Database page
+          </a>{" "}
+          to add them for every client.
+        </p>
+      </Card>
+    );
+  }
   return (
     <Card>
       <div className="flex items-start justify-between gap-md">
@@ -913,8 +982,20 @@ function AddMissingCard({
           <p className="text-body-sm text-muted">
             The competitors&apos; investors your database doesn&apos;t have. Each one added is researched, gets its contacts from Hunter, and waits for
             your review on the Fund Database page (Added by Rupert). It counts for this client right away, and for every client once you approve it.
+            Confirm when done: whatever isn&apos;t added is skipped.
           </p>
         </div>
+        <button
+          type="button"
+          className={`${primaryButton} shrink-0`}
+          disabled={busy || !!adding}
+          onClick={() => {
+            const left = funds.length + angels.length;
+            if (!left || window.confirm(`Confirm Step 2D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
+          }}
+        >
+          Confirm Step 2D
+        </button>
       </div>
       {adding ? (
         <p className="mt-sm text-body-sm text-primary">
@@ -1102,6 +1183,16 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(confirm ? "Check confirmed. Saved." : "Check reopened.");
   };
 
+  const confirmAdded = async (confirm: boolean) => {
+    setBusy(true);
+    setError(null);
+    const result = await confirmAddedStep(clientId, confirm);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setCheck(result.check);
+    setToast(confirm ? "Step 2D confirmed. Saved." : "Step 2D reopened.");
+  };
+
   /** Try and Add to DB, one investor at a time (about a minute each: research, then Hunter). */
   const addToDb = async (ids: string[]) => {
     setError(null);
@@ -1158,7 +1249,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   if (!check) {
     return (
       <Card>
-        <h3 className="text-h4 text-heading">Check against the fund database</h3>
+        <h3 className="text-h4 text-heading">Step 2C: Check against the fund database</h3>
         {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : <p className="mt-sm text-body-sm text-muted">Checking every investor…</p>}
       </Card>
     );
@@ -1178,7 +1269,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const details = (
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <h3 className="text-h4 text-heading">Check against the fund database</h3>
+        <h3 className="text-h4 text-heading">Step 2C: Check against the fund database</h3>
         <p className="text-body-sm text-muted">
           {n(check.rows.length)} investors · Step 1 list confirmed {new Date(check.dryConfirmedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
         </p>
@@ -1352,6 +1443,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           busy={busy || !!finding}
           adding={adding}
           onAdd={(ids) => void addToDb(ids)}
+          onConfirm={(c) => void confirmAdded(c)}
           renderRow={(row) => (
             <SimpleRow
               key={row.investor.id}
@@ -1365,6 +1457,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           )}
         />
       ) : null}
+      {check.addedConfirmedAt ? <NextStepCard /> : null}
       <Toast text={toast} />
     </div>
   );

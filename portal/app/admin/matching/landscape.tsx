@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { fillCompetitorSectors, loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
 import { InvestorsStep } from "@/app/admin/matching/investors-step";
-import { DatabaseCheck } from "@/app/admin/matching/database-check";
+import { DatabaseCheck, NextStepCard } from "@/app/admin/matching/database-check";
 import type { Competitor, LinkState } from "@/lib/match/landscape/core";
 import { MAX_COMPETITORS } from "@/lib/match/landscape/core";
 import type { Landscape } from "@/lib/match/landscape/server";
@@ -275,7 +275,7 @@ function ConfirmedSummary({
     <Card tone="final">
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
-          <BigNumber value={items.length} label="Funded competitors: confirmed" />
+          <BigNumber value={items.length} label="Step 2A · Funded competitors: confirmed" />
           <p className="text-body-sm text-secondary">
             Confirmed {when(landscape.confirmedAt)}
             {landscape.confirmedBy ? ` by ${landscape.confirmedBy}` : ""}.
@@ -444,7 +444,11 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
       <div className="space-y-md">
         <ConfirmedSummary landscape={landscape} items={items} busy={busy === "start"} onStartOver={() => void startOver()} sectorNote={sectorNote} />
         {error ? <p className="text-body-sm text-error">{error}</p> : null}
-        <InvestorsStep clientId={clientId} landscape={landscape} onChange={take} />
+        {items.length ? (
+          <InvestorsStep clientId={clientId} landscape={landscape} onChange={take} />
+        ) : (
+          <NextStepCard note="No funded competitors were confirmed, so Steps 2B to 2D are skipped." />
+        )}
         {landscape.investorsStatus === "confirmed" ? <DatabaseCheck key={landscape.investorsConfirmedAt ?? ""} clientId={clientId} /> : null}
       </div>
     );
@@ -452,11 +456,14 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
 
   return (
     <section className="animate-slide-in space-y-md rounded-card border border-border bg-surface px-lg py-md">
-      <div className="flex flex-wrap items-start justify-between gap-md">
+      <div className="flex items-start justify-between gap-md">
+      <div className="min-w-0 flex-1">
+      <h3 className="text-h4 text-heading">Step 2A: Funded competitors</h3>
       <p className="max-w-prose text-body-sm text-secondary">
         Top {MAX_COMPETITORS} <strong className="font-medium text-heading">funded</strong> direct competitors, most relevant first. Check each
-        website and funding article, then confirm.
+        website and funding article, then confirm. None found? Confirm the empty list to skip Step 2.
       </p>
+      </div>
         {landscape ? (
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
             {busy === "start" ? "Starting over…" : "Start over"}
@@ -532,7 +539,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
                 <button
                   type="button"
                   className={primaryButton}
-                  disabled={busy !== null || editing !== null || items.length === 0}
+                  disabled={busy !== null || editing !== null}
                   onClick={() => void run("confirm", () => saveLandscape(clientId, items, true))}
                 >
                   {busy === "confirm" ? "Confirming…" : "Confirm list"}

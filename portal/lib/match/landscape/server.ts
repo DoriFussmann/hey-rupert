@@ -363,7 +363,6 @@ export async function saveCompetitors(
   if (!current.value) return { ok: false, error: "Run Show Competitors first." };
   if (current.value.status === "confirmed") return { ok: false, error: "This list is confirmed. Start over to change it." };
   const list = orderCompetitors(Array.isArray(items) ? items : [], () => randomUUID());
-  if (confirm && list.length === 0) return { ok: false, error: "The list is empty. Add at least one competitor, or Start over." };
   const checked = await withLinkChecks(list);
   const now = new Date().toISOString();
   const { data, error } = await supabase
@@ -665,6 +664,9 @@ export type CheckResult = {
   /** The final confirmation of the check, if given. */
   confirmedAt: string | null;
   confirmedBy: string | null;
+  /** Step 2D confirmed (what wasn't added is skipped). */
+  addedConfirmedAt: string | null;
+  addedConfirmedBy: string | null;
   rows: CheckRow[];
   /** Whether Find websites can run (its column exists). */
   websitesReady: boolean;
@@ -748,7 +750,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
-    value: { confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: snapshot.value.dataVersion },
+    value: { addedConfirmedAt: confirmation.addedAt, addedConfirmedBy: confirmation.addedBy, confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: snapshot.value.dataVersion },
   };
 }
 
@@ -1012,14 +1014,43 @@ export async function findWebsites(supabase: ServiceClient, clientId: string, in
 
 export const CHECK_CONFIRM_MIGRATION = "The confirmation columns are missing. Run portal/supabase/check_confirmation.sql in the Supabase SQL editor.";
 
-async function loadCheckConfirmation(supabase: ServiceClient, landscapeId: string): Promise<{ at: string | null; by: string | null }> {
+async function loadCheckConfirmation(
+  supabase: ServiceClient,
+  landscapeId: string,
+): Promise<{ at: string | null; by: string | null; addedAt: string | null; addedBy: string | null }> {
   const { data, error } = await supabase
     .from("competitor_landscapes")
     .select("check_confirmed_at, check_confirmed_by")
     .eq("id", landscapeId)
     .maybeSingle<{ check_confirmed_at: string | null; check_confirmed_by: string | null }>();
-  if (error || !data) return { at: null, by: null };
-  return { at: data.check_confirmed_at, by: data.check_confirmed_by };
+  if (error || !data) return { at: null, by: null, addedAt: null, addedBy: null };
+  // Step 2D's confirmation: its own columns, read apart so the check works before that migration.
+  const added = await supabase
+    .from("competitor_landscapes")
+    .select("added_confirmed_at, added_confirmed_by")
+    .eq("id", landscapeId)
+    .maybeSingle<{ added_confirmed_at: string | null; added_confirmed_by: string | null }>();
+  return {
+    at: data.check_confirmed_at,
+    by: data.check_confirmed_by,
+    addedAt: added.error ? null : added.data?.added_confirmed_at ?? null,
+    addedBy: added.error ? null : added.data?.added_confirmed_by ?? null,
+  };
+}
+
+export const ADDED_CONFIRM_MIGRATION = "The Step 2D confirmation columns are missing. Run portal/supabase/added_confirmation.sql in the Supabase SQL editor.";
+
+/** Confirms Step 2D (what wasn't added is skipped), or reopens it. Needs the check confirmed and nothing being added. */
+export async function confirmAdded(supabase: ServiceClient, clientId: string, confirm: boolean, actor: string | null): Promise<Result<null>> {
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok || !current.value) return { ok: false, error: "Nothing to confirm." };
+  if (confirm && !(await checkLocked(supabase, current.value.id))) return { ok: false, error: "Confirm Step 2C (the check) first." };
+  const { error } = await supabase
+    .from("competitor_landscapes")
+    .update(confirm ? { added_confirmed_at: new Date().toISOString(), added_confirmed_by: actor } : { added_confirmed_at: null, added_confirmed_by: null })
+    .eq("id", current.value.id);
+  if (error) return { ok: false, error: /added_confirmed/.test(error.message) ? ADDED_CONFIRM_MIGRATION : error.message };
+  return { ok: true, value: null };
 }
 
 /** Confirms the check (every match settled, every fund decided), or reopens it. While confirmed, decisions can't change. */
@@ -1072,6 +1103,7 @@ export async function addMissingInvestor(
   if (!check.ok) return check;
   const row = check.value.rows.find((r) => r.investor.id === investorId);
   if (!row) return { ok: false, error: "That investor is not on the confirmed list." };
+  if (check.value.addedConfirmedAt) return { ok: false, error: "Step 2D is confirmed. Reopen it to add more." };
   if (row.bucket === "added" && row.added?.status !== "rejected") return { ok: true, value: { created: false, message: `${row.investor.name} was already added.` } };
   if (row.bucket !== "missing_fund" && row.bucket !== "missing_angel" && row.bucket !== "added") {
     return { ok: false, error: "Only investors not in the database can be added." };

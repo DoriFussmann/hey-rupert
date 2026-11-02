@@ -8,6 +8,7 @@ import {
   checkAgainstDatabase,
   decideInvestor,
   addMissingInvestor,
+  confirmAdded,
   confirmCheck,
   lookAlikePreview,
   type LookAlikePreview,
@@ -274,5 +275,18 @@ export async function loadLookAlikes(clientId: string): Promise<Result<{ preview
     return result.ok ? { ok: true, preview: result.value } : { ok: false, error: result.error };
   } catch (err) {
     return fail(err, "The look-alike preview did not load.");
+  }
+}
+
+/** Confirms Step 2D (Try and Add to DB; what wasn't added is skipped), or reopens it. */
+export async function confirmAddedStep(clientId: string, confirm: boolean): Promise<Result<{ check: CheckResult }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const done = await confirmAdded(a.supabase, a.clientId, confirm === true, a.email);
+    if (!done.ok) return { ok: false, error: done.error };
+    return runInvestorCheck(clientId);
+  } catch (err) {
+    return fail(err, "Step 2D was not confirmed.");
   }
 }
