@@ -17,7 +17,7 @@ interface Props {
   intervalMs?: number;
 }
 
-const { steps, intervalMs = 4500 } = Astro.props;
+const { steps, intervalMs = 3500 } = Astro.props;
 ---
 
 <div
@@ -81,7 +81,7 @@ const { steps, intervalMs = 4500 } = Astro.props;
     if (slides.length < 2) return;
 
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const interval = Number(root.dataset.interval || "4500");
+    const interval = Number(root.dataset.interval || "3500");
     let index = 0;
     let timer: number | undefined;
     let paused = false;
@@ -93,7 +93,7 @@ const { steps, intervalMs = 4500 } = Astro.props;
       leaving.classList.remove("is-active");
       leaving.classList.add("is-leaving");
       leaving.setAttribute("aria-hidden", "true");
-      window.setTimeout(() => leaving.classList.remove("is-leaving"), 700);
+      window.setTimeout(() => leaving.classList.remove("is-leaving"), 400);
       index = target;
       slides[index].classList.add("is-active");
       slides[index].setAttribute("aria-hidden", "false");
