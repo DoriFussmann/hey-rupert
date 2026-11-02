@@ -811,6 +811,8 @@ function OutcomeCard({
  * fund resembles the competitors' investors found in the database (by their
  * stated sectors). Reads only; loads when opened.
  */
+// Not on the page yet: it returns with the ranking step (Step 4).
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function LookAlikePanel({ clientId }: { clientId: string }) {
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<LookAlikePreview | null>(null);
@@ -1215,7 +1217,6 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   return (
     <div className="space-y-md">
       <OutcomeCard check={check} busy={busy} onConfirm={(c) => void confirmCheck(c)} />
-      <LookAlikePanel clientId={clientId} />
       {error ? <p className="text-body-sm text-error">{error}</p> : null}
       <button
         type="button"
