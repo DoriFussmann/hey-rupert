@@ -3,7 +3,6 @@ import { Image } from "astro:assets";
 import { RUPERT_LINKEDIN, SITE_NAME, SITE_TAGLINE } from "../config/site";
 import { sitePath } from "../lib/url";
 import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
-import linkedinLogo from "../assets/brand/linkedin.png";
 ---
 
 <footer class="mt-auto border-t border-border">
@@ -26,15 +25,33 @@ import linkedinLogo from "../assets/brand/linkedin.png";
     <div class="mt-xl flex min-h-11 flex-wrap items-center justify-between gap-md">
       <p class="type-body-sm">© {SITE_NAME} 2026</p>
       <div class="footer-social">
+      <p class="footer-rss">
         <a
-          class="footer-linkedin"
+          class="nav-link gap-sm type-body-sm"
           href={RUPERT_LINKEDIN}
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Rupert on LinkedIn"
         >
-          <Image src={linkedinLogo} alt="" width={20} height={20} />
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path>
+            <rect width="4" height="12" x="2" y="9"></rect>
+            <circle cx="4" cy="4" r="2"></circle>
+          </svg>
+          LinkedIn
         </a>
+      </p>
       <p class="footer-rss">
         <a class="nav-link gap-sm type-body-sm" href="/rss.xml">
           <svg
