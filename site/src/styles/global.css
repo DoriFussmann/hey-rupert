@@ -279,6 +279,9 @@
 
   .site-nav--desktop .btn-primary {
     margin-left: theme("spacing.sm");
+    min-height: 38px;
+    padding: 0 theme("spacing.md");
+    font-size: theme("fontSize.body-sm[0]");
   }
 
   .nav-link[aria-current="page"] {
@@ -308,7 +311,7 @@
     cursor: pointer;
     list-style: none;
     color: theme("colors.foreground");
-    font-size: theme("fontSize.body[0]");
+    font-size: theme("fontSize.body-sm[0]");
   }
 
   .site-menu__toggle::-webkit-details-marker {
@@ -346,7 +349,7 @@
     min-height: 48px;
     border-bottom: 1px solid theme("colors.border");
     color: theme("colors.foreground");
-    font-size: theme("fontSize.body-lg[0]");
+    font-size: theme("fontSize.body[0]");
     text-decoration: none;
   }
 
@@ -371,7 +374,7 @@
 
   .nav-link {
     color: theme("colors.foreground");
-    font-size: theme("fontSize.body[0]");
+    font-size: theme("fontSize.body-sm[0]");
     font-weight: 400;
     text-decoration: none;
     min-height: 44px;
@@ -453,6 +456,58 @@
   .article-body > ul,
   .article-body > ol {
     padding-left: theme("spacing.lg");
+  }
+
+  /* Key Takeaways (seo-core wraps the heading and its list in an aside): a green card. */
+  .article-body > .key-takeaways {
+    margin: theme("spacing.xl") 0;
+    padding: 32px 32px 24px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, #EAF3EE 0%, #EEF4F3 100%);
+    border: 1px solid #A9D6C3;
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .article-body > .key-takeaways > h2 {
+    margin: 0 0 12px;
+    font-size: theme("fontSize.label[0]");
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #12806A;
+    scroll-margin-top: 5rem;
+  }
+
+  .article-body > .key-takeaways > ul,
+  .article-body > .key-takeaways > ol {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .article-body > .key-takeaways li {
+    position: relative;
+    padding: 12px 0 12px 32px;
+    border-top: 1px solid rgba(18, 128, 106, 0.18);
+    font-size: theme("fontSize.body[0]");
+    line-height: 1.6;
+    color: theme("colors.foreground");
+  }
+
+  .article-body > .key-takeaways li:first-child {
+    border-top: 0;
+  }
+
+  .article-body > .key-takeaways li::before {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 20px;
+    width: 13px;
+    height: 7px;
+    border-left: 2px solid #12806A;
+    border-bottom: 2px solid #12806A;
+    transform: rotate(-45deg);
   }
 
   /* The CSS reset removes list markers; articles need them back. */
