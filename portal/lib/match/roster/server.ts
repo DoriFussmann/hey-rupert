@@ -1,8 +1,10 @@
 import "server-only";
+import { loadTaxonomy } from "@/lib/taxonomy/server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
-import { addedForLandscape, fillAddedFields, labelLists, type FilledFields } from "@/lib/match/added/server";
+import { addedForLandscape, dismissSuggestion, fillAddedFields, fillItems, labelLists, suggestMissingFields, type FilledFields } from "@/lib/match/added/server";
+import type { AiSuggestion, FillItem } from "@/lib/match/added/core";
 import { checkAgainstDatabase, currentLandscape } from "@/lib/match/landscape/server";
 import type { CheckRow } from "@/lib/match/landscape/check";
 import { buildRoster, type Roster, type RosterCounts, type RosterEntry, type ExclusionCheck, type AddedCheck } from "./core.ts";
@@ -20,18 +22,6 @@ function tableError(message: string, code?: string) {
 
 /** What the Roster was built from: a change to any of these shows as "changed since confirmed". */
 export type RosterFacts = { dryListId: string; landscapeId: string | null; dataVersion: string; exclusions: string; step2Skipped: boolean };
-
-/** 3A: an added investor with missing fields, its current values and the choices. */
-export type FillItem = {
-  addedId: string;
-  name: string;
-  kind: "fund" | "angel";
-  website: string;
-  missing: AddedCheck["missing"];
-  stages: string[];
-  geographies: string[];
-  sectors: string[];
-};
 
 export type RosterOptions = { stages: string[]; geographies: string[]; sectors: string[] };
 
@@ -141,22 +131,9 @@ async function draft(supabase: ServiceClient, clientId: string) {
     clientSectors,
     exclusions,
   });
-  const byId = new Map(Object.values(addedFunds).map((f) => [f.id, f]));
-  const fill: FillItem[] = roster.added
-    .filter((a) => a.result === "missing")
-    .map((a) => {
-      const f = byId.get(a.addedId)!;
-      return {
-        addedId: a.addedId,
-        name: a.name,
-        kind: a.kind,
-        website: f?.website ?? "",
-        missing: a.missing,
-        stages: f?.stages ?? [],
-        geographies: f?.geographies ?? [],
-        sectors: [...(f?.industries ?? []), ...(f?.verticals ?? [])],
-      };
-    });
+  // 3A: the added investors still missing a field, with every field shown.
+  const waiting = new Set(roster.added.filter((x) => x.result === "missing").map((x) => x.addedId));
+  const fill: FillItem[] = fillItems(index, Object.values(addedFunds)).filter((x) => waiting.has(x.addedId));
   const lists = labelLists(index);
   return {
     ok: true as const,
@@ -196,13 +173,28 @@ export async function loadRoster(supabase: ServiceClient, clientId: string): Pro
   };
 }
 
-/** 3A: fills in an added investor's missing fields. */
+/** 3A: fills in (or accepts the AI's suggestion for) an added investor's missing fields. */
 export async function fillMissing(supabase: ServiceClient, clientId: string, addedId: string, fields: FilledFields): Promise<Result<null>> {
-  const snapshot = await matchDataSnapshot(supabase, clientId);
-  if (!snapshot.ok) return snapshot;
-  const done = await fillAddedFields(supabase, snapshot.value.index, clientId, addedId, fields);
+  const taxonomy = await loadTaxonomy(supabase);
+  if (!taxonomy.ok) return taxonomy;
+  const done = await fillAddedFields(supabase, taxonomy.value, clientId, addedId, fields);
   return done.ok ? { ok: true, value: null } : done;
 }
+
+/** 3A: Fill missing fields with AI, for a few investors at once. Each failure is reported; the rest go on. */
+export async function suggestMissing(supabase: ServiceClient, clientId: string, addedIds: string[]): Promise<Result<{ done: number; problems: string[] }>> {
+  const taxonomy = await loadTaxonomy(supabase);
+  if (!taxonomy.ok) return taxonomy;
+  const results = await Promise.all(addedIds.map((id) => suggestMissingFields(supabase, taxonomy.value, id, clientId)));
+  const problems = results.filter((r): r is { ok: false; error: string } => !r.ok).map((r) => r.error);
+  return { ok: true, value: { done: results.length - problems.length, problems } };
+}
+
+export async function dismissMissing(supabase: ServiceClient, addedId: string): Promise<Result<null>> {
+  return dismissSuggestion(supabase, addedId);
+}
+
+export type { AiSuggestion };
 
 /** Confirms the Final Roster: recomputed on the server, saved, replacing the current one. */
 export async function confirmRoster(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<SavedRoster>> {
@@ -210,7 +202,6 @@ export async function confirmRoster(supabase: ServiceClient, clientId: string, a
   if (!built.ok) return built;
   if ("blocked" in built) return { ok: false, error: built.blocked! };
   const { roster, facts } = built;
-  if (roster.counts.addedMissing > 0) return { ok: false, error: `Fill in the missing fields first (${roster.counts.addedMissing} to go).` };
   const cleared = await supabase
     .from("final_rosters")
     .update({ cleared_at: new Date().toISOString(), cleared_by: actor })

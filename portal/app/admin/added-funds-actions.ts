@@ -5,8 +5,8 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { editAddedFund, labelLists, listAddedFunds, reviewAddedFund, type AddedEdits, type LabelLists } from "@/lib/match/added/server";
-import type { AddedFund, AddedStatus } from "@/lib/match/added/core";
+import { dismissSuggestion, editAddedFund, fillAddedFields, fillItems, labelLists, listAddedFunds, reviewAddedFund, suggestMissingFields, type AddedEdits, type LabelLists } from "@/lib/match/added/server";
+import type { AddedFund, AddedStatus, FillItem } from "@/lib/match/added/core";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -62,4 +62,50 @@ export async function reviewAdded(id: string, status: AddedStatus, note: string)
   if (!done.ok) return { ok: false, error: done.error };
   revalidatePath("/admin/fund-database");
   return { ok: true, fund: done.value };
+}
+
+/** The added investors (pending or approved, any client) still missing a stage, geography or sector, and the labels to choose from. */
+export async function loadMissingFields(): Promise<Result<{ items: FillItem[]; options: { stages: string[]; geographies: string[]; sectors: string[] } }>> {
+  const a = await access();
+  if (!a.ok) return a;
+  const [funds, taxonomy] = await Promise.all([listAddedFunds(a.supabase), loadTaxonomy(a.supabase)]);
+  if (!funds.ok) return { ok: false, error: funds.error };
+  if (!taxonomy.ok) return { ok: false, error: taxonomy.error };
+  const labels = labelLists(taxonomy.value);
+  return {
+    ok: true,
+    items: fillItems(taxonomy.value, funds.value),
+    options: { stages: labels.stages, geographies: labels.geographies, sectors: [...labels.industries, ...labels.verticals].sort() },
+  };
+}
+
+/** Fill missing fields with AI, for a few investors at once: suggestions only, waiting for Accept. */
+export async function suggestAddedFields(ids: unknown): Promise<Result<{ problems: string[] }>> {
+  const a = await access();
+  if (!a.ok) return a;
+  const list = Array.isArray(ids) ? ids.filter(validId).slice(0, 8) : [];
+  const taxonomy = await loadTaxonomy(a.supabase);
+  if (!taxonomy.ok) return { ok: false, error: taxonomy.error };
+  const results = await Promise.all(list.map((id) => suggestMissingFields(a.supabase, taxonomy.value, id, null)));
+  return { ok: true, problems: results.filter((r): r is { ok: false; error: string } => !r.ok).map((r) => r.error) };
+}
+
+/** Saves (or accepts the AI's suggestion for) an added investor's missing fields. */
+export async function fillAdded(id: string, fields: { stages?: string[]; geographies?: string[]; sectors?: string[] }): Promise<Result<object>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (!validId(id)) return { ok: false, error: "Unknown fund." };
+  const taxonomy = await loadTaxonomy(a.supabase);
+  if (!taxonomy.ok) return { ok: false, error: taxonomy.error };
+  const clean = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string").slice(0, 50) : undefined);
+  const done = await fillAddedFields(a.supabase, taxonomy.value, null, id, { stages: clean(fields?.stages), geographies: clean(fields?.geographies), sectors: clean(fields?.sectors) });
+  return done.ok ? { ok: true } : { ok: false, error: done.error };
+}
+
+export async function dismissAddedSuggestion(id: string): Promise<Result<object>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (!validId(id)) return { ok: false, error: "Unknown fund." };
+  const done = await dismissSuggestion(a.supabase, id);
+  return done.ok ? { ok: true } : { ok: false, error: done.error };
 }

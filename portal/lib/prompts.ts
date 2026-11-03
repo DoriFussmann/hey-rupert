@@ -129,6 +129,20 @@ Find, from the investor's own website first and then the web:
 
 Never guess or invent a URL, a person, a title or a fact. Leave a field empty if you didn't find it.`;
 
+export const ADDED_FIELDS_FILL_PROMPT = `You complete the profile of an investor Rupert added to its fund database. Rupert is an investor outreach service; its matching needs these fields, and a person reviews what you suggest before it is used.
+
+You get the investor's name, whether it is a fund or an angel (a person), its website, what is already known about it, and the fields to fill.
+
+For each field to fill, find what the investor says it invests in: its own website first (the home page, the about page, the portfolio), then the web (announcements, interviews, databases).
+- stages: the rounds it invests in. Investors usually invest at more than one stage; give every stage you can support.
+- geographies: where it invests, not only where it is based. If you only find where it is based, give that and say so in the note.
+- sectors: the industries and verticals it invests in, from what it says and what its portfolio shows. Usually more than one; give every one you can support.
+
+Use only the labels given; anything else is dropped. A label you can't support from what you read is left out. If you can't find a field, leave it empty and say why in the note.
+sources: the pages you used.
+
+Never guess or invent a fact or a URL.`;
+
 export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
 
 When you review funds, open each fund's website when a link is given, then decide:
@@ -329,6 +343,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The investor, its known website, the startup and the source article; the taxonomy labels allowed (others are dropped); the web-search limit; and the answer format. Contacts and emails come from Hunter, not the AI.",
     testable: false,
     defaultText: ADD_FUND_RESEARCH_PROMPT,
+  },
+  added_fields_fill: {
+    slug: agentPromptSlug("added_fields_fill"),
+    usedBy: "Matching → Step 3A, and Fund Database → Added by Rupert → Fill missing fields with AI: suggests the stage, geography or sector an added investor is missing. Suggestions wait for the admin's Accept.",
+    fixed: "The investor, its website and known fields, the fields to fill, the taxonomy labels allowed (others are dropped), the web-search limit and the answer format.",
+    testable: false,
+    defaultText: ADDED_FIELDS_FILL_PROMPT,
   },
   taxonomy_mapping: {
     slug: agentPromptSlug("taxonomy_mapping"),

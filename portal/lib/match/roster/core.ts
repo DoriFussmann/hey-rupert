@@ -4,7 +4,10 @@
 // client's own exclusions, matched strictly. Every entry keeps its source and
 // the competitors it backed.
 
-import type { DryData, DryFund } from "../dry/core.ts";
+import type { DryData } from "../dry/core.ts";
+import { MISSING_LABEL, missingFields, type MissingField } from "../added/core.ts";
+
+export { MISSING_LABEL, missingFields, type MissingField };
 import { firstFailure, indexFirms, matchInvestor, type CheckRow, type DbFirm, type SavedStepChoice } from "../landscape/check.ts";
 
 export type RosterSource = "dry" | "brought_back" | "added";
@@ -26,11 +29,6 @@ export type RosterEntry = {
   addedStatus: "pending" | "approved" | null;
   kind: "fund" | "angel" | null;
 };
-
-/** The Step 1 fields an added investor can be missing. Financing defaults to Equity, so it is never missing. */
-export type MissingField = "stage" | "geography" | "sector";
-
-export const MISSING_LABEL: Record<MissingField, string> = { stage: "Stage", geography: "Geography", sector: "Sector" };
 
 /** An investor added in 2D, as 3A and 3B see it. */
 export type AddedCheck = {
@@ -104,15 +102,6 @@ export function exclusionLines(text: string): string[] {
 function asWebsite(line: string): string {
   const bare = line.trim().toLowerCase().replace(/^https?:\/\//, "").replace(/^www\./, "").replace(/[/?#].*$/, "");
   return /^[a-z0-9-]+(\.[a-z0-9-]+)+$/.test(bare) ? bare : "";
-}
-
-/** The fields Step 1 would find empty for a fund. */
-export function missingFields(fund: DryFund): MissingField[] {
-  const out: MissingField[] = [];
-  if (!fund.stage.length) out.push("stage");
-  if (!fund.geo.length) out.push("geography");
-  if (!fund.sector.length && !fund.generalist) out.push("sector");
-  return out;
 }
 
 export function buildRoster(input: {

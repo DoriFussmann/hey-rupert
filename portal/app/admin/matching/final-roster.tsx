@@ -1,11 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { confirmFinalRoster, fillRosterFields, loadFinalRoster, reopenFinalRoster } from "@/app/admin/roster-actions";
-import { primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
+import { confirmFinalRoster, dismissRosterSuggestion, fillRosterFields, loadFinalRoster, reopenFinalRoster, suggestRosterFields } from "@/app/admin/roster-actions";
+import { MissingFields } from "@/app/admin/matching/missing-fields";
+import { primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/ui";
 import { BigNumber, Card } from "@/app/admin/matching/dry-match";
-import { MISSING_LABEL, SOURCE_LABEL, type AddedCheck, type ExclusionCheck, type MissingField, type RosterCounts, type RosterEntry } from "@/lib/match/roster/core";
-import type { FillItem, RosterOptions, RosterState } from "@/lib/match/roster/server";
+import { SOURCE_LABEL, type AddedCheck, type ExclusionCheck, type RosterCounts, type RosterEntry } from "@/lib/match/roster/core";
+import type { RosterState } from "@/lib/match/roster/server";
 
 const n = (value: number) => value.toLocaleString("en-US");
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -47,6 +48,7 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
         {row("Dry Match (Step 1)", n(counts.dry))}
         {row("Brought back (2C)", `+${n(counts.broughtBack)}`)}
         {row("Added (2D), passing the filters", `+${n(counts.added)}`)}
+        {counts.addedMissing ? row("Added (2D), waiting for missing fields: not counted", n(counts.addedMissing), "text-warning") : null}
         {row("Combined", n(counts.combined))}
         {row("Excluded by the client", `−${n(counts.excluded)}`, "text-error")}
         {row("The Final Roster", n(counts.total), "text-heading", true)}
@@ -120,77 +122,6 @@ function ExclusionTable({ exclusions }: { exclusions: ExclusionCheck[] }) {
   );
 }
 
-/** Chips plus a dropdown to add one more. */
-function ChipPicker({ options, value, onChange, disabled }: { options: string[]; value: string[]; onChange: (v: string[]) => void; disabled: boolean }) {
-  return (
-    <div className="flex flex-wrap items-center gap-xs">
-      {value.map((v) => (
-        <span key={v} className="inline-flex items-center gap-xs rounded-md border border-primary/40 bg-primary-tint/40 px-sm py-[2px] text-body-sm text-heading">
-          {v}
-          <button type="button" aria-label={`Remove ${v}`} disabled={disabled} className="text-muted hover:text-heading" onClick={() => onChange(value.filter((x) => x !== v))}>
-            ×
-          </button>
-        </span>
-      ))}
-      <select
-        className="rounded-md border border-border bg-background px-sm py-[3px] text-body-sm text-body"
-        value=""
-        disabled={disabled}
-        onChange={(e) => e.target.value && onChange([...value, e.target.value])}
-      >
-        <option value="">Add…</option>
-        {options
-          .filter((o) => !value.includes(o))
-          .map((o) => (
-            <option key={o} value={o}>
-              {o}
-            </option>
-          ))}
-      </select>
-    </div>
-  );
-}
-
-const FIELD_KEY: Record<MissingField, "stages" | "geographies" | "sectors"> = { stage: "stages", geography: "geographies", sector: "sectors" };
-
-/** 3A: one added investor with missing fields. */
-function FillRow({ item, options, busy, onSave }: { item: FillItem; options: RosterOptions; busy: boolean; onSave: (fields: Partial<Record<"stages" | "geographies" | "sectors", string[]>>) => void }) {
-  const [picked, setPicked] = useState<Partial<Record<"stages" | "geographies" | "sectors", string[]>>>({});
-  const ready = item.missing.every((m) => (picked[FIELD_KEY[m]] ?? []).length > 0);
-  return (
-    <li className="border-t border-border py-sm">
-      <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <p className="text-body-sm text-heading">
-          {item.name} <span className="text-muted">({item.kind === "angel" ? "angel" : "fund"})</span>
-          {item.website ? (
-            <a className="ml-sm text-primary underline" href={item.website.startsWith("http") ? item.website : `https://${item.website}`} target="_blank" rel="noreferrer noopener">
-              website
-            </a>
-          ) : null}
-        </p>
-        <button type="button" className={smallButton} disabled={busy || !ready} onClick={() => onSave(picked)}>
-          Save
-        </button>
-      </div>
-      <div className="mt-xs space-y-xs">
-        {item.missing.map((m) => {
-          const key = FIELD_KEY[m];
-          const current = item[key];
-          return (
-            <div key={m} className="grid grid-cols-[96px_1fr] items-start gap-sm">
-              <span className="pt-[3px] text-label uppercase tracking-label text-muted">{MISSING_LABEL[m]}</span>
-              <div>
-                <ChipPicker options={options[key]} value={picked[key] ?? []} disabled={busy} onChange={(v) => setPicked({ ...picked, [key]: v })} />
-                {current.length ? <p className="mt-[2px] text-body-sm text-muted">Research said {current.join(", ")}, which the taxonomy doesn&apos;t map.</p> : null}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </li>
-  );
-}
-
 /** Step 3: The Final Roster. */
 export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: string; clientName: string; refreshKey: number }) {
   const [state, setState] = useState<RosterState | null>(null);
@@ -258,10 +189,34 @@ export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: st
     </div>
   );
 
+  const { fill, options } = state;
+  const fillCard = fill.length ? (
+        <Card>
+          <h3 className="text-h4 text-heading">Step 3A: Fill in missing fields</h3>
+          <p className="max-w-prose text-body-sm text-secondary">
+            {n(fill.length)} added {fill.length === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need, so {fill.length === 1 ? "it stays" : "they stay"} off
+            the Roster until filled in. {state.saved ? "The Roster is confirmed without them: once filled, Reopen and confirm again to add them." : "Not a blocker: you can confirm the Roster now, and reopen it once more are filled."}
+          </p>
+          <div className="mt-sm">
+            <MissingFields
+              items={fill}
+              options={options}
+              suggest={(ids) => suggestRosterFields(clientId, ids)}
+              save={(id, fields) => fillRosterFields(clientId, id, fields)}
+              dismiss={(id) => dismissRosterSuggestion(clientId, id)}
+              onChanged={load}
+            />
+          </div>
+          {errorLine}
+        </Card>
+  ) : null;
+
   // Confirmed: the green summary card.
   if (state.saved) {
     const saved = state.saved;
     return (
+      <div className="space-y-md">
+      {fillCard}
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
@@ -289,40 +244,30 @@ export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: st
             Download (CSV)
           </button>
         </div>
-        {errorLine}
+        {fill.length ? null : errorLine}
       </Card>
+      </div>
     );
   }
 
-  const { draft, fill, options } = state;
+  const { draft } = state;
   const c = draft.counts;
   return (
     <div className="space-y-md">
-      {fill.length ? (
-        <Card>
-          <h3 className="text-h4 text-heading">Step 3A: Fill in missing fields</h3>
-          <p className="max-w-prose text-body-sm text-secondary">
-            {n(fill.length)} added {fill.length === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need. Choose the values; nothing is guessed. The Roster
-            can&apos;t be confirmed until these are done.
-          </p>
-          <ul className="mt-sm">
-            {fill.map((item) => (
-              <FillRow key={item.addedId} item={item} options={options} busy={busy !== null} onSave={(fields) => void run(`fill-${item.addedId}`, () => fillRosterFields(clientId, item.addedId, fields))} />
-            ))}
-          </ul>
-          {errorLine}
-        </Card>
-      ) : null}
-
+      {fillCard}
       <Card tone="final">
         <div className="flex flex-wrap items-start justify-between gap-md">
           <BigNumber value={c.total} label="The Final Roster" />
-          <button type="button" className={primaryButton} disabled={busy !== null || c.addedMissing > 0} onClick={() => void run("confirm", () => confirmFinalRoster(clientId))}>
+          <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void run("confirm", () => confirmFinalRoster(clientId))}>
             {busy === "confirm" ? "Saving…" : "Confirm Roster"}
           </button>
         </div>
         {state.facts.step2Skipped ? <p className="text-body-sm text-muted">Step 2 was skipped (no funded competitors): the Roster is the Dry Match minus exclusions.</p> : null}
-        {c.addedMissing > 0 ? <p className="mt-xs text-body-sm text-warning">Fill in the missing fields above first ({n(c.addedMissing)} to go).</p> : null}
+        {c.addedMissing > 0 ? (
+          <p className="mt-xs text-body-sm text-warning">
+            {n(c.addedMissing)} added {c.addedMissing === 1 ? "investor isn't" : "investors aren't"} on the Roster yet: missing fields (Step 3A).
+          </p>
+        ) : null}
         <SummaryTable counts={c} />
         <p className="mt-sm text-body-sm text-muted">
           Added in 2D: {n(c.added)} in, {n(c.addedFailed)} out on the filters{c.addedMissing ? `, ${n(c.addedMissing)} waiting` : ""}. Exclusions: only clear matches count;

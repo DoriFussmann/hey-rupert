@@ -11,6 +11,49 @@ import { domainOf } from "../landscape/check.ts";
 
 export type AddedStatus = "pending" | "approved" | "rejected";
 
+/** The Step 1 fields an added investor can be missing. Financing defaults to Equity, so it is never missing. */
+export type MissingField = "stage" | "geography" | "sector";
+
+export const MISSING_LABEL: Record<MissingField, string> = { stage: "Stage", geography: "Geography", sector: "Sector" };
+
+/** The fields Step 1 would find empty for a fund. */
+export function missingFields(fund: { stage: number[]; geo: number[]; sector: number[]; generalist: boolean }): MissingField[] {
+  const out: MissingField[] = [];
+  if (!fund.stage.length) out.push("stage");
+  if (!fund.geo.length) out.push("geography");
+  if (!fund.sector.length && !fund.generalist) out.push("sector");
+  return out;
+}
+
+/** AI suggestions for the missing fields, waiting for the admin's Accept. */
+export type AiSuggestion = {
+  fields: MissingField[];
+  stages: string[];
+  geographies: string[];
+  sectors: string[];
+  sources: { url: string; label: string }[];
+  note: string;
+  at: string;
+};
+
+/** An added investor with missing fields, as Step 3A and the Fund Database page show it. */
+export type FillItem = {
+  addedId: string;
+  name: string;
+  kind: "fund" | "angel";
+  status: "pending" | "approved";
+  website: string;
+  missing: MissingField[];
+  /** Every field as stored (taxonomy labels), the missing ones included when research found something the taxonomy doesn't map. */
+  stages: string[];
+  geographies: string[];
+  sectors: string[];
+  financing: string[];
+  hqCountry: string;
+  firmType: string;
+  suggestion: AiSuggestion | null;
+};
+
 export type AddedContact = {
   first: string;
   last: string;
@@ -52,6 +95,8 @@ export type AddedFund = {
   reviewedBy: string | null;
   reviewedAt: string | null;
   reviewNote: string;
+  /** AI suggestions for missing fields, waiting for the admin (absent before the migration). */
+  aiSuggestion?: AiSuggestion | null;
 };
 
 export const MAX_ADDED_CONTACTS = 5;

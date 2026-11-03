@@ -3,7 +3,7 @@
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { confirmRoster, fillMissing, loadRoster, reopenRoster, type RosterState } from "@/lib/match/roster/server";
+import { confirmRoster, dismissMissing, fillMissing, loadRoster, reopenRoster, suggestMissing, type RosterState } from "@/lib/match/roster/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -72,4 +72,26 @@ export async function reopenFinalRoster(clientId: string): Promise<Result<{ stat
   } catch (err) {
     return fail(err, "The Final Roster was not reopened.");
   }
+}
+
+const ids = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string" && /^[0-9a-f-]{36}$/i.test(x)).slice(0, 8) : []);
+
+/** 3A: Fill missing fields with AI, for a few investors at once (suggestions only). */
+export async function suggestRosterFields(clientId: string, addedIds: unknown): Promise<Result<{ problems: string[] }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const done = await suggestMissing(a.supabase, a.clientId, ids(addedIds));
+    return done.ok ? { ok: true, problems: done.value.problems } : done;
+  } catch (err) {
+    return fail(err, "The search did not run.");
+  }
+}
+
+export async function dismissRosterSuggestion(clientId: string, addedId: string): Promise<Result<object>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!ids([addedId]).length) return { ok: false, error: "Unknown investor." };
+  const done = await dismissMissing(a.supabase, addedId);
+  return done.ok ? { ok: true } : done;
 }

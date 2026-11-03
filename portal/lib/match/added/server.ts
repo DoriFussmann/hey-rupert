@@ -23,7 +23,12 @@ import {
   type AddedContact,
   type AddedFund,
   type AddedStatus,
+  type AiSuggestion,
+  missingFields,
+  type FillItem,
+  type MissingField,
 } from "./core.ts";
+import { buildDryData } from "@/lib/match/dry/core";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -68,6 +73,7 @@ type Row = {
   reviewed_by: string | null;
   reviewed_at: string | null;
   review_note: string;
+  ai_suggestion?: AiSuggestion | null;
 };
 
 function fromRow(r: Row): AddedFund {
@@ -99,6 +105,7 @@ function fromRow(r: Row): AddedFund {
     reviewedBy: r.reviewed_by,
     reviewedAt: r.reviewed_at,
     reviewNote: r.review_note,
+    aiSuggestion: r.ai_suggestion ?? null,
   };
 }
 
@@ -483,15 +490,16 @@ export async function editAddedFund(supabase: ServiceClient, index: TaxIndex, id
 export type FilledFields = { stages?: string[]; geographies?: string[]; sectors?: string[] };
 
 /**
- * Step 3A: the admin fills in the fields an added investor is missing
- * (stage, geography, sector), pending or approved. Only labels the taxonomy
- * has are kept; a sector goes to industries or verticals by its granularity.
- * Only investors added for this client can be changed here.
+ * Step 3A: fills in the fields an added investor is missing (stage,
+ * geography, sector), pending or approved. Only labels the taxonomy has are
+ * kept; a sector goes to industries or verticals by its granularity. With a
+ * client, only investors added for that client can be changed. Clears the AI
+ * suggestion, which this answers.
  */
 export async function fillAddedFields(
   supabase: ServiceClient,
   index: TaxIndex,
-  clientId: string,
+  clientId: string | null,
   id: string,
   fields: FilledFields,
 ): Promise<Result<AddedFund>> {
@@ -502,21 +510,145 @@ export async function fillAddedFields(
   if (fields.sectors?.length) {
     const industries = onlyLabels(fields.sectors, labels.industries);
     const verticals = onlyLabels(fields.sectors, labels.verticals);
-    if (industries.length) patch.industries = industries;
-    if (verticals.length) patch.verticals = verticals;
+    if (industries.length || verticals.length) {
+      patch.industries = industries;
+      patch.verticals = verticals;
+    }
   }
   const empty = Object.values(patch).every((v) => !(v as string[]).length);
   if (empty) return { ok: false, error: "Choose at least one value." };
-  const { data, error } = await supabase
-    .from("added_funds")
-    .update(patch)
-    .eq("id", id)
-    .eq("found_for_client", clientId)
-    .in("status", ["pending", "approved"])
-    .select("*")
-    .single<Row>();
+  let query = supabase.from("added_funds").update(patch).eq("id", id).in("status", ["pending", "approved"]);
+  if (clientId) query = query.eq("found_for_client", clientId);
+  const { data, error } = await query.select("*").single<Row>();
   if (error) return { ok: false, error: error.code === "PGRST116" ? "That investor wasn't added for this client, or was rejected." : tableError(error.message, error.code) };
-  return { ok: true, value: fromRow(data) };
+  // The suggestion is answered (its own column: never breaks the save before the migration).
+  await supabase.from("added_funds").update({ ai_suggestion: null }).eq("id", id);
+  return { ok: true, value: { ...fromRow(data), aiSuggestion: null } };
+}
+
+/** The fields Step 1 would find empty for an added investor, read through the taxonomy like any fund. */
+export function missingOf(index: TaxIndex, fund: AddedFund): MissingField[] {
+  const firm = toFirm(fund, rawForFn(index));
+  const data = buildDryData({ firms: [firm], contacts: [] } as unknown as FundDb, index, { financing: [], stage: null, hqCountry: null, primarySector: null });
+  return data.funds[0] ? missingFields(data.funds[0]) : [];
+}
+
+/** The added investors (not rejected) with missing fields, for 3A and the Fund Database page. */
+export function fillItems(index: TaxIndex, funds: AddedFund[]): FillItem[] {
+  return funds
+    .filter((f) => f.status !== "rejected")
+    .map((f) => ({ f, missing: missingOf(index, f) }))
+    .filter((x) => x.missing.length)
+    .map(({ f, missing }) => ({
+      addedId: f.id,
+      name: f.name,
+      kind: f.kind,
+      status: f.status as "pending" | "approved",
+      website: f.website,
+      missing,
+      stages: f.stages,
+      geographies: f.geographies,
+      sectors: [...f.industries, ...f.verticals],
+      financing: f.financing,
+      hqCountry: f.hqCountry,
+      firmType: f.firmType,
+      suggestion: f.aiSuggestion ?? null,
+    }));
+}
+
+export const AI_FIELDS_MIGRATION = "The AI-suggestions column is missing. Run portal/supabase/added_fields_ai.sql in the Supabase SQL editor.";
+
+const SUGGEST_TOOL = {
+  name: "submit_fields",
+  description: "Deliver the missing fields you found.",
+  input_schema: {
+    type: "object",
+    properties: {
+      stages: { type: "array", items: { type: "string" } },
+      geographies: { type: "array", items: { type: "string" } },
+      sectors: { type: "array", items: { type: "string" } },
+      sources: {
+        type: "array",
+        items: { type: "object", properties: { url: { type: "string" }, label: { type: "string" } }, required: ["url", "label"] },
+      },
+      note: { type: "string", description: "What you couldn't find, and anything a reviewer should know." },
+    },
+    required: ["stages", "geographies", "sectors", "sources", "note"],
+  },
+};
+
+/**
+ * Fill missing fields with AI, for one added investor: a web search for its
+ * missing fields only, in the taxonomy's labels. Saved as a suggestion that
+ * waits for the admin's Accept; nothing counts until then.
+ */
+export async function suggestMissingFields(supabase: ServiceClient, index: TaxIndex, id: string, clientId: string | null): Promise<Result<AiSuggestion>> {
+  const { data: row, error } = await supabase.from("added_funds").select("*").eq("id", id).maybeSingle<Row>();
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  if (!row || row.status === "rejected" || (clientId && row.found_for_client !== clientId)) return { ok: false, error: "Unknown investor." };
+  if (!("ai_suggestion" in row)) return { ok: false, error: AI_FIELDS_MIGRATION };
+  const fund = fromRow(row);
+  const missing = missingOf(index, fund);
+  if (!missing.length) return { ok: false, error: `${fund.name} has nothing missing.` };
+  const prompt = await loadPrompt(supabase, "added_fields_fill", { clientId: row.found_for_client, purpose: `Fill missing fields: ${fund.name}` });
+  if (!prompt.ok) return { ok: false, error: prompt.error };
+  const labels = labelLists(index);
+  const sectors = [...labels.industries, ...labels.verticals].sort();
+  const word: Record<MissingField, string> = { stage: "stages", geography: "geographies", sector: "sectors" };
+  const known = [
+    fund.stages.length ? `stages: ${fund.stages.join(", ")}` : "",
+    fund.geographies.length ? `geographies: ${fund.geographies.join(", ")}` : "",
+    fund.industries.length || fund.verticals.length ? `sectors: ${[...fund.industries, ...fund.verticals].join(", ")}` : "",
+    fund.hqCountry ? `HQ country: ${fund.hqCountry}` : "",
+    fund.description ? `description: ${fund.description}` : "",
+  ].filter(Boolean);
+  const facts = [
+    `Investor: ${fund.name} (${fund.kind === "angel" ? "an angel, a person" : "a fund"})`,
+    fund.website ? `Website: ${fund.website}` : "Website: not known.",
+    known.length ? `Already known (some may not map to the taxonomy):\n${known.join("\n")}` : "Already known: nothing.",
+    `Fields to fill: ${missing.map((m) => word[m]).join(", ")}`,
+  ].join("\n");
+  const allowed = [
+    missing.includes("stage") ? `stages: ${labels.stages.join(", ")}` : "",
+    missing.includes("geography") ? `geographies: ${labels.geographies.join(", ")}` : "",
+    missing.includes("sector") ? `sectors: ${sectors.join(", ")}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const result = await callClaudeAgent<Record<string, unknown>>({
+    system: promptSystem(prompt.value, "## The investor", facts, "## Labels you may use", allowed),
+    content: [{ type: "text", text: `Find ${fund.name}'s missing fields and deliver them by calling the ${SUGGEST_TOOL.name} tool.` }],
+    tool: SUGGEST_TOOL,
+    serverTools: [webSearchTool(4)],
+    requireServerTools: true,
+    maxTokens: 3000,
+  });
+  if (!result.ok) return { ok: false, error: `${fund.name}: the search did not finish (${result.reason}).` };
+  const r = result.input;
+  const suggestion: AiSuggestion = {
+    fields: missing,
+    stages: missing.includes("stage") ? onlyLabels(r.stages, labels.stages) : [],
+    geographies: missing.includes("geography") ? onlyLabels(r.geographies, labels.geographies) : [],
+    sectors: missing.includes("sector") ? onlyLabels(r.sectors, sectors) : [],
+    sources: (Array.isArray(r.sources) ? r.sources : [])
+      .map((x) => {
+        const v = (x ?? {}) as Record<string, unknown>;
+        return { url: cleanUrl(v.url), label: text(v.label, 120) };
+      })
+      .filter((x) => x.url)
+      .slice(0, 6),
+    note: text(r.note, 600),
+    at: new Date().toISOString(),
+  };
+  const saved = await supabase.from("added_funds").update({ ai_suggestion: suggestion }).eq("id", id);
+  if (saved.error) return { ok: false, error: /ai_suggestion/.test(saved.error.message) ? AI_FIELDS_MIGRATION : saved.error.message };
+  return { ok: true, value: suggestion };
+}
+
+/** Dismiss an AI suggestion without using it. */
+export async function dismissSuggestion(supabase: ServiceClient, id: string): Promise<Result<null>> {
+  const { error } = await supabase.from("added_funds").update({ ai_suggestion: null }).eq("id", id);
+  return error ? { ok: false, error: error.message } : { ok: true, value: null };
 }
 
 /** Approve (joins the shared database for every client), reject, or back to pending. */

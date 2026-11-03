@@ -1,7 +1,9 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { editAdded, loadAddedFunds, reviewAdded, type AddedView } from "@/app/admin/added-funds-actions";
+import { dismissAddedSuggestion, editAdded, fillAdded, loadAddedFunds, loadMissingFields, reviewAdded, suggestAddedFields, type AddedView } from "@/app/admin/added-funds-actions";
+import { MissingFields, type FieldOptions } from "@/app/admin/matching/missing-fields";
+import type { FillItem } from "@/lib/match/added/core";
 import type { AddedStatus } from "@/lib/match/added/core";
 import type { LabelLists } from "@/lib/match/added/server";
 import { inputClass, labelClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
@@ -230,13 +232,19 @@ export function AddedFundsReview() {
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<AddedStatus>("pending");
   const [open, setOpen] = useState<string | null>(null);
+  const [missing, setMissing] = useState<{ items: FillItem[]; options: FieldOptions } | null>(null);
+  const [showMissing, setShowMissing] = useState(false);
+
+  const reload = async () => {
+    const [result, gaps] = await Promise.all([loadAddedFunds(), loadMissingFields()]);
+    if (!result.ok) return setError(result.error);
+    setFunds(result.funds);
+    setLabels(result.labels);
+    if (gaps.ok) setMissing({ items: gaps.items, options: gaps.options });
+  };
 
   useEffect(() => {
-    void loadAddedFunds().then((result) => {
-      if (!result.ok) return setError(result.error);
-      setFunds(result.funds);
-      setLabels(result.labels);
-    });
+    void reload();
   }, []);
 
   if (error) return <p className="text-body-sm text-error">{error}</p>;
@@ -251,6 +259,25 @@ export function AddedFundsReview() {
         Funds and angels Rupert added while researching a client&apos;s competitors. A pending one already counts for the client it was found for;
         approve it to add it to the shared database for every client. Check the details (in the taxonomy&apos;s labels) and the contacts first.
       </p>
+      {missing && missing.items.length ? (
+        <div className="rounded-card border border-warning/40 bg-surface px-md py-sm">
+          <button type="button" className="text-body-sm text-warning underline" aria-expanded={showMissing} onClick={() => setShowMissing(!showMissing)}>
+            {n(missing.items.length)} {missing.items.length === 1 ? "investor is" : "investors are"} missing a stage, geography or sector: {showMissing ? "hide" : "fill them in"}
+          </button>
+          {showMissing ? (
+            <div className="mt-sm">
+              <MissingFields
+                items={missing.items}
+                options={missing.options}
+                suggest={(ids) => suggestAddedFields(ids)}
+                save={(id, fields) => fillAdded(id, fields)}
+                dismiss={(id) => dismissAddedSuggestion(id)}
+                onChanged={reload}
+              />
+            </div>
+          ) : null}
+        </div>
+      ) : null}
       <div className="flex flex-wrap gap-xs">
         {(["pending", "approved", "rejected"] as AddedStatus[]).map((s) => (
           <button key={s} type="button" className={filter === s ? `${smallButton} !border-primary text-heading` : smallButton} onClick={() => setFilter(s)}>
