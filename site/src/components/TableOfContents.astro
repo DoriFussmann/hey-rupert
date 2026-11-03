@@ -1,4 +1,10 @@
 ---
+/**
+ * Article table of contents.
+ * Mobile: one collapsed line above the article ("On this page · N sections").
+ * Desktop (≥1024px): a sticky right rail that highlights the section in view.
+ * Lists H2 sections only; H3 sub-items are left out to keep it short.
+ */
 interface Heading {
   depth: number;
   slug: string;
@@ -10,33 +16,84 @@ interface Props {
 }
 
 const { headings } = Astro.props;
-const toc = headings.filter((heading) => heading.depth === 2 || heading.depth === 3);
-
-let section = 0;
-const items = toc.map((heading) => {
-  if (heading.depth === 2) section += 1;
-  return {
-    ...heading,
-    num: heading.depth === 2 ? String(section).padStart(2, "0") : null,
-  };
-});
+const items = headings.filter((heading) => heading.depth === 2);
 ---
 
 {
   items.length > 0 && (
-    <nav class="toc" aria-label="Table of contents">
-      <p class="type-label">On this page</p>
-      <p class="type-body-sm mt-sm">Jump to a section</p>
-      <ol class="toc-list">
-        {items.map((heading) => (
-          <li class:list={[{ "toc-h3": heading.depth === 3 }]}>
-            <a href={`#${heading.slug}`}>
-              {heading.num && <span class="toc-num">{heading.num}</span>}
-              <span class="toc-text">{heading.text}</span>
-            </a>
-          </li>
-        ))}
-      </ol>
+    <nav class="toc" aria-label="On this page">
+      <details class="toc-details" data-toc>
+        <summary class="toc-summary">
+          <span class="toc-title">On this page</span>
+          <span class="toc-count">{`${items.length} ${items.length === 1 ? "section" : "sections"}`}</span>
+          <svg class="toc-chevron" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+            <path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" />
+          </svg>
+        </summary>
+        <ol class="toc-list">
+          {items.map((heading) => (
+            <li>
+              <a href={`#${heading.slug}`} data-toc-link={heading.slug}>
+                {heading.text}
+              </a>
+            </li>
+          ))}
+        </ol>
+      </details>
     </nav>
   )
 }
+
+<script>
+  const details = document.querySelector<HTMLDetailsElement>("[data-toc]");
+  if (details) {
+    const desktop = window.matchMedia("(min-width: 1024px)");
+    const sync = () => {
+      details.open = desktop.matches;
+    };
+    sync();
+    desktop.addEventListener("change", sync);
+
+    details.querySelectorAll("a").forEach((link) => {
+      link.addEventListener("click", () => {
+        if (!desktop.matches) details.open = false;
+      });
+    });
+
+    const links = new Map<string, HTMLAnchorElement>();
+    details.querySelectorAll<HTMLAnchorElement>("[data-toc-link]").forEach((link) => {
+      links.set(link.dataset.tocLink!, link);
+    });
+    const sections = [...links.keys()]
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+
+    const setActive = () => {
+      const line = 120;
+      let current = sections[0];
+      for (const section of sections) {
+        if (section.getBoundingClientRect().top <= line) current = section;
+        else break;
+      }
+      links.forEach((link, id) => {
+        if (id === current?.id) link.setAttribute("aria-current", "true");
+        else link.removeAttribute("aria-current");
+      });
+    };
+
+    let ticking = false;
+    window.addEventListener(
+      "scroll",
+      () => {
+        if (ticking) return;
+        ticking = true;
+        requestAnimationFrame(() => {
+          setActive();
+          ticking = false;
+        });
+      },
+      { passive: true },
+    );
+    setActive();
+  }
+</script>
