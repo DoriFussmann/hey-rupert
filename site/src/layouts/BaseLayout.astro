@@ -3,8 +3,8 @@ import "@fontsource/inter/latin-300.css";
 import "@fontsource/inter/latin-400.css";
 import "@fontsource/inter/latin-500.css";
 import "../styles/global.css";
-import { abs, orgNode, websiteNode } from "seo-core";
-import { DEFAULT_OG_IMAGE, SITE_IDENTITY, SITE_NAME, SITE_URL } from "../config/site";
+import { abs, orgId, orgNode, websiteNode } from "seo-core";
+import { DEFAULT_OG_IMAGE, ORG_ALTERNATE_NAMES, SITE_IDENTITY, SITE_NAME, SITE_URL } from "../config/site";
 import { ANALYTICS_ID, SEARCH_CONSOLE_VERIFICATION } from "../config/publicEnv";
 import Footer from "../components/Footer.astro";
 import Header from "../components/Header.astro";
@@ -68,12 +68,31 @@ function withoutContext({ "@context": _context, ...node }: JsonLdNode): JsonLdNo
   return node;
 }
 
-const jsonLdDocument = Array.isArray(jsonLd)
+const rawJsonLdDocument = Array.isArray(jsonLd)
   ? {
       "@context": "https://schema.org",
       "@graph": [orgNode(SITE_IDENTITY), websiteNode(SITE_IDENTITY), ...jsonLd.map(withoutContext)],
     }
   : jsonLd;
+
+// Article pages build their graph in seo-core's ArticleLayout, so the
+// alternate names are added here, where both paths meet.
+const ownOrgId = orgId(SITE_URL);
+const withAlternateNames = (node: unknown): unknown => {
+  if (!node || typeof node !== "object") return node;
+  const record = node as Record<string, unknown>;
+  if (record["@type"] === "Organization" && record["@id"] === ownOrgId) {
+    return { ...record, alternateName: ORG_ALTERNATE_NAMES };
+  }
+  return node;
+};
+const jsonLdDocument =
+  rawJsonLdDocument && typeof rawJsonLdDocument === "object" && Array.isArray((rawJsonLdDocument as Record<string, unknown>)["@graph"])
+    ? {
+        ...(rawJsonLdDocument as Record<string, unknown>),
+        "@graph": ((rawJsonLdDocument as Record<string, unknown>)["@graph"] as unknown[]).map(withAlternateNames),
+      }
+    : rawJsonLdDocument;
 ---
 
 <!doctype html>

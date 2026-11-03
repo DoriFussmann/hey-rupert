@@ -1,5 +1,6 @@
 ---
 import { getImage, Image } from "astro:assets";
+import { getEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CtaBanner from "../components/CtaBanner.astro";
 import CaseStack from "../components/CaseStack.astro";
@@ -52,6 +53,26 @@ const clientLogos = [
   }
   return { name: item.name, src: mod.default };
 });
+
+// Linked from the homepage so crawlers reach the main guides in one hop.
+// Titles come from the articles themselves; a missing or draft slug fails the build.
+const guideSlugs = [
+  "how-to-find-investors",
+  "capital-raising-services",
+  "startup-fundraising-consultant",
+  "capital-raising-fees",
+  "how-to-cold-email-investors",
+  "where-to-find-startup-investors-warm-intros-vs-cold-outreach",
+];
+const guides = await Promise.all(
+  guideSlugs.map(async (slug) => {
+    const entry = await getEntry("articles", slug);
+    if (!entry || entry.data.draft === true) {
+      throw new Error(`Homepage guide link points to a missing or draft article: ${slug}`);
+    }
+    return { slug, title: entry.data.title };
+  }),
+);
 
 const title = "Investor Outreach for Startups, Run by Experts | Rupert";
 const description =
@@ -193,9 +214,14 @@ const jsonLd: Record<string, unknown>[] = [
     name: "Expert-Managed Investor Outreach",
     provider: { "@id": orgId(SITE_URL) },
     serviceType: "Investor outreach",
-    description,
+    description: `${description} No success fee or percentage of capital raised.`,
     url: absoluteUrl("/"),
-    areaServed: "Worldwide",
+    areaServed: [
+      { "@type": "Country", name: "United States" },
+      { "@type": "Country", name: "Canada" },
+      { "@type": "Country", name: "United Kingdom" },
+      { "@type": "Country", name: "Ireland" },
+    ],
   },
   {
     "@context": "https://schema.org",
@@ -380,6 +406,45 @@ const jsonLd: Record<string, unknown>[] = [
       </ul>
       <p class="mt-xl">
         <a class="btn-quiet" href={sitePath("/database/")}>How Rupert uses investor research</a>
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule reveal" aria-labelledby="guides-heading">
+      <p class="type-label">Founder Guides</p>
+      <h2 id="guides-heading" class="type-h2 mt-md">
+        How investor outreach works, from finding investors to what it costs.
+      </h2>
+      <ul class="mt-xl">
+        {
+          guides.map((guide) => (
+            <li class="border-b border-border">
+              <a
+                class="flex min-h-11 items-center justify-between gap-md py-md font-medium no-underline"
+                href={sitePath(`/articles/${guide.slug}/`)}
+              >
+                {guide.title}
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14" />
+                  <path d="m12 5 7 7-7 7" />
+                </svg>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-xl">
+        <a class="btn-quiet" href={sitePath("/articles/")}>All articles</a>
       </p>
     </section>
 
