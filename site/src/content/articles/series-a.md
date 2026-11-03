@@ -22,11 +22,15 @@ draft: false
 pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: series a
-updatedDate: 2026-09-18
+updatedDate: "2026-11-03"
 keywords:
   - series a
   - startup funding stages
 faqs:
+  - question: "What is a Series A?"
+    answer: "A Series A is a startup's first major priced equity round, usually led by an institutional venture fund that takes a board seat. In 2026 the median Series A is about $14.4 million (Carta, July 2026), and B2B software companies typically need around $1M–$3M in ARR growing 2x–3x a year to raise one."
+  - question: "How many funds invest at Series A?"
+    answer: "In Rupert's database of more than 10,000 funds, 4,116 say they invest at Series A, and most of them (84% of early-stage funds) also invest at Seed. Far fewer lead Series A rounds in any given sector, so the real work is finding the funds that lead rounds like yours."
   - question: What is the difference between seed and Series A funding?
     answer: Seed rounds typically use SAFEs or convertible notes, involve angel investors or micro-VCs, and carry minimal governance strings. Series A is a priced equity round that introduces preferred stock with liquidation preferences, anti-dilution protections, a formal board seat for the lead investor, and protective provisions that govern major company decisions. The shift is structural, not just a matter of round size — the documents you sign at Series A shape governance for every future round.
   - question: How much equity will I give up at Series A?
@@ -36,6 +40,10 @@ faqs:
   - question: What happens after I close a Series A?
     answer: The capital creates an 18–24 month runway to hit the milestones needed for a strong Series B. In practice, the first 90 days should focus on building the executive team (typically a first VP of Sales, Engineering, or Marketing), establishing board governance with a quarterly meeting cadence, and setting quarterly revenue targets that work backward from Series B benchmarks — generally $8M–$15M ARR with sustained 2x year-over-year growth. The commitments embedded in your Series A pitch become the baseline investors use to price the next round.
 internalLinks:
+  - slug: biggest-venture-capital-firms-in-silicon-valley
+    anchor: "The top Series A investors in Silicon Valley"
+  - slug: early-stage-investor-report
+    anchor: "Early-stage investors in 2026: the Rupert investor report"
   - slug: startup-funding-stages
     anchor: "Startup funding stages, pre-seed to Series C"
   - slug: seed-vs-series-a
@@ -64,6 +72,29 @@ externalLinks:
     addedAt: 2026-10-25
 supportingKeyword: series a
 ---
+## The Short Answer
+
+A **Series A** is a startup's first major priced equity round, usually led by a venture fund that takes a board seat. In 2026 the median Series A is about **$14.4 million** ([Carta](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/)). For B2B software, investors typically look for **$1M–$3M in ARR growing 2x–3x a year** with strong retention; founders usually give up **18%–25%** of the company, and the process takes **four to nine months** from first pitch to money in the bank.
+
+<ul class="glance-grid">
+  <li class="experience-card experience-card--compact">
+    <p class="experience-card__value">$14.4M</p>
+    <p class="type-h4">Median Series A round, July 2026 (Carta)</p>
+  </li>
+  <li class="experience-card experience-card--compact">
+    <p class="experience-card__value">$1M–$3M ARR</p>
+    <p class="type-h4">Typical bar for B2B software, growing 2x–3x a year</p>
+  </li>
+  <li class="experience-card experience-card--compact">
+    <p class="experience-card__value">18%–25%</p>
+    <p class="type-h4">Typical dilution, including the option pool</p>
+  </li>
+  <li class="experience-card experience-card--compact">
+    <p class="experience-card__value">4,116 funds</p>
+    <p class="type-h4">Say they invest at Series A, in Rupert's database</p>
+  </li>
+</ul>
+
 ## What Series A Actually Is — and Why It Matters
 
 Series A is a startup's first major priced equity round. 
@@ -177,7 +208,7 @@ The active Series A fundraising process takes 4–9 months from first pitch to m
  Founders who budget three or four months often hit month five or six with no term sheet and deteriorating runway.
 
 The process breaks into distinct phases. 
-Refine your deck, build your data room, prepare a financial model with 3-year projections, compile customer reference lists, and build a target list of 30 to 50 firms.
+Refine your deck, build your data room, prepare a financial model with 3-year projections, compile customer reference lists, and build a target list of the funds that actually lead Series A rounds in your sector.
  This preparation phase alone takes four to eight weeks when done properly, and skimping on it compounds every subsequent step.
 
 The active outreach phase requires discipline in sequencing. 
@@ -195,14 +226,14 @@ Series A due diligence takes 90–120 days on average, including financial revie
 
 The lead investor is the single most consequential decision in a Series A process. The lead sets price, takes a board seat, and signals quality to every future investor who will price the Series B.
 
-Target 40 to 60 funds that actually lead Series A rounds in your sector. Expect roughly half to take a first meeting with a warm process, 8 to 12 to go deep, and 1 to 3 term sheets.
+Build a complete list of the funds that actually lead Series A rounds in your sector, usually several dozen, and work through it systematically. In Rupert's database, 4,116 funds say they invest at Series A, but only a fraction lead rounds in any given sector, so filtering for leads matters more than the length of the list.
  This targeting logic is more important than most founders appreciate. A warm, personalized introduction to an investor who actively leads deals in your category is dramatically more effective than a broadcast to hundreds of funds. 
-When building your target list, focus on firms that have recent experience in your sector and stage. Review their portfolio for potential conflicts — a firm is unlikely to lead your round if they already back a direct competitor. Warm introductions from existing investors, other founders in the firm's portfolio, or mutual connections convert at 5x to 10x the rate of cold outreach.
+When building your target list, focus on firms that have recent experience in your sector and stage. Review their portfolio for potential conflicts — a firm is unlikely to lead your round if they already back a direct competitor. Warm introductions from existing investors, other founders in the firm's portfolio, or mutual connections convert at a much higher rate than cold outreach.
 
 Quality of targeting matters far more than volume. 
 
  Capital is concentrating, which means reaching the right partner at the right fund with a message that demonstrates genuine fit is the work — not maximizing outreach volume. 
-Warm intros help, but they are not required if your numbers are strong and your outreach is sharp. Many Series A rounds today start with well-crafted cold or semi-warm emails. A relevant, personalized message to an investor who funds your stage beats a generic intro to one who does not.
+Warm intros help, but they are not required if your numbers are strong and your outreach is sharp. Many Series A rounds today start with well-crafted cold or semi-warm emails. A relevant, personalized message to an investor who funds your stage beats a generic intro to one who does not. As Rupert's founder, Dori Fussmann, puts it: "Warm intros are valuable, but they're often difficult to get and nearly impossible to scale. Don't let that become your bottleneck."
 
 The lead investor's value extends well beyond the check. 
 Most Series A companies need to hire their first VP of Engineering, VP of Sales, or VP of Marketing within the first 6 months. These hires are critical because they own the systems and processes that drive scale. Your lead investor's network should be a primary sourcing channel for these roles.
@@ -228,9 +259,9 @@ The capital is deployed to scale product-market fit: growing the team, expanding
 
 Series A is the highest-stakes fundraising process most founders will run. The combination of compressed timelines, institutional diligence, cap table complexity, and the sheer volume of investor conversations makes it genuinely disruptive to a company's day-to-day momentum. Founders who try to run it alone, without a structured pipeline or experienced support, often describe the experience as a second full-time job — one that pulls them off product and team for the worst possible four to nine months.
 
-The practical answer is not to outsource the relationship — every investor interaction, every follow-up, every term sheet conversation belongs to the founder. The answer is to structure the work. Researching the right 40–60 funds, personalizing outreach at scale, maintaining a disciplined pipeline, and tracking where each conversation stands in the process are all tasks that benefit from operational rigor. When that infrastructure is in place and managed by people who have run these processes before, the active raise becomes what it should be: a period of focused investor engagement, not an administrative grind.
+The practical answer is not to outsource the relationship — every investor interaction, every follow-up, every term sheet conversation belongs to the founder. The answer is to structure the work. Researching the right funds, personalizing outreach at scale, maintaining a disciplined pipeline, and tracking where each conversation stands in the process are all tasks that benefit from operational rigor. When that infrastructure is in place and managed by people who have run these processes before, the active raise becomes what it should be: a period of focused investor engagement, not an administrative grind.
 
-Getting the investor targeting, outreach sequencing, and pipeline management right determines whether a raise closes in four months or stretches to nine. [Rupert](/book-call/) provides the experienced operators and complete transparency to run that process without pulling the founder off the product — every conversation, every contact, every investor relationship stays with the founder throughout. In a market where fewer than one in five seed-funded companies reaches Series A, the execution of the fundraising process itself is a competitive advantage.
+Getting the investor targeting, outreach sequencing, and pipeline management right determines whether a raise closes in four months or stretches to nine. Rupert ([how it works](/how-it-works/), [pricing](/pricing/)) provides the experienced operators and complete transparency to run that process without pulling the founder off the product — every conversation, every contact, every investor relationship stays with the founder throughout. In a market where only about one in four seed-funded companies reaches Series A, the execution of the fundraising process itself is a competitive advantage.
 
 ---
 
@@ -238,4 +269,12 @@ Getting the investor targeting, outreach sequencing, and pipeline management rig
 <!-- WHERE-THINGS-STAND:START -->
 Series A remains the hardest round to win in late 2026. Venture funding hit a [record $510 billion in the first half of 2026](https://siliconangle.com/2026/07/02/global-venture-funding-hits-record-510b-first-half-ai-boom-accelerates/), but most of it went to a small number of very large rounds, and only 24% of US startups that raised a $1M+ seed in 2023 have raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). Disciplined preparation, precise targeting and metrics that clear the bar before the process starts matter more than ever.
 <!-- WHERE-THINGS-STAND:END -->
+
+## Key Takeaways
+
+- A Series A is the first major priced equity round; the median in 2026 is about $14.4M, usually led by a venture fund that takes a board seat.
+- For B2B software, the bar is typically $1M–$3M ARR growing 2x–3x a year, with strong retention and efficient growth.
+- Expect 18%–25% dilution including the option pool, and four to nine months from first pitch to money in the bank.
+- Only about one in four companies that raised a seed in 2023 has raised again, so start building investor relationships 12–18 months ahead.
+- 4,116 funds say they invest at Series A, but few lead in any given sector: build a complete list of the funds that lead rounds like yours and work it systematically.
 
