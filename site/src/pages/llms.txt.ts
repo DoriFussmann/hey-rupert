@@ -35,7 +35,7 @@ export const GET: APIRoute = async () => {
         title: "Pricing",
         path: "/pricing/",
         description:
-          "Rupert charges a setup fee (two to four weeks of intake, narrative, messaging and investor matching), then a flat monthly fee. No success fee, no percentage of the raise, no equity. Month to month; cancel at any time.",
+          "Rupert charges a setup fee (two to four weeks of intake, narrative, expert feedback on company materials, messaging and investor matching), then a flat monthly fee from go-live. No success fee, no percentage of the raise, no equity. Month to month; cancel at any time.",
       },
       {
         title: "Book a Free Consultation",

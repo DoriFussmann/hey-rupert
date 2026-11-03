@@ -10,45 +10,65 @@ const title = "Pricing: Flat Fee Investor Outreach, No Success Fee | Rupert";
 const description =
   "Rupert charges a setup fee, then a flat monthly fee. No success fee, no percentage of the raise, no equity. Month to month, cancel at any time.";
 
-const setup = [
+const glance = [
+  { value: "0%", label: "Success fee or share of your raise" },
+  { value: "No equity", label: "Rupert takes no stake in your company" },
+  { value: "2–4 weeks", label: "Setup, ending with your approval" },
+  { value: "Month to month", label: "Flat monthly fee, cancel at any time" },
+];
+
+const setup: { title: string; body: string; sub?: string[] }[] = [
   {
     title: "Understand the company",
-    body: "An intake on the company, the round, traction and what has already been tried, so the work starts from what makes the company fundable.",
+    body: "An intake on the company, the round, traction and what has already been tried.",
   },
   {
     title: "Shape the narrative",
-    body: "The story investors will hear, built around the company's strongest selling points, with the weak spots known in advance.",
+    body: "The story investors will hear, built around the company's strongest selling points.",
+  },
+  {
+    title: "Expert feedback on your materials",
+    body: "A review of your deck and company materials, with the fixes that matter most to investors, ranked.",
   },
   {
     title: "Align on messaging",
-    body: "How the company is presented to each type of investor, agreed with you before anything is written for outreach.",
+    body: "How the company is presented to each type of investor, agreed with you before outreach is written.",
   },
   {
     title: "Match the investors",
-    body: "Three passes over Rupert's investor database: first every fund that fits your stage, sector, geography and type of financing; then your funded competitors and who invested in them; then the funds that look most like those investors.",
+    body: "Three passes over Rupert's investor database:",
+    sub: [
+      "Every fund that fits your stage, sector, geography and type of financing",
+      "Your funded competitors, and who invested in them",
+      "The funds that look most like those investors",
+    ],
   },
   {
     title: "Approve and go live",
-    body: "You review the investor list, the strategy and the messaging. Nothing goes live until you have approved and confirmed it.",
+    body: "You review the investor list, the strategy and the messaging. Nothing goes live until you confirm.",
   },
 ];
 
 const monthly = [
   {
     title: "Outreach from your own inbox",
-    body: "Emails go out from your existing email account, so investors hear from you, not from an agency.",
+    body: "Investors hear from you, not from an agency.",
   },
   {
     title: "Written for the investor",
-    body: "Every critical email is written for the specific investor receiving it. The rest follow the messaging you approved for each investor type.",
+    body: "Every critical email is written for the specific investor receiving it.",
   },
   {
-    title: "Follow-up that keeps going",
-    body: "Sequenced follow-up on a schedule, so conversations don't stall because no one had time to send the second email.",
+    title: "Follow-up on a schedule",
+    body: "Conversations don't stall because no one had time to send the second email.",
   },
   {
     title: "Replies sorted for you",
-    body: "Replies come to your inbox, and Rupert sorts them in your portal so real interest stands out from the noise.",
+    body: "Replies reach your inbox, and your portal shows which ones are real interest.",
+  },
+  {
+    title: "Your relationships",
+    body: "Every investor relationship stays yours, during the engagement and after it.",
   },
 ];
 
@@ -76,7 +96,21 @@ const comparison = [
     pay: "Setup fee, then a flat monthly fee. No percentage of the raise",
     work: "Rupert researches, writes and runs follow-up; you approve the approach",
     owner: "You, from your own inbox",
+    highlight: true,
   },
+];
+
+const fitYes = [
+  "You're raising Pre-Seed, Seed or Series A for a venture-scale company",
+  "You have a credible story and are ready to raise",
+  "You want a disciplined process without losing months to it",
+  "You want to keep every investor relationship yourself",
+];
+
+const fitNo = [
+  "You want guaranteed meetings or funding",
+  "You want high-volume automated sending",
+  "You want someone else to negotiate and close the round",
 ];
 
 const faqs = [
@@ -93,7 +127,7 @@ const faqs = [
   {
     question: "How long does setup take?",
     answer:
-      "Usually two to four weeks: intake, narrative, messaging, and investor matching. Outreach goes live once you have approved and confirmed the investor list, the strategy and the messaging.",
+      "Usually two to four weeks: intake, narrative, expert feedback on your materials, messaging and investor matching. Outreach goes live once you have approved and confirmed the investor list, the strategy and the messaging.",
   },
   {
     question: "Is there a minimum commitment?",
@@ -115,7 +149,7 @@ const jsonLd: Record<string, unknown>[] = [
     serviceType: "Investor outreach",
     url: absoluteUrl("/pricing/"),
     description:
-      "A one-time setup fee (two to four weeks of intake, narrative, messaging and investor matching), then a flat monthly fee for outreach and follow-up. No success fee, no percentage of capital raised, no equity. Month to month; cancel at any time.",
+      "A one-time setup fee (two to four weeks of intake, narrative, expert feedback on company materials, messaging and investor matching), then a flat monthly fee for outreach and follow-up. No success fee, no percentage of capital raised, no equity. Month to month; cancel at any time.",
   },
   {
     "@context": "https://schema.org",
@@ -136,97 +170,100 @@ const jsonLd: Record<string, unknown>[] = [
       <h1 class="type-h1 mt-md">How Rupert charges.</h1>
       <p class="type-body-lg mt-lg max-w-prose">
         A setup fee, then a flat monthly fee. No success fee, no percentage of
-        the raise, no equity. Month to month: cancel at any time.
+        the raise, no equity. Fees depend on the company and the scope of the
+        raise, and you'll know both before you commit.
       </p>
-      <p class="type-body mt-md max-w-prose">
-        Fees depend on the company and the scope of the raise, and you'll know
-        both before you commit. The first step is a free consultation.
-      </p>
-      <p class="mt-xl">
+      <ul class="glance-grid mt-2xl" aria-label="At a glance">
+        {
+          glance.map((item) => (
+            <li class="experience-card experience-card--compact">
+              <p class="experience-card__value">{item.value}</p>
+              <p class="type-h4">{item.label}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-2xl">
         <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
       </p>
     </section>
 
-    <section class="site-wrap section-block rule" aria-labelledby="setup-heading">
-      <p class="type-label">Setup · 2 to 4 weeks</p>
-      <h2 id="setup-heading" class="type-h2 mt-md">What the setup fee covers</h2>
-      <p class="type-body mt-md max-w-prose">
-        Everything that has to be right before the first email goes out. It
-        ends with your approval.
-      </p>
-      <ol class="work-stages">
-        {
-          setup.map((item) => (
-            <li class="work-stage">
-              <h3 class="type-h3">{item.title}</h3>
-              <p class="type-body mt-sm">{item.body}</p>
-            </li>
-          ))
-        }
-      </ol>
-      <p class="type-body mt-lg max-w-prose">
-        Matching runs on <a href={sitePath("/database/")}>Rupert's investor database</a>.
-        See <a href={sitePath("/how-it-works/")}>how it works</a> for the full process.
-      </p>
-    </section>
+    <section class="site-wrap section-block rule" aria-labelledby="plan-heading">
+      <p class="type-label">What you pay for</p>
+      <h2 id="plan-heading" class="type-h2 mt-md">Two parts: setup, then outreach.</h2>
+      <div class="plan-grid mt-2xl">
+        <article class="plan-card" aria-labelledby="setup-title">
+          <p class="plan-card__label">One-time · 2 to 4 weeks</p>
+          <h3 id="setup-title" class="plan-card__title">Setup</h3>
+          <p class="plan-card__lead type-body">
+            Everything that has to be right before the first email goes out.
+          </p>
+          <ol class="plan-steps">
+            {
+              setup.map((item) => (
+                <li>
+                  <p class="plan-item__title">{item.title}</p>
+                  <p class="plan-item__body">{item.body}</p>
+                  {item.sub ? (
+                    <ul class="plan-sub">
+                      {item.sub.map((line) => <li>{line}</li>)}
+                    </ul>
+                  ) : null}
+                </li>
+              ))
+            }
+          </ol>
+          <p class="plan-card__foot">
+            Matching runs on <a href={sitePath("/database/")}>Rupert's investor database</a>.
+          </p>
+        </article>
 
-    <section class="site-wrap section-block rule" aria-labelledby="monthly-heading">
-      <p class="type-label">After go-live · month to month</p>
-      <h2 id="monthly-heading" class="type-h2 mt-md">What the monthly fee covers</h2>
-      <ul class="editorial-grid editorial-grid--2 mt-2xl">
-        {
-          monthly.map((item) => (
-            <li class="editorial-cell">
-              <h3 class="type-h3">{item.title}</h3>
-              <p class="type-body mt-sm">{item.body}</p>
-            </li>
-          ))
-        }
-      </ul>
-    </section>
-
-    <section class="site-wrap section-block rule" aria-labelledby="terms-heading">
-      <h2 id="terms-heading" class="type-h2">The terms, plainly</h2>
-      <ul class="mt-md max-w-prose">
-        <li class="rule py-md type-body"><strong>No success fee.</strong> Nothing is owed on the money you raise, during the engagement or after it.</li>
-        <li class="rule py-md type-body"><strong>No equity.</strong> Rupert takes no stake in your company.</li>
-        <li class="rule py-md type-body"><strong>Month to month.</strong> After setup, cancel at any time.</li>
-        <li class="rule py-md type-body"><strong>Your relationships.</strong> Outreach goes from your inbox, and every investor relationship stays yours.</li>
-      </ul>
+        <article class="plan-card plan-card--plain" aria-labelledby="monthly-title">
+          <p class="plan-card__label">Flat monthly fee · cancel any time</p>
+          <h3 id="monthly-title" class="plan-card__title">Outreach</h3>
+          <p class="plan-card__lead type-body">From go-live, month to month.</p>
+          <ul class="plan-checks">
+            {
+              monthly.map((item) => (
+                <li>
+                  <p class="plan-item__title">{item.title}</p>
+                  <p class="plan-item__body">{item.body}</p>
+                </li>
+              ))
+            }
+          </ul>
+          <p class="plan-card__foot">
+            See <a href={sitePath("/how-it-works/")}>how it works</a> for the full process.
+          </p>
+        </article>
+      </div>
     </section>
 
     <section class="site-wrap section-block rule" aria-labelledby="why-heading">
-      <h2 id="why-heading" class="type-h2">Why a flat fee instead of a success fee</h2>
+      <p class="type-label">Why no success fee</p>
+      <h2 id="why-heading" class="type-h2 mt-md">A success fee pays for the close. A flat fee pays for the work.</h2>
       <p class="type-body mt-md max-w-prose">
-        A success fee pays for the close, not for the work. It rewards whoever
-        moves fastest, at whatever terms, and it keeps costing you long after
-        the engagement ends if there's a tail period. A flat fee pays for the
-        research, the writing and the follow-up, which is what actually decides
-        whether the right investors hear about your company.
+        A success fee rewards whoever moves fastest, at whatever terms, and can
+        keep costing you after the engagement ends if there's a tail period. A
+        flat fee pays for the research, the writing and the follow-up, which is
+        what decides whether the right investors hear about your company. More
+        on <a href={sitePath("/articles/capital-raising-fees/")}>capital raising fees</a>
+        and <a href={sitePath("/articles/capital-raising-advisory-services/")}>advisors vs. brokers</a>.
       </p>
-      <p class="type-body mt-md max-w-prose">
-        For the details of how success fees, retainers and tail periods work,
-        see <a href={sitePath("/articles/capital-raising-fees/")}>capital raising fees explained</a>
-        and <a href={sitePath("/articles/capital-raising-advisory-services/")}>advisory services vs. capital raising brokers</a>.
-      </p>
-    </section>
-
-    <section class="site-wrap section-block rule" aria-labelledby="compare-heading">
-      <h2 id="compare-heading" class="type-h2">How the options compare</h2>
-      <div class="article-body mt-lg">
+      <div class="compare-table mt-2xl">
         <table>
           <thead>
             <tr>
-              <th>Model</th>
-              <th>How you pay</th>
-              <th>Who does the work</th>
-              <th>Who owns the relationships</th>
+              <th scope="col">Model</th>
+              <th scope="col">How you pay</th>
+              <th scope="col">Who does the work</th>
+              <th scope="col">Who owns the relationships</th>
             </tr>
           </thead>
           <tbody>
             {
               comparison.map((row) => (
-                <tr>
+                <tr class={row.highlight ? "is-highlight" : undefined}>
                   <td><strong>{row.model}</strong></td>
                   <td>{row.pay}</td>
                   <td>{row.work}</td>
@@ -240,16 +277,22 @@ const jsonLd: Record<string, unknown>[] = [
     </section>
 
     <section class="site-wrap section-block rule" aria-labelledby="fit-heading">
-      <h2 id="fit-heading" class="type-h2">Who it's for</h2>
-      <p class="type-body mt-md max-w-prose">
-        Founders of venture-scale companies raising Pre-Seed, Seed or Series A,
-        with a credible story and real readiness, who want a disciplined process
-        without losing months to it.
-      </p>
-      <p class="type-body mt-md max-w-prose">
-        It isn't the right fit if you want guaranteed meetings, high-volume
-        automated sending, or someone else to negotiate and close the round.
-      </p>
+      <p class="type-label">Who it's for</p>
+      <h2 id="fit-heading" class="type-h2 mt-md">Built for founders who are ready to raise.</h2>
+      <div class="fit-grid mt-2xl">
+        <div class="plan-card">
+          <p class="plan-card__label">A good fit if</p>
+          <ul class="fit-list">
+            {fitYes.map((line) => <li>{line}</li>)}
+          </ul>
+        </div>
+        <div class="plan-card plan-card--plain">
+          <p class="plan-card__label" style="color: #5C5C5C">Not the right fit if</p>
+          <ul class="fit-list fit-list--no">
+            {fitNo.map((line) => <li>{line}</li>)}
+          </ul>
+        </div>
+      </div>
     </section>
 
     <section class="site-wrap section-block rule" aria-labelledby="faq-heading">
