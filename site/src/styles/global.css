@@ -279,8 +279,9 @@
 
   .site-nav--desktop .btn-primary {
     margin-left: theme("spacing.sm");
-    min-height: 38px;
-    padding: 0 theme("spacing.md");
+    min-height: 32px;
+    padding: 0 14px;
+    line-height: 1;
     font-size: theme("fontSize.body-sm[0]");
   }
 
