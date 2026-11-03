@@ -8,18 +8,41 @@ const title = "Investor Research and Targeting for Your Raise | Rupert";
 const description =
   "Rupert uses investor research to judge fit by thesis, stage, sector, geography, check size and mandate. The database is never sold as a contact list.";
 
-const proofPoints = [
+// Figures from the live Fund Database, November 2026: 7,672 equity funds mapped to the taxonomy
+// (stages and sectors as each firm states them) plus 2,500 debt-only funds held separately.
+const glance = [
+  { value: "10,000+", label: "Funds in the database, equity and debt" },
+  { value: "4,200+", label: "Active at Pre-Seed, Seed or Series A" },
+  { value: "2,500", label: "Debt-only funds, for raises that include debt" },
+  { value: "69", label: "Countries where funds are headquartered" },
+];
+
+const byType = [
+  { label: "Venture capital firms", value: "4,137" },
+  { label: "Private equity firms", value: "3,302" },
+  { label: "Family offices", value: "152" },
+  { label: "Angel groups", value: "81" },
+  { label: "Debt-only funds", value: "2,500" },
+];
+
+const byStage = [
+  { label: "Pre-Seed", value: "923" },
+  { label: "Seed", value: "3,675" },
+  { label: "Series A", value: "4,116" },
+];
+
+const passes = [
   {
-    title: "10,000+ fund offices in the research universe",
-    body: "The starting universe. A campaign uses a smaller list, chosen for this company and this raise.",
+    title: "Match on fit",
+    body: "Every fund in the database is filtered by your stage, sector, geography and type of financing, using a sector map that translates each fund's stated focus into consistent categories.",
   },
   {
-    title: "Thesis, stage, sector, and mandate",
-    body: "Research looks at thesis, stage, sector, geography, check size, and mandate, plus available information about investment activity.",
+    title: "Follow your competitors' money",
+    body: "Your funded competitors are identified, along with every investor in their rounds. Each is checked against the database; funds that aren't there yet are researched and added.",
   },
   {
-    title: "Used inside the managed service",
-    body: "Investors are selected for relevance to the company and the raise. The database is not offered as a download or a self-service list.",
+    title: "Find the look-alikes",
+    body: "The list is then ranked by how closely each fund resembles the investors who backed your competitors, so the strongest fits come first.",
   },
 ];
 
@@ -27,27 +50,26 @@ const faqs = [
   {
     question: "What types of investors does Rupert research?",
     answer:
-      "Venture funds, family offices, and other capital sources. Selection uses thesis, stage, sector, geography, check size, and mandate. The database does not provide a self-service list or a guarantee that an investor will meet or invest.",
+      "Venture capital firms, private equity firms, family offices, angel groups and debt-only funds, with selection based on thesis, stage, sector, geography, check size and mandate. The database is not a self-service list and does not guarantee that an investor will meet or invest.",
   },
   {
     question: "How does Rupert identify relevant investors?",
     answer:
-      "Rupert combines structured investor research with human judgment: mandate, thesis, check size, stage, sector, geography, and available information about investment activity.",
+      "In three passes: funds that fit your stage, sector, geography and financing type; the investors behind your funded competitors; and the funds that most resemble those investors. Human judgment reviews the result, and you approve the list before outreach starts.",
   },
   {
     question: "Can I buy or download Rupert's investor database?",
     answer:
-      "No. The research supports Rupert's managed investor outreach service. It is used to build a target list for a campaign. It is not sold as a self-service list or a database export.",
+      "No. The research supports Rupert's managed investor outreach service and is used to build a target list for a campaign. It is not sold as a self-service list or a database export.",
   },
   {
     question: "Do I approve the investor list and outreach?",
-    answer:
-      "Yes. You review the targeting, the investor list, and the messaging before outreach is sent.",
+    answer: "Yes. You review the targeting, the investor list and the messaging before outreach is sent.",
   },
   {
     question: "How large is Rupert's investor research universe?",
     answer:
-      "Rupert's existing company materials describe a research universe of more than 10,000 fund offices. This refers to the broader research universe, not a guarantee that every fund is active, eligible, or appropriate for a particular raise.",
+      "More than 10,000 funds: more than 7,600 equity funds mapped to Rupert's stage, sector and geography categories (more than 4,200 of them say they invest at Pre-Seed, Seed or Series A), plus 2,500 funds that provide only debt. These figures describe the research universe, not a guarantee that every fund is active, eligible or right for a particular raise.",
   },
 ];
 
@@ -58,73 +80,92 @@ const jsonLd: Record<string, unknown>[] = [
     mainEntity: faqs.map((faq) => ({
       "@type": "Question",
       name: faq.question,
-      acceptedAnswer: {
-        "@type": "Answer",
-        text: faq.answer,
-      },
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
     })),
   },
 ];
 ---
 
-<BaseLayout
-  title={title}
-  description={description}
-  canonicalPath="/database/"
-  jsonLd={jsonLd}
->
+<BaseLayout title={title} description={description} canonicalPath="/database/" jsonLd={jsonLd}>
   <main id="main-content" class="flex-1">
     <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
       <p class="type-label">Our Database</p>
-      <h1 class="type-h1 mt-md">
-        The research behind every Rupert campaign.
-      </h1>
+      <h1 class="type-h1 mt-md">The research behind every Rupert campaign.</h1>
       <p class="type-body-lg mt-lg max-w-prose">
-        The investor database is the research Rupert uses to build a target
-        list for a managed outreach campaign. It is not sold as a self-service
-        list. Research covers venture funds, family offices, and other capital
-        sources, and it is narrowed to investors whose thesis, stage, sector,
-        geography, check size, and mandate fit the company and the raise.
+        Rupert's investor database is the research used to build each client's
+        target list. It's narrowed to investors whose thesis, stage, sector,
+        geography, check size and mandate fit the company and the raise. It is
+        never sold as a contact list.
       </p>
-    </section>
-
-    <section class="site-wrap section-block rule" aria-labelledby="fit-heading">
-      <h2 id="fit-heading" class="type-h2">
-        A research universe built around investor fit
-      </h2>
-      <p class="type-body mt-md max-w-prose">
-        The database records fit. It does not hand over a directory. The points
-        below are how a large research universe becomes a list for one raise.
-      </p>
-      <ul class="editorial-grid editorial-grid--3 mt-2xl">
+      <ul class="glance-grid mt-2xl" aria-label="The database at a glance">
         {
-          proofPoints.map((item) => (
-            <li class="editorial-cell">
-              <h3 class="type-h3">{item.title}</h3>
-              <p class="type-body mt-sm">{item.body}</p>
+          glance.map((item) => (
+            <li class="experience-card experience-card--compact">
+              <p class="experience-card__value">{item.value}</p>
+              <p class="type-h4">{item.label}</p>
             </li>
           ))
         }
       </ul>
+      <p class="mt-md type-body-sm text-muted">
+        Rupert fund database, November 2026: more than 7,600 equity funds mapped to stage, sector (29 industries, 34 verticals) and geography, plus 2,500 debt-only funds. Stages and sectors as each fund states them; stage and country figures cover the mapped funds.
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="inside-heading">
+      <p class="type-label">What's inside</p>
+      <h2 id="inside-heading" class="type-h2 mt-md">Built for early-stage venture, with the wider market around it.</h2>
+      <div class="fit-grid mt-2xl">
+        <div class="plan-card">
+          <p class="plan-card__label">By investor type</p>
+          <ul class="stat-rows">
+            {byType.map((row) => <li><span>{row.label}</span><b>{row.value}</b></li>)}
+          </ul>
+        </div>
+        <div class="plan-card plan-card--plain">
+          <p class="plan-card__label">By stage they invest at</p>
+          <ul class="stat-rows">
+            {byStage.map((row) => <li><span>{row.label}</span><b>{row.value}</b></li>)}
+          </ul>
+          <p class="plan-card__foot">Most funds invest at more than one stage, so the rows overlap.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="passes-heading">
+      <p class="type-label">How a list gets built</p>
+      <h2 id="passes-heading" class="type-h2 mt-md">Three passes, then your approval.</h2>
+      <ol class="step-grid mt-2xl">
+        {
+          passes.map((pass, index) => (
+            <li class="experience-card experience-card--compact">
+              <p class="step-card__step">Pass {index + 1}</p>
+              <p class="experience-card__value">{pass.title}</p>
+              <p class="type-h4">{pass.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="type-body mt-xl max-w-prose">
+        The result is a list chosen for one company and one raise. You review
+        it, along with the strategy and messaging, before a single email goes
+        out. Funds found while researching your competitors are added to the
+        database after review, so it grows with every campaign.
+      </p>
     </section>
 
     <section class="site-wrap section-block rule" aria-labelledby="campaign-heading">
-      <h2 id="campaign-heading" class="type-h2">Built into the campaign</h2>
+      <p class="type-label">Not a contact list</p>
+      <h2 id="campaign-heading" class="type-h2 mt-md">Used inside the campaign, never sold.</h2>
       <p class="type-body mt-md max-w-prose">
-        Rupert uses the research to build your target list, write personalized
-        outreach, and run follow-up. You review and approve the strategy, the
-        list, and the messages before anything is sent.
+        The research supports Rupert's managed service: building your target
+        list, writing outreach for each investor and running follow-up from
+        your own inbox. Investor replies come to you, and the relationships
+        stay yours. The database itself isn't a product you buy or export.
       </p>
-      <p class="type-body mt-md max-w-prose">
-        Investor replies come to you. The relationships stay yours. The research
-        supports that managed service. It is not a product you buy or export.
-      </p>
-      <p class="type-body mt-md max-w-prose">
-        <a href={sitePath("/how-it-works/")}>See how Rupert runs investor outreach</a>,
-        or read about <a href={sitePath("/about/")}>Dori Fussmann</a>, who leads
-        the work.
-        <a href={sitePath("/book-call/")}>Book a free consultation</a> when you
-        are ready to talk through a raise.
+      <p class="mt-xl flex flex-wrap items-center gap-md">
+        <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+        <a class="btn-quiet" href={sitePath("/how-it-works/")}>See how Rupert runs outreach</a>
       </p>
     </section>
 
