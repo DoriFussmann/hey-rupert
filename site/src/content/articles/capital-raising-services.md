@@ -21,6 +21,8 @@ keywords:
   - capital raising services
 draft: false
 internalLinks:
+  - slug: foundersuite-alternatives
+    anchor: "Foundersuite alternatives for managed outreach"
   - slug: startup-fundraising-consultant
     anchor: "Hiring a fundraising consultant"
   - slug: capital-raising-advisory-services
