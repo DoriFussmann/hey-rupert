@@ -31,18 +31,28 @@
       "permanent": true
     },
     {
+      "source": "/login",
+      "destination": "https://hey-rupert-portal.vercel.app/login",
+      "permanent": false
+    },
+    {
+      "source": "/login/",
+      "destination": "https://hey-rupert-portal.vercel.app/login",
+      "permanent": false
+    },
+    {
       "source": "/blog",
-      "destination": "/",
+      "destination": "/articles/",
       "permanent": true
     },
     {
       "source": "/blog/",
-      "destination": "/",
+      "destination": "/articles/",
       "permanent": true
     },
     {
       "source": "/blog/:path*",
-      "destination": "/",
+      "destination": "/articles/",
       "permanent": true
     },
     {
