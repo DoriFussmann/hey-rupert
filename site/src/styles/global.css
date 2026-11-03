@@ -2188,6 +2188,18 @@
     }
   }
 
+  @media (min-width: 1024px) {
+    .glance-grid--3 {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  .article-body > .glance-grid,
+  .article-body > .compare-table {
+    margin: theme("spacing.lg") 0 theme("spacing.xl");
+    padding-left: 0;
+  }
+
   .experience-card--compact {
     padding: 28px 24px;
   }

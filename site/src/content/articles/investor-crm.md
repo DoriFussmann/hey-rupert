@@ -24,6 +24,8 @@ keywords:
   - how to find investors
 draft: false
 internalLinks:
+  - slug: foundersuite-alternatives
+    anchor: "Foundersuite alternatives for managed outreach"
   - slug: how-to-find-investors
     anchor: How to find the right investors
   - slug: investor-list
