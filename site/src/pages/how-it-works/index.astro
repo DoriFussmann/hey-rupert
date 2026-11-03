@@ -12,85 +12,105 @@ const title = "How Rupert Runs Investor Outreach, Step by Step | Rupert";
 const description =
   "Rupert runs investor outreach in three stages: research and targeting, a campaign you approve, and follow-up. You own every investor relationship.";
 
+type Stage = { title: string; body: string; linkHref?: string; linkLabel?: string };
+
 const pillars: {
+  id: string;
   title: string;
+  timing: string;
   summary: string;
   src: ImageMetadata;
   alt: string;
-  stages: {
-    title: string;
-    body: string;
-    linkHref?: string;
-    linkLabel?: string;
-  }[];
+  green: boolean;
+  stages: Stage[];
 }[] = [
   {
+    id: "discovery",
     title: "Discovery & Strategy",
-    summary:
-      "Map the raise and research the investors who fit before a message is written.",
+    timing: "Setup · 2 to 4 weeks",
+    summary: "Understand the company, shape the story, and find the investors who fit before a message is written.",
     src: howItWorks1,
     alt: "Two people in conversation across a table, a notebook open between them",
+    green: true,
     stages: [
       {
-        title: "Understand the Raise",
-        body: "It starts with a direct conversation with Dori: the company, the story, the round, traction, and what has already been tried. The point is to see what makes the company fundable and where investor outreach should concentrate.",
+        title: "Understand the raise",
+        body: "A direct conversation with Dori: the company, the round, traction, and what has already been tried, to see what makes the company fundable.",
         linkHref: "/about/",
         linkLabel: "Dori",
       },
       {
-        title: "Build the Investor Universe",
-        body: "Rupert builds a target list from its proprietary investor database, filtered by thesis, stage, sector, geography, check size, and mandate. Names are chosen for fit with this company and this raise.",
-        linkHref: "/database/",
-        linkLabel: "proprietary investor database",
+        title: "Shape the narrative",
+        body: "A company brief and the story investors will hear, built around the company's strongest selling points.",
       },
       {
-        title: "Develop the Strategy",
-        body: "Positioning, investor segments, and messaging are set around the company and the raise before any outreach is written. A seed-stage fund and a family office are different conversations, and the strategy treats them that way.",
+        title: "Expert feedback on your materials",
+        body: "A review of the deck and company materials, with the fixes that matter most to investors, ranked.",
+      },
+      {
+        title: "Build the investor list",
+        body: "Three passes over Rupert's investor database: funds that fit your stage, sector and geography; the investors behind your funded competitors; and the funds that look most like them.",
+        linkHref: "/database/",
+        linkLabel: "Rupert's investor database",
+      },
+      {
+        title: "Set the strategy and messaging",
+        body: "Investor segments, positioning and messaging for each type of investor. A seed fund and a family office are different conversations.",
       },
     ],
   },
   {
+    id: "launch",
     title: "Campaign Launch",
-    summary:
-      "Write personalized outreach, get your approval, then run the campaign and the follow-up.",
+    timing: "From go-live",
+    summary: "Write outreach for each investor, get your approval, then send from your own inbox and keep following up.",
     src: howItWorks2,
     alt: "A printed investor outreach list on a desk, a few names already marked",
+    green: false,
     stages: [
       {
-        title: "Craft the Outreach",
-        body: "Messages are written for your company and tailored to each investor audience: the proof points and the follow-ups that match how that investor decides. This is not one sequence with the company name swapped in.",
+        title: "Craft the outreach",
+        body: "Every critical email is written for the specific investor: the proof points and follow-ups that match how that investor decides. Not one sequence with the name swapped in.",
       },
       {
-        title: "Review & Approve",
-        body: "You review the strategy, the target list, and the messaging before anything is sent. Nothing goes out without your approval. Rupert does the work; you decide how the company is presented.",
+        title: "Review and approve",
+        body: "You review the strategy, the investor list and the messaging. Nothing goes out without your approval. Rupert does the work; you decide how the company is presented.",
       },
       {
-        title: "Launch & Follow Up",
-        body: "Once you approve it, Rupert runs the campaign and the follow-up. Sequencing and timing sit with Rupert. Replies come to you, and the investor relationships stay yours.",
+        title: "Launch and follow up",
+        body: "Outreach goes from your own inbox, in waves, with follow-up on a schedule. Sequencing and timing sit with Rupert.",
       },
     ],
   },
   {
+    id: "meetings",
     title: "Meetings & Momentum",
-    summary:
-      "Turn replies into the right conversations. You own every investor relationship.",
+    timing: "While the round is open",
+    summary: "Turn replies into the right conversations. Every investor relationship stays yours.",
     src: howItWorks5,
     alt: "Two people at a small table with papers, in a working conversation",
+    green: false,
     stages: [
       {
-        title: "Qualify the Interest",
-        body: "Every response is visible to you. Rupert helps sort real interest from noise so time goes to the conversations that fit the raise.",
+        title: "Qualify the interest",
+        body: "Every reply is visible to you. Rupert sorts real interest from noise in your portal, so your time goes to the conversations that fit the raise.",
       },
       {
-        title: "Prepare for Meetings",
-        body: "When a meeting is worth taking, the story is sharpened for that investor: likely questions, the proof points that matter, and what their mandate suggests they will ask.",
+        title: "Prepare for meetings",
+        body: "When a meeting is worth taking, the story is sharpened for that investor: likely questions, the proof points that matter, what their mandate suggests they'll ask.",
       },
       {
-        title: "Manage the Process",
-        body: "Rupert stays on follow-ups and next steps so the process keeps moving. Investor relationships remain yours. Dori can help manage the process without sitting between you and the investor.",
+        title: "Keep the process moving",
+        body: "Rupert stays on follow-ups and next steps. Dori can help manage the process without sitting between you and the investor.",
       },
     ],
   },
+];
+
+const promises = [
+  { value: "You approve", label: "The list and messaging, before anything goes out" },
+  { value: "Your inbox", label: "Outreach is sent in your name, from your email" },
+  { value: "Your relationships", label: "Every investor conversation stays yours" },
 ];
 ---
 
@@ -100,66 +120,83 @@ const pillars: {
       <p class="type-label">How it works</p>
       <h1 class="type-h1 mt-md">How Rupert runs investor outreach.</h1>
       <p class="type-body-lg mt-lg max-w-prose">
-        Three stages: investor research and targeting, personalized outreach you
-        approve, and follow-up. You own every investor relationship.
+        Three stages: research and strategy, a campaign you approve, and the
+        conversations that follow. You own every investor relationship.
       </p>
+      <ol class="step-grid mt-2xl">
+        {
+          pillars.map((pillar, index) => (
+            <li>
+              <a class="experience-card experience-card--compact step-card" href={`#${pillar.id}`}>
+                <p class="step-card__step">Step {index + 1} · {pillar.timing}</p>
+                <p class="experience-card__value">{pillar.title}</p>
+                <p class="type-h4">{pillar.summary}</p>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
     </section>
 
     {
       pillars.map((pillar, index) => (
-        <section
-          class="site-wrap work-pillar section-block rule"
-          aria-labelledby={`pillar-${index + 1}`}
-        >
-          <div class="work-pillar__intro">
-            <div>
-              <p class="step-script">Step {index + 1}</p>
-              <h2 id={`pillar-${index + 1}`} class="type-h2 mt-md">
-                {pillar.title}
-              </h2>
-              <p class="type-body-lg mt-md max-w-prose">{pillar.summary}</p>
-            </div>
-            <div class="media-frame">
+        <section id={pillar.id} class="site-wrap section-block rule pillar" aria-labelledby={`pillar-${index + 1}`}>
+          <div class="pillar__intro">
+            <p class="step-script">Step {index + 1}</p>
+            <h2 id={`pillar-${index + 1}`} class="type-h2 mt-md">{pillar.title}</h2>
+            <p class="type-body-lg mt-md max-w-prose">{pillar.summary}</p>
+            <div class="media-frame mt-xl">
               <Image
                 class="photo"
                 src={pillar.src}
                 alt={pillar.alt}
                 widths={[640, 960, 1280]}
-                sizes="(min-width: 768px) 40vw, 92vw"
+                sizes="(min-width: 900px) 40vw, 92vw"
               />
             </div>
           </div>
-          <ol class="work-stages">
-            {pillar.stages.map((stage) => {
-              const linkAt =
-                stage.linkHref && stage.linkLabel
-                  ? stage.body.indexOf(stage.linkLabel)
-                  : -1;
-              return (
-                <li class="work-stage">
-                  <h3 class="type-h3">{stage.title}</h3>
-                  <p class="type-body mt-sm">
-                    {linkAt >= 0 && stage.linkHref && stage.linkLabel ? (
-                      <>
-                        {stage.body.slice(0, linkAt)}
-                        <a href={sitePath(stage.linkHref)}>{stage.linkLabel}</a>
-                        {stage.body.slice(linkAt + stage.linkLabel.length)}
-                      </>
-                    ) : (
-                      stage.body
-                    )}
-                  </p>
-                </li>
-              );
-            })}
-          </ol>
+          <div class:list={["plan-card", { "plan-card--plain": !pillar.green }]}>
+            <p class="plan-card__label">{pillar.timing}</p>
+            <ol class="plan-steps">
+              {pillar.stages.map((stage) => {
+                const linkAt = stage.linkHref && stage.linkLabel ? stage.body.indexOf(stage.linkLabel) : -1;
+                return (
+                  <li>
+                    <p class="plan-item__title">{stage.title}</p>
+                    <p class="plan-item__body">
+                      {linkAt >= 0 && stage.linkHref && stage.linkLabel ? (
+                        <>{stage.body.slice(0, linkAt)}<a href={sitePath(stage.linkHref)}>{stage.linkLabel}</a>{stage.body.slice(linkAt + stage.linkLabel.length)}</>
+                      ) : (
+                        stage.body
+                      )}
+                    </p>
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
         </section>
       ))
     }
 
-    <p class="site-wrap pb-2xl">
-      <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
-    </p>
+    <section class="site-wrap section-block rule" aria-labelledby="promises-heading">
+      <p class="type-label">Throughout</p>
+      <h2 id="promises-heading" class="type-h2 mt-md">What stays with you.</h2>
+      <ul class="glance-grid glance-grid--3 mt-2xl">
+        {
+          promises.map((item) => (
+            <li class="experience-card experience-card--compact">
+              <p class="experience-card__value">{item.value}</p>
+              <p class="type-h4">{item.label}</p>
+            </li>
+          ))
+        }
+      </ul>
+      <p class="mt-2xl flex flex-wrap items-center gap-md">
+        <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+        <a class="btn-quiet" href={sitePath("/pricing/")}>See how Rupert charges</a>
+      </p>
+    </section>
   </main>
   <CtaBanner />
 </BaseLayout>
