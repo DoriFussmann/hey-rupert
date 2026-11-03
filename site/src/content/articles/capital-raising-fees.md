@@ -3,7 +3,7 @@ title: "Capital Raising Fees Explained: What Founders Actually Pay"
 description: "Received a capital raising proposal? Plain-English answers on success fees, retainer credits, tail periods, and what you can negotiate before signing."
 slug: capital-raising-fees
 date: "2026-09-29"
-updatedDate: "2026-09-29"
+updatedDate: "2026-11-03"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -29,6 +29,10 @@ internalLinks:
     anchor: "Hiring a fundraising consultant"
   - slug: capital-raising-advisory-services
     anchor: "Advisors vs. broker-dealers for capital raising"
+  - slug: best-investor-outreach-services
+    anchor: "The best investor outreach services and tools"
+  - slug: foundersuite-alternatives
+    anchor: "Foundersuite alternatives for managed outreach"
 
 externalLinks:
   - label: "Axial: 2026 M&A Fee Guide"
@@ -38,6 +42,10 @@ externalLinks:
     url: "https://www.sec.gov/reportspubs/investor-publications/divisionsmarketregbdguidehtm.html"
     addedAt: 2026-10-25
 faqs:
+  - question: "How much do capital raising services charge?"
+    answer: "Advisors and placement agents on Seed to Series A rounds typically charge a success fee of 3% to 6% of capital raised (4% to 6% is most common at Series A), often on top of a monthly retainer of about $5,000 to $15,000, with a tail period of 12 to 24 months. Flat-fee outreach services charge a setup fee and a monthly fee with no percentage of the raise, and fundraising software costs from nothing to a few hundred dollars a month."
+  - question: "Do all capital raising services charge a success fee?"
+    answer: "No. Success fees are standard among placement agents and many advisors, but a growing group of outreach and advisory services charge flat fees instead: a setup fee or retainer and a monthly fee, with nothing tied to the size of the round. Rupert, for example, charges a setup fee and a flat monthly fee, with no success fee, no percentage and no equity."
   - question: "Can I negotiate the success fee percentage with a capital raising advisor?"
     answer: "Yes. Success fee percentages, retainer amounts, retainer credits, tail period length, and carve-out lists are all negotiable in most engagement letters. The goal is not simply to drive the percentage as low as possible — a misaligned fee structure that pays the advisor for activity rather than outcomes is worse than a slightly higher percentage on a well-structured deal. Focus on whether retainer payments credit against the success fee at close, how long the tail runs, and which investors are explicitly excluded."
   - question: "What happens to my investor relationships when the engagement ends?"
@@ -46,6 +54,21 @@ faqs:
     answer: "Not necessarily. A success-fee-only model shifts upfront cost risk to the advisor, but it also changes incentives: advisors working without a retainer have less financial reason to invest time in careful investor targeting and personalized outreach. The more important question is whether the advisor's economics are genuinely aligned with closing — which depends on the full structure of the engagement, not just whether a retainer exists."
   - question: "What is a tail period and why does it matter?"
     answer: "A tail period is the window after an engagement ends during which the advisor can still earn a success fee if you close capital from an investor they introduced. Tails typically run 12 to 24 months. A long tail with a broad covered-party definition can restrict your ability to raise independently long after the engagement is over. Negotiate the shortest tail you can, get a named exclusion list for existing relationships, and make sure the contract specifies exactly what qualifies as an introduction for fee purposes."
+---
+
+## The Short Answer
+
+For Seed to Series A rounds, capital raising advisors typically charge a **success fee of 3% to 6%** of the money raised, often on top of a **monthly retainer of about $5,000 to $15,000**, with a **tail period of 12 to 24 months** during which the fee still applies. Flat-fee services charge for the work instead, with no percentage of the raise, so compare the full structure, not just the percentage.
+
+| Fee model | How you pay | Typical range (Seed–Series A) | Watch for |
+|---|---|---|---|
+| Success fee only | A percentage of capital raised, at close | 3%–6% (4%–6% common at Series A) | Tail period, minimum fee, which capital counts |
+| Retainer plus success fee | Monthly retainer, then a percentage at close | Retainer about $5K–$15K/month plus 3%–6% | Whether the retainer is credited against the success fee |
+| Flat fee | Setup fee and/or monthly fee; nothing tied to the raise | Varies; published examples about $5K–$10K/month | What's included, minimum term |
+| Software | Subscription; you do the work | Free to a few hundred dollars a month | Your time |
+
+*Ranges from the sources cited in this article and providers' published pricing, November 2026. See our [comparison of investor outreach services](/articles/best-investor-outreach-services/) for named examples.*
+
 ---
 
 ## What Is a Capital Raising Fee, and Why Does the Structure Matter More Than the Percentage?
@@ -136,10 +159,21 @@ Fee math matters, but it is not the most expensive variable in a capital raising
 Advisors who do not screen for mandate fit, check size, and sector alignment before outreach are optimizing for volume, not conversion — and sending your materials to every investor on a list is not targeting.
  Bulk, impersonal outreach to investors you may want to approach again — at this round or a later one — damages your standing with exactly the people you need to be selective with. A VC who receives a mass email pitch from a founder they have never heard of does not think less of the advisor; they think less of the founder.
 
-Top [fundraising consultants](/articles/startup-fundraising-consultant/) can increase success rates by 30–50% and reduce fundraising time by 40–60%, often generating 3–10x ROI through faster closing, better terms, and higher valuations.
- The inverse is also true: a poor-quality service that burns your investor list, generates lukewarm meetings that never convert, and leaves you with a depleted pipeline and a damaged reputation has a real cost that dwarfs whatever retainer you paid.
+A poor-quality service that burns your investor list, generates lukewarm meetings that never convert, and leaves you with a depleted pipeline and a damaged reputation has a real cost that dwarfs whatever retainer you paid.
 
 The test of a capital raising service is not whether it can send emails. It is whether the people running the process understand which investors are genuinely likely to fund a company at your stage and sector, can articulate why, and have a track record of personalized, researched outreach that produces competitive term sheet dynamics rather than one-at-a-time exploratory conversations.
+
+---
+
+## The Flat-Fee Alternative
+
+Not every service ties its pay to your raise. Some outreach and advisory services charge a setup fee and a flat monthly fee instead, with no success fee and no tail. The trade-off is simple: you pay for the work whether or not the round closes, and in exchange nothing is owed on the money you raise, during the engagement or after it.
+
+Rupert's founder, Dori Fussmann, came to this model from investment banking:
+
+"I know success fees well; they're standard in banking. But investor outreach is a different professional service. We're responsible for identifying the right investors, matching, organizing and running the outreach. We're not the company, the product or the founders, and we don't control whether investors like the business or whether the valuation works. There's also proportionality: a company raises a few million dollars, and a success fee for outreach can run to tens of thousands. That doesn't reflect the work involved. So we charge for the work, the expertise and the execution. The outcome belongs to the company."
+
+If you're weighing the two models, compare the all-in cost at your expected raise size, and remember that a success fee keeps applying through the tail. Rupert's [pricing page](/pricing/) shows how one flat-fee model works.
 
 ---
 
@@ -153,7 +187,7 @@ Before signing any capital raising proposal, work through the following question
 
 **On transparency:** Will you have visibility into every investor conversation, every outreach sequence, and every response? Do the investor relationships and contact history belong to you at the end of the engagement, regardless of outcome?
 
-Most founders focus on the success fee percentage. The real risks are in the clauses around exclusivity, termination rights, tail periods, and retainer credits — because those terms determine how much flexibility you keep during the process and what you owe if it does not close. For comparison, [Rupert](/book-call/) does not take a percentage of the capital raised.
+Most founders focus on the success fee percentage. The real risks are in the clauses around exclusivity, termination rights, tail periods, and retainer credits — because those terms determine how much flexibility you keep during the process and what you owe if it does not close. For comparison, Rupert does not take a percentage of the capital raised; [see how it charges](/pricing/).
 
 ---
 
@@ -168,4 +202,5 @@ Fee structures for capital raising have not shifted materially this year: retain
 - The most important retainer question is not the monthly amount but whether those payments are credited against the success fee at close; without that credit, founders effectively pay twice.
 - Finder's fees paid to unregistered individuals for investor introductions carry real legal risk in the US — no general federal finder exemption exists as of 2026, and both parties can face SEC enforcement exposure if transaction-based compensation is involved.
 - Tail periods of 12–24 months are standard, but founders should negotiate a shorter tail, a named exclusion list for pre-existing relationships, and precise language defining what constitutes an "introduction" for fee purposes.
+- Flat-fee services are an alternative: a setup fee and monthly fee with no percentage of the raise and no tail, in exchange for paying whether or not the round closes.
 - The real cost of a poor capital raising service is not the fee paid — it is the reputational damage from bulk, impersonal investor outreach that poisons relationships the founder may need again at this round or the next.
