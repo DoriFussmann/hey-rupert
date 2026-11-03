@@ -3,6 +3,18 @@ import { Image } from "astro:assets";
 import { PORTAL_LOGIN_URL, SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
 import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
+
+// Primary pages, in the order a founder would read them. About covers Dori and the team.
+const links = [
+  { href: "/how-it-works/", label: "How It Works" },
+  { href: "/pricing/", label: "Pricing" },
+  { href: "/database/", label: "Our Database" },
+  { href: "/articles/", label: "Articles" },
+  { href: "/about/", label: "About" },
+];
+
+const current = Astro.url.pathname;
+const isCurrent = (href: string) => current === href || (href !== "/" && current.startsWith(href));
 ---
 
 <header class="site-header">
@@ -17,10 +29,38 @@ import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
         loading="eager"
       />
     </a>
-    <div class="site-nav">
-      <a class="nav-link" href={sitePath("/pricing/")}>Pricing</a>
-      <a class="nav-link" href={sitePath("/articles/")}>Articles</a>
+
+    <div class="site-nav site-nav--desktop">
+      {
+        links.map((link) => (
+          <a class="nav-link" href={sitePath(link.href)} aria-current={isCurrent(link.href) ? "page" : undefined}>
+            {link.label}
+          </a>
+        ))
+      }
       <a class="nav-link" href={PORTAL_LOGIN_URL}>Login</a>
+      <a class="btn-primary btn-primary--sm" href={sitePath("/book-call/")}>Book a Free Consultation</a>
     </div>
+
+    <details class="site-menu">
+      <summary class="site-menu__toggle" aria-label="Menu">
+        <span class="site-menu__label">Menu</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+          <path class="site-menu__bars" d="M4 7h16M4 12h16M4 17h16"></path>
+          <path class="site-menu__close" d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </summary>
+      <div class="site-menu__panel">
+        {
+          links.map((link) => (
+            <a class="site-menu__link" href={sitePath(link.href)} aria-current={isCurrent(link.href) ? "page" : undefined}>
+              {link.label}
+            </a>
+          ))
+        }
+        <a class="site-menu__link" href={PORTAL_LOGIN_URL}>Login</a>
+        <a class="btn-primary site-menu__cta" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+      </div>
+    </details>
   </nav>
 </header>

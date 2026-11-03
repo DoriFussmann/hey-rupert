@@ -264,12 +264,109 @@
     gap: theme("spacing.md");
   }
 
-  /* Two links only (Articles, Login): shown inline at every width, no menu toggle. */
+  /* Desktop: links inline with Login and the consultation button. Below 1024px: the Menu toggle. */
   .site-nav {
     display: flex;
     flex-direction: row;
     align-items: center;
     justify-content: flex-end;
+  }
+
+  .site-nav--desktop {
+    display: none;
+    gap: 2px;
+  }
+
+  .site-nav--desktop .btn-primary {
+    margin-left: theme("spacing.sm");
+  }
+
+  .nav-link[aria-current="page"] {
+    color: theme("colors.heading");
+    text-decoration: underline;
+    text-decoration-color: theme("colors.accent");
+    text-underline-offset: 6px;
+    text-decoration-thickness: 1px;
+  }
+
+  .btn-primary--sm {
+    min-height: 40px;
+    padding: 0 theme("spacing.md");
+    font-size: theme("fontSize.body-sm[0]");
+  }
+
+  .site-menu {
+    position: static;
+  }
+
+  .site-menu__toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+    padding: 0 theme("spacing.sm");
+    cursor: pointer;
+    list-style: none;
+    color: theme("colors.foreground");
+    font-size: theme("fontSize.body[0]");
+  }
+
+  .site-menu__toggle::-webkit-details-marker {
+    display: none;
+  }
+
+  .site-menu__close {
+    display: none;
+  }
+
+  .site-menu[open] .site-menu__bars {
+    display: none;
+  }
+
+  .site-menu[open] .site-menu__close {
+    display: inline;
+  }
+
+  .site-menu__panel {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: theme("spacing.sm") theme("spacing.md") theme("spacing.lg");
+    background: theme("colors.background");
+    border-bottom: 1px solid theme("colors.border");
+    box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  }
+
+  .site-menu__link {
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    border-bottom: 1px solid theme("colors.border");
+    color: theme("colors.foreground");
+    font-size: theme("fontSize.body-lg[0]");
+    text-decoration: none;
+  }
+
+  .site-menu__link[aria-current="page"] {
+    color: theme("colors.heading");
+    font-weight: 500;
+  }
+
+  .site-menu__cta {
+    margin-top: theme("spacing.md");
+  }
+
+  @media (min-width: 1024px) {
+    .site-nav--desktop {
+      display: flex;
+    }
+
+    .site-menu {
+      display: none;
+    }
   }
 
   .nav-link {
