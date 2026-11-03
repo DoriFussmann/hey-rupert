@@ -1,0 +1,260 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
+import FaqBlock from "../../components/FaqBlock.astro";
+import { orgId } from "seo-core";
+import { SITE_URL } from "../../config/site";
+import { absoluteUrl, sitePath } from "../../lib/url";
+
+const title = "Pricing: Flat Fee Investor Outreach, No Success Fee | Rupert";
+const description =
+  "Rupert charges a setup fee, then a flat monthly fee. No success fee, no percentage of the raise, no equity. Month to month, cancel at any time.";
+
+const setup = [
+  {
+    title: "Understand the company",
+    body: "An intake on the company, the round, traction and what has already been tried, so the work starts from what makes the company fundable.",
+  },
+  {
+    title: "Shape the narrative",
+    body: "The story investors will hear, built around the company's strongest selling points, with the weak spots known in advance.",
+  },
+  {
+    title: "Align on messaging",
+    body: "How the company is presented to each type of investor, agreed with you before anything is written for outreach.",
+  },
+  {
+    title: "Match the investors",
+    body: "Three passes over Rupert's investor database: first every fund that fits your stage, sector, geography and type of financing; then your funded competitors and who invested in them; then the funds that look most like those investors.",
+  },
+  {
+    title: "Approve and go live",
+    body: "You review the investor list, the strategy and the messaging. Nothing goes live until you have approved and confirmed it.",
+  },
+];
+
+const monthly = [
+  {
+    title: "Outreach from your own inbox",
+    body: "Emails go out from your existing email account, so investors hear from you, not from an agency.",
+  },
+  {
+    title: "Written for the investor",
+    body: "Every critical email is written for the specific investor receiving it. The rest follow the messaging you approved for each investor type.",
+  },
+  {
+    title: "Follow-up that keeps going",
+    body: "Sequenced follow-up on a schedule, so conversations don't stall because no one had time to send the second email.",
+  },
+  {
+    title: "Replies sorted for you",
+    body: "Replies come to your inbox, and Rupert sorts them in your portal so real interest stands out from the noise.",
+  },
+];
+
+const comparison = [
+  {
+    model: "Success-fee advisor or placement agent",
+    pay: "Often a retainer plus a percentage of the capital raised",
+    work: "Advisor runs outreach, often under their own name",
+    owner: "Often routed through the advisor",
+  },
+  {
+    model: "Fundraising consultant on retainer",
+    pay: "Monthly or project fee",
+    work: "Advice and materials; you run most of the outreach",
+    owner: "You",
+  },
+  {
+    model: "Self-serve software (database or CRM)",
+    pay: "Subscription",
+    work: "You research, write and send everything",
+    owner: "You",
+  },
+  {
+    model: "Rupert",
+    pay: "Setup fee, then a flat monthly fee. No percentage of the raise",
+    work: "Rupert researches, writes and runs follow-up; you approve the approach",
+    owner: "You, from your own inbox",
+  },
+];
+
+const faqs = [
+  {
+    question: "Does Rupert take a success fee or a percentage of the raise?",
+    answer:
+      "No. Rupert charges a setup fee and then a flat monthly fee. There is no success fee, no percentage of capital raised and no equity, during the engagement or after it ends.",
+  },
+  {
+    question: "Why doesn't Rupert publish its prices?",
+    answer:
+      "Scope depends on the company, the round and the size of the investor list, so the fee is set after a free consultation. You'll know the setup fee and the monthly fee before you commit to anything.",
+  },
+  {
+    question: "How long does setup take?",
+    answer:
+      "Usually two to four weeks: intake, narrative, messaging, and investor matching. Outreach goes live once you have approved and confirmed the investor list, the strategy and the messaging.",
+  },
+  {
+    question: "Is there a minimum commitment?",
+    answer: "No. After setup, Rupert runs month to month, and you can cancel at any time.",
+  },
+  {
+    question: "Does Rupert guarantee investor meetings or funding?",
+    answer:
+      "No. Rupert finds the investors who fit, runs disciplined outreach and follow-up, and helps you qualify interest. Meetings and investment depend on the company and on the investors.",
+  },
+];
+
+const jsonLd: Record<string, unknown>[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Expert-Managed Investor Outreach",
+    provider: { "@id": orgId(SITE_URL) },
+    serviceType: "Investor outreach",
+    url: absoluteUrl("/pricing/"),
+    description:
+      "A one-time setup fee (two to four weeks of intake, narrative, messaging and investor matching), then a flat monthly fee for outreach and follow-up. No success fee, no percentage of capital raised, no equity. Month to month; cancel at any time.",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/pricing/" jsonLd={jsonLd}>
+  <main id="main-content" class="flex-1">
+    <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
+      <p class="type-label">Pricing</p>
+      <h1 class="type-h1 mt-md">How Rupert charges.</h1>
+      <p class="type-body-lg mt-lg max-w-prose">
+        A setup fee, then a flat monthly fee. No success fee, no percentage of
+        the raise, no equity. Month to month: cancel at any time.
+      </p>
+      <p class="type-body mt-md max-w-prose">
+        Fees depend on the company and the scope of the raise, and you'll know
+        both before you commit. The first step is a free consultation.
+      </p>
+      <p class="mt-xl">
+        <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="setup-heading">
+      <p class="type-label">Setup · 2 to 4 weeks</p>
+      <h2 id="setup-heading" class="type-h2 mt-md">What the setup fee covers</h2>
+      <p class="type-body mt-md max-w-prose">
+        Everything that has to be right before the first email goes out. It
+        ends with your approval.
+      </p>
+      <ol class="work-stages">
+        {
+          setup.map((item) => (
+            <li class="work-stage">
+              <h3 class="type-h3">{item.title}</h3>
+              <p class="type-body mt-sm">{item.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="type-body mt-lg max-w-prose">
+        Matching runs on <a href={sitePath("/database/")}>Rupert's investor database</a>.
+        See <a href={sitePath("/how-it-works/")}>how it works</a> for the full process.
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="monthly-heading">
+      <p class="type-label">After go-live · month to month</p>
+      <h2 id="monthly-heading" class="type-h2 mt-md">What the monthly fee covers</h2>
+      <ul class="editorial-grid editorial-grid--2 mt-2xl">
+        {
+          monthly.map((item) => (
+            <li class="editorial-cell">
+              <h3 class="type-h3">{item.title}</h3>
+              <p class="type-body mt-sm">{item.body}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="terms-heading">
+      <h2 id="terms-heading" class="type-h2">The terms, plainly</h2>
+      <ul class="mt-md max-w-prose">
+        <li class="rule py-md type-body"><strong>No success fee.</strong> Nothing is owed on the money you raise, during the engagement or after it.</li>
+        <li class="rule py-md type-body"><strong>No equity.</strong> Rupert takes no stake in your company.</li>
+        <li class="rule py-md type-body"><strong>Month to month.</strong> After setup, cancel at any time.</li>
+        <li class="rule py-md type-body"><strong>Your relationships.</strong> Outreach goes from your inbox, and every investor relationship stays yours.</li>
+      </ul>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="why-heading">
+      <h2 id="why-heading" class="type-h2">Why a flat fee instead of a success fee</h2>
+      <p class="type-body mt-md max-w-prose">
+        A success fee pays for the close, not for the work. It rewards whoever
+        moves fastest, at whatever terms, and it keeps costing you long after
+        the engagement ends if there's a tail period. A flat fee pays for the
+        research, the writing and the follow-up, which is what actually decides
+        whether the right investors hear about your company.
+      </p>
+      <p class="type-body mt-md max-w-prose">
+        For the details of how success fees, retainers and tail periods work,
+        see <a href={sitePath("/articles/capital-raising-fees/")}>capital raising fees explained</a>
+        and <a href={sitePath("/articles/capital-raising-advisory-services/")}>advisory services vs. capital raising brokers</a>.
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="compare-heading">
+      <h2 id="compare-heading" class="type-h2">How the options compare</h2>
+      <div class="article-body mt-lg">
+        <table>
+          <thead>
+            <tr>
+              <th>Model</th>
+              <th>How you pay</th>
+              <th>Who does the work</th>
+              <th>Who owns the relationships</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              comparison.map((row) => (
+                <tr>
+                  <td><strong>{row.model}</strong></td>
+                  <td>{row.pay}</td>
+                  <td>{row.work}</td>
+                  <td>{row.owner}</td>
+                </tr>
+              ))
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="fit-heading">
+      <h2 id="fit-heading" class="type-h2">Who it's for</h2>
+      <p class="type-body mt-md max-w-prose">
+        Founders of venture-scale companies raising Pre-Seed, Seed or Series A,
+        with a credible story and real readiness, who want a disciplined process
+        without losing months to it.
+      </p>
+      <p class="type-body mt-md max-w-prose">
+        It isn't the right fit if you want guaranteed meetings, high-volume
+        automated sending, or someone else to negotiate and close the round.
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="faq-heading">
+      <FaqBlock faqs={faqs} bordered={false} />
+    </section>
+  </main>
+  <CtaBanner />
+</BaseLayout>
