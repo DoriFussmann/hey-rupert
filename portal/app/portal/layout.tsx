@@ -3,6 +3,7 @@ import { BookCallLink } from "@/components/book-call-link";
 import { PortalNav } from "@/components/portal-nav";
 import { ViewAsBanner } from "@/components/view-as-banner";
 import { requirePortalUser } from "@/lib/auth";
+import { bookCallHref } from "@/lib/book-call";
 import { getPortalView } from "@/lib/data";
 import { isSupabaseConfigured } from "@/lib/env";
 import { getSetupItems } from "@/lib/setup";
@@ -64,7 +65,7 @@ export default async function PortalLayout({
                 : null
             }
           />
-          <BookCallLink disabled={viewAs} />
+          <BookCallLink href={bookCallHref(client)} disabled={viewAs} />
         </>
       }
     >

@@ -14,7 +14,6 @@ import {
   startIntake,
   type IntakeActionResult,
 } from "@/app/portal/intake/actions";
-import { BOOK_CALL_URL } from "@/components/book-call-link";
 import { RupertAvatar } from "@/components/rupert-avatar";
 import { formatDate } from "@/lib/format";
 import {
@@ -225,6 +224,7 @@ export function IntakeExperience({
   topics,
   completedAt,
   firstName,
+  bookCallUrl,
   readOnly,
 }: {
   initialInterview: IntakeInterview | null;
@@ -232,6 +232,7 @@ export function IntakeExperience({
   topics: IntakeTopic[];
   completedAt: string | null;
   firstName: string;
+  bookCallUrl: string;
   readOnly: boolean;
 }) {
   const router = useRouter();
@@ -769,7 +770,7 @@ export function IntakeExperience({
         <>
           {" "}
           <a
-            href={BOOK_CALL_URL}
+            href={bookCallUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary no-underline hover:text-primary-hover"

@@ -1,8 +1,7 @@
 // "Book a call" with Rupert, shown on every client portal page.
-const DEFAULT_BOOK_CALL_URL = "https://cal.com/dori-fussmann-lqbqlb/15min";
+import { BOOK_CALL_URL } from "@/lib/book-call";
 
-export const BOOK_CALL_URL =
-  process.env.NEXT_PUBLIC_BOOK_CALL_URL || DEFAULT_BOOK_CALL_URL;
+export { BOOK_CALL_URL };
 
 function CalendarIcon() {
   return (
@@ -19,7 +18,7 @@ function CalendarIcon() {
   );
 }
 
-export function BookCallLink({ disabled = false }: { disabled?: boolean }) {
+export function BookCallLink({ href = BOOK_CALL_URL, disabled = false }: { href?: string; disabled?: boolean }) {
   const body = (
     <>
       <span className="flex items-center gap-sm text-body-sm text-heading">
@@ -49,7 +48,7 @@ export function BookCallLink({ disabled = false }: { disabled?: boolean }) {
 
   return (
     <a
-      href={BOOK_CALL_URL}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       className={`${className} transition-colors duration-hover hover:border-primary/40 hover:bg-primary-tint`}
