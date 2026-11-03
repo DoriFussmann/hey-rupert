@@ -21,7 +21,7 @@ draft: false
 pillarKeyword: startup funding stages
 articleType: comprehensive
 targetKeyword: startup funding stages
-updatedDate: "2026-10-25"
+updatedDate: "2026-11-03"
 keywords:
   - startup funding stages
 faqs:
@@ -38,6 +38,8 @@ faqs:
   - question: "What is a 'down round' and how do I avoid one?"
     answer: "A down round is when you raise at a lower valuation than your previous round. It signals distress, triggers anti-dilution provisions that punish existing shareholders, and complicates future fundraising. The best prevention is setting a realistic valuation in your current round — one that your next-round milestones can credibly exceed — and maintaining enough runway to avoid raising under pressure."
 internalLinks:
+  - slug: early-stage-investor-report
+    anchor: "Early-stage investors in 2026: the Rupert investor report"
   - slug: pre-seed-funding
     anchor: "Pre-seed funding: the complete guide"
   - slug: pre-seed-vs-seed-funding
@@ -72,6 +74,20 @@ externalLinks:
     url: "https://carta.com/data/founder-ownership-2026/"
     addedAt: 2026-10-25
 ---
+## The Short Answer
+
+Startups raise money in stages, each tied to how much the company has proven: **pre-seed** (the founders and the idea), **seed** (early product and market signal), **Series A** (a repeatable growth engine), **Series B** (scaling it) and **Series C and beyond** (category leadership). Typical 2026 figures:
+
+| Stage | Typical round | Typical valuation | What you must prove |
+|---|---|---|---|
+| Pre-seed | $250K–$1.5M (median ~$1M) | $3M–$8M post-money | Team, problem, early product |
+| Seed | Median $4.1M | ~$24M | Early traction and a market that wants it |
+| Series A | Median $14.4M | ~$80M | A repeatable engine; often $1M–$3M ARR in B2B |
+| Series B | Median ~$40M | $120M–$160M+ post-money | $5M–$10M ARR, scaling efficiently |
+| Series C+ | Median ~$44M | ~$200M pre-money | $15M+ ARR, path to $100M |
+
+*Seed and Series A medians: [Carta, July 2026](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/). Other ranges from the sources cited in each section below.*
+
 ## What Startup Funding Stages Actually Are — and Why They Matter
 
 Startup funding does not arrive as one continuous stream. It moves in discrete rounds — each named, each sized, and each tied to a specific level of company maturity. That structure is not arbitrary. 
@@ -80,7 +96,7 @@ Startup funding stages are discrete rounds of investment that correspond to spec
 At the earliest stage, there is almost nothing to evaluate except the founder and the idea. By Series C, investors are underwriting a proven business with millions in revenue and a clear path to dominance.
 
 Understanding which stage you are actually in (not where you wish you were) is the most important strategic decision you will make before opening a raise. 
-The stage names matter because investors are stage-specialised. Pitching a Series B fund with a pre-seed deck wastes everyone's time. Match the stage first, then the sector.
+The stage names matter because investors are stage-specialised. Pitching a Series B fund with a pre-seed deck wastes everyone's time. Match the stage first, then the sector. At the early end, though, the lines blur: in Rupert's database, 84% of early-stage funds say they invest at both Seed and Series A, so a fund's behavior (whether it leads, its check size, how early it goes) tells you more than its label.
  Misreading your own stage leads to targeting the wrong investors, telling the wrong story, and spending months building a pipeline that was never going to convert.
 
 This guide moves through each stage in turn — what it is, who invests, how much capital is typically involved, what you must prove, and what dilution to expect. The benchmarks reflect where the market actually sits in 2025–2026, not where it sat in the easy-money years.
@@ -98,7 +114,7 @@ At this point, a startup is often little more than an idea, a prototype, or an e
 ### Who Invests
 
 Pre-seed is typically $250K to $1M raised on a SAFE with a $3M to $8M valuation cap. The investors are angels, tiny pre-seed funds, and accelerators like Y Combinator with its $500K standard deal.
- Friends, family, and former colleagues also contribute meaningfully at this stage. Institutional venture firms rarely write pre-seed checks; the round is simply too small and too early for their fund economics.
+ Friends, family, and former colleagues also contribute meaningfully at this stage. Many large venture firms don't write pre-seed checks, but a growing group of institutional funds does: 923 funds in Rupert's database say they invest at pre-seed, and 72% of them were founded since 2015. As Rupert's founder, Dori Fussmann, puts it: "If you think you're too early, you're wrong. A lot of funds do pre-seed."
 
 ### 2025–2026 Benchmarks
 
@@ -161,7 +177,7 @@ The critical distinction from seed is this: seed proves your product solves a pr
 ### Who Invests
 
 Institutional VCs with $50M to $500M in assets under management lead most Series A deals. One lead investor takes a board seat with a $5M to $12M lead check.
- These are typically dedicated early-stage VC firms with enough conviction to take an active governance role. Seed investors may follow on, but they are rarely leading at this stage.
+ These are typically dedicated early-stage VC firms with enough conviction to take an active governance role. Your seed investors may follow on, but the Series A lead is usually a new investor.
 
 ### 2025–2026 Benchmarks
 
@@ -194,7 +210,7 @@ While companies that are funded at the seed stage are typically raising larger c
 Timeline to Series A: plan 24 to 30 months of operating runway, not 18.
  Founders who design their seed rounds around an 18-month runway and then miss their ARR targets by month 22 find themselves in a bridge-round or closure conversation that could have been avoided with more conservative planning from the start.
 
-The crunch makes investor targeting and milestone discipline at the seed stage critical, not optional. Knowing which Series A funds invest in your sector, at your stage, at your traction level — and reaching them at the right moment — is what separates the roughly one-in-six seed companies that graduate from the five-in-six that do not.
+The crunch makes investor targeting and milestone discipline at the seed stage critical, not optional. Knowing which Series A funds invest in your sector, at your stage, at your traction level — and reaching them at the right moment — is what separates the minority of seed companies that graduate (24% of the 2023 cohort, 16% of the 2024 cohort so far) from the majority that do not.
 
 ---
 
@@ -262,7 +278,7 @@ Once a founder understands their stage clearly, the next problem is almost alway
 According to research by Techstars, it typically takes 100 to 200 investor conversations to close a solid pre-seed or seed round.
  Most of those conversations can be de-risked by doing the research upfront — understanding which investors have recently written checks at your stage, in your sector, and at your traction level. The founders who compress their fundraising timelines are almost always the ones who start with a tight, well-researched target list rather than a mass-market approach.
 
-This is the work [Rupert](/book-call/) was built to do. Rather than handing founders a database and leaving them to build outreach infrastructure from scratch, Rupert's experienced operators research the investor universe on a founder's behalf — identifying which funds are actively deploying at the right stage, mapping portfolio overlaps and competitive conflicts, and building personalised outreach for each contact. Every conversation that results is one the founder can have with full context already in place, rather than cold-starting from a generic email.
+This is the work Rupert was built to do ([see how it works](/how-it-works/)). Rather than handing founders a database and leaving them to build outreach infrastructure from scratch, Rupert's experienced operators research the investor universe on a founder's behalf — identifying which funds are actively deploying at the right stage, mapping portfolio overlaps and competitive conflicts, and building personalised outreach for each contact. Every conversation that results is one the founder can have with full context already in place, rather than cold-starting from a generic email.
 
 The appeal for founders who are focused on hitting their milestones is straightforward: the research, personalisation, and pipeline management that drives a disciplined fundraising process gets handled by people who have run these processes before, while the founder retains complete visibility into every outreach sent and every investor relationship built. Nothing is a black box. Every contact, every reply, and every resulting conversation belongs to the founder — not the service.
 
@@ -309,4 +325,12 @@ Diligence typically involves a full data room review, customer reference calls, 
 <!-- WHERE-THINGS-STAND:START -->
 The funding stages are the same, but the bar at each one keeps rising. [Carta's July 2026 benchmark](https://carta.com/data/linkedin-vc-fundraising-benchmarks-2026/) puts the median seed round at $4.1M and the median Series A at $14.4M, while only 24% of the 2023 seed cohort has raised again, per [Crunchbase](https://news.crunchbase.com/seed/data-bigger-deals-longer-seriesa-2026/). For most founders, that means planning for longer runways between stages.
 <!-- WHERE-THINGS-STAND:END -->
+
+## Key Takeaways
+
+- Startups raise in stages tied to what they've proven: pre-seed (team and idea), seed (early traction), Series A (a repeatable engine), Series B (scale) and Series C+ (category leadership).
+- 2026 medians: about $1M at pre-seed, $4.1M at seed and $14.4M at Series A (Carta), with Series B around $40M.
+- Pre-seed is not only angels: 923 funds in Rupert's database invest there, most founded since 2015.
+- Early-stage labels blur: 84% of early-stage funds invest at both Seed and Series A, so judge funds by whether they lead and their check size.
+- The seed-to-Series A gap is the hardest crossing: only 24% of 2023 seed companies have raised again, so plan 24–30 months of runway.
 
