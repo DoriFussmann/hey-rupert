@@ -2200,6 +2200,13 @@
     padding-left: 0;
   }
 
+  /* Four cards are too tight in the article column: two per row there. */
+  @media (min-width: 1024px) {
+    .article-body > .glance-grid:not(.glance-grid--3) {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
   .experience-card--compact {
     padding: 28px 24px;
   }
