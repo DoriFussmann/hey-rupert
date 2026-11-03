@@ -455,6 +455,26 @@
     padding-left: theme("spacing.lg");
   }
 
+  /* The CSS reset removes list markers; articles need them back. */
+  .article-body > ul:not(.glance-grid) {
+    list-style: disc;
+  }
+
+  .article-body > ol {
+    list-style: decimal;
+  }
+
+  .article-body > ul:not(.glance-grid) > li,
+  .article-body > ol > li {
+    margin-bottom: 6px;
+    padding-left: 4px;
+  }
+
+  .article-body > ul:not(.glance-grid) > li::marker,
+  .article-body > ol > li::marker {
+    color: theme("colors.accent.text");
+  }
+
   .article-body a {
     color: theme("colors.accent.text");
   }

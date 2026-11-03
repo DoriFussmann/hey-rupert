@@ -41,6 +41,8 @@ faqs:
   - question: "Does the size of a VC fund matter when choosing who to pitch?"
     answer: "Less than most founders think. What matters is whether the firm invests at your stage and can write the check you need. A smaller fund that leads seed rounds in your sector is usually a better target than a very large fund whose smallest check is several times your round."
 internalLinks:
+  - slug: early-stage-investor-report
+    anchor: "Early-stage investors in 2026: the Rupert investor report"
   - slug: biggest-venture-capital-firms
     anchor: "The biggest VC firms in 2026, ranked by AUM"
   - slug: how-to-find-investors
