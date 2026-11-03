@@ -871,6 +871,14 @@
     }
   }
 
+  .author-bio-text {
+    max-width: theme("maxWidth.prose");
+  }
+
+  .author-bio-text p + p {
+    margin-top: theme("spacing.md");
+  }
+
   .faq-list {
     display: grid;
     gap: 0;

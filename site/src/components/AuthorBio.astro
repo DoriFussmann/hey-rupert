@@ -9,6 +9,10 @@ interface Props {
 
 const { author } = Astro.props;
 const href = sitePath("/about/");
+const paragraphs = author.data.bio
+  .split(/\n+/)
+  .map((paragraph) => paragraph.trim())
+  .filter(Boolean);
 ---
 
 <aside class="author-card mt-2xl grid gap-lg md:grid-cols-[8rem_1fr] md:gap-xl">
@@ -29,7 +33,9 @@ const href = sitePath("/about/");
       <a href={href}>{author.data.name}</a>
     </h3>
     <p class="type-label mt-xs">{author.data.role}</p>
-    <p class="type-body mt-md">{author.data.bio}</p>
+    <div class="author-bio-text mt-md">
+      {paragraphs.map((paragraph) => <p class="type-body">{paragraph}</p>)}
+    </div>
     {author.data.credentials && (
       <p class="type-body-sm mt-sm">{author.data.credentials}</p>
     )}
