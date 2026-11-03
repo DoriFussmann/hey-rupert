@@ -28,6 +28,13 @@ export const SAME_AS: string[] = [RUPERT_LINKEDIN, RUPERT_CRUNCHBASE];
 /** Organization logo (512×512 PNG of the Rupert portrait). */
 export const LOGO_PATH = "/logo.png";
 
+/**
+ * Other names the company goes by. Set on every Organization node (BaseLayout)
+ * so AI engines can tell this Rupert apart from other companies named Rupert.
+ * Without it, seo-core fills alternateName with the bare domain label ("heyrupert").
+ */
+export const ORG_ALTERNATE_NAMES: string[] = ["Hey Rupert", "heyrupert.com"];
+
 export const SITE_IDENTITY: SiteIdentity = {
   siteUrl: SITE_URL,
   siteName: SITE_NAME,

@@ -1,5 +1,6 @@
 ---
 import { getImage, Image } from "astro:assets";
+import { getEntry } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CaseStack from "../../components/CaseStack.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
@@ -52,6 +53,8 @@ const media = [
 ];
 
 const portrait = await getImage({ src: doriPortrait, width: 800 });
+// Same list as the article author entry, read from the team file.
+const doriProfile = await getEntry("team", "dori-fussmann");
 const personId = authorUrl("dori-fussmann", SITE_URL, AUTHOR_PATH);
 const jsonLd: Record<string, unknown>[] = [
   {
@@ -68,6 +71,7 @@ const jsonLd: Record<string, unknown>[] = [
       name: SITE_NAME,
     },
     sameAs: [DORI_LINKEDIN],
+    knowsAbout: doriProfile?.data.knowsAbout ?? [],
   },
 ];
 ---
