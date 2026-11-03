@@ -40,6 +40,8 @@ faqs:
   - question: "What should I ask a managed outreach service before signing?"
     answer: "Ask who writes and sends the emails, and from whose inbox; whether you approve the messaging before anything goes out; how fees work, including any success fee or tail period; whether you can cancel month to month; and who owns the investor relationships and contact history when the engagement ends."
 internalLinks:
+  - slug: best-investor-outreach-services
+    anchor: "The best investor outreach services and tools"
   - slug: capital-raising-services
     anchor: "Capital raising services: the definitive guide"
   - slug: capital-raising-fees
