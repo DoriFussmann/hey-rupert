@@ -480,6 +480,45 @@ export async function editAddedFund(supabase: ServiceClient, index: TaxIndex, id
   return { ok: true, value: fromRow(data) };
 }
 
+export type FilledFields = { stages?: string[]; geographies?: string[]; sectors?: string[] };
+
+/**
+ * Step 3A: the admin fills in the fields an added investor is missing
+ * (stage, geography, sector), pending or approved. Only labels the taxonomy
+ * has are kept; a sector goes to industries or verticals by its granularity.
+ * Only investors added for this client can be changed here.
+ */
+export async function fillAddedFields(
+  supabase: ServiceClient,
+  index: TaxIndex,
+  clientId: string,
+  id: string,
+  fields: FilledFields,
+): Promise<Result<AddedFund>> {
+  const labels = labelLists(index);
+  const patch: Record<string, unknown> = {};
+  if (fields.stages?.length) patch.stages = onlyLabels(fields.stages, labels.stages);
+  if (fields.geographies?.length) patch.geographies = onlyLabels(fields.geographies, labels.geographies);
+  if (fields.sectors?.length) {
+    const industries = onlyLabels(fields.sectors, labels.industries);
+    const verticals = onlyLabels(fields.sectors, labels.verticals);
+    if (industries.length) patch.industries = industries;
+    if (verticals.length) patch.verticals = verticals;
+  }
+  const empty = Object.values(patch).every((v) => !(v as string[]).length);
+  if (empty) return { ok: false, error: "Choose at least one value." };
+  const { data, error } = await supabase
+    .from("added_funds")
+    .update(patch)
+    .eq("id", id)
+    .eq("found_for_client", clientId)
+    .in("status", ["pending", "approved"])
+    .select("*")
+    .single<Row>();
+  if (error) return { ok: false, error: error.code === "PGRST116" ? "That investor wasn't added for this client, or was rejected." : tableError(error.message, error.code) };
+  return { ok: true, value: fromRow(data) };
+}
+
 /** Approve (joins the shared database for every client), reject, or back to pending. */
 export async function reviewAddedFund(
   supabase: ServiceClient,

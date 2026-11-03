@@ -7,6 +7,7 @@ import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult, LookAlikePreview } from "@/lib/match/landscape/server";
 import { inputClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
 import { BigNumber, Card } from "@/app/admin/matching/dry-match";
+import { useStepSignal } from "@/app/admin/matching/step-signal";
 
 const n = (value: number) => value.toLocaleString("en-US");
 const backedText = (row: CheckRow) => Array.from(new Set(row.investor.backed.map((b) => b.competitor))).join(", ");
@@ -878,13 +879,16 @@ function LookAlikePanel({ clientId }: { clientId: string }) {
 
 /** What comes after Step 2: the next step of the flow, once it exists. */
 export function NextStepCard({ note }: { note?: string }) {
+  // Step 2 is done (or skipped) while this shows: Step 3 loads again, and again when it goes away (reopened).
+  const signal = useStepSignal();
+  useEffect(() => {
+    signal();
+    return signal;
+  }, [signal]);
   return (
     <section className="rounded-card border border-dashed border-border bg-surface px-lg py-md">
-      <h3 className="text-h4 text-heading">Next: Step 3, the working list</h3>
-      <p className="text-body-sm text-muted">
-        {note ? `${note} ` : ""}The Step 1 shortlist plus the funds brought back and added in Step 2, minus exclusions. Not built yet: designed in the project doc
-        &ldquo;rupert-matching-next-stage&rdquo;.
-      </p>
+      <h3 className="text-h4 text-heading">Next: Step 3, The Final Roster</h3>
+      <p className="text-body-sm text-muted">{note ? `${note} ` : ""}Step 3 opens below.</p>
     </section>
   );
 }
