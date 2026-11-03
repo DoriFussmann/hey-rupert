@@ -1,0 +1,55 @@
+name: IndexNow
+
+# After each successful production deploy of the marketing site, tell IndexNow
+# (Bing and partners) which pages changed since the previous production deploy.
+# Run by hand with a list of URLs to submit specific pages.
+on:
+  deployment_status:
+  workflow_dispatch:
+    inputs:
+      urls:
+        description: "URLs or paths to submit, separated by spaces"
+        required: true
+
+permissions:
+  contents: read
+  deployments: read
+
+jobs:
+  submit:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.deployment_status.state == 'success' &&
+       github.event.deployment.environment == 'Production – hey-rupert-site')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Submit specific URLs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          URLS: ${{ github.event.inputs.urls }}
+        run: node site/scripts/indexnow.mjs $URLS
+
+      - name: Submit pages changed since the previous production deploy
+        if: github.event_name == 'deployment_status'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_SHA: ${{ github.event.deployment.sha }}
+          ENVIRONMENT: ${{ github.event.deployment.environment }}
+        run: |
+          BASE_SHA=$(gh api -X GET "repos/${{ github.repository }}/deployments" \
+            -f environment="$ENVIRONMENT" -f per_page=20 \
+            --jq "[.[] | select(.sha != \"$HEAD_SHA\")][0].sha")
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "null" ]; then
+            echo "No previous production deploy found; nothing to compare."
+            exit 0
+          fi
+          echo "Comparing $BASE_SHA..$HEAD_SHA"
+          node site/scripts/indexnow.mjs --diff "$BASE_SHA" "$HEAD_SHA"
