@@ -12,7 +12,7 @@
     text-rendering: optimizeLegibility;
     color-scheme: light;
     overflow-wrap: break-word;
-    overflow-x: hidden;
+    overflow-x: clip;
     scroll-behavior: smooth;
     scroll-padding-top: 5rem;
   }
@@ -21,7 +21,7 @@
     min-height: 100vh;
     display: flex;
     flex-direction: column;
-    overflow-x: hidden;
+    overflow-x: clip;
   }
 
   b,
@@ -737,64 +737,138 @@
     border-radius: theme("borderRadius.card");
   }
 
+  /* Table of contents: collapsed line on mobile, sticky right rail on desktop. */
   .toc {
     margin-bottom: theme("spacing.xl");
-    padding: theme("spacing.lg");
-    background: linear-gradient(90deg, #EAF3EE 0%, #EEF4F3 100%);
-    border: 1px solid #A9D6C3;
-    border-radius: 8px;
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
+  }
+
+  .toc-summary {
+    display: flex;
+    align-items: center;
+    gap: theme("spacing.sm");
+    min-height: 48px;
+    padding: 0 theme("spacing.md");
+    border: 1px solid theme("colors.border");
+    border-radius: theme("borderRadius.card");
+    background: theme("colors.surface");
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .toc-summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .toc-title {
+    font-size: theme("fontSize.body-sm[0]");
+    font-weight: 500;
+    color: theme("colors.heading");
+  }
+
+  .toc-count {
+    flex: 1;
+    font-size: theme("fontSize.body-sm[0]");
+    color: theme("colors.muted.text");
+  }
+
+  .toc-count::before {
+    content: "· ";
+  }
+
+  .toc-chevron {
+    flex-shrink: 0;
+    color: theme("colors.muted.text");
+    transition: transform 150ms ease;
+  }
+
+  .toc-details[open] .toc-chevron {
+    transform: rotate(180deg);
   }
 
   .toc-list {
     list-style: none;
-    margin-top: theme("spacing.md");
-    padding: 0;
-  }
-
-  .toc-list li + li {
-    margin-top: theme("spacing.sm");
+    margin: theme("spacing.sm") 0 0;
+    padding: theme("spacing.xs") 0;
+    border-left: 1px solid theme("colors.border");
   }
 
   .toc-list a {
-    display: flex;
-    align-items: center;
-    gap: theme("spacing.sm");
-    min-height: 44px;
-    padding: theme("spacing.sm") theme("spacing.md");
-    background: color-mix(in srgb, white 55%, #EAF3EE);
-    border: 1px solid #A9D6C3;
-    border-radius: 8px;
-    color: theme("colors.accent.text");
-    font-size: theme("fontSize.body[0]");
-    line-height: 1.5;
-    text-decoration: underline;
-    text-underline-offset: 0.18em;
+    display: block;
+    margin-left: -1px;
+    padding: 6px 0 6px theme("spacing.md");
+    border-left: 2px solid transparent;
+    color: theme("colors.muted.text");
+    font-size: theme("fontSize.body-sm[0]");
+    line-height: 1.45;
+    text-decoration: none;
+    transition:
+      color 150ms ease,
+      border-color 150ms ease;
   }
 
   .toc-list a:hover {
-    background: white;
-    color: theme("colors.primary.hover");
+    color: theme("colors.heading");
   }
 
-  .toc-num {
-    flex-shrink: 0;
-    font-size: theme("fontSize.label[0]");
-    letter-spacing: 0.08em;
+  .toc-list a[aria-current] {
+    border-left-color: theme("colors.accent.DEFAULT");
+    color: theme("colors.heading");
     font-weight: 500;
-    color: #5c7a5e;
   }
 
-  .toc-text {
-    flex: 1;
-  }
+  @media (min-width: 1024px) {
+    .article-column:has(> .toc) {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 240px;
+      grid-auto-flow: row dense;
+      column-gap: theme("spacing.xl");
+    }
 
-  .toc-h3 {
-    margin-left: theme("spacing.lg");
-  }
+    .article-column:has(> .toc) > * {
+      grid-column: 1 / -1;
+    }
 
-  .toc-h3 .toc-text::before {
-    content: none;
+    .article-column:has(> .toc) > .toc {
+      grid-column: 2;
+      margin-bottom: 0;
+    }
+
+    .article-column:has(> .toc) > [data-article-body] {
+      grid-column: 1;
+      min-width: 0;
+    }
+
+    .toc-details {
+      position: sticky;
+      top: calc(64px + theme("spacing.lg"));
+    }
+
+    .toc-summary {
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .toc-title {
+      font-size: theme("fontSize.label[0]");
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: theme("colors.muted.text");
+    }
+
+    .toc-count,
+    .toc-chevron {
+      display: none;
+    }
+
+    .toc-list {
+      margin-top: theme("spacing.md");
+      max-height: calc(100vh - 64px - 6rem);
+      overflow-y: auto;
+    }
   }
 
   .faq-list {
