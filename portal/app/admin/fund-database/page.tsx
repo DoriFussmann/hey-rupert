@@ -28,6 +28,9 @@ export const maxDuration = 300;
 
 const MONTH_MS = 30 * 24 * 60 * 60 * 1000;
 
+const downloadLink =
+  "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading";
+
 async function loadPage(): Promise<{
   versions: FundDbVersion[];
   sites: { checked: number; recent: number; byStatus: { label: string; count: number }[] };
@@ -176,6 +179,18 @@ export default async function FundDatabasePage({
           hint={classified ? `${n(classified.approved)} of ${n(classified.values)} provider values approved` : "Taxonomy not set up"}
         />
       </section>
+      {live ? (
+        <section aria-label="Download" className="mb-lg flex flex-wrap items-center gap-sm text-body-sm">
+          <span className="text-muted">Download CSV:</span>
+          <a href="/admin/fund-database/export?kind=funds" download className={downloadLink}>
+            Funds
+          </a>
+          <a href="/admin/fund-database/export?kind=contacts" download className={downloadLink}>
+            Contacts
+          </a>
+          <span className="text-muted">Live version, plus funds added by Rupert once approved.</span>
+        </section>
+      ) : null}
       {classified && classified.unclassified > 0 ? (
         <p className="mb-lg flex flex-wrap items-center justify-between gap-sm rounded-card border border-warning/40 bg-surface px-lg py-md text-body-sm text-heading">
           <span>
