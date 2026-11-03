@@ -3,11 +3,13 @@ import { EmptyState } from "@/components/empty-state";
 import { MarkdownBody } from "@/components/markdown-body";
 import { PageHeader } from "@/components/page-header";
 import { CollapsiblePanel } from "@/components/setup/collapsible-panel";
+import { agreementRows, agreementsMeta } from "@/lib/agreements";
 import { intakeKnowledge, knowledgeFacts, knowledgeFiles, sharedRead } from "@/lib/company-knowledge";
-import { getPortalView } from "@/lib/data";
+import { getActiveServiceOrder, getPortalView } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 import { loadIntakeSettings, loadInterview } from "@/lib/intake-server";
+import { loadLiveState } from "@/lib/outreach/live-server";
 import { fileExtension, formatBytes, websiteHref } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -52,11 +54,24 @@ export default async function WhatRupertKnowsPage({
     rows.find((row) => row.step === "deck_review"),
   );
   const supabase = isServiceRoleConfigured() ? createServiceClient() : null;
-  const [interview, settings, links] = await Promise.all([
+  const [interview, settings, links, serviceOrder, live] = await Promise.all([
     supabase ? loadInterview(supabase, client.id) : Promise.resolve(null),
     supabase ? loadIntakeSettings(supabase) : Promise.resolve(null),
     supabase && files.length > 0 ? signFileLinks(supabase, files) : Promise.resolve({} as Record<string, string>),
+    getActiveServiceOrder(client.id),
+    supabase ? loadLiveState(supabase, client.id) : Promise.resolve(null),
   ]);
+  const agreements = agreementRows({
+    sowIssued: Boolean(client.statement_of_work_content?.trim()),
+    sowConfirmedAt: client.sow_confirmed_at ?? null,
+    serviceOrderIssued: Boolean((serviceOrder?.content || client.service_order_content || "").trim()),
+    serviceOrderSignedAt: client.service_order_agreed_at ?? null,
+    signerName: serviceOrder?.signature?.signer_name ?? null,
+    setupInvoiceUrl: client.setup_invoice_url || serviceOrder?.payment_link || null,
+    setupPaidAt: client.payment_received_at ?? null,
+    monthlyInvoiceUrl: live?.ok ? live.value.invoice.url : null,
+    monthlyPaidAt: live?.ok ? live.value.invoice.paidAt : null,
+  });
   const loaded = interview?.ok ? interview.interview : null;
   const facts = knowledgeFacts(client, loaded?.admin_brief ?? null);
   const intake = intakeKnowledge(loaded, settings?.topics ?? []);
@@ -205,6 +220,51 @@ export default async function WhatRupertKnowsPage({
           )}
         </CollapsiblePanel>
         </div>
+
+        <CollapsiblePanel title="Your Agreements" meta={agreementsMeta(agreements)}>
+          {agreements.length === 0 ? (
+            <p className="max-w-prose text-body-sm text-muted">
+              Your Statement of Work, Service Order and invoices appear here once Rupert issues them.
+            </p>
+          ) : (
+            <ul className="-my-sm divide-y divide-border">
+              {agreements.map((row) => (
+                <li key={row.id} className="flex flex-wrap items-center gap-x-md gap-y-xs py-md">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-body text-heading">{row.title}</span>
+                    <span className="mt-xs block text-body-sm text-muted">
+                      {[
+                        row.level,
+                        row.at ? `${row.label} ${formatDate(row.at)}` : "",
+                        row.by ? `by ${row.by}` : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" · ")}
+                    </span>
+                  </span>
+                  <span
+                    className={`inline-flex shrink-0 rounded-full border px-sm py-xs text-label uppercase tracking-label ${
+                      row.status === "done" ? "border-border text-success" : "border-primary/30 bg-primary-tint text-primary"
+                    }`}
+                  >
+                    {row.label}
+                  </span>
+                  {row.href ? (
+                    row.external ? (
+                      <a href={row.href} target="_blank" rel="noopener noreferrer" className={`${link} shrink-0`}>
+                        {row.status === "done" ? "View Invoice" : "Pay Invoice"}
+                      </a>
+                    ) : (
+                      <Link href={row.href} className={`${link} shrink-0`}>
+                        Open
+                      </Link>
+                    )
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          )}
+        </CollapsiblePanel>
       </div>
     </>
   );
