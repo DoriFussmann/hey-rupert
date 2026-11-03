@@ -3,7 +3,7 @@ title: "Advisory Services vs. Capital Raising Brokers: What to Know"
 description: Not all capital raising help is equal — advisory services and broker-dealers are legally distinct models with very different consequences for founders.
 slug: capital-raising-advisory-services
 date: "2026-09-29"
-updatedDate: "2026-09-29"
+updatedDate: "2026-11-03"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -23,6 +23,8 @@ keywords:
   - capital raising services
 draft: false
 internalLinks:
+  - slug: best-investor-outreach-services
+    anchor: "The best investor outreach services and tools"
   - slug: capital-raising-services
     anchor: "Capital raising services for startups"
   - slug: startup-fundraising-consultant
@@ -36,7 +38,7 @@ externalLinks:
     addedAt: 2026-10-25
 faqs:
   - question: "Can a capital raising advisory service legally receive a success fee?"
-    answer: "This depends heavily on the structure. Under U.S. securities law, receiving transaction-based compensation tied directly to the closing of a securities offering triggers broker-dealer registration requirements. Advisory services that operate on flat retainers or project fees avoid this regulatory exposure. If any success fee is contemplated, the engagement should be reviewed by legal counsel to ensure it does not cross into unlicensed broker-dealer activity — which can create rescission rights for investors and complications in future due diligence."
+    answer: "This depends heavily on the structure. Under U.S. securities law, receiving transaction-based compensation tied directly to the closing of a securities offering triggers broker-dealer registration requirements. Advisory services paid flat retainers or project fees avoid that compensation trigger, although regulators also look at what the advisor actually does, such as negotiating terms or selling the deal. If any success fee is contemplated, the engagement should be reviewed by securities counsel to ensure it does not cross into unlicensed broker-dealer activity — which can create rescission rights for investors and complications in future due diligence."
   - question: "How long does a broker-dealer tail period typically last, and can it be negotiated?"
     answer: "Standard tail periods in broker-dealer and placement agent agreements run 12 to 24 months after the engagement ends. During that window, the broker-dealer may claim a success fee on any capital closed with investors they introduced — even if the founder independently drives that closing. Tail periods can sometimes be negotiated down (12 months is a common floor), and their scope — which investors and what types of transactions are covered — should be defined precisely in the contract before signing."
   - question: "Why are broker-dealers rarely the right fit for Seed or Series A raises?"
@@ -44,6 +46,30 @@ faqs:
   - question: "What should a founder look for in a capital raising advisory contract to protect their investor relationships?"
     answer: "The key clauses to review and negotiate are: (1) tail period — scope, duration, and which investors it covers; (2) ownership of introductions — the contract should specify that the founder retains all investor relationships after the engagement ends; (3) exclusivity — whether you can run parallel outreach or accept inbound investor interest during the engagement; and (4) termination rights — you should be able to exit the engagement without owing fees on investors you independently converted after a defined period."
 ---
+
+## The Short Answer
+
+A capital raising **advisor** helps you prepare and run a fundraising process and is usually paid a retainer, project fee or flat fee. A **broker-dealer** (or placement agent) is registered with the SEC and FINRA, formally places securities with investors, and is usually paid a success fee on the capital raised. For most Seed and Series A rounds, an advisory or outreach service is the closer fit; any arrangement that pays someone a percentage of the money raised should be reviewed by securities counsel first.
+
+| | Advisory or outreach service | Broker-dealer or placement agent |
+|---|---|---|
+| Registration | None required for advisory work | SEC registration and FINRA membership |
+| How they're paid | Retainer, project fee or flat monthly fee | Success fee on capital raised, often plus a retainer |
+| Typical deal size | Seed to Series A | Larger, often institutional placements |
+| Tail period | Varies; none if there's no success fee | Commonly 12–24 months |
+| Investor focus | VCs and angels | Institutional allocators, family offices, PE |
+| Main risk | Quality varies widely; check the work | Cost and tail at early stage; unregistered "finders" are a legal risk |
+
+*This is a general overview, not legal advice. Talk to securities counsel about your specific arrangement.*
+
+**Questions to ask any provider before you sign:**
+
+1. Are you registered as a broker-dealer, and does any part of your fee depend on the round closing?
+2. Who contacts investors, and in whose name?
+3. Is there a tail period, how long is it, and which investors does it cover?
+4. Do I approve the investor list and messaging before anything goes out?
+5. Can I terminate at any time, and what do I owe if I do?
+6. Do every investor relationship and conversation history stay with me?
 
 When founders start looking for help raising capital, they quickly encounter two types of professionals who appear to offer similar things: advisors who help them run a fundraising process, and registered broker-dealers who place securities with investors. The homepage pitch often sounds identical. The underlying structure, the legal obligations, and the practical consequences for founders at Seed and Series A could not be more different. Understanding that gap before signing an engagement letter isn't a legal technicality — it's a decision that shapes who owns your investor relationships, what fees follow you after the engagement ends, and whether your prior raise holds up in the next round of due diligence. For the full range of options, see the main [types of capital raising services](/articles/capital-raising-services/).
 
@@ -97,6 +123,8 @@ Regulatory label aside, the more practically dangerous distinction for most foun
 
 A pattern repeats across nearly every advisory engagement with founders raising venture capital today: genuinely strong companies arrive with clean metrics, yet unclear round structure and thin investor positioning sit quietly underneath — and investors simply cannot underwrite that story quickly, so even warm introductions tend to stall before serious conversations begin. The binding constraint almost always lives in narrative and proof, never in the underlying quality of the business.
 
+Rupert's founder, Dori Fussmann, who came to the advisory side from investment banking, describes the line Rupert draws this way: "Investor outreach is a professional service. We're responsible for identifying the right investors, matching, organizing and running the outreach. We're not the company, the product or the founders, and we don't control whether investors like the business or whether the valuation works. So we charge for the work, the expertise and the execution. The outcome belongs to the company."
+
 A genuine advisory service does work that a list-seller cannot: it pressure-tests positioning before outreach begins, builds a thesis-matched investor target set rather than a generic database filter, and manages conversations in a way that preserves the founder's credibility with investors they may approach again in future rounds. The difference between those two service types is not always legible from a homepage. It shows up in the quality of the investor targeting, the depth of the personalization in outreach, and whether the advisor brings operator judgment to the process or simply executes a template.
 
 Fundraising services have split into two clearly separate camps, and founders now feel that divide immediately — you now choose between a full-stack capital partner who runs an entire raise or a narrow tool solving one task.
@@ -112,7 +140,7 @@ The regulatory label — advisory service versus broker-dealer — matters, but 
 Given tighter purse strings in non-AI opportunities, only companies with the strongest competitive positions are attracting substantial funding — and investors are prioritizing companies with strong unit economics, growth, and defensible market positions.
  That selectivity in the market makes the targeting precision of an outreach campaign more important than ever. Spray-and-pray outreach doesn't work in a market where investors are moving carefully and reputation is the only currency that survives a no.
 
-[Rupert](/book-call/) is built to be the transparent extension of the founding team that early-stage raises actually require. Every investor campaign is researched, personalized, and managed by experienced operators — not templated and batched. Founders retain complete visibility into every conversation and every investor relationship introduced during the engagement, with no tail-period surprises and no opaque network that the advisor controls. The investor relationship belongs to the founder from the first introduction, which is how it should be in a model designed around genuine partnership rather than intermediary leverage.
+Rupert is built to be the transparent extension of the founding team that early-stage raises actually require. Every investor campaign is researched, personalized, and managed by experienced operators — not templated and batched. Founders retain complete visibility into every conversation and every investor relationship introduced during the engagement. Rupert charges a setup fee and a flat monthly fee, with no success fee and no tail ([see how it charges](/pricing/)), and outreach goes from the founder's own inbox, not through an opaque network the advisor controls. The investor relationship belongs to the founder from the first introduction, which is how it should be in a model designed around genuine partnership rather than intermediary leverage.
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
@@ -126,3 +154,4 @@ The rules on who can be paid for introducing investors have not materially chang
 - Tail periods — typically 12 to 24 months in broker-dealer agreements — mean a fee obligation can follow a founder long after an engagement ends; advisory contracts vary far more on this point and the scope and duration must be negotiated explicitly before signing.
 - The quality gap inside the advisory category is enormous: a genuine expert-run service builds thesis-matched investor targeting and manages conversations with full founder transparency, while lower-quality providers sell access to a database and call it outreach.
 - For early-stage founders, the right selection criteria are transparency, sector-specific targeting precision, and confirmed ownership of every investor relationship introduced — not regulatory label.
+- Before signing with anyone, ask whether any fee depends on the round closing, who contacts investors and in whose name, and what the tail covers, and have securities counsel review any success-fee arrangement.
