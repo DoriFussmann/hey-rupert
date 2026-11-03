@@ -376,6 +376,36 @@
     color: theme("colors.heading");
   }
 
+  /* Markdown tables in articles: full width, ruled rows, scroll on small screens. */
+  .article-body > table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+    margin: theme("spacing.lg") 0;
+    font-size: theme("fontSize.body-sm[0]");
+    line-height: 1.5;
+    color: theme("colors.foreground");
+  }
+
+  .article-body > table th,
+  .article-body > table td {
+    padding: theme("spacing.sm") theme("spacing.md");
+    border-bottom: 1px solid theme("colors.border");
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .article-body > table th {
+    font-weight: 500;
+    color: theme("colors.heading");
+    border-bottom-color: theme("colors.heading");
+  }
+
+  .article-body > table td:last-child {
+    font-variant-numeric: tabular-nums;
+  }
+
   .media-frame {
     position: relative;
     aspect-ratio: 16 / 9;
