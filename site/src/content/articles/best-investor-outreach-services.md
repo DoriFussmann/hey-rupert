@@ -86,6 +86,8 @@ Start from the situation you're in:
   </li>
 </ul>
 
+One caution before any of them: outreach puts your company in front of investors. It can't make the company ready to raise. More on that below.
+
 ---
 
 ## What an Investor Outreach Service Actually Does
@@ -147,7 +149,7 @@ Choose this if you have the time and want to keep costs down.
 
 **Foundersuite** pairs a large investor database with a fundraising CRM, from a free tier up to about $149 a month.
 
-Whichever you use, the database is the starting point, not the list. Expect to spend real time narrowing it to investors who fit. Our guide to [building an investor list](/articles/investor-list/) covers how.
+Whichever you use, the database is raw material, not a list. Thousands of rows still have to be filtered to the investors who fit, put in order, written to and followed up, and that is where most of the value is won or lost. Budget the time honestly before choosing this route. Our guide to [building an investor list](/articles/investor-list/) covers how.
 
 ---
 
@@ -164,6 +166,28 @@ Choose this if you're running the raise yourself and need to keep dozens of conv
 Choose this if you'd rather be introduced than write cold.
 
 **Funden** distributes your deal to its network of investment partners and makes double opt-in introductions, alongside coaching and materials review. **Metal** and **OpenVC Premium** help you find warm paths in your own network. Warm introductions convert well but are hard to get at scale, so most founders combine them with direct outreach rather than relying on them alone.
+
+---
+
+## What We've Learned Running Investor Outreach
+
+Rupert's founder, Dori Fussmann, spent years in investment banking before building Rupert. Four views shape how Rupert works, and they're worth considering whichever option you choose.
+
+### 1. A database isn't a pipeline
+
+"Founders often buy investor databases without really knowing what they're buying. You get a spreadsheet with thousands of investors. Now what? How do you filter it, which investors are actually relevant, who do you approach first, and how do you track every conversation, follow-up and reply? The data is valuable, but without the experience, process and systems to work through it, much of that value goes to waste. And founders rarely have time to run a large outreach operation themselves. Buying a database is buying raw material. Someone still has to turn it into a working pipeline."
+
+### 2. Outreach is a professional service, not a commission
+
+"Coming from investment banking, I know success fees well. They're standard there. But investor outreach is a different service. We're responsible for identifying the right investors, matching, organizing and running the outreach. We're not the company, the product or the founders, and we don't control whether investors like the business or whether the valuation works. There's also proportionality: a company raises a few million dollars and a success fee for outreach can run to tens of thousands, which doesn't reflect the work involved. So we charge for the work, the expertise and the execution. The outcome belongs to the company."
+
+### 3. Readiness comes before outreach
+
+"I wouldn't steer founders toward doing outreach themselves. It's specialized and time-consuming, and it's exactly what Rupert was built to handle. But I will tell a founder when I think they're not ready to raise. Sometimes the product, traction, business model or overall maturity doesn't support the round yet, and no amount of matching, outreach or clever messaging will fix that. We can get you in front of the right investors. We can't make your company investable."
+
+### 4. Matching beats volume
+
+"Running real campaigns teaches you things no database or software can. You learn which approaches work, which investors are responsive and which are hard to engage, and how much fit matters: approaching irrelevant funds wastes everyone's time. Different funds have different strategies and criteria, and you need to know what each one is looking for and which parts of the company matter most to them. Outreach isn't about sending as many emails as possible. It's about knowing who to approach, why they're relevant, and how to introduce the company in a way that lands with that investor."
 
 ---
 
@@ -184,7 +208,7 @@ Our guide to [cold emailing investors](/articles/how-to-cold-email-investors/) g
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->
-In 2026 founders can buy every part of investor outreach separately: free databases, AI-assisted CRMs, network introductions, or a service that runs the whole outreach for them. Software is cheap but leaves the work with you; managed services cost more and differ most in who sends the email, how they charge, and whether any fee is tied to your raise. Pick by what you're short of, and ask every provider about success fees and tail periods before you sign.
+In 2026 founders can buy every part of investor outreach separately: free databases, AI-assisted CRMs, network introductions, or a service that runs the whole outreach for them. Software is cheap but leaves the work with you; managed services cost more and differ most in who sends the email, how they charge, and whether any fee is tied to your raise. Pick by what you're short of, make sure the company is ready before you start, and ask every provider about success fees and tail periods before you sign.
 <!-- WHERE-THINGS-STAND:END -->
 
 ## Key Takeaways
@@ -193,4 +217,6 @@ In 2026 founders can buy every part of investor outreach separately: free databa
 - Managed services take over list-building, writing, sending and follow-up; software leaves those to you.
 - Published costs range from free (OpenVC) to about $10,000 a month (Waveup Managed); several providers price after a call.
 - Success fees vary: none at Rupert, a few engagements at Waveup, 3% at Fundex's managed service.
-- Good outreach is specific, sent in waves, followed up on a schedule, and sent in the founder's own name.
+- A database is raw material: the value comes from filtering, prioritizing and working it, which takes time and experience.
+- Outreach can't fix a company that isn't ready to raise. Check readiness first.
+- Good outreach is about fit, not volume: specific, sent in waves, followed up on a schedule, and sent in the founder's own name.
