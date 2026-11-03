@@ -32,10 +32,16 @@ export const GET: APIRoute = async () => {
           "See how Rupert works in three stages: discovery and strategy, campaign launch, and meetings and momentum — with the founder in control of every conversation.",
       },
       {
-        title: "Request a Discovery Call",
+        title: "Pricing",
+        path: "/pricing/",
+        description:
+          "Rupert charges a setup fee (two to four weeks of intake, narrative, expert feedback on company materials, messaging and investor matching), then a flat monthly fee from go-live. No success fee, no percentage of the raise, no equity. Month to month; cancel at any time.",
+      },
+      {
+        title: "Book a Free Consultation",
         path: "/book-call/",
         description:
-          "A 30-minute conversation with Dori to understand what you're raising, where you are in the process, and whether Rupert is the right fit.",
+          "A free 30-minute consultation with Dori to understand what you're raising, where you are in the process, and whether Rupert is the right fit.",
       },
     ],
   });
