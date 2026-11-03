@@ -3,6 +3,7 @@ import { BackLink } from "@/components/back-link";
 import { IntakeExperience } from "@/app/portal/intake/intake-experience";
 import { getIntakeInterview, getPortalView } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
+import { bookCallHref } from "@/lib/book-call";
 import { DEFAULT_INTAKE_TOPICS } from "@/lib/intake";
 import { loadIntakeSettings } from "@/lib/intake-server";
 import { materialsView } from "@/lib/materials-server";
@@ -40,6 +41,7 @@ export default async function IntakePage() {
           topics={settings.topics}
           completedAt={client.intake_completed_at ?? null}
           firstName={firstName}
+          bookCallUrl={bookCallHref(client)}
           readOnly={viewAs}
           initialMaterials={materialsView(
             client.setup_steps?.find((row) => row.step === "materials"),
