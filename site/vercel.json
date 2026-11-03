@@ -371,16 +371,6 @@
       "permanent": true
     },
     {
-      "source": "/articles/biggest-venture-capital-firms-in-silicon-valley",
-      "destination": "/articles/biggest-venture-capital-firms/",
-      "permanent": true
-    },
-    {
-      "source": "/articles/biggest-venture-capital-firms-in-silicon-valley/",
-      "destination": "/articles/biggest-venture-capital-firms/",
-      "permanent": true
-    },
-    {
       "source": "/articles/largest-venture-capital-firms-by-aum",
       "destination": "/articles/biggest-venture-capital-firms/",
       "permanent": true
