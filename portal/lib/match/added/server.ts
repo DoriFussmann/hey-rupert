@@ -521,9 +521,17 @@ export async function fillAddedFields(
   if (clientId) query = query.eq("found_for_client", clientId);
   const { data, error } = await query.select("*").single<Row>();
   if (error) return { ok: false, error: error.code === "PGRST116" ? "That investor wasn't added for this client, or was rejected." : tableError(error.message, error.code) };
-  // The suggestion is answered (its own column: never breaks the save before the migration).
-  await supabase.from("added_funds").update({ ai_suggestion: null }).eq("id", id);
-  return { ok: true, value: { ...fromRow(data), aiSuggestion: null } };
+  // The suggestion is answered (its own column: never breaks the save before the migration). A field the AI
+  // already searched and found nothing for stays marked that way, so it isn't searched again.
+  const saved = fromRow(data);
+  const before = saved.aiSuggestion ?? null;
+  const left = missingOf(index, saved);
+  const next: AiSuggestion | null =
+    before && left.length && left.every((m) => before.fields.includes(m))
+      ? { ...before, fields: left, stages: [], geographies: [], sectors: [], skipped: false }
+      : null;
+  await supabase.from("added_funds").update({ ai_suggestion: next }).eq("id", id);
+  return { ok: true, value: { ...saved, aiSuggestion: next } };
 }
 
 /** The fields Step 1 would find empty for an added investor, read through the taxonomy like any fund. */
@@ -643,6 +651,20 @@ export async function suggestMissingFields(supabase: ServiceClient, index: TaxIn
   const saved = await supabase.from("added_funds").update({ ai_suggestion: suggestion }).eq("id", id);
   if (saved.error) return { ok: false, error: /ai_suggestion/.test(saved.error.message) ? AI_FIELDS_MIGRATION : saved.error.message };
   return { ok: true, value: suggestion };
+}
+
+/** Skip an investor's missing fields for now (it stays off the Roster), or bring it back. Kept with the suggestion. */
+export async function skipMissingFields(supabase: ServiceClient, id: string, skip: boolean): Promise<Result<null>> {
+  const { data, error } = await supabase.from("added_funds").select("ai_suggestion").eq("id", id).maybeSingle<{ ai_suggestion: AiSuggestion | null }>();
+  if (error) return { ok: false, error: /ai_suggestion/.test(error.message) ? AI_FIELDS_MIGRATION : error.message };
+  const current = data?.ai_suggestion ?? null;
+  const next: AiSuggestion | null = skip
+    ? { ...(current ?? { fields: [], stages: [], geographies: [], sectors: [], sources: [], note: "", at: new Date().toISOString() }), skipped: true }
+    : current && (current.stages.length || current.geographies.length || current.sectors.length || current.note)
+      ? { ...current, skipped: false }
+      : null;
+  const saved = await supabase.from("added_funds").update({ ai_suggestion: next }).eq("id", id);
+  return saved.error ? { ok: false, error: saved.error.message } : { ok: true, value: null };
 }
 
 /** Dismiss an AI suggestion without using it. */

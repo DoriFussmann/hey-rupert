@@ -34,6 +34,8 @@ export type AiSuggestion = {
   sources: { url: string; label: string }[];
   note: string;
   at: string;
+  /** The admin chose to skip this investor's missing fields for now: it stays off the Roster. */
+  skipped?: boolean;
 };
 
 /** An added investor with missing fields, as Step 3A and the Fund Database page show it. */

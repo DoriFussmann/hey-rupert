@@ -5,7 +5,7 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { dismissSuggestion, editAddedFund, fillAddedFields, fillItems, labelLists, listAddedFunds, reviewAddedFund, suggestMissingFields, type AddedEdits, type LabelLists } from "@/lib/match/added/server";
+import { dismissSuggestion, skipMissingFields, editAddedFund, fillAddedFields, fillItems, labelLists, listAddedFunds, reviewAddedFund, suggestMissingFields, type AddedEdits, type LabelLists } from "@/lib/match/added/server";
 import type { AddedFund, AddedStatus, FillItem } from "@/lib/match/added/core";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -107,5 +107,13 @@ export async function dismissAddedSuggestion(id: string): Promise<Result<object>
   if (!a.ok) return a;
   if (!validId(id)) return { ok: false, error: "Unknown fund." };
   const done = await dismissSuggestion(a.supabase, id);
+  return done.ok ? { ok: true } : { ok: false, error: done.error };
+}
+
+export async function skipAddedFields(id: string, skip: boolean): Promise<Result<object>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (!validId(id)) return { ok: false, error: "Unknown fund." };
+  const done = await skipMissingFields(a.supabase, id, skip === true);
   return done.ok ? { ok: true } : { ok: false, error: done.error };
 }

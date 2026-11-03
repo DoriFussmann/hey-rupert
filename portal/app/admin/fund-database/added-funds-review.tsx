@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { dismissAddedSuggestion, editAdded, fillAdded, loadAddedFunds, loadMissingFields, reviewAdded, suggestAddedFields, type AddedView } from "@/app/admin/added-funds-actions";
+import { dismissAddedSuggestion, skipAddedFields, editAdded, fillAdded, loadAddedFunds, loadMissingFields, reviewAdded, suggestAddedFields, type AddedView } from "@/app/admin/added-funds-actions";
 import { MissingFields, type FieldOptions } from "@/app/admin/matching/missing-fields";
 import type { FillItem } from "@/lib/match/added/core";
 import type { AddedStatus } from "@/lib/match/added/core";
@@ -272,6 +272,7 @@ export function AddedFundsReview() {
                 suggest={(ids) => suggestAddedFields(ids)}
                 save={(id, fields) => fillAdded(id, fields)}
                 dismiss={(id) => dismissAddedSuggestion(id)}
+                skip={(id, on) => skipAddedFields(id, on)}
                 onChanged={reload}
               />
             </div>

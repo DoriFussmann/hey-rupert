@@ -3,7 +3,7 @@ import { loadTaxonomy } from "@/lib/taxonomy/server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
-import { addedForLandscape, dismissSuggestion, fillAddedFields, fillItems, labelLists, suggestMissingFields, type FilledFields } from "@/lib/match/added/server";
+import { addedForLandscape, dismissSuggestion, skipMissingFields, fillAddedFields, fillItems, labelLists, suggestMissingFields, type FilledFields } from "@/lib/match/added/server";
 import type { AiSuggestion, FillItem } from "@/lib/match/added/core";
 import { checkAgainstDatabase, currentLandscape } from "@/lib/match/landscape/server";
 import type { CheckRow } from "@/lib/match/landscape/check";
@@ -192,6 +192,10 @@ export async function suggestMissing(supabase: ServiceClient, clientId: string, 
 
 export async function dismissMissing(supabase: ServiceClient, addedId: string): Promise<Result<null>> {
   return dismissSuggestion(supabase, addedId);
+}
+
+export async function skipMissing(supabase: ServiceClient, addedId: string, skip: boolean): Promise<Result<null>> {
+  return skipMissingFields(supabase, addedId, skip);
 }
 
 export type { AiSuggestion };

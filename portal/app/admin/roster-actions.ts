@@ -3,7 +3,7 @@
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { confirmRoster, dismissMissing, fillMissing, loadRoster, reopenRoster, suggestMissing, type RosterState } from "@/lib/match/roster/server";
+import { confirmRoster, dismissMissing, skipMissing, fillMissing, loadRoster, reopenRoster, suggestMissing, type RosterState } from "@/lib/match/roster/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -93,5 +93,13 @@ export async function dismissRosterSuggestion(clientId: string, addedId: string)
   if (!a.ok) return a;
   if (!ids([addedId]).length) return { ok: false, error: "Unknown investor." };
   const done = await dismissMissing(a.supabase, addedId);
+  return done.ok ? { ok: true } : done;
+}
+
+export async function skipRosterFields(clientId: string, addedId: string, skip: boolean): Promise<Result<object>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!ids([addedId]).length) return { ok: false, error: "Unknown investor." };
+  const done = await skipMissing(a.supabase, addedId, skip === true);
   return done.ok ? { ok: true } : done;
 }

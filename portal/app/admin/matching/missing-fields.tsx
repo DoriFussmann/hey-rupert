@@ -17,7 +17,7 @@ const BATCH = 4;
 
 function fromSuggestion(item: FillItem): Picked {
   const s = item.suggestion;
-  if (!s) return {};
+  if (!s || s.skipped) return {};
   const out: Picked = {};
   for (const m of item.missing) if (s[KEY[m]].length) out[KEY[m]] = s[KEY[m]];
   return out;
@@ -57,21 +57,27 @@ function ChipPicker({ options, value, onChange, disabled, ai }: { options: strin
   );
 }
 
+/** Whether the AI found anything for this investor's missing fields. */
+const aiFound = (item: FillItem) => Object.values(fromSuggestion(item)).some((v) => v && v.length);
+
 function Row({
   item,
   options,
   busy,
   onSave,
   onDismiss,
+  onSkip,
 }: {
   item: FillItem;
   options: FieldOptions;
   busy: boolean;
   onSave: (fields: Picked) => void;
   onDismiss: () => void;
+  onSkip: () => void;
 }) {
   const [picked, setPicked] = useState<Picked>(() => fromSuggestion(item));
-  const s = item.suggestion;
+  const s = item.suggestion && !item.suggestion.skipped ? item.suggestion : null;
+  const found = aiFound(item);
   const any = Object.values(picked).some((v) => v && v.length);
   const known = (label: string, values: string[]) => (
     <div className="grid grid-cols-[96px_1fr] gap-sm">
@@ -86,7 +92,7 @@ function Row({
       <div key={m} className="grid grid-cols-[96px_1fr] items-start gap-sm">
         <span className="pt-[2px] text-label uppercase tracking-label text-warning">{MISSING_LABEL[m]} · missing</span>
         <div>
-          <ChipPicker ai={!!s && (picked[key] ?? []).length > 0} options={options[key]} value={picked[key] ?? []} disabled={busy} onChange={(v) => setPicked({ ...picked, [key]: v })} />
+          <ChipPicker ai={found && (picked[key] ?? []).length > 0} options={options[key]} value={picked[key] ?? []} disabled={busy} onChange={(v) => setPicked({ ...picked, [key]: v })} />
           {stored.length ? <p className="mt-[2px] text-body-sm text-muted">Research said {stored.join(", ")}, which the taxonomy doesn&apos;t map.</p> : null}
           {s && s.fields.includes(m) && !s[key].length ? <p className="mt-[2px] text-body-sm text-muted">AI found nothing for this.</p> : null}
         </div>
@@ -107,16 +113,20 @@ function Row({
               website ↗
             </a>
           ) : null}
-          {s ? <span className="ml-sm rounded-md border border-warning/50 px-xs text-label uppercase tracking-label text-warning">AI suggestion</span> : null}
+          {s && found ? <span className="ml-sm rounded-md border border-warning/50 px-xs text-label uppercase tracking-label text-warning">AI suggestion</span> : null}
+          {s && !found ? <span className="ml-sm rounded-md border border-border px-xs text-label uppercase tracking-label text-muted">AI found nothing: add or skip</span> : null}
         </p>
         <span className="flex gap-xs">
-          {s ? (
+          <button type="button" className={smallButton} disabled={busy} onClick={onSkip}>
+            Skip
+          </button>
+          {s && found ? (
             <button type="button" className={smallButton} disabled={busy} onClick={onDismiss}>
               Dismiss
             </button>
           ) : null}
           <button type="button" className={smallButton} disabled={busy || !any} onClick={() => onSave(picked)}>
-            {s ? "Accept" : "Save"}
+            {s && found ? "Accept" : "Save"}
           </button>
         </span>
       </div>
@@ -153,6 +163,7 @@ export function MissingFields({
   suggest,
   save,
   dismiss,
+  skip,
   onChanged,
 }: {
   items: FillItem[];
@@ -160,14 +171,19 @@ export function MissingFields({
   suggest: (ids: string[]) => Promise<{ ok: true; problems: string[] } | { ok: false; error: string }>;
   save: (id: string, fields: Picked) => Promise<Done>;
   dismiss: (id: string) => Promise<Done>;
+  skip: (id: string, skip: boolean) => Promise<Done>;
   onChanged: () => Promise<void> | void;
 }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [progress, setProgress] = useState<string | null>(null);
   const [problems, setProblems] = useState<string[]>([]);
 
-  const toSearch = items.filter((i) => !i.suggestion);
-  const toAccept = items.filter((i) => Object.values(fromSuggestion(i)).some((v) => v && v.length));
+  const [showSkipped, setShowSkipped] = useState(false);
+  const skipped = items.filter((i) => i.suggestion?.skipped);
+  const active = items.filter((i) => !i.suggestion?.skipped);
+  // Searched once already (found something or not): not searched again by the button.
+  const toSearch = active.filter((i) => !i.suggestion);
+  const toAccept = active.filter(aiFound);
 
   async function fillAll() {
     setBusy("ai");
@@ -228,7 +244,8 @@ export function MissingFields({
         {progress ? <span className="text-body-sm text-primary">{progress}</span> : null}
       </div>
       <p className="mt-xs text-body-sm text-muted">
-        AI suggestions are marked and count only once you accept them. You can also pick values yourself; every field takes several.
+        AI suggestions are marked and count only once you accept them. Where the AI found nothing, add the values yourself or Skip (it stays off the Roster).
+        Every field takes several values.
       </p>
       {problems.length ? (
         <ul className="mt-sm list-disc pl-lg text-body-sm text-error">
@@ -238,7 +255,7 @@ export function MissingFields({
         </ul>
       ) : null}
       <ul className="mt-sm">
-        {items.map((item) => (
+        {active.map((item) => (
           <Row
             key={`${item.addedId}-${item.suggestion?.at ?? ""}`}
             item={item}
@@ -246,9 +263,32 @@ export function MissingFields({
             busy={busy !== null}
             onSave={(fields) => void one(`save-${item.addedId}`, () => save(item.addedId, fields))}
             onDismiss={() => void one(`dismiss-${item.addedId}`, () => dismiss(item.addedId))}
+            onSkip={() => void one(`skip-${item.addedId}`, () => skip(item.addedId, true))}
           />
         ))}
       </ul>
+      {!active.length ? <p className="mt-sm text-body-sm text-success">✓ Nothing left to fill: the rest are skipped.</p> : null}
+      {skipped.length ? (
+        <div className="mt-sm">
+          <button type="button" className="text-body-sm text-primary underline" aria-expanded={showSkipped} onClick={() => setShowSkipped(!showSkipped)}>
+            Skipped ({n(skipped.length)}): {showSkipped ? "hide" : "show"}
+          </button>
+          {showSkipped ? (
+            <ul className="mt-xs space-y-xs text-body-sm">
+              {skipped.map((item) => (
+                <li key={item.addedId} className="flex items-center justify-between gap-sm">
+                  <span className="text-secondary">
+                    {item.name} <span className="text-muted">(missing {item.missing.map((m) => MISSING_LABEL[m].toLowerCase()).join(", ")})</span>
+                  </span>
+                  <button type="button" className={smallButton} disabled={busy !== null} onClick={() => void one(`unskip-${item.addedId}`, () => skip(item.addedId, false))}>
+                    Bring back
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+      ) : null}
     </div>
   );
 }

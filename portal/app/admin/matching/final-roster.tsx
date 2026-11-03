@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { confirmFinalRoster, dismissRosterSuggestion, fillRosterFields, loadFinalRoster, reopenFinalRoster, suggestRosterFields } from "@/app/admin/roster-actions";
+import { confirmFinalRoster, dismissRosterSuggestion, skipRosterFields, fillRosterFields, loadFinalRoster, reopenFinalRoster, suggestRosterFields } from "@/app/admin/roster-actions";
 import { MissingFields } from "@/app/admin/matching/missing-fields";
 import { primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/ui";
 import { BigNumber, Card } from "@/app/admin/matching/dry-match";
@@ -204,6 +204,7 @@ export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: st
               suggest={(ids) => suggestRosterFields(clientId, ids)}
               save={(id, fields) => fillRosterFields(clientId, id, fields)}
               dismiss={(id) => dismissRosterSuggestion(clientId, id)}
+              skip={(id, on) => skipRosterFields(clientId, id, on)}
               onChanged={load}
             />
           </div>
