@@ -92,7 +92,6 @@ function WaterfallTable({ w }: { w: Waterfall }) {
             <th className="whitespace-nowrap py-xs pr-md font-medium">Tier</th>
             <th className={th}>Approachable funds</th>
             <th className={th}># of contacts</th>
-            <th className={th}>No contact</th>
             <th className={`${th} ${split}`}>Funds in plan</th>
             <th className={`${th} pr-0`}># of contacts</th>
           </tr>
@@ -103,7 +102,6 @@ function WaterfallTable({ w }: { w: Waterfall }) {
               <td className="whitespace-nowrap py-xs pr-md text-heading" title={TIER_RULE[r.tier]}>{TIER_LABEL[r.tier]}</td>
               <td className="py-xs pr-md text-right">{n(r.funds)}</td>
               <td className="py-xs pr-md text-right">{n(r.contacts)}</td>
-              <td className="py-xs pr-md text-right text-muted">{n(r.noContact)}</td>
               <td className={`py-xs pr-md text-right ${split} ${r.plannedFunds ? "text-success" : "text-muted"}`}>{n(r.plannedFunds)}</td>
               <td className={`py-xs text-right ${r.plannedContacts ? "text-success" : "text-muted"}`}>{n(r.plannedContacts)}</td>
             </tr>
@@ -112,7 +110,6 @@ function WaterfallTable({ w }: { w: Waterfall }) {
             <td className="whitespace-nowrap py-xs pr-md text-heading">The Final Outreach Roster</td>
             <td className="py-xs pr-md text-right">{n(w.rows.reduce((s, r) => s + r.funds, 0))}</td>
             <td className="py-xs pr-md text-right">{n(w.rows.reduce((s, r) => s + r.contacts, 0))}</td>
-            <td className="py-xs pr-md text-right text-muted">{n(w.rows.reduce((s, r) => s + r.noContact, 0))}</td>
             <td className={`py-xs pr-md text-right text-heading ${split}`}>{n(w.plannedFunds)}</td>
             <td className="py-xs text-right text-heading">{n(w.plannedContacts)}</td>
           </tr>
