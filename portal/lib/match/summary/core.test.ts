@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { landscapeSummary, matchingSummary, minus } from "./core.ts";
+import { summaryFactsText } from "./email-facts.ts";
 import type { CheckRow } from "../landscape/check.ts";
 import type { Competitor } from "../landscape/core.ts";
 import type { Investor } from "../landscape/investors.ts";
@@ -43,6 +44,11 @@ test("the matching summary: one step per stage, clean numbers, (n) deductions", 
   const plan = s.steps[6];
   assert.equal(plan.headline?.value, 3);
   assert.equal(plan.tables[1].rows.length, 2);
+  const facts = summaryFactsText(s, landscapeSummary({ clientName: "Argentl", competitors: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) }));
+  assert.match(facts, /Started from 10,172 funds/);
+  assert.match(facts, /In the plan: 3 contacts at 2 funds/);
+  assert.match(facts, /1\. Acme VC: Core; backed Monk\./);
+  assert.match(facts, /Competitors you may name \(at most 3\): Monk\./);
   // Nothing about who confirmed or when.
   assert.ok(!JSON.stringify(s).match(/confirmed|@|20\d\d-\d\d-\d\dT/i));
 });

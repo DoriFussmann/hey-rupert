@@ -1,4 +1,7 @@
 import "server-only";
+import { loadDeliverables } from "@/lib/match/summary/server";
+import { summaryFactsText } from "@/lib/match/summary/email-facts";
+import type { Summary } from "@/lib/match/summary/core";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import {
   callClaudeAgent,
@@ -601,8 +604,15 @@ export async function draftInvestorListEmail(
   version: number,
   override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
+  // The new matching: the summaries pushed to the client page are the source.
+  const pushed = await loadDeliverables(supabase, clientId);
+  const matching = pushed.ok ? pushed.value.find((d) => d.kind === "matching")?.content ?? null : null;
+  if (matching) {
+    const landscape = pushed.ok ? pushed.value.find((d) => d.kind === "landscape")?.content ?? null : null;
+    return draftMatchingSummaryEmail(supabase, clientId, matching, landscape, list.admin_note ?? "", version, override);
+  }
   if (list.rows.length === 0) {
-    return { ok: false, error: "Push the list from Rupert Match first: the email is drafted from it." };
+    return { ok: false, error: "Finalize the matching and Push to Client first: the email is drafted from the summaries." };
   }
   const [loaded, prompt] = await Promise.all([
     loadClient(supabase, clientId),
@@ -634,6 +644,39 @@ export async function draftInvestorListEmail(
     .filter(Boolean)
     .join("\n\n");
 
+  return draftEmailMiddle(promptSystem(prompt.value), context);
+}
+
+/** The founder email for the new matching, from the pushed Matching Summary and Competitive Landscape Overview. */
+async function draftMatchingSummaryEmail(
+  supabase: ServiceClient,
+  clientId: string,
+  matching: Summary,
+  landscape: Summary | null,
+  adminNote: string,
+  version: number,
+  override?: PromptOverride | null,
+): Promise<AgentResult<ClientEmailDraft>> {
+  const [loaded, prompt] = await Promise.all([
+    loadClient(supabase, clientId),
+    loadPrompt(supabase, "matching_summary_email", { clientId, purpose: "Matching summary email draft", override }),
+  ]);
+  if (!loaded.ok) return loaded;
+  if (!prompt.ok) return prompt;
+  const company = await companyContext(supabase, clientId, loaded.client);
+  const listRow = company.rows.find((item) => item.step === "investor_list");
+  const clientAsk = listRow?.status === "changes_requested" ? earlierNotes([], listRow.response) : "";
+  const context = [
+    ...founderLines(loaded.client, version),
+    "# Facts about the matching (use only these, numbers exactly as given)",
+    summaryFactsText(matching, landscape),
+    adminNote.trim() ? `## Rupert's note to the founder (shown on their page)\n${adminNote.trim()}` : "",
+    clientAsk ? `## What the founder asked about the previous version\n${clientAsk}` : "",
+    "# Company information (context only)",
+    company.text,
+  ]
+    .filter(Boolean)
+    .join("\n\n");
   return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
