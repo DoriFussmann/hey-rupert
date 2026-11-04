@@ -241,7 +241,7 @@ export function ThePlan({ clientId, clientName, refreshKey }: { clientId: string
         </div>
         {state.changed.length ? (
           <p className="mt-sm rounded-md border border-warning/40 bg-surface px-md py-sm text-body-sm text-warning">
-            Changed since it was confirmed: {state.changed.join(" ")} Reopen to plan it again.
+            Since it was confirmed, the Roster behind it changed: {state.changed.join(" ")} Reopen to plan it again.
           </p>
         ) : null}
         <WaterfallTable w={savedW} />

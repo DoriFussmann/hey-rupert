@@ -859,6 +859,40 @@ export async function decideMany(
   return { ok: true, value: ids.length };
 }
 
+/**
+ * Apply Default to All: every fund in the database but not in the shortlist
+ * that is still on its default (Not sure ones too) gets the default as the
+ * admin's decision: bring back when it fails only on sector and lists the
+ * client's Secondary 1 or 2, otherwise leave out. Decisions already made stay.
+ */
+export async function applyDefaults(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ broughtBack: number; leftOut: number }>> {
+  const check = await checkAgainstDatabase(supabase, clientId);
+  if (!check.ok) return check;
+  const current = await currentLandscape(supabase, clientId);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to change a decision." };
+  const decisions = await loadDecisions(supabase, land.id);
+  if (!decisions.ok) return decisions;
+  const at = new Date().toISOString();
+  const next = { ...decisions.value };
+  let broughtBack = 0;
+  let leftOut = 0;
+  for (const row of check.value.rows) {
+    if (row.bucket !== "not_in_list" || !row.defaulted || !row.action) continue;
+    const d: InvestorDecision = { ...(next[row.investor.id] ?? {}), action: row.action, by: actor, at };
+    delete d.unsure;
+    next[row.investor.id] = d;
+    if (row.action === "bring_back") broughtBack += 1;
+    else leftOut += 1;
+  }
+  if (!broughtBack && !leftOut) return { ok: true, value: { broughtBack, leftOut } };
+  const { error } = await supabase.from("competitor_landscapes").update({ investor_decisions: next, updated_at: at }).eq("id", land.id);
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: { broughtBack, leftOut } };
+}
+
 export const INVESTMENTS_MIGRATION = "The investments table is missing. Run portal/supabase/fund_investments.sql in the Supabase SQL editor.";
 
 /**

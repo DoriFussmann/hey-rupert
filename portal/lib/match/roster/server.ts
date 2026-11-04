@@ -144,13 +144,28 @@ async function draft(supabase: ServiceClient, clientId: string) {
   };
 }
 
-function changes(saved: RosterFacts, now: RosterFacts): string[] {
+/**
+ * What a rebuild would change, in words: empty when the Roster built now is
+ * the one confirmed. Steps re-confirmed with the same result (a new Step 1
+ * list with the same funds, Step 2 redone with the same outcome) change nothing.
+ */
+function changes(saved: SavedRoster, now: Roster): string[] {
+  const key = (e: RosterEntry) => `${e.firmId}|${e.source}|${e.backed.join(",")}`;
+  const before = new Set(saved.entries.map(key));
+  const after = new Set(now.entries.map(key));
+  const ids = (list: RosterEntry[]) => new Set(list.map((e) => e.firmId));
+  const was = ids(saved.entries);
+  const is = ids(now.entries);
+  const added = Array.from(is).filter((id) => !was.has(id)).length;
+  const removed = Array.from(was).filter((id) => !is.has(id)).length;
+  const retagged = now.entries.filter((e) => was.has(e.firmId) && !before.has(key(e))).length;
   const out: string[] = [];
-  if (saved.dryListId !== now.dryListId) out.push("Step 1 was confirmed again.");
-  if (saved.landscapeId !== now.landscapeId) out.push("Step 2 was redone.");
-  if (saved.dataVersion !== now.dataVersion) out.push("The Fund Database or the added investors changed.");
-  if (saved.exclusions !== now.exclusions) out.push("The client's exclusions changed.");
-  return out;
+  if (added) out.push(`${added.toLocaleString("en-US")} ${added === 1 ? "investor" : "investors"} would be added.`);
+  if (removed) out.push(`${removed.toLocaleString("en-US")} would be removed.`);
+  if (retagged) out.push(`${retagged.toLocaleString("en-US")} would change source or competitor tag.`);
+  const lines = (list: ExclusionCheck[]) => list.map((x) => `${x.line}|${x.result}|${x.firmId ?? ""}`).sort().join("\n");
+  if (lines(saved.exclusions) !== lines(now.exclusions)) out.push("The client's exclusions changed.");
+  return out.length || before.size === after.size ? out : ["The Roster would change."];
 }
 
 export async function loadRoster(supabase: ServiceClient, clientId: string): Promise<Result<RosterState>> {
@@ -168,7 +183,7 @@ export async function loadRoster(supabase: ServiceClient, clientId: string): Pro
       fill: built.fill,
       options: built.options,
       saved: saved.value,
-      changed: saved.value ? changes(saved.value.facts, built.facts) : [],
+      changed: saved.value ? changes(saved.value, built.roster) : [],
     },
   };
 }
