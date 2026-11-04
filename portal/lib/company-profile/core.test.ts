@@ -153,7 +153,7 @@ test("missing information blocks", () => {
   const profile = fromEngineProfile(engine({ verticals: [], industries: [], stage: "", country: "" }), lists, index, meta);
   const { readiness, issues } = validateProfile(profile, index);
   assert.equal(readiness, "blocked");
-  assert.deepEqual(issues.filter((i) => i.severity === "blocking").map((i) => i.field).sort(), ["HQ country", "Primary sector", "Stage"]);
+  assert.deepEqual(issues.filter((i) => i.severity === "blocking").map((i) => i.field).sort(), ["HQ country", "Primary sub-sector", "Stage"]);
 });
 
 test("a sample intake becomes a profile Phase 3 can use without string matching", () => {
@@ -215,7 +215,7 @@ test("confirming a sector with the founder clears its unfound quotes", () => {
   }, index, transcript);
   const confirmed = confirmWithFounder(profile, "sector:sector.fintech", "admin@x.com", "2026-10-21T00:00:00Z")!;
   const { issues } = validateProfile(confirmed, index, openBuildProblems(confirmed, problems));
-  assert.ok(!issues.some((i) => i.field === "Primary sector"));
+  assert.ok(!issues.some((i) => i.field === "Primary sub-sector"));
 });
 
 test("markets and investor types left empty add no notes", () => {
@@ -249,7 +249,7 @@ test("ambiguous sectors: low confidence or missing reasoning needs confirmation"
   const { readiness, issues } = validateProfile(profile, index);
   assert.equal(readiness, "limited");
   assert.ok(issues.some((i) => i.message.includes("Fintech: needs confirmation")));
-  assert.ok(issues.some((i) => i.message.includes("Insurtech: a secondary sector needs its own founder evidence")));
+  assert.ok(issues.some((i) => i.message.includes("Insurtech: a secondary sub-sector needs its own founder evidence")));
   assert.ok(issues.some((i) => i.message === "Do you also underwrite payment risk?"));
 });
 
@@ -330,7 +330,7 @@ test("answer lists treat 'none' as empty", () => {
 test("build problems stay open only until the classification is decided", () => {
   const base = fromEngineProfile(engine(), lists, index, meta);
   const problems = [
-    { field: "Primary sector", severity: "limited" as const, message: "AI category invalid" },
+    { field: "Primary sub-sector", severity: "limited" as const, message: "AI category invalid" },
     { field: "Stage", severity: "limited" as const, message: "stage unclear" },
   ];
   assert.equal(openBuildProblems(base, problems).length, 2);

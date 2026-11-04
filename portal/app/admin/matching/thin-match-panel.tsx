@@ -97,7 +97,7 @@ export function ThinMatchPanel({
     const sectors = [option.primaryLabel, ...option.secondaryLabels].join(", ");
     if (
       !window.confirm(
-        `Apply ${sectors} · ${REACH_LABEL[option.option.stageReach]}? The sectors are saved as a new company profile version, and the match runs again. Nothing is pushed to the client.`,
+        `Apply ${sectors} · ${REACH_LABEL[option.option.stageReach]}? The sub-sectors are saved as a new company profile version, and the match runs again. Nothing is pushed to the client.`,
       )
     ) {
       return;
@@ -199,7 +199,7 @@ export function ThinMatchPanel({
 
       {pending === "find" ? (
         <p className="border-t border-border px-lg py-md text-body-sm text-muted" aria-live="polite">
-          The AI proposes sector setups, then the match engine counts each one. This takes up to a minute.
+          The AI proposes sub-sector setups, then the match engine counts each one. This takes up to a minute.
         </p>
       ) : null}
 

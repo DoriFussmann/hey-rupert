@@ -70,6 +70,7 @@ export function notificationLabel(type: string) {
   if (type === "nudge_ready") return "Nudge Ready to Send";
   if (type === "founder_answered") return "Answered Rupert's Questions";
   if (type === "linkedin_needed") return "Upload the Founder's LinkedIn PDF";
+  if (type === "sub_sector_unmatched") return "Sub-sector Not in the Taxonomy";
   return statusLabel(type);
 }
 
@@ -111,6 +112,9 @@ export function notificationAction(type: string) {
   }
   if (type === "linkedin_needed") {
     return "finished the intake: upload the founder's LinkedIn PDF in the Company Brief";
+  }
+  if (type === "sub_sector_unmatched") {
+    return "found no sub-sector that fits in the intake: decide on one, or add it to the taxonomy";
   }
   if (type === "founder_answered") {
     return "answered Rupert's questions (see the Company Brief)";

@@ -1,4 +1,5 @@
 import "server-only";
+import { asSubSectorPick } from "@/lib/intake-sub-sector";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeTool, type ClaudeMessage } from "@/lib/anthropic";
 import { promptSystem, type ActivePrompt, type PromptOverride } from "@/lib/prompts";
@@ -129,6 +130,7 @@ export function asIntakeInterview(row: Record<string, unknown>): IntakeInterview
         ? row.client_message_count
         : 0,
     classification_guide: row.classification_guide === 1,
+    sector_pick: asSubSectorPick(row.sector_pick),
     completed_at: row.completed_at != null ? String(row.completed_at) : null,
     updated_at: String(row.updated_at ?? new Date().toISOString()),
   };
@@ -357,6 +359,12 @@ const RESPOND_TOOL = {
           required: ["id", "topic_id", "file", "file_says", "founder_says", "status", "resolution"],
         },
       },
+      sector_names: {
+        type: "array",
+        description:
+          "Only when the founder answered where investors would file the company in this message: the sector names they chose, most important first, as close to the names in the sector list as you can (a sector, a broad industry or a specific one). Empty otherwise.",
+        items: { type: "string" },
+      },
     },
     required: ["reply", "topics"],
   },
@@ -369,6 +377,8 @@ export type InterviewTurn = {
   fileFacts: Map<string, string>;
   /** Disagreements noticed or resolved in this turn (merged by the caller). */
   conflicts: unknown;
+  /** The sector names the founder chose in this turn (empty when they didn't answer that). */
+  sectorNames: string[];
 };
 
 function readTurn(input: unknown): InterviewTurn | null {
@@ -378,6 +388,7 @@ function readTurn(input: unknown): InterviewTurn | null {
     topics?: unknown;
     files?: unknown;
     conflicts?: unknown;
+    sector_names?: unknown;
   };
   const reply = typeof value.reply === "string" ? value.reply.trim() : "";
   if (!reply) return null;
@@ -406,7 +417,10 @@ function readTurn(input: unknown): InterviewTurn | null {
       if (name && facts) fileFacts.set(name, facts);
     }
   }
-  return { reply, topics, fileFacts, conflicts: value.conflicts ?? [] };
+  const sectorNames = Array.isArray(value.sector_names)
+    ? value.sector_names.filter((x): x is string => typeof x === "string").map((x) => x.trim().slice(0, 80)).filter(Boolean).slice(0, 5)
+    : [];
+  return { reply, topics, fileFacts, conflicts: value.conflicts ?? [], sectorNames };
 }
 
 // Reading files takes longer than a chat reply.

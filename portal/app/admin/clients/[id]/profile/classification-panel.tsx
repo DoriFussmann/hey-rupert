@@ -37,7 +37,8 @@ export type VersionRow = {
   note: string;
 };
 
-export type SectorChoice = { id: string; label: string; broad: boolean };
+/** A sub-sector the client can pick, with the sector (taxonomy group) it sits in. */
+export type SectorChoice = { id: string; label: string; broad: boolean; sector: string };
 
 const READINESS_TONE: Record<Readiness, string> = {
   blocked: "border-error/40 text-error",
@@ -104,9 +105,12 @@ function ClassCard({
   item,
   clientId,
   path,
+  note,
 }: {
   title: string;
   item: Classification;
+  /** Shown next to the label, e.g. the sub-sector's sector. */
+  note?: string;
   clientId: string;
   path: string;
 }) {
@@ -116,7 +120,10 @@ function ClassCard({
       <div className="flex flex-wrap items-start justify-between gap-sm">
         <div>
           <p className="text-label uppercase tracking-label text-muted">{title}</p>
-          <p className="text-body text-heading">{item.label}</p>
+          <p className="text-body text-heading">
+            {item.label}
+            {note ? <span className="text-body-sm text-muted"> ({note})</span> : null}
+          </p>
           <div className="mt-xs flex flex-wrap gap-xs">
             <Chip>{SOURCE_LABEL[item.source]}</Chip>
             <Chip tone={item.status === "needs_confirmation" ? "text-warning" : "text-success"}>{STATUS_LABEL[item.status]}</Chip>
@@ -188,18 +195,18 @@ function SectorEditor({
   const [rationale, setRationale] = useState("");
   const options = (current: string) => (
     <>
-      <option value="">{current === "primary" ? "Pick a sector" : "None"}</option>
-      <optgroup label="Specific sectors">
+      <option value="">{current === "primary" ? "Pick a sub-sector" : "None"}</option>
+      <optgroup label="Specific sub-sectors">
         {choices.filter((c) => !c.broad).map((c) => (
           <option key={c.id} value={c.id}>
-            {c.label}
+            {c.label}{c.sector ? ` (${c.sector})` : ""}
           </option>
         ))}
       </optgroup>
-      <optgroup label="Broad industries">
+      <optgroup label="Broad sub-sectors">
         {choices.filter((c) => c.broad).map((c) => (
           <option key={c.id} value={c.id}>
-            {c.label}
+            {c.label}{c.sector ? ` (${c.sector})` : ""}
           </option>
         ))}
       </optgroup>
@@ -216,7 +223,7 @@ function SectorEditor({
       <div className="grid gap-sm sm:grid-cols-3">
         <div>
           <label className={labelClass} htmlFor="sector-primary">
-            Primary sector
+            Primary sub-sector
           </label>
           <Select id="sector-primary" value={primary} onChange={(e) => setPrimary(e.target.value)}>
             {options("primary")}
@@ -224,7 +231,7 @@ function SectorEditor({
         </div>
         <div>
           <label className={labelClass} htmlFor="sector-second">
-            Secondary
+            Secondary sub-sector 1
           </label>
           <Select id="sector-second" value={second} onChange={(e) => setSecond(e.target.value)}>
             {options("secondary")}
@@ -232,7 +239,7 @@ function SectorEditor({
         </div>
         <div>
           <label className={labelClass} htmlFor="sector-third">
-            Secondary
+            Secondary sub-sector 2
           </label>
           <Select id="sector-third" value={third} onChange={(e) => setThird(e.target.value)}>
             {options("secondary")}
@@ -250,11 +257,11 @@ function SectorEditor({
           maxLength={800}
           value={rationale}
           onChange={(e) => setRationale(e.target.value)}
-          placeholder="What the company does that puts it in these sectors (not its customers' industries)."
+          placeholder="What the company does that puts it in these sub-sectors (not its customers' industries)."
         />
       </div>
       <p className="text-body-sm text-muted">
-        Prefer the most specific sector the business supports. The profile fields matching runs on follow this change.
+        Prefer the most specific sub-sector the business supports. The profile fields matching runs on follow this change.
       </p>
       <div className="flex flex-wrap gap-sm">
         <button type="button" className={primaryButton} disabled={pending || !primary} onClick={save}>
@@ -341,7 +348,7 @@ export function ClassificationPanel({
         <Fact label="What the company does" fact={profile.business.product} />
         <Fact label="Who pays" fact={profile.business.customers} />
         <div>
-          <p className={labelClass}>Not the company&apos;s sector</p>
+          <p className={labelClass}>Not the company&apos;s sub-sector</p>
           {profile.business.notCompanySectors.length ? (
             <ul className="mt-xs space-y-xs text-body-sm text-secondary">
               {profile.business.notCompanySectors.map((item) => (
@@ -358,18 +365,19 @@ export function ClassificationPanel({
 
       <div className="space-y-sm px-lg py-md">
         <div className="flex flex-wrap items-center justify-between gap-sm">
-          <h3 className="text-body text-heading">Sectors</h3>
+          <h3 className="text-body text-heading">Sub-sectors</h3>
           <button type="button" className={smallButton} onClick={() => setEditing((open) => !open)}>
-            {editing ? "Close" : "Change sectors"}
+            {editing ? "Close" : "Change sub-sectors"}
           </button>
         </div>
         {editing ? <SectorEditor clientId={clientId} profile={profile} choices={choices} onDone={() => setEditing(false)} /> : null}
-        {profile.sectors.length === 0 ? <p className="text-body-sm text-error">No sector yet.</p> : null}
+        {profile.sectors.length === 0 ? <p className="text-body-sm text-error">No sub-sector yet.</p> : null}
         <div className="grid gap-sm md:grid-cols-3">
-          {profile.sectors.map((sector) => (
+          {profile.sectors.map((sector, i) => (
             <ClassCard
               key={`${sector.nodeId}-${sector.status}-${sector.source}`}
-              title={sector.role === "primary" ? "Primary sector" : "Secondary sector"}
+              title={sector.role === "primary" ? "Primary sub-sector" : `Secondary sub-sector ${profile.sectors.slice(0, i).filter((s) => s.role !== "primary").length + 1}`}
+              note={sector.role === "primary" ? choices.find((c) => c.id === sector.nodeId)?.sector : undefined}
               item={sector}
               clientId={clientId}
               path={`sector:${sector.nodeId}`}

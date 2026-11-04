@@ -99,6 +99,7 @@ export function interviewGuide(index: TaxIndex | null) {
     "- Keep the company's own activity apart from its customers' industries, its suppliers and its sales channels: a payments tool sold to clinics is fintech, not healthtech.",
     "- Then suggest two or three sector names from the list below, in plain words, most specific first, and ask which fits best and whether there is a second one. Never read out the whole list, and never offer a name that isn't on it; if nothing fits, ask the founder to describe it in their own words.",
     "- Never widen the company's sector to reach more investors.",
+    "- If the founder's answer is a whole sector or a broad industry (for example financial services or software), don't press for a narrower one in words: report it in `sector_names` and the portal shows them the sub-sectors under it to pick from. Their pick then appears in the conversation.",
     "- If the round, the HQ location or the sector is unclear or conflicts with something said earlier, ask one short follow-up, then read back what you understood and ask the founder to confirm.",
   ];
   if (index) {

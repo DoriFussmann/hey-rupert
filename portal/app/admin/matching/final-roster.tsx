@@ -50,7 +50,7 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
         {row("Added (2D), passing the filters", `+${n(counts.added)}`)}
         {counts.addedMissing ? row("Added (2D), waiting for missing fields: not counted", n(counts.addedMissing), "text-warning") : null}
         {row("Combined", n(counts.combined))}
-        {row("Excluded by the client", `−${n(counts.excluded)}`, "text-error")}
+        {row("Excluded by the client", `(${n(counts.excluded)})`, "text-error")}
         {row("The Final Roster", n(counts.total), "text-heading", true)}
         {row("Of which backed a competitor", n(counts.backed), "text-success")}
       </tbody>
@@ -60,7 +60,7 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
 
 const RESULT_TEXT: Record<AddedCheck["result"], { label: string; tone: string }> = {
   pass: { label: "In: passes the filters", tone: "text-success" },
-  secondary: { label: "In: by the client's secondary sector", tone: "text-success" },
+  secondary: { label: "In: by the client's secondary sub-sector", tone: "text-success" },
   fail: { label: "Out", tone: "text-error" },
   missing: { label: "Waiting: missing fields", tone: "text-warning" },
   not_found: { label: "Out: not in the database", tone: "text-error" },
@@ -123,7 +123,7 @@ function ExclusionTable({ exclusions }: { exclusions: ExclusionCheck[] }) {
 }
 
 /** Step 3: The Final Roster. */
-export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: string; clientName: string; refreshKey: number }) {
+export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { clientId: string; clientName: string; refreshKey: number; onChanged?: () => void }) {
   const [state, setState] = useState<RosterState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -147,6 +147,7 @@ export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: st
     setBusy(null);
     if (!result.ok) return setError(result.error);
     setState(result.state);
+    onChanged?.();
   }
 
   const errorLine = error ? <p className="mt-sm whitespace-pre-line text-body-sm text-error">{error}</p> : null;

@@ -14,7 +14,7 @@ export type AddedStatus = "pending" | "approved" | "rejected";
 /** The Step 1 fields an added investor can be missing. Financing defaults to Equity, so it is never missing. */
 export type MissingField = "stage" | "geography" | "sector";
 
-export const MISSING_LABEL: Record<MissingField, string> = { stage: "Stage", geography: "Geography", sector: "Sector" };
+export const MISSING_LABEL: Record<MissingField, string> = { stage: "Stage", geography: "Geography", sector: "Sub-sector" };
 
 /** The fields Step 1 would find empty for a fund. */
 export function missingFields(fund: { stage: number[]; geo: number[]; sector: number[]; generalist: boolean }): MissingField[] {

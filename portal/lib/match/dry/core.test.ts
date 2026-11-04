@@ -132,11 +132,13 @@ test("funnel: each confirmed step counts what it removed and what is left, in or
   assert.deepEqual(
     steps.map((s) => [s.step, s.before, s.removed, s.left]),
     [
-      ["financing", 6, 1, 5],
+      ["financing", 2506, 2501, 5],
       ["stage", 5, 1, 4],
       ["geography", 4, 1, 3],
       ["sector", 3, 1, 2],
     ],
   );
   assert.equal(funnel(data, { financing: ["financing.equity"] }).length, 1);
+  // Debt halts at the Financing step.
+  assert.equal(funnel(data, { ...data.defaults, financing: ["financing.debt"] }).length, 1);
 });

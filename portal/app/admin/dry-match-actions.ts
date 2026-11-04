@@ -3,7 +3,7 @@
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { DRY_STEPS, buildDryData, expandStage, funnel, type DryData, type DryStep } from "@/lib/match/dry/core";
+import { DEBT_HALT, DRY_STEPS, allFunds, buildDryData, choosesDebt, expandStage, funnel, type DryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -134,7 +134,7 @@ export async function loadDryMatch(
 export async function confirmDryMatch(
   clientId: string,
   choices: Partial<Record<DryStep, string[]>>,
-): Promise<Result<{ saved: SavedDryList }>> {
+): Promise<Result<{ saved: SavedDryList; data: DryData; facts: DryFacts }>> {
   const a = await access();
   if (!a.ok) return a;
   if (!validId(clientId)) return { ok: false, error: "Unknown client." };
@@ -148,6 +148,7 @@ export async function confirmDryMatch(
       const picked = Array.isArray(choices?.[step]) ? choices[step]!.filter((id) => typeof id === "string" && known.has(id)) : [];
       if (picked.length === 0) return { ok: false, error: `Confirm every step first: ${step} has no choice.` };
       clean[step] = Array.from(new Set(picked));
+      if (step === "financing" && choosesDebt(clean[step])) return { ok: false, error: `${DEBT_HALT}.` };
     }
     const steps = funnel(data, clean);
     const last = steps[steps.length - 1];
@@ -174,7 +175,7 @@ export async function confirmDryMatch(
       .from("dry_match_lists")
       .insert({
         client_id: clientId,
-        total_funds: data.funds.length,
+        total_funds: allFunds(data),
         steps: savedSteps,
         fund_ids: last.funds.map((f) => f.id),
         fund_count: last.left,
@@ -190,7 +191,7 @@ export async function confirmDryMatch(
       ok: true,
       saved: {
         id: row.id,
-        totalFunds: data.funds.length,
+        totalFunds: allFunds(data),
         steps: savedSteps,
         fundIds: last.funds.map((f) => f.id),
         fundCount: last.left,
@@ -198,6 +199,9 @@ export async function confirmDryMatch(
         confirmedBy: a.email,
         confirmedAt: row.confirmed_at,
       },
+      // The live data the list was built from, so the page shows the same and doesn't flag a change.
+      data,
+      facts,
     };
   } catch (err) {
     return { ok: false, error: err instanceof Error ? err.message : "The list was not saved." };

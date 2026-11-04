@@ -133,7 +133,7 @@ function Row({
       <div className="mt-xs space-y-[2px]">
         {row("stage", "Stage", item.stages)}
         {row("geography", "Geography", item.geographies)}
-        {row("sector", "Sector", item.sectors)}
+        {row("sector", "Sub-sector", item.sectors)}
         {known("Financing", item.financing.length ? item.financing : ["Equity (default)"])}
         {known("HQ", [item.hqCountry].filter(Boolean))}
         {item.firmType ? known("Type", [item.firmType]) : null}

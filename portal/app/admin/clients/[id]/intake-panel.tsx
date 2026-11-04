@@ -24,6 +24,38 @@ function statusLine(
   return `In progress · ${percent}% of required topics`;
 }
 
+/** The intake's sub-sector question, when it was asked: what the founder picked, or their own words for the admin to decide on. */
+function SubSectorAnswer({ interview }: { interview: IntakeInterview | null }) {
+  const pick = interview?.sector_pick;
+  if (!pick) return null;
+  const asked = pick.asked.map((a) => a.label).join(", ");
+  if (pick.status === "picked") {
+    return (
+      <p className="border-b border-border px-lg py-md text-body-sm text-secondary">
+        <span className="text-heading">Sub-sector question:</span> said {asked}, then picked {pick.chosen.map((c) => c.label).join(", ")}.
+      </p>
+    );
+  }
+  if (pick.status === "unmatched") {
+    return (
+      <div className="border-b border-border bg-warning/5 px-lg py-md text-body-sm">
+        <p className="text-warning">
+          No sub-sector fitted. Decide on one in the company profile, or add it to the taxonomy (Taxonomy page).
+        </p>
+        <p className="mt-xs text-secondary">
+          Said {asked}. In their own words: <span className="text-heading">{pick.description}</span>
+          {pick.suggestions.length ? ` The AI suggested (not taken): ${pick.suggestions.map((x) => x.label).join(", ")}.` : ""}
+        </p>
+      </div>
+    );
+  }
+  return (
+    <p className="border-b border-border px-lg py-md text-body-sm text-muted">
+      Sub-sector question open: said {asked}; the founder hasn&apos;t picked yet.
+    </p>
+  );
+}
+
 export function IntakePanel({
   interview,
   topics,
@@ -49,6 +81,8 @@ export function IntakePanel({
             : ""}
         </p>
       </div>
+
+      <SubSectorAnswer interview={interview} />
 
       {summary ? (
         <dl className="divide-y divide-border">

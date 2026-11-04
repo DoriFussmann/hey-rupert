@@ -106,10 +106,15 @@ export function campaignDays(months: number) {
   return Math.round((months * 365.25) / 12);
 }
 
-function dailyCapacity(inputs: CapacityInputs, warmup: boolean, warmupWeek = 0) {
+export type ScheduleOptions = {
+  /** One warm-up percentage for the whole warm-up period, instead of the ramp (Step 4 of the new matching). */
+  flatWarmup?: boolean;
+};
+
+export function dailyCapacity(inputs: CapacityInputs, warmup: boolean, warmupWeek = 0, flat = false) {
   const normal = inputs.inboxes * inputs.emailsPerInboxPerDay;
   if (!warmup || inputs.warmupWeeks === 0) return normal;
-  const percent = inputs.warmupPercent + ((100 - inputs.warmupPercent) * warmupWeek) / inputs.warmupWeeks;
+  const percent = flat ? inputs.warmupPercent : inputs.warmupPercent + ((100 - inputs.warmupPercent) * warmupWeek) / inputs.warmupWeeks;
   return Math.min(normal, Math.round((normal * percent) / 100));
 }
 
@@ -161,7 +166,8 @@ export type CapacityResult = {
  * Builds the schedule. `stopAtFirms` stops starting firms once that many have
  * started (for a target); the capacity figures still cover the whole campaign.
  */
-export function schedule(inputs: CapacityInputs, stopAtFirms = Number.POSITIVE_INFINITY): CapacityResult {
+export function schedule(inputs: CapacityInputs, stopAtFirms = Number.POSITIVE_INFINITY, options: ScheduleOptions = {}): CapacityResult {
+  const flat = options.flatWarmup === true;
   const problems = inputProblems(inputs);
   if (problems.length > 0) throw new Error(problems.join(" "));
   const days = campaignDays(inputs.months);
@@ -174,7 +180,7 @@ export function schedule(inputs: CapacityInputs, stopAtFirms = Number.POSITIVE_I
   const sending = new Array<boolean>(days).fill(false);
   for (let d = 0; d < days; d += 1) {
     sending[d] = d % 7 < inputs.sendingDaysPerWeek;
-    if (sending[d]) cap[d] = dailyCapacity(inputs, d < warmupDays, Math.floor(d / 7));
+    if (sending[d]) cap[d] = dailyCapacity(inputs, d < warmupDays, Math.floor(d / 7), flat);
   }
   const free = [...cap];
   const initialOn = new Array<number>(days).fill(0);
@@ -254,7 +260,7 @@ export function schedule(inputs: CapacityInputs, stopAtFirms = Number.POSITIVE_I
     sendingDays: sending.filter(Boolean).length,
     warmupSendingDays: sending.slice(0, Math.min(warmupDays, days)).filter(Boolean).length,
     dailyNormal: dailyCapacity(inputs, false),
-    dailyWarmup: warmupDays > 0 ? dailyCapacity(inputs, true, 0) : dailyCapacity(inputs, false),
+    dailyWarmup: warmupDays > 0 ? dailyCapacity(inputs, true, 0, flat) : dailyCapacity(inputs, false),
     warmupLost: cap.slice(0, Math.min(warmupDays, days)).reduce((lost, value, d) => lost + (sending[d] ? dailyCapacity(inputs, false) - value : 0), 0),
     capacity,
     warmupCapacity,

@@ -191,7 +191,7 @@ export function buildRoster(input: {
       const sectors = fund.sector.map((i) => input.data.labels.sector[i]).filter((s) => lower.has(s.toLowerCase()));
       if (failure.step === "sector" && sectors.length) {
         result = "secondary";
-        reason = `Fails only on primary sector, but lists ${sectors.join(", ")}: the client's sector.`;
+        reason = `Fails only on sector, but lists ${sectors.join(", ")}: the client's sub-sector.`;
       } else {
         result = "fail";
         reason = `${failure.label}: ${failure.fundValues}.`;

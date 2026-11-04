@@ -2,6 +2,7 @@
 // Pure module: safe to use on the server and in the browser.
 
 import { MATERIAL_EXTENSIONS, MATERIAL_MAX_BYTES, fileExtension, formatBytes } from "./setup.ts";
+import type { SubSectorPick } from "./intake-sub-sector.ts";
 
 export type IntakeTopic = {
   id: string;
@@ -191,6 +192,8 @@ export type IntakeInterview = {
    * under way keep their original behavior.
    */
   classification_guide: boolean;
+  /** The sub-sector question: shown when the founder's sector answer was a sector or a broad sub-sector. */
+  sector_pick: SubSectorPick | null;
   completed_at: string | null;
   updated_at: string;
 };
@@ -450,7 +453,7 @@ export function asIntakeBrief(value: unknown): IntakeBrief | null {
  */
 export const MATCHING_TOPICS: Record<string, string> = {
   company: "HQ country and US state",
-  sector: "Primary and secondary sectors",
+  sector: "Primary and secondary sub-sectors",
   raise: "Stage",
   existing_and_exclusions: "Funds to exclude",
   competitors: "Competitive landscape (Step 2)",

@@ -14,7 +14,7 @@ export const DRY_STEP_LABEL: Record<DryStep, string> = {
   financing: "Financing type",
   stage: "Stage",
   geography: "Geography",
-  sector: "Primary sector",
+  sector: "Sector",
 };
 
 /**
@@ -33,6 +33,26 @@ export const GEO_BUCKETS = [
   { key: "middle_east", label: "Middle East", node: "geo.middle_east" },
   { key: "africa", label: "Africa", node: "geo.africa" },
 ] as const;
+
+/**
+ * Debt-only funds, held outside this Fund Database (1,950 US, most of the rest
+ * Europe; industry-agnostic). They count in All funds and drop at the
+ * Financing step: matching is equity only for now.
+ */
+export const DEBT_ONLY_FUNDS = 2500;
+
+/** Debt isn't supported by the matching yet (Dori runs debt raises by hand). */
+export const DEBT_NODE = "financing.debt";
+export const DEBT_HALT = "Debt Financing Type Not Supported Yet";
+
+export function choosesDebt(chosen: string[] | undefined) {
+  return (chosen ?? []).includes(DEBT_NODE);
+}
+
+/** All funds: the Fund Database plus the debt-only funds. */
+export function allFunds(data: DryData) {
+  return data.funds.length + DEBT_ONLY_FUNDS;
+}
 
 /** Pre-Seed and Seed are one stage: choosing either chooses both. */
 const EARLY = ["stage.pre_seed", "stage.seed"];
@@ -196,8 +216,8 @@ export function buildDryData(db: FundDb, index: TaxIndex, profile: DryProfile): 
         : "Profile has no stage",
       geography: profile.hqCountry ? `Profile HQ: ${label(profile.hqCountry)}` : "Profile has no HQ country",
       sector: profile.primarySector
-        ? `Profile primary sector: ${label(profile.primarySector)}${ownGroup ? `, in ${label(ownGroup)}` : ""}`
-        : "Profile has no primary sector",
+        ? `Profile primary sub-sector: ${label(profile.primarySector)}${ownGroup ? `, in the sector ${label(ownGroup)}` : ""}`
+        : "Profile has no primary sub-sector",
     },
   };
 }
@@ -232,10 +252,13 @@ export function funnel(data: DryData, confirmed: Partial<Record<DryStep, string[
   for (const step of DRY_STEPS) {
     const chosen = confirmed[step];
     if (!chosen) break;
-    const before = left.length;
+    // The debt-only funds held outside the database drop here.
+    const extra = step === "financing" ? DEBT_ONLY_FUNDS : 0;
+    const before = left.length + extra;
     const wanted = wantedSet(data, step, chosen);
     left = left.filter((fund) => fund[FIELD[step]].some((i) => wanted.has(i)));
     steps.push({ step, before, removed: before - left.length, left: left.length, funds: left });
+    if (step === "financing" && choosesDebt(chosen)) break;
   }
   return steps;
 }

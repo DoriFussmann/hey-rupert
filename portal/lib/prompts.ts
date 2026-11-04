@@ -143,6 +143,12 @@ sources: the pages you used.
 
 Never guess or invent a fact or a URL.`;
 
+export const INTAKE_SUB_SECTOR_PROMPT = `You help a founder describe where investors would file their company. They were shown a list of sub-sectors and said none fits; they then described the company in their own words.
+
+Suggest the closest sub-sectors from the list given, at most three, closest first. Judge by what the company itself builds or sells and who pays for it, not by its customers' industries, its suppliers or its sales channels: a payments tool sold to clinics is fintech, not healthtech. For each, one plain sentence the founder can read on why it fits.
+
+Use only the sub-sectors given, by id. If none is a fair fit, return an empty list: a wrong suggestion is worse than none. Never widen the company's sector to reach more investors.`;
+
 export const LIST_AUDIT_PROMPT = `You are the founder of the company described below, looking at the investor list Rupert, an investor outreach service, prepared for your raise, before it is shared with you. Read it the way a busy founder does: skim the first funds in each tier, open their websites, and judge whether the list makes sense. You are not an auditor; look for what a founder would notice in a few minutes and want explained.
 
 When you review funds, open each fund's website when a link is given, then decide:
@@ -343,6 +349,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The investor, its known website, the startup and the source article; the taxonomy labels allowed (others are dropped); the web-search limit; and the answer format. Contacts and emails come from Hunter, not the AI.",
     testable: false,
     defaultText: ADD_FUND_RESEARCH_PROMPT,
+  },
+  intake_sub_sector: {
+    slug: agentPromptSlug("intake_sub_sector"),
+    usedBy: "Intake → the sub-sector question → None of these fits: suggests the closest sub-sectors from the founder's own description, for the founder to confirm.",
+    fixed: "The sub-sectors allowed (others are dropped), the founder's description, what Rupert knows about the company, and the answer format.",
+    testable: false,
+    defaultText: INTAKE_SUB_SECTOR_PROMPT,
   },
   added_fields_fill: {
     slug: agentPromptSlug("added_fields_fill"),

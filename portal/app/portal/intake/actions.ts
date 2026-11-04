@@ -17,6 +17,7 @@ import {
 } from "@/lib/intake";
 import {
   asIntakeInterview,
+  buildClientContext,
   loadIntakeSettings,
   loadInterview,
   nextInterviewTurn,
@@ -24,6 +25,17 @@ import {
   type InterviewMaterials,
 } from "@/lib/intake-server";
 import { loadInterviewGuide } from "@/lib/company-profile/server";
+import { loadTaxonomy } from "@/lib/taxonomy/server";
+import {
+  SUB_SECTOR_LIMITS,
+  cleanChoice,
+  isSubSectorDone,
+  pickFor,
+  pickMessage,
+  resolveSectorName,
+  type SubSectorPick,
+} from "@/lib/intake-sub-sector";
+import { suggestSubSectors } from "@/lib/intake-sub-sector-server";
 import { prepareFiles, type PreparedFiles } from "@/lib/material-files-server";
 import {
   attachMaterialFile,
@@ -275,6 +287,8 @@ async function takeTurn(
   interview: IntakeInterview,
   message: IntakeMessage,
   files?: PreparedFiles,
+  /** The sub-sector question's new state, when this message answers it. */
+  answeredPick?: SubSectorPick,
 ): Promise<IntakeActionResult> {
   const { supabase, user } = access;
   const settings = await loadIntakeSettings(supabase);
@@ -322,6 +336,7 @@ async function takeTurn(
     settings.topics,
   );
   const conflicts = mergeConflicts(interview.conflicts, turn.turn.conflicts, at);
+  const sectorPick = answeredPick ?? (await pickAfterTurn(access, interview, turn.turn.sectorNames, at));
 
   // Guard against a second tab writing at the same time: only update if the
   // message count is still the one this turn was based on.
@@ -333,6 +348,7 @@ async function takeTurn(
       material_conflicts: conflicts,
       client_message_count: interview.client_message_count + 1,
       updated_at: at,
+      ...(sectorPick !== undefined ? { sector_pick: sectorPick } : {}),
     })
     .eq("client_id", user.id)
     .eq("client_message_count", interview.client_message_count)
@@ -357,6 +373,114 @@ async function takeTurn(
 
   revalidatePath(`/admin/clients/${user.id}`);
   return success(access, asIntakeInterview(data[0]));
+}
+
+/**
+ * The sub-sector question after a turn: opened when the founder's sector
+ * answer is a sector or a broad sub-sector; an open one is closed when they
+ * name a specific sub-sector in words instead. Undefined: no change.
+ */
+async function pickAfterTurn(
+  { supabase }: PortalAccess,
+  interview: IntakeInterview,
+  names: string[],
+  at: string,
+): Promise<SubSectorPick | null | undefined> {
+  if (!interview.classification_guide || !names.length || isSubSectorDone(interview.sector_pick)) return undefined;
+  const taxonomy = await loadTaxonomy(supabase);
+  if (!taxonomy.ok) return undefined;
+  const pick = pickFor(taxonomy.value, names, at);
+  if (pick) return pick;
+  const specific = names.some((n) => {
+    const node = resolveSectorName(taxonomy.value, n);
+    return node && node.kind !== "group" && node.attrs.granularity !== "broad";
+  });
+  return specific && interview.sector_pick ? null : undefined;
+}
+
+/** Saves the sub-sector question's state without a reply from Rupert. */
+async function savePick(access: PortalAccess, pick: SubSectorPick): Promise<IntakeActionResult> {
+  const { data, error } = await access.supabase
+    .from("intake_interviews")
+    .update({ sector_pick: pick })
+    .eq("client_id", access.user.id)
+    .select("*");
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: "The interview was not found." };
+  return success(access, asIntakeInterview(data[0]));
+}
+
+async function openPick(access: PortalAccess) {
+  const open = await loadOpenInterview(access);
+  if (!open.ok) return open;
+  const pick = open.interview.sector_pick;
+  if (!pick || isSubSectorDone(pick)) return { ok: false as const, error: "There is no sub-sector question open." };
+  return { ...open, pick };
+}
+
+/** The sub-sector question: the founder picks one or more sub-sectors (from the list, or the AI's suggestions). */
+export async function pickSubSectors(ids: string[]): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const open = await openPick(access);
+  if (!open.ok) return open;
+  const chosen = cleanChoice(open.pick, ids);
+  if (!chosen.length) return { ok: false, error: "Pick at least one." };
+  const at = now();
+  const pick: SubSectorPick = { ...open.pick, status: "picked", chosen, at };
+  return takeTurn(access, open.client, open.interview, { role: "user", content: pickMessage(pick), at }, undefined, pick);
+}
+
+/** "None of these fits": the founder describes it in their own words next. Again: back to the list. */
+export async function subSectorNoneFits(none: boolean): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const open = await openPick(access);
+  if (!open.ok) return open;
+  return savePick(access, { ...open.pick, status: none ? "describe" : "open", suggestions: none ? open.pick.suggestions : [] });
+}
+
+/** The founder's own description: the AI suggests the closest sub-sectors for them to confirm. */
+export async function describeSubSector(text: string): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const description = String(text ?? "").trim();
+  if (description.length < 3) return { ok: false, error: "Describe it in a few words first." };
+  if (description.length > SUB_SECTOR_LIMITS.descriptionMax) return { ok: false, error: `Please keep it under ${SUB_SECTOR_LIMITS.descriptionMax} characters.` };
+  const open = await openPick(access);
+  if (!open.ok) return open;
+  const taxonomy = await loadTaxonomy(access.supabase);
+  if (!taxonomy.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
+  const suggested = await suggestSubSectors(access.supabase, taxonomy.value, {
+    clientId: access.user.id,
+    description,
+    asked: open.pick.asked.map((a) => a.label),
+    context: buildClientContext(open.client),
+  });
+  if (!suggested.ok) return { ok: false, error: AI_UNAVAILABLE, aiUnavailable: true };
+  return savePick(access, { ...open.pick, status: "suggested", description, suggestions: suggested.value, at: now() });
+}
+
+/** Still none fits: the founder's words go to Rupert's team, and the interview goes on. */
+export async function subSectorStillNone(): Promise<IntakeActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const open = await openPick(access);
+  if (!open.ok) return open;
+  if (!open.pick.description) return { ok: false, error: "Describe it in a few words first." };
+  const at = now();
+  const pick: SubSectorPick = { ...open.pick, status: "unmatched", chosen: [], at };
+  const result = await takeTurn(access, open.client, open.interview, { role: "user", content: pickMessage(pick), at }, undefined, pick);
+  if (result.ok) {
+    await notifyAdmin(access.supabase, access.user.id, "sub_sector_unmatched", {
+      email: false,
+      details: `They first said: ${open.pick.asked.map((a) => a.label).join(", ")}. In their own words: ${open.pick.description}${
+        open.pick.suggestions.length ? `
+The AI suggested (not taken): ${open.pick.suggestions.map((x) => x.label).join(", ")}.` : ""
+      }`,
+    });
+  }
+  return result;
 }
 
 export async function sendIntakeMessage(
