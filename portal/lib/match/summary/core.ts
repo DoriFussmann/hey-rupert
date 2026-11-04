@@ -13,10 +13,16 @@ import { TIER_LABEL, waterfall, type PlanFund, type PlanInputs, type Planned } f
 
 export type Cell = string | number | { text: string; href: string };
 export type Column = { key: string; label: string; align?: "right" };
+export type Detail = { label: string; value: Cell | Cell[] };
 export type SummaryTable = {
   title?: string;
   columns: Column[];
+  /** One short line per item. */
   rows: Record<string, Cell>[];
+  /** Per row (same order): everything about it, shown when the row is clicked. */
+  details?: Detail[][];
+  /** What a row is, for the details' heading ("Competitor"). */
+  item?: string;
   /** Bold last row (a total). */
   total?: Record<string, Cell>;
 };
@@ -90,31 +96,42 @@ function competitorsStep(competitors: Competitor[], key: string, button: string,
     headline: { value: competitors.length, label: competitors.length === 1 ? "Funded competitor" : "Funded competitors" },
     tables: [
       {
+        item: "Competitor",
         columns: [
           { key: "name", label: "Competitor" },
-          { key: "what", label: "What it does" },
           { key: "hq", label: "HQ" },
           { key: "round", label: "Latest round" },
           { key: "raised", label: "Total raised" },
-          { key: "investors", label: "Investors named" },
-          ...(withSources ? [{ key: "source", label: "Source" }] : []),
         ],
-        rows: competitors.map((c) => ({
-          name: c.website ? { text: c.name, href: c.website } : c.name,
-          what: c.oneLiner,
-          hq: c.hq,
-          round: round(c),
-          raised: c.funding.totalRaised,
-          investors: c.funding.investors.join(", "),
-          ...(withSources ? { source: c.newsUrl ? { text: c.newsTitle || "Article", href: c.newsUrl } : "" } : {}),
-        })),
+        rows: competitors.map((c) => ({ name: c.name, hq: c.hq, round: c.funding.lastRound, raised: c.funding.totalRaised })),
+        details: competitors.map((c) => [
+          { label: "What it does", value: c.oneLiner },
+          { label: "Website", value: c.website ? { text: c.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: c.website } : "" },
+          { label: "HQ", value: c.hq },
+          { label: "Latest round", value: round(c) },
+          { label: "Total raised", value: c.funding.totalRaised },
+          { label: "Investors named", value: c.funding.investors },
+          ...(withSources ? [] : [{ label: "Why a direct competitor", value: c.why }]),
+          { label: "Source", value: c.newsUrl ? { text: c.newsTitle || "Article", href: c.newsUrl } : "" },
+        ]),
       },
     ],
   };
 }
 
-function backedText(i: Investor) {
-  return i.backed.map((b) => [b.competitor, b.round, b.lead ? "led" : ""].filter(Boolean).join(" · ")).join("; ");
+function backingLine(b: Investor["backed"][number]) {
+  return [b.competitor, b.round, b.lead ? "led" : ""].filter(Boolean).join(" · ");
+}
+
+/** One line: the first competitor it backed, and how many more. */
+function backedShort(names: string[]) {
+  const unique = Array.from(new Set(names));
+  if (!unique.length) return "";
+  return unique.length === 1 ? unique[0] : `${unique[0]} +${unique.length - 1}`;
+}
+
+function backingDetails(i: Investor): Cell[] {
+  return i.backed.map((b) => (b.sourceUrl ? { text: backingLine(b), href: b.sourceUrl } : backingLine(b)));
 }
 
 function investorsStep(investors: Investor[]): SummaryStep {
@@ -126,12 +143,18 @@ function investorsStep(investors: Investor[]): SummaryStep {
     headline: { value: investors.length, label: "Investors found" },
     tables: [
       {
+        item: "Investor",
         columns: [
           { key: "name", label: "Investor" },
           { key: "kind", label: "Type" },
-          { key: "backed", label: "Backed (round)" },
+          { key: "backed", label: "Backed" },
         ],
-        rows: sorted.map((i) => ({ name: i.website ? { text: i.name, href: i.website } : i.name, kind: KIND_LABEL[i.kind], backed: backedText(i) })),
+        rows: sorted.map((i) => ({ name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort(i.backed.map((b) => b.competitor)) })),
+        details: sorted.map((i) => [
+          { label: "Type", value: KIND_LABEL[i.kind] },
+          { label: "Website", value: i.website ? { text: i.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: i.website } : "" },
+          { label: "Backed (round)", value: backingDetails(i) },
+        ]),
       },
     ],
   };
@@ -188,12 +211,19 @@ function addedStep(rows: CheckRow[]): SummaryStep {
           { key: "backed", label: "Backed" },
           { key: "contacts", label: "Contacts", align: "right" },
         ],
+        item: "Investor",
         rows: added.map((r) => ({
-          name: r.added!.website ? { text: r.investor.name, href: r.added!.website } : r.investor.name,
+          name: r.investor.name,
           kind: KIND_LABEL[r.investor.kind],
-          backed: r.investor.backed.map((b) => b.competitor).join(", "),
+          backed: backedShort(r.investor.backed.map((b) => b.competitor)),
           contacts: n(r.added!.contacts),
         })),
+        details: added.map((r) => [
+          { label: "Type", value: KIND_LABEL[r.investor.kind] },
+          { label: "Website", value: r.added!.website ? { text: r.added!.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: r.added!.website } : "" },
+          { label: "Backed (round)", value: backingDetails(r.investor) },
+          { label: "Contacts found", value: n(r.added!.contacts) },
+        ]),
       },
     ],
   };
@@ -269,15 +299,24 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
           { key: "backed", label: "Backed a competitor" },
           { key: "contacts", label: "Contacts", align: "right" },
         ],
+        item: "Fund",
         rows: planned.map((p, i) => {
           const f = byId.get(p.firmId);
-          return {
-            i: i + 1,
-            tier: TIER_LABEL[p.tier],
-            name: f?.website ? { text: f.name, href: f.website } : f?.name ?? p.firmId,
-            backed: f?.backed.join(", ") ?? "",
-            contacts: p.slots,
-          };
+          return { i: i + 1, tier: TIER_LABEL[p.tier], name: f?.name ?? p.firmId, backed: backedShort(f?.backed ?? []), contacts: p.slots };
+        }),
+        details: planned.map((p) => {
+          const f = byId.get(p.firmId);
+          return [
+            { label: "Tier", value: `${TIER_LABEL[p.tier]}, #${p.rank} in the tier` },
+            { label: "Website", value: f?.website ? { text: f.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: f.website } : "" },
+            { label: "Matched on", value: f?.hit ?? [] },
+            { label: "Backed a competitor", value: f?.backed ?? [] },
+            { label: "At the client's stage", value: f?.sameStage ?? [] },
+            { label: "Look-alike score", value: f ? f.lookAlike.toFixed(2) : "" },
+            { label: "Sub-sectors listed", value: f ? String(f.focus) : "" },
+            { label: "Contacts in the plan", value: `${p.slots} of ${f?.contacts ?? p.slots} available` },
+            { label: "Source", value: f?.source ?? "" },
+          ];
         }),
       },
     ],
@@ -330,20 +369,25 @@ export function landscapeSummary(input: {
         headline: { value: input.investors.length, label: `Investors, ${n(onList)} on your outreach list` },
         tables: [
           {
+            item: "Investor",
             columns: [
               { key: "name", label: "Investor" },
               { key: "kind", label: "Type" },
-              { key: "backed", label: "Backed (round)" },
+              { key: "backed", label: "Backed" },
               { key: "outreach", label: "On your outreach list" },
             ],
             rows: sorted.map((i) => {
               const id = firmOf.get(i.id);
-              return {
-                name: i.website ? { text: i.name, href: i.website } : i.name,
-                kind: KIND_LABEL[i.kind],
-                backed: backedText(i),
-                outreach: id && input.outreach.has(id) ? "Yes" : "No",
-              };
+              return { name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort(i.backed.map((b) => b.competitor)), outreach: id && input.outreach.has(id) ? "Yes" : "No" };
+            }),
+            details: sorted.map((i) => {
+              const id = firmOf.get(i.id);
+              return [
+                { label: "Type", value: KIND_LABEL[i.kind] },
+                { label: "Website", value: i.website ? { text: i.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: i.website } : "" },
+                { label: "Backed (round)", value: backingDetails(i) },
+                { label: "On your outreach list", value: id && input.outreach.has(id) ? "Yes" : "No" },
+              ];
             }),
           },
         ],

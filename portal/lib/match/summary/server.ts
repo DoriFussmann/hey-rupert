@@ -158,6 +158,19 @@ export async function pushToClient(supabase: ServiceClient, clientId: string, ki
   return { ok: true, value: null };
 }
 
+/** Push to Client, both summaries at once (the overview only when there is one). */
+export async function pushAllToClient(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<null>> {
+  const fin = await currentFinalization(supabase, clientId);
+  if (!fin.ok) return fin;
+  if (!fin.value) return { ok: false, error: "Finalize the matching first." };
+  const kinds: DeliverableKind[] = fin.value.landscape ? ["matching", "landscape"] : ["matching"];
+  for (const kind of kinds) {
+    const done = await pushToClient(supabase, clientId, kind, actor);
+    if (!done.ok) return done;
+  }
+  return { ok: true, value: null };
+}
+
 /** What was pushed to the client page, matching first. */
 export async function loadDeliverables(supabase: ServiceClient, clientId: string): Promise<Result<Deliverable[]>> {
   const { data, error } = await supabase

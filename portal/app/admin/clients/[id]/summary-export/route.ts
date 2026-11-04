@@ -4,7 +4,7 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { currentFinalization, loadDeliverables } from "@/lib/match/summary/server";
-import { cellText, type Summary } from "@/lib/match/summary/core";
+import { cellText, type Detail, type Summary } from "@/lib/match/summary/core";
 
 // Download: the matching summary or the Competitive Landscape Overview as an
 // Excel file, one tab per step, each tab named after its step. From the
@@ -34,19 +34,24 @@ function workbook(summary: Summary) {
     for (const table of step.tables) {
       sheet.addRow([]);
       if (table.title) sheet.addRow([table.title]).font = { bold: true };
-      sheet.addRow(table.columns.map((c) => c.label)).font = { bold: true };
-      const add = (row: Record<string, unknown>, bold = false) => {
-        const r = sheet.addRow(
-          table.columns.map((c) => {
-            const cell = row[c.key] as Parameters<typeof cellText>[0];
-            if (cell && typeof cell === "object") return { text: cell.text, hyperlink: cell.href };
-            return cellText(cell);
+      // The details shown on a row's click become extra columns here (those not already a column).
+      const shownLabels = new Set(table.columns.map((c) => c.label.toLowerCase()));
+      const extra = Array.from(new Set((table.details ?? []).flatMap((d) => d.map((x) => x.label)))).filter((l) => !shownLabels.has(l.toLowerCase()));
+      sheet.addRow([...table.columns.map((c) => c.label), ...extra]).font = { bold: true };
+      const asValue = (cell: Parameters<typeof cellText>[0]) => (cell && typeof cell === "object" ? { text: cell.text, hyperlink: cell.href } : cellText(cell));
+      const add = (row: Record<string, unknown>, detail: Detail[] | undefined, bold = false) => {
+        const r = sheet.addRow([
+          ...table.columns.map((c) => asValue(row[c.key] as Parameters<typeof cellText>[0])),
+          ...extra.map((label) => {
+            const d = detail?.find((x) => x.label === label);
+            if (!d) return "";
+            return Array.isArray(d.value) ? d.value.map((v) => cellText(v)).join("; ") : asValue(d.value);
           }),
-        );
+        ]);
         if (bold) r.font = { bold: true };
       };
-      table.rows.forEach((row) => add(row));
-      if (table.total) add(table.total, true);
+      table.rows.forEach((row, i) => add(row, table.details?.[i]));
+      if (table.total) add(table.total, undefined, true);
     }
     sheet.columns.forEach((col, i) => {
       let width = 10;

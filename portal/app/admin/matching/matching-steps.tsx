@@ -8,7 +8,7 @@ import { ThePlan } from "@/app/admin/matching/the-plan";
 import { StepSignal } from "@/app/admin/matching/step-signal";
 import { SummaryView } from "@/app/admin/matching/summary-view";
 import { primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/ui";
-import { finalizeTheMatching, loadFinalization, pushSummaryToClient, reopenTheMatching } from "@/app/admin/summary-actions";
+import { finalizeTheMatching, loadFinalization, pushSummariesToClient, reopenTheMatching } from "@/app/admin/summary-actions";
 import type { DeliverableKind, Finalization } from "@/lib/match/summary/server";
 
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -115,21 +115,26 @@ export function MatchingSteps({ clientId, clientName }: { clientId: string; clie
 
   const download = (kind: DeliverableKind) => `/admin/clients/${clientId}/summary-export?kind=${kind}`;
   const footer = (kind: DeliverableKind) => (
-    <>
-      {fin.pushed[kind] ? <span className="mr-auto text-body-sm text-success">✓ On the client page</span> : null}
-      <a href={download(kind)} className={`${secondaryButton} no-underline`}>
-        Download (Excel)
-      </a>
-      <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void run(`push-${kind}`, () => pushSummaryToClient(clientId, kind))}>
-        {busy === `push-${kind}` ? "Pushing…" : fin.pushed[kind] ? "Push to Client again" : "Push to Client"}
-      </button>
-    </>
+    <a href={download(kind)} className={`${secondaryButton} no-underline`}>
+      Download (Excel)
+    </a>
   );
+  const pushed = fin.pushed.matching && (!fin.landscape || fin.pushed.landscape);
 
   return (
     <div className="space-y-lg">
       <SummaryView summary={fin.matching} footer={footer("matching")} />
       {fin.landscape ? <SummaryView summary={fin.landscape} footer={footer("landscape")} /> : null}
+      <div className="flex flex-wrap items-center justify-end gap-md">
+        <p className="mr-auto text-body-sm text-secondary">
+          {pushed
+            ? "✓ Both summaries are on the client page. Pushing again replaces them."
+            : `Push to Client sends ${fin.landscape ? "both summaries" : "the summary"} to the client page (not the client's portal yet).`}
+        </p>
+        <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void run("push", () => pushSummariesToClient(clientId))}>
+          {busy === "push" ? "Pushing…" : pushed ? "Push to Client again" : "Push to Client"}
+        </button>
+      </div>
       {errorLine}
       <details className="group rounded-card border border-border bg-surface" open={panelOpen} onToggle={(e) => setPanelOpen((e.target as HTMLDetailsElement).open)}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">

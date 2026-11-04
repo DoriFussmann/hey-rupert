@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { SUMMARY_MIGRATION, currentFinalization, finalizeMatching, pushToClient, reopenMatching, type DeliverableKind, type Finalization } from "@/lib/match/summary/server";
+import { SUMMARY_MIGRATION, currentFinalization, finalizeMatching, pushAllToClient, reopenMatching, type Finalization } from "@/lib/match/summary/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -61,12 +61,12 @@ export async function reopenTheMatching(clientId: string): Promise<Result<{ fina
   }
 }
 
-export async function pushSummaryToClient(clientId: string, kind: unknown): Promise<Result<{ finalization: Finalization | null }>> {
+/** Push to Client: both summaries go to the client's admin page (not the portal). */
+export async function pushSummariesToClient(clientId: string): Promise<Result<{ finalization: Finalization | null }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
-  if (kind !== "matching" && kind !== "landscape") return { ok: false, error: "Unknown summary." };
   try {
-    const done = await pushToClient(a.supabase, a.clientId, kind as DeliverableKind, a.email);
+    const done = await pushAllToClient(a.supabase, a.clientId, a.email);
     if (!done.ok) return done;
     revalidatePath(`/admin/clients/${a.clientId}`);
     return await state(a.supabase, a.clientId);
