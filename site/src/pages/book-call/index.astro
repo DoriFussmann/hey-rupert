@@ -148,5 +148,18 @@ const bookingFields = [
       calLink: new URL(calendarUrl).pathname.replace(/^\/+|\/+$/g, ""),
       config: { layout: "month_view", theme: "light" },
     });
+
+    // Conversion tracking (invisible): record a completed booking in GA4 as
+    // `book_call`. Cal.com fires bookingSuccessfulV2 (newer) and/or
+    // bookingSuccessful (older); send at most one event per page view.
+    let bookingTracked = false;
+    const trackBooking = () => {
+      if (bookingTracked) return;
+      bookingTracked = true;
+      const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+      gtag?.("event", "book_call", { method: "cal_com" });
+    };
+    window.Cal?.("on", { action: "bookingSuccessfulV2", callback: trackBooking });
+    window.Cal?.("on", { action: "bookingSuccessful", callback: trackBooking });
   }
 </script>
