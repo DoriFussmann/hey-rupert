@@ -3,20 +3,11 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ViewAsClientLink } from "@/components/eye-icon";
 import { ProgressBar } from "@/components/progress-bar";
 import { StagePill } from "@/components/stage-pill";
 import { nextActionText, overallProgress } from "@/lib/progress";
 import type { Client } from "@/lib/types";
 import { isKickoffReady } from "@/lib/service-order";
-import type { Readiness } from "@/lib/company-profile/core";
-import { matchPath } from "@/lib/match/shared";
-
-const MATCH_READY: Record<Readiness, { label: string; tone: string }> = {
-  ready: { label: "Ready", tone: "text-success" },
-  limited: { label: "Limited", tone: "text-warning" },
-  blocked: { label: "Blocked", tone: "text-error" },
-};
 
 function clientName(client: Client) {
   return (
@@ -49,14 +40,7 @@ function matches(client: Client, needle: string) {
  * Clients in three groups: Active (Service Order signed and Setup Fee paid),
  * Prospects (not signed or paid yet), and Archived, folded away at the bottom.
  */
-export function ClientTable({
-  clients,
-  readiness = {},
-}: {
-  clients: Client[];
-  /** Whether each client's profile can be matched, by client id. */
-  readiness?: Record<string, Readiness>;
-}) {
+export function ClientTable({ clients }: { clients: Client[] }) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
 
@@ -91,14 +75,12 @@ export function ClientTable({
         title="Active clients"
         hint="Service Order signed and Setup Fee paid."
         clients={groups.active}
-        readiness={readiness}
         empty={empty ?? "No active clients yet."}
       />
       <ClientSection
         title="Prospects"
         hint="Not signed or paid yet: Statement of Work and Service Order."
         clients={groups.prospects}
-        readiness={readiness}
         empty={empty ?? "No prospects right now."}
       />
       {groups.archived.length > 0 || !needle ? (
@@ -121,8 +103,7 @@ export function ClientTable({
           <div className="border-t border-border">
             <ClientRows
               clients={groups.archived}
-              readiness={readiness}
-              empty="No archived clients."
+                    empty="No archived clients."
             />
           </div>
         </details>
@@ -135,13 +116,11 @@ function ClientSection({
   title,
   hint,
   clients,
-  readiness,
   empty,
 }: {
   title: string;
   hint: string;
   clients: Client[];
-  readiness: Record<string, Readiness>;
   empty: string;
 }) {
   return (
@@ -152,20 +131,12 @@ function ClientSection({
         </h2>
         <p className="text-body-sm text-muted">{hint}</p>
       </div>
-      <ClientRows clients={clients} readiness={readiness} empty={empty} />
+      <ClientRows clients={clients} empty={empty} />
     </section>
   );
 }
 
-function ClientRows({
-  clients,
-  readiness,
-  empty,
-}: {
-  clients: Client[];
-  readiness: Record<string, Readiness>;
-  empty: string;
-}) {
+function ClientRows({ clients, empty }: { clients: Client[]; empty: string }) {
   const router = useRouter();
   if (clients.length === 0)
     return <p className="px-lg py-lg text-body-sm text-muted">{empty}</p>;
@@ -174,14 +145,11 @@ function ClientRows({
       <table className="w-full min-w-[820px] text-left text-body-sm">
         <thead>
           <tr className="border-b border-border text-label uppercase tracking-label text-muted">
+            <th className="px-lg py-sm font-medium">Company</th>
             <th className="px-lg py-sm font-medium">Client</th>
             <th className="px-lg py-sm font-medium">Stage</th>
             <th className="px-lg py-sm font-medium">Progress</th>
             <th className="px-lg py-sm font-medium">Next action</th>
-            <th className="px-lg py-sm font-medium">Ready to match</th>
-            <th className="px-lg py-sm font-medium">
-              <span className="sr-only">View as client</span>
-            </th>
           </tr>
         </thead>
         <tbody>
@@ -189,8 +157,7 @@ function ClientRows({
             const href = `/admin/clients/${client.id}`;
             const company = client.company_name;
             const person = clientName(client);
-            const heading = company || person || client.email || "Open client";
-            const sub = company && person && person !== company ? person : "";
+            const heading = company || "No company yet";
             const progress = overallProgress(client);
 
             return (
@@ -212,8 +179,8 @@ function ClientRows({
                       Test
                     </span>
                   ) : null}
-                  {sub ? <p className="text-muted">{sub}</p> : null}
                 </td>
+                <td className="px-lg py-md text-body">{person || <span className="text-muted">–</span>}</td>
                 <td className="px-lg py-md">
                   <StagePill stage={client.stage} />
                 </td>
@@ -225,22 +192,6 @@ function ClientRows({
                 </td>
                 <td className="px-lg py-md text-muted">
                   {nextActionText(client)}
-                </td>
-                <td className="px-lg py-md">
-                  {readiness[client.id] ? (
-                    <Link
-                      href={matchPath(client.id)}
-                      onClick={(event) => event.stopPropagation()}
-                      className={`${MATCH_READY[readiness[client.id]].tone} no-underline hover:underline`}
-                    >
-                      {MATCH_READY[readiness[client.id]].label}
-                    </Link>
-                  ) : (
-                    <span className="text-muted">–</span>
-                  )}
-                </td>
-                <td className="px-sm py-md text-right">
-                  <ViewAsClientLink clientId={client.id} label={heading} />
                 </td>
               </tr>
             );
