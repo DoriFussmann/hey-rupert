@@ -234,7 +234,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
         </div>
         {state.changed.length ? (
           <p className="mt-sm rounded-md border border-warning/40 bg-surface px-md py-sm text-body-sm text-warning">
-            Changed since it was confirmed: {state.changed.join(" ")} Reopen to rebuild it.
+            Since it was confirmed, the data behind it changed: {state.changed.join(" ")} Reopen to rebuild it.
           </p>
         ) : null}
         <SummaryTable counts={saved.counts} />

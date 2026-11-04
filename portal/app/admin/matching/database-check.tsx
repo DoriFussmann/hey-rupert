@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { addInvestorToDb, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, applyDefaultsToAll, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult, LookAlikePreview } from "@/lib/match/landscape/server";
@@ -500,11 +500,13 @@ function DecisionSummary({
   busy,
   onGroup,
   onOpen,
+  onApplyDefaults,
 }: {
   rows: CheckRow[];
   busy: boolean;
   onGroup: (ids: string[], action: "bring_back" | "leave_out" | null) => void;
   onOpen: (key: string) => void;
+  onApplyDefaults: () => void;
 }) {
   const reasons: Reason[] = REASONS.map((r) => ({ ...r, rows: rows.filter((x) => reasonOf(x) === r.key) }))
     .filter((r) => r.rows.length);
@@ -523,6 +525,17 @@ function DecisionSummary({
           · Click a row to see its funds.
         </span>
       </p>
+      {rows.length - mine(rows) ? (
+        <div className="mt-xs flex flex-wrap items-center gap-sm">
+          <button type="button" className={primaryButton} disabled={busy} onClick={onApplyDefaults}>
+            Apply Default to All
+          </button>
+          <span className="text-body-sm text-muted">
+            The {n(rows.length - mine(rows))} still to decide (Not sure included) take their default: {n(rows.filter((x) => x.defaulted && x.action === "bring_back").length)} brought back,{" "}
+            {n(rows.filter((x) => x.defaulted && x.action === "leave_out").length)} left out. Decisions already made stay.
+          </span>
+        </div>
+      ) : null}
       <table className="mt-xs w-full text-left text-body-sm">
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
@@ -1176,6 +1189,19 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(text);
   };
 
+  const applyAll = async () => {
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const result = await applyDefaultsToAll(clientId);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setCheck(result.check);
+    const text = `Defaults applied: ${n(result.broughtBack)} brought back, ${n(result.leftOut)} left out. Saved.`;
+    setNotice(text);
+    setToast(text);
+  };
+
   const confirmCheck = async (confirm: boolean) => {
     if (confirm && !window.confirm("Confirm the check? Decisions are locked until you reopen it.")) return;
     setBusy(true);
@@ -1321,7 +1347,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </tr>
         </tbody>
       </table>
-      <DecisionSummary rows={notInList} busy={frozen} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} />
+      <DecisionSummary rows={notInList} busy={frozen} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} onApplyDefaults={() => void applyAll()} />
       {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
       {openReason ? (
         <ReasonModal

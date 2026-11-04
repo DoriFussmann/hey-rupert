@@ -13,6 +13,7 @@ import {
   lookAlikePreview,
   type LookAlikePreview,
   decideMany,
+  applyDefaults,
   findWebsites,
   recordInvestments,
   type CheckResult,
@@ -204,6 +205,20 @@ export async function decideForGroup(
     return check.ok ? { ok: true, check: check.check, changed: done.value } : check;
   } catch (err) {
     return fail(err, "The decisions were not saved.");
+  }
+}
+
+/** 2C: Apply Default to All, for the funds still on their default. */
+export async function applyDefaultsToAll(clientId: string): Promise<Result<{ check: CheckResult; broughtBack: number; leftOut: number }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  try {
+    const done = await applyDefaults(a.supabase, a.clientId, a.email);
+    if (!done.ok) return { ok: false, error: done.error };
+    const check = await runInvestorCheck(clientId);
+    return check.ok ? { ok: true, check: check.check, ...done.value } : check;
+  } catch (err) {
+    return fail(err, "The defaults were not applied.");
   }
 }
 

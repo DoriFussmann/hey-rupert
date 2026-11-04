@@ -225,14 +225,19 @@ async function savedPlan(supabase: ServiceClient, clientId: string): Promise<Res
   };
 }
 
-function changes(saved: PlanFacts, now: PlanFacts): string[] {
+/** What re-planning would change, in words: empty when the Roster's tiers, ranks and contacts are the ones confirmed. */
+function changes(saved: SavedPlan, now: PlanFund[]): string[] {
+  const key = (f: PlanFund) => `${f.firmId}|${f.tier}|${f.contacts}|${f.backed.join(",")}|${(f.sameStage ?? []).join(",")}|${f.lookAlike}|${f.focus}`;
+  const before = new Set(saved.funds.map(key));
+  const was = new Set(saved.funds.map((f) => f.firmId));
+  const is = new Set(now.map((f) => f.firmId));
+  const added = now.filter((f) => !was.has(f.firmId)).length;
+  const removed = saved.funds.filter((f) => !is.has(f.firmId)).length;
+  const moved = now.filter((f) => was.has(f.firmId) && !before.has(key(f))).length;
   const out: string[] = [];
-  if (saved.rosterId !== now.rosterId) out.push("Step 3 was confirmed again.");
-  if (saved.dataVersion !== now.dataVersion) out.push("The Fund Database or the added investors changed.");
-  if (saved.taxonomyRevision !== now.taxonomyRevision) out.push("The taxonomy changed.");
-  const s = saved.subSectors;
-  const n = now.subSectors;
-  if (s.primary !== n.primary || s.secondary1 !== n.secondary1 || s.secondary2 !== n.secondary2) out.push("The client's sub-sectors changed.");
+  if (added) out.push(`${added.toLocaleString("en-US")} ${added === 1 ? "fund is" : "funds are"} new on the Roster.`);
+  if (removed) out.push(`${removed.toLocaleString("en-US")} left the Roster.`);
+  if (moved) out.push(`${moved.toLocaleString("en-US")} changed tier, contacts or ranking facts.`);
   return out;
 }
 
@@ -255,7 +260,7 @@ export async function loadPlan(supabase: ServiceClient, clientId: string): Promi
       profile: built.profile,
       facts: built.facts,
       saved: saved.value,
-      changed: saved.value ? changes(saved.value.facts, built.facts) : [],
+      changed: saved.value ? changes(saved.value, built.funds) : [],
     },
   };
 }
