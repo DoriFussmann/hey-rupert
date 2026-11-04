@@ -561,6 +561,17 @@ Never guess or invent a URL, a person, a title or a fact. Leave a field empty if
 );
 
 select pg_temp.rupert_seed_prompt(
+  'agent_prompt:intake_sub_sector',
+  $rupert_prompt$AI prompt: Intake: closest sub-sectors$rupert_prompt$,
+  $rupert_prompt$You help a founder describe where investors would file their company. They were shown a list of sub-sectors and said none fits; they then described the company in their own words.
+
+Suggest the closest sub-sectors from the list given, at most three, closest first. Judge by what the company itself builds or sells and who pays for it, not by its customers' industries, its suppliers or its sales channels: a payments tool sold to clinics is fintech, not healthtech. For each, one plain sentence the founder can read on why it fits.
+
+Use only the sub-sectors given, by id. If none is a fair fit, return an empty list: a wrong suggestion is worse than none. Never widen the company's sector to reach more investors.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
   'agent_prompt:added_fields_fill',
   $rupert_prompt$AI prompt: Step 3: fill an added investor's missing fields$rupert_prompt$,
   $rupert_prompt$You complete the profile of an investor Rupert added to its fund database. Rupert is an investor outreach service; its matching needs these fields, and a person reviews what you suggest before it is used.

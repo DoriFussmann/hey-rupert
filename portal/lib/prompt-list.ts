@@ -9,6 +9,7 @@ export const PROMPT_LIST = [
   { key: "intake_interviewer", title: "Intake interviewer", group: "Intake" },
   { key: "intake_summary", title: "Intake summary (founder reviews)", group: "Intake" },
   { key: "intake_brief", title: "Intake brief (for Rupert)", group: "Intake" },
+  { key: "intake_sub_sector", title: "Intake: closest sub-sectors", group: "Intake" },
   { key: "company_brief", title: "Company brief", group: "Company and narrative" },
   { key: "framing_room", title: "Framing Room chat", group: "Company and narrative" },
   { key: "selling_points", title: "Selling points", group: "Company and narrative" },

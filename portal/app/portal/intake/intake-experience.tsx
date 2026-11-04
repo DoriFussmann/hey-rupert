@@ -7,11 +7,15 @@ import {
   confirmIntake,
   createIntakeUpload,
   declareNoDeck,
+  describeSubSector,
+  pickSubSectors,
   requestIntakeSummary,
   resumeIntakeConversation,
   sendIntakeFiles,
   sendIntakeMessage,
   startIntake,
+  subSectorNoneFits,
+  subSectorStillNone,
   type IntakeActionResult,
 } from "@/app/portal/intake/actions";
 import { RupertAvatar } from "@/components/rupert-avatar";
@@ -40,6 +44,7 @@ import {
   type MaterialsView,
 } from "@/lib/setup";
 import { createClient } from "@/lib/supabase/client";
+import { SUB_SECTOR_LIMITS, isSubSectorDone, type SubSectorPick } from "@/lib/intake-sub-sector";
 
 const primaryButton =
   "inline-flex items-center justify-center gap-sm rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
@@ -51,6 +56,114 @@ const QUICK_REPLIES = ["None", "Not sure yet", "Skip this one"];
 const TEXTAREA_MAX_PX = 168;
 
 const ACCEPT = INTAKE_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
+
+/**
+ * The sub-sector question: the founder's answer was a sector or a broad
+ * sub-sector, so they pick from the list under it. None fits → they describe
+ * it → the AI's closest suggestions → still none → their words go to Rupert's team.
+ */
+function SubSectorCard({
+  pick,
+  disabled,
+  busy,
+  onPick,
+  onNoneFits,
+  onDescribe,
+  onStillNone,
+}: {
+  pick: SubSectorPick;
+  disabled: boolean;
+  busy: boolean;
+  onPick: (ids: string[]) => void;
+  onNoneFits: (none: boolean) => void;
+  onDescribe: (text: string) => void;
+  onStillNone: () => void;
+}) {
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [text, setText] = useState(pick.description);
+  const toggle = (id: string) =>
+    setChosen((list) => (list.includes(id) ? list.filter((x) => x !== id) : list.length >= SUB_SECTOR_LIMITS.pickMax ? list : [...list, id]));
+  const asked = pick.asked.map((a) => a.label).join(" and ");
+  const choices = (list: { id: string; label: string; why?: string }[]) => (
+    <ul className="mt-sm space-y-xs">
+      {list.map((o) => (
+        <li key={o.id}>
+          <label className="flex cursor-pointer items-start gap-sm text-body-sm text-heading">
+            <input type="checkbox" className="mt-[3px]" checked={chosen.includes(o.id)} disabled={disabled} onChange={() => toggle(o.id)} />
+            <span>
+              {o.label}
+              {o.why ? <span className="block text-secondary">{o.why}</span> : null}
+            </span>
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+  const pickButton = (
+    <button type="button" className={primaryButton} disabled={disabled || chosen.length === 0} onClick={() => onPick(chosen)}>
+      {busy ? "Saving…" : chosen.length > 1 ? "Use these" : "Use this one"}
+    </button>
+  );
+  return (
+    <section aria-label="Pick your sub-sector" className="mx-lg mb-sm rounded-card border border-primary/40 bg-primary-tint/40 px-md py-sm">
+      {pick.status === "open" ? (
+        <>
+          <p className="text-body-sm text-heading">
+            {asked} is broad. Which of these describes the company best? Pick up to {SUB_SECTOR_LIMITS.pickMax}, most important first.
+          </p>
+          {choices(pick.options)}
+          <div className="mt-sm flex flex-wrap items-center gap-sm">
+            {pickButton}
+            <button type="button" className="text-body-sm text-primary underline disabled:opacity-40" disabled={disabled} onClick={() => onNoneFits(true)}>
+              None of these fits
+            </button>
+          </div>
+        </>
+      ) : pick.status === "describe" ? (
+        <>
+          <label htmlFor="sub-sector-words" className="text-body-sm text-heading">
+            How would you describe it? What the company builds or sells, and who pays for it.
+          </label>
+          <textarea
+            id="sub-sector-words"
+            rows={2}
+            maxLength={SUB_SECTOR_LIMITS.descriptionMax}
+            value={text}
+            disabled={disabled}
+            onChange={(e) => setText(e.target.value)}
+            className="mt-xs w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
+          />
+          <div className="mt-sm flex flex-wrap items-center gap-sm">
+            <button type="button" className={primaryButton} disabled={disabled || text.trim().length < 3} onClick={() => onDescribe(text)}>
+              {busy ? "Looking…" : "Find the closest"}
+            </button>
+            <button type="button" className="text-body-sm text-primary underline disabled:opacity-40" disabled={disabled} onClick={() => onNoneFits(false)}>
+              Back to the list
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-body-sm text-heading">
+            {pick.suggestions.length
+              ? "These are the closest we have. Does one fit?"
+              : "Nothing on our list is a close fit."}
+          </p>
+          {pick.suggestions.length ? choices(pick.suggestions) : null}
+          <div className="mt-sm flex flex-wrap items-center gap-sm">
+            {pick.suggestions.length ? pickButton : null}
+            <button type="button" className={pick.suggestions.length ? secondaryButton : primaryButton} disabled={disabled} onClick={onStillNone}>
+              {pick.suggestions.length ? "Still none fits: send my description to Rupert's team" : "Send my description to Rupert's team"}
+            </button>
+            <button type="button" className="text-body-sm text-primary underline disabled:opacity-40" disabled={disabled} onClick={() => onNoneFits(true)}>
+              Change my description
+            </button>
+          </div>
+        </>
+      )}
+    </section>
+  );
+}
 
 function FileBadge({ name }: { name: string }) {
   return (
@@ -242,7 +355,7 @@ export function IntakeExperience({
   const [materials, setMaterials] = useState<MaterialsView>(initialMaterials);
   const [draft, setDraft] = useState("");
   const [pending, setPending] = useState<
-    "start" | "send" | "upload" | "no_deck" | "summary" | "resume" | "confirm" | null
+    "start" | "send" | "upload" | "no_deck" | "summary" | "resume" | "confirm" | "sub_sector" | null
   >(null);
   // Shown in the conversation right away, before Rupert answers.
   const [outgoing, setOutgoing] = useState<{ text: string; files: string[] } | null>(null);
@@ -1080,7 +1193,7 @@ export function IntakeExperience({
                 ) : null}
               </div>
             ) : null}
-            {pending === "start" || pending === "send" || pending === "no_deck" ? (
+            {pending === "start" || pending === "send" || pending === "no_deck" || pending === "sub_sector" ? (
               <TypingIndicator />
             ) : null}
             {uploading ? (
@@ -1093,6 +1206,18 @@ export function IntakeExperience({
             ) : null}
           </div>
 
+          {interview?.sector_pick && !isSubSectorDone(interview.sector_pick) && chatOpen && !readOnly ? (
+            <SubSectorCard
+              key={interview.sector_pick.status}
+              pick={interview.sector_pick}
+              disabled={pending !== null}
+              busy={pending === "sub_sector"}
+              onPick={(ids) => void run("sub_sector", () => pickSubSectors(ids))}
+              onNoneFits={(none) => void run("sub_sector", () => subSectorNoneFits(none))}
+              onDescribe={(text) => void run("sub_sector", () => describeSubSector(text))}
+              onStillNone={() => void run("sub_sector", subSectorStillNone)}
+            />
+          ) : null}
           <form onSubmit={onSend} className="border-t border-border px-lg py-md">
             {canWrite && messages.length > 0 && messages[messages.length - 1].role === "assistant" ? (
               <div className="mb-sm flex flex-wrap gap-xs" aria-label="Quick replies">
