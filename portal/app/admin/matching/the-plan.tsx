@@ -81,39 +81,44 @@ function SubSectors({ list }: { list: SubSectorView[] }) {
 }
 
 function WaterfallTable({ w }: { w: Waterfall }) {
+  // The Roster's side (who can be approached) | the Plan's side (who fits the campaign).
+  const split = "border-l-2 border-primary/50 pl-md";
+  const th = "whitespace-nowrap py-xs pr-md text-right font-medium";
   return (
-    <table className="mt-md w-full max-w-3xl text-left text-body-sm">
-      <thead className="text-label uppercase tracking-label text-muted">
-        <tr>
-          <th className="py-xs pr-md font-medium">Tier</th>
-          <th className="py-xs pr-md text-right font-medium">Funds with a contact</th>
-          <th className="py-xs pr-md text-right font-medium">Their contacts</th>
-          <th className="py-xs pr-md text-right font-medium">Planned funds</th>
-          <th className="py-xs pr-md text-right font-medium">Planned contacts</th>
-          <th className="py-xs text-right font-medium">No contact</th>
-        </tr>
-      </thead>
-      <tbody>
-        {w.rows.map((r) => (
-          <tr key={r.tier} className="border-t border-border">
-            <td className="py-xs pr-md text-heading" title={TIER_RULE[r.tier]}>{TIER_LABEL[r.tier]}</td>
-            <td className="py-xs pr-md text-right">{n(r.funds)}</td>
-            <td className="py-xs pr-md text-right">{n(r.contacts)}</td>
-            <td className={`py-xs pr-md text-right ${r.plannedFunds ? "text-success" : "text-muted"}`}>{n(r.plannedFunds)}</td>
-            <td className={`py-xs pr-md text-right ${r.plannedContacts ? "text-success" : "text-muted"}`}>{n(r.plannedContacts)}</td>
-            <td className="py-xs text-right text-muted">{n(r.noContact)}</td>
+    <div className="mt-md max-w-4xl overflow-x-auto">
+      <table className="w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="whitespace-nowrap py-xs pr-md font-medium">Tier</th>
+            <th className={th}>Approachable funds</th>
+            <th className={th}># of contacts</th>
+            <th className={th}>No contact</th>
+            <th className={`${th} ${split}`}>Funds in plan</th>
+            <th className={`${th} pr-0`}># of contacts</th>
           </tr>
-        ))}
-        <tr className="border-t-2 border-primary">
-          <td className="py-xs pr-md text-heading">The Final Outreach Roster</td>
-          <td className="py-xs pr-md text-right">{n(w.rows.reduce((s, r) => s + r.funds, 0))}</td>
-          <td className="py-xs pr-md text-right">{n(w.rows.reduce((s, r) => s + r.contacts, 0))}</td>
-          <td className="py-xs pr-md text-right text-heading">{n(w.plannedFunds)}</td>
-          <td className="py-xs pr-md text-right text-heading">{n(w.plannedContacts)}</td>
-          <td className="py-xs text-right text-muted">{n(w.rows.reduce((s, r) => s + r.noContact, 0))}</td>
-        </tr>
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {w.rows.map((r) => (
+            <tr key={r.tier} className="border-t border-border">
+              <td className="whitespace-nowrap py-xs pr-md text-heading" title={TIER_RULE[r.tier]}>{TIER_LABEL[r.tier]}</td>
+              <td className="py-xs pr-md text-right">{n(r.funds)}</td>
+              <td className="py-xs pr-md text-right">{n(r.contacts)}</td>
+              <td className="py-xs pr-md text-right text-muted">{n(r.noContact)}</td>
+              <td className={`py-xs pr-md text-right ${split} ${r.plannedFunds ? "text-success" : "text-muted"}`}>{n(r.plannedFunds)}</td>
+              <td className={`py-xs text-right ${r.plannedContacts ? "text-success" : "text-muted"}`}>{n(r.plannedContacts)}</td>
+            </tr>
+          ))}
+          <tr className="border-t-2 border-primary">
+            <td className="whitespace-nowrap py-xs pr-md text-heading">The Final Outreach Roster</td>
+            <td className="py-xs pr-md text-right">{n(w.rows.reduce((s, r) => s + r.funds, 0))}</td>
+            <td className="py-xs pr-md text-right">{n(w.rows.reduce((s, r) => s + r.contacts, 0))}</td>
+            <td className="py-xs pr-md text-right text-muted">{n(w.rows.reduce((s, r) => s + r.noContact, 0))}</td>
+            <td className={`py-xs pr-md text-right text-heading ${split}`}>{n(w.plannedFunds)}</td>
+            <td className="py-xs text-right text-heading">{n(w.plannedContacts)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
