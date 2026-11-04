@@ -161,7 +161,18 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
 type PanelKey = "planned" | "ranked" | "outside" | "none" | "nocontact";
 
 /** Step 4: The Plan. */
-export function ThePlan({ clientId, clientName, refreshKey }: { clientId: string; clientName: string; refreshKey: number }) {
+export function ThePlan({
+  clientId,
+  clientName,
+  refreshKey,
+  onConfirmedChange,
+}: {
+  clientId: string;
+  clientName: string;
+  refreshKey: number;
+  /** Tells the page whether the Plan is confirmed (Finalize needs it). */
+  onConfirmedChange?: (confirmed: boolean) => void;
+}) {
   const [state, setState] = useState<PlanState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -179,6 +190,11 @@ export function ThePlan({ clientId, clientName, refreshKey }: { clientId: string
   useEffect(() => {
     void load();
   }, [load, refreshKey]);
+
+  const confirmed = state?.status === "ready" && state.saved !== null;
+  useEffect(() => {
+    onConfirmedChange?.(confirmed);
+  }, [confirmed, onConfirmedChange]);
 
   const inputs = useMemo(() => toInputs(boxes), [boxes]);
   const problems = useMemo(() => planInputProblems(inputs), [inputs]);

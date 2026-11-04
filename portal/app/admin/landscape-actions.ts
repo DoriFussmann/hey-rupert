@@ -4,6 +4,7 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { lockedError } from "@/lib/match/summary/server";
 import {
   checkAgainstDatabase,
   decideInvestor,
@@ -31,19 +32,25 @@ import {
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
-async function access(clientId: unknown) {
+async function access(clientId: unknown, change = true) {
   const { user, role } = await getAuthContext();
   if (!user || role !== "admin") return { ok: false as const, error: "You do not have permission to do that." };
   if (!isServiceRoleConfigured()) return { ok: false as const, error: "Service role key is not configured." };
   if (typeof clientId !== "string" || !/^[0-9a-f-]{36}$/i.test(clientId)) return { ok: false as const, error: "Unknown client." };
-  return { ok: true as const, supabase: createServiceClient(), email: user.email ?? null, clientId };
+  const supabase = createServiceClient();
+  // While the matching is finalized, the steps are locked.
+  if (change) {
+    const locked = await lockedError(supabase, clientId);
+    if (locked) return { ok: false as const, error: locked };
+  }
+  return { ok: true as const, supabase, email: user.email ?? null, clientId };
 }
 
 const fail = (err: unknown, fallback: string) => ({ ok: false as const, error: err instanceof Error ? err.message : fallback });
 
 /** Step 2 for a client: whether Step 1 is confirmed, and the current landscape. */
 export async function loadLandscape(clientId: string): Promise<Result<{ stepOneConfirmed: boolean; landscape: Landscape | null }>> {
-  const a = await access(clientId);
+  const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
     const dry = await confirmedDryList(a.supabase, a.clientId);
@@ -142,7 +149,7 @@ export async function startOverInvestors(clientId: string): Promise<LandscapeRes
 
 /** Step 2C: the confirmed investors checked against the Fund Database and the shortlist. Reads only. */
 export async function runInvestorCheck(clientId: string): Promise<Result<{ check: CheckResult }>> {
-  const a = await access(clientId);
+  const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
     const result = await checkAgainstDatabase(a.supabase, a.clientId);
@@ -283,7 +290,7 @@ export async function addInvestorToDb(clientId: string, investorId: string): Pro
 
 /** Look-alike funds (preview): the shortlist ranked by resemblance to the competitors' investors. Reads only. */
 export async function loadLookAlikes(clientId: string): Promise<Result<{ preview: LookAlikePreview }>> {
-  const a = await access(clientId);
+  const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
     const result = await lookAlikePreview(a.supabase, a.clientId);

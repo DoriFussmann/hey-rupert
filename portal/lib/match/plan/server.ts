@@ -198,7 +198,7 @@ type SavedRow = {
   confirmed_by: string | null;
 };
 
-async function savedPlan(supabase: ServiceClient, clientId: string): Promise<Result<SavedPlan | null>> {
+export async function savedPlan(supabase: ServiceClient, clientId: string): Promise<Result<SavedPlan | null>> {
   const { data, error } = await supabase
     .from("match_plans")
     .select("id, inputs, capacity, counts, planned, funds, facts, confirmed_at, confirmed_by")

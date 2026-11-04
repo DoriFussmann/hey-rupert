@@ -3,16 +3,23 @@
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { lockedError } from "@/lib/match/summary/server";
 import { cleanInputs, confirmPlan, loadPlan, reopenPlan, type PlanState } from "@/lib/match/plan/server";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
-async function access(clientId: unknown) {
+async function access(clientId: unknown, change = true) {
   const { user, role } = await getAuthContext();
   if (!user || role !== "admin") return { ok: false as const, error: "You do not have permission to do that." };
   if (!isServiceRoleConfigured()) return { ok: false as const, error: "Service role key is not configured." };
   if (typeof clientId !== "string" || !/^[0-9a-f-]{36}$/i.test(clientId)) return { ok: false as const, error: "Unknown client." };
-  return { ok: true as const, supabase: createServiceClient(), email: user.email ?? null, clientId };
+  const supabase = createServiceClient();
+  // While the matching is finalized, the steps are locked.
+  if (change) {
+    const locked = await lockedError(supabase, clientId);
+    if (locked) return { ok: false as const, error: locked };
+  }
+  return { ok: true as const, supabase, email: user.email ?? null, clientId };
 }
 
 const fail = (err: unknown, fallback: string) => ({ ok: false as const, error: err instanceof Error ? err.message : fallback });
@@ -24,7 +31,7 @@ async function state(supabase: ReturnType<typeof createServiceClient>, clientId:
 
 /** Step 4: the Roster in tiers and ranked, and the confirmed Plan. Read only. */
 export async function loadThePlan(clientId: string): Promise<Result<{ state: PlanState }>> {
-  const a = await access(clientId);
+  const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
     return await state(a.supabase, a.clientId);

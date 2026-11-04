@@ -3,6 +3,7 @@
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { lockedError } from "@/lib/match/summary/server";
 import { DEBT_HALT, DRY_STEPS, allFunds, buildDryData, choosesDebt, expandStage, funnel, type DryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 
@@ -138,6 +139,8 @@ export async function confirmDryMatch(
   const a = await access();
   if (!a.ok) return a;
   if (!validId(clientId)) return { ok: false, error: "Unknown client." };
+  const locked = await lockedError(a.supabase, clientId);
+  if (locked) return { ok: false, error: locked };
   try {
     const built = await build(a.supabase, clientId);
     if (!built.ok) return built;
@@ -213,6 +216,8 @@ export async function startOverDryMatch(clientId: string): Promise<Result<object
   const a = await access();
   if (!a.ok) return a;
   if (!validId(clientId)) return { ok: false, error: "Unknown client." };
+  const locked = await lockedError(a.supabase, clientId);
+  if (locked) return { ok: false, error: locked };
   const { error } = await a.supabase
     .from("dry_match_lists")
     .update({ cleared_at: new Date().toISOString(), cleared_by: a.email })

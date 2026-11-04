@@ -11,6 +11,7 @@ import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-order";
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
+import { ReadyForClient } from "@/app/admin/clients/[id]/ready-for-client";
 import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-card";
 import { CompanyMaterialsCard } from "@/app/admin/clients/[id]/company-materials-card";
 import { ReanalyzeBanner } from "@/app/admin/clients/[id]/reanalyze-banner";
@@ -413,6 +414,7 @@ export default async function ClientDetailPage({
       {alsoYoursPanels.map((panel) => (
         <Fragment key={panel.key}>{panel.node}</Fragment>
       ))}
+      <ReadyForClient clientId={client.id} />
       {completedPanels.length > 0 ? (
         <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
           {completedPanels.map((panel) => (
