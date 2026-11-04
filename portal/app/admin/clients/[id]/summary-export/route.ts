@@ -23,11 +23,14 @@ function tabName(name: string, taken: Set<string>) {
   return out;
 }
 
-function workbook(summary: Summary) {
+/** One workbook: the matching steps' tabs, then the landscape overview's (prefixed "Landscape"). */
+function workbook(summaries: Summary[]) {
   const book = new ExcelJS.Workbook();
   const taken = new Set<string>();
+  for (const summary of summaries)
   for (const step of summary.steps) {
-    const sheet = book.addWorksheet(tabName(`${step.button} ${step.title}`, taken));
+    const name = summary.kind === "landscape" ? `Landscape ${step.button}` : `${step.button} ${step.title}`;
+    const sheet = book.addWorksheet(tabName(name, taken));
     sheet.addRow([`${step.button}: ${step.title}`]).font = { bold: true, size: 13 };
     if (step.headline) sheet.addRow([step.headline.label, step.headline.value]);
     if (step.line) sheet.addRow([step.line]);
@@ -72,24 +75,24 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
   if (!UUID.test(params.id)) return NextResponse.json({ error: "Unknown client." }, { status: 400 });
   const url = new URL(request.url);
-  const kind = url.searchParams.get("kind") === "landscape" ? "landscape" : "matching";
   const supabase = createServiceClient();
 
-  let summary: Summary | null = null;
+  // Both summaries in one file: the Matching Summary, then the Competitive Landscape Overview.
+  let summaries: Summary[] = [];
   if (url.searchParams.get("from") === "pushed") {
     const list = await loadDeliverables(supabase, params.id);
     if (!list.ok) return NextResponse.json({ error: list.error }, { status: 400 });
-    summary = list.value.find((d) => d.kind === kind)?.content ?? null;
+    summaries = (["matching", "landscape"] as const).map((k) => list.value.find((d) => d.kind === k)?.content).filter((x): x is Summary => !!x);
   } else {
     const fin = await currentFinalization(supabase, params.id);
     if (!fin.ok) return NextResponse.json({ error: fin.error }, { status: 400 });
-    summary = fin.value ? (kind === "matching" ? fin.value.matching : fin.value.landscape) : null;
+    if (fin.value) summaries = [fin.value.matching, ...(fin.value.landscape ? [fin.value.landscape] : [])];
   }
-  if (!summary) return NextResponse.json({ error: "Nothing to download yet." }, { status: 404 });
+  if (!summaries.length) return NextResponse.json({ error: "Nothing to download yet." }, { status: 404 });
 
-  const buffer = await workbook(summary).xlsx.writeBuffer();
-  const slug = (summary.clientName || "client").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const file = `${slug}-${kind === "matching" ? "matching-summary" : "competitive-landscape"}.xlsx`;
+  const buffer = await workbook(summaries).xlsx.writeBuffer();
+  const slug = (summaries[0].clientName || "client").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  const file = `${slug}-matching-summary.xlsx`;
   return new NextResponse(buffer as ArrayBuffer, {
     headers: {
       "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
