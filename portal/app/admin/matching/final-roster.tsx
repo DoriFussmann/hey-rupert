@@ -123,7 +123,7 @@ function ExclusionTable({ exclusions }: { exclusions: ExclusionCheck[] }) {
 }
 
 /** Step 3: The Final Roster. */
-export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: string; clientName: string; refreshKey: number }) {
+export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { clientId: string; clientName: string; refreshKey: number; onChanged?: () => void }) {
   const [state, setState] = useState<RosterState | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -147,6 +147,7 @@ export function FinalRoster({ clientId, clientName, refreshKey }: { clientId: st
     setBusy(null);
     if (!result.ok) return setError(result.error);
     setState(result.state);
+    onChanged?.();
   }
 
   const errorLine = error ? <p className="mt-sm whitespace-pre-line text-body-sm text-error">{error}</p> : null;
