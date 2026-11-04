@@ -6,7 +6,7 @@
 
 import { DRY_STEP_LABEL, type DryStep } from "../dry/core.ts";
 import { KIND_LABEL, type Investor } from "../landscape/investors.ts";
-import type { Competitor } from "../landscape/core.ts";
+import { countryFromHq, type Competitor } from "../landscape/core.ts";
 import type { CheckRow } from "../landscape/check.ts";
 import type { RosterCounts } from "../roster/core.ts";
 import { TIER_LABEL, waterfall, type PlanFund, type PlanInputs, type Planned } from "../plan/core.ts";
@@ -84,6 +84,11 @@ function stepOne(dry: MatchingInputs["dry"]): SummaryStep {
   };
 }
 
+/** The HQ country only ("New York, NY, USA" → United States). */
+function country(c: Competitor) {
+  return c.geography || countryFromHq(c.hq);
+}
+
 function round(c: Competitor) {
   return [c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ");
 }
@@ -102,11 +107,11 @@ function competitorsStep(competitors: Competitor[], key: string, button: string,
           { key: "hq", label: "HQ" },
           { key: "round", label: "Latest round" },
         ],
-        rows: competitors.map((c) => ({ name: c.name, hq: c.hq, round: round(c) })),
+        rows: competitors.map((c) => ({ name: c.name, hq: country(c), round: round(c) })),
         details: competitors.map((c) => [
           { label: "What it does", value: c.oneLiner },
           { label: "Website", value: c.website ? { text: c.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: c.website } : "" },
-          { label: "HQ", value: c.hq },
+          { label: "HQ", value: country(c) },
           { label: "Latest round", value: round(c) },
           { label: "Investors named", value: c.funding.investors },
           ...(withSources ? [] : [{ label: "Why a direct competitor", value: c.why }]),
