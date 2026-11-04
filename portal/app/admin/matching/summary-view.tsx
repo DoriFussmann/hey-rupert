@@ -24,7 +24,7 @@ function TableView({ table }: { table: SummaryTable }) {
       {table.title ? <h4 className="mb-xs text-label uppercase tracking-label text-muted">{table.title}</h4> : null}
       <div className={long ? "max-h-[520px] overflow-auto" : "overflow-x-auto"}>
         <table className="w-full text-left text-body-sm">
-          <thead className={`text-label uppercase tracking-label text-muted ${long ? "sticky top-0 bg-surface" : ""}`}>
+          <thead className={`text-label uppercase tracking-label text-muted ${long ? "sticky top-0 bg-primary-tint" : ""}`}>
             <tr>
               {table.columns.map((c) => (
                 <th key={c.key} className={`whitespace-nowrap py-xs pr-md font-medium last:pr-0 ${c.align === "right" ? "text-right" : ""}`}>
@@ -68,7 +68,7 @@ export function SummaryView({ summary, footer }: { summary: Summary; footer?: Re
   const step = summary.steps.find((s) => s.key === picked) ?? summary.steps[0];
   if (!step) return null;
   return (
-    <section className="rounded-card border border-primary bg-surface px-lg py-md">
+    <section className="rounded-card border border-primary bg-primary-tint/60 px-lg py-md">
       <h3 className="text-h4 text-heading">{summary.title}</h3>
       <nav aria-label={`${summary.title}: steps`} className="mt-sm flex flex-wrap items-center gap-xs">
         {summary.steps.map((s, i) => (
