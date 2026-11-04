@@ -50,7 +50,7 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
         {row("Added (2D), passing the filters", `+${n(counts.added)}`)}
         {counts.addedMissing ? row("Added (2D), waiting for missing fields: not counted", n(counts.addedMissing), "text-warning") : null}
         {row("Combined", n(counts.combined))}
-        {row("Excluded by the client", `−${n(counts.excluded)}`, "text-error")}
+        {row("Excluded by the client", `(${n(counts.excluded)})`, "text-error")}
         {row("The Final Roster", n(counts.total), "text-heading", true)}
         {row("Of which backed a competitor", n(counts.backed), "text-success")}
       </tbody>

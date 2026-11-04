@@ -2,10 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { confirmDryMatch, loadDryMatch, startOverDryMatch, type DryFacts, type SavedDryList } from "@/app/admin/dry-match-actions";
-import { DRY_STEPS, DRY_STEP_LABEL, expandStage, funnel, type DryData, type DryFund, type DryStep } from "@/lib/match/dry/core";
+import { DEBT_HALT, DEBT_ONLY_FUNDS, DRY_STEPS, DRY_STEP_LABEL, allFunds, choosesDebt, expandStage, funnel, type DryData, type DryFund, type DryStep } from "@/lib/match/dry/core";
 import { primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
 
 const n = (value: number) => value.toLocaleString("en-US");
+/** A deduction, accountant style: (16). */
+const minus = (value: number) => `(${n(value)})`;
 const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
 
 /** A card that slides in from the side when it appears. */
@@ -160,8 +162,8 @@ function Summary({
         <tbody>
           <tr className="border-t border-border">
             <td className="py-xs pr-md text-muted" />
-            <td className="py-xs pr-md text-heading">Fund Database</td>
-            <td className="py-xs pr-md text-secondary">All funds</td>
+            <td className="py-xs pr-md text-heading">All funds</td>
+            <td className="py-xs pr-md text-secondary">Fund Database + debt-only</td>
             <td className="py-xs pr-md text-right">–</td>
             <td className="py-xs pr-md text-right">–</td>
             <td className="py-xs pr-md text-right text-heading">{n(total)}</td>
@@ -173,7 +175,7 @@ function Summary({
               <td className="py-xs pr-md text-heading">{r.label}</td>
               <td className="py-xs pr-md text-secondary">{r.chosen}</td>
               <td className="py-xs pr-md text-right">{n(r.before)}</td>
-              <td className="py-xs pr-md text-right text-error">−{n(r.removed)}</td>
+              <td className="py-xs pr-md text-right text-error">{minus(r.removed)}</td>
               <td className="py-xs pr-md text-right text-heading">{n(r.left)}</td>
               <td className="py-xs text-right">{pct(r.left, r.before)}</td>
             </tr>
@@ -256,7 +258,7 @@ export function DryMatch({
   if (error && !data) return <p className="rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">{error}</p>;
   if (!data) return <p className="text-body-sm text-muted">Loading the Fund Database…</p>;
 
-  const total = data.funds.length;
+  const total = allFunds(data);
   const errorLine = error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null;
 
   const startOver = async () => {
@@ -264,11 +266,19 @@ export function DryMatch({
     setBusy("start");
     setError(null);
     const result = await startOverDryMatch(clientId);
+    if (!result.ok) {
+      setBusy(null);
+      return setError(result.error);
+    }
+    // Rebuild from the live data: the database may have changed since the page opened.
+    const fresh = await loadDryMatch(clientId);
     setBusy(null);
-    if (!result.ok) return setError(result.error);
+    if (!fresh.ok) return setError(fresh.error);
+    setData(fresh.data);
+    setFacts(fresh.facts);
     setSaved(null);
     setConfirmed({});
-    setChoices({ ...data.defaults });
+    setChoices({ ...fresh.data.defaults });
     setOpen(1);
     setDone(false);
   };
@@ -330,6 +340,8 @@ export function DryMatch({
     const result = await confirmDryMatch(clientId, confirmed);
     setBusy(null);
     if (!result.ok) return setError(result.error);
+    setData(result.data);
+    setFacts(result.facts);
     setSaved(result.saved);
   };
   const chosenText = (step: DryStep) => {
@@ -340,7 +352,10 @@ export function DryMatch({
   return (
     <div className="space-y-md">
       <Card>
-        <BigNumber value={total} label="Funds in the Fund Database" />
+        <BigNumber value={total} label="All funds" />
+        <p className="text-body-sm text-secondary">
+          {n(data.funds.length)} in the Fund Database + {n(DEBT_ONLY_FUNDS)} debt-only funds (held separately; they drop at Financing, as matching is equity only).
+        </p>
       </Card>
 
       {DRY_STEPS.slice(0, open).map((step, i) => {
@@ -372,13 +387,19 @@ export function DryMatch({
                   <button
                     type="button"
                     className={primaryButton}
-                    disabled={value.length === 0}
+                    disabled={value.length === 0 || (step === "financing" && choosesDebt(value))}
                     onClick={() => setConfirmed((c) => ({ ...c, [step]: value }))}
                   >
                     Confirm
                   </button>
                 )}
               </div>
+              {step === "financing" && choosesDebt(value) ? (
+                <p className="mt-xs text-body-sm text-error">{DEBT_HALT}. Matching runs on equity only; debt raises are handled by hand.</p>
+              ) : null}
+              {step === "financing" && !choosesDebt(value) ? (
+                <p className="mt-xs text-body-sm text-muted">The {n(DEBT_ONLY_FUNDS)} debt-only funds drop here, with the database funds that don&apos;t list the chosen type.</p>
+              ) : null}
               {step === "stage" ? <p className="mt-xs text-body-sm text-muted">Pre-Seed and Seed count as one stage: choosing either includes both.</p> : null}
               {step === "geography" ? (
                 <p className="mt-xs text-body-sm text-muted">A fund passes if any geography it states is inside the choice (e.g. a US region for the United States) or contains it.</p>
@@ -392,7 +413,7 @@ export function DryMatch({
                 <div className="flex flex-wrap items-end justify-between gap-md">
                   <BigNumber value={result.left} label={`Funds left after ${DRY_STEP_LABEL[step].toLowerCase()}`} />
                   <p className="text-body-sm text-secondary">
-                    {n(result.before)} in · <span className="text-error">−{n(result.removed)} removed</span> · {pct(result.left, result.before)} kept
+                    {n(result.before)} in · <span className="text-error">{minus(result.removed)} removed</span> · {pct(result.left, result.before)} kept
                   </p>
                   {open === i + 1 && !done ? (
                     <button

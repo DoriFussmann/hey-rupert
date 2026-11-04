@@ -9,6 +9,7 @@ import {
   PLAN_INPUT_KEYS,
   PLAN_LIMITS,
   PLAN_TIERS,
+  SAME_STAGE_SEEDS_MIN,
   TIER_LABEL,
   TIER_RULE,
   planCapacity,
@@ -33,7 +34,7 @@ function download(planned: Planned[], funds: PlanFund[], clientName: string) {
   const byId = new Map(funds.map((f) => [f.firmId, f]));
   const cell = (v: string) => (/[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v);
   const lines = [
-    ["#", "Tier", "Rank in tier", "Investor", "Fund Database ID", "Website", "Contacts used", "Contacts available", "Backed a competitor", "Look-alike", "Sub-sectors listed", "Matched on", "Source"].join(","),
+    ["#", "Tier", "Rank in tier", "Investor", "Fund Database ID", "Website", "Contacts used", "Contacts available", "Backed a competitor", "Backed at the client's stage", "Look-alike", "Sub-sectors listed", "Matched on", "Source"].join(","),
     ...planned.map((p, i) => {
       const f = byId.get(p.firmId);
       return [
@@ -46,6 +47,7 @@ function download(planned: Planned[], funds: PlanFund[], clientName: string) {
         String(p.slots),
         String(f?.contacts ?? ""),
         f?.backed.join("; ") ?? "",
+        f?.sameStage?.join("; ") ?? "",
         f ? f.lookAlike.toFixed(3) : "",
         String(f?.focus ?? ""),
         f?.hit.join("; ") ?? "",
@@ -139,7 +141,10 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
               <td className="py-xs pr-md text-muted">{f.rank || "–"}</td>
               <td className="py-xs pr-md text-heading">{f.name}</td>
               <td className="py-xs pr-md text-secondary">{f.hit.join(", ")}</td>
-              <td className="py-xs pr-md text-success">{f.backed.join(", ")}</td>
+              <td className="py-xs pr-md text-success">
+                {f.backed.join(", ")}
+                {f.sameStage?.length ? <span className="text-muted"> (at the client&apos;s stage: {f.sameStage.join(", ")})</span> : null}
+              </td>
               <td className="py-xs pr-md text-right">{f.lookAlike.toFixed(2)}</td>
               <td className="py-xs pr-md text-right">{f.focus}</td>
               <td className="py-xs text-right">{slots ? `${slots.get(f.firmId) ?? 0} of ${f.contacts}` : f.contacts || "no contact"}</td>
@@ -285,9 +290,11 @@ export function ThePlan({ clientId, clientName, refreshKey }: { clientId: string
       <Card>
         <h3 className="text-h4 text-heading">4B. Ranking inside each tier</h3>
         <p className="max-w-prose text-body-sm text-secondary">
-          1. Backed a competitor. 2. Look-alike score (resemblance to the competitors&apos; investors; {n(state.seeds)} found in the database
-          {state.profile.length ? `, led by ${state.profile.slice(0, 3).map((p) => `${p.sector} ${Math.round(p.share * 100)}%`).join(", ")}` : ""}). 3. Focus: fewer
-          sub-sectors listed ranks higher. 4. Contacts available: 2 before 1.
+          1. Backed a competitor at the client&apos;s stage ({state.clientStage || "no stage on the profile"}; Pre-Seed and Seed count as one):{" "}
+          {n(state.sameStageSeeds)} of the {n(state.seeds)} competitor investors in the database. 2. Backed a competitor at another stage. 3. Look-alike score: resemblance to{" "}
+          {state.seedsBasis === "same_stage" ? "the same-stage backers" : `every competitor investor (fewer than ${SAME_STAGE_SEEDS_MIN} backed one at the client's stage)`}
+          {state.profile.length ? `, led by ${state.profile.slice(0, 3).map((p) => `${p.sector} ${Math.round(p.share * 100)}%`).join(", ")}` : ""}. 4. Focus: fewer
+          sub-sectors listed ranks higher. 5. Contacts available: 2 before 1.
         </p>
         <p className="mt-xs text-body-sm text-secondary">
           Funds with no contact are not used: {n(l.noContact.length)} in the tiers.

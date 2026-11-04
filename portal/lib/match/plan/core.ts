@@ -133,6 +133,19 @@ export function placeFund(index: TaxIndex, keys: TierKeys, sectors: string[]): {
 // ---------------------------------------------------------------------------
 // Ranking inside each tier
 
+const EARLY_STAGES = ["pre-seed", "seed"];
+
+/** Two stage names are the same stage (Pre-Seed and Seed are one). Empty never matches. */
+export function sameStage(a: string, b: string) {
+  const x = a.trim().toLowerCase();
+  const y = b.trim().toLowerCase();
+  if (!x || !y) return false;
+  return x === y || (EARLY_STAGES.includes(x) && EARLY_STAGES.includes(y));
+}
+
+/** Fewer same-stage backers than this in the database: the look-alike profile uses every backer instead. */
+export const SAME_STAGE_SEEDS_MIN = 3;
+
 export type PlanFund = {
   firmId: string;
   name: string;
@@ -144,6 +157,8 @@ export type PlanFund = {
   hit: string[];
   /** Competitors it backed (2B). */
   backed: string[];
+  /** Of those, the ones it backed at the client's stage (Pre-Seed and Seed count as one). */
+  sameStage: string[];
   /** Cosine similarity to the competitors' investors' sector profile, 0–1. */
   lookAlike: number;
   /** Sub-sectors listed: fewer ranks higher. */
@@ -160,15 +175,20 @@ export type RankInput = {
   website: string;
   source: string;
   backed: string[];
+  sameStage: string[];
   /** Sector node ids. */
   sectors: string[];
   contacts: number;
 };
 
-/** The 4B order: backed a competitor, look-alike, focus, contacts (2 before 1), then name. */
+/**
+ * The 4B order: backed a competitor at the client's stage, then backed one at
+ * another stage, then look-alike, focus, contacts (2 before 1), then name.
+ */
 export function compareFunds(a: PlanFund, b: PlanFund, cap: number) {
   const reach = (f: PlanFund) => Math.min(f.contacts, cap);
   return (
+    Number(b.sameStage.length > 0) - Number(a.sameStage.length > 0) ||
     Number(b.backed.length > 0) - Number(a.backed.length > 0) ||
     b.lookAlike - a.lookAlike ||
     a.focus - b.focus ||
@@ -192,6 +212,7 @@ export function tierRoster(index: TaxIndex, client: ClientSubSectors, funds: Ran
       tier: placed.tier,
       hit: placed.hit.map(label),
       backed: f.backed,
+      sameStage: f.sameStage,
       lookAlike: lookAlikeScore(labels, profile).score,
       focus: new Set(f.sectors).size,
       contacts: f.contacts,

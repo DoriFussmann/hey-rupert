@@ -6,6 +6,7 @@ import type { Firm, FundDb } from "@/lib/match/engine/index.mjs";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { checkAgainstDatabase } from "@/lib/match/landscape/server";
 import { sectorProfile, type ProfileEntry } from "@/lib/match/landscape/lookalike";
+import { stageFromRound } from "@/lib/match/landscape/core";
 import { confirmedRoster } from "@/lib/match/roster/server";
 import { SOURCE_LABEL } from "@/lib/match/roster/core";
 import {
@@ -13,7 +14,9 @@ import {
   planCapacity,
   planCounts,
   planInputProblems,
+  SAME_STAGE_SEEDS_MIN,
   rankFunds,
+  sameStage,
   tierRoster,
   waterfall,
   type ClientSubSectors,
@@ -59,6 +62,11 @@ export type PlanState =
       subSectors: SubSectorView[];
       /** Competitor investors found in the database: the look-alike seeds. */
       seeds: number;
+      /** The client's stage, and how many seeds backed a competitor at it. */
+      clientStage: string;
+      sameStageSeeds: number;
+      /** The look-alike profile is built from the same-stage backers (else from every backer: too few at the stage). */
+      seedsBasis: "same_stage" | "all";
       profile: ProfileEntry[];
       facts: PlanFacts;
       saved: SavedPlan | null;
@@ -121,14 +129,33 @@ async function draft(supabase: ServiceClient, clientId: string) {
     return s;
   };
 
-  // Look-alike seeds: the competitors' investors found in the database (2C), whether or not they made the Roster.
+  // The competitors' investors found in the database (2C), whether or not they made the Roster,
+  // with the competitors each backed at the client's stage (the round's stage, read from its name).
+  const clientStage = (profileInputs.stage as Named)?.label ?? "";
+  const sameStageBy = new Map<string, Set<string>>();
   let seedIds: string[] = [];
   if (!roster.value.facts.step2Skipped) {
     const check = await checkAgainstDatabase(supabase, clientId);
-    if (check.ok) seedIds = Array.from(new Set(check.value.rows.map((r) => r.firmId ?? r.added?.firmId ?? null).filter((x): x is string => !!x && firmById.has(x))));
+    if (check.ok) {
+      for (const row of check.value.rows) {
+        const id = row.firmId ?? row.added?.firmId ?? null;
+        if (!id || !firmById.has(id)) continue;
+        seedIds.push(id);
+        for (const b of row.investor.backed) {
+          if (!sameStage(stageFromRound(b.round), clientStage)) continue;
+          const set = sameStageBy.get(id) ?? new Set<string>();
+          set.add(b.competitor);
+          sameStageBy.set(id, set);
+        }
+      }
+      seedIds = Array.from(new Set(seedIds));
+    }
   }
+  // Look-alikes of the same-stage backers, when there are enough of them; else of every backer.
+  const sameStageSeeds = seedIds.filter((id) => sameStageBy.has(id));
+  const seedsBasis: "same_stage" | "all" = sameStageSeeds.length >= SAME_STAGE_SEEDS_MIN ? "same_stage" : "all";
   const label = (id: string) => index.nodes.get(id)?.label ?? id;
-  const profile = sectorProfile(seedIds.map((id) => ({ id, name: id, sectors: sectors(id).map(label) })));
+  const profile = sectorProfile((seedsBasis === "same_stage" ? sameStageSeeds : seedIds).map((id) => ({ id, name: id, sectors: sectors(id).map(label) })));
 
   const contacts = contactCounts(db);
   const funds = tierRoster(
@@ -140,6 +167,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
       website: e.website,
       source: SOURCE_LABEL[e.source],
       backed: e.backed,
+      sameStage: Array.from(sameStageBy.get(e.firmId) ?? []).sort(),
       sectors: sectors(e.firmId),
       contacts: contacts.get(e.firmId) ?? 0,
     })),
@@ -149,6 +177,9 @@ async function draft(supabase: ServiceClient, clientId: string) {
     ok: true as const,
     funds,
     seeds: seedIds.length,
+    clientStage,
+    sameStageSeeds: sameStageSeeds.length,
+    seedsBasis,
     profile: profile.slice(0, 10),
     subSectors: [view("Primary sub-sector", subSectors.primary), view("Secondary sub-sector 1", subSectors.secondary1), view("Secondary sub-sector 2", subSectors.secondary2)],
     facts: { rosterId: roster.value.id, dataVersion, taxonomyRevision: index.taxonomy.revision, subSectors } as PlanFacts,
@@ -218,6 +249,9 @@ export async function loadPlan(supabase: ServiceClient, clientId: string): Promi
       funds: built.funds,
       subSectors: built.subSectors,
       seeds: built.seeds,
+      clientStage: built.clientStage,
+      sameStageSeeds: built.sameStageSeeds,
+      seedsBasis: built.seedsBasis,
       profile: built.profile,
       facts: built.facts,
       saved: saved.value,
