@@ -32,7 +32,7 @@ export const PROMPT_LIST = [
   { key: "match_options", title: "Thin match: sector options", group: "Matching" },
   { key: "list_audit", title: "Investor list audit", group: "Matching" },
   { key: "competitor_search", title: "Step 2: funded competitors", group: "Matching" },
-  { key: "competitor_sector", title: "Step 2: competitors' primary sector", group: "Matching" },
+  { key: "competitor_sector", title: "Step 2: competitors' primary sub-sector", group: "Matching" },
   { key: "competitor_investors", title: "Step 2: competitors' investors", group: "Matching" },
   { key: "investor_website", title: "Step 2: investors' websites", group: "Matching" },
   { key: "add_fund_research", title: "Step 2: research a fund to add", group: "Matching" },

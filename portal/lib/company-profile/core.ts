@@ -491,14 +491,14 @@ export function applyAiClassification(
   transcript: string,
 ): { profile: CompanyProfile; problems: ProfileIssue[] } {
   const problems: ProfileIssue[] = [];
-  const primary = readAiClass(raw.primary_sector, index, "sector", SECTOR_KINDS, transcript, problems, "Primary sector");
+  const primary = readAiClass(raw.primary_sector, index, "sector", SECTOR_KINDS, transcript, problems, "Primary sub-sector");
   const secondaryRaw = Array.isArray(raw.secondary_sectors) ? (raw.secondary_sectors as AiClassInput[]) : [];
   if (secondaryRaw.length > MAX_SECONDARY) {
-    problems.push({ field: "Secondary sectors", severity: "info", message: `The AI proposed ${secondaryRaw.length} secondary sectors; only the first ${MAX_SECONDARY} are kept.` });
+    problems.push({ field: "Secondary sub-sectors", severity: "info", message: `The AI proposed ${secondaryRaw.length} secondary sub-sectors; only the first ${MAX_SECONDARY} are kept.` });
   }
   const secondaries: SectorClass[] = [];
   for (const item of secondaryRaw.slice(0, MAX_SECONDARY)) {
-    const c = readAiClass(item, index, "sector", SECTOR_KINDS, transcript, problems, "Secondary sector");
+    const c = readAiClass(item, index, "sector", SECTOR_KINDS, transcript, problems, "Secondary sub-sector");
     if (c && c.nodeId !== primary?.nodeId && !secondaries.some((s) => s.nodeId === c.nodeId)) {
       secondaries.push({ ...c, role: "secondary" });
     }
@@ -517,7 +517,7 @@ export function applyAiClassification(
       }
     }
   };
-  fallback("Primary sector", !primary && base.sectors.length > 0);
+  fallback("Primary sub-sector", !primary && base.sectors.length > 0);
   fallback("Stage", !stage && Boolean(base.stage));
   fallback("HQ country", !country && Boolean(base.hq.country));
   const unconfirmed = <T extends Classification>(c: T): T => ({ ...c, status: c.status === "confirmed_founder" ? c.status : "needs_confirmation" });
@@ -605,20 +605,20 @@ export function validateProfile(profile: CompanyProfile, index: TaxIndex, extra:
 
   const primaries = profile.sectors.filter((s) => s.role === "primary");
   const secondaries = profile.sectors.filter((s) => s.role === "secondary");
-  if (primaries.length === 0) add("Primary sector", "blocking", "No primary sector.");
-  if (primaries.length > 1) add("Primary sector", "blocking", "More than one primary sector.");
-  if (secondaries.length > MAX_SECONDARY) add("Secondary sectors", "blocking", `More than ${MAX_SECONDARY} secondary sectors.`);
+  if (primaries.length === 0) add("Primary sub-sector", "blocking", "No primary sub-sector.");
+  if (primaries.length > 1) add("Primary sub-sector", "blocking", "More than one primary sub-sector.");
+  if (secondaries.length > MAX_SECONDARY) add("Secondary sub-sectors", "blocking", `More than ${MAX_SECONDARY} secondary sub-sectors.`);
   for (const sector of profile.sectors) {
-    const field = sector.role === "primary" ? "Primary sector" : "Secondary sector";
+    const field = sector.role === "primary" ? "Primary sub-sector" : "Secondary sub-sector";
     if (!checkNode(sector, field, "sector", SECTOR_KINDS)) continue;
     if (sector.role === "primary") needsConfirming(sector, field);
     if (sector.role === "secondary" && sector.source !== "legacy" && sector.status !== "confirmed_founder" && sector.source !== "admin") {
       if (verifiedCount(sector) === 0 || sector.rationale.length < RATIONALE_MIN) {
-        add(field, "limited", `${sector.label}: a secondary sector needs its own founder evidence and justification.`);
+        add(field, "limited", `${sector.label}: a secondary sub-sector needs its own founder evidence and justification.`);
       }
     }
     if (sector.role === "primary" && index.nodes.get(sector.nodeId)?.attrs.granularity === "broad") {
-      add(field, "info", `${sector.label} is a broad industry. Use a more specific sector if the business evidence supports one.`);
+      add(field, "info", `${sector.label} is a broad sub-sector. Use a more specific one if the business evidence supports one.`);
     }
   }
 
@@ -635,7 +635,7 @@ export function validateProfile(profile: CompanyProfile, index: TaxIndex, extra:
   for (const sector of profile.sectors) {
     if (sector.status === "confirmed_founder" || sector.source === "admin") continue;
     for (const e of sector.evidence) {
-      if (!e.verified) add(sector.role === "primary" ? "Primary sector" : "Secondary sector", "limited", `Quote not found in the founder's messages or files: "${e.quote.slice(0, 80)}".`);
+      if (!e.verified) add(sector.role === "primary" ? "Primary sub-sector" : "Secondary sub-sector", "limited", `Quote not found in the founder's messages or files: "${e.quote.slice(0, 80)}".`);
     }
   }
   for (const a of profile.ambiguities) add("To clarify", "limited", a.question);
@@ -661,8 +661,8 @@ export function openBuildProblems(profile: CompanyProfile, problems: ProfileIssu
   const primary = profile.sectors.find((s) => s.role === "primary");
   const secondaries = profile.sectors.filter((s) => s.role === "secondary");
   return problems.filter((p) => {
-    if (p.field === "Primary sector") return !settled(primary);
-    if (p.field === "Secondary sector" || p.field === "Secondary sectors") return !secondaries.every(settled);
+    if (p.field === "Primary sub-sector") return !settled(primary);
+    if (p.field === "Secondary sub-sector" || p.field === "Secondary sub-sectors") return !secondaries.every(settled);
     if (p.field === "Stage") return !settled(profile.stage);
     if (p.field === "HQ country") return !settled(profile.hq.country);
     return true;
@@ -698,11 +698,11 @@ export function setSectors(
   actor: string | null,
 ): { ok: true; profile: CompanyProfile } | { ok: false; error: string } {
   const ids = [input.primary, ...input.secondary.filter((id) => id && id !== input.primary)];
-  if (!input.primary) return { ok: false, error: "Pick a primary sector." };
-  if (ids.length - 1 > MAX_SECONDARY) return { ok: false, error: `At most ${MAX_SECONDARY} secondary sectors.` };
-  if (new Set(ids).size !== ids.length) return { ok: false, error: "A sector is listed twice." };
+  if (!input.primary) return { ok: false, error: "Pick a primary sub-sector." };
+  if (ids.length - 1 > MAX_SECONDARY) return { ok: false, error: `At most ${MAX_SECONDARY} secondary sub-sectors.` };
+  if (new Set(ids).size !== ids.length) return { ok: false, error: "A sub-sector is listed twice." };
   for (const id of ids) {
-    if (!isChoosable(index, id, "sector", SECTOR_KINDS)) return { ok: false, error: `"${id}" is not a sector you can choose.` };
+    if (!isChoosable(index, id, "sector", SECTOR_KINDS)) return { ok: false, error: `"${id}" is not a sub-sector you can choose.` };
   }
   const rationale = input.rationale.trim().slice(0, 800);
   const changed = ids.join("|") !== profile.sectors.map((s) => s.nodeId).join("|");

@@ -57,8 +57,8 @@ export async function GET(_request: Request, { params }: { params: { id: string 
   const profile = book.addWorksheet("Profile");
   profile.columns = [{ width: 32 }, { width: 90 }];
   profile.addRows([
-    ["Primary sector", named(p.primarySector)],
-    ["Secondary sectors (in profile order)", namedList(p.secondarySectors)],
+    ["Primary sub-sector", named(p.primarySector)],
+    ["Secondary sub-sectors (in profile order)", namedList(p.secondarySectors)],
     ["Stage", named(p.stage)],
     ["Stage reach", String(p.stageReach ?? "exact")],
     ["HQ country", named(p.hqCountry)],

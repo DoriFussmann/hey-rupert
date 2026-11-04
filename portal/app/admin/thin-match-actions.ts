@@ -84,7 +84,7 @@ export async function findMatchOptions(clientId: string): Promise<Result<{ optio
   const { index } = profile.value;
   const sectors = profile.value.profile.sectors;
   const primary = sectors.find((sector) => sector.role === "primary")?.nodeId ?? null;
-  if (!primary) return { ok: false, error: "The company profile has no primary sector." };
+  if (!primary) return { ok: false, error: "The company profile has no primary sub-sector." };
 
   const suggested = await suggestSectorSetups(supabase, clientId, {
     tally: tallyRows(run.value.rows),

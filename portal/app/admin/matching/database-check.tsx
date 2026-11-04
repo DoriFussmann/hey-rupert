@@ -143,9 +143,9 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
             <p className="text-heading">Removed at {row.failure.label}</p>
             <p className="text-secondary">Fund lists: {row.failure.fundValues}</p>
             {row.overlap.client.length ? (
-              <p className="text-success">Lists {row.overlap.client.join(", ")}: the client&apos;s sector.</p>
+              <p className="text-success">Lists {row.overlap.client.join(", ")}: the client&apos;s sub-sectors.</p>
             ) : row.failure.step === "sector" ? (
-              <p className="text-warning">Backed a competitor, but lists none of the client&apos;s sectors.</p>
+              <p className="text-warning">Backed a competitor, but lists none of the client&apos;s sub-sectors.</p>
             ) : null}
             {row.overlap.competitor.length ? (
               <p className="text-secondary">Shares {row.overlap.competitor.join(", ")} with the competitor it backed.</p>
@@ -429,8 +429,8 @@ function Toast({ text }: { text: string | null }) {
 type Reason = { key: string; label: string; rows: CheckRow[]; note: string };
 
 const REASONS: Omit<Reason, "rows">[] = [
-  { key: "sector_shared", label: "Sector only, lists the client's sector", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
-  { key: "sector_none", label: "Sector only, no shared sector", note: "Backed a direct competitor, but lists none of the client's sectors: left out by default." },
+  { key: "sector_shared", label: "Sector only, lists the client's sub-sector", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
+  { key: "sector_none", label: "Sector only, no shared sub-sector", note: "Backed a direct competitor, but lists none of the client's sub-sectors: left out by default." },
   { key: "stage", label: "Stage", note: "A different stage: left out by default." },
   { key: "geography", label: "Geography", note: "Another geography: left out by default." },
   { key: "financing", label: "Financing", note: "Another financing type: left out by default." },
@@ -852,7 +852,7 @@ function LookAlikePanel({ clientId }: { clientId: string }) {
                   <th className="py-xs pr-md font-medium">Fund</th>
                   <th className="py-xs pr-md text-right font-medium">Look-alike</th>
                   <th className="py-xs pr-md font-medium">Shares with the profile</th>
-                  <th className="py-xs text-right font-medium">Sectors listed</th>
+                  <th className="py-xs text-right font-medium">Sub-sectors listed</th>
                 </tr>
               </thead>
               <tbody>

@@ -46,18 +46,18 @@ export const TIER_KEYS = ["core", "sphere", "tier3", "tier4"] as const;
 export type TierKey = (typeof TIER_KEYS)[number];
 
 export const TIER_INFO: Record<TierKey, { label: string; description: string }> = {
-  core: { label: "Core", description: "Direct match to the company's primary sector." },
+  core: { label: "Core", description: "Direct match to the company's primary sub-sector." },
   sphere: {
     label: "Sphere",
-    description: "Immediate adjacency to the primary sector, or a direct match to a secondary sector.",
+    description: "Immediate adjacency to the primary sub-sector, or a direct match to a secondary sub-sector.",
   },
   tier3: {
     label: "Tier 3",
-    description: "Broader adjacency to the primary sector, or immediate adjacency to a secondary sector.",
+    description: "Broader adjacency to the primary sub-sector, or immediate adjacency to a secondary sub-sector.",
   },
   tier4: {
     label: "Tier 4",
-    description: "Weak but defensible link to the primary sector, or broader adjacency to a secondary sector.",
+    description: "Weak but defensible link to the primary sub-sector, or broader adjacency to a secondary sub-sector.",
   },
 };
 
@@ -304,9 +304,9 @@ const DEFAULT_FINANCING = "financing.equity";
 // Profile readiness
 
 const EFFECT: Record<string, string> = {
-  "Primary sector": "affects the sector tiers",
-  "Secondary sector": "affects the sector tiers",
-  "Secondary sectors": "affects the sector tiers",
+  "Primary sub-sector": "affects the sector tiers",
+  "Secondary sub-sector": "affects the sector tiers",
+  "Secondary sub-sectors": "affects the sector tiers",
   Stage: "affects the stage check",
   "HQ country": "affects the geography check",
   "HQ state": "affects the US regional geography check",
@@ -831,7 +831,7 @@ export function allowedFirmTypes(index: TaxIndex, profile: MatchingProfile) {
 export function runTiers(input: TierRunInput): TierRun {
   const { db, index, profile, legacy } = input;
   if (!profile.primarySector || !profile.stage || !profile.hqCountry) {
-    throw new Error("The profile needs a primary sector, a stage and an HQ country.");
+    throw new Error("The profile needs a primary sub-sector, a stage and an HQ country.");
   }
   const primary = profile.primarySector;
   const secondaries = profile.secondarySectors;

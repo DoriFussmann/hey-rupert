@@ -112,7 +112,7 @@ function fundCells(data: DryData, fund: DryFund) {
 }
 
 function download(data: DryData, funds: DryFund[], clientName: string) {
-  const head = ["FirmID", "Firm name", "Financing", "Stage", "Geography", "Sectors (industry + vertical)", "Generalist"];
+  const head = ["FirmID", "Firm name", "Financing", "Stage", "Geography", "Sub-sectors (industry + vertical)", "Generalist"];
   const esc = (v: string) => `"${v.replace(/"/g, '""')}"`;
   const lines = [head.map(esc).join(",")];
   for (const fund of funds) {
@@ -384,7 +384,7 @@ export function DryMatch({
                 <p className="mt-xs text-body-sm text-muted">A fund passes if any geography it states is inside the choice (e.g. a US region for the United States) or contains it.</p>
               ) : null}
               {step === "sector" ? (
-                <p className="mt-xs text-body-sm text-muted">A fund passes if any of its industries or verticals sits in a chosen sector group.</p>
+                <p className="mt-xs text-body-sm text-muted">A fund passes if any of its sub-sectors (industries or verticals) sits in a chosen sector.</p>
               ) : null}
             </Card>
             {isConfirmed && result ? (

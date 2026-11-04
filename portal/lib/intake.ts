@@ -450,7 +450,7 @@ export function asIntakeBrief(value: unknown): IntakeBrief | null {
  */
 export const MATCHING_TOPICS: Record<string, string> = {
   company: "HQ country and US state",
-  sector: "Primary and secondary sectors",
+  sector: "Primary and secondary sub-sectors",
   raise: "Stage",
   existing_and_exclusions: "Funds to exclude",
   competitors: "Competitive landscape (Step 2)",

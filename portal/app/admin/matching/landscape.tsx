@@ -84,7 +84,7 @@ function EditForm({ value, onSave, onCancel }: { value: Competitor; onSave: (c: 
       {field("HQ", text("hq"))}
       {field("Stage (latest round)", text("stage"))}
       {field("Geography (HQ country)", text("geography"))}
-      {field("Primary sector", text("primarySector"))}
+      {field("Primary sub-sector", text("primarySector"))}
       {field("Investors (comma separated)", <input className={inputClass} value={investors} onChange={(e) => setInvestors(e.target.value)} />, true)}
       {field("What it does", text("oneLiner"), true)}
       {field(
@@ -230,9 +230,9 @@ function DetailsModal({ c, rank, onClose }: { c: Competitor; rank: number; onClo
           <dd className="text-heading">{c.stage || "–"}</dd>
           <dt className="text-muted">Geography</dt>
           <dd className="text-heading">{c.geography || "–"}</dd>
-          <dt className="text-muted">Primary sector</dt>
+          <dt className="text-muted">Primary sub-sector</dt>
           <dd className="text-heading">{c.primarySector || "–"}</dd>
-          <dt className="text-muted">Secondary sectors</dt>
+          <dt className="text-muted">Secondary sub-sectors</dt>
           <dd className="text-heading">{c.secondarySectors.length ? c.secondarySectors.join(", ") : "–"}</dd>
           <dt className="text-muted">Latest round</dt>
           <dd className="text-body">{funding || "–"}</dd>
@@ -292,7 +292,7 @@ function ConfirmedSummary({
             <th className="py-xs pr-md font-medium">Competitor</th>
             <th className="py-xs pr-md font-medium">Stage</th>
             <th className="py-xs pr-md font-medium">Geography</th>
-            <th className="py-xs font-medium">Primary sector</th>
+            <th className="py-xs font-medium">Primary sub-sector</th>
           </tr>
         </thead>
         <tbody>
@@ -431,10 +431,10 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
     const missingSectors = items.filter((c) => !c.primarySector || !c.sectorsChecked).length;
     const sectorNote =
       sectorTry === "running" ? (
-        <p className="mt-xs text-body-sm text-primary">Classifying the sectors…</p>
+        <p className="mt-xs text-body-sm text-primary">Classifying the sub-sectors…</p>
       ) : missingSectors > 0 ? (
         <p className="mt-xs text-body-sm text-warning">
-          {missingSectors} not yet classified by sector.{" "}
+          {missingSectors} not yet classified by sub-sector.{" "}
           <button type="button" className="underline" onClick={() => void fillSectors()}>
             Classify sectors
           </button>

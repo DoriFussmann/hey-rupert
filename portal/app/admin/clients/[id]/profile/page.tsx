@@ -19,6 +19,7 @@ import {
 import { SECTOR_KINDS, choosable, sectorAnswers, validateProfile } from "@/lib/company-profile/core";
 import { currentProfile, loadVersions, type ProfileVersion } from "@/lib/company-profile/server";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
+import { groupOf } from "@/lib/match/dry/core";
 
 // Building the profile from the intake runs in a server action here.
 export const maxDuration = 120;
@@ -53,7 +54,10 @@ async function loadClassification(clientId: string, state: MatchProfileState | n
   if (!versions.ok) return { error: versions.error };
   const { issues, readiness } = validateProfile(current.value.profile, index, current.value.buildProblems);
   const choices: SectorChoice[] = choosable(index, "sector", SECTOR_KINDS)
-    .map((node) => ({ id: node.id, label: node.label, broad: node.attrs.granularity === "broad" }))
+    .map((node) => {
+      const group = groupOf(index, node.id);
+      return { id: node.id, label: node.label, broad: node.attrs.granularity === "broad", sector: group ? index.nodes.get(group)?.label ?? "" : "" };
+    })
     .sort((a, b) => a.label.localeCompare(b.label));
   return {
     data: {

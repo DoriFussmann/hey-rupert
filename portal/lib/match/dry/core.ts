@@ -14,7 +14,7 @@ export const DRY_STEP_LABEL: Record<DryStep, string> = {
   financing: "Financing type",
   stage: "Stage",
   geography: "Geography",
-  sector: "Primary sector",
+  sector: "Sector",
 };
 
 /**
@@ -196,8 +196,8 @@ export function buildDryData(db: FundDb, index: TaxIndex, profile: DryProfile): 
         : "Profile has no stage",
       geography: profile.hqCountry ? `Profile HQ: ${label(profile.hqCountry)}` : "Profile has no HQ country",
       sector: profile.primarySector
-        ? `Profile primary sector: ${label(profile.primarySector)}${ownGroup ? `, in ${label(ownGroup)}` : ""}`
-        : "Profile has no primary sector",
+        ? `Profile primary sub-sector: ${label(profile.primarySector)}${ownGroup ? `, in the sector ${label(ownGroup)}` : ""}`
+        : "Profile has no primary sub-sector",
     },
   };
 }

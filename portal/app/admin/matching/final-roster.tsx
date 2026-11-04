@@ -60,7 +60,7 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
 
 const RESULT_TEXT: Record<AddedCheck["result"], { label: string; tone: string }> = {
   pass: { label: "In: passes the filters", tone: "text-success" },
-  secondary: { label: "In: by the client's secondary sector", tone: "text-success" },
+  secondary: { label: "In: by the client's secondary sub-sector", tone: "text-success" },
   fail: { label: "Out", tone: "text-error" },
   missing: { label: "Waiting: missing fields", tone: "text-warning" },
   not_found: { label: "Out: not in the database", tone: "text-error" },

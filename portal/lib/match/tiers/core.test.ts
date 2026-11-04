@@ -639,7 +639,7 @@ test("profile readiness: Blocked refuses, Limited lists every point with the che
   assert.equal(blockedReason("ready", []), null);
   assert.match(blockedReason("blocked", [{ field: "Stage", severity: "blocking", message: "No stage." }])!, /blocked: No stage\./);
   const warnings = profileWarnings([
-    { field: "Primary sector", severity: "limited", message: "Fintech: needs confirmation (no founder quote supports it)." },
+    { field: "Primary sub-sector", severity: "limited", message: "Fintech: needs confirmation (no founder quote supports it)." },
     { field: "HQ state", severity: "limited", message: "US company without a state." },
     { field: "Markets", severity: "info", message: "No other markets given." },
   ]);
