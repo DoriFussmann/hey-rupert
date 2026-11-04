@@ -449,7 +449,9 @@ export async function draftSetupEmail(
   const row = state.rows.find((item) => item.step === step) ?? null;
   const version = (row?.version ?? 0) + 1;
 
-  if (step === "investor_list") {
+  // The new matching's summaries are written up by Claude (below); lists from the older tools use the fixed letter.
+  const withSummaries = step === "investor_list" && Boolean(asInvestorListDraft(draft).summaries);
+  if (step === "investor_list" && !(withSummaries && isClaudeConfigured())) {
     const rendered = await renderInvestorListLetter(access.supabase, clientId, asInvestorListDraft(draft));
     if (!rendered.ok) return rendered;
     return {

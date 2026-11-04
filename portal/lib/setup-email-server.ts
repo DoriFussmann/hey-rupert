@@ -12,7 +12,7 @@ import {
   updatedSubject,
   type EmailToken,
 } from "@/lib/email-templates";
-import { adminFirstName, investorListEmailHtml, investorListEmailText } from "@/lib/investor-list-email";
+import { adminFirstName, investorListEmailHtml, investorListEmailText, matchingSummaryLetter } from "@/lib/investor-list-email";
 import { withClientNote } from "@/lib/investor-list-note";
 import { clientAddress, firstNameOf, greetingFor } from "@/lib/notify";
 import { PORTAL_URL } from "@/lib/portal-url";
@@ -98,6 +98,16 @@ export async function renderInvestorListLetter(
     to: context.to,
     paused: context.row.emails_paused === true,
     email: (() => {
+      if (list.summaries) {
+        const letter = matchingSummaryLetter({
+          summaries: list.summaries,
+          company: text(context.row.company_name) || "your company",
+          clientFirstName: firstNameOf(context.row),
+          adminName: adminFirstName(context.signature),
+          portalUrl: context.portalLink,
+        });
+        return { subject: letter.subject, body: letter.text };
+      }
       const letter = investorListEmailText({
         list,
         company: text(context.row.company_name) || "your company",

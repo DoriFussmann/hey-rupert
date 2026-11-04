@@ -1,4 +1,5 @@
-import { fitTiersFor, type FitTier, type InvestorListPayload } from "./setup.ts";
+import { fitTiersFor, type FitTier, type InvestorListPayload, type InvestorSummaries } from "./setup.ts";
+import { cellText } from "./match/summary/core.ts";
 
 const CTA_LABEL = "Review your investor list";
 
@@ -74,6 +75,50 @@ export function investorListEmailText({
     subject: `Your investor list for ${company} is ready to review`,
     text: lines.join("\n"),
   };
+}
+
+/** The letter for the new matching when Claude isn't set up: the headline numbers from the summaries. */
+export function matchingSummaryLetter({
+  summaries,
+  company,
+  clientFirstName,
+  adminName,
+  portalUrl,
+}: {
+  summaries: InvestorSummaries;
+  company: string;
+  clientFirstName: string;
+  adminName: string;
+  portalUrl: string;
+}) {
+  const step = (key: string) => summaries.matching.steps.find((s) => s.key === key);
+  const all = cellText(step("step1")?.tables[0]?.rows[0]?.left);
+  const roster = step("step3")?.headline?.value ?? 0;
+  const plan = step("step4")?.tables[0]?.total;
+  const competitors = summaries.landscape?.steps.find((s) => s.key === "competitors")?.headline?.value ?? 0;
+  const lines = [
+    clientFirstName ? `Hi ${clientFirstName},` : "Hi,",
+    "",
+    `Your investor matching for ${company} is ready. I started from ${all} funds, narrowed them by your financing type, stage, geography and sector, researched the investors behind your funded competitors, and arrived at a Final Roster of ${n(roster)} investors.`,
+    "",
+    plan
+      ? `This campaign reaches ${cellText(plan.planContacts)} investors at ${cellText(plan.planFunds)} funds, starting with Core: funds that invest directly in your sector. The rest of the roster is kept for later waves.`
+      : "",
+    "",
+    competitors
+      ? `I've also included a Competitive Landscape Overview: your ${n(competitors)} funded competitors, their latest rounds, and who backed them.`
+      : "",
+    "",
+    "Please review both in your portal. You can confirm, comment, ask a question or request changes. If you'd like to go through it together, book a short call with \"Book a call\" in the left panel of your portal.",
+    "",
+    "Outreach starts only after you confirm, and you'll approve every email before anything is sent.",
+    "",
+    `[Review your investor matching] → ${portalUrl}`,
+    "",
+    adminName,
+    "Hey Rupert",
+  ];
+  return { subject: `Your investor matching for ${company} is ready to review`, text: lines.join("\n").replace(/\n{3,}/g, "\n\n") };
 }
 
 function escapeHtml(value: string) {
