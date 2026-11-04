@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ResponseHistory } from "@/components/setup/response-history";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
+import { SummariesReview } from "@/app/portal/setup/investor-list/summaries-review";
 import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
 import { loadEmailSettings } from "@/lib/email-settings";
 import { isServiceRoleConfigured } from "@/lib/env";
@@ -57,7 +58,7 @@ export default async function InvestorListPage() {
       </p>
       {row?.status === "confirmed" ? (
         <p className="mb-lg text-body text-heading" role="status">
-          You confirmed this list
+          You confirmed {list.summaries ? "your investor matching" : "this list"}
           {row.response?.at ? ` on ${formatDate(row.response.at)}` : ""}.
         </p>
       ) : null}
@@ -72,10 +73,22 @@ export default async function InvestorListPage() {
       ) : null}
       {row?.status === "changes_requested" ? (
         <p className="mb-lg text-body text-heading" role="status">
-          Rupert has your note. He&apos;ll reply and send this list back for you to confirm.
+          Rupert has your note. He&apos;ll reply and send {list.summaries ? "it" : "this list"} back for you to confirm.
         </p>
       ) : null}
-      {visible && row ? (
+      {visible && row && list.summaries ? (
+        <SummariesReview
+          summaries={list.summaries}
+          version={row.version}
+          open={open}
+          company={company}
+          adminName={adminName}
+          publishedAt={row.published_at}
+          adminNote={list.admin_note}
+          questions={questionsOf(row)}
+          readOnly={viewAs}
+        />
+      ) : visible && row ? (
         <InvestorListReview
           rows={list.rows}
           summary={list.summary}

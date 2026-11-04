@@ -3,6 +3,7 @@
 // browser. Every screen, email and reminder reads from here.
 
 import { dropSectorFocus } from "./match/shared.ts";
+import type { Summary } from "./match/summary/core.ts";
 import { asTypedCopy, typedCopyIssues, typedHasContent, type TypedCopy } from "./outreach/copy.ts";
 
 export type SetupStepId =
@@ -462,7 +463,21 @@ export type InvestorListPayload = {
   /** Contacts emailed per fund, from the confirmed campaign plan. Absent: 2. */
   contacts_per_firm?: number;
   questions?: SetupQuestion[];
+  /** The new matching: the Matching Summary and the Competitive Landscape Overview, as pushed from Matching. */
+  summaries?: InvestorSummaries;
 };
+
+export type InvestorSummaries = { matching: Summary; landscape: Summary | null };
+
+/** The pushed summaries, kept only when they have the summary shape. */
+export function asInvestorSummaries(value: unknown): InvestorSummaries | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const ok = (s: unknown): s is Summary =>
+    Boolean(s) && typeof s === "object" && Array.isArray((s as Summary).steps) && typeof (s as Summary).title === "string";
+  if (!ok(raw.matching)) return undefined;
+  return { matching: raw.matching, landscape: ok(raw.landscape) ? raw.landscape : null };
+}
 
 export type CopyEmail = { subject: string; body: string };
 
@@ -1329,6 +1344,7 @@ export function asInvestorList(value: unknown): InvestorListPayload {
     client_flags: asInvestorFlags(raw.client_flags, rows.map((row) => row.id)),
     removed_flags: asRemovedFlags(raw.removed_flags),
     ...withQuestions(asQuestions(raw.questions)),
+    ...(asInvestorSummaries(raw.summaries) ? { summaries: asInvestorSummaries(raw.summaries) } : {}),
     ...(scheme === "four"
       ? {
           tier_scheme: "four" as const,
@@ -1359,6 +1375,7 @@ export function investorListForClient(draft: InvestorListPayload): InvestorListP
     client_flags: draft.client_flags,
     removed_flags: draft.removed_flags,
     ...withQuestions(draft.questions ?? []),
+    ...(draft.summaries ? { summaries: draft.summaries } : {}),
     ...(draft.tier_scheme === "four"
       ? {
           tier_scheme: "four" as const,
@@ -1507,7 +1524,7 @@ function flagFields(flag: InvestorFundFlag): InvestorFundFlag {
 
 /** Why the investor list cannot be sent yet, or null. */
 export function investorListProblem(draft: InvestorListPayload) {
-  return draft.rows.length === 0 ? "Push the list from Rupert Match first." : null;
+  return draft.rows.length === 0 && !draft.summaries ? "Finalize the matching and Push to Client first." : null;
 }
 
 function count(value: unknown) {

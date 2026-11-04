@@ -12,6 +12,8 @@ import {
   secondaryButton,
 } from "@/app/admin/clients/[id]/setup/shared";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
+import { SummariesReview } from "@/app/portal/setup/investor-list/summaries-review";
+import { SummaryView } from "@/app/admin/matching/summary-view";
 import { ListAuditPanel } from "@/app/admin/clients/[id]/setup/list-audit-panel";
 import { InvestorFundGroups } from "@/components/setup/investor-fund-groups";
 import { InvestorListSummaryPanel } from "@/components/setup/investor-list-summary";
@@ -45,6 +47,9 @@ function ClientPreview({
   company: string;
   adminName: string;
 }) {
+  if (list.summaries) {
+    return <SummariesReview summaries={list.summaries} version={0} open company={company} adminName={adminName} adminNote={list.admin_note} readOnly heading="p" />;
+  }
   return (
     <InvestorListReview
       rows={list.rows}
@@ -92,7 +97,7 @@ export function InvestorListPanel({
 }) {
   const initial = useMemo(() => {
     const draft = asInvestorListDraft(row?.draft);
-    if (draft.rows.length > 0) return draft;
+    if (draft.rows.length > 0 || draft.summaries) return draft;
     // Nothing pushed from Rupert Match yet: show what the client has, if anything.
     const published = asInvestorList(row?.published);
     return { ...published, admin_note: draft.admin_note, client_email: draft.client_email };
@@ -106,7 +111,8 @@ export function InvestorListPanel({
     ...initial,
     admin_note: note.trim() || undefined,
   });
-  const empty = list.rows.length === 0;
+  const summaries = list.summaries ?? null;
+  const empty = list.rows.length === 0 && !summaries;
   const verification = list.verification;
   const visibleRows = list.rows.filter((entry) => !entry.hidden_duplicate);
   const hiddenCount = list.rows.length - visibleRows.length;
@@ -117,7 +123,7 @@ export function InvestorListPanel({
   const adminRows = flaggedOnly ? flaggedRows : list.rows;
   const changesRequested = row?.status === "changes_requested";
   const fingerprint = listFingerprint(list.rows);
-  const auditWarning = empty ? null : auditSendWarning(audit.value, fingerprint);
+  const auditWarning = empty || summaries ? null : auditSendWarning(audit.value, fingerprint);
   const sendHint = clientFirstName
     ? `Sending makes the list visible in ${clientFirstName}'s portal.`
     : "Sending makes the list visible in the client's portal.";
@@ -141,8 +147,17 @@ export function InvestorListPanel({
 
       {empty ? (
         <p className="px-lg pt-md text-body-sm text-secondary">
-          No list yet. Open Matching, run the match for this client, then click Push to client.
+          Nothing yet. In Matching, finalize the matching for this client, then click Push to Client.
         </p>
+      ) : summaries ? (
+        <div className="space-y-md px-lg pt-md">
+          <p className="text-body-sm text-secondary">
+            The Matching Summary and the Competitive Landscape Overview, as pushed from Matching. Preview as Client below shows
+            exactly what the client will see.
+          </p>
+          <SummaryView summary={summaries.matching} />
+          {summaries.landscape ? <SummaryView summary={summaries.landscape} /> : null}
+        </div>
       ) : (
         <>
           <p className="px-lg pt-md text-body-sm text-secondary">
@@ -294,7 +309,11 @@ export function InvestorListPanel({
         onSaved={() => setSavedNote(note)}
         problem={investorListProblem(list)}
         busy={false}
-        pushSummary="Pushes the fund list above (fund names, tiers, websites and contact counts) and your note to the client's portal as a new version, and sends them this email. They add notes, ask questions or confirm there."
+        pushSummary={
+          summaries
+            ? "Pushes the two summaries above and your note to the client's portal as a new version, and sends them this email. They comment, ask questions, request changes or confirm there."
+            : "Pushes the fund list above (fund names, tiers, websites and contact counts) and your note to the client's portal as a new version, and sends them this email. They add notes, ask questions or confirm there."
+        }
         sendHint={auditWarning ? `${sendHint} Audit: ${auditWarning}` : sendHint}
         clientPreview={
           empty ? undefined : (

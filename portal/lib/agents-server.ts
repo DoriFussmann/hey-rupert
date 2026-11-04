@@ -605,6 +605,9 @@ export async function draftInvestorListEmail(
   override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
   // The new matching: the summaries pushed to the client page are the source.
+  if (list.summaries) {
+    return draftMatchingSummaryEmail(supabase, clientId, list.summaries.matching, list.summaries.landscape, list.admin_note ?? "", version, override);
+  }
   const pushed = await loadDeliverables(supabase, clientId);
   const matching = pushed.ok ? pushed.value.find((d) => d.kind === "matching")?.content ?? null : null;
   if (matching) {

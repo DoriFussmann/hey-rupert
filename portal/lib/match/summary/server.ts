@@ -168,6 +168,27 @@ export async function pushAllToClient(supabase: ServiceClient, clientId: string,
     const done = await pushToClient(supabase, clientId, kind, actor);
     if (!done.ok) return done;
   }
+  // The client page's Investor Matching step takes them as its draft (replacing a list from the older tools),
+  // keeping the email and the note. Nothing reaches the client's portal until Push to Client Portal & Send.
+  const { data: row, error: rowError } = await supabase
+    .from("setup_steps")
+    .select("draft")
+    .eq("client_id", clientId)
+    .eq("step", "investor_list")
+    .maybeSingle<{ draft: Record<string, unknown> | null }>();
+  if (rowError) return { ok: false, error: rowError.message };
+  const current = (row?.draft ?? {}) as Record<string, unknown>;
+  const draft = {
+    rows: [],
+    source_file: "",
+    summaries: { matching: fin.value.matching, landscape: fin.value.landscape },
+    ...(current.admin_note ? { admin_note: current.admin_note } : {}),
+    ...(current.client_email ? { client_email: current.client_email } : {}),
+  };
+  const { error } = await supabase
+    .from("setup_steps")
+    .upsert({ client_id: clientId, step: "investor_list", draft, updated_at: new Date().toISOString() }, { onConflict: "client_id,step", ignoreDuplicates: false });
+  if (error) return { ok: false, error: error.message };
   return { ok: true, value: null };
 }
 
