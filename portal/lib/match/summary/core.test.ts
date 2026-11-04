@@ -51,7 +51,7 @@ test("the landscape overview: competitors with sources, and who is on the outrea
   const s = landscapeSummary({ clientName: "Argentl", competitors: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) });
   assert.deepEqual(s.steps.map((x) => x.button), ["Competitors", "Their Investors"]);
   // One line per row; the source and the rest are in the details.
-  assert.deepEqual(Object.keys(s.steps[0].tables[0].rows[0]), ["name", "hq", "round", "raised"]);
+  assert.deepEqual(Object.keys(s.steps[0].tables[0].rows[0]), ["name", "hq", "round"]);
   assert.deepEqual(s.steps[0].tables[0].details![0].find((d) => d.label === "Source")!.value, { text: "Raises $5M", href: "https://news.com/a" });
   const list = s.steps[1].tables[0].rows.map((r) => [r.name, r.outreach]);
   assert.deepEqual(list, [["Acme VC", "Yes"], ["Bolt", "No"], ["Jane Doe", "No"]]);
