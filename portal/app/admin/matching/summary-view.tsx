@@ -139,7 +139,8 @@ function TableView({ table }: { table: SummaryTable }) {
  * step's name and clean tables below, and the actions at the bottom right.
  */
 export function SummaryView({ summary, footer }: { summary: Summary; footer?: React.ReactNode }) {
-  const [picked, setPicked] = useState(summary.steps[summary.steps.length - 1]?.key ?? "");
+  // Opens on the first step: Step 1, and Competitors for the landscape.
+  const [picked, setPicked] = useState(summary.steps[0]?.key ?? "");
   const step = summary.steps.find((s) => s.key === picked) ?? summary.steps[0];
   if (!step) return null;
   return (
