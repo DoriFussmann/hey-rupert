@@ -1,5 +1,6 @@
 import { fitTiersFor, type FitTier, type InvestorListPayload, type InvestorSummaries } from "./setup.ts";
 import { cellText } from "./match/summary/core.ts";
+import { bulletOf } from "./text-bullets.ts";
 
 const CTA_LABEL = "Review your investor list";
 
@@ -130,6 +131,46 @@ function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
+const P_STYLE = "margin:0 0 16px;font-size:16px;line-height:1.6;color:#2D2D2D";
+const UL_STYLE = "margin:0 0 16px;padding-left:20px;font-size:16px;line-height:1.6;color:#2D2D2D";
+const SUB_UL_STYLE = "margin:8px 0 0;padding-left:20px;list-style-type:circle";
+
+/** One paragraph block: its plain lines as a paragraph, its bullet lines ("• ", "  ◦ ", "- ") as a list, nested by level. */
+function blockHtml(lines: string[]) {
+  const out: string[] = [];
+  let text: string[] = [];
+  let items: { html: string; subs: string[] }[] = [];
+  const flushText = () => {
+    if (text.length) out.push(`<p style="${P_STYLE}">${text.map(escapeHtml).join("<br>")}</p>`);
+    text = [];
+  };
+  const flushList = () => {
+    if (items.length) {
+      const li = items
+        .map((i) => `<li style="margin:0 0 8px">${i.html}${i.subs.length ? `<ul style="${SUB_UL_STYLE}">${i.subs.map((x) => `<li style="margin:0 0 4px">${x}</li>`).join("")}</ul>` : ""}</li>`)
+        .join("");
+      // A list right under a line of text sits close to it.
+      if (out.length && out[out.length - 1].startsWith("<p")) out[out.length - 1] = out[out.length - 1].replace("margin:0 0 16px", "margin:0 0 8px");
+      out.push(`<ul style="${UL_STYLE}">${li}</ul>`);
+    }
+    items = [];
+  };
+  for (const line of lines) {
+    const b = bulletOf(line);
+    if (!b) {
+      flushList();
+      text.push(line);
+      continue;
+    }
+    flushText();
+    if (b.level === 2 && items.length) items[items.length - 1].subs.push(escapeHtml(b.rest));
+    else items.push({ html: escapeHtml(b.rest), subs: [] });
+  }
+  flushText();
+  flushList();
+  return out.join("");
+}
+
 /** HTML for the same letter. The review line becomes a button; everything else is the edited text. */
 export function investorListEmailHtml(text: string) {
   const blocks = text.replace(/\r\n/g, "\n").split(/\n{2,}/);
@@ -142,14 +183,7 @@ export function investorListEmailHtml(text: string) {
         const href = escapeHtml(cta[2]);
         return `<p style="margin:24px 0"><a href="${href}" style="display:inline-block;background:#5C7A5E;color:#ffffff;text-decoration:none;font-size:16px;line-height:1.4;padding:12px 20px;border-radius:6px">${label}</a></p>`;
       }
-      const bullets = lines.filter((line) => line.startsWith("• "));
-      if (bullets.length === lines.length && bullets.length > 0) {
-        const items = bullets
-          .map((line) => `<li style="margin:0 0 8px">${escapeHtml(line.slice(2))}</li>`)
-          .join("");
-        return `<ul style="margin:0 0 16px;padding-left:20px;font-size:16px;line-height:1.6;color:#2D2D2D">${items}</ul>`;
-      }
-      return `<p style="margin:0 0 16px;font-size:16px;line-height:1.6;color:#2D2D2D">${lines.map(escapeHtml).join("<br>")}</p>`;
+      return blockHtml(lines);
     })
     .join("");
   return `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#FAF9F5;color:#2D2D2D;font-family:Inter,Helvetica,Arial,sans-serif">${html}</body></html>`;

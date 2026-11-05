@@ -1,6 +1,6 @@
 "use client";
 
-import { AutoTextarea } from "@/components/email-body-field";
+import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -257,16 +257,17 @@ export function DocumentStep({
             />
           </label>
         ) : null}
-        <label className={`${labelClass} mt-md`}>
-          Email
-          <AutoTextarea
-            className={`${inputClass} mt-sm min-h-[160px] normal-case tracking-normal`}
+        <div className="mt-md">
+          <p className={labelClass}>Email</p>
+          <EmailBodyField
+            className={`${inputClass} min-h-[160px] normal-case tracking-normal`}
             value={email.body}
             maxLength={EMAIL_BODY_MAX}
+            label="Email"
             placeholder="Click Draft Email to write it from everything above and the company information."
-            onChange={(event) => setEmail({ ...email, body: event.target.value })}
+            onChange={(body) => setEmail({ ...email, body })}
           />
-        </label>
+        </div>
         {step === "investor_list" && email.body.trim() ? (
           <div className="mt-md">
             <p className="text-body text-heading">Preview</p>

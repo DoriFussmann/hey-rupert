@@ -127,5 +127,13 @@ export function summaryFactsText(matching: Summary, landscape: Summary | null, p
   } else {
     lines.push("None this time. Don't mention it.");
   }
+  const peerCompanies = stepOf(peersOverview, "peers");
+  const peerInvestors = peersOverview?.steps.find((x) => x.key === "investors");
+  if (peerCompanies && peerInvestors) {
+    lines.push("## The Peers Landscape Overview (shared with the founder too)");
+    const names = peerCompanies.tables[0].rows.slice(0, NAMED_COMPETITORS_MAX).map((r) => cellText(r.name));
+    lines.push(`${peerCompanies.headline?.value ?? 0} companies like theirs (not competitors, the same bet for investors), with their latest rounds. You may name (at most ${NAMED_COMPETITORS_MAX}): ${names.join(", ")}.`);
+    lines.push(`${peerInvestors.headline?.value ?? 0} investors behind them; ${peerInvestors.headline?.label.replace(/^Investors, /, "") ?? ""}.`);
+  }
   return lines.join("\n");
 }
