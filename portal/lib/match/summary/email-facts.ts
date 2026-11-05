@@ -21,8 +21,12 @@ export function summaryFactsText(matching: Summary, landscape: Summary | null): 
   const s2a = stepOf(matching, "step2a");
   const s2b = stepOf(matching, "step2b");
   const s2c = stepOf(matching, "step2c");
-  const s3 = stepOf(matching, "step3");
-  const s4 = stepOf(matching, "step4");
+  // Rosters and Plans: Step 4 and 5 since Step 3 (Companies Like You); Step 3 and 4 before.
+  const byTitle = (title: string) => matching.steps.find((x) => x.title === title);
+  const s3 = byTitle("The Final Roster");
+  const s4 = byTitle("The Plan");
+  const s3a = stepOf(matching, "step3a");
+  const s3c = stepOf(matching, "step3c");
 
   lines.push("## How the database was narrowed (Step 1)");
   if (s1) {
@@ -41,14 +45,26 @@ export function summaryFactsText(matching: Summary, landscape: Summary | null): 
     lines.push("No funded competitors were found: the matching ran on the database alone. Don't mention competitor research.");
   }
 
-  lines.push("## The Final Roster (Step 3)");
+  if (s3a) {
+    lines.push("## Companies like you (Step 3)");
+    lines.push(
+      `${s3a.headline?.value ?? 0} funded comparable companies (not competitors, but the same bet for investors) researched; ${s3c?.headline?.value ?? 0} of their investors, and of those the founder named, were used in the match.`,
+    );
+    lines.push(`Comparable companies you may name (at most ${NAMED_COMPETITORS_MAX}): ${s3a.tables[0].rows.slice(0, NAMED_COMPETITORS_MAX).map((r) => cellText(r.name)).join(", ")}.`);
+  }
+
+  lines.push("## The Final Roster");
   if (s3) {
     lines.push(`${s3.headline?.value ?? 0} investors, after the founder's exclusions.`);
     const backed = s3.tables[1]?.rows[0];
     if (backed) lines.push(`${cellText(backed.investors)} of them backed one of the competitors.`);
+    const like = s3.tables[1]?.rows.find((r) => cellText(r.what) === "Backed a comparable company");
+    if (like) lines.push(`${cellText(like.investors)} backed a comparable company.`);
+    const named = s3.tables[1]?.rows.find((r) => cellText(r.what) === "Named by you");
+    if (named) lines.push(`${cellText(named.investors)} are investors the founder named.`);
   }
 
-  lines.push("## The campaign plan (Step 4)");
+  lines.push("## The campaign plan");
   if (s4) {
     if (s4.line) lines.push(`Setup: ${s4.line}.`);
     const t = s4.tables[0];
@@ -71,7 +87,15 @@ export function summaryFactsText(matching: Summary, landscape: Summary | null): 
     named.forEach(({ row, d }, i) => {
       const backed = detail(d, "Backed a competitor");
       const matched = detail(d, "Matched on");
-      const facts = [`${cellText(row.tier)}`, matched.length ? `invests in ${matched.join(", ")}` : "", backed.length ? `backed ${backed.join(", ")}` : ""].filter(Boolean);
+      const like = detail(d, "Backed a comparable company");
+      const named = detail(d, "Named by you").length > 0;
+      const facts = [
+        `${cellText(row.tier)}`,
+        matched.length ? `invests in ${matched.join(", ")}` : "",
+        backed.length ? `backed ${backed.join(", ")}` : "",
+        like.length ? `backed ${like.join(", ")} (comparable)` : "",
+        named ? "the founder asked for it" : "",
+      ].filter(Boolean);
       lines.push(`${i + 1}. ${cellText(row.name)}: ${facts.join("; ")}.`);
     });
   }

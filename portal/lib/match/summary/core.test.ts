@@ -38,7 +38,7 @@ test("the matching summary: one step per stage, clean numbers, (n) deductions", 
       ],
     },
   });
-  assert.deepEqual(s.steps.map((x) => x.button), ["Step 1", "Step 2A", "Step 2B", "Step 2C", "Step 2D", "Step 3", "Step 4"]);
+  assert.deepEqual(s.steps.map((x) => x.button), ["Step 1", "Step 2A", "Step 2B", "Step 2C", "Step 2D", "Step 4", "Step 5"]);
   assert.equal(s.steps[0].tables[0].rows[1].removed, "(2,567)");
   assert.equal(minus(16), "(16)");
   const plan = s.steps[6];

@@ -146,6 +146,8 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
               <td className="py-xs pr-md text-success">
                 {f.backed.join(", ")}
                 {f.sameStage?.length ? <span className="text-muted"> (at the client&apos;s stage: {f.sameStage.join(", ")})</span> : null}
+                {f.clientNamed ? <span className="text-primary"> · Named by the client</span> : null}
+                {f.comparables?.length ? <span className="text-secondary"> · Comparable: {f.comparables.join(", ")}</span> : null}
               </td>
               <td className="py-xs pr-md text-right">{f.lookAlike.toFixed(2)}</td>
               <td className="py-xs pr-md text-right">{f.focus}</td>
@@ -160,7 +162,7 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
 
 type PanelKey = "planned" | "ranked" | "outside" | "none" | "nocontact";
 
-/** Step 4: The Plan. */
+/** Step 5: The Plan. */
 export function ThePlan({
   clientId,
   clientName,
@@ -246,7 +248,7 @@ export function ThePlan({
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={saved.counts.plannedContacts} label="Step 4 · The Plan: confirmed (contacts)" />
+            <BigNumber value={saved.counts.plannedContacts} label="Step 5 · The Plan: confirmed (contacts)" />
             <p className="text-body-sm text-secondary">
               {n(saved.counts.plannedFunds)} funds, of {n(saved.counts.roster)} on the Roster. {saved.inputs.inboxes} {saved.inputs.inboxes === 1 ? "inbox" : "inboxes"}, {saved.inputs.months}{" "}
               {saved.inputs.months === 1 ? "month" : "months"}, {saved.capacity.emailsPerContact} emails per contact. Confirmed {when(saved.confirmedAt)}
@@ -286,7 +288,7 @@ export function ThePlan({
   return (
     <div className="space-y-md">
       <Card>
-        <h3 className="text-h4 text-heading">4A. Tiers of the Final Roster</h3>
+        <h3 className="text-h4 text-heading">5A. Tiers of the Final Roster</h3>
         <SubSectors list={state.subSectors} />
         <ul className="mt-sm list-disc pl-lg text-body-sm text-secondary">
           {PLAN_TIERS.map((t) => (
@@ -306,13 +308,14 @@ export function ThePlan({
       </Card>
 
       <Card>
-        <h3 className="text-h4 text-heading">4B. Ranking inside each tier</h3>
+        <h3 className="text-h4 text-heading">5B. Ranking inside each tier</h3>
         <p className="max-w-prose text-body-sm text-secondary">
           1. Backed a competitor at the client&apos;s stage ({state.clientStage || "no stage on the profile"}; Pre-Seed and Seed count as one):{" "}
-          {n(state.sameStageSeeds)} of the {n(state.seeds)} competitor investors in the database. 2. Backed a competitor at another stage. 3. Look-alike score: resemblance to{" "}
+          {n(state.sameStageSeeds)} of the {n(state.seeds)} competitor investors in the database. 2. Backed a competitor at another stage. 3. The client&apos;s
+          priorities (Step 3): named by the client, or backed a comparable company. 4. Look-alike score: resemblance to{" "}
           {state.seedsBasis === "same_stage" ? "the same-stage backers" : `every competitor investor (fewer than ${SAME_STAGE_SEEDS_MIN} backed one at the client's stage)`}
-          {state.profile.length ? `, led by ${state.profile.slice(0, 3).map((p) => `${p.sector} ${Math.round(p.share * 100)}%`).join(", ")}` : ""}. 4. Focus: fewer
-          sub-sectors listed ranks higher. 5. Contacts available: 2 before 1.
+          {state.profile.length ? `, led by ${state.profile.slice(0, 3).map((p) => `${p.sector} ${Math.round(p.share * 100)}%`).join(", ")}` : ""}. 5. Focus: fewer
+          sub-sectors listed ranks higher. 6. Contacts available: 2 before 1.
         </p>
         <p className="mt-xs text-body-sm text-secondary">
           Funds with no contact are not used: {n(l.noContact.length)} in the tiers.
@@ -322,7 +325,7 @@ export function ThePlan({
       </Card>
 
       <Card tone="final">
-        <h3 className="text-h4 text-heading">4C. Capacity and the Final Outreach Roster</h3>
+        <h3 className="text-h4 text-heading">5C. Capacity and the Final Outreach Roster</h3>
         <div className="mt-sm grid gap-md sm:grid-cols-3">
           {PLAN_INPUT_KEYS.map((key) => (
             <label key={key} className="block">

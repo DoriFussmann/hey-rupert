@@ -13,6 +13,9 @@ import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addFund, addedForLandscape } from "@/lib/match/added/server";
 import { lookAlikes } from "./lookalike.ts";
+import type { LandscapeKind } from "./kind.ts";
+
+export type { LandscapeKind };
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -82,17 +85,42 @@ function fromRow(row: Row): Landscape {
   };
 }
 
-export async function currentLandscape(supabase: ServiceClient, clientId: string): Promise<Result<Landscape | null>> {
+export async function currentLandscape(supabase: ServiceClient, clientId: string, kind: LandscapeKind = "competitors"): Promise<Result<Landscape | null>> {
   const { data, error } = await supabase
     .from("competitor_landscapes")
     .select(COLUMNS)
     .eq("client_id", clientId)
+    .eq("kind", kind)
     .is("cleared_at", null)
     .order("searched_at", { ascending: false })
     .limit(1)
     .maybeSingle<Row>();
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: data ? fromRow(data) : null };
+}
+
+/**
+ * Whether a layer (Step 2 competitors, Step 3 comparables) is done: its list
+ * confirmed and, unless it was confirmed empty (skipped), its investors, the
+ * database check and the adds confirmed. With the reason when it isn't.
+ */
+export async function layerDone(
+  supabase: ServiceClient,
+  clientId: string,
+  kind: LandscapeKind,
+): Promise<Result<{ done: boolean; reason: string; skipped: boolean; landscape: Landscape | null }>> {
+  const step = kind === "comparables" ? "3" : "2";
+  const land = await currentLandscape(supabase, clientId, kind);
+  if (!land.ok) return land;
+  const l = land.value;
+  if (!l || l.status !== "confirmed") return { ok: true, value: { done: false, reason: `Step ${step} isn't done yet.`, skipped: false, landscape: l } };
+  if (l.competitors.length === 0) return { ok: true, value: { done: true, reason: "", skipped: true, landscape: l } };
+  if (l.investorsStatus !== "confirmed") return { ok: true, value: { done: false, reason: `Step ${step} isn't done (${step}B isn't confirmed).`, skipped: false, landscape: l } };
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
+  if (!check.ok) return check;
+  if (!check.value.confirmedAt) return { ok: true, value: { done: false, reason: `Step ${step} isn't done (${step}C isn't confirmed).`, skipped: false, landscape: l } };
+  if (!check.value.addedConfirmedAt) return { ok: true, value: { done: false, reason: `Step ${step} isn't done (${step}D isn't confirmed).`, skipped: false, landscape: l } };
+  return { ok: true, value: { done: true, reason: "", skipped: false, landscape: l } };
 }
 
 /** The client's confirmed Step 1 list, which Step 2 builds on. */
@@ -172,6 +200,21 @@ async function companyFacts(supabase: ServiceClient, clientId: string): Promise<
       stageLabels,
     },
   };
+}
+
+/** What the founder told Rupert outside the portal about the investors they want (logged feedback summaries, any step). */
+async function founderTargeting(supabase: ServiceClient, clientId: string): Promise<string> {
+  const { data } = await supabase.from("setup_steps").select("published").eq("client_id", clientId);
+  const lines: string[] = [];
+  for (const row of (data ?? []) as { published: Record<string, unknown> | null }[]) {
+    const questions = Array.isArray(row.published?.questions) ? (row.published!.questions as Record<string, unknown>[]) : [];
+    for (const q of questions) {
+      if (!q || typeof q !== "object" || !q.via) continue;
+      const text = typeof q.summary === "string" && q.summary.trim() ? q.summary : typeof q.question === "string" ? q.question : "";
+      if (text.trim()) lines.push(text.trim().slice(0, 3000));
+    }
+  }
+  return lines.join("\n\n");
 }
 
 // ---------------------------------------------------------------------------
@@ -257,6 +300,7 @@ export async function findCompetitors(
   supabase: ServiceClient,
   clientId: string,
   actor: string | null,
+  kind: LandscapeKind = "competitors",
 ): Promise<Result<Landscape>> {
   const dry = await confirmedDryList(supabase, clientId);
   if (!dry.ok) return dry;
@@ -264,6 +308,21 @@ export async function findCompetitors(
   const facts = await companyFacts(supabase, clientId);
   if (!facts.ok) return facts;
   const f = facts.value;
+  // Companies Like You: the confirmed competitors are left out, and what the founder said about who they want (logged feedback) goes in.
+  let likeYou = "";
+  if (kind === "comparables") {
+    const competitors = await currentLandscape(supabase, clientId, "competitors");
+    if (!competitors.ok) return competitors;
+    if (!competitors.value || competitors.value.status !== "confirmed") return { ok: false, error: "Confirm Step 2 (the funded competitors) first." };
+    const known = competitors.value.competitors.map((c) => c.name);
+    const feedback = await founderTargeting(supabase, clientId);
+    likeYou = [
+      known.length ? `Direct competitors already covered (do not list them): ${known.join(", ")}` : "No funded direct competitors were found.",
+      feedback ? `What the founder said about the investors they want (Rupert's summary of their feedback):\n${feedback}` : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
+  }
 
   const brief = [
     `Company: ${f.name} (${f.website})`,
@@ -276,11 +335,15 @@ export async function findCompetitors(
     f.hq && `Based in: ${f.hq}`,
     f.markets.length && `Sells into: ${f.markets.join(", ")}`,
     f.clientText ? `What the founder said about competitors:\n${f.clientText}` : "The founder named no competitors.",
+    likeYou,
   ]
     .filter(Boolean)
     .join("\n");
 
-  const prompt = await loadPrompt(supabase, "competitor_search", { clientId, purpose: "Step 2: funded competitors" });
+  const prompt =
+    kind === "comparables"
+      ? await loadPrompt(supabase, "comparables_search", { clientId, purpose: "Step 3: companies like you" })
+      : await loadPrompt(supabase, "competitor_search", { clientId, purpose: "Step 2: funded competitors" });
   if (!prompt.ok) return prompt;
 
   let usage: ClaudeUsage = { inputTokens: 0, outputTokens: 0, webSearches: 0 };
@@ -292,14 +355,22 @@ export async function findCompetitors(
       "## Fields for matching",
       `For each competitor also give stage (the stage of its latest round), geography (its HQ country) and primarySector, using these exact labels. Leave a field empty if you can't tell.\nStages: ${f.stageLabels.join(", ")}\nSectors: ${f.sectorLabels.join(", ")}`,
     ),
-    content: [{ type: "text", text: `Find the funded direct competitors and deliver them by calling the ${TOOL.name} tool.` }],
+    content: [
+      {
+        type: "text",
+        text:
+          kind === "comparables"
+            ? `Find the funded comparable companies and deliver them by calling the ${TOOL.name} tool (each in the competitors list; "why" says why investors see it as the same bet).`
+            : `Find the funded direct competitors and deliver them by calling the ${TOOL.name} tool.`,
+      },
+    ],
     tool: TOOL,
     serverTools: [webSearchTool(15)],
     requireServerTools: true,
     maxTokens: 12_000,
   });
   usage = result.usage;
-  if (!result.ok) return { ok: false, error: `The competitor search did not finish: ${result.reason}` };
+  if (!result.ok) return { ok: false, error: `The ${kind === "comparables" ? "comparable companies" : "competitor"} search did not finish: ${result.reason}` };
 
   // "Client" only when the founder's own words name it.
   const clientWords = f.clientText.toLowerCase();
@@ -331,12 +402,14 @@ export async function findCompetitors(
     .from("competitor_landscapes")
     .update({ cleared_at: now, cleared_by: actor })
     .eq("client_id", clientId)
+    .eq("kind", kind)
     .is("cleared_at", null);
   if (cleared.error) return { ok: false, error: landscapeTableError(cleared.error.message, cleared.error.code) };
   const { data, error } = await supabase
     .from("competitor_landscapes")
     .insert({
       client_id: clientId,
+      kind,
       dry_match_list_id: dry.value,
       competitors: checked,
       unfunded_named: unfunded,
@@ -357,8 +430,9 @@ export async function saveCompetitors(
   items: unknown[],
   confirm: boolean,
   actor: string | null,
+  kind: LandscapeKind = "competitors",
 ): Promise<Result<Landscape>> {
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   if (!current.value) return { ok: false, error: "Run Show Competitors first." };
   if (current.value.status === "confirmed") return { ok: false, error: "This list is confirmed. Start over to change it." };
@@ -380,11 +454,12 @@ export async function saveCompetitors(
   return { ok: true, value: fromRow(data) };
 }
 
-export async function clearLandscape(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<null>> {
+export async function clearLandscape(supabase: ServiceClient, clientId: string, actor: string | null, kind: LandscapeKind = "competitors"): Promise<Result<null>> {
   const { error } = await supabase
     .from("competitor_landscapes")
     .update({ cleared_at: new Date().toISOString(), cleared_by: actor })
     .eq("client_id", clientId)
+    .eq("kind", kind)
     .is("cleared_at", null);
   if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
   return { ok: true, value: null };
@@ -422,8 +497,8 @@ const SECTOR_TOOL = {
 };
 
 /** Fills the empty primary sectors of the confirmed competitors. Nothing else on the list changes. */
-export async function fillSectors(supabase: ServiceClient, clientId: string): Promise<Result<Landscape>> {
-  const current = await currentLandscape(supabase, clientId);
+export async function fillSectors(supabase: ServiceClient, clientId: string, kind: LandscapeKind = "competitors"): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land) return { ok: false, error: "Run Show Competitors first." };
@@ -515,8 +590,8 @@ const INVESTOR_TOOL = {
  * list. The investors already named in Step 2A are added too, with the
  * funding article as their source. Run once per competitor.
  */
-export async function researchInvestors(supabase: ServiceClient, clientId: string, competitorId: string): Promise<Result<Landscape>> {
-  const current = await currentLandscape(supabase, clientId);
+export async function researchInvestors(supabase: ServiceClient, clientId: string, competitorId: string, kind: LandscapeKind = "competitors"): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.status !== "confirmed") return { ok: false, error: "Confirm the competitors first." };
@@ -583,7 +658,7 @@ export async function researchInvestors(supabase: ServiceClient, clientId: strin
   }
 
   // Read again just before writing, so two runs never overwrite each other's findings.
-  const fresh = await currentLandscape(supabase, clientId);
+  const fresh = await currentLandscape(supabase, clientId, kind);
   if (!fresh.ok) return fresh;
   if (!fresh.value || fresh.value.id !== land.id) return { ok: false, error: "The competitor list changed. Reload the page." };
   let merged = fresh.value.investors;
@@ -611,8 +686,9 @@ export async function saveInvestors(
   items: unknown[],
   confirm: boolean,
   actor: string | null,
+  kind: LandscapeKind = "competitors",
 ): Promise<Result<Landscape>> {
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus === "none") return { ok: false, error: "Run Find Investors first." };
@@ -636,8 +712,8 @@ export async function saveInvestors(
 }
 
 /** Start over for Step 2B only: the confirmed competitors stay. */
-export async function clearInvestors(supabase: ServiceClient, clientId: string): Promise<Result<Landscape>> {
-  const current = await currentLandscape(supabase, clientId);
+export async function clearInvestors(supabase: ServiceClient, clientId: string, kind: LandscapeKind = "competitors"): Promise<Result<Landscape>> {
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   if (!current.value) return { ok: false, error: "Nothing to start over." };
   const { data, error } = await supabase
@@ -703,8 +779,8 @@ async function loadSuggestions(supabase: ServiceClient, landscapeId: string): Pr
 }
 
 /** Checks every confirmed investor against the live Fund Database and the confirmed Step 1 list. Reads only. */
-export async function checkAgainstDatabase(supabase: ServiceClient, clientId: string): Promise<Result<CheckResult>> {
-  const current = await currentLandscape(supabase, clientId);
+export async function checkAgainstDatabase(supabase: ServiceClient, clientId: string, kind: LandscapeKind = "competitors"): Promise<Result<CheckResult>> {
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
@@ -772,8 +848,9 @@ export async function decideInvestor(
   actor: string | null,
   /** A system write (Try and Add to DB found the fund's website in the database), allowed after the check is confirmed. */
   system = false,
+  kind: LandscapeKind = "competitors",
 ): Promise<Result<null>> {
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
@@ -836,8 +913,9 @@ export async function decideMany(
   investorIds: string[],
   action: "bring_back" | "leave_out" | null,
   actor: string | null,
+  kind: LandscapeKind = "competitors",
 ): Promise<Result<number>> {
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
@@ -865,10 +943,10 @@ export async function decideMany(
  * admin's decision: bring back when it fails only on sector and lists the
  * client's Secondary 1 or 2, otherwise leave out. Decisions already made stay.
  */
-export async function applyDefaults(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ broughtBack: number; leftOut: number }>> {
-  const check = await checkAgainstDatabase(supabase, clientId);
+export async function applyDefaults(supabase: ServiceClient, clientId: string, actor: string | null, kind: LandscapeKind = "competitors"): Promise<Result<{ broughtBack: number; leftOut: number }>> {
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
   if (!check.ok) return check;
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
@@ -901,10 +979,10 @@ export const INVESTMENTS_MIGRATION = "The investments table is missing. Run port
  * and the source. A fact about the fund's portfolio, never a change to its
  * sectors. Recording again updates the same rows.
  */
-export async function recordInvestments(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<number>> {
-  const check = await checkAgainstDatabase(supabase, clientId);
+export async function recordInvestments(supabase: ServiceClient, clientId: string, actor: string | null, kind: LandscapeKind = "competitors"): Promise<Result<number>> {
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
   if (!check.ok) return check;
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value!;
   const byId = new Map(land.competitors.map((c) => [c.id, c]));
@@ -979,8 +1057,8 @@ const WEBSITE_TOOL = {
 };
 
 /** Finds the official website of a few investors (at most WEBSITE_BATCH) and saves the suggestions. */
-export async function findWebsites(supabase: ServiceClient, clientId: string, investorIds: string[]): Promise<Result<number>> {
-  const current = await currentLandscape(supabase, clientId);
+export async function findWebsites(supabase: ServiceClient, clientId: string, investorIds: string[], kind: LandscapeKind = "competitors"): Promise<Result<number>> {
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
@@ -1077,8 +1155,8 @@ async function loadCheckConfirmation(
 export const ADDED_CONFIRM_MIGRATION = "The Step 2D confirmation columns are missing. Run portal/supabase/added_confirmation.sql in the Supabase SQL editor.";
 
 /** Confirms Step 2D (what wasn't added is skipped), or reopens it. Needs the check confirmed and nothing being added. */
-export async function confirmAdded(supabase: ServiceClient, clientId: string, confirm: boolean, actor: string | null): Promise<Result<null>> {
-  const current = await currentLandscape(supabase, clientId);
+export async function confirmAdded(supabase: ServiceClient, clientId: string, confirm: boolean, actor: string | null, kind: LandscapeKind = "competitors"): Promise<Result<null>> {
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok || !current.value) return { ok: false, error: "Nothing to confirm." };
   if (confirm && !(await checkLocked(supabase, current.value.id))) return { ok: false, error: "Confirm Step 2C (the check) first." };
   const { error } = await supabase
@@ -1090,8 +1168,8 @@ export async function confirmAdded(supabase: ServiceClient, clientId: string, co
 }
 
 /** Confirms the check (every match settled, every fund decided), or reopens it. While confirmed, decisions can't change. */
-export async function confirmCheck(supabase: ServiceClient, clientId: string, confirm: boolean, actor: string | null): Promise<Result<null>> {
-  const check = await checkAgainstDatabase(supabase, clientId);
+export async function confirmCheck(supabase: ServiceClient, clientId: string, confirm: boolean, actor: string | null, kind: LandscapeKind = "competitors"): Promise<Result<null>> {
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
   if (!check.ok) return check;
   if (confirm) {
     const unsure = check.value.rows.filter((r) => r.unsure).length;
@@ -1101,7 +1179,7 @@ export async function confirmCheck(supabase: ServiceClient, clientId: string, co
       return { ok: false, error: `Not yet: ${open} to confirm, ${todo} to decide, ${unsure} marked Not sure.` };
     }
   }
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok || !current.value) return { ok: false, error: "Nothing to confirm." };
   const { error } = await supabase
     .from("competitor_landscapes")
@@ -1130,12 +1208,13 @@ export async function addMissingInvestor(
   clientId: string,
   investorId: string,
   actor: string | null,
+  kind: LandscapeKind = "competitors",
 ): Promise<Result<{ created: boolean; message: string }>> {
-  const current = await currentLandscape(supabase, clientId);
+  const current = await currentLandscape(supabase, clientId, kind);
   if (!current.ok) return current;
   const land = current.value;
   if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
-  const check = await checkAgainstDatabase(supabase, clientId);
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
   if (!check.ok) return check;
   const row = check.value.rows.find((r) => r.investor.id === investorId);
   if (!row) return { ok: false, error: "That investor is not on the confirmed list." };
@@ -1175,7 +1254,7 @@ export async function addMissingInvestor(
   if (!added.ok) return { ok: false, error: added.error };
   const outcome = added.value;
   if (outcome.kind === "in_database") {
-    const saved = await decideInvestor(supabase, clientId, investorId, { website: outcome.website, resetMatch: true }, actor, true);
+    const saved = await decideInvestor(supabase, clientId, investorId, { website: outcome.website, resetMatch: true }, actor, true, kind);
     if (!saved.ok) return saved;
     return { ok: true, value: { created: false, message: `${row.investor.name} is already in the database as ${outcome.firm.name} (same website): matched to it, not added.` } };
   }
@@ -1204,8 +1283,8 @@ export type LookAlikePreview = {
  * The Step 1 shortlist ranked by how much each fund resembles the
  * competitors' investors found in the database (their stated sectors). Reads only.
  */
-export async function lookAlikePreview(supabase: ServiceClient, clientId: string): Promise<Result<LookAlikePreview>> {
-  const check = await checkAgainstDatabase(supabase, clientId);
+export async function lookAlikePreview(supabase: ServiceClient, clientId: string, kind: LandscapeKind = "competitors"): Promise<Result<LookAlikePreview>> {
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
   if (!check.ok) return check;
   const seedIds = new Set(
     check.value.rows.filter((r) => r.firmId && (r.bucket === "in_list" || r.bucket === "not_in_list")).map((r) => r.firmId!),

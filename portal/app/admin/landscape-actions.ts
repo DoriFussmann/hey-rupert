@@ -4,9 +4,11 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { isClaudeConfigured } from "@/lib/anthropic";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { asLandscapeKind } from "@/lib/match/landscape/kind";
 import { lockedError } from "@/lib/match/summary/server";
 import {
   checkAgainstDatabase,
+  layerDone,
   decideInvestor,
   addMissingInvestor,
   confirmAdded,
@@ -49,14 +51,20 @@ async function access(clientId: unknown, change = true) {
 const fail = (err: unknown, fallback: string) => ({ ok: false as const, error: err instanceof Error ? err.message : fallback });
 
 /** Step 2 for a client: whether Step 1 is confirmed, and the current landscape. */
-export async function loadLandscape(clientId: string): Promise<Result<{ stepOneConfirmed: boolean; landscape: Landscape | null }>> {
+export async function loadLandscape(clientId: string, kind?: unknown): Promise<Result<{ stepOneConfirmed: boolean; landscape: Landscape | null }>> {
   const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
     const dry = await confirmedDryList(a.supabase, a.clientId);
     if (!dry.ok) return { ok: false, error: dry.error };
-    const current = await currentLandscape(a.supabase, a.clientId);
+    const current = await currentLandscape(a.supabase, a.clientId, asLandscapeKind(kind));
     if (!current.ok) return { ok: false, error: current.error };
+    // Step 3 opens once Step 2 is done; Step 2 once Step 1 is confirmed.
+    if (asLandscapeKind(kind) === "comparables") {
+      const two = await layerDone(a.supabase, a.clientId, "competitors");
+      if (!two.ok) return { ok: false, error: two.error };
+      return { ok: true, stepOneConfirmed: !!dry.value && two.value.done, landscape: current.value };
+    }
     return { ok: true, stepOneConfirmed: !!dry.value, landscape: current.value };
   } catch (err) {
     return fail(err, "Step 2 did not load.");
@@ -64,12 +72,12 @@ export async function loadLandscape(clientId: string): Promise<Result<{ stepOneC
 }
 
 /** Show Competitors: web search for funded direct competitors, saved as a draft. Up to a few minutes. */
-export async function showCompetitors(clientId: string): Promise<Result<{ landscape: Landscape }>> {
+export async function showCompetitors(clientId: string, kind?: unknown): Promise<Result<{ landscape: Landscape }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
   try {
-    const found = await findCompetitors(a.supabase, a.clientId, a.email);
+    const found = await findCompetitors(a.supabase, a.clientId, a.email, asLandscapeKind(kind));
     if (!found.ok) return { ok: false, error: found.error };
     return { ok: true, landscape: found.value };
   } catch (err) {
@@ -78,11 +86,11 @@ export async function showCompetitors(clientId: string): Promise<Result<{ landsc
 }
 
 /** Saves edits to the draft list; with confirm, locks it. Links are checked again. */
-export async function saveLandscape(clientId: string, competitors: unknown[], confirm: boolean): Promise<Result<{ landscape: Landscape }>> {
+export async function saveLandscape(clientId: string, competitors: unknown[], confirm: boolean, kind?: unknown): Promise<Result<{ landscape: Landscape }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   try {
-    const saved = await saveCompetitors(a.supabase, a.clientId, competitors, confirm === true, a.email);
+    const saved = await saveCompetitors(a.supabase, a.clientId, competitors, confirm === true, a.email, asLandscapeKind(kind));
     if (!saved.ok) return { ok: false, error: saved.error };
     return { ok: true, landscape: saved.value };
   } catch (err) {
@@ -91,10 +99,10 @@ export async function saveLandscape(clientId: string, competitors: unknown[], co
 }
 
 /** Start over: the current list is set aside (kept on record). */
-export async function startOverLandscape(clientId: string): Promise<Result<object>> {
+export async function startOverLandscape(clientId: string, kind?: unknown): Promise<Result<object>> {
   const a = await access(clientId);
   if (!a.ok) return a;
-  const cleared = await clearLandscape(a.supabase, a.clientId, a.email);
+  const cleared = await clearLandscape(a.supabase, a.clientId, a.email, asLandscapeKind(kind));
   return cleared.ok ? { ok: true } : { ok: false, error: cleared.error };
 }
 
@@ -105,54 +113,54 @@ function wrap(value: { ok: true; value: Landscape } | { ok: false; error: string
 }
 
 /** Fills the empty primary sectors of the confirmed competitors. */
-export async function fillCompetitorSectors(clientId: string): Promise<LandscapeResult> {
+export async function fillCompetitorSectors(clientId: string, kind?: unknown): Promise<LandscapeResult> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
   try {
-    return wrap(await fillSectors(a.supabase, a.clientId));
+    return wrap(await fillSectors(a.supabase, a.clientId, asLandscapeKind(kind)));
   } catch (err) {
     return fail(err, "The sectors were not filled.");
   }
 }
 
 /** Step 2B: researches one competitor's investors and merges them into the list. The page calls it once per competitor. */
-export async function findInvestorsFor(clientId: string, competitorId: string): Promise<LandscapeResult> {
+export async function findInvestorsFor(clientId: string, competitorId: string, kind?: unknown): Promise<LandscapeResult> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
   if (typeof competitorId !== "string" || !competitorId || competitorId.length > 64) return { ok: false, error: "Unknown competitor." };
   try {
-    return wrap(await researchInvestors(a.supabase, a.clientId, competitorId));
+    return wrap(await researchInvestors(a.supabase, a.clientId, competitorId, asLandscapeKind(kind)));
   } catch (err) {
     return fail(err, "The investor research failed.");
   }
 }
 
 /** Saves edits to the investor list; with confirm, locks it. */
-export async function saveInvestorList(clientId: string, investors: unknown[], confirm: boolean): Promise<LandscapeResult> {
+export async function saveInvestorList(clientId: string, investors: unknown[], confirm: boolean, kind?: unknown): Promise<LandscapeResult> {
   const a = await access(clientId);
   if (!a.ok) return a;
   try {
-    return wrap(await saveInvestors(a.supabase, a.clientId, investors, confirm === true, a.email));
+    return wrap(await saveInvestors(a.supabase, a.clientId, investors, confirm === true, a.email, asLandscapeKind(kind)));
   } catch (err) {
     return fail(err, "The investor list was not saved.");
   }
 }
 
 /** Start over for the investor list only; the confirmed competitors stay. */
-export async function startOverInvestors(clientId: string): Promise<LandscapeResult> {
+export async function startOverInvestors(clientId: string, kind?: unknown): Promise<LandscapeResult> {
   const a = await access(clientId);
   if (!a.ok) return a;
-  return wrap(await clearInvestors(a.supabase, a.clientId));
+  return wrap(await clearInvestors(a.supabase, a.clientId, asLandscapeKind(kind)));
 }
 
 /** Step 2C: the confirmed investors checked against the Fund Database and the shortlist. Reads only. */
-export async function runInvestorCheck(clientId: string): Promise<Result<{ check: CheckResult }>> {
+export async function runInvestorCheck(clientId: string, kind?: unknown): Promise<Result<{ check: CheckResult }>> {
   const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
-    const result = await checkAgainstDatabase(a.supabase, a.clientId);
+    const result = await checkAgainstDatabase(a.supabase, a.clientId, asLandscapeKind(kind));
     return result.ok ? { ok: true, check: result.value } : { ok: false, error: result.error };
   } catch (err) {
     return fail(err, "The check did not run.");
@@ -173,6 +181,7 @@ export async function decideOnInvestor(
     clear?: boolean;
     unsure?: boolean;
   },
+  kind?: unknown,
 ): Promise<Result<{ check: CheckResult }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
@@ -187,9 +196,9 @@ export async function decideOnInvestor(
   if (patch?.clear === true) clean.clear = true;
   if (typeof patch?.unsure === "boolean") clean.unsure = patch.unsure;
   try {
-    const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email);
+    const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email, false, asLandscapeKind(kind));
     if (!saved.ok) return { ok: false, error: saved.error };
-    return runInvestorCheck(clientId);
+    return runInvestorCheck(clientId, kind);
   } catch (err) {
     return fail(err, "The decision was not saved.");
   }
@@ -200,15 +209,16 @@ export async function decideForGroup(
   clientId: string,
   investorIds: string[],
   action: "bring_back" | "leave_out" | null,
+  kind?: unknown,
 ): Promise<Result<{ check: CheckResult; changed: number }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!Array.isArray(investorIds) || investorIds.length > 2000) return { ok: false, error: "Unknown investors." };
   if (action !== null && action !== "bring_back" && action !== "leave_out") return { ok: false, error: "Unknown action." };
   try {
-    const done = await decideMany(a.supabase, a.clientId, investorIds.filter((id) => typeof id === "string").map((id) => id.slice(0, 64)), action, a.email);
+    const done = await decideMany(a.supabase, a.clientId, investorIds.filter((id) => typeof id === "string").map((id) => id.slice(0, 64)), action, a.email, asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    const check = await runInvestorCheck(clientId);
+    const check = await runInvestorCheck(clientId, kind);
     return check.ok ? { ok: true, check: check.check, changed: done.value } : check;
   } catch (err) {
     return fail(err, "The decisions were not saved.");
@@ -216,13 +226,13 @@ export async function decideForGroup(
 }
 
 /** 2C: Apply Default to All, for the funds still on their default. */
-export async function applyDefaultsToAll(clientId: string): Promise<Result<{ check: CheckResult; broughtBack: number; leftOut: number }>> {
+export async function applyDefaultsToAll(clientId: string, kind?: unknown): Promise<Result<{ check: CheckResult; broughtBack: number; leftOut: number }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   try {
-    const done = await applyDefaults(a.supabase, a.clientId, a.email);
+    const done = await applyDefaults(a.supabase, a.clientId, a.email, asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    const check = await runInvestorCheck(clientId);
+    const check = await runInvestorCheck(clientId, kind);
     return check.ok ? { ok: true, check: check.check, ...done.value } : check;
   } catch (err) {
     return fail(err, "The defaults were not applied.");
@@ -230,13 +240,13 @@ export async function applyDefaultsToAll(clientId: string): Promise<Result<{ che
 }
 
 /** Records the matched investors' investments in the database, company-wide. */
-export async function recordInvestmentsInDb(clientId: string): Promise<Result<{ check: CheckResult; recorded: number }>> {
+export async function recordInvestmentsInDb(clientId: string, kind?: unknown): Promise<Result<{ check: CheckResult; recorded: number }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   try {
-    const done = await recordInvestments(a.supabase, a.clientId, a.email);
+    const done = await recordInvestments(a.supabase, a.clientId, a.email, asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    const check = await runInvestorCheck(clientId);
+    const check = await runInvestorCheck(clientId, kind);
     return check.ok ? { ok: true, check: check.check, recorded: done.value } : check;
   } catch (err) {
     return fail(err, "The investments were not recorded.");
@@ -244,15 +254,15 @@ export async function recordInvestmentsInDb(clientId: string): Promise<Result<{ 
 }
 
 /** Find websites for a few investors (the page calls it batch by batch), then the check again. */
-export async function findWebsitesFor(clientId: string, investorIds: string[]): Promise<Result<{ check: CheckResult; found: number }>> {
+export async function findWebsitesFor(clientId: string, investorIds: string[], kind?: unknown): Promise<Result<{ check: CheckResult; found: number }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
   if (!Array.isArray(investorIds) || investorIds.length > 20) return { ok: false, error: "Unknown investors." };
   try {
-    const done = await findWebsites(a.supabase, a.clientId, investorIds.filter((id) => typeof id === "string").map((id) => id.slice(0, 64)));
+    const done = await findWebsites(a.supabase, a.clientId, investorIds.filter((id) => typeof id === "string").map((id) => id.slice(0, 64)), asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    const check = await runInvestorCheck(clientId);
+    const check = await runInvestorCheck(clientId, kind);
     return check.ok ? { ok: true, check: check.check, found: done.value } : check;
   } catch (err) {
     return fail(err, "Find websites failed.");
@@ -260,28 +270,28 @@ export async function findWebsitesFor(clientId: string, investorIds: string[]): 
 }
 
 /** The final confirmation of the check, or reopening it. */
-export async function confirmInvestorCheck(clientId: string, confirm: boolean): Promise<Result<{ check: CheckResult }>> {
+export async function confirmInvestorCheck(clientId: string, confirm: boolean, kind?: unknown): Promise<Result<{ check: CheckResult }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   try {
-    const done = await confirmCheck(a.supabase, a.clientId, confirm === true, a.email);
+    const done = await confirmCheck(a.supabase, a.clientId, confirm === true, a.email, asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    return runInvestorCheck(clientId);
+    return runInvestorCheck(clientId, kind);
   } catch (err) {
     return fail(err, "The check was not confirmed.");
   }
 }
 
 /** Try and Add to DB for one missing investor (the page calls it one by one), then the check again. */
-export async function addInvestorToDb(clientId: string, investorId: string): Promise<Result<{ check: CheckResult; created: boolean; message: string }>> {
+export async function addInvestorToDb(clientId: string, investorId: string, kind?: unknown): Promise<Result<{ check: CheckResult; created: boolean; message: string }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!isClaudeConfigured()) return { ok: false, error: "ANTHROPIC_API_KEY is not configured." };
   if (typeof investorId !== "string" || !investorId || investorId.length > 64) return { ok: false, error: "Unknown investor." };
   try {
-    const done = await addMissingInvestor(a.supabase, a.clientId, investorId, a.email);
+    const done = await addMissingInvestor(a.supabase, a.clientId, investorId, a.email, asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    const check = await runInvestorCheck(clientId);
+    const check = await runInvestorCheck(clientId, kind);
     return check.ok ? { ok: true, check: check.check, created: done.value.created, message: done.value.message } : check;
   } catch (err) {
     return fail(err, "Try and Add to DB failed.");
@@ -289,11 +299,11 @@ export async function addInvestorToDb(clientId: string, investorId: string): Pro
 }
 
 /** Look-alike funds (preview): the shortlist ranked by resemblance to the competitors' investors. Reads only. */
-export async function loadLookAlikes(clientId: string): Promise<Result<{ preview: LookAlikePreview }>> {
+export async function loadLookAlikes(clientId: string, kind?: unknown): Promise<Result<{ preview: LookAlikePreview }>> {
   const a = await access(clientId, false);
   if (!a.ok) return a;
   try {
-    const result = await lookAlikePreview(a.supabase, a.clientId);
+    const result = await lookAlikePreview(a.supabase, a.clientId, asLandscapeKind(kind));
     return result.ok ? { ok: true, preview: result.value } : { ok: false, error: result.error };
   } catch (err) {
     return fail(err, "The look-alike preview did not load.");
@@ -301,13 +311,13 @@ export async function loadLookAlikes(clientId: string): Promise<Result<{ preview
 }
 
 /** Confirms Step 2D (Try and Add to DB; what wasn't added is skipped), or reopens it. */
-export async function confirmAddedStep(clientId: string, confirm: boolean): Promise<Result<{ check: CheckResult }>> {
+export async function confirmAddedStep(clientId: string, confirm: boolean, kind?: unknown): Promise<Result<{ check: CheckResult }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   try {
-    const done = await confirmAdded(a.supabase, a.clientId, confirm === true, a.email);
+    const done = await confirmAdded(a.supabase, a.clientId, confirm === true, a.email, asLandscapeKind(kind));
     if (!done.ok) return { ok: false, error: done.error };
-    return runInvestorCheck(clientId);
+    return runInvestorCheck(clientId, kind);
   } catch (err) {
     return fail(err, "Step 2D was not confirmed.");
   }

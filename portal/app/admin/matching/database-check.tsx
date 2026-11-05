@@ -1,5 +1,6 @@
 "use client";
 
+import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { useEffect, useState } from "react";
 import { addInvestorToDb, applyDefaultsToAll, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
@@ -750,6 +751,7 @@ function OutcomeCard({
   busy: boolean;
   onConfirm: (confirm: boolean) => void;
 }) {
+  const { T } = useLandscapeKind();
   const by = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const inList = by("in_list").length;
   const back = by("not_in_list").filter((r) => r.action === "bring_back").length;
@@ -771,7 +773,7 @@ function OutcomeCard({
     <Card tone="final">
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
-          <BigNumber value={inList + back + added} label={locked ? "Step 2C · Check against the database: confirmed" : "Step 2C · Check against the database: ready to confirm"} />
+          <BigNumber value={inList + back + added} label={`Step ${T.step}C · Check against the database: ${locked ? "confirmed" : "ready to confirm"}`} />
           <p className="text-body-sm text-secondary">
             {n(inList + back + added)} of {n(total)} go forward with this client ({n(inList)} already in the shortlist, {n(back)} brought back
             {added ? `, ${n(added)} added` : ""}).
@@ -828,13 +830,14 @@ function OutcomeCard({
 // Not on the page yet: it returns with the ranking step (Step 4).
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function LookAlikePanel({ clientId }: { clientId: string }) {
+  const { kind } = useLandscapeKind();
   const [open, setOpen] = useState(false);
   const [preview, setPreview] = useState<LookAlikePreview | null>(null);
   const [error, setError] = useState<string | null>(null);
   useEffect(() => {
     if (!open || preview) return;
-    void loadLookAlikes(clientId).then((result) => (result.ok ? setPreview(result.preview) : setError(result.error)));
-  }, [open, preview, clientId]);
+    void loadLookAlikes(clientId, kind).then((result) => (result.ok ? setPreview(result.preview) : setError(result.error)));
+  }, [open, preview, clientId, kind]);
   return (
     <Card>
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-md text-left">
@@ -898,10 +901,16 @@ export function NextStepCard({ note }: { note?: string }) {
     signal();
     return signal;
   }, [signal]);
+  const { kind } = useLandscapeKind();
+  const next = kind === "comparables" ? { step: "4", title: "The Final Roster" } : { step: "3", title: "Companies Like You" };
   return (
     <section className="rounded-card border border-dashed border-border bg-surface px-lg py-md">
-      <h3 className="text-h4 text-heading">Next: Step 3, The Final Roster</h3>
-      <p className="text-body-sm text-muted">{note ? `${note} ` : ""}Step 3 opens below.</p>
+      <h3 className="text-h4 text-heading">
+        Next: Step {next.step}, {next.title}
+      </h3>
+      <p className="text-body-sm text-muted">
+        {note ? `${note} ` : ""}Step {next.step} opens below.
+      </p>
     </section>
   );
 }
@@ -926,6 +935,7 @@ function AddMissingCard({
   onConfirm: (confirm: boolean) => void;
   renderRow: (row: CheckRow) => React.ReactNode;
 }) {
+  const { T } = useLandscapeKind();
   const [open, setOpen] = useState<"missing_fund" | "missing_angel" | "added" | null>(null);
   const rows = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const funds = rows("missing_fund");
@@ -944,7 +954,7 @@ function AddMissingCard({
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={added.length} label="Step 2D · Try and Add to DB: confirmed" />
+            <BigNumber value={added.length} label={`Step ${T.step}D · Try and Add to DB: confirmed`} />
             <p className="text-body-sm text-secondary">
               {n(added.length)} added ({n(pending)} pending review, {n(approved)} approved), with {n(contacts)} contacts. Skipped: {n(funds.length)} funds and{" "}
               {n(angels.length)} angels. Confirmed {new Date(check.addedConfirmedAt!).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" })}
@@ -995,9 +1005,9 @@ function AddMissingCard({
     <Card>
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
-          <h3 className="text-h4 text-heading">Step 2D: Try and Add to DB</h3>
+          <h3 className="text-h4 text-heading">Step {T.step}D: Try and Add to DB</h3>
           <p className="text-body-sm text-muted">
-            The competitors&apos; investors your database doesn&apos;t have. Each one added is researched, gets its contacts from Hunter, and waits for
+            The investors your database doesn&apos;t have. Each one added is researched, gets its contacts from Hunter, and waits for
             your review on the Fund Database page (Added by Rupert). It counts for this client right away, and for every client once you approve it.
             When you&apos;re done adding, &ldquo;Done adding&rdquo; closes this step: whatever isn&apos;t added counts as skipped (Reopen to add more).
           </p>
@@ -1008,10 +1018,10 @@ function AddMissingCard({
           disabled={busy || !!adding}
           onClick={() => {
             const left = funds.length + angels.length;
-            if (!left || window.confirm(`Confirm Step 2D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
+            if (!left || window.confirm(`Confirm Step ${T.step}D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
           }}
         >
-          Done adding: confirm 2D
+          Done adding: confirm {T.step}D
         </button>
       </div>
       {adding ? (
@@ -1099,6 +1109,7 @@ function AddMissingCard({
  * for a decision (and a lesson for Rupert when the data is wrong).
  */
 export function DatabaseCheck({ clientId }: { clientId: string }) {
+  const { kind, T } = useLandscapeKind();
   const [check, setCheck] = useState<CheckResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -1109,19 +1120,19 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
 
   useEffect(() => {
     let live = true;
-    void runInvestorCheck(clientId).then((result) => {
+    void runInvestorCheck(clientId, kind).then((result) => {
       if (!live) return;
       if (!result.ok) return setError(result.error);
       setCheck(result.check);
       // The matched investors' investments are saved to the funds' records, quietly (no decision in it).
-      void recordInvestmentsInDb(clientId).then((saved) => {
+      void recordInvestmentsInDb(clientId, kind).then((saved) => {
         if (live && saved.ok) setRecorded(saved.recorded);
       });
     });
     return () => {
       live = false;
     };
-  }, [clientId]);
+  }, [clientId, kind]);
 
   const [toast, setToast] = useState<string | null>(null);
   const [finding, setFinding] = useState<{ done: number; total: number } | null>(null);
@@ -1139,7 +1150,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setBusy(true);
     setError(null);
     const name = check?.rows.find((r) => r.investor.id === investorId)?.investor.name ?? "Investor";
-    const result = await decideOnInvestor(clientId, investorId, patch);
+    const result = await decideOnInvestor(clientId, investorId, patch, kind);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
@@ -1177,7 +1188,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setBusy(true);
     setError(null);
     setNotice(null);
-    const result = await decideForGroup(clientId, ids, action);
+    const result = await decideForGroup(clientId, ids, action, kind);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
@@ -1193,7 +1204,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setBusy(true);
     setError(null);
     setNotice(null);
-    const result = await applyDefaultsToAll(clientId);
+    const result = await applyDefaultsToAll(clientId, kind);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
@@ -1206,7 +1217,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     if (confirm && !window.confirm("Confirm the check? Decisions are locked until you reopen it.")) return;
     setBusy(true);
     setError(null);
-    const result = await confirmInvestorCheck(clientId, confirm);
+    const result = await confirmInvestorCheck(clientId, confirm, kind);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
@@ -1216,11 +1227,11 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const confirmAdded = async (confirm: boolean) => {
     setBusy(true);
     setError(null);
-    const result = await confirmAddedStep(clientId, confirm);
+    const result = await confirmAddedStep(clientId, confirm, kind);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setCheck(result.check);
-    setToast(confirm ? "Step 2D confirmed. Saved." : "Step 2D reopened.");
+    setToast(confirm ? `Step ${T.step}D confirmed. Saved.` : `Step ${T.step}D reopened.`);
   };
 
   /** Try and Add to DB, one investor at a time (about a minute each: research, then Hunter). A problem with one never stops the rest. */
@@ -1236,7 +1247,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         setAdding({ current: id, done, total: ids.length });
         const name = check?.rows.find((r) => r.investor.id === id)?.investor.name ?? "An investor";
         try {
-          const result = await addInvestorToDb(clientId, id);
+          const result = await addInvestorToDb(clientId, id, kind);
           if (!result.ok) problems.push(`${name}: ${result.error}`);
           else {
             if (result.created) created += 1;
@@ -1268,7 +1279,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setFinding({ done, total: ids.length });
     for (let i = 0; i < ids.length; i += 4) {
       const batch = ids.slice(i, i + 4);
-      const result = await findWebsitesFor(clientId, batch);
+      const result = await findWebsitesFor(clientId, batch, kind);
       done += batch.length;
       setFinding({ done, total: ids.length });
       if (!result.ok) {
@@ -1285,7 +1296,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   if (!check) {
     return (
       <Card>
-        <h3 className="text-h4 text-heading">Step 2C: Check against the fund database</h3>
+        <h3 className="text-h4 text-heading">Step {T.step}C: Check against the fund database</h3>
         {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : <p className="mt-sm text-body-sm text-muted">Checking every investor…</p>}
       </Card>
     );
@@ -1307,7 +1318,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const details = (
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <h3 className="text-h4 text-heading">Step 2C: Check against the fund database</h3>
+        <h3 className="text-h4 text-heading">Step {T.step}C: Check against the fund database</h3>
         <p className="text-body-sm text-muted">
           {n(check.rows.length)} investors · Step 1 list confirmed {new Date(check.dryConfirmedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
         </p>

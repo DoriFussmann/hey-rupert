@@ -99,3 +99,15 @@ test("waterfall: Core in full first, then the next tiers, until the budget runs 
   assert.equal(all.plannedContacts, 9);
   assert.equal(all.unused, 91);
 });
+
+test("Step 3 signal ranks after competitor backers and before look-alike", () => {
+  const fund = (firmId: string, sectors: string[], extra: Partial<RankInput> = {}): RankInput => ({ firmId, name: firmId, website: "", source: "dry", backed: [], sameStage: [], sectors, contacts: 2, ...extra });
+  const profile = [{ sector: "fintech", share: 1 }];
+  const ranked = tierRoster(index, argentl, [
+    fund("lookalike", ["sector.fintech"]),
+    fund("comparable", ["sector.fintech", "sector.insurtech"], { comparables: ["Collections Co"] }),
+    fund("named", ["sector.fintech", "sector.insurtech", "sector.ai_ml"], { clientNamed: true }),
+    fund("backer", ["sector.fintech", "sector.insurtech", "sector.ai_ml"], { backed: ["Monk"] }),
+  ], profile, 2).filter((f) => f.tier === "core");
+  assert.deepEqual(ranked.map((f) => f.firmId), ["backer", "comparable", "named", "lookalike"]);
+});

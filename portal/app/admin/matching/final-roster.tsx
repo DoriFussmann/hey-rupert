@@ -46,9 +46,9 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
       </thead>
       <tbody>
         {row("Dry Match (Step 1)", n(counts.dry))}
-        {row("Brought back (2C)", `+${n(counts.broughtBack)}`)}
-        {row("Added (2D), passing the filters", `+${n(counts.added)}`)}
-        {counts.addedMissing ? row("Added (2D), waiting for missing fields: not counted", n(counts.addedMissing), "text-warning") : null}
+        {row("Brought back (2C, 3C)", `+${n(counts.broughtBack)}`)}
+        {row("Added (2D, 3D), passing the filters", `+${n(counts.added)}`)}
+        {counts.addedMissing ? row("Added (2D, 3D), waiting for missing fields: not counted", n(counts.addedMissing), "text-warning") : null}
         {row("Combined", n(counts.combined))}
         {row("Excluded by the client", `(${n(counts.excluded)})`, "text-error")}
         {row("The Final Roster", n(counts.total), "text-heading", true)}
@@ -67,7 +67,7 @@ const RESULT_TEXT: Record<AddedCheck["result"], { label: string; tone: string }>
 };
 
 function AddedTable({ added }: { added: AddedCheck[] }) {
-  if (!added.length) return <p className="text-body-sm text-muted">No investors were added in 2D.</p>;
+  if (!added.length) return <p className="text-body-sm text-muted">No investors were added in 2D or 3D.</p>;
   return (
     <table className="mt-sm w-full text-left text-body-sm">
       <thead className="text-label uppercase tracking-label text-muted">
@@ -122,7 +122,7 @@ function ExclusionTable({ exclusions }: { exclusions: ExclusionCheck[] }) {
   );
 }
 
-/** Step 3: The Final Roster. */
+/** Step 4: The Final Roster. */
 export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { clientId: string; clientName: string; refreshKey: number; onChanged?: () => void }) {
   const [state, setState] = useState<RosterState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -193,7 +193,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
   const { fill, options } = state;
   const fillCard = fill.length ? (
         <Card>
-          <h3 className="text-h4 text-heading">Step 3A: Fill in missing fields</h3>
+          <h3 className="text-h4 text-heading">Step 4A: Fill in missing fields</h3>
           <p className="max-w-prose text-body-sm text-secondary">
             {n(fill.length)} added {fill.length === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need, so {fill.length === 1 ? "it stays" : "they stay"} off
             the Roster until filled in. {state.saved ? "The Roster is confirmed without them: once filled, Reopen and confirm again to add them." : "Not a blocker: you can confirm the Roster now, and reopen it once more are filled."}
@@ -222,7 +222,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={saved.counts.total} label="Step 3 · The Final Roster: confirmed" />
+            <BigNumber value={saved.counts.total} label="Step 4 · The Final Roster: confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(saved.confirmedAt)}
               {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}.{saved.facts.step2Skipped ? " Step 2 was skipped (no funded competitors)." : ""}
@@ -267,12 +267,12 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
         {state.facts.step2Skipped ? <p className="text-body-sm text-muted">Step 2 was skipped (no funded competitors): the Roster is the Dry Match minus exclusions.</p> : null}
         {c.addedMissing > 0 ? (
           <p className="mt-xs text-body-sm text-warning">
-            {n(c.addedMissing)} added {c.addedMissing === 1 ? "investor isn't" : "investors aren't"} on the Roster yet: missing fields (Step 3A).
+            {n(c.addedMissing)} added {c.addedMissing === 1 ? "investor isn't" : "investors aren't"} on the Roster yet: missing fields (Step 4A).
           </p>
         ) : null}
         <SummaryTable counts={c} />
         <p className="mt-sm text-body-sm text-muted">
-          Added in 2D: {n(c.added)} in, {n(c.addedFailed)} out on the filters{c.addedMissing ? `, ${n(c.addedMissing)} waiting` : ""}. Exclusions: only clear matches count;
+          Added in 2D and 3D: {n(c.added)} in, {n(c.addedFailed)} out on the filters{c.addedMissing ? `, ${n(c.addedMissing)} waiting` : ""}. Exclusions: only clear matches count;
           {" "}
           {n(draft.exclusions.filter((e) => e.result === "not_matched").length)} of {n(draft.exclusions.length)} lines matched nothing and are ignored.
           {c.gone ? ` ${n(c.gone)} shortlist funds are no longer in the database.` : ""}

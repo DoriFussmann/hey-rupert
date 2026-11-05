@@ -155,7 +155,7 @@ function Row({
 /**
  * The added investors still missing a stage, geography or sector: every
  * field shown, Fill missing fields with AI for all of them, and Accept per
- * row or for all. Used in Step 3A and on the Fund Database page.
+ * row or for all. Used in Step 4A and on the Fund Database page.
  */
 export function MissingFields({
   items,

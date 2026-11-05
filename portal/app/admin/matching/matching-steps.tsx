@@ -6,6 +6,7 @@ import { CompetitiveLandscape } from "@/app/admin/matching/landscape";
 import { FinalRoster } from "@/app/admin/matching/final-roster";
 import { ThePlan } from "@/app/admin/matching/the-plan";
 import { StepSignal } from "@/app/admin/matching/step-signal";
+import { LandscapeKindContext } from "@/app/admin/matching/landscape-kind";
 import { SummaryView } from "@/app/admin/matching/summary-view";
 import { primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/ui";
 import { finalizeTheMatching, loadFinalization, pushSummariesToClient, reopenTheMatching } from "@/app/admin/summary-actions";
@@ -18,6 +19,8 @@ function Steps({ clientId, clientName, onPlanConfirmed }: { clientId: string; cl
   const [stepOne, setStepOne] = useState(false);
   const [stepTwoSignal, setStepTwoSignal] = useState(0);
   const bump = useCallback(() => setStepTwoSignal((v) => v + 1), []);
+  const [likeSignal, setLikeSignal] = useState(0);
+  const bumpLike = useCallback(() => setLikeSignal((v) => v + 1), []);
   const [stepThreeSignal, setStepThreeSignal] = useState(0);
   const bumpThree = useCallback(() => setStepThreeSignal((v) => v + 1), []);
   return (
@@ -32,13 +35,21 @@ function Steps({ clientId, clientName, onPlanConfirmed }: { clientId: string; cl
           <CompetitiveLandscape clientId={clientId} stepOneConfirmed={stepOne} />
         </StepSignal.Provider>
       </section>
-      <section aria-label="Step 3: The Final Roster">
-        <h2 className="mb-md text-h3 text-heading">Step 3: The Final Roster</h2>
-        <FinalRoster clientId={clientId} clientName={clientName} refreshKey={stepTwoSignal} onChanged={bumpThree} />
+      <section aria-label="Step 3: Companies Like You">
+        <h2 className="mb-md text-h3 text-heading">Step 3: Companies Like You</h2>
+        <LandscapeKindContext.Provider value="comparables">
+          <StepSignal.Provider value={bumpLike}>
+            <CompetitiveLandscape clientId={clientId} stepOneConfirmed={stepOne} refreshKey={stepTwoSignal} />
+          </StepSignal.Provider>
+        </LandscapeKindContext.Provider>
       </section>
-      <section aria-label="Step 4: The Plan">
-        <h2 className="mb-md text-h3 text-heading">Step 4: The Plan</h2>
-        <ThePlan clientId={clientId} clientName={clientName} refreshKey={stepTwoSignal + stepThreeSignal} onConfirmedChange={onPlanConfirmed} />
+      <section aria-label="Step 4: The Final Roster">
+        <h2 className="mb-md text-h3 text-heading">Step 4: The Final Roster</h2>
+        <FinalRoster clientId={clientId} clientName={clientName} refreshKey={stepTwoSignal + likeSignal} onChanged={bumpThree} />
+      </section>
+      <section aria-label="Step 5: The Plan">
+        <h2 className="mb-md text-h3 text-heading">Step 5: The Plan</h2>
+        <ThePlan clientId={clientId} clientName={clientName} refreshKey={stepTwoSignal + likeSignal + stepThreeSignal} onConfirmedChange={onPlanConfirmed} />
       </section>
     </div>
   );
@@ -139,7 +150,7 @@ export function MatchingSteps({ clientId, clientName }: { clientId: string; clie
             <span className="text-h4 text-heading">Matching steps (finalized)</span>
             <span className="ml-sm text-body-sm text-muted">
               Finalized {when(fin.finalizedAt)}
-              {fin.finalizedBy ? ` by ${fin.finalizedBy}` : ""}. Steps 1 to 4 with every detail; locked.
+              {fin.finalizedBy ? ` by ${fin.finalizedBy}` : ""}. Steps 1 to 5 with every detail; locked.
             </span>
           </span>
           <span className="flex items-center gap-md">

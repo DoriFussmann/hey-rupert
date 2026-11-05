@@ -25,6 +25,10 @@ export type RosterEntry = {
   source: RosterSource;
   /** The competitors it backed (2B), by name. Empty: none known. */
   backed: string[];
+  /** Step 3: the comparable companies it backed (3B), by name. Absent on Rosters built before Step 3. */
+  comparables?: string[];
+  /** Step 3: the client named it (a strategic, or a lead they want pitched). */
+  clientNamed?: boolean;
   /** For an added investor: its review status in the Fund Database. */
   addedStatus: "pending" | "approved" | null;
   kind: "fund" | "angel" | null;
@@ -70,6 +74,9 @@ export type RosterCounts = {
   excluded: number;
   total: number;
   backed: number;
+  /** Step 3: backed a comparable company, and named by the client. */
+  comparables?: number;
+  clientNamed?: number;
   /** Added investors that failed a filter, and still waiting for missing fields. */
   addedFailed: number;
   addedMissing: number;
@@ -113,7 +120,9 @@ export function buildRoster(input: {
   shortlist: string[];
   /** The 2C rows. Empty when Step 2 was skipped. */
   rows: CheckRow[];
-  /** The investors added from this client's Step 2. */
+  /** The 3C rows (Companies Like You). Empty when Step 3 was skipped. */
+  likeRows?: CheckRow[];
+  /** The investors added from this client's Step 2 and Step 3. */
   added: AddedInput[];
   /** The client's sector labels (primary and secondary), for the 2C rule. */
   clientSectors: string[];
@@ -122,15 +131,24 @@ export function buildRoster(input: {
   const fundById = new Map(input.data.funds.map((f) => [f.id, f]));
   const firmById = new Map(input.firms.map((f) => [f.id, f]));
 
-  // Who backed which competitor, by database record.
-  const backedBy = new Map<string, Set<string>>();
-  for (const row of input.rows) {
-    const id = row.firmId ?? row.added?.firmId ?? null;
-    if (!id) continue;
-    const set = backedBy.get(id) ?? new Set<string>();
-    row.investor.backed.forEach((b) => b.competitor && set.add(b.competitor));
-    backedBy.set(id, set);
-  }
+  // Who backed which competitor (Step 2), and which comparable company (Step 3), by database record.
+  const likeRows = input.likeRows ?? [];
+  const tally = (rows: CheckRow[]) => {
+    const by = new Map<string, Set<string>>();
+    for (const row of rows) {
+      const id = row.firmId ?? row.added?.firmId ?? null;
+      if (!id) continue;
+      const set = by.get(id) ?? new Set<string>();
+      row.investor.backed.forEach((b) => b.competitor && set.add(b.competitor));
+      by.set(id, set);
+    }
+    return by;
+  };
+  const backedBy = tally(input.rows);
+  const comparablesBy = tally(likeRows);
+  const namedByClient = new Set(
+    likeRows.filter((r) => r.investor.clientNamed).map((r) => r.firmId ?? r.added?.firmId ?? null).filter((x): x is string => !!x),
+  );
 
   const entries = new Map<string, RosterEntry>();
   const put = (firmId: string, source: RosterSource, extra?: Partial<RosterEntry>) => {
@@ -142,6 +160,8 @@ export function buildRoster(input: {
       website: firm?.web ?? "",
       source,
       backed: Array.from(backedBy.get(firmId) ?? []).sort(),
+      comparables: Array.from(comparablesBy.get(firmId) ?? []).sort(),
+      clientNamed: namedByClient.has(firmId),
       addedStatus: null,
       kind: null,
       ...extra,
@@ -160,7 +180,7 @@ export function buildRoster(input: {
   }
 
   let broughtBack = 0;
-  for (const row of input.rows) {
+  for (const row of [...input.rows, ...likeRows]) {
     if (row.bucket === "not_in_list" && row.action === "bring_back" && row.firmId && fundById.has(row.firmId)) {
       if (put(row.firmId, "brought_back")) broughtBack += 1;
     }
@@ -233,6 +253,8 @@ export function buildRoster(input: {
       excluded: exclusions.filter((e) => e.result === "excluded").length,
       total: list.length,
       backed: list.filter((e) => e.backed.length).length,
+      comparables: list.filter((e) => e.comparables?.length).length,
+      clientNamed: list.filter((e) => e.clientNamed).length,
       addedFailed: added.filter((a) => a.result === "fail" || a.result === "not_found").length,
       addedMissing: added.filter((a) => a.result === "missing").length,
       gone,

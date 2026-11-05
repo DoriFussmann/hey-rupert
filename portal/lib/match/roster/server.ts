@@ -5,7 +5,7 @@ import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addedForLandscape, dismissSuggestion, skipMissingFields, fillAddedFields, fillItems, labelLists, suggestMissingFields, type FilledFields } from "@/lib/match/added/server";
 import type { AiSuggestion, FillItem } from "@/lib/match/added/core";
-import { checkAgainstDatabase, currentLandscape } from "@/lib/match/landscape/server";
+import { checkAgainstDatabase, layerDone } from "@/lib/match/landscape/server";
 import type { CheckRow } from "@/lib/match/landscape/check";
 import { buildRoster, type Roster, type RosterCounts, type RosterEntry, type ExclusionCheck, type AddedCheck } from "./core.ts";
 
@@ -21,7 +21,16 @@ function tableError(message: string, code?: string) {
 }
 
 /** What the Roster was built from: a change to any of these shows as "changed since confirmed". */
-export type RosterFacts = { dryListId: string; landscapeId: string | null; dataVersion: string; exclusions: string; step2Skipped: boolean };
+export type RosterFacts = {
+  dryListId: string;
+  landscapeId: string | null;
+  /** Step 3's layer (absent on Rosters built before Step 3). */
+  likeId?: string | null;
+  dataVersion: string;
+  exclusions: string;
+  step2Skipped: boolean;
+  step3Skipped?: boolean;
+};
 
 export type RosterOptions = { stages: string[]; geographies: string[]; sectors: string[] };
 
@@ -100,24 +109,38 @@ async function draft(supabase: ServiceClient, clientId: string) {
     .maybeSingle<{ id: string; steps: { step: DryStep; chosen: string[] }[]; fund_ids: string[] }>();
   if (dryError) return { ok: false as const, error: dryError.message };
   if (!dry) return { ok: true as const, blocked: "Opens once Step 1 is confirmed." };
-  const land = await currentLandscape(supabase, clientId);
-  if (!land.ok) return land;
-  if (!land.value || land.value.status !== "confirmed") return { ok: true as const, blocked: "Opens once Step 2 is done." };
-  const skipped = land.value.competitors.length === 0;
+  // Step 2 (competitors) and Step 3 (companies like you), each done or skipped.
+  const two = await layerDone(supabase, clientId, "competitors");
+  if (!two.ok) return two;
+  const opensOnce = (step: string, reason: string) => `Opens once Step ${step} is done${reason.match(/\(.*\)/)?.[0] ? ` ${reason.match(/\(.*\)/)?.[0]}` : ""}.`;
+  if (!two.value.done) return { ok: true as const, blocked: opensOnce("2", two.value.reason) };
+  const three = await layerDone(supabase, clientId, "comparables");
+  if (!three.ok) return three;
+  if (!three.value.done) return { ok: true as const, blocked: opensOnce("3", three.value.reason) };
+  const land = { value: two.value.landscape! };
+  const like = three.value.landscape;
+  const skipped = two.value.skipped;
+  const likeSkipped = three.value.skipped || !like;
   let rows: CheckRow[] = [];
   if (!skipped) {
-    if (land.value.investorsStatus !== "confirmed") return { ok: true as const, blocked: "Opens once Step 2 is done (2B isn't confirmed)." };
-    const check = await checkAgainstDatabase(supabase, clientId);
+    const check = await checkAgainstDatabase(supabase, clientId, "competitors");
     if (!check.ok) return check;
-    if (!check.value.confirmedAt) return { ok: true as const, blocked: "Opens once Step 2 is done (2C isn't confirmed)." };
-    if (!check.value.addedConfirmedAt) return { ok: true as const, blocked: "Opens once Step 2 is done (2D isn't confirmed)." };
     rows = check.value.rows;
+  }
+  let likeRows: CheckRow[] = [];
+  if (!likeSkipped) {
+    const check = await checkAgainstDatabase(supabase, clientId, "comparables");
+    if (!check.ok) return check;
+    likeRows = check.value.rows;
   }
   const snapshot = await matchDataSnapshot(supabase, clientId);
   if (!snapshot.ok) return snapshot;
   const { db, index, profileInputs, exclusions, dataVersion } = snapshot.value;
   const data = buildDryData(db, index, { financing: [], stage: null, hqCountry: null, primarySector: null });
-  const addedFunds = skipped ? {} : await addedForLandscape(supabase, land.value.id);
+  const addedFunds = {
+    ...(skipped ? {} : await addedForLandscape(supabase, land.value.id)),
+    ...(likeSkipped ? {} : await addedForLandscape(supabase, like!.id)),
+  };
   const clientSectors = [profileInputs.primarySector as Named, ...((profileInputs.secondarySectors as Named[]) ?? [])]
     .map((x) => x?.label ?? "")
     .filter(Boolean);
@@ -127,6 +150,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
     steps: dry.steps.map((s) => ({ step: s.step, chosen: s.chosen })),
     shortlist: dry.fund_ids,
     rows,
+    likeRows,
     added: Object.values(addedFunds).map((f) => ({ id: f.id, firmId: f.firmId, name: f.name, kind: f.kind, status: f.status })),
     clientSectors,
     exclusions,
@@ -140,7 +164,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
     roster,
     fill,
     options: { stages: lists.stages, geographies: lists.geographies, sectors: [...lists.industries, ...lists.verticals].sort() },
-    facts: { dryListId: dry.id, landscapeId: skipped ? null : land.value.id, dataVersion, exclusions, step2Skipped: skipped } as RosterFacts,
+    facts: { dryListId: dry.id, landscapeId: skipped ? null : land.value.id, likeId: likeSkipped ? null : like!.id, dataVersion, exclusions, step2Skipped: skipped, step3Skipped: likeSkipped } as RosterFacts,
   };
 }
 
@@ -150,7 +174,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
  * list with the same funds, Step 2 redone with the same outcome) change nothing.
  */
 function changes(saved: SavedRoster, now: Roster): string[] {
-  const key = (e: RosterEntry) => `${e.firmId}|${e.source}|${e.backed.join(",")}`;
+  const key = (e: RosterEntry) => `${e.firmId}|${e.source}|${e.backed.join(",")}|${(e.comparables ?? []).join(",")}|${e.clientNamed ? 1 : 0}`;
   const before = new Set(saved.entries.map(key));
   const after = new Set(now.entries.map(key));
   const ids = (list: RosterEntry[]) => new Set(list.map((e) => e.firmId));
@@ -233,6 +257,7 @@ export async function confirmRoster(supabase: ServiceClient, clientId: string, a
       client_id: clientId,
       dry_list_id: facts.dryListId,
       landscape_id: facts.landscapeId,
+      like_you_id: facts.likeId ?? null,
       entries: roster.entries,
       fund_ids: roster.entries.map((e) => e.firmId),
       added_checks: roster.added,

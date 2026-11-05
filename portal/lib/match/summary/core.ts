@@ -56,6 +56,8 @@ export type MatchingInputs = {
   /** Null when Step 2 was skipped (no funded competitors). */
   landscape: { competitors: Competitor[]; investors: Investor[] } | null;
   rows: CheckRow[];
+  /** Step 3, Companies Like You. Null when skipped (or before Step 3 existed). */
+  like?: { companies: Competitor[]; investors: Investor[]; rows: CheckRow[] } | null;
   roster: RosterCounts;
   plan: { inputs: PlanInputs; capacityContacts: number; planned: Planned[]; funds: PlanFund[] };
 };
@@ -93,17 +95,22 @@ function round(c: Competitor) {
   return [c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ");
 }
 
+const comparable = (key: string) => key === "step3a" || key === "comparables";
+
 function competitorsStep(competitors: Competitor[], key: string, button: string, title: string, withSources: boolean): SummaryStep {
   return {
     key,
     button,
     title,
-    headline: { value: competitors.length, label: competitors.length === 1 ? "Funded competitor" : "Funded competitors" },
+    headline: {
+      value: competitors.length,
+      label: comparable(key) ? (competitors.length === 1 ? "Comparable company" : "Comparable companies") : competitors.length === 1 ? "Funded competitor" : "Funded competitors",
+    },
     tables: [
       {
-        item: "Competitor",
+        item: comparable(key) ? "Company" : "Competitor",
         columns: [
-          { key: "name", label: "Competitor" },
+          { key: "name", label: comparable(key) ? "Company" : "Competitor" },
           { key: "hq", label: "HQ" },
           { key: "round", label: "Latest round" },
         ],
@@ -114,7 +121,7 @@ function competitorsStep(competitors: Competitor[], key: string, button: string,
           { label: "HQ", value: country(c) },
           { label: "Latest round", value: round(c) },
           { label: "Investors named", value: c.funding.investors },
-          ...(withSources ? [] : [{ label: "Why a direct competitor", value: c.why }]),
+          ...(withSources && !comparable(key) ? [] : [{ label: comparable(key) ? "Why investors see it as the same bet" : "Why a direct competitor", value: c.why }]),
           { label: "Source", value: c.newsUrl ? { text: c.newsTitle || "Article", href: c.newsUrl } : "" },
         ]),
       },
@@ -137,12 +144,12 @@ function backingDetails(i: Investor): Cell[] {
   return i.backed.map((b) => (b.sourceUrl ? { text: backingLine(b), href: b.sourceUrl } : backingLine(b)));
 }
 
-function investorsStep(investors: Investor[]): SummaryStep {
+function investorsStep(investors: Investor[], key = "step2b", button = "Step 2B", title = "Investors in the Competitors"): SummaryStep {
   const sorted = [...investors].sort((a, b) => b.backed.length - a.backed.length || a.name.localeCompare(b.name));
   return {
-    key: "step2b",
-    button: "Step 2B",
-    title: "Investors in the Competitors",
+    key,
+    button,
+    title,
     headline: { value: investors.length, label: "Investors found" },
     tables: [
       {
@@ -152,7 +159,7 @@ function investorsStep(investors: Investor[]): SummaryStep {
           { key: "kind", label: "Type" },
           { key: "backed", label: "Backed" },
         ],
-        rows: sorted.map((i) => ({ name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort(i.backed.map((b) => b.competitor)) })),
+        rows: sorted.map((i) => ({ name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort([...(i.clientNamed ? ["Named by you"] : []), ...i.backed.map((b) => b.competitor)]) })),
         details: sorted.map((i) => [
           { label: "Type", value: KIND_LABEL[i.kind] },
           { label: "Website", value: i.website ? { text: i.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: i.website } : "" },
@@ -163,7 +170,7 @@ function investorsStep(investors: Investor[]): SummaryStep {
   };
 }
 
-function checkStep(rows: CheckRow[]): SummaryStep {
+function checkStep(rows: CheckRow[], key = "step2c", button = "Step 2C", title = "Checked Against the Database", addedStep = "Step 2D"): SummaryStep {
   const count = (f: (r: CheckRow) => boolean) => rows.filter(f).length;
   const inList = count((r) => r.bucket === "in_list");
   const back = count((r) => r.bucket === "not_in_list" && r.action === "bring_back");
@@ -174,10 +181,10 @@ function checkStep(rows: CheckRow[]): SummaryStep {
   const open = count((r) => r.bucket === "confirm");
   const line = (result: string, value: number) => ({ result, investors: n(value) });
   return {
-    key: "step2c",
-    button: "Step 2C",
-    title: "Checked Against the Database",
-    headline: { value: inList + back, label: "Competitor investors used in the match" },
+    key,
+    button,
+    title,
+    headline: { value: inList + back, label: key === "step2c" ? "Competitor investors used in the match" : "Investors used in the match" },
     tables: [
       {
         columns: [
@@ -188,23 +195,23 @@ function checkStep(rows: CheckRow[]): SummaryStep {
           line("Already on the short list", inList),
           line("In the database, brought back", back),
           line("In the database, left out", out),
-          line("Not in the database: added (Step 2D)", added),
+          line(`Not in the database: added (${addedStep})`, added),
           line("Not in the database: funds, not added", funds),
           line("Not in the database: angels, not added", angels),
           ...(open ? [line("Unresolved", open)] : []),
         ],
-        total: line("All competitor investors", rows.length),
+        total: line(key === "step2c" ? "All competitor investors" : "All investors in this step", rows.length),
       },
     ],
   };
 }
 
-function addedStep(rows: CheckRow[]): SummaryStep {
+function addedStep(rows: CheckRow[], key = "step2d", button = "Step 2D", title = "Added to the Database"): SummaryStep {
   const added = rows.filter((r) => r.bucket === "added" && r.added && r.added.status !== "rejected");
   return {
-    key: "step2d",
-    button: "Step 2D",
-    title: "Added to the Database",
+    key,
+    button,
+    title,
     headline: { value: added.length, label: "Investors added" },
     tables: [
       {
@@ -235,8 +242,8 @@ function addedStep(rows: CheckRow[]): SummaryStep {
 function rosterStep(c: RosterCounts): SummaryStep {
   const line = (source: string, investors: string) => ({ source, investors });
   return {
-    key: "step3",
-    button: "Step 3",
+    key: "step4",
+    button: "Step 4",
     title: "The Final Roster",
     headline: { value: c.total, label: "Investors on the Final Roster" },
     tables: [
@@ -247,8 +254,8 @@ function rosterStep(c: RosterCounts): SummaryStep {
         ],
         rows: [
           line("Dry Match Short List", n(c.dry)),
-          line("Brought back (Step 2C)", `+${n(c.broughtBack)}`),
-          line("Added (Step 2D)", `+${n(c.added)}`),
+          line("Brought back (Steps 2C, 3C)", `+${n(c.broughtBack)}`),
+          line("Added (Steps 2D, 3D)", `+${n(c.added)}`),
           line("Excluded by the client", minus(c.excluded)),
         ],
         total: line("The Final Roster", n(c.total)),
@@ -258,7 +265,11 @@ function rosterStep(c: RosterCounts): SummaryStep {
           { key: "what", label: "Of which" },
           { key: "investors", label: "Investors", align: "right" },
         ],
-        rows: [{ what: "Backed a competitor", investors: n(c.backed) }],
+        rows: [
+          { what: "Backed a competitor", investors: n(c.backed) },
+          ...(c.comparables !== undefined ? [{ what: "Backed a comparable company", investors: n(c.comparables) }] : []),
+          ...(c.clientNamed ? [{ what: "Named by you", investors: n(c.clientNamed) }] : []),
+        ],
       },
     ],
   };
@@ -270,8 +281,8 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
   const byId = new Map(funds.map((f) => [f.firmId, f]));
   const months = `${inputs.months} ${inputs.months === 1 ? "month" : "months"}`;
   return {
-    key: "step4",
-    button: "Step 4",
+    key: "step5",
+    button: "Step 5",
     title: "The Plan",
     headline: { value: w.plannedContacts, label: `Contacts at ${n(w.plannedFunds)} funds` },
     line: `${inputs.inboxes} ${inputs.inboxes === 1 ? "inbox" : "inboxes"} · ${months} · ${1 + inputs.followUps} emails per contact · up to ${inputs.contactsPerFund} contacts per fund`,
@@ -315,6 +326,8 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
             { label: "Matched on", value: f?.hit ?? [] },
             { label: "Backed a competitor", value: f?.backed ?? [] },
             { label: "At the client's stage", value: f?.sameStage ?? [] },
+            { label: "Backed a comparable company", value: f?.comparables ?? [] },
+            { label: "Named by you", value: f?.clientNamed ? "Yes" : "" },
             { label: "Look-alike score", value: f ? f.lookAlike.toFixed(2) : "" },
             { label: "Sub-sectors listed", value: f ? String(f.focus) : "" },
             { label: "Contacts in the plan", value: `${p.slots} of ${f?.contacts ?? p.slots} available` },
@@ -336,6 +349,14 @@ export function matchingSummary(input: MatchingInputs): Summary {
       addedStep(input.rows),
     );
   }
+  if (input.like) {
+    steps.push(
+      competitorsStep(input.like.companies, "step3a", "Step 3A", "Comparable Companies", false),
+      investorsStep(input.like.investors, "step3b", "Step 3B", "Investors in Comparable Companies"),
+      checkStep(input.like.rows, "step3c", "Step 3C", "Checked Against the Database", "Step 3D"),
+      addedStep(input.like.rows, "step3d", "Step 3D", "Added to the Database"),
+    );
+  }
   steps.push(rosterStep(input.roster), planStep(input.plan));
   return { kind: "matching", title: "Matching Summary", clientName: input.clientName, steps };
 }
@@ -352,6 +373,8 @@ export function landscapeSummary(input: {
   rows: CheckRow[];
   /** Fund Database ids on the Final Outreach Roster. */
   outreach: Set<string>;
+  /** Step 3's comparable companies, shown as a third tab. */
+  comparables?: Competitor[];
 }): Summary {
   const firmOf = new Map(input.rows.map((r) => [r.investor.id, r.firmId ?? r.added?.firmId ?? null]));
   const sorted = [...input.investors].sort((a, b) => b.backed.length - a.backed.length || a.name.localeCompare(b.name));
@@ -395,6 +418,9 @@ export function landscapeSummary(input: {
           },
         ],
       },
+      ...(input.comparables?.length
+        ? [competitorsStep(input.comparables, "comparables", "Companies Like You", "Companies Investors See as the Same Bet", true)]
+        : []),
     ],
   };
 }

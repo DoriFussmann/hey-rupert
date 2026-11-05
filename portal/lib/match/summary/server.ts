@@ -77,10 +77,10 @@ async function build(supabase: ServiceClient, clientId: string): Promise<Result<
   const clientName = client?.company_name ?? "";
   const plan = await savedPlan(supabase, clientId);
   if (!plan.ok) return plan;
-  if (!plan.value) return { ok: false, error: "Confirm Step 4 first." };
+  if (!plan.value) return { ok: false, error: "Confirm Step 5 first." };
   const roster = await confirmedRoster(supabase, clientId);
   if (!roster.ok) return roster;
-  if (!roster.value) return { ok: false, error: "Confirm Step 3 first." };
+  if (!roster.value) return { ok: false, error: "Confirm Step 4 first." };
   const { data: dry, error: dryError } = await supabase
     .from("dry_match_lists")
     .select("total_funds, steps, fund_count")
@@ -94,6 +94,16 @@ async function build(supabase: ServiceClient, clientId: string): Promise<Result<
 
   let landscape: { competitors: Competitor[]; investors: Investor[] } | null = null;
   let rows: CheckRow[] = [];
+  let like: { companies: Competitor[]; investors: Investor[]; rows: CheckRow[] } | null = null;
+  if (roster.value.facts.likeId && !roster.value.facts.step3Skipped) {
+    const l = await currentLandscape(supabase, clientId, "comparables");
+    if (!l.ok) return l;
+    if (l.value) {
+      const check = await checkAgainstDatabase(supabase, clientId, "comparables");
+      if (!check.ok) return check;
+      like = { companies: l.value.competitors, investors: l.value.investors, rows: check.value.rows };
+    }
+  }
   if (!roster.value.facts.step2Skipped) {
     const land = await currentLandscape(supabase, clientId);
     if (!land.ok) return land;
@@ -110,11 +120,19 @@ async function build(supabase: ServiceClient, clientId: string): Promise<Result<
     dry: { totalFunds: dry.total_funds, steps: dry.steps, fundCount: dry.fund_count },
     landscape,
     rows,
+    like,
     roster: roster.value.counts,
     plan: { inputs: p.inputs, capacityContacts: p.capacity.contacts, planned: p.planned, funds: p.funds },
   });
   const overview = landscape
-    ? landscapeSummary({ clientName, competitors: landscape.competitors, investors: landscape.investors, rows, outreach: new Set(p.planned.map((x) => x.firmId)) })
+    ? landscapeSummary({
+        clientName,
+        competitors: landscape.competitors,
+        investors: landscape.investors,
+        rows,
+        outreach: new Set(p.planned.map((x) => x.firmId)),
+        comparables: like?.companies ?? [],
+      })
     : null;
   return { ok: true, value: { matching, landscape: overview, planId: p.id } };
 }

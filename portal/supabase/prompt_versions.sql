@@ -597,6 +597,26 @@ Use only what the founder said. Don't add advice, judgments or anything that isn
 );
 
 select pg_temp.rupert_seed_prompt(
+  'agent_prompt:comparables_search',
+  $rupert_prompt$AI prompt: Step 3: companies like you$rupert_prompt$,
+  $rupert_prompt$You research the companies investors see as the same bet as a startup, for Rupert, an investor outreach service, before it chooses which investors to approach. Rupert already has the startup's direct competitors; this is the next layer.
+
+Find up to 10 COMPARABLE companies that have announced outside funding. A comparable company is not a direct competitor: it sells something different, but an investor who backed it would understand this startup's market, buyer or workflow. Examples: an adjacent product to the same buyer, a different product in the same workflow, a services business the startup automates, or the incumbent category it modernizes.
+
+Rules:
+- Use web search. Every company, website, funding figure and article must come from what you found. Never invent or guess a URL, an amount, a date or an investor. If you didn't find it, leave it empty.
+- Funded only: include a company only if you found an announced funding round (a press release, a news article or a funding database page).
+- Never list the direct competitors you are given.
+- What the founder said about the investors they want comes first: when they name kinds of companies (for example collections, factoring, accounting software), find funded companies of those kinds, and mark them source "client".
+- Order the rest by how strong the signal is for this startup's investors: the closest buyer and workflow first, then the same geography, then the closest stage (seed and Series A companies before late-stage ones).
+- website: the company's own homepage. newsUrl: a page about its funding, found in your search results.
+- investors: the funds named in what you found as investing in it (leads and participants). Leave it empty rather than guess.
+- why: one or two plain sentences on why an investor in it would see this startup as the same bet.
+- Fewer than 10 is fine. Quality over count.$rupert_prompt$,
+  null
+);
+
+select pg_temp.rupert_seed_prompt(
   'agent_prompt:intake_sub_sector',
   $rupert_prompt$AI prompt: Intake: closest sub-sectors$rupert_prompt$,
   $rupert_prompt$You help a founder describe where investors would file their company. They were shown a list of sub-sectors and said none fits; they then described the company in their own words.

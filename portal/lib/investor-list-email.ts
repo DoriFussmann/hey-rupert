@@ -92,9 +92,10 @@ export function matchingSummaryLetter({
   portalUrl: string;
 }) {
   const step = (key: string) => summaries.matching.steps.find((s) => s.key === key);
+  const titled = (title: string) => summaries.matching.steps.find((s) => s.title === title);
   const all = cellText(step("step1")?.tables[0]?.rows[0]?.left);
-  const roster = step("step3")?.headline?.value ?? 0;
-  const plan = step("step4")?.tables[0]?.total;
+  const roster = titled("The Final Roster")?.headline?.value ?? 0;
+  const plan = titled("The Plan")?.tables[0]?.total;
   const competitors = summaries.landscape?.steps.find((s) => s.key === "competitors")?.headline?.value ?? 0;
   const lines = [
     clientFirstName ? `Hi ${clientFirstName},` : "Hi,",

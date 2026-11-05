@@ -32,6 +32,8 @@ export type Investor = {
   backed: Backing[];
   /** "research": found by the per-competitor search. "step2a": named in the competitor's funding article. "admin": added by hand. */
   source: "research" | "step2a" | "admin";
+  /** Step 3: the client named this investor (a strategic, or a lead they want pitched). Ranks with the comparables' backers. */
+  clientNamed?: boolean;
 };
 
 /** Per competitor: whether its investors have been researched. */
@@ -79,6 +81,7 @@ export function cleanInvestor(value: unknown, fallbackId: string): Investor | nu
     kind,
     backed,
     source: v.source === "research" || v.source === "admin" ? v.source : "step2a",
+    ...(v.clientNamed === true ? { clientNamed: true } : {}),
   };
 }
 
@@ -113,6 +116,7 @@ export function mergeInvestor(list: Investor[], incoming: Investor): Investor[] 
     kind: current.kind === "fund" ? current.kind : incoming.kind,
     backed,
     source: current.source === "research" || incoming.source === "research" ? "research" : current.source,
+    ...(current.clientNamed || incoming.clientNamed ? { clientNamed: true } : {}),
   };
   return list.map((x, i) => (i === at ? merged : x));
 }

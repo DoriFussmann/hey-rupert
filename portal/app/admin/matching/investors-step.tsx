@@ -1,5 +1,6 @@
 "use client";
 
+import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { useCallback, useEffect, useState } from "react";
 import { findInvestorsFor, saveInvestorList, startOverInvestors } from "@/app/admin/landscape-actions";
 import { INVESTOR_KINDS, KIND_LABEL, type Investor, type InvestorKind } from "@/lib/match/landscape/investors";
@@ -122,7 +123,7 @@ function InvestorTable({
               {isLead(inv) ? <span className="ml-sm text-label uppercase tracking-label text-primary">Led a round</span> : null}
             </td>
             <td className="py-xs pr-md text-secondary">{KIND_LABEL[inv.kind]}</td>
-            <td className="py-xs pr-md text-secondary">{competitorsOf(inv).join(", ")}</td>
+            <td className="py-xs pr-md text-secondary">{inv.clientNamed ? ["Named by the client", ...competitorsOf(inv)].join(", ") : competitorsOf(inv).join(", ")}</td>
             {onRemove ? (
               <td className="py-xs text-right">
                 <button
@@ -157,10 +158,13 @@ function InvestorTable({
 }
 
 function AddInvestor({ competitors, onAdd, onCancel }: { competitors: { id: string; name: string }[]; onAdd: (inv: Investor) => void; onCancel: () => void }) {
+  const { kind: layer, T } = useLandscapeKind();
+  // Step 3 also takes investors the client named (a strategic's venture arm, a lead they want pitched), backing no company.
+  const CLIENT = "__client__";
   const [name, setName] = useState("");
   const [website, setWebsite] = useState("");
   const [kind, setKind] = useState<InvestorKind>("fund");
-  const [competitorId, setCompetitorId] = useState(competitors[0]?.id ?? "");
+  const [competitorId, setCompetitorId] = useState(layer === "comparables" ? CLIENT : competitors[0]?.id ?? "");
   const [round, setRound] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const field = (label: string, input: React.ReactNode) => (
@@ -186,6 +190,7 @@ function AddInvestor({ competitors, onAdd, onCancel }: { competitors: { id: stri
       {field(
         "Backed",
         <select className={inputClass} value={competitorId} onChange={(e) => setCompetitorId(e.target.value)}>
+          {layer === "comparables" ? <option value={CLIENT}>Named by the client (a strategic or a lead)</option> : null}
           {competitors.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -193,6 +198,11 @@ function AddInvestor({ competitors, onAdd, onCancel }: { competitors: { id: stri
           ))}
         </select>,
       )}
+      {competitorId === CLIENT ? (
+        <p className="text-body-sm text-muted md:col-span-2">
+          It joins the list as named by the client and ranks with the backers of {T.companies}. For a strategic, add its venture arm when it has one.
+        </p>
+      ) : null}
       {field("Round", <input className={inputClass} value={round} onChange={(e) => setRound(e.target.value)} />)}
       {field("Source link", <input className={inputClass} value={sourceUrl} onChange={(e) => setSourceUrl(e.target.value)} />)}
       <div className="flex gap-sm md:col-span-2">
@@ -207,7 +217,9 @@ function AddInvestor({ competitors, onAdd, onCancel }: { competitors: { id: stri
               website,
               kind,
               source: "admin",
-              backed: [{ competitorId, competitor: competitors.find((c) => c.id === competitorId)?.name ?? "", round, lead: false, sourceUrl }],
+              ...(competitorId === CLIENT
+                ? { clientNamed: true, backed: [] }
+                : { backed: [{ competitorId, competitor: competitors.find((c) => c.id === competitorId)?.name ?? "", round, lead: false, sourceUrl }] }),
             })
           }
         >
@@ -227,6 +239,7 @@ function AddInvestor({ competitors, onAdd, onCancel }: { competitors: { id: stri
  * merging the same investor across competitors. No cap on how many.
  */
 export function InvestorsStep({ clientId, landscape, onChange }: { clientId: string; landscape: Landscape; onChange: (next: Landscape) => void }) {
+  const { kind, T } = useLandscapeKind();
   const [items, setItems] = useState<Investor[]>(landscape.investors);
   const [dirty, setDirty] = useState(false);
   const [running, setRunning] = useState<string | null>(null);
@@ -249,7 +262,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
     let latest = landscape;
     for (const id of ids) {
       setRunning(id);
-      const result = await findInvestorsFor(clientId, id);
+      const result = await findInvestorsFor(clientId, id, kind);
       if (!result.ok) {
         setError(result.error);
         continue;
@@ -263,7 +276,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
   const save = async (confirm: boolean) => {
     setBusy(confirm ? "confirm" : "save");
     setError(null);
-    const result = await saveInvestorList(clientId, items, confirm);
+    const result = await saveInvestorList(clientId, items, confirm, kind);
     setBusy(null);
     if (!result.ok) return setError(result.error);
     setDirty(false);
@@ -271,10 +284,10 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
   };
 
   const startOver = async () => {
-    if (!window.confirm("Start over the investor list? The confirmed competitors stay.")) return;
+    if (!window.confirm(`Start over the investor list? The confirmed ${T.companies} stay.`)) return;
     setBusy("start");
     setError(null);
-    const result = await startOverInvestors(clientId);
+    const result = await startOverInvestors(clientId, kind);
     setBusy(null);
     if (!result.ok) return setError(result.error);
     setDirty(false);
@@ -289,7 +302,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={items.length} label="Step 2B · Investors in the competitors: confirmed" />
+            <BigNumber value={items.length} label={`Step ${T.step}B · ${T.investorsTitle}: confirmed`} />
             <p className="text-body-sm text-secondary">
               Confirmed {when(landscape.investorsConfirmedAt)}
               {landscape.investorsConfirmedBy ? ` by ${landscape.investorsConfirmedBy}` : ""}.
@@ -300,7 +313,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
           </button>
         </div>
         <InvestorTable items={items} onOpen={setOpen} limit={10} />
-        <p className="mt-md text-body-sm text-muted">Most competitors backed first. Click an investor for the rounds and sources.</p>
+        <p className="mt-md text-body-sm text-muted">Most {T.companies} backed first. Click an investor for the rounds and sources.</p>
         {errorLine}
         {modal}
       </Card>
@@ -311,8 +324,11 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
     <Card>
       <div className="flex flex-wrap items-start justify-between gap-sm">
         <div>
-          <h3 className="text-h4 text-heading">Step 2B: Investors in the competitors</h3>
-          <p className="text-body-sm text-muted">Researched one competitor at a time. No cap.</p>
+          <h3 className="text-h4 text-heading">Step {T.step}B: {T.investorsTitle}</h3>
+          <p className="text-body-sm text-muted">
+            Researched one {T.company} at a time. No cap.
+            {kind === "comparables" ? " Add the investors the client named (strategics' venture arms, leads they want pitched) with Add investor." : ""}
+          </p>
         </div>
         {landscape.investorsStatus !== "none" ? (
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={running !== null || busy !== null} onClick={() => void startOver()}>
@@ -349,7 +365,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
           {items.length ? (
             <>
               <p className="mt-md text-body-sm text-secondary">
-                {items.length} investors so far, most competitors backed first. Click one for its rounds and sources.
+                {items.length} investors so far, most {T.companies} backed first. Click one for its rounds and sources.
               </p>
               <InvestorTable
                 items={items}

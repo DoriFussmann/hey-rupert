@@ -90,6 +90,21 @@ Rules:
 - why: one or two plain sentences on why it competes directly with this company.
 - Fewer than 10 is fine. Quality over count.`;
 
+export const COMPARABLES_SEARCH_PROMPT = `You research the companies investors see as the same bet as a startup, for Rupert, an investor outreach service, before it chooses which investors to approach. Rupert already has the startup's direct competitors; this is the next layer.
+
+Find up to 10 COMPARABLE companies that have announced outside funding. A comparable company is not a direct competitor: it sells something different, but an investor who backed it would understand this startup's market, buyer or workflow. Examples: an adjacent product to the same buyer, a different product in the same workflow, a services business the startup automates, or the incumbent category it modernizes.
+
+Rules:
+- Use web search. Every company, website, funding figure and article must come from what you found. Never invent or guess a URL, an amount, a date or an investor. If you didn't find it, leave it empty.
+- Funded only: include a company only if you found an announced funding round (a press release, a news article or a funding database page).
+- Never list the direct competitors you are given.
+- What the founder said about the investors they want comes first: when they name kinds of companies (for example collections, factoring, accounting software), find funded companies of those kinds, and mark them source "client".
+- Order the rest by how strong the signal is for this startup's investors: the closest buyer and workflow first, then the same geography, then the closest stage (seed and Series A companies before late-stage ones).
+- website: the company's own homepage. newsUrl: a page about its funding, found in your search results.
+- investors: the funds named in what you found as investing in it (leads and participants). Leave it empty rather than guess.
+- why: one or two plain sentences on why an investor in it would see this startup as the same bet.
+- Fewer than 10 is fine. Quality over count.`;
+
 export const COMPETITOR_SECTOR_PROMPT = `You classify startups for Rupert, an investor outreach service. For each competitor below, choose its primary sector: the one sector an investor would file it under, from the sector labels given. Base it on what the company sells and to whom, as described. Use only the labels given, spelled exactly. If none fits, leave it empty.`;
 
 export const COMPETITOR_INVESTORS_PROMPT = `You research who has invested in a startup, for Rupert, an investor outreach service. Rupert uses the result to find investors who back companies like its client.
@@ -347,6 +362,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The company facts and exclusions, the funds checked (5 per request, with their websites to open), the list's tier counts, and the answer formats (a verdict per fund; the overall read with questions and concerns).",
     testable: false,
     defaultText: LIST_AUDIT_PROMPT,
+  },
+  comparables_search: {
+    slug: agentPromptSlug("comparables_search"),
+    usedBy: "Matching → Step 3A → Find Comparable Companies: searches the web for funded companies that aren't direct competitors but that investors see as the same bet, led by what the founder said about the investors they want.",
+    fixed: "The company facts, the confirmed direct competitors (left out), the founder's logged feedback summaries, the stage and sector labels allowed, the web-search limit, and the answer format.",
+    testable: false,
+    defaultText: COMPARABLES_SEARCH_PROMPT,
   },
   competitor_search: {
     slug: agentPromptSlug("competitor_search"),

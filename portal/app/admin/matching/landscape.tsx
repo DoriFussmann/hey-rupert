@@ -1,5 +1,6 @@
 "use client";
 
+import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { useCallback, useEffect, useState } from "react";
 import { fillCompetitorSectors, loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
 import { InvestorsStep } from "@/app/admin/matching/investors-step";
@@ -58,6 +59,7 @@ const blank = (): Competitor => ({
 });
 
 function EditForm({ value, onSave, onCancel }: { value: Competitor; onSave: (c: Competitor) => void; onCancel: () => void }) {
+  const { T } = useLandscapeKind();
   const [c, setC] = useState(value);
   const [investors, setInvestors] = useState(value.funding.investors.join(", "));
   const field = (label: string, input: React.ReactNode, wide = false) => (
@@ -88,7 +90,7 @@ function EditForm({ value, onSave, onCancel }: { value: Competitor; onSave: (c: 
       {field("Investors (comma separated)", <input className={inputClass} value={investors} onChange={(e) => setInvestors(e.target.value)} />, true)}
       {field("What it does", text("oneLiner"), true)}
       {field(
-        "Why it's a direct competitor",
+        T.why,
         <textarea className={inputClass} rows={2} value={c.why} onChange={(e) => setC({ ...c, why: e.target.value })} />,
         true,
       )}
@@ -271,11 +273,12 @@ function ConfirmedSummary({
 }) {
   const [open, setOpen] = useState<number | null>(null);
   const close = useCallback(() => setOpen(null), []);
+  const { kind, T } = useLandscapeKind();
   return (
     <Card tone="final">
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
-          <BigNumber value={items.length} label="Step 2A · Funded competitors: confirmed" />
+          <BigNumber value={items.length} label={`Step ${T.step}A · ${T.listTitle}: confirmed`} />
           <p className="text-body-sm text-secondary">
             Confirmed {when(landscape.confirmedAt)}
             {landscape.confirmedBy ? ` by ${landscape.confirmedBy}` : ""}.
@@ -289,7 +292,7 @@ function ConfirmedSummary({
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
             <th className="py-xs pr-md font-medium">#</th>
-            <th className="py-xs pr-md font-medium">Competitor</th>
+            <th className="py-xs pr-md font-medium">{kind === "comparables" ? "Company" : "Competitor"}</th>
             <th className="py-xs pr-md font-medium">Stage</th>
             <th className="py-xs pr-md font-medium">Geography</th>
             <th className="py-xs font-medium">Primary sub-sector</th>
@@ -321,7 +324,7 @@ function ConfirmedSummary({
           ))}
         </tbody>
       </table>
-      <p className="mt-md text-body-sm text-muted">Click a competitor for its funding, investors and links.</p>
+      <p className="mt-md text-body-sm text-muted">Click a {T.company} for its funding, investors and links.</p>
       {sectorNote}
       {open !== null && items[open] ? <DetailsModal c={items[open]} rank={open + 1} onClose={close} /> : null}
     </Card>
@@ -333,7 +336,10 @@ function ConfirmedSummary({
  * once Step 1 is confirmed. Show Competitors searches the web; the admin
  * checks the links, edits, removes, adds, reorders, and confirms.
  */
-export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId: string; stepOneConfirmed: boolean }) {
+export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 0 }: { clientId: string; stepOneConfirmed: boolean; refreshKey?: number }) {
+  const { kind, T } = useLandscapeKind();
+  /** From the server: Step 2 needs Step 1 confirmed; Step 3 needs Step 2 done. */
+  const [ready, setReady] = useState(true);
   const [landscape, setLandscape] = useState<Landscape | null>(null);
   const [items, setItems] = useState<Competitor[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -346,10 +352,11 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
   useEffect(() => {
     let live = true;
     setLoaded(false);
-    void loadLandscape(clientId).then((result) => {
+    void loadLandscape(clientId, kind).then((result) => {
       if (!live) return;
       setLoaded(true);
       if (!result.ok) return setError(result.error);
+      setReady(result.stepOneConfirmed);
       setLandscape(result.landscape);
       setItems(result.landscape?.competitors ?? []);
       setDirty(false);
@@ -357,14 +364,14 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
     return () => {
       live = false;
     };
-  }, [clientId, stepOneConfirmed]);
+  }, [clientId, stepOneConfirmed, kind, refreshKey]);
 
   // A confirmed list with empty primary sectors gets them filled once, automatically.
   const needsSectors = landscape?.status === "confirmed" && landscape.competitors.some((c) => !c.primarySector || !c.sectorsChecked);
   useEffect(() => {
     if (!needsSectors || sectorTry !== "idle") return;
     setSectorTry("running");
-    void fillCompetitorSectors(clientId).then((result) => {
+    void fillCompetitorSectors(clientId, kind).then((result) => {
       if (!result.ok) {
         setSectorTry("failed");
         setError(result.error);
@@ -374,7 +381,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
       setLandscape(result.landscape);
       setItems(result.landscape.competitors);
     });
-  }, [needsSectors, sectorTry, clientId]);
+  }, [needsSectors, sectorTry, clientId, kind]);
 
   const take = (next: Landscape) => {
     setLandscape(next);
@@ -401,13 +408,20 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
     return <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">Opens once Step 1 is confirmed.</p>;
   }
   if (!loaded) return <p className="text-body-sm text-muted">Loading…</p>;
+  if (!ready) {
+    return (
+      <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">
+        {kind === "comparables" ? "Opens once Step 2 is done." : "Opens once Step 1 is confirmed."}
+      </p>
+    );
+  }
 
   const locked = landscape?.status === "confirmed";
   const startOver = async () => {
     if (!window.confirm("Start over? This list is set aside (kept on record) and you can search again.")) return;
     setBusy("start");
     setError(null);
-    const result = await startOverLandscape(clientId);
+    const result = await startOverLandscape(clientId, kind);
     setBusy(null);
     if (!result.ok) return setError(result.error);
     setLandscape(null);
@@ -418,7 +432,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
   async function fillSectors() {
     setSectorTry("running");
     setError(null);
-    const result = await fillCompetitorSectors(clientId);
+    const result = await fillCompetitorSectors(clientId, kind);
     if (!result.ok) {
       setSectorTry("failed");
       return setError(result.error);
@@ -447,7 +461,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
         {items.length ? (
           <InvestorsStep clientId={clientId} landscape={landscape} onChange={take} />
         ) : (
-          <NextStepCard note="No funded competitors were confirmed, so Steps 2B to 2D are skipped." />
+          <NextStepCard note={T.skipped} />
         )}
         {landscape.investorsStatus === "confirmed" ? <DatabaseCheck key={landscape.investorsConfirmedAt ?? ""} clientId={clientId} /> : null}
       </div>
@@ -458,10 +472,11 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
     <section className="animate-slide-in space-y-md rounded-card border border-border bg-surface px-lg py-md">
       <div className="flex items-start justify-between gap-md">
       <div className="min-w-0 flex-1">
-      <h3 className="text-h4 text-heading">Step 2A: Funded competitors</h3>
+      <h3 className="text-h4 text-heading">
+        Step {T.step}A: {T.listTitle}
+      </h3>
       <p className="max-w-prose text-body-sm text-secondary">
-        Top {MAX_COMPETITORS} <strong className="font-medium text-heading">funded</strong> direct competitors, most relevant first. Check each
-        website and funding article, then confirm. None found? Confirm the empty list to skip Step 2.
+        Top {MAX_COMPETITORS} <strong className="font-medium text-heading">funded</strong> {T.intro}
       </p>
       </div>
         {landscape ? (
@@ -472,8 +487,8 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
       </div>
 
       {!landscape ? (
-        <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void run("find", () => showCompetitors(clientId))}>
-          {busy === "find" ? "Searching the web… this can take 2–3 minutes" : "Show Competitors"}
+        <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void run("find", () => showCompetitors(clientId, kind))}>
+          {busy === "find" ? "Searching the web… this can take 2–3 minutes" : T.find}
         </button>
       ) : (
         <>
@@ -481,10 +496,16 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
             {locked
               ? `Confirmed ${when(landscape.confirmedAt)}${landscape.confirmedBy ? ` by ${landscape.confirmedBy}` : ""}.`
               : `Searched ${when(landscape.searchedAt)}. Draft: edit, then confirm.`}{" "}
-            Named by the client in the intake: {landscape.clientNamed.length ? landscape.clientNamed.join(", ") : "none"}.
-            {landscape.unfundedNamed.length ? ` Named by the client but no funding found (left out): ${landscape.unfundedNamed.join(", ")}.` : ""}
+            {kind === "competitors" ? (
+              <>
+                Named by the client in the intake: {landscape.clientNamed.length ? landscape.clientNamed.join(", ") : "none"}.
+                {landscape.unfundedNamed.length ? ` Named by the client but no funding found (left out): ${landscape.unfundedNamed.join(", ")}.` : ""}
+              </>
+            ) : (
+              "Led by what the client said about the investors they want (logged feedback). Marked Client when it came from them."
+            )}
           </p>
-          {items.length === 0 ? <p className="text-body-sm text-warning">No funded direct competitors found.</p> : null}
+          {items.length === 0 ? <p className="text-body-sm text-warning">{T.none}</p> : null}
           <ol className="space-y-sm">
             {items.map((c, i) => (
               <Row
@@ -526,13 +547,13 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
                     setEditing(c.id);
                   }}
                 >
-                  Add competitor
+                  {T.add}
                 </button>
                 <button
                   type="button"
                   className={secondaryButton}
                   disabled={busy !== null || !dirty || editing !== null}
-                  onClick={() => void run("save", () => saveLandscape(clientId, items, false))}
+                  onClick={() => void run("save", () => saveLandscape(clientId, items, false, kind))}
                 >
                   {busy === "save" ? "Saving and checking links…" : "Save changes"}
                 </button>
@@ -540,7 +561,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed }: { clientId:
                   type="button"
                   className={primaryButton}
                   disabled={busy !== null || editing !== null}
-                  onClick={() => void run("confirm", () => saveLandscape(clientId, items, true))}
+                  onClick={() => void run("confirm", () => saveLandscape(clientId, items, true, kind))}
                 >
                   {busy === "confirm" ? "Confirming…" : "Confirm list"}
                 </button>

@@ -159,6 +159,9 @@ export type PlanFund = {
   backed: string[];
   /** Of those, the ones it backed at the client's stage (Pre-Seed and Seed count as one). */
   sameStage: string[];
+  /** Step 3: comparable companies it backed, and whether the client named it. Absent on Plans made before Step 3. */
+  comparables?: string[];
+  clientNamed?: boolean;
   /** Cosine similarity to the competitors' investors' sector profile, 0–1. */
   lookAlike: number;
   /** Sub-sectors listed: fewer ranks higher. */
@@ -176,20 +179,28 @@ export type RankInput = {
   source: string;
   backed: string[];
   sameStage: string[];
+  comparables?: string[];
+  clientNamed?: boolean;
   /** Sector node ids. */
   sectors: string[];
   contacts: number;
 };
 
+/** Step 3's signal: the client named it, or it backed a comparable company. */
+export const clientPriority = (f: { comparables?: string[]; clientNamed?: boolean }) => Boolean(f.clientNamed || f.comparables?.length);
+
 /**
- * The 4B order: backed a competitor at the client's stage, then backed one at
- * another stage, then look-alike, focus, contacts (2 before 1), then name.
+ * The ranking order (Step 5B): backed a competitor at the client's stage, then
+ * backed one at another stage, then the client's priorities (named by the
+ * client, or backed a comparable company), then look-alike, focus, contacts
+ * (2 before 1), then name.
  */
 export function compareFunds(a: PlanFund, b: PlanFund, cap: number) {
   const reach = (f: PlanFund) => Math.min(f.contacts, cap);
   return (
     Number(b.sameStage.length > 0) - Number(a.sameStage.length > 0) ||
     Number(b.backed.length > 0) - Number(a.backed.length > 0) ||
+    Number(clientPriority(b)) - Number(clientPriority(a)) ||
     b.lookAlike - a.lookAlike ||
     a.focus - b.focus ||
     reach(b) - reach(a) ||
@@ -213,6 +224,8 @@ export function tierRoster(index: TaxIndex, client: ClientSubSectors, funds: Ran
       hit: placed.hit.map(label),
       backed: f.backed,
       sameStage: f.sameStage,
+      comparables: f.comparables ?? [],
+      clientNamed: f.clientNamed ?? false,
       lookAlike: lookAlikeScore(labels, profile).score,
       focus: new Set(f.sectors).size,
       contacts: f.contacts,

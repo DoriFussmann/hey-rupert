@@ -102,7 +102,7 @@ type Named = { id?: string | null; label?: string | null } | null | undefined;
 async function draft(supabase: ServiceClient, clientId: string) {
   const roster = await confirmedRoster(supabase, clientId);
   if (!roster.ok) return roster;
-  if (!roster.value) return { ok: true as const, blocked: "Opens once Step 3 is confirmed." };
+  if (!roster.value) return { ok: true as const, blocked: "Opens once Step 4 is confirmed." };
   const snapshot = await matchDataSnapshot(supabase, clientId);
   if (!snapshot.ok) return snapshot;
   const { db, index, profileInputs, dataVersion } = snapshot.value;
@@ -168,6 +168,8 @@ async function draft(supabase: ServiceClient, clientId: string) {
       source: SOURCE_LABEL[e.source],
       backed: e.backed,
       sameStage: Array.from(sameStageBy.get(e.firmId) ?? []).sort(),
+      comparables: e.comparables ?? [],
+      clientNamed: e.clientNamed ?? false,
       sectors: sectors(e.firmId),
       contacts: contacts.get(e.firmId) ?? 0,
     })),
@@ -227,7 +229,8 @@ export async function savedPlan(supabase: ServiceClient, clientId: string): Prom
 
 /** What re-planning would change, in words: empty when the Roster's tiers, ranks and contacts are the ones confirmed. */
 function changes(saved: SavedPlan, now: PlanFund[]): string[] {
-  const key = (f: PlanFund) => `${f.firmId}|${f.tier}|${f.contacts}|${f.backed.join(",")}|${(f.sameStage ?? []).join(",")}|${f.lookAlike}|${f.focus}`;
+  const key = (f: PlanFund) =>
+    `${f.firmId}|${f.tier}|${f.contacts}|${f.backed.join(",")}|${(f.sameStage ?? []).join(",")}|${(f.comparables ?? []).join(",")}|${f.clientNamed ? 1 : 0}|${f.lookAlike}|${f.focus}`;
   const before = new Set(saved.funds.map(key));
   const was = new Set(saved.funds.map((f) => f.firmId));
   const is = new Set(now.map((f) => f.firmId));
