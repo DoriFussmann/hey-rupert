@@ -37,6 +37,10 @@ import {
   narrativeProblem,
   questionsOf,
   settleQuestion,
+  addQuestion,
+  FEEDBACK_CHANNELS,
+  QUESTION_MAX,
+  type FeedbackChannel,
   setupFilesFolder,
   withPublishedQuestions,
   type ClientEmailDraft,
@@ -114,7 +118,7 @@ async function requireAdmin() {
   if (!isServiceRoleConfigured()) {
     return { ok: false as const, error: "Service role key is not configured." };
   }
-  return { ok: true as const, supabase: createServiceClient() };
+  return { ok: true as const, supabase: createServiceClient(), email: user.email ?? null };
 }
 
 function revalidateSetup(clientId: string) {
@@ -530,6 +534,49 @@ export async function settleSetupQuestion(
       : { ok: false, reason: "Resolved without an answer: no email sent." };
     revalidateSetup(clientId);
     return { ok: true, clientEmail };
+  }
+  return { ok: false, error: "The step changed meanwhile. Refresh and try again." };
+}
+
+/**
+ * Log client feedback: what the client said outside the portal (an email, a
+ * call), added to the step's thread for them, marked with how and when.
+ * Answer it like any question. It never changes the turn and emails nobody.
+ */
+export async function logClientFeedback(
+  clientId: string,
+  step: SetupDocumentStep,
+  input: { text: string; channel: string; on: string },
+): Promise<AdminSetupResult> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
+  const text = String(input?.text ?? "").trim();
+  if (!text) return { ok: false, error: "Paste or summarize what they said first." };
+  if (text.length > QUESTION_MAX) return { ok: false, error: `Keep it under ${QUESTION_MAX} characters (summarize the rest).` };
+  const channel = FEEDBACK_CHANNELS.includes(input?.channel as FeedbackChannel) ? (input.channel as FeedbackChannel) : null;
+  if (!channel) return { ok: false, error: "Pick how they sent it." };
+  const on = String(input?.on ?? "");
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(on) || Number.isNaN(new Date(on).getTime())) return { ok: false, error: "Pick the date." };
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const loaded = await loadSetupStep(access.supabase, clientId, step);
+    if (!loaded.ok) return loaded;
+    const row = loaded.row;
+    if (!row || row.version < 1) return { ok: false, error: "Send this step to the client first: feedback is logged on the version they have." };
+    const added = addQuestion(questionsOf(row), {
+      id: crypto.randomUUID(),
+      question: text,
+      at: nowIso(),
+      version: row.version,
+      via: { channel, on, ...(access.email ? { by: access.email } : {}) },
+    });
+    if (!added.ok) return added;
+    const saved = await saveQuestions(access.supabase, row, added.questions);
+    if (!saved.ok) return saved;
+    if (!saved.saved) continue;
+    revalidateSetup(clientId);
+    return { ok: true };
   }
   return { ok: false, error: "The step changed meanwhile. Refresh and try again." };
 }

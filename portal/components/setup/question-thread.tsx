@@ -1,5 +1,5 @@
-import { formatDateAtTime } from "@/lib/format";
-import type { SetupQuestion } from "@/lib/setup";
+import { formatDate, formatDateAtTime } from "@/lib/format";
+import { FEEDBACK_CHANNEL_LABEL, type SetupQuestion } from "@/lib/setup";
 
 /**
  * The client's questions on a review step and Rupert's answers, oldest
@@ -16,13 +16,15 @@ export function QuestionThread({
   return (
     <section aria-labelledby="question-thread-title" className="mt-lg rounded-card border border-border bg-surface">
       <h2 id="question-thread-title" className="border-b border-border px-lg py-md text-h4 text-heading">
-        Your Questions
+        Your Questions and Feedback
       </h2>
       <ul className="divide-y divide-border">
         {questions.map((item) => (
           <li key={item.id} className="px-lg py-md">
             <p className="text-label uppercase tracking-label text-muted">
-              You asked{item.asked_at ? ` · ${formatDateAtTime(item.asked_at)}` : ""}
+              {item.via
+                ? `You told ${adminName} ${FEEDBACK_CHANNEL_LABEL[item.via.channel]} · ${formatDate(`${item.via.on}T12:00:00`)}`
+                : `You asked${item.asked_at ? ` · ${formatDateAtTime(item.asked_at)}` : ""}`}
             </p>
             <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{item.question}</p>
             {item.answer ? (

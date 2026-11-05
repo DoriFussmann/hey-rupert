@@ -74,7 +74,28 @@ export type SetupQuestion = {
   answered_at?: string;
   /** Rupert closed it without a written answer (for example, handled on a call). */
   resolved_at?: string;
+  /** The client said it outside the portal and Rupert logged it for them. */
+  via?: { channel: FeedbackChannel; on: string; by?: string };
 };
+
+export const FEEDBACK_CHANNELS = ["email", "call", "message", "meeting"] as const;
+export type FeedbackChannel = (typeof FEEDBACK_CHANNELS)[number];
+export const FEEDBACK_CHANNEL_LABEL: Record<FeedbackChannel, string> = {
+  email: "by email",
+  call: "on a call",
+  message: "by message",
+  meeting: "in a meeting",
+};
+
+function asVia(value: unknown): SetupQuestion["via"] | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const raw = value as Record<string, unknown>;
+  const channel = FEEDBACK_CHANNELS.includes(raw.channel as FeedbackChannel) ? (raw.channel as FeedbackChannel) : null;
+  const on = typeof raw.on === "string" && /^\d{4}-\d{2}-\d{2}$/.test(raw.on) ? raw.on : "";
+  if (!channel || !on) return undefined;
+  const by = typeof raw.by === "string" ? raw.by.slice(0, 200) : undefined;
+  return by ? { channel, on, by } : { channel, on };
+}
 
 export const QUESTION_MAX = 2000;
 export const QUESTIONS_MAX = 50;
@@ -1089,6 +1110,7 @@ export function asQuestions(value: unknown): SetupQuestion[] {
       answer: optionalText(raw.answer, NOTE_MAX),
       answered_at: optionalText(raw.answered_at, 40),
       resolved_at: optionalText(raw.resolved_at, 40),
+      ...(asVia(raw.via) ? { via: asVia(raw.via) } : {}),
     });
   }
   return out;
@@ -1107,7 +1129,7 @@ function withQuestions(questions: SetupQuestion[]) {
 /** Adds the client's question, or says why it can't be added. */
 export function addQuestion(
   questions: SetupQuestion[],
-  input: { id: string; question: string; at: string; version: number },
+  input: { id: string; question: string; at: string; version: number; via?: SetupQuestion["via"] },
 ): { ok: true; questions: SetupQuestion[] } | { ok: false; error: string } {
   const question = input.question.trim().slice(0, QUESTION_MAX);
   if (!question) return { ok: false, error: "Write your question first." };
@@ -1116,7 +1138,7 @@ export function addQuestion(
   }
   return {
     ok: true,
-    questions: [...questions, { id: input.id, question, asked_at: input.at, version: input.version }],
+    questions: [...questions, { id: input.id, question, asked_at: input.at, version: input.version, ...(input.via ? { via: input.via } : {}) }],
   };
 }
 
