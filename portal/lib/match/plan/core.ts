@@ -16,6 +16,18 @@ export type PlanTier = (typeof PLAN_TIERS)[number];
 /** outside: same sector, other sub-sectors only. none: nothing the tiers look at (e.g. no sub-sector listed). */
 export type Placement = PlanTier | "outside" | "none";
 
+/** The investor's type, short: from the Fund Database's "Type of Firm", or the kind of an added investor. */
+export function investorType(firmType: string | undefined, addedKind: "fund" | "angel" | null | undefined): string {
+  const t = (firmType ?? "").toLowerCase();
+  if (t.includes("venture")) return "VC";
+  if (t.includes("private equity")) return "PE";
+  if (t.includes("family")) return "Family office";
+  if (t.includes("angel")) return "Angel group";
+  if (addedKind === "angel") return "Angel";
+  if (addedKind === "fund") return "Fund";
+  return firmType?.trim() || "";
+}
+
 export const TIER_LABEL: Record<Placement, string> = {
   core: "Core",
   sphere: "Sphere",
@@ -168,6 +180,8 @@ export type PlanFund = {
   focus: number;
   /** Usable contacts (email on file, not ops or advisor), before the cap. */
   contacts: number;
+  /** VC, PE, Family office, Angel group, Angel. Absent on Plans made before it was kept. */
+  type?: string;
   /** Position inside its tier, from 1. 0: not ranked (no contact, or outside the tiers). */
   rank: number;
 };
@@ -184,6 +198,7 @@ export type RankInput = {
   /** Sector node ids. */
   sectors: string[];
   contacts: number;
+  type?: string;
 };
 
 /** Step 3's signal: the client named it, or it backed a comparable company. */
@@ -229,6 +244,7 @@ export function tierRoster(index: TaxIndex, client: ClientSubSectors, funds: Ran
       lookAlike: lookAlikeScore(labels, profile).score,
       focus: new Set(f.sectors).size,
       contacts: f.contacts,
+      ...(f.type ? { type: f.type } : {}),
       rank: 0,
     };
   });

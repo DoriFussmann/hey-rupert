@@ -18,6 +18,7 @@ import {
   rankFunds,
   sameStage,
   tierRoster,
+  investorType,
   waterfall,
   type ClientSubSectors,
   type PlanCapacity,
@@ -172,6 +173,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
       clientNamed: e.clientNamed ?? false,
       sectors: sectors(e.firmId),
       contacts: contacts.get(e.firmId) ?? 0,
+      type: investorType(firmById.get(e.firmId)?.type, e.kind),
     })),
     profile,
   );

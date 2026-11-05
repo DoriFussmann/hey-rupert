@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useId, useMemo, useState } from "react";
 import { cellText, type Cell, type Detail, type Summary, type SummaryTable } from "@/lib/match/summary/core";
 
 const n = (value: number) => value.toLocaleString("en-US");
@@ -69,14 +69,117 @@ function DetailModal({ title, item, details, onClose }: { title: string; item?: 
   );
 }
 
+const PAGE = 100;
+const tokens = (cell: Cell | undefined) =>
+  cellText(cell)
+    .split(", ")
+    .map((x) => x.trim())
+    .filter(Boolean);
+
+/** Search (with suggestions from the names) and the column filters, for a long list. */
+function useListFilter(table: SummaryTable, nameKey: string) {
+  const [query, setQuery] = useState("");
+  const [picked, setPicked] = useState<Record<string, string>>({});
+  const filters = useMemo(
+    () =>
+      table.search
+        ? table.columns
+            .filter((c) => c.filter)
+            .map((c) => {
+              const counts = new Map<string, number>();
+              for (const row of table.rows) for (const t of tokens(row[c.key])) counts.set(t, (counts.get(t) ?? 0) + 1);
+              return { column: c, options: Array.from(counts.entries()).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])) };
+            })
+            .filter((f) => f.options.length > 1 || (f.options.length === 1 && f.options[0][1] < table.rows.length))
+        : [],
+    [table],
+  );
+  const names = useMemo(() => Array.from(new Set(table.rows.map((r) => cellText(r[nameKey])).filter(Boolean))).sort(), [table, nameKey]);
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const active = Object.entries(picked).filter(([, v]) => v);
+    return table.rows
+      .map((row, i) => ({ row, i }))
+      .filter(({ row }) => (!q || cellText(row[nameKey]).toLowerCase().includes(q)) && active.every(([k, v]) => tokens(row[k]).includes(v)));
+  }, [table, query, picked, nameKey]);
+  const filtering = Boolean(query.trim()) || Object.values(picked).some(Boolean);
+  return { query, setQuery, picked, setPicked, filters, names, shown, filtering };
+}
+
 function TableView({ table }: { table: SummaryTable }) {
   const [open, setOpen] = useState<number | null>(null);
-  const long = table.rows.length > 25;
+  const [limit, setLimit] = useState(PAGE);
   const clickable = Boolean(table.details?.length);
-  const first = table.columns[0];
+  // The item's name: the "name" column when there is one (the first column may be a number).
+  const nameCol = table.columns.find((c) => c.key === "name") ?? table.columns[0];
+  const list = useListFilter(table, nameCol.key);
+  const rows = table.search ? list.shown : table.rows.map((row, i) => ({ row, i }));
+  const visible = table.search ? rows.slice(0, limit) : rows;
+  const long = visible.length > 25;
+  const listId = useId();
+  const field = "rounded-md border border-border bg-surface px-sm py-[5px] text-body-sm text-heading";
   return (
     <div className="mt-md">
       {table.title ? <h4 className="mb-xs text-label uppercase tracking-label text-muted">{table.title}</h4> : null}
+      {table.search ? (
+        <div className="mb-sm flex flex-wrap items-center gap-sm">
+          <input
+            type="search"
+            className={`${field} w-56`}
+            placeholder={`Search by ${nameCol.label.toLowerCase()}`}
+            aria-label={`Search ${table.title ?? "the list"}`}
+            value={list.query}
+            list={listId}
+            onChange={(e) => {
+              list.setQuery(e.target.value);
+              setLimit(PAGE);
+            }}
+          />
+          <datalist id={listId}>
+            {list.query.trim().length >= 1
+              ? list.names
+                  .filter((x) => x.toLowerCase().includes(list.query.trim().toLowerCase()))
+                  .slice(0, 12)
+                  .map((x) => <option key={x} value={x} />)
+              : null}
+          </datalist>
+          {list.filters.map(({ column, options }) => (
+            <select
+              key={column.key}
+              className={field}
+              aria-label={`Filter by ${column.label}`}
+              value={list.picked[column.key] ?? ""}
+              onChange={(e) => {
+                list.setPicked({ ...list.picked, [column.key]: e.target.value });
+                setLimit(PAGE);
+              }}
+            >
+              <option value="">{column.label}: all</option>
+              {options.map(([value, count]) => (
+                <option key={value} value={value}>
+                  {value} ({n(count)})
+                </option>
+              ))}
+            </select>
+          ))}
+          <span className="text-body-sm text-muted">
+            {list.filtering ? `${n(rows.length)} of ${n(table.rows.length)}` : `${n(table.rows.length)} in all`}
+          </span>
+          {list.filtering ? (
+            <button
+              type="button"
+              className="text-body-sm text-primary hover:underline"
+              onClick={() => {
+                list.setQuery("");
+                list.setPicked({});
+                setLimit(PAGE);
+              }}
+            >
+              Clear
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <div className={long ? "max-h-[520px] overflow-auto" : "overflow-x-auto"}>
         <table className="w-full text-left text-body-sm">
           <thead className={`text-label uppercase tracking-label text-muted ${long ? "sticky top-0 bg-primary-tint" : ""}`}>
@@ -89,7 +192,7 @@ function TableView({ table }: { table: SummaryTable }) {
             </tr>
           </thead>
           <tbody>
-            {table.rows.map((row, i) => (
+            {visible.map(({ row, i }) => (
               <tr
                 key={i}
                 className={`border-t border-border ${clickable ? "cursor-pointer hover:bg-surface/70 focus:bg-surface/70 focus:outline-none" : ""}`}
@@ -101,7 +204,7 @@ function TableView({ table }: { table: SummaryTable }) {
                   <td
                     key={c.key}
                     className={`max-w-[18rem] truncate whitespace-nowrap py-xs pr-md last:pr-0 ${c.align === "right" ? "text-right tabular-nums" : ""} ${
-                      c === first ? `text-heading ${clickable ? "underline decoration-border underline-offset-4" : ""}` : "text-secondary"
+                      c === nameCol ? `text-heading ${clickable ? "underline decoration-border underline-offset-4" : ""}` : "text-secondary"
                     }`}
                   >
                     <CellView cell={row[c.key]} />
@@ -109,7 +212,7 @@ function TableView({ table }: { table: SummaryTable }) {
                 ))}
               </tr>
             ))}
-            {table.total ? (
+            {table.total && !list.filtering ? (
               <tr className="border-t-2 border-primary">
                 {table.columns.map((c) => (
                   <td key={c.key} className={`whitespace-nowrap py-xs pr-md font-medium text-heading last:pr-0 ${c.align === "right" ? "text-right tabular-nums" : ""}`}>
@@ -120,11 +223,19 @@ function TableView({ table }: { table: SummaryTable }) {
             ) : null}
           </tbody>
         </table>
+        {table.search && !rows.length ? <p className="py-sm text-body-sm text-muted">No match.</p> : null}
       </div>
-      {clickable ? <p className="mt-xs text-body-sm text-muted">Click a row for the details.</p> : null}
+      <div className="mt-xs flex flex-wrap items-center gap-md">
+        {clickable && rows.length ? <p className="text-body-sm text-muted">Click a row for the details.</p> : null}
+        {table.search && rows.length > visible.length ? (
+          <button type="button" className="text-body-sm text-primary hover:underline" onClick={() => setLimit(limit + PAGE * 5)}>
+            Show more ({n(rows.length - visible.length)} left)
+          </button>
+        ) : null}
+      </div>
       {open !== null && table.details?.[open] ? (
         <DetailModal
-          title={cellText(table.rows[open][first.key])}
+          title={cellText(table.rows[open][nameCol.key])}
           item={table.item}
           details={table.details[open]}
           onClose={() => setOpen(null)}

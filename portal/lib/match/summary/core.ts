@@ -12,7 +12,8 @@ import type { RosterCounts } from "../roster/core.ts";
 import { TIER_LABEL, waterfall, type PlanFund, type PlanInputs, type Planned } from "../plan/core.ts";
 
 export type Cell = string | number | { text: string; href: string };
-export type Column = { key: string; label: string; align?: "right" };
+/** filter: the table can be filtered by this column (a cell may hold several values, ", " between). */
+export type Column = { key: string; label: string; align?: "right"; filter?: boolean };
 export type Detail = { label: string; value: Cell | Cell[] };
 export type SummaryTable = {
   title?: string;
@@ -25,6 +26,8 @@ export type SummaryTable = {
   item?: string;
   /** Bold last row (a total). */
   total?: Record<string, Cell>;
+  /** A long list: shown with a search box (by the first column) and the column filters. */
+  search?: boolean;
 };
 export type SummaryStep = {
   key: string;
@@ -144,7 +147,60 @@ function backingDetails(i: Investor): Cell[] {
   return i.backed.map((b) => (b.sourceUrl ? { text: backingLine(b), href: b.sourceUrl } : backingLine(b)));
 }
 
-function rosterStep(c: RosterCounts): SummaryStep {
+/** How an investor is tied to the client, as filterable tags. */
+function connection(f: { backed?: string[]; comparables?: string[]; clientNamed?: boolean }) {
+  return [
+    ...(f.backed?.length ? ["Backed a competitor"] : []),
+    ...(f.comparables?.length ? ["Backed a company like you"] : []),
+    ...(f.clientNamed ? ["Named by you"] : []),
+  ].join(", ");
+}
+
+/** Every investor on the Final Roster, best placed first, with whether it is in the plan. */
+function rosterList(plan: MatchingInputs["plan"]): SummaryTable {
+  const inPlan = new Set(plan.planned.map((p) => p.firmId));
+  const order: Record<string, number> = { core: 0, sphere: 1, tier3: 2, tier4: 3, outside: 4, none: 5 };
+  const funds = [...plan.funds].sort(
+    (a, b) =>
+      Number(inPlan.has(b.firmId)) - Number(inPlan.has(a.firmId)) ||
+      (order[a.tier] ?? 9) - (order[b.tier] ?? 9) ||
+      a.name.localeCompare(b.name),
+  );
+  return {
+    title: "Everyone on the Final Roster",
+    item: "Investor",
+    search: true,
+    columns: [
+      { key: "name", label: "Investor" },
+      { key: "type", label: "Type", filter: true },
+      { key: "tier", label: "Tier", filter: true },
+      { key: "connection", label: "Connection", filter: true },
+      { key: "contacts", label: "Contacts", align: "right" },
+      { key: "plan", label: "In the plan", filter: true },
+    ],
+    rows: funds.map((f) => ({
+      name: f.name,
+      type: f.type ?? "",
+      tier: TIER_LABEL[f.tier],
+      connection: connection(f),
+      contacts: f.contacts,
+      plan: inPlan.has(f.firmId) ? "Yes" : "No",
+    })),
+    details: funds.map((f) => [
+      { label: "Type", value: f.type ?? "" },
+      { label: "Website", value: f.website ? { text: f.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: f.website } : "" },
+      { label: "Tier", value: TIER_LABEL[f.tier] },
+      { label: "Matched on", value: f.hit },
+      { label: "Backed a competitor", value: f.backed },
+      { label: "Backed a comparable company", value: f.comparables ?? [] },
+      { label: "Named by you", value: f.clientNamed ? "Yes" : "" },
+      { label: "Contacts found", value: n(f.contacts) },
+      { label: "In the plan", value: inPlan.has(f.firmId) ? "Yes" : "No" },
+    ]),
+  };
+}
+
+function rosterStep(c: RosterCounts, plan?: MatchingInputs["plan"]): SummaryStep {
   const line = (source: string, investors: string) => ({ source, investors });
   return {
     key: "step4",
@@ -176,6 +232,7 @@ function rosterStep(c: RosterCounts): SummaryStep {
           ...(c.clientNamed ? [{ what: "Named by you", investors: n(c.clientNamed) }] : []),
         ],
       },
+      ...(plan ? [rosterList(plan)] : []),
     ],
   };
 }
@@ -211,17 +268,19 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
       },
       {
         title: "The Final Outreach Roster",
+        search: true,
         columns: [
           { key: "i", label: "#", align: "right" },
-          { key: "tier", label: "Tier" },
           { key: "name", label: "Investor" },
-          { key: "backed", label: "Backed a competitor" },
+          { key: "type", label: "Type", filter: true },
+          { key: "tier", label: "Tier", filter: true },
+          { key: "connection", label: "Connection", filter: true },
           { key: "contacts", label: "Contacts", align: "right" },
         ],
         item: "Fund",
         rows: planned.map((p, i) => {
           const f = byId.get(p.firmId);
-          return { i: i + 1, tier: TIER_LABEL[p.tier], name: f?.name ?? p.firmId, backed: backedShort(f?.backed ?? []), contacts: p.slots };
+          return { i: i + 1, name: f?.name ?? p.firmId, type: f?.type ?? "", tier: TIER_LABEL[p.tier], connection: f ? connection(f) : "", contacts: p.slots };
         }),
         details: planned.map((p) => {
           const f = byId.get(p.firmId);
@@ -288,7 +347,7 @@ export function matchingSummary(input: MatchingInputs): Summary {
   const steps: SummaryStep[] = [stepOne(input.dry)];
   if (input.landscape) steps.push(layerStep(input.landscape.competitors, input.landscape.investors, input.rows, false));
   if (input.like) steps.push(layerStep(input.like.companies, input.like.investors, input.like.rows, true));
-  steps.push(rosterStep(input.roster), planStep(input.plan));
+  steps.push(rosterStep(input.roster, input.plan), planStep(input.plan));
   return { kind: "matching", title: "Matching Summary", clientName: input.clientName, steps };
 }
 
