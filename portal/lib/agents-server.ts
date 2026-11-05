@@ -451,23 +451,31 @@ async function draftEmailMiddle(
   system: string,
   context: string,
 ): Promise<AgentResult<ClientEmailDraft>> {
-  const result = await callClaudeTool<Record<string, unknown>>({
-    system,
-    messages: [
-      {
-        role: "user",
-        content: `${context}\n\nWrite the email by calling the ${EMAIL_TOOL.name} tool.`,
-      },
-    ],
-    tool: EMAIL_TOOL,
-    maxTokens: 1500,
-  });
-  if (!result.ok) return { ok: false, error: result.reason };
-
-  const subject = text(result.input.subject).slice(0, 300);
-  const body = text(result.input.body).slice(0, 10000);
-  if (!body) return { ok: false, error: "Claude returned an empty email." };
-  return { ok: true, value: { subject, body } };
+  // Room for a long email with bullets; one retry when the reply comes back without a body
+  // (a cut-off tool call arrives empty).
+  let last = "Claude returned an empty email.";
+  for (const maxTokens of [4000, 6000]) {
+    const result = await callClaudeTool<Record<string, unknown>>({
+      system,
+      messages: [
+        {
+          role: "user",
+          content: `${context}\n\nWrite the email by calling the ${EMAIL_TOOL.name} tool, with the whole email body in "body".`,
+        },
+      ],
+      tool: EMAIL_TOOL,
+      maxTokens,
+      // Claude sometimes writes the email as plain text instead of calling the tool: take it as the body.
+      fallbackFromText: (reply) => (reply.trim() ? { subject: "", body: reply } : null),
+    });
+    if (!result.ok) return { ok: false, error: result.reason };
+    const raw = result.input.body;
+    const body = (Array.isArray(raw) ? raw.map((x) => String(x)).join("\n") : text(raw)).slice(0, 10000);
+    const subject = text(result.input.subject).slice(0, 300);
+    if (body) return { ok: true, value: { subject, body } };
+    last = "Claude returned an empty email twice. Click Draft Email again; if it keeps happening, check the prompt under Agents → Emails to founders.";
+  }
+  return { ok: false, error: last };
 }
 
 const FEEDBACK_SUMMARY_TOOL = {
