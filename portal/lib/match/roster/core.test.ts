@@ -159,3 +159,15 @@ test("an investor removed as not relevant: its own group, tags nothing, adds not
   // Alpha stays (it's on the Dry Match list) but no longer tagged as backing Monk; Gamma isn't brought back.
   assert.deepEqual(roster.entries.map((e) => [e.firmId, e.backed]), [["F1", []]]);
 });
+
+test("an added investor removed in 4A: not waiting, not on the Roster, counted as removed", () => {
+  const roster = buildRoster({
+    data, firms, steps, shortlist: ["F1"], rows: [],
+    added: [{ id: "a4", firmId: "RUP-4", name: "Eta Capital", kind: "angel", status: "pending", skipped: true }],
+    clientSectors: ["Fintech"], exclusions: "",
+  });
+  assert.equal(roster.added[0].result, "removed");
+  assert.equal(roster.counts.addedMissing, 0);
+  assert.equal(roster.counts.addedRemoved, 1);
+  assert.deepEqual(roster.entries.map((e) => e.firmId), ["F1"]);
+});

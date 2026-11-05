@@ -50,12 +50,21 @@ export type AddedCheck = {
    * - secondary: fails only on sector but lists the client's Secondary 1 or 2 (the 2C rule).
    * - fail: fails a filter; reason says which, with the investor's own values.
    * - not_found: not in this client's database (e.g. rejected since).
+   * - removed: missing fields, and removed by the admin in 4A as not relevant.
    */
-  result: "missing" | "pass" | "secondary" | "fail" | "not_found";
+  result: "missing" | "pass" | "secondary" | "fail" | "not_found" | "removed";
   reason: string;
 };
 
-export type AddedInput = { id: string; firmId: string; name: string; kind: "fund" | "angel"; status: "pending" | "approved" | "rejected" };
+export type AddedInput = {
+  id: string;
+  firmId: string;
+  name: string;
+  kind: "fund" | "angel";
+  status: "pending" | "approved" | "rejected";
+  /** Removed by the admin in Step 4A (not relevant): off the Roster, and not waiting either. */
+  skipped?: boolean;
+};
 
 export type ExclusionCheck = {
   line: string;
@@ -80,6 +89,8 @@ export type RosterCounts = {
   /** Added investors that failed a filter, and still waiting for missing fields. */
   addedFailed: number;
   addedMissing: number;
+  /** Removed in 4A as not relevant (absent on Rosters built before). */
+  addedRemoved?: number;
   /** Shortlist funds no longer in the database. */
   gone: number;
 };
@@ -203,6 +214,10 @@ export function buildRoster(input: {
       continue;
     }
     const missing = missingFields(fund);
+    if (missing.length && a.skipped) {
+      added.push({ ...base, missing, result: "removed", reason: "Removed by you in Step 4A: not relevant." });
+      continue;
+    }
     if (missing.length) {
       added.push({ ...base, missing, result: "missing", reason: `Missing: ${missing.map((m) => MISSING_LABEL[m]).join(", ")}.` });
       continue;
@@ -264,6 +279,7 @@ export function buildRoster(input: {
       clientNamed: list.filter((e) => e.clientNamed).length,
       addedFailed: added.filter((a) => a.result === "fail" || a.result === "not_found").length,
       addedMissing: added.filter((a) => a.result === "missing").length,
+      addedRemoved: added.filter((a) => a.result === "removed").length,
       gone,
     },
   };

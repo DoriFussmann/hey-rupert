@@ -114,11 +114,11 @@ function Row({
             </a>
           ) : null}
           {s && found ? <span className="ml-sm rounded-md border border-warning/50 px-xs text-label uppercase tracking-label text-warning">AI suggestion</span> : null}
-          {s && !found ? <span className="ml-sm rounded-md border border-border px-xs text-label uppercase tracking-label text-muted">AI found nothing: add or skip</span> : null}
+          {s && !found ? <span className="ml-sm rounded-md border border-border px-xs text-label uppercase tracking-label text-muted">AI found nothing: add or remove</span> : null}
         </p>
         <span className="flex gap-xs">
-          <button type="button" className={smallButton} disabled={busy} onClick={onSkip}>
-            Skip
+          <button type="button" className={smallButton} disabled={busy} onClick={onSkip} title="Not relevant: stays off the Roster. You can restore it.">
+            Remove: not relevant
           </button>
           {s && found ? (
             <button type="button" className={smallButton} disabled={busy} onClick={onDismiss}>
@@ -234,6 +234,8 @@ export function MissingFields({
   if (!items.length) return <p className="text-body-sm text-success">✓ No added investor is missing a field.</p>;
   return (
     <div>
+      {active.length ? (
+      <>
       <div className="flex flex-wrap items-center gap-sm">
         <button type="button" className={primaryButton} disabled={busy !== null || !toSearch.length} onClick={() => void fillAll()}>
           {busy === "ai" ? "Searching…" : `Fill missing fields with AI (${n(toSearch.length)})`}
@@ -244,9 +246,11 @@ export function MissingFields({
         {progress ? <span className="text-body-sm text-primary">{progress}</span> : null}
       </div>
       <p className="mt-xs text-body-sm text-muted">
-        AI suggestions are marked and count only once you accept them. Where the AI found nothing, add the values yourself or Skip (it stays off the Roster).
+        AI suggestions are marked and count only once you accept them. Where the AI found nothing, add the values yourself, or Remove it as not relevant (it stays off the Roster).
         Every field takes several values.
       </p>
+      </>
+      ) : null}
       {problems.length ? (
         <ul className="mt-sm list-disc pl-lg text-body-sm text-error">
           {problems.map((p) => (
@@ -267,11 +271,11 @@ export function MissingFields({
           />
         ))}
       </ul>
-      {!active.length ? <p className="mt-sm text-body-sm text-success">✓ Nothing left to fill: the rest are skipped.</p> : null}
+      {!active.length && !skipped.length ? <p className="mt-sm text-body-sm text-success">✓ Nothing left to fill.</p> : null}
       {skipped.length ? (
         <div className="mt-sm">
           <button type="button" className="text-body-sm text-primary underline" aria-expanded={showSkipped} onClick={() => setShowSkipped(!showSkipped)}>
-            Skipped ({n(skipped.length)}): {showSkipped ? "hide" : "show"}
+            Removed: not relevant ({n(skipped.length)}): {showSkipped ? "hide" : "show"}
           </button>
           {showSkipped ? (
             <ul className="mt-xs space-y-xs text-body-sm">
@@ -281,7 +285,7 @@ export function MissingFields({
                     {item.name} <span className="text-muted">(missing {item.missing.map((m) => MISSING_LABEL[m].toLowerCase()).join(", ")})</span>
                   </span>
                   <button type="button" className={smallButton} disabled={busy !== null} onClick={() => void one(`unskip-${item.addedId}`, () => skip(item.addedId, false))}>
-                    Bring back
+                    Restore
                   </button>
                 </li>
               ))}

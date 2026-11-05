@@ -52,6 +52,7 @@ function SummaryTable({ counts }: { counts: RosterCounts }) {
         {row("Brought back (2C, 3C)", `+${n(counts.broughtBack)}`)}
         {row("Added (2D, 3D), passing the filters", `+${n(counts.added)}`)}
         {counts.addedMissing ? row("Added (2D, 3D), waiting for missing fields: not counted", n(counts.addedMissing), "text-warning") : null}
+        {counts.addedRemoved ? row("Added (2D, 3D), removed by you (4A): not counted", n(counts.addedRemoved), "text-muted") : null}
         {row("Combined", n(counts.combined))}
         {row("Excluded by the client", `(${n(counts.excluded)})`, "text-error")}
         {row("The Final Roster", n(counts.total), "text-heading", true)}
@@ -67,6 +68,7 @@ const RESULT_TEXT: Record<AddedCheck["result"], { label: string; tone: string }>
   fail: { label: "Out", tone: "text-error" },
   missing: { label: "Waiting: missing fields", tone: "text-warning" },
   not_found: { label: "Out: not in the database", tone: "text-error" },
+  removed: { label: "Removed: not relevant", tone: "text-muted" },
 };
 
 function AddedTable({ added }: { added: AddedCheck[] }) {
@@ -214,11 +216,15 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
   const toFill = fill.filter((i) => !i.suggestion?.skipped).length;
   const fillCard = fill.length ? (
         <Card>
-          <h3 className="text-h4 text-heading">Step 4A: Fill in missing fields</h3>
+          <h3 className="text-h4 text-heading">Step 4A: Fill in missing fields{toFill ? "" : " · done"}</h3>
+          {toFill ? (
           <p className="max-w-prose text-body-sm text-secondary">
-            {n(fill.length)} added {fill.length === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need, so {fill.length === 1 ? "it stays" : "they stay"} off
-            the Roster until filled in. {state.saved ? "The Roster is confirmed without them: once filled, Reopen and confirm again to add them." : "Fill in or skip each one: the Roster opens below once none are left."}
+            {n(toFill)} added {toFill === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need, so {toFill === 1 ? "it stays" : "they stay"} off
+            the Roster until filled in. {state.saved ? "The Roster is confirmed without them: once filled, Reopen and confirm again to add them." : "Fill in or remove each one: the Roster opens below once none are left."}
           </p>
+          ) : (
+            <p className="max-w-prose text-body-sm text-secondary">Nothing left to fill. The investors you removed stay off the Roster; Restore one to fill it in instead.</p>
+          )}
           <div className="mt-sm">
             <MissingFields
               items={fill}
@@ -278,7 +284,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
       <div className="space-y-md">
         {fillCard}
         <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">
-          The Final Roster opens once Step 4A is done: {n(toFill)} {toFill === 1 ? "investor" : "investors"} still to fill in or skip.
+          The Final Roster opens once Step 4A is done: {n(toFill)} {toFill === 1 ? "investor" : "investors"} still to fill in or remove.
         </p>
       </div>
     );
@@ -304,7 +310,8 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
         ) : null}
         <SummaryTable counts={c} />
         <p className="mt-sm text-body-sm text-muted">
-          Added in 2D and 3D: {n(c.added)} in, {n(c.addedFailed)} out on the filters{c.addedMissing ? `, ${n(c.addedMissing)} waiting` : ""}. Exclusions: only clear matches count;
+          Added in 2D and 3D: {n(c.added)} in, {n(c.addedFailed)} out on the filters{c.addedMissing ? `, ${n(c.addedMissing)} waiting` : ""}
+          {c.addedRemoved ? `, ${n(c.addedRemoved)} removed by you` : ""}. Exclusions: only clear matches count;
           {" "}
           {n(draft.exclusions.filter((e) => e.result === "not_matched").length)} of {n(draft.exclusions.length)} lines matched nothing and are ignored.
           {c.gone ? ` ${n(c.gone)} shortlist funds are no longer in the database.` : ""}

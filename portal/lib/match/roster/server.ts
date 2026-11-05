@@ -152,13 +152,14 @@ async function draft(supabase: ServiceClient, clientId: string) {
     shortlist: dry.fund_ids,
     rows,
     likeRows,
-    added: Object.values(addedFunds).map((f) => ({ id: f.id, firmId: f.firmId, name: f.name, kind: f.kind, status: f.status })),
+    added: Object.values(addedFunds).map((f) => ({ id: f.id, firmId: f.firmId, name: f.name, kind: f.kind, status: f.status, skipped: !!f.aiSuggestion?.skipped })),
     manual: (await manualFunds(supabase, clientId)).map((f) => ({ firmId: f.firmId, kind: f.kind })),
     clientSectors,
     exclusions,
   });
   // 3A: the added investors still missing a field, with every field shown.
-  const waiting = new Set(roster.added.filter((x) => x.result === "missing").map((x) => x.addedId));
+  // 4A lists the removed ones too (folded away), so they can be restored.
+  const waiting = new Set(roster.added.filter((x) => x.result === "missing" || x.result === "removed").map((x) => x.addedId));
   const fill: FillItem[] = fillItems(index, Object.values(addedFunds)).filter((x) => waiting.has(x.addedId));
   const lists = labelLists(index);
   return {
