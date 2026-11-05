@@ -1003,13 +1003,16 @@ export async function recordInvestments(supabase: ServiceClient, clientId: strin
   if (!current.ok) return current;
   const land = current.value!;
   const byId = new Map(land.competitors.map((c) => [c.id, c]));
+  // Matched investors, and those added to the database (by their added record). Removed ones prove nothing.
+  const firmOf = (r: (typeof check.value.rows)[number]) =>
+    r.bucket === "in_list" || r.bucket === "not_in_list" ? r.firmId : r.bucket === "added" && r.added && r.added.status !== "rejected" ? r.added.firmId : null;
   const rows = check.value.rows
-    .filter((r) => r.firmId && (r.bucket === "in_list" || r.bucket === "not_in_list"))
+    .filter((r) => firmOf(r))
     .flatMap((r) =>
       r.investor.backed.map((b) => {
         const c = byId.get(b.competitorId);
         return {
-          firm_id: r.firmId!,
+          firm_id: firmOf(r)!,
           investor_name: r.investor.name,
           company: b.competitor,
           company_website: c?.website ?? "",
