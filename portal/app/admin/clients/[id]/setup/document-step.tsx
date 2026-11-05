@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import {
   draftSetupEmail,
   saveSetupDraft,
+  pushSetupDocument,
   sendSetupDocument,
 } from "@/app/admin/setup-actions";
 import {
@@ -29,7 +30,7 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 
-type Pending = null | "save" | "draft" | "send";
+type Pending = null | "save" | "draft" | "send" | "push";
 type Message = { kind: "ok" | "error"; text: string } | null;
 
 const labelClass = "block text-label uppercase tracking-label text-muted";
@@ -219,6 +220,42 @@ export function DocumentStep({
     }
   }
 
+  async function onPushOnly() {
+    if (problem) {
+      setMessage({ kind: "error", text: problem });
+      return;
+    }
+    const question = [
+      warning ? `${warning}\n\nPush anyway?` : "",
+      `Push version ${nextVersion} to the client's portal without an email? Nothing is sent to ${to || "the client"}: they see it next time they open the portal.`,
+      row?.status === "confirmed" || row?.status === "published"
+        ? "They already confirmed the current version: they will be asked to confirm again."
+        : row?.status === "with_client"
+          ? "This replaces the version they have now."
+          : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    if (!window.confirm(question)) return;
+
+    setPending("push");
+    setMessage(null);
+    try {
+      const result = await pushSetupDocument(clientId, step, fullDraft);
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      markSaved();
+      setMessage({ kind: "ok", text: `Version ${result.version} is in the client's portal. No email was sent.` });
+      router.refresh();
+    } catch (err) {
+      setMessage({ kind: "error", text: errorText(err, "Unable to push.") });
+    } finally {
+      setPending(null);
+    }
+  }
+
   const history = [...(row?.history ?? [])].sort((a, b) => b.version - a.version);
 
   return (
@@ -298,6 +335,17 @@ export function DocumentStep({
                 ? `Push to Client Portal & Send Email (v${nextVersion})`
                 : "Push to Client Portal & Send Email"}
           </button>
+          {row?.version ? (
+            <button
+              type="button"
+              className={secondaryButton}
+              disabled={locked || !reachable}
+              title="Updates the client's portal without emailing them"
+              onClick={onPushOnly}
+            >
+              {pending === "push" ? "Pushing…" : `Push to Client Portal, No Email (v${nextVersion})`}
+            </button>
+          ) : null}
           <button type="button" className={secondaryButton} disabled={locked} onClick={onSave}>
             {pending === "save" ? "Saving…" : "Save Draft"}
           </button>

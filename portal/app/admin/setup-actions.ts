@@ -431,6 +431,20 @@ export async function sendSetupDocument(
   return { ok: true, version: pushed.version, clientEmail };
 }
 
+/**
+ * Push to Client Portal, without an email: the same push as above (a new version
+ * in the client's portal), for an update the client was already told about.
+ */
+export async function pushSetupDocument(clientId: string, step: SetupDocumentStep, draft: unknown): Promise<AdminPushResult> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!isSetupDocumentStep(step)) return { ok: false, error: "This step cannot be pushed here." };
+  const pushed = await writePush(access.supabase, clientId, step, draft);
+  if (!pushed.ok) return pushed;
+  revalidateSetup(clientId);
+  return { ok: true, version: pushed.version };
+}
+
 /** Marks a version as emailed. Best effort: the email is already out. */
 async function recordEmailed(
   supabase: ServiceClient,
