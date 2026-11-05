@@ -661,6 +661,7 @@ function describeDecision(row: CheckRow) {
   const d = row.decision;
   if (!d) return "";
   const parts: string[] = [];
+  if (d.removed) parts.push("Removed: not relevant");
   if (d.unsure) parts.push("Not sure (later)");
   if (typeof d.firmId === "string") parts.push(`Matched to ${row.firmName ?? d.firmId}`);
   if (d.firmId === null) parts.push("Not in the database");
@@ -740,7 +741,14 @@ function ReviewAndConfirm({
                   {row.decision!.at ? new Date(row.decision!.at).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }) : ""}
                 </td>
                 <td className="py-xs pr-md text-heading">{row.investor.name}</td>
-                <td className={`py-xs pr-md ${row.unsure ? "text-warning" : "text-secondary"}`}>{describeDecision(row)}</td>
+                <td className={`py-xs pr-md ${row.unsure ? "text-warning" : "text-secondary"}`}>
+                  {describeDecision(row)}
+                  {row.decision?.website || row.firmWeb || row.investor.website ? (
+                    <span className="block">
+                      <Site url={row.decision?.website || row.firmWeb || row.investor.website} />
+                    </span>
+                  ) : null}
+                </td>
                 <td className="py-xs pr-md text-secondary">{BUCKET_LABEL[row.bucket]}</td>
                 <td className="py-xs text-right">
                   <button type="button" disabled={busy || locked} className={smallButton} onClick={() => onDecide(row.investor.id, { clear: true })}>
