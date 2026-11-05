@@ -377,7 +377,11 @@ export async function findCompetitors(
   const raw = (result.input.competitors ?? []).map((item) => {
     const c = item as Record<string, unknown>;
     const name = typeof c.name === "string" ? c.name : "";
-    const named = !!name && (clientWords.includes(name.toLowerCase()) || f.clientList.some((n) => sameName(n, name)));
+    // Step 3: "client" when the search took it from what the founder said they want (their logged feedback).
+    const named =
+      kind === "comparables"
+        ? c.source === "client"
+        : !!name && (clientWords.includes(name.toLowerCase()) || f.clientList.some((n) => sameName(n, name)));
     return { ...c, source: named ? "client" : "web" };
   });
   const sectorSet = new Map(f.sectorLabels.map((l) => [l.toLowerCase(), l]));
