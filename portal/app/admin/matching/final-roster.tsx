@@ -8,6 +8,8 @@ import { primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/u
 import { BigNumber, Card } from "@/app/admin/matching/dry-match";
 import { SOURCE_LABEL, type AddedCheck, type ExclusionCheck, type RosterCounts, type RosterEntry } from "@/lib/match/roster/core";
 import type { RosterState } from "@/lib/match/roster/server";
+import { sourceTags } from "@/lib/match/plan/core";
+import { ListFilterBar, useListFilter, type FilterDef } from "@/components/list-filter";
 
 const n = (value: number) => value.toLocaleString("en-US");
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -123,6 +125,44 @@ function ExclusionTable({ exclusions }: { exclusions: ExclusionCheck[] }) {
   );
 }
 
+const ROSTER_FILTERS: FilterDef<RosterEntry>[] = [{ key: "source", label: "Source", values: (e) => sourceTags(e) }];
+const rosterName = (e: RosterEntry) => e.name;
+
+/** The Roster itself: search with suggestions, and the Source filter. */
+function RosterList({ entries }: { entries: RosterEntry[] }) {
+  const list = useListFilter(entries, rosterName, ROSTER_FILTERS);
+  return (
+    <div>
+      <ListFilterBar list={list} label="Investor" noun="investors" />
+      <div className="max-h-[480px] overflow-auto">
+        <table className="w-full text-left text-body-sm">
+          <thead className="sticky top-0 bg-surface text-label uppercase tracking-label text-muted">
+            <tr>
+              <th className="py-xs pr-md font-medium">#</th>
+              <th className="py-xs pr-md font-medium">Investor</th>
+              <th className="py-xs pr-md font-medium">Source</th>
+              <th className="py-xs pr-md font-medium">Backed a competitor</th>
+              <th className="py-xs font-medium">Backed a company like the client</th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.shown.map(({ row: e, i }) => (
+              <tr key={e.firmId} className="border-t border-border">
+                <td className="py-xs pr-md text-muted">{i + 1}</td>
+                <td className="py-xs pr-md text-heading">{e.name}</td>
+                <td className="py-xs pr-md text-secondary">{sourceTags(e).join(", ")}</td>
+                <td className="py-xs pr-md text-success">{e.backed.join(", ")}</td>
+                <td className="py-xs text-secondary">{(e.comparables ?? []).join(", ")}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {!list.shown.length ? <p className="py-sm text-body-sm text-muted">No match.</p> : null}
+      </div>
+    </div>
+  );
+}
+
 /** Step 4: The Final Roster. */
 export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { clientId: string; clientName: string; refreshKey: number; onChanged?: () => void }) {
   const [state, setState] = useState<RosterState | null>(null);
@@ -167,30 +207,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
       {open === key ? <div className="mt-xs">{body}</div> : null}
     </div>
   );
-  const listTable = (entries: RosterEntry[]) => (
-    <div className="max-h-[480px] overflow-auto">
-      <table className="w-full text-left text-body-sm">
-        <thead className="sticky top-0 bg-surface text-label uppercase tracking-label text-muted">
-          <tr>
-            <th className="py-xs pr-md font-medium">#</th>
-            <th className="py-xs pr-md font-medium">Investor</th>
-            <th className="py-xs pr-md font-medium">Source</th>
-            <th className="py-xs font-medium">Backed a competitor</th>
-          </tr>
-        </thead>
-        <tbody>
-          {entries.map((e, i) => (
-            <tr key={e.firmId} className="border-t border-border">
-              <td className="py-xs pr-md text-muted">{i + 1}</td>
-              <td className="py-xs pr-md text-heading">{e.name}</td>
-              <td className="py-xs pr-md text-secondary">{SOURCE_LABEL[e.source]}</td>
-              <td className="py-xs text-success">{e.backed.join(", ")}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  );
+  const listTable = (entries: RosterEntry[]) => <RosterList entries={entries} />;
 
   const { fill, options } = state;
   const fillCard = fill.length ? (

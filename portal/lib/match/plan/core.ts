@@ -16,6 +16,27 @@ export type PlanTier = (typeof PLAN_TIERS)[number];
 /** outside: same sector, other sub-sectors only. none: nothing the tiers look at (e.g. no sub-sector listed). */
 export type Placement = PlanTier | "outside" | "none";
 
+/**
+ * Where an investor on the Roster came from, as filter tags (an investor can have several):
+ * the Dry Match (Step 1), backing a competitor (Step 2), backing a company like the client
+ * (Step 3), named by the client, or added by Rupert. `source` is the Roster source, as its
+ * code (dry, brought_back, added) or its label (Dry Match, Brought back, Added).
+ */
+export function sourceTags(
+  f: { source: string; backed?: string[]; comparables?: string[]; clientNamed?: boolean },
+  named = "Named by the client",
+): string[] {
+  const s = f.source.toLowerCase();
+  const tags = [
+    ...(s === "dry" || s === "dry match" ? ["Dry Match"] : []),
+    ...(f.backed?.length ? ["Competitors"] : []),
+    ...(f.comparables?.length ? ["Companies Like You"] : []),
+    ...(f.clientNamed ? [named] : []),
+    ...(s === "added" ? ["Added by Rupert"] : []),
+  ];
+  return tags.length ? tags : ["Brought back"];
+}
+
 /** The investor's type, short: from the Fund Database's "Type of Firm", or the kind of an added investor. */
 export function investorType(firmType: string | undefined, addedKind: "fund" | "angel" | null | undefined): string {
   const t = (firmType ?? "").toLowerCase();

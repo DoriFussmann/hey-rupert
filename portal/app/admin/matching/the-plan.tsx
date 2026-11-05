@@ -16,6 +16,7 @@ import {
   planCapacity,
   planInputProblems,
   rankFunds,
+  sourceTags,
   waterfall,
   type PlanFund,
   type PlanInputs,
@@ -23,6 +24,7 @@ import {
   type Waterfall,
 } from "@/lib/match/plan/core";
 import type { PlanState, SubSectorView } from "@/lib/match/plan/server";
+import { ListFilterBar, useListFilter, type FilterDef } from "@/components/list-filter";
 
 const n = (value: number) => value.toLocaleString("en-US");
 const when = (iso: string) => new Date(iso).toLocaleString("en-US", { dateStyle: "medium", timeStyle: "short" });
@@ -120,9 +122,20 @@ function WaterfallTable({ w }: { w: Waterfall }) {
   );
 }
 
+const PLAN_FILTERS: FilterDef<PlanFund>[] = [
+  { key: "type", label: "Type", values: (f) => (f.type ? [f.type] : []) },
+  { key: "tier", label: "Tier", values: (f) => [TIER_LABEL[f.tier]] },
+  { key: "source", label: "Source", values: (f) => sourceTags(f) },
+];
+const fundName = (f: PlanFund) => f.name;
+
+/** A list of funds: search with suggestions, and Type, Tier and Source filters. */
 function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, number> }) {
+  const list = useListFilter(funds, fundName, PLAN_FILTERS);
   if (!funds.length) return <p className="text-body-sm text-muted">None.</p>;
   return (
+    <div>
+    <ListFilterBar list={list} label="Investor" noun="funds" />
     <div className="max-h-[480px] overflow-auto">
       <table className="w-full text-left text-body-sm">
         <thead className="sticky top-0 bg-surface text-label uppercase tracking-label text-muted">
@@ -130,6 +143,8 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
             <th className="py-xs pr-md font-medium">Tier</th>
             <th className="py-xs pr-md font-medium">#</th>
             <th className="py-xs pr-md font-medium">Investor</th>
+            <th className="py-xs pr-md font-medium">Type</th>
+            <th className="py-xs pr-md font-medium">Source</th>
             <th className="py-xs pr-md font-medium">Matched on</th>
             <th className="py-xs pr-md font-medium">Backed a competitor</th>
             <th className="py-xs pr-md text-right font-medium">Look-alike</th>
@@ -138,11 +153,13 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
           </tr>
         </thead>
         <tbody>
-          {funds.map((f) => (
+          {list.shown.map(({ row: f }) => (
             <tr key={f.firmId} className="border-t border-border">
               <td className="py-xs pr-md text-secondary">{TIER_LABEL[f.tier]}</td>
               <td className="py-xs pr-md text-muted">{f.rank || "–"}</td>
               <td className="py-xs pr-md text-heading">{f.name}</td>
+              <td className="py-xs pr-md text-secondary">{f.type ?? ""}</td>
+              <td className="py-xs pr-md text-secondary">{sourceTags(f).join(", ")}</td>
               <td className="py-xs pr-md text-secondary">{f.hit.join(", ")}</td>
               <td className="py-xs pr-md text-success">
                 {f.backed.join(", ")}
@@ -157,6 +174,8 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
           ))}
         </tbody>
       </table>
+      {!list.shown.length ? <p className="py-sm text-body-sm text-muted">No match.</p> : null}
+    </div>
     </div>
   );
 }

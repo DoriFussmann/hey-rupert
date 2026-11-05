@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { indexTaxonomy, type TaxEdge, type TaxNode } from "../../taxonomy/core.ts";
-import { PLAN_DEFAULTS, sameStage, above, covered, placeFund, planCapacity, planInputProblems, tierKeys, tierRoster, waterfall, type RankInput } from "./core.ts";
+import { PLAN_DEFAULTS, sameStage, above, covered, placeFund, planCapacity, planInputProblems, sourceTags, tierKeys, tierRoster, waterfall, type RankInput } from "./core.ts";
 
 function node(id: string, kind: string, parentId: string | null, granularity?: "broad" | "specific"): TaxNode {
   return { id, dimension: "sector", label: id.replace("sector.", ""), parentId, kind, description: "", synonyms: [], attrs: granularity ? { granularity } : {}, status: "active", sort: 0 };
@@ -110,4 +110,12 @@ test("Step 3 signal ranks after competitor backers and before look-alike", () =>
     fund("backer", ["sector.fintech", "sector.insurtech", "sector.ai_ml"], { backed: ["Monk"] }),
   ], profile, 2).filter((f) => f.tier === "core");
   assert.deepEqual(ranked.map((f) => f.firmId), ["backer", "comparable", "named", "lookalike"]);
+});
+
+test("sourceTags: every source an investor has, as filter tags", () => {
+  assert.deepEqual(sourceTags({ source: "Dry Match", backed: ["Acme"], comparables: [], clientNamed: false }), ["Dry Match", "Competitors"]);
+  assert.deepEqual(sourceTags({ source: "dry" }), ["Dry Match"]);
+  assert.deepEqual(sourceTags({ source: "brought_back", comparables: ["Beta"], clientNamed: true }, "Named by you"), ["Companies Like You", "Named by you"]);
+  assert.deepEqual(sourceTags({ source: "Added" }), ["Added by Rupert"]);
+  assert.deepEqual(sourceTags({ source: "Brought back" }), ["Brought back"]);
 });

@@ -9,7 +9,7 @@ import { KIND_LABEL, type Investor } from "../landscape/investors.ts";
 import { countryFromHq, type Competitor } from "../landscape/core.ts";
 import type { CheckRow } from "../landscape/check.ts";
 import type { RosterCounts } from "../roster/core.ts";
-import { TIER_LABEL, waterfall, type PlanFund, type PlanInputs, type Planned } from "../plan/core.ts";
+import { TIER_LABEL, sourceTags, waterfall, type PlanFund, type PlanInputs, type Planned } from "../plan/core.ts";
 
 export type Cell = string | number | { text: string; href: string };
 /** filter: the table can be filtered by this column (a cell may hold several values, ", " between). */
@@ -147,14 +147,8 @@ function backingDetails(i: Investor): Cell[] {
   return i.backed.map((b) => (b.sourceUrl ? { text: backingLine(b), href: b.sourceUrl } : backingLine(b)));
 }
 
-/** How an investor is tied to the client, as filterable tags. */
-function connection(f: { backed?: string[]; comparables?: string[]; clientNamed?: boolean }) {
-  return [
-    ...(f.backed?.length ? ["Backed a competitor"] : []),
-    ...(f.comparables?.length ? ["Backed a company like you"] : []),
-    ...(f.clientNamed ? ["Named by you"] : []),
-  ].join(", ");
-}
+/** Where the investor came from, as filterable tags (the client's view). */
+const sources = (f: Parameters<typeof sourceTags>[0]) => sourceTags(f, "Named by you").join(", ");
 
 /** Every investor on the Final Roster, best placed first, with whether it is in the plan. */
 function rosterList(plan: MatchingInputs["plan"]): SummaryTable {
@@ -174,7 +168,7 @@ function rosterList(plan: MatchingInputs["plan"]): SummaryTable {
       { key: "name", label: "Investor" },
       { key: "type", label: "Type", filter: true },
       { key: "tier", label: "Tier", filter: true },
-      { key: "connection", label: "Connection", filter: true },
+      { key: "source", label: "Source", filter: true },
       { key: "contacts", label: "Contacts", align: "right" },
       { key: "plan", label: "In the plan", filter: true },
     ],
@@ -182,12 +176,13 @@ function rosterList(plan: MatchingInputs["plan"]): SummaryTable {
       name: f.name,
       type: f.type ?? "",
       tier: TIER_LABEL[f.tier],
-      connection: connection(f),
+      source: sources(f),
       contacts: f.contacts,
       plan: inPlan.has(f.firmId) ? "Yes" : "No",
     })),
     details: funds.map((f) => [
       { label: "Type", value: f.type ?? "" },
+      { label: "Source", value: sources(f) },
       { label: "Website", value: f.website ? { text: f.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: f.website } : "" },
       { label: "Tier", value: TIER_LABEL[f.tier] },
       { label: "Matched on", value: f.hit },
@@ -274,13 +269,13 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
           { key: "name", label: "Investor" },
           { key: "type", label: "Type", filter: true },
           { key: "tier", label: "Tier", filter: true },
-          { key: "connection", label: "Connection", filter: true },
+          { key: "source", label: "Source", filter: true },
           { key: "contacts", label: "Contacts", align: "right" },
         ],
         item: "Fund",
         rows: planned.map((p, i) => {
           const f = byId.get(p.firmId);
-          return { i: i + 1, name: f?.name ?? p.firmId, type: f?.type ?? "", tier: TIER_LABEL[p.tier], connection: f ? connection(f) : "", contacts: p.slots };
+          return { i: i + 1, name: f?.name ?? p.firmId, type: f?.type ?? "", tier: TIER_LABEL[p.tier], source: f ? sources(f) : "", contacts: p.slots };
         }),
         details: planned.map((p) => {
           const f = byId.get(p.firmId);
@@ -295,7 +290,7 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
             { label: "Look-alike score", value: f ? f.lookAlike.toFixed(2) : "" },
             { label: "Sub-sectors listed", value: f ? String(f.focus) : "" },
             { label: "Contacts in the plan", value: `${p.slots} of ${f?.contacts ?? p.slots} available` },
-            { label: "Source", value: f?.source ?? "" },
+            { label: "Source", value: f ? sources(f) : "" },
           ];
         }),
       },
