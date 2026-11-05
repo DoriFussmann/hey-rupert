@@ -1,5 +1,6 @@
 "use client";
 
+import { useStepReady } from "@/app/admin/matching/step-order";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { confirmDryMatch, loadDryMatch, startOverDryMatch, type DryFacts, type SavedDryList } from "@/app/admin/dry-match-actions";
 import { DEBT_HALT, DEBT_ONLY_FUNDS, DRY_STEPS, DRY_STEP_LABEL, allFunds, choosesDebt, expandStage, funnel, type DryData, type DryFund, type DryStep } from "@/lib/match/dry/core";
@@ -254,6 +255,8 @@ export function DryMatch({
   useEffect(() => {
     onSavedChange?.(hasSaved);
   }, [hasSaved, onSavedChange]);
+
+  useStepReady(!!data || !!error);
 
   if (error && !data) return <p className="rounded-card border border-error/40 bg-surface px-lg py-md text-body-sm text-error">{error}</p>;
   if (!data) return <p className="text-body-sm text-muted">Loading the Fund Database…</p>;

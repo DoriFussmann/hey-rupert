@@ -1,5 +1,6 @@
 "use client";
 
+import { useStepReady } from "@/app/admin/matching/step-order";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { confirmThePlan, loadThePlan, reopenThePlan } from "@/app/admin/plan-actions";
 import { inputClass, labelClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/match/ui";
@@ -214,6 +215,7 @@ export function ThePlan({
     setState(result.state);
   }
 
+  useStepReady(!!state || !!error);
   const errorLine = error ? <p className="mt-sm whitespace-pre-line text-body-sm text-error">{error}</p> : null;
   if (!state) return error ? errorLine : <p className="text-body-sm text-muted">Loading…</p>;
   if (state.status === "blocked") {

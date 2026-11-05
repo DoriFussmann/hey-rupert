@@ -1,5 +1,6 @@
 "use client";
 
+import { useStepReady } from "@/app/admin/matching/step-order";
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { useCallback, useEffect, useState } from "react";
 import { fillCompetitorSectors, loadLandscape, saveLandscape, showCompetitors, startOverLandscape } from "@/app/admin/landscape-actions";
@@ -403,6 +404,8 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
     setItems(next);
     setDirty(true);
   };
+
+  useStepReady(!stepOneConfirmed || loaded || !!error);
 
   if (!stepOneConfirmed) {
     return <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">Opens once Step 1 is confirmed.</p>;
