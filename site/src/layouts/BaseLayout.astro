@@ -107,7 +107,7 @@ const jsonLdDocument =
           />
           <script
             is:inline
-            set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ANALYTICS_ID.replace(/[^a-zA-Z0-9-]/g, "")}');`}
+            set:html={`window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','${ANALYTICS_ID.replace(/[^a-zA-Z0-9-]/g, "")}');document.addEventListener('click',function(e){var t=e.target;var a=t&&t.closest?t.closest('a[href*="/book-call"]'):null;if(a){gtag('event','cta_book_call_click',{link_text:(a.textContent||'').trim().slice(0,80)});}});`}
           />
         </>
       )
