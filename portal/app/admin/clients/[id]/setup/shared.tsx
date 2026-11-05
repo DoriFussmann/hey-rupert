@@ -2,15 +2,12 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { logClientFeedback, saveFeedbackSummary, settleSetupQuestion } from "@/app/admin/setup-actions";
+import { saveFeedbackSummary, settleSetupQuestion } from "@/app/admin/setup-actions";
 import { formatDate, formatDateAtTime } from "@/lib/format";
 import {
-  FEEDBACK_CHANNELS,
   FEEDBACK_CHANNEL_LABEL,
   NOTE_MAX,
-  QUESTION_MAX,
   isOpenQuestion,
-  type FeedbackChannel,
   questionsOf,
   type SetupDocumentStep,
   type SetupItem,
@@ -240,7 +237,7 @@ function QuestionItem({
             : ""}
       </p>
       {question.via ? (
-        <FeedbackBody clientId={clientId} step={step} question={question} />
+        <FeedbackBody clientId={clientId} question={question} />
       ) : (
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{question.question}</p>
       )}
@@ -289,7 +286,7 @@ function QuestionItem({
 }
 
 /** Logged feedback: the summary (editable; drafting uses it) and the original. */
-function FeedbackBody({ clientId, step, question }: { clientId: string; step: SetupDocumentStep; question: SetupQuestion }) {
+function FeedbackBody({ clientId, question }: { clientId: string; question: SetupQuestion }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [value, setValue] = useState(question.summary ?? "");
@@ -298,7 +295,7 @@ function FeedbackBody({ clientId, step, question }: { clientId: string; step: Se
   async function save() {
     setPending(true);
     setError(null);
-    const result = await saveFeedbackSummary(clientId, step, question.id, value);
+    const result = await saveFeedbackSummary(clientId, question.id, value);
     setPending(false);
     if (!result.ok) return setError(result.error);
     setEditing(false);
@@ -341,82 +338,6 @@ function FeedbackBody({ clientId, step, question }: { clientId: string; step: Se
   );
 }
 
-/** Log client feedback: what they said by email or on a call, added to their thread. */
-function LogFeedback({ clientId, step }: { clientId: string; step: SetupDocumentStep }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [text, setText] = useState("");
-  const [channel, setChannel] = useState<FeedbackChannel>("email");
-  const [on, setOn] = useState(() => new Date().toLocaleDateString("en-CA"));
-  const [pending, setPending] = useState(false);
-  const [message, setMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
-
-  async function save() {
-    setPending(true);
-    setMessage(null);
-    try {
-      const result = await logClientFeedback(clientId, step, { text, channel, on });
-      if (!result.ok) return setMessage({ kind: "error", text: result.error });
-      setText("");
-      setOpen(false);
-      setMessage({ kind: "ok", text: "Logged and summarized. Check the summary below (drafting uses it), then answer it like any question." });
-      router.refresh();
-    } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to save." });
-    } finally {
-      setPending(false);
-    }
-  }
-
-  return (
-    <div className="w-full">
-      {!open ? (
-        <div className="flex justify-end">
-          <button type="button" className={secondaryButton} onClick={() => setOpen(true)}>
-            Log client feedback
-          </button>
-        </div>
-      ) : (
-        <div className="mt-sm rounded-md border border-border bg-background px-md py-sm">
-          <p className="text-body-sm text-secondary">
-            Something they said outside the portal. It joins their thread, marked with how and when; nothing is emailed.
-          </p>
-          <textarea
-            className={`${inputClass} mt-sm min-h-[120px] resize-y normal-case tracking-normal`}
-            value={text}
-            maxLength={QUESTION_MAX}
-            placeholder="Paste their email, or summarize the call."
-            onChange={(event) => setText(event.target.value)}
-          />
-          <div className="mt-sm flex flex-wrap items-end gap-sm">
-            <label className="block text-label uppercase tracking-label text-muted">
-              How
-              <select className={`${inputClass} mt-xs w-auto normal-case tracking-normal`} value={channel} onChange={(e) => setChannel(e.target.value as FeedbackChannel)}>
-                {FEEDBACK_CHANNELS.map((c) => (
-                  <option key={c} value={c}>
-                    {FEEDBACK_CHANNEL_LABEL[c]}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="block text-label uppercase tracking-label text-muted">
-              When
-              <input type="date" className={`${inputClass} mt-xs w-auto normal-case tracking-normal`} value={on} onChange={(e) => setOn(e.target.value)} />
-            </label>
-            <button type="button" className={primaryButton} disabled={pending || !text.trim()} onClick={() => void save()}>
-              {pending ? "Saving…" : "Log it"}
-            </button>
-            <button type="button" className={secondaryButton} disabled={pending} onClick={() => setOpen(false)}>
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
-      {message ? <p className={`mt-xs text-body-sm ${message.kind === "ok" ? "text-success" : "text-error"}`}>{message.text}</p> : null}
-    </div>
-  );
-}
-
 /**
  * The client's questions on a review step, newest first: answer one (they
  * are emailed) or mark it resolved. Answering never changes the turn.
@@ -431,24 +352,18 @@ export function ClientQuestions({
   row: SetupStepState | null;
 }) {
   const questions = [...questionsOf(row)].reverse();
+  if (questions.length === 0) return null;
   const openCount = questions.filter(isOpenQuestion).length;
-  const canLog = Boolean(row && row.version > 0);
-  if (questions.length === 0 && !canLog) return null;
   return (
     <section className="mx-lg mt-md">
-      <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <p className="text-label uppercase tracking-label text-muted">
-          Client questions and feedback{openCount > 0 ? ` · ${openCount} waiting for you` : ""}
-        </p>
-        {canLog ? <LogFeedback clientId={clientId} step={step} /> : null}
-      </div>
-      {questions.length ? (
-        <ul className="mt-sm space-y-sm">
-          {questions.map((question) => (
-            <QuestionItem key={question.id} clientId={clientId} step={step} question={question} />
-          ))}
-        </ul>
-      ) : null}
+      <p className="text-label uppercase tracking-label text-muted">
+        Client questions and feedback{openCount > 0 ? ` · ${openCount} waiting for you` : ""}
+      </p>
+      <ul className="mt-sm space-y-sm">
+        {questions.map((question) => (
+          <QuestionItem key={question.id} clientId={clientId} step={step} question={question} />
+        ))}
+      </ul>
     </section>
   );
 }

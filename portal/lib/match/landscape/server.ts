@@ -14,6 +14,8 @@ import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addFund, addedForLandscape } from "@/lib/match/added/server";
 import { lookAlikes } from "./lookalike.ts";
 import type { LandscapeKind } from "./kind.ts";
+import { loadClientFeedback } from "@/lib/client-feedback-server";
+import { feedbackText } from "@/lib/client-feedback";
 
 export type { LandscapeKind };
 
@@ -204,6 +206,9 @@ async function companyFacts(supabase: ServiceClient, clientId: string): Promise<
 
 /** What the founder told Rupert outside the portal about the investors they want (logged feedback summaries, any step). */
 async function founderTargeting(supabase: ServiceClient, clientId: string): Promise<string> {
+  const logged = await loadClientFeedback(supabase, clientId);
+  if (logged.ok && logged.value.length) return feedbackText(logged.value);
+  // Before the client feedback table: feedback logged on a step's thread.
   const { data } = await supabase.from("setup_steps").select("published").eq("client_id", clientId);
   const lines: string[] = [];
   for (const row of (data ?? []) as { published: Record<string, unknown> | null }[]) {

@@ -11,6 +11,8 @@ import { GenerateStatementOfWork } from "@/app/admin/clients/[id]/generate-sow";
 import { GenerateServiceOrder } from "@/app/admin/clients/[id]/generate-service-order";
 import { GenerateNda } from "@/app/admin/clients/[id]/generate-nda";
 import { IntakePanel } from "@/app/admin/clients/[id]/intake-panel";
+import { ClientFeedbackPanel } from "@/app/admin/clients/[id]/client-feedback-panel";
+import { loadClientFeedback } from "@/lib/client-feedback-server";
 import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-card";
 import { CompanyMaterialsCard } from "@/app/admin/clients/[id]/company-materials-card";
 import { ReanalyzeBanner } from "@/app/admin/clients/[id]/reanalyze-banner";
@@ -105,7 +107,7 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel, matchProfile] =
+  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel, matchProfile, feedback] =
     await Promise.all([
       listSowSends(client.id),
       listServiceOrderSends(client.id),
@@ -115,6 +117,7 @@ export default async function ClientDetailPage({
       getIntakeSettings(),
       loadEmailPanel(client.id),
       loadMatchProfile(client.id),
+      isServiceRoleConfigured() ? loadClientFeedback(createServiceClient(), client.id) : Promise.resolve({ ok: true as const, value: [] }),
     ]);
 
   const kickedOffAt = kickoffDate(client);
@@ -413,6 +416,7 @@ export default async function ClientDetailPage({
       {alsoYoursPanels.map((panel) => (
         <Fragment key={panel.key}>{panel.node}</Fragment>
       ))}
+      {client.nda_signed_at ? <ClientFeedbackPanel clientId={client.id} items={feedback.ok ? feedback.value : []} /> : null}
       {completedPanels.length > 0 ? (
         <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
           {completedPanels.map((panel) => (

@@ -14,6 +14,11 @@ import { notifyClient } from "@/lib/notify";
 import { coreReadiness } from "@/lib/outreach/progress-server";
 import { copyTierOf } from "@/lib/outreach/copy";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { FEEDBACK_ABOUT, type FeedbackAbout } from "@/lib/client-feedback";
+import { deleteClientFeedback, insertClientFeedback, updateFeedbackSummary } from "@/lib/client-feedback-server";
+
+/** The longest feedback that can be logged (a long email). The step thread keeps the first QUESTION_MAX characters. */
+const FEEDBACK_MAX = 12_000;
 import type { EmailResult } from "@/lib/email";
 import { isHttpUrl } from "@/lib/material-fields";
 import {
@@ -42,6 +47,7 @@ import {
   FEEDBACK_CHANNELS,
   QUESTION_MAX,
   type FeedbackChannel,
+  type SetupQuestion,
   setupFilesFolder,
   withPublishedQuestions,
   type ClientEmailDraft,
@@ -541,50 +547,55 @@ export async function settleSetupQuestion(
 
 /**
  * Log client feedback: what the client said outside the portal (an email, a
- * call), added to the step's thread for them, marked with how and when.
- * Answer it like any question. It never changes the turn and emails nobody.
+ * call), with the AI's summary, kept for the client (What Rupert Knows) and
+ * used by drafting and the Step 3 search. About a step the client has open, it
+ * also joins that step's thread (same id), to be answered there. Emails nobody.
  */
 export async function logClientFeedback(
   clientId: string,
-  step: SetupDocumentStep,
-  input: { text: string; channel: string; on: string },
+  input: { text: string; channel: string; on: string; about: string },
 ): Promise<AdminSetupResult> {
   const access = await requireAdmin();
   if (!access.ok) return access;
-  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
   const text = String(input?.text ?? "").trim();
   if (!text) return { ok: false, error: "Paste or summarize what they said first." };
-  if (text.length > QUESTION_MAX) return { ok: false, error: `Keep it under ${QUESTION_MAX} characters (summarize the rest).` };
+  if (text.length > FEEDBACK_MAX) return { ok: false, error: `Keep it under ${FEEDBACK_MAX.toLocaleString("en-US")} characters (summarize the rest).` };
   const channel = FEEDBACK_CHANNELS.includes(input?.channel as FeedbackChannel) ? (input.channel as FeedbackChannel) : null;
   if (!channel) return { ok: false, error: "Pick how they sent it." };
   const on = String(input?.on ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(on) || Number.isNaN(new Date(on).getTime())) return { ok: false, error: "Pick the date." };
+  const about = (FEEDBACK_ABOUT as readonly string[]).includes(input?.about) ? (input.about as FeedbackAbout) : "general";
 
   // The AI's summary, which drafting uses; the original is kept. Without Claude (or on a failure) it is logged without one.
-  const summarized = isClaudeConfigured() ? await summarizeClientFeedback(access.supabase, clientId, STEP_LABEL[step], text) : null;
-  const summary = summarized?.ok ? summarized.value : undefined;
+  const summarized = isClaudeConfigured()
+    ? await summarizeClientFeedback(access.supabase, clientId, about === "general" ? "the client's raise in general" : STEP_LABEL[about], text)
+    : null;
+  const summary = summarized?.ok ? summarized.value : null;
+  const id = crypto.randomUUID();
+  const saved = await insertClientFeedback(access.supabase, clientId, { id, about, channel, on, original: text, summary, by: access.email });
+  if (!saved.ok) return saved;
 
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const loaded = await loadSetupStep(access.supabase, clientId, step);
-    if (!loaded.ok) return loaded;
-    const row = loaded.row;
-    if (!row || row.version < 1) return { ok: false, error: "Send this step to the client first: feedback is logged on the version they have." };
-    const added = addQuestion(questionsOf(row), {
-      id: crypto.randomUUID(),
-      question: text,
-      at: nowIso(),
-      version: row.version,
-      via: { channel, on, ...(access.email ? { by: access.email } : {}) },
-      ...(summary ? { summary } : {}),
-    });
-    if (!added.ok) return added;
-    const saved = await saveQuestions(access.supabase, row, added.questions);
-    if (!saved.ok) return saved;
-    if (!saved.saved) continue;
-    revalidateSetup(clientId);
-    return { ok: true };
+  // About a step the client has: also in its thread, to answer there.
+  if (about !== "general") {
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      const loaded = await loadSetupStep(access.supabase, clientId, about);
+      if (!loaded.ok || !loaded.row || loaded.row.version < 1) break;
+      const added = addQuestion(questionsOf(loaded.row), {
+        id,
+        question: text.slice(0, QUESTION_MAX),
+        at: nowIso(),
+        version: loaded.row.version,
+        via: { channel, on, ...(access.email ? { by: access.email } : {}) },
+        ...(summary ? { summary } : {}),
+      });
+      if (!added.ok) break;
+      const put = await saveQuestions(access.supabase, loaded.row, added.questions);
+      if (!put.ok || put.saved) break;
+    }
   }
-  return { ok: false, error: "The step changed meanwhile. Refresh and try again." };
+  revalidateSetup(clientId);
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true };
 }
 
 const STEP_LABEL: Record<SetupDocumentStep, string> = {
@@ -593,32 +604,46 @@ const STEP_LABEL: Record<SetupDocumentStep, string> = {
   email_copy: "the outreach email copy",
 };
 
-/** Rupert's edit of a logged feedback's summary (the original never changes). */
-export async function saveFeedbackSummary(clientId: string, step: SetupDocumentStep, questionId: string, summary: string): Promise<AdminSetupResult> {
+/** Rupert's edit of a feedback's summary (the original never changes), wherever it shows. */
+export async function saveFeedbackSummary(clientId: string, feedbackId: string, summary: string): Promise<AdminSetupResult> {
   const access = await requireAdmin();
   if (!access.ok) return access;
-  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
-  const textValue = String(summary ?? "").trim();
-  if (textValue.length > NOTE_MAX) return { ok: false, error: `Keep it under ${NOTE_MAX} characters.` };
-  for (let attempt = 0; attempt < 2; attempt += 1) {
-    const loaded = await loadSetupStep(access.supabase, clientId, step);
-    if (!loaded.ok) return loaded;
-    const row = loaded.row;
-    const questions = questionsOf(row);
-    if (!row || !questions.some((q) => q.id === questionId && q.via)) return { ok: false, error: "That feedback is no longer here. Refresh the page." };
-    const next = questions.map((q) => {
-      if (q.id !== questionId) return q;
-      const rest = { ...q };
-      delete rest.summary;
-      return textValue ? { ...rest, summary: textValue } : rest;
-    });
-    const saved = await saveQuestions(access.supabase, row, next);
-    if (!saved.ok) return saved;
-    if (!saved.saved) continue;
-    revalidateSetup(clientId);
-    return { ok: true };
+  const value = String(summary ?? "").trim();
+  if (value.length > NOTE_MAX) return { ok: false, error: `Keep it under ${NOTE_MAX} characters.` };
+  const updated = await updateFeedbackSummary(access.supabase, clientId, String(feedbackId), value);
+  if (!updated.ok) return updated;
+  await syncThread(access.supabase, clientId, String(feedbackId), (q) => {
+    const rest = { ...q };
+    delete rest.summary;
+    return value ? { ...rest, summary: value } : rest;
+  });
+  revalidateSetup(clientId);
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true };
+}
+
+/** Removes feedback logged by mistake (and, if still unanswered, from the step's thread). */
+export async function removeClientFeedback(clientId: string, feedbackId: string): Promise<AdminSetupResult> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const done = await deleteClientFeedback(access.supabase, clientId, String(feedbackId));
+  if (!done.ok) return done;
+  await syncThread(access.supabase, clientId, String(feedbackId), (q) => (q.answered_at ? q : null));
+  revalidateSetup(clientId);
+  revalidatePath(`/admin/clients/${clientId}`);
+  return { ok: true };
+}
+
+/** Applies a change to the thread item with this id, in whichever step holds it (null removes it). Best effort. */
+async function syncThread(supabase: ServiceClient, clientId: string, id: string, change: (q: SetupQuestion) => SetupQuestion | null) {
+  for (const step of ["framing", "investor_list", "email_copy"] as SetupDocumentStep[]) {
+    const loaded = await loadSetupStep(supabase, clientId, step);
+    if (!loaded.ok || !loaded.row) continue;
+    const questions = questionsOf(loaded.row);
+    if (!questions.some((q) => q.id === id)) continue;
+    const next = questions.map((q) => (q.id === id ? change(q) : q)).filter((q): q is SetupQuestion => q !== null);
+    await saveQuestions(supabase, loaded.row, next);
   }
-  return { ok: false, error: "The step changed meanwhile. Refresh and try again." };
 }
 
 // ---------------------------------------------------------------------------

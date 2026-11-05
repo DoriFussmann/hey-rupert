@@ -13,6 +13,8 @@ import { loadLiveState } from "@/lib/outreach/live-server";
 import { fileExtension, formatBytes, websiteHref } from "@/lib/setup";
 import { signFileLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
+import { loadClientFeedback } from "@/lib/client-feedback-server";
+import { feedbackMeta } from "@/lib/client-feedback";
 import { AddFiles } from "./add-files";
 
 const label = "text-label uppercase tracking-label text-muted";
@@ -54,13 +56,16 @@ export default async function WhatRupertKnowsPage({
     rows.find((row) => row.step === "deck_review"),
   );
   const supabase = isServiceRoleConfigured() ? createServiceClient() : null;
-  const [interview, settings, links, serviceOrder, live] = await Promise.all([
+  const [interview, settings, links, serviceOrder, live, feedback] = await Promise.all([
     supabase ? loadInterview(supabase, client.id) : Promise.resolve(null),
     supabase ? loadIntakeSettings(supabase) : Promise.resolve(null),
     supabase && files.length > 0 ? signFileLinks(supabase, files) : Promise.resolve({} as Record<string, string>),
     getActiveServiceOrder(client.id),
     supabase ? loadLiveState(supabase, client.id) : Promise.resolve(null),
+    supabase ? loadClientFeedback(supabase, client.id) : Promise.resolve(null),
   ]);
+  // What they told Rupert since the intake (by email, on a call): Rupert's summaries only.
+  const since = feedback?.ok ? feedback.value.filter((f) => f.summary?.trim()) : [];
   const agreements = agreementRows({
     sowIssued: Boolean(client.statement_of_work_content?.trim()),
     sowConfirmedAt: client.sow_confirmed_at ?? null,
@@ -155,13 +160,15 @@ export default async function WhatRupertKnowsPage({
         <CollapsiblePanel
           title="What You Told Rupert"
           meta={
-            intake
-              ? intake.confirmed
-                ? "The intake summary you confirmed."
-                : "What Rupert noted from your intake conversation."
-              : "Nothing from your intake yet."
+            [
+              intake ? (intake.confirmed ? "The intake summary you confirmed." : "What Rupert noted from your intake conversation.") : "Nothing from your intake yet.",
+              since.length ? `${since.length} more since then.` : "",
+            ]
+              .filter(Boolean)
+              .join(" ")
           }
         >
+          {since.length ? <p className={`${label} mb-xs`}>From your intake</p> : null}
           {intake ? (
             <dl className="-my-sm divide-y divide-border">
               {intake.items.map((item) => (
@@ -174,6 +181,19 @@ export default async function WhatRupertKnowsPage({
           ) : (
             <p className="text-body-sm text-muted">Nothing from your intake yet.</p>
           )}
+          {since.length ? (
+            <div className="mt-lg">
+              <p className={label}>Since then</p>
+              <ul className="mt-xs divide-y divide-border">
+                {since.map((f) => (
+                  <li key={f.id} className="py-md">
+                    <p className="text-body-sm text-muted">{feedbackMeta(f, formatDate, true)}</p>
+                    <p className="mt-xs whitespace-pre-wrap text-body-sm text-body">{f.summary}</p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
           <p className="mt-md">
             <Link href="/portal/intake" className={link}>
               Add or Correct Something

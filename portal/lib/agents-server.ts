@@ -1,4 +1,6 @@
 import "server-only";
+import { loadClientFeedback } from "@/lib/client-feedback-server";
+import { feedbackText } from "@/lib/client-feedback";
 import { loadDeliverables } from "@/lib/match/summary/server";
 import { summaryFactsText } from "@/lib/match/summary/email-facts";
 import type { Summary } from "@/lib/match/summary/core";
@@ -34,7 +36,6 @@ import {
   asNarrative,
   EMAIL_SEQUENCE_LABELS,
   fitTiersFor,
-  questionsOf,
   tierEmails,
   workingNarrative,
   type EmailCopyPayload,
@@ -604,6 +605,7 @@ export async function draftNarrativeEmail(
     clientAsk
       ? `## What Rupert changed\n${narrative.change_summary?.trim() || "(no list: describe the changes only from what the founder asked and what the narrative now says)"}`
       : "",
+    await loggedFeedbackText(supabase, clientId, "framing"),
     narrative.feedback
       ? `# Company Materials Feedback sent with it (Rupert's edited version; the founder reads it, nothing to confirm)\n${feedbackContext(company.rows, narrative.feedback)}`
       : "",
@@ -678,14 +680,12 @@ export async function draftInvestorListEmail(
   return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
-/** Feedback the founder gave outside the portal, as Rupert summarized it, for drafting. */
-function loggedFeedbackText(row: SetupStepState | null | undefined) {
-  const logged = questionsOf(row).filter((q) => q.via);
-  if (!logged.length) return "";
-  return [
-    "## What the founder told Rupert outside the portal (Rupert's summary; acknowledge it briefly and say how it was used, only from what Rupert's note and the facts say)",
-    ...logged.map((q) => `- ${q.via!.on}: ${(q.summary || q.question).replace(/\n+/g, " ")}`),
-  ].join("\n");
+/** Feedback the founder gave outside the portal (general, and about this step), as Rupert summarized it, for drafting. */
+async function loggedFeedbackText(supabase: ServiceClient, clientId: string, step: "framing" | "investor_list" | "email_copy") {
+  const logged = await loadClientFeedback(supabase, clientId);
+  const text = logged.ok ? feedbackText(logged.value, ["general", step]) : "";
+  if (!text) return "";
+  return `## What the founder told Rupert outside the portal (Rupert's summaries; take it into account, and acknowledge it briefly only where Rupert's note or the facts say how it was used)\n${text}`;
 }
 
 /** The founder email for the new matching, from the pushed Matching Summary and Competitive Landscape Overview. */
@@ -713,7 +713,7 @@ async function draftMatchingSummaryEmail(
     summaryFactsText(matching, landscape),
     adminNote.trim() ? `## Rupert's note to the founder (shown on their page)\n${adminNote.trim()}` : "",
     clientAsk ? `## What the founder asked about the previous version\n${clientAsk}` : "",
-    loggedFeedbackText(listRow),
+    await loggedFeedbackText(supabase, clientId, "investor_list"),
     "# Company information (context only)",
     company.text,
   ]
@@ -791,6 +791,7 @@ export async function draftEmailCopyEmail(
     copyText,
     list ? `# Investor list (types and counts only)\n${listBrief(list)}` : "",
     clientAsk ? `## What the founder asked to change in the previous version\n${clientAsk}` : "",
+    await loggedFeedbackText(supabase, clientId, "email_copy"),
     "# Company information (context only)",
     company.text,
   ]
