@@ -98,6 +98,10 @@ test("waterfall: Core in full first, then the next tiers, until the budget runs 
   const all = waterfall(funds, 100, 2);
   assert.equal(all.plannedContacts, 9);
   assert.equal(all.unused, 91);
+  // No cap (0): every contact at each fund.
+  const uncapped = waterfall(funds, 100, 0);
+  assert.equal(uncapped.plannedContacts, 10);
+  assert.deepEqual(planInputProblems({ ...PLAN_DEFAULTS, contactsPerFund: 0 }), []);
 });
 
 test("Step 3 signal ranks after competitor backers and before look-alike", () => {

@@ -233,8 +233,11 @@ export const clientPriority = (f: { comparables?: string[]; clientNamed?: boolea
  * client, or backed a comparable company), then look-alike, focus, contacts
  * (2 before 1), then name.
  */
+/** The cap as a number to compare with: 0 means no cap. */
+export const capOf = (cap: number) => (cap > 0 ? cap : Number.POSITIVE_INFINITY);
+
 export function compareFunds(a: PlanFund, b: PlanFund, cap: number) {
-  const reach = (f: PlanFund) => Math.min(f.contacts, cap);
+  const reach = (f: PlanFund) => Math.min(f.contacts, capOf(cap));
   return (
     Number(b.sameStage.length > 0) - Number(a.sameStage.length > 0) ||
     Number(b.backed.length > 0) - Number(a.backed.length > 0) ||
@@ -303,7 +306,7 @@ export type PlanInputs = {
   followUps: number;
   /** Calendar days between one email and the next. */
   followUpDelayDays: number;
-  /** Contacts emailed per fund, at most. */
+  /** Contacts emailed per fund, at most. 0: no cap (every usable contact). */
   contactsPerFund: number;
   months: number;
 };
@@ -328,7 +331,7 @@ export const PLAN_LIMITS: Record<keyof PlanInputs, { min: number; max: number; l
   warmupPercent: { min: 0, max: 100, label: "Warm-up capacity (%)", hint: "One percentage for the whole warm-up." },
   followUps: { min: 0, max: 5, label: "Follow-ups per contact", hint: "1 = two emails." },
   followUpDelayDays: { min: 1, max: 30, label: "Days between email and follow-up", hint: "Calendar days. 7 = 5 working days." },
-  contactsPerFund: { min: 1, max: 5, label: "Contacts per fund (cap)" },
+  contactsPerFund: { min: 0, max: 20, label: "Contacts per fund (cap)", hint: "Off: every usable contact at each fund." },
   months: { min: 1, max: 12, label: "Campaign length (months)" },
 };
 
@@ -420,7 +423,8 @@ export type Waterfall = {
   partial: string | null;
 };
 
-export function waterfall(funds: PlanFund[], budget: number, cap: number): Waterfall {
+export function waterfall(funds: PlanFund[], budget: number, capInput: number): Waterfall {
+  const cap = capOf(capInput);
   let left = Math.max(0, budget);
   const planned: Planned[] = [];
   let partial: string | null = null;

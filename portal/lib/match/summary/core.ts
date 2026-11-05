@@ -243,7 +243,7 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
     button: "Step 5",
     title: "The Plan",
     headline: { value: w.plannedContacts, label: `Contacts at ${n(w.plannedFunds)} funds` },
-    line: `${inputs.inboxes} ${inputs.inboxes === 1 ? "inbox" : "inboxes"} · ${months} · ${1 + inputs.followUps} emails per contact · up to ${inputs.contactsPerFund} contacts per fund`,
+    line: `${inputs.inboxes} ${inputs.inboxes === 1 ? "inbox" : "inboxes"} · ${months} · ${1 + inputs.followUps} emails per contact · ${inputs.contactsPerFund > 0 ? `up to ${inputs.contactsPerFund} contacts per fund` : "every usable contact at each fund"}`,
     tables: [
       {
         columns: [

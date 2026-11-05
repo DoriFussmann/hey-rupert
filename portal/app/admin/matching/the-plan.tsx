@@ -224,7 +224,8 @@ export function ThePlan({
   const inputs = useMemo(() => toInputs(boxes), [boxes]);
   const problems = useMemo(() => planInputProblems(inputs), [inputs]);
   const capacity = useMemo(() => (problems.length ? null : planCapacity(inputs)), [inputs, problems.length]);
-  const cap = Number.isInteger(inputs.contactsPerFund) && inputs.contactsPerFund > 0 ? inputs.contactsPerFund : 2;
+  // 0: no cap (every usable contact at each fund).
+  const cap = Number.isInteger(inputs.contactsPerFund) && inputs.contactsPerFund >= 0 ? inputs.contactsPerFund : 2;
   const funds = useMemo(() => (state?.status === "ready" ? rankFunds(state.funds, cap) : []), [state, cap]);
   const w = useMemo(() => waterfall(funds, capacity?.contacts ?? 0, cap), [funds, capacity, cap]);
 
@@ -339,7 +340,7 @@ export function ThePlan({
           priorities (Step 3): named by the client, or backed a comparable company. 4. Look-alike score: resemblance to{" "}
           {state.seedsBasis === "same_stage" ? "the same-stage backers" : `every competitor investor (fewer than ${SAME_STAGE_SEEDS_MIN} backed one at the client's stage)`}
           {state.profile.length ? `, led by ${state.profile.slice(0, 3).map((p) => `${p.sector} ${Math.round(p.share * 100)}%`).join(", ")}` : ""}. 5. Focus: fewer
-          sub-sectors listed ranks higher. 6. Contacts available: 2 before 1.
+          sub-sectors listed ranks higher. 6. Contacts available: more before fewer (up to the cap).
         </p>
         <p className="mt-xs text-body-sm text-secondary">
           Funds with no contact are not used: {n(l.noContact.length)} in the tiers.
@@ -351,7 +352,32 @@ export function ThePlan({
       <Card tone="final">
         <h3 className="text-h4 text-heading">5C. Capacity and the Final Outreach Roster</h3>
         <div className="mt-sm grid gap-md sm:grid-cols-3">
-          {PLAN_INPUT_KEYS.map((key) => (
+          {PLAN_INPUT_KEYS.map((key) =>
+            key === "contactsPerFund" ? (
+              <div key={key} className="block">
+                <label className="flex items-center gap-xs">
+                  <input
+                    type="checkbox"
+                    className="accent-primary"
+                    checked={boxes[key] !== "0"}
+                    onChange={(e) => setBoxes({ ...boxes, [key]: e.target.checked ? "2" : "0" })}
+                  />
+                  <span className={labelClass}>{PLAN_LIMITS[key].label}</span>
+                </label>
+                {boxes[key] !== "0" ? (
+                  <input
+                    className={`${inputClass} mt-xs`}
+                    inputMode="numeric"
+                    aria-label="Contacts per fund, at most"
+                    value={boxes[key]}
+                    onChange={(e) => setBoxes({ ...boxes, [key]: e.target.value })}
+                  />
+                ) : (
+                  <p className="mt-xs rounded-md border border-border px-sm py-[7px] text-body-sm text-secondary">No cap: every usable contact at each fund.</p>
+                )}
+                <span className="mt-xs block text-body-sm text-muted">{boxes[key] !== "0" ? "Contacts emailed at each fund, at most (1–20)." : "Tick to cap it."}</span>
+              </div>
+            ) : (
             <label key={key} className="block">
               <span className={labelClass}>{PLAN_LIMITS[key].label}</span>
               <input
@@ -365,7 +391,8 @@ export function ThePlan({
                 {PLAN_LIMITS[key].hint ?? ""}
               </span>
             </label>
-          ))}
+            ),
+          )}
         </div>
         {problems.length ? <p className="mt-sm text-body-sm text-error">{problems.join(" ")}</p> : null}
         {capacity ? (
