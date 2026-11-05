@@ -831,7 +831,7 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
     clientSectors,
     competitorSectors,
   });
-  const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0, added: 0 } as Record<Bucket, number>;
+  const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0, added: 0, removed: 0 } as Record<Bucket, number>;
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
@@ -853,6 +853,7 @@ export async function decideInvestor(
     resetMatch?: boolean;
     clear?: boolean;
     unsure?: boolean;
+    removed?: boolean;
   },
   actor: string | null,
   /** A system write (Try and Add to DB found the fund's website in the database), allowed after the check is confirmed. */
@@ -907,6 +908,13 @@ export async function decideInvestor(
     else delete next.unsure;
   }
   if (patch.lesson !== undefined) next.lesson = patch.lesson === true;
+  // Removed as not relevant: settled, nothing else to decide. Restoring brings back what was decided before.
+  if (patch.removed !== undefined) {
+    if (patch.removed) {
+      next.removed = true;
+      delete next.unsure;
+    } else delete next.removed;
+  }
   const { error } = await supabase
     .from("competitor_landscapes")
     .update({ investor_decisions: { ...decisions.value, [investorId]: next }, updated_at: next.at })

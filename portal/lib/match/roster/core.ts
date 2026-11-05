@@ -138,6 +138,7 @@ export function buildRoster(input: {
   const tally = (rows: CheckRow[]) => {
     const by = new Map<string, Set<string>>();
     for (const row of rows) {
+      if (row.bucket === "removed") continue;
       const id = row.firmId ?? row.added?.firmId ?? null;
       if (!id) continue;
       const set = by.get(id) ?? new Set<string>();
@@ -149,7 +150,7 @@ export function buildRoster(input: {
   const backedBy = tally(input.rows);
   const comparablesBy = tally(likeRows);
   const namedByClient = new Set(
-    likeRows.filter((r) => r.investor.clientNamed).map((r) => r.firmId ?? r.added?.firmId ?? null).filter((x): x is string => !!x),
+    likeRows.filter((r) => r.investor.clientNamed && r.bucket !== "removed").map((r) => r.firmId ?? r.added?.firmId ?? null).filter((x): x is string => !!x),
   );
 
   const entries = new Map<string, RosterEntry>();

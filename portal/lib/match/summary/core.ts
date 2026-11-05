@@ -303,7 +303,8 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
  * behind them, and what they added to the client's list. The companies and
  * investors themselves are in the overviews (Competitive / Peers Landscape).
  */
-function layerStep(companies: Competitor[], investors: Investor[], rows: CheckRow[], peers: boolean): SummaryStep {
+function layerStep(companies: Competitor[], allInvestors: Investor[], allRows: CheckRow[], peers: boolean): SummaryStep {
+  const { investors, rows } = withoutRemoved(allInvestors, allRows);
   const count = (f: (r: CheckRow) => boolean) => rows.filter(f).length;
   const inList = count((r) => r.bucket === "in_list");
   const back = count((r) => r.bucket === "not_in_list" && r.action === "bring_back");
@@ -355,8 +356,15 @@ type OverviewInput = {
   outreach: Set<string>;
 };
 
+/** The investors the admin removed as not relevant (Step 2C / 3C) are left out of everything the client sees. */
+function withoutRemoved(investors: Investor[], rows: CheckRow[]) {
+  const gone = new Set(rows.filter((r) => r.bucket === "removed").map((r) => r.investor.id));
+  return { investors: investors.filter((i) => !gone.has(i.id)), rows: rows.filter((r) => r.bucket !== "removed") };
+}
+
 /** The investors tab of an overview: who backed the companies, and whether each is on the outreach list. */
-function overviewInvestors(input: OverviewInput, title: string): SummaryStep {
+function overviewInvestors(all: OverviewInput, title: string): SummaryStep {
+  const input = { ...all, ...withoutRemoved(all.investors, all.rows) };
   const firmOf = new Map(input.rows.map((r) => [r.investor.id, r.firmId ?? r.added?.firmId ?? null]));
   const sorted = [...input.investors].sort((a, b) => b.backed.length - a.backed.length || a.name.localeCompare(b.name));
   const listed = (i: Investor) => {

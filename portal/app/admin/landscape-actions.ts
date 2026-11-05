@@ -180,6 +180,7 @@ export async function decideOnInvestor(
     resetMatch?: boolean;
     clear?: boolean;
     unsure?: boolean;
+    removed?: boolean;
   },
   kind?: unknown,
 ): Promise<Result<{ check: CheckResult }>> {
@@ -195,6 +196,7 @@ export async function decideOnInvestor(
   if (patch?.resetMatch === true) clean.resetMatch = true;
   if (patch?.clear === true) clean.clear = true;
   if (typeof patch?.unsure === "boolean") clean.unsure = patch.unsure;
+  if (typeof patch?.removed === "boolean") clean.removed = patch.removed;
   try {
     const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email, false, asLandscapeKind(kind));
     if (!saved.ok) return { ok: false, error: saved.error };

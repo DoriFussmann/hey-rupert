@@ -143,3 +143,19 @@ test("funds added by hand: on the Roster whatever the filters say, still subject
   );
   assert.equal(roster.exclusions[0].result, "excluded");
 });
+
+test("an investor removed as not relevant: its own group, tags nothing, adds nothing", () => {
+  const removedRows = checkInvestors({
+    investors: [inv("i1", "Alpha Ventures"), inv("i3", "Gamma Partners", "Ramp")],
+    firms,
+    data,
+    steps,
+    shortlist: new Set(["F1", "F2", "F4"]),
+    decisions: { i1: { removed: true, by: null, at: "" }, i3: { removed: true, action: "bring_back", by: null, at: "" } },
+    clientSectors: ["Fintech", "AI/ML"],
+  });
+  assert.deepEqual(removedRows.map((r) => r.bucket), ["removed", "removed"]);
+  const roster = buildRoster({ data, firms, steps, shortlist: ["F1"], rows: removedRows, added: [], clientSectors: ["Fintech"], exclusions: "" });
+  // Alpha stays (it's on the Dry Match list) but no longer tagged as backing Monk; Gamma isn't brought back.
+  assert.deepEqual(roster.entries.map((e) => [e.firmId, e.backed]), [["F1", []]]);
+});

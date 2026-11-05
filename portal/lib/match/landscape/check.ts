@@ -107,6 +107,8 @@ export type InvestorDecision = {
   action?: "bring_back" | "leave_out";
   /** Parked for later: out of the queue, back in the "Not sure" pile. Any real decision clears it. */
   unsure?: boolean;
+  /** Removed by the admin as not relevant: out of this step, the Roster and the client's summaries. */
+  removed?: boolean;
   /** The investor's correct website, from the admin's research. Matching uses it. */
   website?: string;
   /** Why, and whether it is a lesson for Rupert (the database or the taxonomy needs fixing), not just this client. */
@@ -127,12 +129,13 @@ export type WebsiteSuggestion = {
   at: string;
 };
 
-export type Bucket = "confirm" | "in_list" | "not_in_list" | "missing_fund" | "missing_angel" | "added";
+export type Bucket = "confirm" | "in_list" | "not_in_list" | "missing_fund" | "missing_angel" | "added" | "removed";
 
 export const BUCKET_LABEL: Record<Bucket, string> = {
   confirm: "Needs your confirmation",
   in_list: "In the database and the shortlist",
   not_in_list: "In the database, not in the shortlist",
+  removed: "Removed: not relevant",
   missing_fund: "Not in the database: funds",
   missing_angel: "Not in the database: angels",
   added: "Added to the database (Rupert)",
@@ -224,7 +227,8 @@ export function checkInvestors(input: {
     const ownAdded = input.added?.[original.id] ?? null;
     const viaFirm = firmId ? Object.values(input.added ?? {}).find((a) => a.firmId === firmId && a.status !== "rejected") ?? null : null;
     const added = ownAdded && ownAdded.status !== "rejected" ? ownAdded : viaFirm;
-    if (added && added.status !== "rejected") bucket = "added";
+    if (decision?.removed) bucket = "removed";
+    else if (added && added.status !== "rejected") bucket = "added";
     else if (!settled) bucket = "confirm";
     else if (!firmId) bucket = investor.kind === "angel" ? "missing_angel" : "missing_fund";
     else if (input.shortlist.has(firmId)) bucket = "in_list";

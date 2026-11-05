@@ -39,7 +39,7 @@ function Site({ url, label }: { url: string | null | undefined; label?: string }
   );
 }
 
-const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel", "added"];
+const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel", "added", "removed"];
 const TONE: Record<Bucket, string> = {
   confirm: "text-warning",
   in_list: "text-success",
@@ -47,7 +47,27 @@ const TONE: Record<Bucket, string> = {
   missing_fund: "text-heading",
   missing_angel: "text-heading",
   added: "text-success",
+  removed: "text-muted",
 };
+
+/** Removes an investor from this step as not relevant (or restores it). */
+function RemoveButton({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+  return row.bucket === "removed" ? (
+    <button type="button" disabled={busy} className={smallButton} onClick={() => onDecide({ removed: false })}>
+      Restore
+    </button>
+  ) : (
+    <button
+      type="button"
+      disabled={busy}
+      className={`${smallButton} hover:!border-error hover:text-error`}
+      title="Not relevant: out of this step, the Roster and the client's summaries. You can restore it."
+      onClick={() => onDecide({ removed: true })}
+    >
+      Remove: not relevant
+    </button>
+  );
+}
 
 const pct = (part: number, whole: number) => (whole ? `${Math.round((part / whole) * 100)}%` : "–");
 
@@ -186,6 +206,7 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
           >
             {row.unsure ? "Not sure ✓" : "Not sure"}
           </button>
+          <RemoveButton row={row} busy={busy} onDecide={onDecide} />
         </div>
         <textarea
           className={`${inputClass} mt-xs`}
@@ -245,6 +266,7 @@ function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onD
           >
             {row.unsure ? "Not sure ✓ (later)" : "Not sure"}
           </button>
+          <RemoveButton row={row} busy={busy} onDecide={onDecide} />
         </div>
         <div className="mt-sm">
           <p className="mb-xs text-body-sm text-muted">Neither? Give the correct website: it is matched again, and kept for adding it to the database.</p>
@@ -296,7 +318,10 @@ function SimpleRow({
     <tr className="border-t border-border align-top">
       <td className="py-xs pr-md text-heading">
         {row.investor.name}
-        <UndoLink row={row} busy={busy} onDecide={onDecide} />
+        {row.bucket === "removed" ? null : <UndoLink row={row} busy={busy} onDecide={onDecide} />}
+        <div className="mt-xs">
+          <RemoveButton row={row} busy={busy} onDecide={onDecide} />
+        </div>
       </td>
       <td className="py-xs pr-md text-secondary">{KIND_LABEL[row.investor.kind]}</td>
       <td className="py-xs pr-md text-secondary">{backedText(row)}</td>
