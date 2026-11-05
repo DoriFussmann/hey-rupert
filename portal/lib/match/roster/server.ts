@@ -182,11 +182,25 @@ function changes(saved: SavedRoster, now: Roster): string[] {
   const is = ids(now.entries);
   const added = Array.from(is).filter((id) => !was.has(id)).length;
   const removed = Array.from(was).filter((id) => !is.has(id)).length;
-  const retagged = now.entries.filter((e) => was.has(e.firmId) && !before.has(key(e))).length;
+  const savedBy = new Map(saved.entries.map((e) => [e.firmId, e]));
+  const retagged = now.entries.filter((e) => was.has(e.firmId) && !before.has(key(e)));
+  // Why each kept investor changed: its source, the competitors it backed, the peers (Step 3) it backed, or Named by the client.
+  const why = { source: 0, competitors: 0, peers: 0, named: 0 };
+  for (const e of retagged) {
+    const s = savedBy.get(e.firmId)!;
+    if (e.source !== s.source) why.source++;
+    else if (e.backed.join(",") !== s.backed.join(",")) why.competitors++;
+    else if ((e.comparables ?? []).join(",") !== (s.comparables ?? []).join(",")) why.peers++;
+    else why.named++;
+  }
+  const count = (x: number) => `${x.toLocaleString("en-US")} ${x === 1 ? "investor" : "investors"}`;
   const out: string[] = [];
-  if (added) out.push(`${added.toLocaleString("en-US")} ${added === 1 ? "investor" : "investors"} would be added.`);
-  if (removed) out.push(`${removed.toLocaleString("en-US")} would be removed.`);
-  if (retagged) out.push(`${retagged.toLocaleString("en-US")} would change source or competitor tag.`);
+  if (added) out.push(`${count(added)} would be added.`);
+  if (removed) out.push(`${count(removed)} would be removed.`);
+  if (why.source) out.push(`${count(why.source)} would change source.`);
+  if (why.competitors) out.push(`${count(why.competitors)} would change which competitors they backed (Step 2).`);
+  if (why.peers) out.push(`${count(why.peers)} would change their Step 3 tag (backed a company like the client).`);
+  if (why.named) out.push(`${count(why.named)} would change "Named by the client".`);
   const lines = (list: ExclusionCheck[]) => list.map((x) => `${x.line}|${x.result}|${x.firmId ?? ""}`).sort().join("\n");
   if (lines(saved.exclusions) !== lines(now.exclusions)) out.push("The client's exclusions changed.");
   return out.length || before.size === after.size ? out : ["The Roster would change."];
