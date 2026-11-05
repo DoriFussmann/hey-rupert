@@ -137,6 +137,19 @@ function revalidateSetup(clientId: string) {
   revalidatePath("/portal/onboarding");
 }
 
+/**
+ * The investor list draft with the summaries as last pushed from Matching (the
+ * stored draft), never the copy a page sent: a page opened before the last
+ * Push to Client still holds the older summaries.
+ */
+async function withPushedSummaries(supabase: ServiceClient, clientId: string, draft: unknown): Promise<unknown> {
+  if (!draft || typeof draft !== "object") return draft;
+  const stored = await loadSetupStep(supabase, clientId, "investor_list");
+  if (!stored.ok) return draft;
+  const pushed = asInvestorListDraft(stored.row?.draft).summaries;
+  return pushed ? { ...(draft as Record<string, unknown>), summaries: pushed } : draft;
+}
+
 async function loadState(supabase: ServiceClient, clientId: string) {
   const { data: client, error } = await supabase
     .from("clients")
@@ -244,6 +257,7 @@ export async function saveSetupDraft(
     if (internal) keep = { internal_update: internal };
   }
 
+  if (step === "investor_list") draft = await withPushedSummaries(access.supabase, clientId, draft);
   const at = nowIso();
   const { error } = await access.supabase.from("setup_steps").upsert(
     {
@@ -280,6 +294,7 @@ async function writePush(
   if (!state.ok) return state;
   if (!canPublish(state.source, step)) return { ok: false, error: BLOCKED[step] };
 
+  if (step === "investor_list") draft = await withPushedSummaries(supabase, clientId, draft);
   let payload = normalizeDraft(clientId, step, draft);
   // Email Copy's reply comes with the push; the investor list keeps its own on the draft.
   if (step === "investor_list") {
@@ -460,6 +475,7 @@ export async function draftSetupEmail(
   const row = state.rows.find((item) => item.step === step) ?? null;
   const version = (row?.version ?? 0) + 1;
 
+  if (step === "investor_list") draft = await withPushedSummaries(access.supabase, clientId, draft);
   // The new matching's summaries are written up by Claude (below); lists from the older tools use the fixed letter.
   const withSummaries = step === "investor_list" && Boolean(asInvestorListDraft(draft).summaries);
   if (step === "investor_list" && !(withSummaries && isClaudeConfigured())) {
