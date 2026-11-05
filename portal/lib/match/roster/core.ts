@@ -124,6 +124,8 @@ export function buildRoster(input: {
   likeRows?: CheckRow[];
   /** The investors added from this client's Step 2 and Step 3. */
   added: AddedInput[];
+  /** Funds Rupert added by hand for this client: on the Roster whatever the Step 1 filters say. */
+  manual?: { firmId: string; kind: "fund" | "angel" }[];
   /** The client's sector labels (primary and secondary), for the 2C rule. */
   clientSectors: string[];
   exclusions: string;
@@ -221,6 +223,10 @@ export function buildRoster(input: {
     if (result === "pass" || result === "secondary") {
       if (put(a.firmId, "added", { addedStatus: a.status, kind: a.kind })) addedIn += 1;
     }
+  }
+
+  for (const m of input.manual ?? []) {
+    if (firmById.has(m.firmId) && put(m.firmId, "added", { addedStatus: "approved", kind: m.kind })) addedIn += 1;
   }
 
   // Exclusions: only a clear match (website, or the same name) counts. Anything else is shown and ignored.

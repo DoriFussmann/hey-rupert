@@ -64,7 +64,7 @@ export type AddedContact = {
   /** Hunter's confidence (0–100), when Hunter found the address. */
   confidence: number | null;
   linkedin: string;
-  source: "hunter_domain" | "hunter_finder" | "research";
+  source: "hunter_domain" | "hunter_finder" | "research" | "manual";
 };
 
 export type AddedFund = {

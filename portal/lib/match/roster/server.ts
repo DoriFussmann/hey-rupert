@@ -5,6 +5,7 @@ import { buildDryData, type DryStep } from "@/lib/match/dry/core";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addedForLandscape, dismissSuggestion, skipMissingFields, fillAddedFields, fillItems, labelLists, suggestMissingFields, type FilledFields } from "@/lib/match/added/server";
 import type { AiSuggestion, FillItem } from "@/lib/match/added/core";
+import { manualFunds } from "@/lib/match/added/manual";
 import { checkAgainstDatabase, layerDone } from "@/lib/match/landscape/server";
 import type { CheckRow } from "@/lib/match/landscape/check";
 import { buildRoster, type Roster, type RosterCounts, type RosterEntry, type ExclusionCheck, type AddedCheck } from "./core.ts";
@@ -152,6 +153,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
     rows,
     likeRows,
     added: Object.values(addedFunds).map((f) => ({ id: f.id, firmId: f.firmId, name: f.name, kind: f.kind, status: f.status })),
+    manual: (await manualFunds(supabase, clientId)).map((f) => ({ firmId: f.firmId, kind: f.kind })),
     clientSectors,
     exclusions,
   });

@@ -35,17 +35,17 @@ type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 export const ADDED_MIGRATION = "The added-funds table is missing. Run portal/supabase/added_funds.sql in the Supabase SQL editor.";
 
-function tableError(message: string, code?: string) {
+export function tableError(message: string, code?: string) {
   return code === "42P01" || code === "PGRST205" ? ADDED_MIGRATION : message;
 }
 
 /** Whether the table exists. Checked before any paid call (research, Hunter). */
-async function tableReady(supabase: ServiceClient): Promise<boolean> {
+export async function tableReady(supabase: ServiceClient): Promise<boolean> {
   const { error } = await supabase.from("added_funds").select("id").limit(1);
   return !error;
 }
 
-type Row = {
+export type Row = {
   id: string;
   firm_id: string;
   name: string;
@@ -76,7 +76,7 @@ type Row = {
   ai_suggestion?: AiSuggestion | null;
 };
 
-function fromRow(r: Row): AddedFund {
+export function fromRow(r: Row): AddedFund {
   return {
     id: r.id,
     firmId: r.firm_id,
@@ -195,7 +195,7 @@ export function withAdded(db: FundDb, added: Pick<FundDb, "firms" | "contacts">)
 // ---------------------------------------------------------------------------
 // Try and Add to DB
 
-const RESEARCH_TOOL = {
+export const RESEARCH_TOOL = {
   name: "submit_fund",
   description: "Deliver what you found about the investor.",
   input_schema: {
@@ -443,14 +443,14 @@ export async function addFund(
 }
 
 /** The country labels (for an HQ country). */
-function countryLabels(index: TaxIndex) {
+export function countryLabels(index: TaxIndex) {
   return Array.from(index.nodes.values())
     .filter((n) => n.status === "active" && n.dimension === "geography" && n.kind === "country")
     .map((n) => n.label);
 }
 
 /** An added fund (not rejected) for another landscape with the same name or website, if any. */
-async function findAddedElsewhere(supabase: ServiceClient, name: string, website: string): Promise<AddedFund | null> {
+export async function findAddedElsewhere(supabase: ServiceClient, name: string, website: string): Promise<AddedFund | null> {
   const { data, error } = await supabase.from("added_funds").select("*").neq("status", "rejected").range(0, 4999);
   if (error || !data) return null;
   const key = investorKey(name);

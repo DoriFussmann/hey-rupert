@@ -126,3 +126,20 @@ test("exclusions: a clear match only; notes and unknown names are shown and igno
 test("exclusion lines: split like the engine, trimmed, no duplicates", () => {
   assert.deepEqual(exclusionLines("A Fund, b fund;\n\nA fund\nx"), ["A Fund", "b fund"]);
 });
+
+test("funds added by hand: on the Roster whatever the filters say, still subject to exclusions", () => {
+  const manual = [
+    { firmId: "RUP-3", kind: "fund" as const }, // Series B only: fails Step 1, on the Roster anyway
+    { firmId: "RUP-4", kind: "angel" as const }, // no stage: on the Roster anyway
+    { firmId: "RUP-404", kind: "fund" as const }, // not in the database: left out
+  ];
+  const roster = buildRoster({ data, firms, steps, shortlist: ["F1"], rows: [], added: [], manual, clientSectors: ["Fintech"], exclusions: "eta.vc" });
+  assert.deepEqual(
+    roster.entries.map((e) => [e.firmId, e.source, e.addedStatus]),
+    [
+      ["F1", "dry", null],
+      ["RUP-3", "added", "approved"],
+    ],
+  );
+  assert.equal(roster.exclusions[0].result, "excluded");
+});

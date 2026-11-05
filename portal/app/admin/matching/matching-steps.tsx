@@ -9,6 +9,7 @@ import { StepSignal } from "@/app/admin/matching/step-signal";
 import { LandscapeKindContext } from "@/app/admin/matching/landscape-kind";
 import { StepReady } from "@/app/admin/matching/step-order";
 import { SummaryView } from "@/app/admin/matching/summary-view";
+import { AddFund, AddFundProvider } from "@/app/admin/matching/add-fund";
 import {
   primaryButton,
   secondaryButton,
@@ -44,6 +45,9 @@ function Steps({
   const bumpLike = useCallback(() => setLikeSignal((v) => v + 1), []);
   const [stepThreeSignal, setStepThreeSignal] = useState(0);
   const bumpThree = useCallback(() => setStepThreeSignal((v) => v + 1), []);
+  // A fund added by hand: the Roster and the Plan reload.
+  const [addedSignal, setAddedSignal] = useState(0);
+  const bumpAdded = useCallback(() => setAddedSignal((v) => v + 1), []);
   // All five load at once, but each shows only once the steps above it have loaded: they appear in order.
   const [ready, setReady] = useState([false, false, false, false, false]);
   const reporters = useMemo(
@@ -59,74 +63,85 @@ function Steps({
   const shown = (i: number) =>
     ready.slice(0, i).every(Boolean) ? "" : "hidden";
   return (
-    <div className="space-y-xl">
-      <section aria-label="Step 1: Dry Match Short List">
-        <h2 className="mb-md text-h3 text-heading">
-          Step 1: Dry Match Short List
-        </h2>
-        <StepReady.Provider value={reporters[0]}>
-          <DryMatch
-            clientId={clientId}
-            clientName={clientName}
-            onSavedChange={setStepOne}
-          />
-        </StepReady.Provider>
-      </section>
-      <section
-        aria-label="Step 2: Competitive Landscape Enrichment"
-        className={shown(1)}
-      >
-        <h2 className="mb-md text-h3 text-heading">
-          Step 2: Competitive Landscape Enrichment
-        </h2>
-        <StepSignal.Provider value={bump}>
-          <StepReady.Provider value={reporters[1]}>
-            <CompetitiveLandscape
+    <AddFundProvider clientId={clientId} onChanged={bumpAdded}>
+      <div className="space-y-xl">
+        <section aria-label="Step 1: Dry Match Short List">
+          <h2 className="mb-md text-h3 text-heading">
+            Step 1: Dry Match Short List
+          </h2>
+          <StepReady.Provider value={reporters[0]}>
+            <DryMatch
               clientId={clientId}
-              stepOneConfirmed={stepOne}
+              clientName={clientName}
+              onSavedChange={setStepOne}
             />
           </StepReady.Provider>
-        </StepSignal.Provider>
-      </section>
-      <section aria-label="Step 3: Companies Like You" className={shown(2)}>
-        <h2 className="mb-md text-h3 text-heading">
-          Step 3: Companies Like You
-        </h2>
-        <LandscapeKindContext.Provider value="comparables">
-          <StepSignal.Provider value={bumpLike}>
-            <StepReady.Provider value={reporters[2]}>
+          <AddFund />
+        </section>
+        <section
+          aria-label="Step 2: Competitive Landscape Enrichment"
+          className={shown(1)}
+        >
+          <h2 className="mb-md text-h3 text-heading">
+            Step 2: Competitive Landscape Enrichment
+          </h2>
+          <StepSignal.Provider value={bump}>
+            <StepReady.Provider value={reporters[1]}>
               <CompetitiveLandscape
                 clientId={clientId}
                 stepOneConfirmed={stepOne}
-                refreshKey={stepTwoSignal}
               />
             </StepReady.Provider>
           </StepSignal.Provider>
-        </LandscapeKindContext.Provider>
-      </section>
-      <section aria-label="Step 4: The Final Roster" className={shown(3)}>
-        <h2 className="mb-md text-h3 text-heading">Step 4: The Final Roster</h2>
-        <StepReady.Provider value={reporters[3]}>
-          <FinalRoster
-            clientId={clientId}
-            clientName={clientName}
-            refreshKey={stepTwoSignal + likeSignal}
-            onChanged={bumpThree}
-          />
-        </StepReady.Provider>
-      </section>
-      <section aria-label="Step 5: The Plan" className={shown(4)}>
-        <h2 className="mb-md text-h3 text-heading">Step 5: The Plan</h2>
-        <StepReady.Provider value={reporters[4]}>
-          <ThePlan
-            clientId={clientId}
-            clientName={clientName}
-            refreshKey={stepTwoSignal + likeSignal + stepThreeSignal}
-            onConfirmedChange={onPlanConfirmed}
-          />
-        </StepReady.Provider>
-      </section>
-    </div>
+          <AddFund />
+        </section>
+        <section aria-label="Step 3: Companies Like You" className={shown(2)}>
+          <h2 className="mb-md text-h3 text-heading">
+            Step 3: Companies Like You
+          </h2>
+          <LandscapeKindContext.Provider value="comparables">
+            <StepSignal.Provider value={bumpLike}>
+              <StepReady.Provider value={reporters[2]}>
+                <CompetitiveLandscape
+                  clientId={clientId}
+                  stepOneConfirmed={stepOne}
+                  refreshKey={stepTwoSignal}
+                />
+              </StepReady.Provider>
+            </StepSignal.Provider>
+          </LandscapeKindContext.Provider>
+          <AddFund />
+        </section>
+        <section aria-label="Step 4: The Final Roster" className={shown(3)}>
+          <h2 className="mb-md text-h3 text-heading">
+            Step 4: The Final Roster
+          </h2>
+          <StepReady.Provider value={reporters[3]}>
+            <FinalRoster
+              clientId={clientId}
+              clientName={clientName}
+              refreshKey={stepTwoSignal + likeSignal + addedSignal}
+              onChanged={bumpThree}
+            />
+          </StepReady.Provider>
+          <AddFund />
+        </section>
+        <section aria-label="Step 5: The Plan" className={shown(4)}>
+          <h2 className="mb-md text-h3 text-heading">Step 5: The Plan</h2>
+          <StepReady.Provider value={reporters[4]}>
+            <ThePlan
+              clientId={clientId}
+              clientName={clientName}
+              refreshKey={
+                stepTwoSignal + likeSignal + stepThreeSignal + addedSignal
+              }
+              onConfirmedChange={onPlanConfirmed}
+            />
+          </StepReady.Provider>
+          <AddFund />
+        </section>
+      </div>
+    </AddFundProvider>
   );
 }
 
