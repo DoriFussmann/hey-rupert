@@ -122,6 +122,7 @@ export function SummariesReview({
       <div className="mt-lg space-y-lg">
         <SummaryView summary={summaries.matching} />
         {summaries.landscape ? <SummaryView summary={summaries.landscape} /> : null}
+        {summaries.peers ? <SummaryView summary={summaries.peers} /> : null}
       </div>
 
       <p className="mt-lg text-body-sm text-secondary">

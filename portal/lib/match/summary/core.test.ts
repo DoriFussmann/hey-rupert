@@ -44,7 +44,7 @@ test("the matching summary: one step per stage, clean numbers, (n) deductions", 
   const plan = s.steps[6];
   assert.equal(plan.headline?.value, 3);
   assert.equal(plan.tables[1].rows.length, 2);
-  const facts = summaryFactsText(s, landscapeSummary({ clientName: "Argentl", competitors: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) }));
+  const facts = summaryFactsText(s, landscapeSummary({ clientName: "Argentl", companies: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) }));
   assert.match(facts, /Started from 10,172 funds/);
   assert.match(facts, /In the plan: 3 contacts at 2 funds/);
   assert.match(facts, /1\. Acme VC: Core; backed Monk\./);
@@ -54,7 +54,7 @@ test("the matching summary: one step per stage, clean numbers, (n) deductions", 
 });
 
 test("the landscape overview: competitors with sources, and who is on the outreach list", () => {
-  const s = landscapeSummary({ clientName: "Argentl", competitors: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) });
+  const s = landscapeSummary({ clientName: "Argentl", companies: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) });
   assert.deepEqual(s.steps.map((x) => x.button), ["Competitors", "Their Investors"]);
   // One line per row; the source and the rest are in the details.
   assert.deepEqual(Object.keys(s.steps[0].tables[0].rows[0]), ["name", "hq", "round"]);

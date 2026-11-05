@@ -7,7 +7,7 @@ import type { Competitor } from "@/lib/match/landscape/core";
 import type { Investor } from "@/lib/match/landscape/investors";
 import { confirmedRoster } from "@/lib/match/roster/server";
 import { savedPlan } from "@/lib/match/plan/server";
-import { landscapeSummary, matchingSummary, type Summary } from "./core.ts";
+import { landscapeSummary, matchingSummary, peersSummary, type Summary } from "./core.ts";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -20,12 +20,13 @@ function tableError(message: string, code?: string) {
     : message;
 }
 
-export type DeliverableKind = "matching" | "landscape";
+export type DeliverableKind = "matching" | "landscape" | "peers";
 
 export type Finalization = {
   id: string;
   matching: Summary;
   landscape: Summary | null;
+  peers: Summary | null;
   finalizedAt: string;
   finalizedBy: string | null;
   /** When each summary was last pushed to the client page (null: not yet, or not since this finalize). */
@@ -38,12 +39,12 @@ export type Deliverable = { id: string; kind: DeliverableKind; content: Summary;
 export async function currentFinalization(supabase: ServiceClient, clientId: string): Promise<Result<Finalization | null>> {
   const { data, error } = await supabase
     .from("match_finalizations")
-    .select("id, matching, landscape, finalized_at, finalized_by")
+    .select("id, matching, landscape, peers, finalized_at, finalized_by")
     .eq("client_id", clientId)
     .is("cleared_at", null)
     .order("finalized_at", { ascending: false })
     .limit(1)
-    .maybeSingle<{ id: string; matching: Summary; landscape: Summary | null; finalized_at: string; finalized_by: string | null }>();
+    .maybeSingle<{ id: string; matching: Summary; landscape: Summary | null; peers: Summary | null; finalized_at: string; finalized_by: string | null }>();
   if (error) return { ok: false, error: tableError(error.message, error.code) };
   if (!data) return { ok: true, value: null };
   const pushes = await supabase
@@ -53,11 +54,11 @@ export async function currentFinalization(supabase: ServiceClient, clientId: str
     .eq("finalization_id", data.id)
     .is("cleared_at", null);
   if (pushes.error) return { ok: false, error: tableError(pushes.error.message, pushes.error.code) };
-  const pushed: Record<DeliverableKind, string | null> = { matching: null, landscape: null };
+  const pushed: Record<DeliverableKind, string | null> = { matching: null, landscape: null, peers: null };
   for (const p of (pushes.data ?? []) as { kind: DeliverableKind; pushed_at: string }[]) pushed[p.kind] = p.pushed_at;
   return {
     ok: true,
-    value: { id: data.id, matching: data.matching, landscape: data.landscape, finalizedAt: data.finalized_at, finalizedBy: data.finalized_by, pushed },
+    value: { id: data.id, matching: data.matching, landscape: data.landscape, peers: data.peers ?? null, finalizedAt: data.finalized_at, finalizedBy: data.finalized_by, pushed },
   };
 }
 
@@ -72,7 +73,7 @@ export async function lockedError(supabase: ServiceClient, clientId: string): Pr
 }
 
 /** Builds both summaries from what each step confirmed. */
-async function build(supabase: ServiceClient, clientId: string): Promise<Result<{ matching: Summary; landscape: Summary | null; planId: string }>> {
+async function build(supabase: ServiceClient, clientId: string): Promise<Result<{ matching: Summary; landscape: Summary | null; peers: Summary | null; planId: string }>> {
   const { data: client } = await supabase.from("clients").select("company_name").eq("id", clientId).maybeSingle<{ company_name: string | null }>();
   const clientName = client?.company_name ?? "";
   const plan = await savedPlan(supabase, clientId);
@@ -124,17 +125,10 @@ async function build(supabase: ServiceClient, clientId: string): Promise<Result<
     roster: roster.value.counts,
     plan: { inputs: p.inputs, capacityContacts: p.capacity.contacts, planned: p.planned, funds: p.funds },
   });
-  const overview = landscape
-    ? landscapeSummary({
-        clientName,
-        competitors: landscape.competitors,
-        investors: landscape.investors,
-        rows,
-        outreach: new Set(p.planned.map((x) => x.firmId)),
-        comparables: like?.companies ?? [],
-      })
-    : null;
-  return { ok: true, value: { matching, landscape: overview, planId: p.id } };
+  const outreach = new Set(p.planned.map((x) => x.firmId));
+  const overview = landscape ? landscapeSummary({ clientName, companies: landscape.competitors, investors: landscape.investors, rows, outreach }) : null;
+  const peers = like?.companies.length ? peersSummary({ clientName, companies: like.companies, investors: like.investors, rows: like.rows, outreach }) : null;
+  return { ok: true, value: { matching, landscape: overview, peers, planId: p.id } };
 }
 
 /** Finalize: closes the matching. The summaries are saved as they stand and the steps lock. */
@@ -148,6 +142,7 @@ export async function finalizeMatching(supabase: ServiceClient, clientId: string
     plan_id: built.value.planId,
     matching: built.value.matching,
     landscape: built.value.landscape,
+    peers: built.value.peers,
     finalized_by: actor,
   });
   if (error) return { ok: false, error: tableError(error.message, error.code) };
@@ -166,8 +161,8 @@ export async function pushToClient(supabase: ServiceClient, clientId: string, ki
   const fin = await currentFinalization(supabase, clientId);
   if (!fin.ok) return fin;
   if (!fin.value) return { ok: false, error: "Finalize the matching first." };
-  const content = kind === "matching" ? fin.value.matching : fin.value.landscape;
-  if (!content) return { ok: false, error: "There is no Competitive Landscape Overview (Step 2 was skipped)." };
+  const content = kind === "matching" ? fin.value.matching : kind === "peers" ? fin.value.peers : fin.value.landscape;
+  if (!content) return { ok: false, error: kind === "peers" ? "There is no Peers Landscape Overview (Step 3 was skipped)." : "There is no Competitive Landscape Overview (Step 2 was skipped)." };
   const at = new Date().toISOString();
   const cleared = await supabase.from("client_deliverables").update({ cleared_at: at, cleared_by: actor }).eq("client_id", clientId).eq("kind", kind).is("cleared_at", null);
   if (cleared.error) return { ok: false, error: tableError(cleared.error.message, cleared.error.code) };
@@ -181,7 +176,7 @@ export async function pushAllToClient(supabase: ServiceClient, clientId: string,
   const fin = await currentFinalization(supabase, clientId);
   if (!fin.ok) return fin;
   if (!fin.value) return { ok: false, error: "Finalize the matching first." };
-  const kinds: DeliverableKind[] = fin.value.landscape ? ["matching", "landscape"] : ["matching"];
+  const kinds: DeliverableKind[] = ["matching", ...(fin.value.landscape ? (["landscape"] as const) : []), ...(fin.value.peers ? (["peers"] as const) : [])];
   for (const kind of kinds) {
     const done = await pushToClient(supabase, clientId, kind, actor);
     if (!done.ok) return done;
@@ -199,7 +194,7 @@ export async function pushAllToClient(supabase: ServiceClient, clientId: string,
   const draft = {
     rows: [],
     source_file: "",
-    summaries: { matching: fin.value.matching, landscape: fin.value.landscape },
+    summaries: { matching: fin.value.matching, landscape: fin.value.landscape, peers: fin.value.peers },
     ...(current.admin_note ? { admin_note: current.admin_note } : {}),
     ...(current.client_email ? { client_email: current.client_email } : {}),
   };

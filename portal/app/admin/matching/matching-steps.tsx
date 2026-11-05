@@ -124,17 +124,18 @@ export function MatchingSteps({ clientId, clientName }: { clientId: string; clie
     );
   }
 
-  const pushed = fin.pushed.matching && (!fin.landscape || fin.pushed.landscape);
+  const pushed = fin.pushed.matching && (!fin.landscape || fin.pushed.landscape) && (!fin.peers || fin.pushed.peers);
 
   return (
     <div className="space-y-lg">
       <SummaryView summary={fin.matching} />
       {fin.landscape ? <SummaryView summary={fin.landscape} /> : null}
+      {fin.peers ? <SummaryView summary={fin.peers} /> : null}
       <div className="flex flex-wrap items-center justify-end gap-md">
         <p className="mr-auto text-body-sm text-secondary">
           {pushed
             ? "✓ Both summaries are on the client page. Pushing again replaces them."
-            : `Push to Client sends ${fin.landscape ? "both summaries" : "the summary"} to the client page (not the client's portal yet).`}
+            : `Push to Client sends ${fin.landscape || fin.peers ? "the summaries" : "the summary"} to the client page (not the client's portal yet).`}
         </p>
         <a href={`/admin/clients/${clientId}/summary-export`} className={`${secondaryButton} no-underline`}>
           Download (Excel)

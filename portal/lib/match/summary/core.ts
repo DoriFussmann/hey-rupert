@@ -38,7 +38,7 @@ export type SummaryStep = {
   tables: SummaryTable[];
 };
 export type Summary = {
-  kind: "matching" | "landscape";
+  kind: "matching" | "landscape" | "peers";
   title: string;
   clientName: string;
   steps: SummaryStep[];
@@ -95,7 +95,7 @@ function round(c: Competitor) {
   return [c.funding.lastRound, c.funding.lastRoundDate].filter(Boolean).join(", ");
 }
 
-const comparable = (key: string) => key === "step3a" || key === "comparables";
+const comparable = (key: string) => key === "step3a" || key === "comparables" || key === "peers";
 
 function competitorsStep(competitors: Competitor[], key: string, button: string, title: string, withSources: boolean): SummaryStep {
   return {
@@ -361,66 +361,79 @@ export function matchingSummary(input: MatchingInputs): Summary {
   return { kind: "matching", title: "Matching Summary", clientName: input.clientName, steps };
 }
 
+type OverviewInput = {
+  clientName: string;
+  companies: Competitor[];
+  investors: Investor[];
+  rows: CheckRow[];
+  /** Fund Database ids on the Final Outreach Roster. */
+  outreach: Set<string>;
+};
+
+/** The investors tab of an overview: who backed the companies, and whether each is on the outreach list. */
+function overviewInvestors(input: OverviewInput, title: string): SummaryStep {
+  const firmOf = new Map(input.rows.map((r) => [r.investor.id, r.firmId ?? r.added?.firmId ?? null]));
+  const sorted = [...input.investors].sort((a, b) => b.backed.length - a.backed.length || a.name.localeCompare(b.name));
+  const listed = (i: Investor) => {
+    const id = firmOf.get(i.id);
+    return id ? input.outreach.has(id) : false;
+  };
+  const onList = sorted.filter(listed).length;
+  return {
+    key: "investors",
+    button: "Their Investors",
+    title,
+    headline: { value: input.investors.length, label: `Investors, ${n(onList)} on your outreach list` },
+    tables: [
+      {
+        item: "Investor",
+        columns: [
+          { key: "name", label: "Investor" },
+          { key: "kind", label: "Type" },
+          { key: "backed", label: "Backed" },
+          { key: "outreach", label: "On your outreach list" },
+        ],
+        rows: sorted.map((i) => ({ name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort(i.backed.map((b) => b.competitor)), outreach: listed(i) ? "Yes" : "No" })),
+        details: sorted.map((i) => [
+          { label: "Type", value: KIND_LABEL[i.kind] },
+          { label: "Website", value: i.website ? { text: i.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: i.website } : "" },
+          { label: "Backed (round)", value: backingDetails(i) },
+          { label: "On your outreach list", value: listed(i) ? "Yes" : "No" },
+        ]),
+      },
+    ],
+  };
+}
+
 /**
  * The Competitive Landscape Overview, a bonus for the client: the funded
  * competitors, and the investors behind them, with whether each is on the
  * client's outreach list (the Final Outreach Roster).
  */
-export function landscapeSummary(input: {
-  clientName: string;
-  competitors: Competitor[];
-  investors: Investor[];
-  rows: CheckRow[];
-  /** Fund Database ids on the Final Outreach Roster. */
-  outreach: Set<string>;
-  /** Step 3's comparable companies, shown as a third tab. */
-  comparables?: Competitor[];
-}): Summary {
-  const firmOf = new Map(input.rows.map((r) => [r.investor.id, r.firmId ?? r.added?.firmId ?? null]));
-  const sorted = [...input.investors].sort((a, b) => b.backed.length - a.backed.length || a.name.localeCompare(b.name));
-  const onList = sorted.filter((i) => {
-    const id = firmOf.get(i.id);
-    return id ? input.outreach.has(id) : false;
-  }).length;
+export function landscapeSummary(input: OverviewInput): Summary {
   return {
     kind: "landscape",
     title: "Competitive Landscape Overview",
     clientName: input.clientName,
     steps: [
-      competitorsStep(input.competitors, "competitors", "Competitors", "Funded Competitors", true),
-      {
-        key: "investors",
-        button: "Their Investors",
-        title: "Who Backed Your Competitors",
-        headline: { value: input.investors.length, label: `Investors, ${n(onList)} on your outreach list` },
-        tables: [
-          {
-            item: "Investor",
-            columns: [
-              { key: "name", label: "Investor" },
-              { key: "kind", label: "Type" },
-              { key: "backed", label: "Backed" },
-              { key: "outreach", label: "On your outreach list" },
-            ],
-            rows: sorted.map((i) => {
-              const id = firmOf.get(i.id);
-              return { name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort(i.backed.map((b) => b.competitor)), outreach: id && input.outreach.has(id) ? "Yes" : "No" };
-            }),
-            details: sorted.map((i) => {
-              const id = firmOf.get(i.id);
-              return [
-                { label: "Type", value: KIND_LABEL[i.kind] },
-                { label: "Website", value: i.website ? { text: i.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: i.website } : "" },
-                { label: "Backed (round)", value: backingDetails(i) },
-                { label: "On your outreach list", value: id && input.outreach.has(id) ? "Yes" : "No" },
-              ];
-            }),
-          },
-        ],
-      },
-      ...(input.comparables?.length
-        ? [competitorsStep(input.comparables, "comparables", "Companies Like You", "Companies Investors See as the Same Bet", true)]
-        : []),
+      competitorsStep(input.companies, "competitors", "Competitors", "Funded Competitors", true),
+      overviewInvestors(input, "Who Backed Your Competitors"),
+    ],
+  };
+}
+
+/**
+ * The Peers Landscape Overview: Step 3's companies like the client (same
+ * bet, not rivals), and the investors behind them.
+ */
+export function peersSummary(input: OverviewInput): Summary {
+  return {
+    kind: "peers",
+    title: "Peers Landscape Overview",
+    clientName: input.clientName,
+    steps: [
+      competitorsStep(input.companies, "peers", "Peer Companies", "Companies Investors See as the Same Bet", true),
+      overviewInvestors(input, "Who Backed Your Peers"),
     ],
   };
 }

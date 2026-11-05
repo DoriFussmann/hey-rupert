@@ -29,7 +29,7 @@ function workbook(summaries: Summary[]) {
   const taken = new Set<string>();
   for (const summary of summaries)
   for (const step of summary.steps) {
-    const name = summary.kind === "landscape" ? `Landscape ${step.button}` : `${step.button} ${step.title}`;
+    const name = summary.kind === "landscape" ? `Landscape ${step.button}` : summary.kind === "peers" ? `Peers ${step.button}` : `${step.button} ${step.title}`;
     const sheet = book.addWorksheet(tabName(name, taken));
     sheet.addRow([`${step.button}: ${step.title}`]).font = { bold: true, size: 13 };
     if (step.headline) sheet.addRow([step.headline.label, step.headline.value]);
@@ -82,11 +82,11 @@ export async function GET(request: Request, { params }: { params: { id: string }
   if (url.searchParams.get("from") === "pushed") {
     const list = await loadDeliverables(supabase, params.id);
     if (!list.ok) return NextResponse.json({ error: list.error }, { status: 400 });
-    summaries = (["matching", "landscape"] as const).map((k) => list.value.find((d) => d.kind === k)?.content).filter((x): x is Summary => !!x);
+    summaries = (["matching", "landscape", "peers"] as const).map((k) => list.value.find((d) => d.kind === k)?.content).filter((x): x is Summary => !!x);
   } else {
     const fin = await currentFinalization(supabase, params.id);
     if (!fin.ok) return NextResponse.json({ error: fin.error }, { status: 400 });
-    if (fin.value) summaries = [fin.value.matching, ...(fin.value.landscape ? [fin.value.landscape] : [])];
+    if (fin.value) summaries = [fin.value.matching, ...(fin.value.landscape ? [fin.value.landscape] : []), ...(fin.value.peers ? [fin.value.peers] : [])];
   }
   if (!summaries.length) return NextResponse.json({ error: "Nothing to download yet." }, { status: 404 });
 

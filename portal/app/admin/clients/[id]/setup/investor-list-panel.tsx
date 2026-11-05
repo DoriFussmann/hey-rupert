@@ -157,6 +157,7 @@ export function InvestorListPanel({
           </p>
           <SummaryView summary={summaries.matching} />
           {summaries.landscape ? <SummaryView summary={summaries.landscape} /> : null}
+          {summaries.peers ? <SummaryView summary={summaries.peers} /> : null}
         </div>
       ) : (
         <>
