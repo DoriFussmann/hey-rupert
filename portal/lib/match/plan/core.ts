@@ -205,6 +205,8 @@ export type PlanFund = {
   type?: string;
   /** Position inside its tier, from 1. 0: not ranked (no contact, or outside the tiers). */
   rank: number;
+  /** Sectors and stages its recorded investments added to its record, in words. Absent: none. */
+  proven?: string[];
 };
 
 export type RankInput = {

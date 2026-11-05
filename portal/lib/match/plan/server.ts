@@ -1,4 +1,5 @@
 import "server-only";
+import { proofNotes } from "@/lib/match/proven/core";
 import RME from "@/lib/match/engine/index.mjs";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { GENERALIST_KIND, mapFirm, type TaxIndex } from "@/lib/taxonomy/core";
@@ -106,7 +107,7 @@ async function draft(supabase: ServiceClient, clientId: string) {
   if (!roster.value) return { ok: true as const, blocked: "Opens once Step 4 is confirmed." };
   const snapshot = await matchDataSnapshot(supabase, clientId);
   if (!snapshot.ok) return snapshot;
-  const { db, index, profileInputs, dataVersion } = snapshot.value;
+  const { db, index, profileInputs, dataVersion, proof } = snapshot.value;
 
   const primary = profileInputs.primarySector as Named;
   const secondary = ((profileInputs.secondarySectors as Named[]) ?? []).map((s) => s?.id ?? null);
@@ -176,7 +177,10 @@ async function draft(supabase: ServiceClient, clientId: string) {
       type: investorType(firmById.get(e.firmId)?.type, e.kind),
     })),
     profile,
-  );
+  ).map((f) => {
+    const notes = proofNotes(proof.get(f.firmId));
+    return notes.length ? { ...f, proven: notes } : f;
+  });
   return {
     ok: true as const,
     funds,

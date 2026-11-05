@@ -186,6 +186,7 @@ function rosterList(plan: MatchingInputs["plan"]): SummaryTable {
       { label: "Website", value: f.website ? { text: f.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: f.website } : "" },
       { label: "Tier", value: TIER_LABEL[f.tier] },
       { label: "Matched on", value: f.hit },
+      ...(f.proven?.length ? [{ label: "Proven by its investments", value: f.proven }] : []),
       { label: "Backed a competitor", value: f.backed },
       { label: "Backed a comparable company", value: f.comparables ?? [] },
       { label: "Named by you", value: f.clientNamed ? "Yes" : "" },

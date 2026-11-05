@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
 import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
 import { addedAsDb, withAdded } from "@/lib/match/added/server";
+import { applyProven, loadProven } from "@/lib/match/proven/server";
+import { provenRevision, type Proof } from "@/lib/match/proven/core";
 import { MATCH_MIGRATION_MISSING, loadLiveDb, selectAll } from "@/lib/match/db-server";
 import type { PeopleStates } from "@/lib/match/list-snapshot";
 import { buildProfile, loadProfileState, matchBasis } from "@/lib/match/profile-server";
@@ -404,6 +406,10 @@ export function profileBasis(state: MatchProfileState) {
 type Prepared = {
   /** Fingerprint of the Rupert-added funds merged in ("" when none). */
   addedRevision: string;
+  /** Fingerprint of the recorded investments whose proof was merged in ("" when none). */
+  provenRevision: string;
+  /** What each fund's investments proved (sectors and stages added). */
+  proof: Map<string, Proof>;
   run: MatchContext;
   db: FundDb;
   index: TaxIndex;
@@ -438,7 +444,10 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
   // Funds added by Rupert join the provider records (approved ones for every client, pending ones for the
   // client they were found for); corrections then apply to all of them alike.
   const added = await addedAsDb(supabase, index, clientId);
-  const db = applyCorrections(withAdded(run.live.db, added), run.corrections, run.decisions);
+  // Then what each fund's recorded investments prove (the sub-sectors of the companies it backed, the
+  // stages of those rounds) is added to its record: an investment is proof, whatever the provider lists.
+  const proven = applyProven(withAdded(run.live.db, added), index, await loadProven(supabase));
+  const db = applyCorrections(proven.db, run.corrections, run.decisions);
   const rejected: Record<string, string> = {};
   run.reviews.forEach((review, firmId) => {
     if (review.status === "no") rejected[firmId] = review.reason || "Rejected";
@@ -462,6 +471,8 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
     ok: true,
     value: {
       addedRevision: added.revision,
+      provenRevision: proven.revision,
+      proof: proven.proof,
       run,
       db,
       index,
@@ -515,6 +526,7 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
         fofExceptions: Array.from(fof.value.values()).filter((e) => e.status === "approved").map((e) => e.firmId),
         // The Rupert-added funds this run used ("" when none).
         addedFunds: added.revision,
+        provenInvestments: proven.revision,
       },
     },
   };
@@ -528,7 +540,8 @@ async function prepare(supabase: ServiceClient, clientId: string, actor: string 
 export async function matchDataSnapshot(supabase: ServiceClient, clientId: string) {
   const prepared = await prepare(supabase, clientId, null);
   if (!prepared.ok) return prepared;
-  const { db, index, input, common, profileInputs, addedRevision } = prepared.value;
+  const { db, index, input, common, profileInputs, addedRevision, provenRevision, proof } = prepared.value;
+  const base = String(common.fund_db_version ?? "");
   return {
     ok: true as const,
     value: {
@@ -536,7 +549,8 @@ export async function matchDataSnapshot(supabase: ServiceClient, clientId: strin
       index,
       addedRevision,
       /** The Fund Database version plus the added funds' fingerprint: what Step 1 and Step 2 record. */
-      dataVersion: addedRevision ? `${String(common.fund_db_version ?? "")}+added:${addedRevision}` : String(common.fund_db_version ?? ""),
+      dataVersion: `${base}${addedRevision ? `+added:${addedRevision}` : ""}${provenRevision ? `+proven:${provenRevision}` : ""}`,
+      proof,
       common,
       profileInputs,
       exclusions: input.legacy.exclusions ?? "",
@@ -725,6 +739,9 @@ export async function staleReasons(
     const addedThen = typeof header.settings.addedFunds === "string" ? header.settings.addedFunds : "";
     if (addedNow !== addedThen) reasons.push("Funds added by Rupert were added, approved or changed since this run.");
   }
+  const provenNow = provenRevision(await loadProven(supabase));
+  const provenThen = typeof header.settings.provenInvestments === "string" ? header.settings.provenInvestments : "";
+  if (provenNow !== provenThen) reasons.push("Investments were recorded since this run (they add sectors and stages to the funds that made them).");
   if (!header.settings.basis) {
     reasons.push("This run was made before runs recorded the profile they used.");
   } else if (!state.value || profileBasis(state.value) !== header.settings.basis) {

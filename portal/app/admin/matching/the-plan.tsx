@@ -160,7 +160,10 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
               <td className="py-xs pr-md text-heading">{f.name}</td>
               <td className="py-xs pr-md text-secondary">{f.type ?? ""}</td>
               <td className="py-xs pr-md text-secondary">{sourceTags(f).join(", ")}</td>
-              <td className="py-xs pr-md text-secondary">{f.hit.join(", ")}</td>
+              <td className="py-xs pr-md text-secondary">
+                {f.hit.join(", ")}
+                {f.proven?.length ? <span className="block text-body-sm text-muted">Proven: {f.proven.join("; ")}</span> : null}
+              </td>
               <td className="py-xs pr-md text-success">
                 {f.backed.join(", ")}
                 {f.sameStage?.length ? <span className="text-muted"> (at the client&apos;s stage: {f.sameStage.join(", ")})</span> : null}
