@@ -636,13 +636,14 @@ export async function draftInvestorListEmail(
 ): Promise<AgentResult<ClientEmailDraft>> {
   // The new matching: the summaries pushed to the client page are the source.
   if (list.summaries) {
-    return draftMatchingSummaryEmail(supabase, clientId, list.summaries.matching, list.summaries.landscape, list.admin_note ?? "", version, override);
+    return draftMatchingSummaryEmail(supabase, clientId, list.summaries.matching, list.summaries.landscape, list.summaries.peers ?? null, list.admin_note ?? "", version, override);
   }
   const pushed = await loadDeliverables(supabase, clientId);
   const matching = pushed.ok ? pushed.value.find((d) => d.kind === "matching")?.content ?? null : null;
   if (matching) {
     const landscape = pushed.ok ? pushed.value.find((d) => d.kind === "landscape")?.content ?? null : null;
-    return draftMatchingSummaryEmail(supabase, clientId, matching, landscape, list.admin_note ?? "", version, override);
+    const peers = pushed.ok ? pushed.value.find((d) => d.kind === "peers")?.content ?? null : null;
+    return draftMatchingSummaryEmail(supabase, clientId, matching, landscape, peers, list.admin_note ?? "", version, override);
   }
   if (list.rows.length === 0) {
     return { ok: false, error: "Finalize the matching and Push to Client first: the email is drafted from the summaries." };
@@ -694,6 +695,7 @@ async function draftMatchingSummaryEmail(
   clientId: string,
   matching: Summary,
   landscape: Summary | null,
+  peers: Summary | null,
   adminNote: string,
   version: number,
   override?: PromptOverride | null,
@@ -710,7 +712,7 @@ async function draftMatchingSummaryEmail(
   const context = [
     ...founderLines(loaded.client, version),
     "# Facts about the matching (use only these, numbers exactly as given)",
-    summaryFactsText(matching, landscape),
+    summaryFactsText(matching, landscape, peers),
     adminNote.trim() ? `## Rupert's note to the founder (shown on their page)\n${adminNote.trim()}` : "",
     clientAsk ? `## What the founder asked about the previous version\n${clientAsk}` : "",
     await loggedFeedbackText(supabase, clientId, "investor_list"),

@@ -144,101 +144,6 @@ function backingDetails(i: Investor): Cell[] {
   return i.backed.map((b) => (b.sourceUrl ? { text: backingLine(b), href: b.sourceUrl } : backingLine(b)));
 }
 
-function investorsStep(investors: Investor[], key = "step2b", button = "Step 2B", title = "Investors in the Competitors"): SummaryStep {
-  const sorted = [...investors].sort((a, b) => b.backed.length - a.backed.length || a.name.localeCompare(b.name));
-  return {
-    key,
-    button,
-    title,
-    headline: { value: investors.length, label: "Investors found" },
-    tables: [
-      {
-        item: "Investor",
-        columns: [
-          { key: "name", label: "Investor" },
-          { key: "kind", label: "Type" },
-          { key: "backed", label: "Backed" },
-        ],
-        rows: sorted.map((i) => ({ name: i.name, kind: KIND_LABEL[i.kind], backed: backedShort([...(i.clientNamed ? ["Named by you"] : []), ...i.backed.map((b) => b.competitor)]) })),
-        details: sorted.map((i) => [
-          { label: "Type", value: KIND_LABEL[i.kind] },
-          { label: "Website", value: i.website ? { text: i.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: i.website } : "" },
-          { label: "Backed (round)", value: backingDetails(i) },
-        ]),
-      },
-    ],
-  };
-}
-
-function checkStep(rows: CheckRow[], key = "step2c", button = "Step 2C", title = "Checked Against the Database", addedStep = "Step 2D"): SummaryStep {
-  const count = (f: (r: CheckRow) => boolean) => rows.filter(f).length;
-  const inList = count((r) => r.bucket === "in_list");
-  const back = count((r) => r.bucket === "not_in_list" && r.action === "bring_back");
-  const out = count((r) => r.bucket === "not_in_list" && r.action !== "bring_back");
-  const added = count((r) => r.bucket === "added");
-  const funds = count((r) => r.bucket === "missing_fund");
-  const angels = count((r) => r.bucket === "missing_angel");
-  const open = count((r) => r.bucket === "confirm");
-  const line = (result: string, value: number) => ({ result, investors: n(value) });
-  return {
-    key,
-    button,
-    title,
-    headline: { value: inList + back, label: key === "step2c" ? "Competitor investors used in the match" : "Investors used in the match" },
-    tables: [
-      {
-        columns: [
-          { key: "result", label: "Result" },
-          { key: "investors", label: "Investors", align: "right" },
-        ],
-        rows: [
-          line("Already on the short list", inList),
-          line("In the database, brought back", back),
-          line("In the database, left out", out),
-          line(`Not in the database: added (${addedStep})`, added),
-          line("Not in the database: funds, not added", funds),
-          line("Not in the database: angels, not added", angels),
-          ...(open ? [line("Unresolved", open)] : []),
-        ],
-        total: line(key === "step2c" ? "All competitor investors" : "All investors in this step", rows.length),
-      },
-    ],
-  };
-}
-
-function addedStep(rows: CheckRow[], key = "step2d", button = "Step 2D", title = "Added to the Database"): SummaryStep {
-  const added = rows.filter((r) => r.bucket === "added" && r.added && r.added.status !== "rejected");
-  return {
-    key,
-    button,
-    title,
-    headline: { value: added.length, label: "Investors added" },
-    tables: [
-      {
-        columns: [
-          { key: "name", label: "Investor" },
-          { key: "kind", label: "Type" },
-          { key: "backed", label: "Backed" },
-          { key: "contacts", label: "Contacts", align: "right" },
-        ],
-        item: "Investor",
-        rows: added.map((r) => ({
-          name: r.investor.name,
-          kind: KIND_LABEL[r.investor.kind],
-          backed: backedShort(r.investor.backed.map((b) => b.competitor)),
-          contacts: n(r.added!.contacts),
-        })),
-        details: added.map((r) => [
-          { label: "Type", value: KIND_LABEL[r.investor.kind] },
-          { label: "Website", value: r.added!.website ? { text: r.added!.website.replace(/^https?:\/\//, "").replace(/\/$/, ""), href: r.added!.website } : "" },
-          { label: "Backed (round)", value: backingDetails(r.investor) },
-          { label: "Contacts found", value: n(r.added!.contacts) },
-        ]),
-      },
-    ],
-  };
-}
-
 function rosterStep(c: RosterCounts): SummaryStep {
   const line = (source: string, investors: string) => ({ source, investors });
   return {
@@ -254,8 +159,8 @@ function rosterStep(c: RosterCounts): SummaryStep {
         ],
         rows: [
           line("Dry Match Short List", n(c.dry)),
-          line("Brought back (Steps 2C, 3C)", `+${n(c.broughtBack)}`),
-          line("Added (Steps 2D, 3D)", `+${n(c.added)}`),
+          line("Brought back (Steps 2, 3)", `+${n(c.broughtBack)}`),
+          line("Added to the database (Steps 2, 3)", `+${n(c.added)}`),
           line("Excluded by the client", minus(c.excluded)),
         ],
         total: line("The Final Roster", n(c.total)),
@@ -339,24 +244,50 @@ export function planStep(plan: MatchingInputs["plan"]): SummaryStep {
   };
 }
 
+/**
+ * Step 2 or Step 3 as one step: the companies researched, the investors
+ * behind them, and what they added to the client's list. The companies and
+ * investors themselves are in the overviews (Competitive / Peers Landscape).
+ */
+function layerStep(companies: Competitor[], investors: Investor[], rows: CheckRow[], peers: boolean): SummaryStep {
+  const count = (f: (r: CheckRow) => boolean) => rows.filter(f).length;
+  const inList = count((r) => r.bucket === "in_list");
+  const back = count((r) => r.bucket === "not_in_list" && r.action === "bring_back");
+  const added = count((r) => r.bucket === "added" && !!r.added && r.added.status !== "rejected");
+  const left = rows.length - inList - back - added;
+  const named = investors.filter((i) => i.clientNamed).length;
+  const line = (result: string, value: number) => ({ result, investors: n(value) });
+  return {
+    key: peers ? "step3" : "step2",
+    button: peers ? "Step 3" : "Step 2",
+    title: peers ? "Companies Like You" : "Competitive Landscape",
+    headline: { value: back + added, label: peers ? "Investors added from companies like you" : "Investors added from your competitors" },
+    line: `${n(inList)} more already on the short list, now tagged as having backed ${peers ? "a company like you" : "a competitor"}.`,
+    tables: [
+      {
+        columns: [
+          { key: "result", label: "Result" },
+          { key: "investors", label: "#", align: "right" },
+        ],
+        rows: [
+          line(peers ? "Companies like you researched" : "Funded competitors researched", companies.length),
+          line(peers ? "Investors behind them" : "Investors behind them", investors.length - named),
+          ...(named ? [line("Investors you named", named)] : []),
+          line("Already on the short list", inList),
+          line("Brought back from the database", back),
+          line("New, added to the database", added),
+          line("Left out (didn't fit, or couldn't be added)", left),
+        ],
+        total: line("Added to your list", back + added),
+      },
+    ],
+  };
+}
+
 export function matchingSummary(input: MatchingInputs): Summary {
   const steps: SummaryStep[] = [stepOne(input.dry)];
-  if (input.landscape) {
-    steps.push(
-      competitorsStep(input.landscape.competitors, "step2a", "Step 2A", "Funded Competitors", false),
-      investorsStep(input.landscape.investors),
-      checkStep(input.rows),
-      addedStep(input.rows),
-    );
-  }
-  if (input.like) {
-    steps.push(
-      competitorsStep(input.like.companies, "step3a", "Step 3A", "Comparable Companies", false),
-      investorsStep(input.like.investors, "step3b", "Step 3B", "Investors in Comparable Companies"),
-      checkStep(input.like.rows, "step3c", "Step 3C", "Checked Against the Database", "Step 3D"),
-      addedStep(input.like.rows, "step3d", "Step 3D", "Added to the Database"),
-    );
-  }
+  if (input.landscape) steps.push(layerStep(input.landscape.competitors, input.landscape.investors, input.rows, false));
+  if (input.like) steps.push(layerStep(input.like.companies, input.like.investors, input.like.rows, true));
   steps.push(rosterStep(input.roster), planStep(input.plan));
   return { kind: "matching", title: "Matching Summary", clientName: input.clientName, steps };
 }

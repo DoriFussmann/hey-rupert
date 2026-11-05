@@ -38,14 +38,15 @@ test("the matching summary: one step per stage, clean numbers, (n) deductions", 
       ],
     },
   });
-  assert.deepEqual(s.steps.map((x) => x.button), ["Step 1", "Step 2A", "Step 2B", "Step 2C", "Step 2D", "Step 4", "Step 5"]);
+  assert.deepEqual(s.steps.map((x) => x.button), ["Step 1", "Step 2", "Step 4", "Step 5"]);
   assert.equal(s.steps[0].tables[0].rows[1].removed, "(2,567)");
   assert.equal(minus(16), "(16)");
-  const plan = s.steps[6];
+  const plan = s.steps[3];
   assert.equal(plan.headline?.value, 3);
   assert.equal(plan.tables[1].rows.length, 2);
   const facts = summaryFactsText(s, landscapeSummary({ clientName: "Argentl", companies: [competitor("Monk")], investors, rows, outreach: new Set(["F1"]) }));
   assert.match(facts, /Started from 10,172 funds/);
+  assert.match(facts, /1 researched, and the 3 investors behind them/);
   assert.match(facts, /In the plan: 3 contacts at 2 funds/);
   assert.match(facts, /1\. Acme VC: Core; backed Monk\./);
   assert.match(facts, /Competitors you may name \(at most 3\): Monk\./);
