@@ -76,6 +76,8 @@ export type SetupQuestion = {
   resolved_at?: string;
   /** The client said it outside the portal and Rupert logged it for them. */
   via?: { channel: FeedbackChannel; on: string; by?: string };
+  /** For logged feedback: the AI's summary (Rupert can edit it). Drafting uses it; the original stays in `question`. */
+  summary?: string;
 };
 
 export const FEEDBACK_CHANNELS = ["email", "call", "message", "meeting"] as const;
@@ -1111,6 +1113,7 @@ export function asQuestions(value: unknown): SetupQuestion[] {
       answered_at: optionalText(raw.answered_at, 40),
       resolved_at: optionalText(raw.resolved_at, 40),
       ...(asVia(raw.via) ? { via: asVia(raw.via) } : {}),
+      ...(optionalText(raw.summary, NOTE_MAX) ? { summary: optionalText(raw.summary, NOTE_MAX) } : {}),
     });
   }
   return out;
@@ -1129,7 +1132,7 @@ function withQuestions(questions: SetupQuestion[]) {
 /** Adds the client's question, or says why it can't be added. */
 export function addQuestion(
   questions: SetupQuestion[],
-  input: { id: string; question: string; at: string; version: number; via?: SetupQuestion["via"] },
+  input: { id: string; question: string; at: string; version: number; via?: SetupQuestion["via"]; summary?: string },
 ): { ok: true; questions: SetupQuestion[] } | { ok: false; error: string } {
   const question = input.question.trim().slice(0, QUESTION_MAX);
   if (!question) return { ok: false, error: "Write your question first." };
@@ -1138,7 +1141,7 @@ export function addQuestion(
   }
   return {
     ok: true,
-    questions: [...questions, { id: input.id, question, asked_at: input.at, version: input.version, ...(input.via ? { via: input.via } : {}) }],
+    questions: [...questions, { id: input.id, question, asked_at: input.at, version: input.version, ...(input.via ? { via: input.via } : {}), ...(input.summary ? { summary: input.summary } : {}) }],
   };
 }
 

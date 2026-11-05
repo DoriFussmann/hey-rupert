@@ -26,7 +26,18 @@ export function QuestionThread({
                 ? `You told ${adminName} ${FEEDBACK_CHANNEL_LABEL[item.via.channel]} · ${formatDate(`${item.via.on}T12:00:00`)}`
                 : `You asked${item.asked_at ? ` · ${formatDateAtTime(item.asked_at)}` : ""}`}
             </p>
-            <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{item.question}</p>
+            {item.via && item.summary ? (
+              <div className="mt-xs space-y-xs">
+                <p className="text-label uppercase tracking-label text-muted">What {adminName} took from it</p>
+                <p className="whitespace-pre-wrap text-body-sm text-heading">{item.summary}</p>
+                <details>
+                  <summary className="cursor-pointer text-body-sm text-primary">What you sent</summary>
+                  <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{item.question}</p>
+                </details>
+              </div>
+            ) : (
+              <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{item.question}</p>
+            )}
             {item.answer ? (
               <div className="mt-sm rounded-md border border-primary/30 bg-primary-tint px-md py-sm">
                 <p className="text-label uppercase tracking-label text-primary">

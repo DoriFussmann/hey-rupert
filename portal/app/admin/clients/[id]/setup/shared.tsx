@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { logClientFeedback, settleSetupQuestion } from "@/app/admin/setup-actions";
+import { logClientFeedback, saveFeedbackSummary, settleSetupQuestion } from "@/app/admin/setup-actions";
 import { formatDate, formatDateAtTime } from "@/lib/format";
 import {
   FEEDBACK_CHANNELS,
@@ -239,7 +239,11 @@ function QuestionItem({
             ? ` · asked ${formatDateAtTime(question.asked_at)}`
             : ""}
       </p>
-      <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{question.question}</p>
+      {question.via ? (
+        <FeedbackBody clientId={clientId} step={step} question={question} />
+      ) : (
+        <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{question.question}</p>
+      )}
       {question.answer ? (
         <p className="mt-sm whitespace-pre-wrap text-body-sm text-body">
           <span className="text-muted">Your answer{question.answered_at ? `, ${formatDateAtTime(question.answered_at)}` : ""}: </span>
@@ -284,6 +288,59 @@ function QuestionItem({
   );
 }
 
+/** Logged feedback: the summary (editable; drafting uses it) and the original. */
+function FeedbackBody({ clientId, step, question }: { clientId: string; step: SetupDocumentStep; question: SetupQuestion }) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(question.summary ?? "");
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  async function save() {
+    setPending(true);
+    setError(null);
+    const result = await saveFeedbackSummary(clientId, step, question.id, value);
+    setPending(false);
+    if (!result.ok) return setError(result.error);
+    setEditing(false);
+    router.refresh();
+  }
+  return (
+    <div className="mt-xs space-y-xs">
+      <p className="text-label uppercase tracking-label text-muted">Summary (drafting uses this)</p>
+      {editing ? (
+        <>
+          <textarea
+            className={`${inputClass} min-h-[120px] resize-y normal-case tracking-normal`}
+            value={value}
+            maxLength={NOTE_MAX}
+            onChange={(e) => setValue(e.target.value)}
+          />
+          <div className="flex flex-wrap gap-sm">
+            <button type="button" className={primaryButton} disabled={pending} onClick={() => void save()}>
+              {pending ? "Saving…" : "Save summary"}
+            </button>
+            <button type="button" className={secondaryButton} disabled={pending} onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+          </div>
+        </>
+      ) : (
+        <div className="flex items-start justify-between gap-sm">
+          <p className="whitespace-pre-wrap text-body-sm text-heading">{question.summary || "No summary yet: write one, or drafting uses the original."}</p>
+          <button type="button" className={secondaryButton} onClick={() => setEditing(true)}>
+            Edit
+          </button>
+        </div>
+      )}
+      {error ? <p className="text-body-sm text-error">{error}</p> : null}
+      <details>
+        <summary className="cursor-pointer text-body-sm text-primary">What they sent</summary>
+        <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{question.question}</p>
+      </details>
+    </div>
+  );
+}
+
 /** Log client feedback: what they said by email or on a call, added to their thread. */
 function LogFeedback({ clientId, step }: { clientId: string; step: SetupDocumentStep }) {
   const router = useRouter();
@@ -302,7 +359,7 @@ function LogFeedback({ clientId, step }: { clientId: string; step: SetupDocument
       if (!result.ok) return setMessage({ kind: "error", text: result.error });
       setText("");
       setOpen(false);
-      setMessage({ kind: "ok", text: "Logged. Answer it below like any question; it is on their page too." });
+      setMessage({ kind: "ok", text: "Logged and summarized. Check the summary below (drafting uses it), then answer it like any question." });
       router.refresh();
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to save." });

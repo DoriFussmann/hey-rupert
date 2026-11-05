@@ -8,6 +8,7 @@ import {
   draftEmailCopyEmail,
   draftInvestorListEmail,
   draftNarrativeEmail,
+  summarizeClientFeedback,
 } from "@/lib/agents-server";
 import { notifyClient } from "@/lib/notify";
 import { coreReadiness } from "@/lib/outreach/progress-server";
@@ -559,6 +560,10 @@ export async function logClientFeedback(
   const on = String(input?.on ?? "");
   if (!/^\d{4}-\d{2}-\d{2}$/.test(on) || Number.isNaN(new Date(on).getTime())) return { ok: false, error: "Pick the date." };
 
+  // The AI's summary, which drafting uses; the original is kept. Without Claude (or on a failure) it is logged without one.
+  const summarized = isClaudeConfigured() ? await summarizeClientFeedback(access.supabase, clientId, STEP_LABEL[step], text) : null;
+  const summary = summarized?.ok ? summarized.value : undefined;
+
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const loaded = await loadSetupStep(access.supabase, clientId, step);
     if (!loaded.ok) return loaded;
@@ -570,9 +575,44 @@ export async function logClientFeedback(
       at: nowIso(),
       version: row.version,
       via: { channel, on, ...(access.email ? { by: access.email } : {}) },
+      ...(summary ? { summary } : {}),
     });
     if (!added.ok) return added;
     const saved = await saveQuestions(access.supabase, row, added.questions);
+    if (!saved.ok) return saved;
+    if (!saved.saved) continue;
+    revalidateSetup(clientId);
+    return { ok: true };
+  }
+  return { ok: false, error: "The step changed meanwhile. Refresh and try again." };
+}
+
+const STEP_LABEL: Record<SetupDocumentStep, string> = {
+  framing: "the outreach narrative",
+  investor_list: "the investor matching",
+  email_copy: "the outreach email copy",
+};
+
+/** Rupert's edit of a logged feedback's summary (the original never changes). */
+export async function saveFeedbackSummary(clientId: string, step: SetupDocumentStep, questionId: string, summary: string): Promise<AdminSetupResult> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  if (!isSetupDocumentStep(step)) return { ok: false, error: "Unknown step." };
+  const textValue = String(summary ?? "").trim();
+  if (textValue.length > NOTE_MAX) return { ok: false, error: `Keep it under ${NOTE_MAX} characters.` };
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const loaded = await loadSetupStep(access.supabase, clientId, step);
+    if (!loaded.ok) return loaded;
+    const row = loaded.row;
+    const questions = questionsOf(row);
+    if (!row || !questions.some((q) => q.id === questionId && q.via)) return { ok: false, error: "That feedback is no longer here. Refresh the page." };
+    const next = questions.map((q) => {
+      if (q.id !== questionId) return q;
+      const rest = { ...q };
+      delete rest.summary;
+      return textValue ? { ...rest, summary: textValue } : rest;
+    });
+    const saved = await saveQuestions(access.supabase, row, next);
     if (!saved.ok) return saved;
     if (!saved.saved) continue;
     revalidateSetup(clientId);

@@ -160,6 +160,15 @@ Use only the facts you receive. Never invent investors, numbers, results or outc
 If this is an updated version, say so in one short sentence. If the founder asked about the previous version, answer it in a few words, using only Rupert's note and the facts.
 Plain, human, confident. No hype, no exclamation marks, no markdown.`;
 
+export const CLIENT_FEEDBACK_SUMMARY_PROMPT = `You summarize feedback a founder gave Rupert outside the portal (an email, a call, a message), so Rupert and the founder both see what Rupert took from it, and so Rupert can act on it.
+
+Write a short summary in plain words:
+- Start with one sentence on what the founder is asking for or telling Rupert.
+- Then the concrete points as short bullets, each starting with "- ", in the founder's order: requests, preferences, priorities, names, and anything Rupert should do or avoid. Keep names exactly as written.
+- If something is unclear or open to two readings, say so in a last bullet starting with "- To confirm:".
+
+Use only what the founder said. Don't add advice, judgments or anything that isn't in the text. No hype, no markdown headings, no exclamation marks. At most about 150 words.`;
+
 export const INTAKE_SUB_SECTOR_PROMPT = `You help a founder describe where investors would file their company. They were shown a list of sub-sectors and said none fits; they then described the company in their own words.
 
 Suggest the closest sub-sectors from the list given, at most three, closest first. Judge by what the company itself builds or sells and who pays for it, not by its customers' industries, its suppliers or its sales channels: a payments tool sold to clinics is fintech, not healthtech. For each, one plain sentence the founder can read on why it fits.
@@ -373,6 +382,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The investor, its known website, the startup and the source article; the taxonomy labels allowed (others are dropped); the web-search limit; and the answer format. Contacts and emails come from Hunter, not the AI.",
     testable: false,
     defaultText: ADD_FUND_RESEARCH_PROMPT,
+  },
+  client_feedback_summary: {
+    slug: agentPromptSlug("client_feedback_summary"),
+    usedBy: "Client page → a step → Log client feedback: summarizes what the founder said outside the portal. Rupert and the founder see the summary with the original; the summary is what drafting uses. Rupert can edit it.",
+    fixed: "The founder's text, the step it is about, and the answer format (the summary only).",
+    testable: false,
+    defaultText: CLIENT_FEEDBACK_SUMMARY_PROMPT,
   },
   intake_sub_sector: {
     slug: agentPromptSlug("intake_sub_sector"),

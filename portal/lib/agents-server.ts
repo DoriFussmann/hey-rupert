@@ -34,6 +34,7 @@ import {
   asNarrative,
   EMAIL_SEQUENCE_LABELS,
   fitTiersFor,
+  questionsOf,
   tierEmails,
   workingNarrative,
   type EmailCopyPayload,
@@ -468,6 +469,33 @@ async function draftEmailMiddle(
   return { ok: true, value: { subject, body } };
 }
 
+const FEEDBACK_SUMMARY_TOOL = {
+  name: "summarize",
+  description: "Give the summary of the founder's feedback.",
+  input_schema: { type: "object", properties: { summary: { type: "string" } }, required: ["summary"] },
+};
+
+/** Summarizes feedback a founder gave outside the portal (Log client feedback). */
+export async function summarizeClientFeedback(
+  supabase: ServiceClient,
+  clientId: string,
+  stepLabel: string,
+  feedback: string,
+): Promise<AgentResult<string>> {
+  const prompt = await loadPrompt(supabase, "client_feedback_summary", { clientId, purpose: "Client feedback summary" });
+  if (!prompt.ok) return prompt;
+  const result = await callClaudeTool<{ summary?: unknown }>({
+    system: promptSystem(prompt.value),
+    messages: [{ role: "user", content: `The step it is about: ${stepLabel}.\n\nWhat the founder said:\n\n${feedback}\n\nCall the summarize tool.` }],
+    tool: FEEDBACK_SUMMARY_TOOL,
+    maxTokens: 700,
+    fallbackFromText: (t) => ({ summary: t }),
+  });
+  if (!result.ok) return { ok: false, error: result.reason };
+  const summary = text(result.input.summary).slice(0, 2000);
+  return summary ? { ok: true, value: summary } : { ok: false, error: "Claude returned an empty summary." };
+}
+
 /** The middle of a nudge email (subject and body), from the Nudge page's context. */
 export async function draftNudgeMiddle(
   supabase: ServiceClient,
@@ -650,6 +678,16 @@ export async function draftInvestorListEmail(
   return draftEmailMiddle(promptSystem(prompt.value), context);
 }
 
+/** Feedback the founder gave outside the portal, as Rupert summarized it, for drafting. */
+function loggedFeedbackText(row: SetupStepState | null | undefined) {
+  const logged = questionsOf(row).filter((q) => q.via);
+  if (!logged.length) return "";
+  return [
+    "## What the founder told Rupert outside the portal (Rupert's summary; acknowledge it briefly and say how it was used, only from what Rupert's note and the facts say)",
+    ...logged.map((q) => `- ${q.via!.on}: ${(q.summary || q.question).replace(/\n+/g, " ")}`),
+  ].join("\n");
+}
+
 /** The founder email for the new matching, from the pushed Matching Summary and Competitive Landscape Overview. */
 async function draftMatchingSummaryEmail(
   supabase: ServiceClient,
@@ -675,6 +713,7 @@ async function draftMatchingSummaryEmail(
     summaryFactsText(matching, landscape),
     adminNote.trim() ? `## Rupert's note to the founder (shown on their page)\n${adminNote.trim()}` : "",
     clientAsk ? `## What the founder asked about the previous version\n${clientAsk}` : "",
+    loggedFeedbackText(listRow),
     "# Company information (context only)",
     company.text,
   ]
