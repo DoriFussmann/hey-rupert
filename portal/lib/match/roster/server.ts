@@ -260,6 +260,8 @@ export async function confirmRoster(supabase: ServiceClient, clientId: string, a
   const built = await draft(supabase, clientId);
   if (!built.ok) return built;
   if ("blocked" in built) return { ok: false, error: built.blocked! };
+  const open = built.fill.filter((i) => !i.suggestion?.skipped).length;
+  if (open) return { ok: false, error: `Finish Step 4A first: ${open} added ${open === 1 ? "investor is" : "investors are"} still missing fields (fill in or skip).` };
   const { roster, facts } = built;
   const cleared = await supabase
     .from("final_rosters")

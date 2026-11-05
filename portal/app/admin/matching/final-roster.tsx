@@ -210,12 +210,14 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
   const listTable = (entries: RosterEntry[]) => <RosterList entries={entries} />;
 
   const { fill, options } = state;
+  // Step 4A first: the Roster opens once every investor missing a field is filled in or skipped.
+  const toFill = fill.filter((i) => !i.suggestion?.skipped).length;
   const fillCard = fill.length ? (
         <Card>
           <h3 className="text-h4 text-heading">Step 4A: Fill in missing fields</h3>
           <p className="max-w-prose text-body-sm text-secondary">
             {n(fill.length)} added {fill.length === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need, so {fill.length === 1 ? "it stays" : "they stay"} off
-            the Roster until filled in. {state.saved ? "The Roster is confirmed without them: once filled, Reopen and confirm again to add them." : "Not a blocker: you can confirm the Roster now, and reopen it once more are filled."}
+            the Roster until filled in. {state.saved ? "The Roster is confirmed without them: once filled, Reopen and confirm again to add them." : "Fill in or skip each one: the Roster opens below once none are left."}
           </p>
           <div className="mt-sm">
             <MissingFields
@@ -267,6 +269,17 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
         </div>
         {fill.length ? null : errorLine}
       </Card>
+      </div>
+    );
+  }
+
+  if (toFill) {
+    return (
+      <div className="space-y-md">
+        {fillCard}
+        <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">
+          The Final Roster opens once Step 4A is done: {n(toFill)} {toFill === 1 ? "investor" : "investors"} still to fill in or skip.
+        </p>
       </div>
     );
   }
