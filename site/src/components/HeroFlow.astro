@@ -1,0 +1,416 @@
+---
+// Home hero: how Rupert builds an investor list, as one animated card. The
+// same elements (funds, companies) move between six steps: filter, the
+// competitors and companies like you, the evidence, the plan, and approval.
+// Fictional companies and funds. Autoplay pauses on hover, focus or a hidden
+// tab; the step rail jumps to any step; reduced motion shows each step still.
+---
+
+<div class="rhf-rh" data-rh="rh" role="region" aria-roledescription="animation" aria-label="How Rupert builds an investor list, in six steps">
+      <div class="rhf-rh__frame" data-rh="frame">
+        <div class="rhf-rh__stage" data-rh="stage" aria-hidden="true"></div>
+      </div>
+      <div class="rhf-rh__rail" data-rh="rail"></div>
+      <div class="rhf-rh__foot">
+        <span data-rh="live" class="rhf-sr" aria-live="polite"></span>
+        <span>Expert-reviewed at every step · Illustrative data · <button class="rhf-rh__btn" data-rh="toggle" type="button">Pause</button></span>
+      </div>
+
+<style is:global>
+  .rhf-rh {
+    --ink: #1a1a2e; --body: #2d2d2d; --surface: #ffffff; --border: #e4e2de; --muted: #5c5c5c; --ash: #8a8a8a;
+    --brass: #b5935a; --brass-text: #7a5c28; --brass-tint: #f3ece0; --moss: #2f6b4f; --moss-tint: #e4efe8; --tint: #f3f1ec;
+    --ease: cubic-bezier(0.22, 0.61, 0.36, 1); --t: 700ms;
+    color: var(--body);
+  }
+  .rhf-rh *, .rhf-rh *::before, .rhf-rh *::after { box-sizing: border-box; }
+
+  .rhf-rh { width: 100%; }
+  .rhf-rh__frame {
+    position: relative; width: 100%;
+    aspect-ratio: 600 / 390;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04), 0 12px 32px -18px rgba(26, 26, 46, 0.18);
+  }
+  .rhf-rh__stage { position: absolute; left: 0; top: 0; width: 600px; height: 390px; transform-origin: 0 0; }
+  .rhf-el { position: absolute; left: 0; top: 0; transition: transform var(--t) var(--ease), opacity var(--t) var(--ease), width var(--t) var(--ease), height var(--t) var(--ease), background-color var(--t) var(--ease), border-color var(--t) var(--ease), color var(--t) var(--ease); will-change: transform, opacity; }
+
+  .rhf-head-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; color: var(--brass-text); }
+  .rhf-head-caption { font-size: 17px; font-weight: 400; color: var(--ink); line-height: 1.35; width: 360px; }
+  .rhf-num { text-align: right; width: 200px; }
+  .rhf-num__value { font-size: 40px; font-weight: 300; letter-spacing: -0.02em; color: var(--ink); line-height: 1; font-variant-numeric: tabular-nums; }
+  .rhf-num__label { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .rhf-rule { height: 1px; background: var(--border); width: 552px; }
+
+  .rhf-chip { height: 26px; padding: 0 12px; border-radius: 13px; border: 1px solid var(--border); background: var(--surface); font-size: 12px; color: var(--muted); display: flex; align-items: center; white-space: nowrap; }
+  .rhf-chip.is-on { border-color: var(--brass); color: var(--brass-text); background: var(--brass-tint); }
+  .rhf-dot { width: 9px; height: 9px; border-radius: 50%; background: #cfcac0; }
+  .rhf-dot.is-keep { background: var(--brass); }
+
+  .rhf-co { height: 46px; width: 168px; border: 1px solid var(--border); border-radius: 10px; background: var(--tint); padding: 7px 12px; }
+  .rhf-co__name { font-size: 13px; color: var(--ink); font-weight: 500; }
+  .rhf-co__meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .rhf-fund { height: 28px; width: 168px; border-radius: 14px; border: 1px solid var(--border); background: var(--surface); display: flex; align-items: center; gap: 8px; padding: 0 12px; overflow: hidden; white-space: nowrap; }
+  .rhf-fund__name { font-size: 12.5px; color: var(--ink); flex: none; }
+  .rhf-fund__tags { display: flex; gap: 6px; margin-left: auto; opacity: 0; transition: opacity 400ms var(--ease); }
+  .rhf-more { font-size: 11.5px; color: var(--muted); padding-left: 13px; }
+  .rhf-fund__also { font-size: 10.5px; color: #fff; background: var(--brass); border-radius: 8px; padding: 1px 6px; margin-left: auto; opacity: 0; transition: opacity 400ms var(--ease); }
+  .rhf-tag { font-size: 10.5px; padding: 2px 8px; border-radius: 9px; white-space: nowrap; }
+  .rhf-tag--comp { background: var(--brass-tint); color: var(--brass-text); }
+  .rhf-tag--peer { background: var(--moss-tint); color: var(--moss); }
+  .rhf-tag--proof { background: var(--tint); color: var(--muted); }
+  .rhf-tag--none { background: transparent; color: var(--ash); border: 1px dashed #d6d2ca; }
+  .rhf-fund.is-row { border-radius: 8px; }
+  .rhf-fund.is-row .rhf-fund__tags { opacity: 1; }
+  .rhf-fund.is-also .rhf-fund__also { opacity: 1; }
+  .rhf-fund.is-dim { background: #fbfaf8; }
+  .rhf-fund.is-dim .rhf-fund__name { color: var(--ash); text-decoration: line-through; text-decoration-color: #c9c4ba; }
+  .rhf-fund.is-sel { border-color: var(--brass); }
+
+  .rhf-tray-label, .rhf-tier { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; color: var(--muted); }
+  .rhf-tier { color: var(--brass-text); }
+  .rhf-tier__note { text-transform: none; letter-spacing: 0; font-weight: 400; color: var(--muted); margin-left: 6px; }
+
+  .rhf-cap { width: 552px; }
+  .rhf-cap__row { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); margin-bottom: 6px; }
+  .rhf-cap__bar { height: 8px; background: var(--tint); border-radius: 4px; overflow: hidden; }
+  .rhf-cap__fill { height: 100%; width: 0; background: var(--brass); border-radius: 4px; transition: width 900ms var(--ease) 150ms; }
+  .rhf-cap.is-on .rhf-cap__fill { width: 78%; }
+
+  .rhf-mail { width: 552px; height: 180px; border: 1px solid var(--border); border-radius: 10px; background: #fdfcfa; padding: 14px 16px; font-family: "IBM Plex Mono", "Courier New", monospace; font-size: 12px; line-height: 1.6; color: var(--body); }
+  .rhf-mail__meta { color: var(--muted); }
+  .rhf-mail__line { white-space: nowrap; overflow: hidden; }
+  .rhf-mail__body { margin-top: 8px; }
+  .rhf-mail__body .rhf-mail__line { opacity: 0; transition: opacity 500ms var(--ease); }
+  .rhf-mail.is-typing .rhf-mail__body .rhf-mail__line { opacity: 1; }
+  .rhf-mail.is-typing .rhf-mail__body .rhf-mail__line:nth-child(2) { transition-delay: 350ms; }
+  .rhf-mail.is-typing .rhf-mail__body .rhf-mail__line:nth-child(3) { transition-delay: 700ms; }
+  .rhf-mail.is-typing .rhf-mail__body .rhf-mail__line:nth-child(4) { transition-delay: 1050ms; }
+  .rhf-approve { height: 30px; padding: 0 14px; border-radius: 15px; display: flex; align-items: center; gap: 8px; font-size: 12.5px; border: 1px solid var(--border); color: var(--muted); background: var(--surface); }
+  .rhf-check { height: 26px; display: flex; align-items: center; gap: 7px; padding: 0 12px 0 10px; border-radius: 13px; background: var(--moss-tint); color: var(--moss); font-size: 11.5px; white-space: nowrap; }
+  .rhf-check__who { font-weight: 500; }
+  .rhf-check__what { color: #3d5c4c; }
+  .rhf-check__tick { width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; background: transparent; border: 1px solid var(--moss); color: transparent; transition: background-color 300ms var(--ease), color 300ms var(--ease); }
+  .rhf-check.is-on .rhf-check__tick { background: var(--moss); color: #fff; }
+  .rhf-approve.is-on { background: var(--moss); border-color: var(--moss); color: #fff; }
+
+  /* Rail */
+  .rhf-rh__rail { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 16px; }
+  .rhf-rh__step { appearance: none; border: 0; background: none; padding: 0; text-align: left; cursor: pointer; font: inherit; color: var(--muted); }
+  .rhf-rh__bar { display: block; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .rhf-rh__bar i { display: block; height: 100%; width: 0; background: var(--brass); }
+  .rhf-rh__step.is-done .rhf-rh__bar i { width: 100%; }
+  .rhf-rh__step.is-active .rhf-rh__bar i { animation: rhf-fill linear forwards; animation-duration: var(--dur, 4s); }
+  .rhf-rh.is-paused .rhf-rh__step.is-active .rhf-rh__bar i { animation-play-state: paused; }
+  .rhf-rh__name { display: block; font-size: 12px; margin-top: 8px; }
+  .rhf-rh__step.is-active .rhf-rh__name { color: var(--ink); }
+  .rhf-rh__step:focus-visible { outline: 2px solid var(--brass); outline-offset: 4px; border-radius: 2px; }
+  @keyframes rhf-fill { from { width: 0; } to { width: 100%; } }
+  .rhf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .rhf-rh__foot { display: flex; justify-content: flex-end; align-items: center; margin-top: 12px; font-size: 12px; color: var(--muted); }
+  .rhf-rh__btn { appearance: none; border: 1px solid var(--border); background: var(--surface); border-radius: 15px; padding: 4px 12px; font: inherit; font-size: 12px; color: var(--ink); cursor: pointer; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .rhf-el, .rhf-fund__tags, .rhf-fund__also, .rhf-cap__fill, .rhf-mail__body .rhf-mail__line { transition: none !important; }
+    .rhf-rh__step.is-active .rhf-rh__bar i { animation: none; width: 100%; }
+  }
+</style>
+
+<script>
+// @ts-nocheck
+
+document.querySelectorAll<HTMLElement>(".rhf-rh").forEach((root0) => {
+  const SCENES = [
+    { name: "Filter", label: "Step 1 · Every fund", caption: "Filtered to your raise: financing, stage, geography and sector.", ms: 5200, check: "Filters set and confirmed by your expert", at: 3800 },
+    { name: "Competitors", label: "Step 2 · Your competitors", caption: "Your funded competitors, and who backed each of them.", ms: 3000, check: "Each competitor and investor checked by hand", at: 1000 },
+    { name: "Peers", label: "Step 3 · Companies like you", caption: "Not competitors, but the same bet. Some investors keep coming back.", ms: 3400, check: "Each company chosen and confirmed by your expert", at: 1100 },
+    { name: "Evidence", label: "Step 4 · The evidence", caption: "Every investor needs a reason. No evidence, no email.", ms: 3200, check: "Every match reviewed: kept, brought back or removed", at: 1300 },
+    { name: "Plan", label: "Step 5 · The plan", caption: "Ranked into tiers, contacts found, sized to your campaign.", ms: 2800, check: "Plan signed off before anything is sent", at: 1000 },
+    { name: "Approve", label: "Step 6 · You approve", caption: "Each email written for its investor. Nothing goes out until you approve it.", ms: 4200, check: "Written and reviewed by your expert", at: 900 },
+  ];
+
+  const COMPETITORS = [
+    { id: "c1", name: "Brightleaf", meta: "Seed · $3M" },
+    { id: "c2", name: "Kettle & Co", meta: "Seed · $2.5M" },
+    { id: "c3", name: "Northfield Labs", meta: "Series A · $9M" },
+  ];
+  const PEERS = [
+    { id: "p1", name: "Juniper Goods", meta: "Seed · $4M" },
+    { id: "p2", name: "Harbor Supply", meta: "Pre-Seed · $1.2M" },
+    { id: "p3", name: "Oakline", meta: "Seed · $5M" },
+  ];
+  // tags: [kind, text]
+  const FUNDS = [
+    { id: "f1", name: "Northwind Ventures", tags: [["comp", "Backed Northfield Labs"]], tier: "core" },
+    { id: "f2", name: "Alder Street Capital", tags: [["comp", "Backed Brightleaf"], ["peer", "Backed Juniper Goods"]], tier: "core" },
+    { id: "f3", name: "Granite Seed Fund", tags: [["comp", "Backed Kettle & Co"]], tier: "core" },
+    { id: "f4", name: "Meridian Angels", tags: [["peer", "Backed Juniper Goods"], ["proof", "Invests in your sector"]], tier: "core" },
+    { id: "f5", name: "Copperline VC", tags: [["peer", "Backed Harbor Supply"]], tier: "sphere" },
+    { id: "f6", name: "Fieldstone Partners", tags: [["peer", "Backed Oakline"]], tier: "sphere" },
+    { id: "f7", name: "Bluewater Growth", tags: [["none", "No evidence"]], tier: null },
+    { id: "f8", name: "Summit Generalist Fund", tags: [["none", "No evidence"]], tier: null },
+  ];
+  const CHIPS = ["Equity", "Pre-Seed, Seed", "United States", "Your sector"];
+  const COUNTS0 = [10240, 7610, 3720, 2540, 960];
+
+  const stage = root0.querySelector('[data-rh="stage"]');
+  const frame = root0.querySelector('[data-rh="frame"]');
+  const root = root0;
+  const rail = root0.querySelector('[data-rh="rail"]');
+  const live = root0.querySelector('[data-rh="live"]');
+  const toggle = root0.querySelector('[data-rh="toggle"]');
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  const make = (cls, html) => {
+    const d = document.createElement("div");
+    d.className = "rhf-el " + cls.split(" ").map((c) => "rhf-" + c).join(" ");
+    if (html !== undefined) d.innerHTML = html;
+    d.style.opacity = "0";
+    stage.appendChild(d);
+    return d;
+  };
+  const place = (el, x, y, o = 1, extra = {}) => {
+    el.style.transform = `translate(${x}px, ${y}px)` + (extra.scale ? ` scale(${extra.scale})` : "");
+    el.style.opacity = String(o);
+    if (extra.w !== undefined) el.style.width = extra.w + "px";
+    if (extra.h !== undefined) el.style.height = extra.h + "px";
+  };
+
+  // ---- Build every element once: they persist and move between scenes.
+  const label = make("head-label");
+  const caption = make("head-caption");
+  const num = make("num", '<div class="rhf-num__value">0</div><div class="rhf-num__label"></div>');
+  const numValue = num.querySelector(".rhf-num__value");
+  const numLabel = num.querySelector(".rhf-num__label");
+  const rule = make("rule");
+  [label, caption, num, rule].forEach((e) => (e.style.opacity = "1"));
+  place(label, 24, 22); place(caption, 24, 42); place(num, 376, 24); place(rule, 24, 96);
+
+  const chips = CHIPS.map((t) => make("chip", t));
+  const dots = [];
+  // 60 dots: which filter step removes each (0..3), or 4 = kept.
+  const fate = [];
+  for (let i = 0; i < 75; i++) fate.push(i % 11 === 3 || i % 13 === 5 || i === 31 || i === 47 ? 4 : i % 4);
+  for (let i = 0; i < 75; i++) dots.push(make("dot"));
+  const mores = [0, 1, 2].map(() => make("more"));
+
+  const cos = [...COMPETITORS, ...PEERS].map((c) => ({ ...c, el: make("co", `<div class="rhf-co__name">${c.name}</div><div class="rhf-co__meta">${c.meta}</div>`) }));
+  const tagHtml = (tags) => tags.map(([k, t]) => `<span class="rhf-tag rhf-tag--${k}">${t}</span>`).join("");
+  const funds = FUNDS.map((f) => ({ ...f, el: make("fund", `<span class="rhf-fund__name">${f.name}</span><span class="rhf-fund__also">×2</span><span class="rhf-fund__tags">${tagHtml(f.tags)}</span>`) }));
+  const fund = (id) => funds.find((f) => f.id === id);
+  const tray = make("tray-label", "Already on your list");
+  const tierCore = make("tier", 'Core<span class="rhf-tier__note">your sector, strongest evidence first</span>');
+  const tierSphere = make("tier", 'Sphere<span class="rhf-tier__note">next ring out</span>');
+  const cap = make("cap", '<div class="rhf-cap__row"><span>Contacts planned</span><span>186 of 240 the campaign can reach</span></div><div class="rhf-cap__bar"><div class="rhf-cap__fill"></div></div>');
+  const mail = make("mail", `
+    <div class="rhf-mail__line rhf-mail__meta">To: Elena Park, Partner, Northwind Ventures</div>
+    <div class="rhf-mail__line rhf-mail__meta">Subject: Northfield Labs, two years on</div>
+    <div class="rhf-mail__body">
+      <div class="rhf-mail__line">Elena, you backed Northfield Labs before most people</div>
+      <div class="rhf-mail__line">understood the category. We're building the version</div>
+      <div class="rhf-mail__line">their customers keep asking for, and raising a $3M seed.</div>
+      <div class="rhf-mail__line">Worth 20 minutes next week?</div>
+    </div>`);
+  const approve = make("approve", "<span>Approve</span>");
+  const PERSON = '<svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true"><circle cx="8" cy="5.2" r="2.7" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M2.8 14c.6-2.9 2.7-4.4 5.2-4.4s4.6 1.5 5.2 4.4" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/></svg>';
+  const check = make("check", "");
+
+  // ---- Helpers
+  let timers = [];
+  const later = (ms, fn) => timers.push(window.setTimeout(fn, reduce ? 0 : ms));
+  const clearTimers = () => { timers.forEach(clearTimeout); timers = []; };
+  let countTimer = null;
+  const countTo = (to, ms = 900) => {
+    const from = Number(numValue.dataset.v || 0);
+    if (countTimer) cancelAnimationFrame(countTimer);
+    if (reduce) { numValue.textContent = to.toLocaleString("en-US"); numValue.dataset.v = to; return; }
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / ms);
+      const e = 1 - Math.pow(1 - p, 3);
+      const v = Math.round(from + (to - from) * e);
+      numValue.textContent = v.toLocaleString("en-US");
+      numValue.dataset.v = v;
+      if (p < 1) countTimer = requestAnimationFrame(step);
+    };
+    countTimer = requestAnimationFrame(step);
+  };
+  const hideAll = () => {
+    chips.forEach((c) => (c.style.opacity = "0"));
+    dots.forEach((d) => (d.style.opacity = "0"));
+    cos.forEach((c) => (c.el.style.opacity = "0"));
+    [tray, tierCore, tierSphere, cap, mail, approve, check, ...mores].forEach((e) => (e.style.opacity = "0"));
+    check.classList.remove("is-on");
+    cap.classList.remove("is-on"); mail.classList.remove("is-typing"); approve.classList.remove("is-on");
+    approve.innerHTML = "<span>Approve</span>";
+  };
+  const fundAs = (f, mode, x, y, o = 1, rowH = 0) => {
+    // pill: compact chip; row: full-width table row
+    const el = f.el;
+    el.classList.toggle("is-row", mode === "row");
+    if (mode === "row") place(el, x, y, o, { w: 552, h: rowH || 30 });
+    else place(el, x, y, o, { w: mode === "pill-wide" ? 168 : 168, h: 28 });
+  };
+  const colX = [24, 216, 408];
+  const pillX = (col) => colX[col];
+
+  // ---- Scenes
+  const scenes = [
+    // 0 Filter
+    () => {
+      let cx = 24;
+      chips.forEach((c) => { c.classList.remove("is-on"); place(c, cx, 116); cx += c.offsetWidth + 8; });
+      dots.forEach((d, i) => {
+        d.classList.remove("is-keep");
+        place(d, 30 + (i % 15) * 38.5, 176 + Math.floor(i / 15) * 38, 1);
+      });
+      funds.forEach((f) => { f.el.classList.remove("is-also", "is-dim", "is-sel"); fundAs(f, "pill", 216, 330, 0); });
+      numLabel.textContent = "funds in the database";
+      numValue.dataset.v = 0; countTo(COUNTS0[0], 700);
+      CHIPS.forEach((_, i) => later(900 + i * 850, () => {
+        chips[i].classList.add("is-on");
+        dots.forEach((d, j) => { if (fate[j] === i) d.style.opacity = "0.12"; });
+        numLabel.textContent = i === 3 ? "on your shortlist" : "funds left";
+        countTo(COUNTS0[i + 1], 600);
+        if (i === 3) dots.forEach((d, j) => { if (fate[j] === 4) d.classList.add("is-keep"); });
+      }));
+    },
+    // 1 Competitors
+    () => {
+      COMPETITORS.forEach((c, i) => place(cos[i].el, colX[i], 116, 1));
+      numLabel.textContent = "investors behind 3 competitors"; countTo(18);
+      const at = { f2: [0, 0], f3: [1, 0], f1: [2, 0] };
+      Object.entries(at).forEach(([id, [col, row]], k) => {
+        const f = fund(id);
+        f.el.classList.remove("is-row", "is-also", "is-dim");
+        fundAs(f, "pill", pillX(col), 120, 0);
+        later(150 + k * 160, () => fundAs(f, "pill", pillX(col), 176 + row * 36, 1));
+      });
+      ["+ 5 more", "+ 7 more", "+ 3 more"].forEach((t, k) => { mores[k].textContent = t; place(mores[k], pillX(k), 214, 0); later(650, () => place(mores[k], pillX(k), 214, 1)); });
+    },
+    // 2 Peers
+    () => {
+      PEERS.forEach((c, i) => place(cos[3 + i].el, colX[i], 116, 1));
+      numLabel.textContent = "investors behind companies like you"; countTo(52);
+      place(tray, 24, 300, 1);
+      fundAs(fund("f1"), "pill", 24, 324, 1);
+      fundAs(fund("f3"), "pill", 216, 324, 1);
+      fundAs(fund("f7"), "pill", 408, 324, 0);
+      fundAs(fund("f8"), "pill", 408, 324, 0);
+      // Alder Street comes back: it also backed a company like you.
+      const f2 = fund("f2");
+      fundAs(f2, "pill", 24, 176, 1);
+      later(550, () => f2.el.classList.add("is-also"));
+      ["+ 11 more", "+ 17 more", "+ 20 more"].forEach((t, k) => { mores[k].textContent = t; place(mores[k], pillX(k), k === 0 ? 250 : 214, 0); later(650, () => place(mores[k], pillX(k), k === 0 ? 250 : 214, 1)); });
+      [["f4", 0, 1], ["f5", 1, 0], ["f6", 2, 0]].forEach(([id, col, row], k) => {
+        const f = fund(id);
+        fundAs(f, "pill", pillX(col), 120, 0);
+        later(150 + k * 160, () => fundAs(f, "pill", pillX(col), 176 + row * 36, 1));
+      });
+    },
+    // 3 Evidence
+    () => {
+      numLabel.textContent = "with evidence, from 960"; countTo(960, 10);
+      later(150, () => countTo(61, 1000));
+      funds.forEach((f, i) => {
+        f.el.classList.remove("is-also", "is-dim", "is-sel");
+        fundAs(f, "row", 24, 112 + i * 30, 1, 27);
+      });
+      later(1000, () => ["f7", "f8"].forEach((id) => fund(id).el.classList.add("is-dim")));
+    },
+    // 4 Plan
+    () => {
+      numLabel.textContent = "contacts planned"; countTo(186);
+      place(tierCore, 24, 110, 1);
+      const core = funds.filter((f) => f.tier === "core");
+      const sphere = funds.filter((f) => f.tier === "sphere");
+      core.forEach((f, i) => { f.el.classList.remove("is-dim", "is-sel"); fundAs(f, "row", 24, 128 + i * 28, 1, 26); });
+      place(tierSphere, 24, 240, 1);
+      sphere.forEach((f, i) => { f.el.classList.remove("is-dim", "is-sel"); fundAs(f, "row", 24, 258 + i * 27, 1, 25); });
+      funds.filter((f) => !f.tier).forEach((f) => fundAs(f, "row", 24, 360, 0));
+      place(cap, 24, 310, 0);
+      later(200, () => { place(cap, 24, 314, 1); cap.classList.add("is-on"); });
+    },
+    // 5 Approve
+    () => {
+      numLabel.textContent = "emails approved by you"; countTo(0, 10);
+      const f1 = fund("f1");
+      funds.forEach((f) => { f.el.classList.remove("is-dim"); if (f !== f1) fundAs(f, "row", 24, 134, 0); });
+      f1.el.classList.add("is-sel");
+      fundAs(f1, "row", 24, 116, 1);
+      place(mail, 24, 156, 0);
+      later(250, () => { place(mail, 24, 156, 1); mail.classList.add("is-typing"); });
+      place(approve, 426, 362, 0);
+      later(1900, () => place(approve, 426, 356, 1));
+      later(2700, () => { approve.classList.add("is-on"); approve.innerHTML = "<span>✓ Approved by you</span>"; countTo(1, 300); });
+    },
+  ];
+
+  // ---- Rail and playback
+  SCENES.forEach((s, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "rhf-rh__step";
+    b.innerHTML = `<span class="rhf-rh__bar"><i></i></span><span class="rhf-rh__name">${s.name}</span>`;
+    b.addEventListener("click", () => { go(i); });
+    rail.appendChild(b);
+  });
+  const steps = Array.from(rail.children);
+  let index = -1, timer = null, paused = false, userPaused = false, startedAt = 0, remaining = 0;
+
+  const scheduleNext = (ms) => {
+    clearTimeout(timer);
+    remaining = ms; startedAt = performance.now();
+    if (!paused && !reduce) timer = setTimeout(() => go(index + 1), ms);
+  };
+  function go(i) {
+    clearTimers();
+    index = (i + SCENES.length) % SCENES.length;
+    const s = SCENES[index];
+    label.textContent = s.label;
+    caption.textContent = s.caption;
+    live.textContent = `${s.label}: ${s.caption}`;
+    hideAll();
+    scenes[index]();
+    check.innerHTML = `${PERSON}<span class="rhf-check__who">Expert check</span><span class="rhf-check__what">${s.check}</span><span class="rhf-check__tick">✓</span>`;
+    place(check, 24, 364, 0);
+    later(s.at, () => { place(check, 24, 358, 1); later(350, () => check.classList.add("is-on")); });
+    steps.forEach((b, j) => {
+      b.classList.toggle("is-done", j < index);
+      b.classList.remove("is-active");
+      b.setAttribute("aria-current", j === index ? "step" : "false");
+    });
+    void steps[index].offsetWidth; // restart the bar animation
+    steps[index].classList.add("is-active");
+    steps[index].style.setProperty("--dur", s.ms + "ms");
+    scheduleNext(s.ms);
+  }
+  const pause = () => {
+    if (paused) return;
+    paused = true; root.classList.add("is-paused");
+    clearTimeout(timer); remaining -= performance.now() - startedAt;
+  };
+  const resume = () => {
+    if (!paused || userPaused) return;
+    paused = false; root.classList.remove("is-paused");
+    scheduleNext(Math.max(400, remaining));
+  };
+  root.addEventListener("mouseenter", pause);
+  root.addEventListener("mouseleave", resume);
+  toggle.addEventListener("click", () => {
+    userPaused = !userPaused;
+    toggle.textContent = userPaused ? "Play" : "Pause";
+    if (userPaused) pause(); else { paused = true; resume(); }
+  });
+  document.addEventListener("visibilitychange", () => (document.hidden ? pause() : resume()));
+
+  // ---- Scale the 600×390 stage to the frame.
+  const fit = () => { stage.style.transform = `scale(${frame.clientWidth / 600})`; };
+  new ResizeObserver(fit).observe(frame);
+  fit();
+
+  if (reduce) { toggle.hidden = true; }
+  go(0);
+});
+</script>

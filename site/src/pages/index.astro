@@ -1,5 +1,6 @@
 ---
-import { getImage, Image } from "astro:assets";
+import HeroFlow from "../components/HeroFlow.astro";
+import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
 import CtaBanner from "../components/CtaBanner.astro";
@@ -10,11 +11,6 @@ import { orgId } from "seo-core";
 import { DORI_LINKEDIN, SITE_URL } from "../config/site";
 import { absoluteUrl, sitePath } from "../lib/url";
 import type { ImageMetadata } from "astro";
-import HeroSteps from "../components/HeroSteps.astro";
-import step1 from "../assets/hero/steps/step1.png";
-import step2a from "../assets/hero/steps/step2a.png";
-import step2b from "../assets/hero/steps/step2b.png";
-import step2c from "../assets/hero/steps/step2c.png";
 import doriPortrait from "../assets/founder/dori-fussmann/photo.jpg";
 import linkedinLogo from "../assets/brand/linkedin.png";
 
@@ -177,38 +173,6 @@ const faqs = [
   },
 ];
 
-const heroSteps = [
-  {
-    src: step1,
-    step: "Step 1",
-    title: "Every fund, filtered to your raise",
-    alt: "Dry Match Short List: 6,412 funds narrowed by financing type, stage, geography and sector to 312.",
-  },
-  {
-    src: step2a,
-    step: "Step 2A",
-    title: "Your funded competitors",
-    alt: "Funded direct competitors, with each one's stage, geography and sector.",
-  },
-  {
-    src: step2b,
-    step: "Step 2B",
-    title: "Who backed them",
-    alt: "64 investors behind the competitors: funds, corporates and angels, and which competitors each backed.",
-  },
-  {
-    src: step2c,
-    step: "Step 2C",
-    title: "Checked against the fund database",
-    alt: "Check against the database: 31 of 64 investors go forward; the rest are left out or not yet in the database.",
-  },
-];
-
-const heroOptimized = await getImage({
-  src: step1,
-  width: 960,
-});
-
 const jsonLd: Record<string, unknown>[] = [
   {
     "@context": "https://schema.org",
@@ -245,7 +209,6 @@ const jsonLd: Record<string, unknown>[] = [
   description={description}
   canonicalPath="/"
   jsonLd={jsonLd}
-  preloadImage={heroOptimized.src}
 >
   <main id="main-content" class="flex-1">
     <section class="site-wrap pb-lg pt-xl lg:pb-xl lg:pt-2xl">
@@ -275,7 +238,7 @@ const jsonLd: Record<string, unknown>[] = [
           </p>
         </div>
         <div class="hero-reveal md:col-span-6">
-          <HeroSteps steps={heroSteps} />
+          <HeroFlow />
         </div>
       </div>
     </section>
