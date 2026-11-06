@@ -32,6 +32,12 @@ export const GET: APIRoute = async () => {
           "See how Rupert works in three stages: discovery and strategy, campaign launch, and meetings and momentum — with the founder in control of every conversation.",
       },
       {
+        title: "Case Studies",
+        path: "/case-studies/",
+        description:
+          "Anonymized client raises run with Rupert, including a $100M Series A for a US pet-care company: financial model rebuild, about 25 targeted investors, closed in three months.",
+      },
+      {
         title: "Pricing",
         path: "/pricing/",
         description:

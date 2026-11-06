@@ -1,0 +1,261 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
+import { sitePath } from "../../lib/url";
+
+const title = "Case Studies: Startup Raises Run With Rupert | Rupert";
+const description =
+  "How Rupert ran real raises end to end: the financial model, investor targeting and outreach. Our clients stay anonymous; the numbers and the work are real.";
+
+// Clients stay anonymous at their request. Add a case by adding an entry here.
+const cases = [
+  {
+    id: "pet-care-series-a",
+    num: "01",
+    tag: "Series A · Pet care · US",
+    title: "A $100M Series A for a US pet-care company",
+    facts: [
+      { label: "Round", value: "$100M" },
+      { label: "Stage", value: "Series A" },
+      { label: "Sector", value: "Pet care" },
+      { label: "Geography", value: "US" },
+      { label: "Investors targeted", value: "~25" },
+      { label: "Timeline", value: "3 months, end to end" },
+    ],
+    result: "Round closed in full",
+    situation: [
+      "The company had outgrown its investor network. A $100M round meant going to a new kind of investor: institutional funds it had no relationships with.",
+      "Those investors also brought a very different due diligence process, with a much higher bar for reporting, data quality and professionalism. The company's financial model was a simplified one that couldn't answer the questions they would ask. The team wasn't ready for that level of scrutiny.",
+    ],
+    steps: [
+      {
+        title: "Rebuilt the financial model",
+        body: "Replaced the simplified model with a full one, built to answer the questions institutional investors ask before they commit.",
+      },
+      {
+        title: "Got the company diligence-ready",
+        body: "Brought reporting, data and materials up to the standard a $100M round is judged against.",
+      },
+      {
+        title: "Found the right investors",
+        body: "Identified and prioritized about 25 investors that fit the round's size, stage and sector, instead of spraying a long list.",
+      },
+      {
+        title: "Designed and ran the outreach",
+        body: "A focused, personal approach: roughly one email per target, aimed at getting the meeting, then supporting the founder through the conversations that followed.",
+      },
+    ],
+    quote:
+      "The work took the company to a new level. It started with what investors demanded, and it changed how we manage and operate the company: in a different, data-driven way.",
+    quoteBy: "CEO & Founder, US pet-care company",
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/case-studies/">
+  <main id="main-content" class="flex-1">
+    <section class="site-wrap py-2xl lg:py-3xl">
+      <p class="cs-eyebrow">Case Studies</p>
+      <h1 class="type-h1 mt-md">Real raises, run with Rupert.</h1>
+      <p class="type-body-lg mt-lg max-w-prose">
+        Our clients stay anonymous. The numbers and the work are real.
+      </p>
+    </section>
+
+    {
+      cases.map((c) => (
+        <section class="site-wrap pb-2xl lg:pb-3xl" id={c.id} aria-labelledby={`${c.id}-title`}>
+          <article class="cs-case">
+            <header class="cs-head">
+              <p class="cs-eyebrow">
+                Case {c.num} · {c.tag}
+              </p>
+              <h2 id={`${c.id}-title`} class="type-h2 mt-sm">
+                {c.title}
+              </h2>
+            </header>
+
+            <dl class="cs-facts">
+              {c.facts.map((f) => (
+                <div class="cs-fact">
+                  <dt>{f.label}</dt>
+                  <dd>{f.value}</dd>
+                </div>
+              ))}
+              <div class="cs-fact cs-fact--result">
+                <dt>Result</dt>
+                <dd>{c.result}</dd>
+              </div>
+            </dl>
+
+            <div class="cs-body">
+              <div>
+                <h3 class="type-h3">The situation</h3>
+                {c.situation.map((p) => (
+                  <p class="type-body mt-md max-w-prose">{p}</p>
+                ))}
+              </div>
+
+              <div>
+                <h3 class="type-h3">What Rupert did</h3>
+                <ol class="cs-steps">
+                  {c.steps.map((s, i) => (
+                    <li class="cs-step">
+                      <span class="cs-step__num">{String(i + 1).padStart(2, "0")}</span>
+                      <span>
+                        <span class="cs-step__title">{s.title}</span>
+                        <span class="cs-step__text">{s.body}</span>
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+              </div>
+            </div>
+
+            <blockquote class="cs-quote">
+              <p>“{c.quote}”</p>
+              <footer>{c.quoteBy}</footer>
+            </blockquote>
+          </article>
+        </section>
+      ))
+    }
+
+    <section class="site-wrap pb-2xl">
+      <p class="type-body-sm text-muted max-w-prose">
+        Every raise is different. Results depend on the company, the round and the market. See
+        <a href={sitePath("/how-it-works/")}>the process</a> for how an engagement runs.
+      </p>
+    </section>
+
+    <CtaBanner />
+  </main>
+</BaseLayout>
+
+<style>
+  .cs-eyebrow {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #7a5c28;
+  }
+  .cs-case {
+    background: #ffffff;
+    border: 1px solid #e4e2de;
+    border-radius: 16px;
+    padding: 28px 20px;
+    position: relative;
+  }
+  .cs-case::before {
+    content: "";
+    position: absolute;
+    left: 28px;
+    right: 28px;
+    top: 0;
+    height: 2px;
+    background: #b5935a;
+    opacity: 0.55;
+    border-radius: 0 0 2px 2px;
+  }
+  @media (min-width: 768px) {
+    .cs-case { padding: 48px; }
+  }
+  .cs-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin: 32px 0 0;
+  }
+  @media (min-width: 768px) {
+    .cs-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  }
+  .cs-fact {
+    background: #faf9f5;
+    border: 1px solid #e4e2de;
+    border-radius: 10px;
+    padding: 16px;
+    margin: 0;
+  }
+  .cs-fact dt {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #6b6b6b;
+  }
+  .cs-fact dd {
+    margin: 6px 0 0;
+    font-size: 20px;
+    line-height: 1.3;
+    font-weight: 400;
+    color: #1a1a2e;
+  }
+  .cs-fact--result {
+    grid-column: span 2;
+    background: #f5efe4;
+    border-color: #dcc9a6;
+  }
+  .cs-fact--result dt { color: #7a5c28; }
+  .cs-body {
+    display: grid;
+    gap: 40px;
+    margin-top: 48px;
+  }
+  @media (min-width: 1024px) {
+    .cs-body { grid-template-columns: 5fr 7fr; gap: 64px; }
+  }
+  .cs-steps {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0;
+  }
+  .cs-step {
+    display: grid;
+    grid-template-columns: 36px 1fr;
+    gap: 12px;
+    padding: 18px 0;
+    border-top: 1px solid #e4e2de;
+  }
+  .cs-step:last-child { border-bottom: 1px solid #e4e2de; }
+  .cs-step__num {
+    font-family: "IBM Plex Mono", "Courier New", monospace;
+    font-size: 12px;
+    color: #7a5c28;
+    padding-top: 4px;
+  }
+  .cs-step__title {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    color: #1a1a2e;
+  }
+  .cs-step__text {
+    display: block;
+    margin-top: 4px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #2d2d2d;
+  }
+  .cs-quote {
+    margin: 48px 0 0;
+    padding: 32px;
+    background: #faf9f5;
+    border-left: 2px solid #b5935a;
+    border-radius: 4px;
+  }
+  .cs-quote p {
+    margin: 0;
+    font-size: 21px;
+    line-height: 1.55;
+    font-weight: 300;
+    font-style: italic;
+    color: #1a1a2e;
+    max-width: 52ch;
+  }
+  .cs-quote footer {
+    margin-top: 14px;
+    font-size: 14px;
+    color: #4a5568;
+  }
+</style>
