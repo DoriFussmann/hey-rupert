@@ -4,13 +4,13 @@ import { PORTAL_LOGIN_URL, SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
 import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
 
-// Buyer's path: what it is, why it's different, what it costs, resources, who we are. About covers Dori and the team.
+// Buyer's path: what it is, why it's different, what it costs, who we are, resources. About covers Dori and the team.
 const links = [
   { href: "/how-it-works/", label: "The Process" },
   { href: "/database/", label: "Our Database" },
   { href: "/pricing/", label: "Pricing" },
-  { href: "/articles/", label: "Articles" },
   { href: "/about/", label: "About" },
+  { href: "/articles/", label: "Articles" },
 ];
 
 const current = Astro.url.pathname;
@@ -38,8 +38,8 @@ const isCurrent = (href: string) => current === href || (href !== "/" && current
           </a>
         ))
       }
-      <a class="nav-link" href={PORTAL_LOGIN_URL}>Login</a>
       <a class="btn-primary btn-primary--sm" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+      <a class="nav-link" href={PORTAL_LOGIN_URL}>Login</a>
     </div>
 
     <details class="site-menu">
@@ -58,8 +58,8 @@ const isCurrent = (href: string) => current === href || (href !== "/" && current
             </a>
           ))
         }
-        <a class="site-menu__link" href={PORTAL_LOGIN_URL}>Login</a>
         <a class="btn-primary site-menu__cta" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+        <a class="site-menu__link" href={PORTAL_LOGIN_URL}>Login</a>
       </div>
     </details>
   </nav>
