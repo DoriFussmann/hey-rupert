@@ -26,7 +26,7 @@ export const GET: APIRoute = async () => {
           "Dori Fussmann is an entrepreneur, finance executive and former investment banker who founded Rupert to bring disciplined investor outreach to startup fundraising.",
       },
       {
-        title: "How It Works",
+        title: "The Process",
         path: "/how-it-works/",
         description:
           "See how Rupert works in three stages: discovery and strategy, campaign launch, and meetings and momentum — with the founder in control of every conversation.",
