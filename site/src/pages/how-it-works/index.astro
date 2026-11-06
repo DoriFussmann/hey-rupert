@@ -21,6 +21,8 @@ const pillars: {
   summary: string;
   src: ImageMetadata;
   alt: string;
+  /** A line under the image (Step 1 only). */
+  caption?: string;
   green: boolean;
   stages: Stage[];
 }[] = [
@@ -31,6 +33,7 @@ const pillars: {
     summary: "Understand the company, shape the story, and find the investors who fit before a message is written.",
     src: howItWorks1,
     alt: "Two people in conversation across a table, a notebook open between them",
+    caption: "For the record: that's an AI actor, not Dori. The real one is less photogenic and better with term sheets.",
     green: true,
     stages: [
       {
@@ -154,6 +157,7 @@ const promises = [
                 sizes="(min-width: 900px) 40vw, 92vw"
               />
             </div>
+            {pillar.caption ? <p class="pillar__caption">{pillar.caption}</p> : null}
           </div>
           <div class:list={["plan-card", { "plan-card--plain": !pillar.green }]}>
             <p class="plan-card__label">{pillar.timing}</p>
@@ -200,3 +204,13 @@ const promises = [
   </main>
   <CtaBanner />
 </BaseLayout>
+
+<style>
+  .pillar__caption {
+    margin-top: 10px;
+    font-size: 13px;
+    line-height: 1.6;
+    font-style: italic;
+    color: #5c5c5c;
+  }
+</style>
