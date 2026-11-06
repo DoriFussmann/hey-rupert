@@ -2,6 +2,7 @@
 
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { useEffect, useState } from "react";
+import { approveAllAdded } from "@/app/admin/added-funds-actions";
 import { addInvestorToDb, applyDefaultsToAll, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
@@ -960,6 +961,7 @@ function AddMissingCard({
   onAdd,
   onConfirm,
   renderRow,
+  onApproveAll,
 }: {
   check: CheckResult;
   busy: boolean;
@@ -967,8 +969,12 @@ function AddMissingCard({
   onAdd: (ids: string[]) => void;
   onConfirm: (confirm: boolean) => void;
   renderRow: (row: CheckRow) => React.ReactNode;
+  /** Approve All Pending for this client: returns a line to show. */
+  onApproveAll: () => Promise<string>;
 }) {
   const { T } = useLandscapeKind();
+  const [approving, setApproving] = useState(false);
+  const [approvedNote, setApprovedNote] = useState("");
   const [open, setOpen] = useState<"missing_fund" | "missing_angel" | "added" | null>(null);
   const rows = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const funds = rows("missing_fund");
@@ -982,6 +988,27 @@ function AddMissingCard({
   ];
   const confirmed = !!check.addedConfirmedAt;
   const contacts = added.reduce((sum, r) => sum + (r.added?.contacts ?? 0), 0);
+  const approveAll = pending ? (
+    <div className="mt-sm flex flex-wrap items-center gap-sm">
+      <button
+        type="button"
+        className={primaryButton}
+        disabled={approving || busy}
+        onClick={() => {
+          if (!window.confirm(`Approve all pending funds found for this client? They join the shared Fund Database and can match every client. A fund whose website the database already has stays pending.`)) return;
+          setApproving(true);
+          void onApproveAll().then((text) => {
+            setApprovedNote(text);
+            setApproving(false);
+          });
+        }}
+      >
+        {approving ? "Approving…" : `Approve All Pending (${n(pending)})`}
+      </button>
+      <span className="text-body-sm text-muted">Or one by one on the Fund Database page. Not needed for this client: pending funds already count here.</span>
+    </div>
+  ) : null;
+  const approvedLine = approvedNote ? <p className="mt-xs text-body-sm text-secondary">{approvedNote}</p> : null;
   if (confirmed) {
     return (
       <Card tone="final">
@@ -1031,6 +1058,8 @@ function AddMissingCard({
           </a>{" "}
           to add them for every client.
         </p>
+        {approveAll}
+        {approvedLine}
       </Card>
     );
   }
@@ -1537,6 +1566,13 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           adding={adding}
           onAdd={(ids) => void addToDb(ids)}
           onConfirm={(c) => void confirmAdded(c)}
+          onApproveAll={async () => {
+            const r = await approveAllAdded(clientId);
+            const again = await runInvestorCheck(clientId, kind);
+            if (again.ok) setCheck(again.check);
+            if (!r.ok) return r.error;
+            return `${n(r.approved)} approved: in the Fund Database for every client.${r.skipped.length ? ` ${n(r.skipped.length)} left pending: ${r.skipped.map((x) => `${x.name} (${x.reason})`).join("; ")}` : ""}`;
+          }}
           renderRow={(row) => (
             <SimpleRow
               key={row.investor.id}

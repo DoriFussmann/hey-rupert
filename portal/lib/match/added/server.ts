@@ -713,4 +713,41 @@ export async function reviewAddedFund(
   return { ok: true, value: fromRow(data) };
 }
 
+/**
+ * Approve All Pending: every pending fund (or only those found for one client) joins the shared
+ * database at once. Same rule as one by one: a fund whose website the provider already has is
+ * left pending and reported, never added as a second record.
+ */
+export async function approveAllPending(
+  supabase: ServiceClient,
+  actor: string | null,
+  clientId: string | null = null,
+): Promise<Result<{ approved: number; skipped: { name: string; reason: string }[] }>> {
+  let query = supabase.from("added_funds").select("*").eq("status", "pending").range(0, 4999);
+  if (clientId) query = query.eq("found_for_client", clientId);
+  const { data, error } = await query;
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  const pending = (data ?? []) as Row[];
+  if (!pending.length) return { ok: true, value: { approved: 0, skipped: [] } };
+  const live = await loadLiveDb(supabase);
+  const byDomain = new Map<string, { id: string; name: string }>();
+  if (live.ok) for (const f of live.value.db.firms) if (f.web) byDomain.set(domainOf(f.web), { id: f.id, name: f.name });
+  const skipped: { name: string; reason: string }[] = [];
+  const ids: string[] = [];
+  for (const r of pending) {
+    const clash = r.website ? byDomain.get(domainOf(r.website)) : undefined;
+    if (clash) skipped.push({ name: r.name, reason: `${clash.name} (${clash.id}) already has this website: reject it, or correct its website.` });
+    else ids.push(r.id);
+  }
+  for (let at = 0; at < ids.length; at += 200) {
+    const { error: upError } = await supabase
+      .from("added_funds")
+      .update({ status: "approved", review_note: "Approved with Approve All Pending.", reviewed_by: actor, reviewed_at: new Date().toISOString() })
+      .in("id", ids.slice(at, at + 200))
+      .eq("status", "pending");
+    if (upError) return { ok: false, error: tableError(upError.message, upError.code) };
+  }
+  return { ok: true, value: { approved: ids.length, skipped } };
+}
+
 export { ownSite, rawForFn };

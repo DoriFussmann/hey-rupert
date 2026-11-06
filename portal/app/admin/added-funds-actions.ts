@@ -5,7 +5,7 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { dismissSuggestion, skipMissingFields, editAddedFund, fillAddedFields, fillItems, labelLists, listAddedFunds, reviewAddedFund, suggestMissingFields, type AddedEdits, type LabelLists } from "@/lib/match/added/server";
+import { approveAllPending, dismissSuggestion, skipMissingFields, editAddedFund, fillAddedFields, fillItems, labelLists, listAddedFunds, reviewAddedFund, suggestMissingFields, type AddedEdits, type LabelLists } from "@/lib/match/added/server";
 import type { AddedFund, AddedStatus, FillItem } from "@/lib/match/added/core";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
@@ -62,6 +62,17 @@ export async function reviewAdded(id: string, status: AddedStatus, note: string)
   if (!done.ok) return { ok: false, error: done.error };
   revalidatePath("/admin/fund-database");
   return { ok: true, fund: done.value };
+}
+
+/** Approve All Pending: every pending fund, or only those found for one client. */
+export async function approveAllAdded(clientId?: string | null): Promise<Result<{ approved: number; skipped: { name: string; reason: string }[] }>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (clientId && !validId(clientId)) return { ok: false, error: "Unknown client." };
+  const done = await approveAllPending(a.supabase, a.email, clientId ?? null);
+  if (!done.ok) return { ok: false, error: done.error };
+  revalidatePath("/admin/fund-database");
+  return { ok: true, ...done.value };
 }
 
 /** The added investors (pending or approved, any client) still missing a stage, geography or sector, and the labels to choose from. */

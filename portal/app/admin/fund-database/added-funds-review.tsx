@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useEffect, useState } from "react";
-import { dismissAddedSuggestion, skipAddedFields, editAdded, fillAdded, loadAddedFunds, loadMissingFields, reviewAdded, suggestAddedFields, type AddedView } from "@/app/admin/added-funds-actions";
+import { approveAllAdded, dismissAddedSuggestion, skipAddedFields, editAdded, fillAdded, loadAddedFunds, loadMissingFields, reviewAdded, suggestAddedFields, type AddedView } from "@/app/admin/added-funds-actions";
 import { MissingFields, type FieldOptions } from "@/app/admin/matching/missing-fields";
 import type { FillItem } from "@/lib/match/added/core";
 import type { AddedStatus } from "@/lib/match/added/core";
@@ -229,6 +229,7 @@ function Details({ fund, labels, onChange }: { fund: AddedView; labels: LabelLis
 export function AddedFundsReview() {
   const [funds, setFunds] = useState<AddedView[] | null>(null);
   const [labels, setLabels] = useState<LabelLists | null>(null);
+  const [bulk, setBulk] = useState<{ busy: boolean; text: string }>({ busy: false, text: "" });
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<AddedStatus>("pending");
   const [open, setOpen] = useState<string | null>(null);
@@ -252,6 +253,19 @@ export function AddedFundsReview() {
   const count = (s: AddedStatus) => funds.filter((f) => f.status === s).length;
   const shown = funds.filter((f) => f.status === filter);
   const update = (f: AddedView) => setFunds((prev) => (prev ?? []).map((x) => (x.id === f.id ? f : x)));
+  const approveAll = async () => {
+    const pending = count("pending");
+    if (!window.confirm(`Approve all ${pending} pending funds? They join the shared Fund Database and can match every client. A fund whose website the database already has stays pending.`)) return;
+    setBulk({ busy: true, text: "" });
+    const r = await approveAllAdded(null);
+    setBulk({
+      busy: false,
+      text: r.ok
+        ? `${n(r.approved)} approved.${r.skipped.length ? ` ${n(r.skipped.length)} left pending: ${r.skipped.map((x) => `${x.name} (${x.reason})`).join("; ")}` : ""}`
+        : r.error,
+    });
+    await reload();
+  };
 
   return (
     <div className="space-y-md">
@@ -285,7 +299,13 @@ export function AddedFundsReview() {
             {STATUS_LABEL[s]} ({n(count(s))})
           </button>
         ))}
+        {count("pending") ? (
+          <button type="button" className={`${smallButton} !border-primary text-primary`} disabled={bulk.busy} onClick={() => void approveAll()}>
+            {bulk.busy ? "Approving…" : `Approve All Pending (${n(count("pending"))})`}
+          </button>
+        ) : null}
       </div>
+      {bulk.text ? <p className="text-body-sm text-secondary">{bulk.text}</p> : null}
       {shown.length ? (
         <table className="w-full text-left text-body-sm">
           <thead className="text-label uppercase tracking-label text-muted">
