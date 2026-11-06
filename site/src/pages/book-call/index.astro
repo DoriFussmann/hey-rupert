@@ -9,10 +9,18 @@ const description =
   "A free 30-minute consultation with Dori Fussmann for founders preparing to raise or fundraising now, Pre-Seed through Series A, to see if Rupert fits.";
 
 const cover = [
-  "Your company, fundraising stage, target round, and current investor pipeline.",
-  "Which investor profiles and funding sources may be relevant to your raise.",
-  "How Rupert approaches investor research, personalized outreach, and follow-up.",
-  "Whether Rupert's managed service is the right fit for your company.",
+  { title: "Your raise", text: "Your company, stage, target round, and where your investor pipeline stands today." },
+  { title: "The right investors", text: "Which investor profiles and sources of capital are most likely to fit your raise." },
+  { title: "How the process runs", text: "Investor research, personalized outreach and follow-up, with you approving every message." },
+  { title: "Whether it fits", text: "If a managed process is right for you, and if it isn't, an honest view of what would work better." },
+];
+
+// Why speak with Dori: the angles he brings, without naming companies.
+const lenses = [
+  { title: "Founder", text: "Built and led a company from the first round of institutional capital through to a merger, so he knows what a raise asks of a founder." },
+  { title: "Investment banker", text: "Advised technology and consumer companies on M&A, IPOs and strategic financings, from the side that structures the deal." },
+  { title: "Fractional CFO", text: "Runs finance for venture-backed companies: financial planning, investor materials and fundraising processes, including rounds of up to $100M." },
+  { title: "Investor and advisor", text: "Assesses companies the way an investor does, advises growth companies on fundraising and strategy, and mentors early-stage founders." },
 ];
 
 // What Cal.com asks for once a time is picked (the event's booking questions).
@@ -26,7 +34,7 @@ const bookingFields = [
 
 <BaseLayout title={title} description={description} canonicalPath="/book-call/">
   <main id="main-content" class="flex-1">
-    <section class="site-wrap grid gap-2xl py-2xl lg:grid-cols-12 lg:gap-x-lg lg:py-3xl">
+    <section class="site-wrap grid gap-2xl py-2xl lg:grid-cols-12 lg:grid-rows-[auto_1fr] lg:gap-x-lg lg:gap-y-xl lg:py-3xl">
       <div class="order-1 lg:col-span-6 lg:col-start-1 lg:row-start-1">
         <h1 class="type-h1">Let's talk about your raise.</h1>
         <p class="type-body-lg mt-lg max-w-prose">
@@ -48,26 +56,48 @@ const bookingFields = [
         </p>
       </div>
 
-      <div class="order-3 lg:col-span-6 lg:col-start-1 lg:row-start-2">
+      <div class="order-3 lg:col-span-6 lg:col-start-1 lg:row-start-2 lg:self-start">
         <h2 class="type-h2">What we'll cover</h2>
-        <ul class="mt-md">
+        <ol class="call-cover mt-lg">
           {
-            cover.map((item) => (
-              <li class="rule py-md type-body">{item}</li>
+            cover.map((item, i) => (
+              <li class="call-cover__item">
+                <span class="call-cover__num">{String(i + 1).padStart(2, "0")}</span>
+                <h3 class="call-cover__title">{item.title}</h3>
+                <p class="call-cover__text">{item.text}</p>
+              </li>
             ))
           }
-        </ul>
+        </ol>
+        <p class="type-body-sm mt-md text-muted">30 minutes · free · no obligation</p>
 
         <h2 class="type-h2 mt-2xl">Why speak with Dori?</h2>
         <p class="type-body mt-md max-w-prose">
-          <a href={sitePath("/about/")}>Dori</a> has experience across investment
-          banking at Citi and Morgan Stanley, founding and leading The Vets, and
-          serving as CFO of BlueMark. He built Rupert to bring that operator and
-          finance experience to founders managing a raise.
+          <a href={sitePath("/about/")}>Dori</a> has worked on both sides of the
+          table: raising capital as a founder, advising on deals as a banker,
+          running finance and fundraising processes as a Fractional CFO, and
+          looking at companies the way an investor does.
+        </p>
+        <ul class="call-lenses mt-lg">
+          {
+            lenses.map((l) => (
+              <li class="call-lenses__item">
+                <span class="call-lenses__title">{l.title}</span>
+                <span class="call-lenses__text">{l.text}</span>
+              </li>
+            ))
+          }
+        </ul>
+        <p class="type-body mt-lg max-w-prose">
+          What that means for a 30-minute call: a structured way of looking at
+          your company, the experience to see quickly what investors will focus
+          on, and a direct view of what is likely to work for your raise: which
+          investors, which story, and in what order. He built Rupert to bring
+          that discipline to founders running a raise.
         </p>
         <p class="type-body rule mt-xl max-w-prose pt-lg">
-          The goal is straightforward: understand your situation, explain
-          <a href={sitePath("/how-it-works/")}>how Rupert works</a>, and
+          The goal is straightforward: understand your situation, walk you through
+          <a href={sitePath("/how-it-works/")}>the process</a>, and
           determine whether there's a sensible fit. No funding guarantees, no
           pressure, and no obligation to proceed.
         </p>
@@ -163,3 +193,87 @@ const bookingFields = [
     window.Cal?.("on", { action: "bookingSuccessful", callback: trackBooking });
   }
 </script>
+
+<style>
+  .call-cover {
+    display: grid;
+    gap: 16px;
+    list-style: none;
+    padding: 0;
+    margin-left: 0;
+  }
+  @media (min-width: 640px) {
+    .call-cover { grid-template-columns: 1fr 1fr; }
+  }
+  .call-cover__item {
+    position: relative;
+    background: #ffffff;
+    border: 1px solid #e4e2de;
+    border-radius: 12px;
+    padding: 20px 20px 20px;
+    transition: border-color 200ms ease, transform 200ms ease;
+  }
+  .call-cover__item::before {
+    content: "";
+    position: absolute;
+    left: 20px;
+    right: 20px;
+    top: 0;
+    height: 2px;
+    background: #b5935a;
+    opacity: 0.55;
+    border-radius: 0 0 2px 2px;
+  }
+  .call-cover__item:hover { border-color: #b5935a; transform: translateY(-1px); }
+  .call-cover__num {
+    font-family: "IBM Plex Mono", "Courier New", monospace;
+    font-size: 12px;
+    color: #7a5c28;
+    letter-spacing: 0.04em;
+  }
+  .call-cover__title {
+    margin: 6px 0 0;
+    font-size: 16px;
+    line-height: 1.5;
+    font-weight: 500;
+    color: #1a1a2e;
+  }
+  .call-cover__text {
+    margin: 6px 0 0;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #2d2d2d;
+  }
+  .call-lenses {
+    list-style: none;
+    padding: 0;
+    margin-left: 0;
+    border-top: 1px solid #e4e2de;
+  }
+  .call-lenses__item {
+    display: grid;
+    gap: 4px;
+    padding: 14px 0;
+    border-bottom: 1px solid #e4e2de;
+  }
+  @media (min-width: 640px) {
+    .call-lenses__item { grid-template-columns: 160px 1fr; gap: 16px; }
+  }
+  .call-lenses__title {
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-weight: 500;
+    color: #7a5c28;
+    padding-top: 3px;
+  }
+  .call-lenses__text {
+    font-size: 15px;
+    line-height: 1.65;
+    color: #2d2d2d;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .call-cover__item { transition: none; }
+    .call-cover__item:hover { transform: none; }
+  }
+</style>
