@@ -35,7 +35,7 @@ export const GET: APIRoute = async () => {
         title: "Case Studies",
         path: "/case-studies/",
         description:
-          "Anonymized client raises run with Rupert, including a $100M Series A for a US pet-care company: financial model rebuild, about 25 targeted investors, closed in three months.",
+          "Anonymized client raises run with Rupert, including a $100M Series B for a US pet-care company (closed in three months) and a $5M Series A for a US sustainable-finance company that was reorganized before it raised (four months).",
       },
       {
         title: "Pricing",
