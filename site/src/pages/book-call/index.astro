@@ -23,13 +23,6 @@ const lenses = [
   { title: "Investor and advisor", text: "Assesses companies the way an investor does, advises growth companies on fundraising and strategy, and mentors early-stage founders." },
 ];
 
-// What Cal.com asks for once a time is picked (the event's booking questions).
-const bookingFields = [
-  { label: "Your name", required: true },
-  { label: "Email address", required: true },
-  { label: "Company name", required: true },
-  { label: "Additional notes", required: false },
-];
 ---
 
 <BaseLayout title={title} description={description} canonicalPath="/book-call/">
@@ -116,19 +109,6 @@ const bookingFields = [
             <a href={CAL_COM_URL} target="_blank" rel="noopener noreferrer">Book on Cal.com</a>.
           </p>
 
-          <div class="rule mt-xl pt-lg">
-            <h3 class="type-label">After you pick a time, we ask for</h3>
-            <ul class="mt-md">
-              {
-                bookingFields.map((field) => (
-                  <li class="type-body py-xs">
-                    {field.label}
-                    <span class="form-note-inline">{field.required ? " · required" : " · optional"}</span>
-                  </li>
-                ))
-              }
-            </ul>
-          </div>
         </div>
       </div>
     </section>
