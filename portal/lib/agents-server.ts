@@ -908,7 +908,7 @@ export function markdownText(value: unknown): string {
  */
 function narrativeForCopy(narrative: NarrativePayload) {
   if (narrative.statement) {
-    return `### The positioning the founder confirmed: lead with these three selling points, in this order\n${narrative.statement.points
+    return `### The three selling points the founder confirmed, in this order (in an email, one bullet each)\n${narrative.statement.points
       .map((point, index) => `${index + 1}. ${point.title}\n${point.claim}`)
       .join("\n\n")}`;
   }
@@ -1599,6 +1599,25 @@ function sourceGroupText(group: SourceGroupCopy) {
   ].join("\n");
 }
 
+/**
+ * The round, from the company profile Rupert keeps (built from the intake the
+ * founder confirmed, and the one the matching used). The copy states it exactly.
+ */
+async function roundContext(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase.from("match_profiles").select("answers").eq("client_id", clientId).maybeSingle();
+  const answers = (data?.answers && typeof data.answers === "object" ? data.answers : {}) as Record<string, unknown>;
+  const fields: [string, string][] = [
+    ["stage", "Round"],
+    ["raise_amount", "Amount"],
+    ["instrument", "Instrument"],
+    ["valuation", "Valuation"],
+    ["need_lead", "Needs a lead"],
+    ["close_timeline", "Target close"],
+  ];
+  const lines = fields.map(([key, label]) => (text(answers[key]) ? `- ${label}: ${text(answers[key])}` : "")).filter(Boolean);
+  return lines.length ? lines.join("\n") : "";
+}
+
 export type SourceDraftResult = {
   copy: EmailCopyPayload;
   /** Group keys written in this run. */
@@ -1639,7 +1658,7 @@ export async function draftSourceEmailCopy(
   }
   if (listRow?.status !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
 
-  const plan = await loadOutreachPlan(supabase, clientId);
+  const [plan, round] = await Promise.all([loadOutreachPlan(supabase, clientId), roundContext(supabase, clientId)]);
   if (!plan.ok) return plan;
   const groups = sourceGroups(plan.value.funds);
   const base = emptySourceCopy(groups, styleLoad.styles.opt_out_line, plan.value.planId);
@@ -1659,6 +1678,9 @@ export async function draftSourceEmailCopy(
     `Company: ${text(loaded.client.company_name)}`,
     "## Outreach narrative",
     narrativeForCopy(narrative),
+    round
+      ? `## The round (from the company profile; state it exactly as here, never from the deck or older materials)\n${round}`
+      : "## The round\nNot in the company profile. Take it from the intake summary, where the founder confirmed it.",
     "## Intake summary",
     intakeSummaryText(interviewResult.ok ? interviewResult.interview : null),
     "## Materials analysis",
