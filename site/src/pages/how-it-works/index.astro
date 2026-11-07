@@ -69,7 +69,7 @@ const pillars: {
     summary: "Write outreach for each investor, get your approval, then send from your own inbox and keep following up.",
     src: howItWorks2,
     alt: "A printed investor outreach list on a desk, a few names already marked",
-    green: false,
+    green: true,
     stages: [
       {
         title: "Craft the outreach",
@@ -93,7 +93,7 @@ const pillars: {
     src: howItWorks5,
     alt: "Two people at a small table with papers, in a working conversation",
     caption: "Again, not me. Different AI actor, better hair, thinner. — Dori",
-    green: false,
+    green: true,
     stages: [
       {
         title: "Qualify the interest",
@@ -144,7 +144,7 @@ const promises = [
 
     {
       pillars.map((pillar, index) => (
-        <section id={pillar.id} class="site-wrap section-block rule pillar" aria-labelledby={`pillar-${index + 1}`}>
+        <section id={pillar.id} class:list={["site-wrap section-block rule pillar", { "pillar--flip": index % 2 === 1 }]} aria-labelledby={`pillar-${index + 1}`}>
           <div class="pillar__intro">
             <p class="step-script">Step {index + 1}</p>
             <h2 id={`pillar-${index + 1}`} class="type-h2 mt-md">{pillar.title}</h2>

@@ -2642,6 +2642,15 @@
       grid-template-columns: 5fr 7fr;
       gap: 56px;
     }
+
+    /* Alternate sides: even steps put the green box on the left. */
+    .pillar--flip {
+      grid-template-columns: 7fr 5fr;
+    }
+
+    .pillar--flip .pillar__intro {
+      order: 2;
+    }
   }
 
   .stat-rows {
