@@ -5,7 +5,7 @@ import BaseLayout from "../../layouts/BaseLayout.astro";
 import CaseStack from "../../components/CaseStack.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
 import { authorUrl, orgId } from "seo-core";
-import { AUTHOR_PATH, DORI_LINKEDIN, SITE_NAME, SITE_URL } from "../../config/site";
+import { AUTHOR_PATH, DORI_LINKEDIN, DORI_PROFILES, SITE_NAME, SITE_URL } from "../../config/site";
 import { absoluteFileUrl, absoluteUrl, sitePath } from "../../lib/url";
 import doriPortrait from "../../assets/founder/dori-fussmann/photo.jpg";
 import linkedinLogo from "../../assets/brand/linkedin.png";
@@ -15,6 +15,13 @@ const description =
   "Dori Fussmann is an entrepreneur, former investment banker and finance executive. He founded Rupert to run investor research and outreach for startup founders.";
 
 const media = [
+  {
+    outlet: "Wikipedia",
+    excerpt:
+      "The Vets was an American veterinary services company that specialized in providing at-home veterinary care, founded by Shmuel Chafets and Dori Fussmann.",
+    context: "Wikipedia article on The Vets, naming Dori as co-founder.",
+    href: "https://en.wikipedia.org/wiki/The_Vets",
+  },
   {
     outlet: "TechCrunch",
     excerpt:
@@ -62,7 +69,7 @@ const jsonLd: Record<string, unknown>[] = [
     "@type": "Person",
     "@id": personId,
     name: "Dori Fussmann",
-    jobTitle: "Founder",
+    jobTitle: "Founder, Rupert",
     description,
     url: absoluteUrl("/about/"),
     image: absoluteFileUrl(portrait.src),
@@ -70,8 +77,28 @@ const jsonLd: Record<string, unknown>[] = [
       "@id": orgId(SITE_URL),
       name: SITE_NAME,
     },
-    sameAs: [DORI_LINKEDIN],
+    sameAs: DORI_PROFILES,
     knowsAbout: doriProfile?.data.knowsAbout ?? [],
+    alumniOf: [
+      { "@type": "CollegeOrUniversity", name: "Reichman University (IDC Herzliya)" },
+      { "@type": "Organization", name: "Citi" },
+      { "@type": "Organization", name: "Morgan Stanley" },
+      { "@type": "Organization", name: "Ion Pacific" },
+      { "@type": "Organization", name: "The Vets" },
+    ],
+    hasOccupation: [
+      { "@type": "Occupation", name: "Founder, Rupert" },
+      { "@type": "Occupation", name: "Fractional CFO" },
+      { "@type": "Occupation", name: "Mentor, Cornell Tech Runway Startups Program" },
+      { "@type": "Occupation", name: "Mentor, Yale Tsai Center for Innovative Thinking (Tsai CITY)" },
+    ],
+    affiliation: [
+      { "@type": "Organization", name: "BlueMark", url: "https://bluemark.co/" },
+      { "@type": "Organization", name: "Cornell Tech Runway Startups Program", url: "https://tech.cornell.edu/impact/runway" },
+      { "@type": "Organization", name: "Tsai Center for Innovative Thinking at Yale", url: "https://city.yale.edu/" },
+    ],
+    knowsLanguage: ["English", "Hebrew", "German"],
+    subjectOf: media.map((item) => ({ "@type": "CreativeWork", name: item.context, url: item.href, publisher: { "@type": "Organization", name: item.outlet } })),
   },
 ];
 ---

@@ -14,6 +14,8 @@ Dori holds degrees in Accounting and Business Management (B.A.) and Law (LL.B.) 
 photo: ../../assets/founder/dori-fussmann/photo.jpg
 sameAs:
   - https://www.linkedin.com/in/dori-fussmann-663ba242
+  - https://bluemark.co/team/dori-fussmann/
+  - https://www.crunchbase.com/person/dori-fussmann
 knowsAbout:
   - Venture capital fundraising
   - Investor outreach
