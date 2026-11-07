@@ -297,6 +297,11 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The confirmed narrative, the fund groups of the confirmed list (fund type, funds per tier; never names), the style for each group (rules, word cap, proof points, call to action, example), the intake summary, the analysis and any requested changes; the answer format (Core approach and three emails; the others' three emails and a line per tier). The code checks every email against the style.",
     true,
   ),
+  email_copy_source: agentDetails(
+    "email_copy_source",
+    "The confirmed narrative, one group of the confirmed Plan's funds (why they are on the list, funds and contacts, fund types, tiers, example values of the personal field; never names), the intake summary, the analysis and any requested changes; the answer format (a first email and one follow-up). The code checks every email: fields, the personal line, \"your fund\", word caps.",
+    true,
+  ),
   core_quick_facts: agentDetails(
     "core_quick_facts",
     "The fund (name, website, sectors, stages, geography), the person (name, title), the company (what it does, sector, stage, competitors) and fund facts already found; web search (up to 4 searches); the answer format (facts with source links, a competitor conflict). Facts without a link are dropped by the code.",

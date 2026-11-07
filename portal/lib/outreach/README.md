@@ -1,3 +1,25 @@
+# Investor outreach copy by source (copy v3)
+
+For investor lists pushed from the matching (the list holds the summaries, not rows). Replaces copy by fund type and the Core Quick Facts for these clients. The plan is in the project doc `claude/outreach-copy-plan.md`.
+
+| What | Where |
+|---|---|
+| Groups, hooks, checks, rendering (pure) | `source-copy.ts` |
+| The Plan's funds (current finalization → `match_plans`) | `source-server.ts` |
+| Generator (one Claude call per group) | `draftSourceEmailCopy` in `lib/agents-server.ts`, prompt `email_copy_source` |
+| Admin editing | Client → Setup → Email Copy → Draft by source (`source-copy-editor.tsx`) |
+| Client review | `/portal/setup/email-copy` (`source-copy-review.tsx`) |
+
+**Setup:** run `supabase/outreach_source_copy.sql` once (seeds the prompt).
+
+- **Which funds.** The Plan's planned funds, with their contact slots.
+- **Groups**, first that applies: backed a competitor (Step 2), backed a company like this one (Step 3), market fit (everything else). Tier sets the order of outreach, not the copy; fund type is only a hint to the writer.
+- **Hook.** `{{backed_company}}` (the competitor backed at the client's stage first, else the first one; or the first company like this one) or `{{focus}}` (the sub-sector that placed the fund). No web research.
+- **Two emails:** a first email (I'll be brief, three lines, one question; 75 words) and one follow-up in the same thread (blank subject).
+- **Checks.** Errors block the push: missing subject or body, unknown fields, the hook field missing from a competitor or look-alike first email, the usual hype and placeholder checks. Warnings: over the word cap, "you backed" instead of "your fund backed", a follow-up subject, links, funds with no hook value.
+- **Storage.** The `email_copy` setup step with `copy_version: 3` and `by_source`.
+- **Not built yet:** the campaign build and Go Live for these clients (they still read list rows and three-step sequences).
+
 # Investor outreach copy (Phase 5, part 1)
 
 Email copy by fund type for four-tier lists. The full plan (Core personalization, reserve contacts, warm intros, Go Live, reply triage) is in the project doc `claude/rupert-outreach-spec.md`.

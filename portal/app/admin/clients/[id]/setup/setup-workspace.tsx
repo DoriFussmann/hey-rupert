@@ -116,8 +116,9 @@ export function setupPanels({
           to={clientEmail}
           tierCounts={counts}
           listScheme={listScheme}
+          sourceMode={Boolean(investors.summaries)}
           claudeReady={claudeReady}
-          pushWarning={outreach.coreWarning}
+          pushWarning={investors.summaries ? null : outreach.coreWarning}
         />
       ),
     },

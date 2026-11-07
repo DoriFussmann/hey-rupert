@@ -536,9 +536,11 @@ export function emailIssues(
   where: string,
   /** Merge fields allowed; defaults to the section's. A fully written email allows none. */
   allowedFields?: string[],
+  /** What each email of the sequence is called in the messages. */
+  labels: readonly string[] = SEQUENCE_LABELS,
 ): CopyIssue[] {
   const issues: CopyIssue[] = [];
-  const at = `${where}, ${SEQUENCE_LABELS[index] ?? `Email ${index + 1}`}`;
+  const at = `${where}, ${labels[index] ?? `Email ${index + 1}`}`;
   const all = `${email.subject}\n${email.body}`;
   if (index === 0 && !email.subject.trim()) issues.push({ level: "error", where: at, text: "needs a subject." });
   if (!email.body.trim()) {
