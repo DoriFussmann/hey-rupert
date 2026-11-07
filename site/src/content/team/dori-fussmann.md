@@ -2,7 +2,7 @@
 name: Dori Fussmann
 slug: dori-fussmann
 role: Founder
-bio: "Dori Fussmann is an entrepreneur and finance executive, and the founder of Rupert. Rupert researches investors and runs personalized outreach for founders raising capital. He was Founder and CEO of The Vets, a technology-enabled home veterinary care company that raised institutional capital and later merged with BetterVet, and he has been involved in building several other companies from zero to one.
+bio: "Dori Fussmann is an entrepreneur and finance executive, and the founder of Rupert. Rupert researches investors and runs personalized outreach for founders raising capital. He was Founder and CEO, and later Co-founder and COO, of The Vets, a technology-enabled home veterinary care company that raised institutional capital and later merged with BetterVet, and he has been involved in building several other companies from zero to one.
 
 Fractional CFO roles include BlueMark, Translucent AI, Natrion, and Snout. He serves as Fractional CFO of BlueMark, an impact-investment intelligence platform. At Natrion he served as Fractional CFO during the latest fundraise, working across financial planning, investor materials, and close. At Snout he served as Fractional CFO on the company's $100M financing round.
 
