@@ -119,8 +119,8 @@ test("checks: the hook field, 'your fund', a follow-up subject, unknown fields, 
   const link = sourceEmailIssues({ subject: "S", body: "Your fund backed {{backed_company}}. See www.example.com" }, 0, "competitor");
   assert.ok(link.some((i) => i.text.includes("link")));
 
-  const long = sourceEmailIssues({ subject: "S", body: `Your fund backed {{backed_company}}. ${"word ".repeat(80)}` }, 0, "competitor");
-  assert.ok(long.some((i) => i.level === "warning" && i.text.includes("75")));
+  const long = sourceEmailIssues({ subject: "S", body: `Your fund backed {{backed_company}}. ${"word ".repeat(95)}` }, 0, "competitor");
+  assert.ok(long.some((i) => i.level === "warning" && i.text.includes("90")));
 
   assert.ok(sourceCopyIssues({ groups: [], opt_out_line: "" }).some((i) => i.level === "error"));
 });

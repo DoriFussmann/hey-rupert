@@ -7,7 +7,8 @@
 // - market: neither; it fits the company's market (Dry Match, named, added).
 // A fund in more than one goes to the first. Each group gets one template of
 // two emails (a first email and one follow-up), short by design: the founder
-// says they'll be brief, gives three facts and asks one easy question.
+// says they'll be brief, gives the narrative's three selling points as three
+// bullets, states the round and asks one easy question.
 // The only personal details are data the matching already holds: the backed
 // company ({{backed_company}}) or the fund's matching sector ({{focus}}).
 // Tier sets the outreach order, not the copy; fund type is a hint in the prompt.
@@ -21,15 +22,16 @@ export const SOURCE_BUCKETS = ["competitor", "lookalike", "market"] as const;
 export type SourceBucket = (typeof SOURCE_BUCKETS)[number];
 
 export const BUCKET_LABEL: Record<SourceBucket, string> = {
-  competitor: "Backed a competitor",
-  lookalike: "Backed a company like this one",
-  market: "Market fit",
+  competitor: "Competitor Investors",
+  lookalike: "Look-alike Investors",
+  market: "Market Fit",
 };
 
+/** One line each. */
 export const BUCKET_DETAIL: Record<SourceBucket, string> = {
-  competitor: "The fund backed one of the company's direct competitors. The email leads with how this company is different.",
-  lookalike: "The fund backed a company investors see as the same bet. The email leads with that link.",
-  market: "The fund invests in the company's market. The email leads with that fit.",
+  competitor: "Backed a direct competitor; we lead with what's different.",
+  lookalike: "Backed a company like this one; we lead with that link.",
+  market: "Invests in this market; we lead with the fit.",
 };
 
 /** A first email and one follow-up, in the same thread. */
@@ -37,7 +39,7 @@ export const SOURCE_SEQUENCE_LABELS = ["First email", "Follow-up"] as const;
 export const SOURCE_SEQUENCE_LENGTH = SOURCE_SEQUENCE_LABELS.length;
 
 /** Word cap for the first email's body; the follow-up gets three quarters of it. */
-export const SOURCE_MAX_WORDS = 75;
+export const SOURCE_MAX_WORDS = 90;
 
 /** The personal detail each group's opening line is built on. */
 export const HOOK_FIELD: Record<SourceBucket, "backed_company" | "focus"> = {
