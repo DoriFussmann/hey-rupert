@@ -5,6 +5,7 @@ import { createBotMiddleware } from "seo-core/middleware";
 
 export const config = {
   matcher: ["/((?!_astro/|_vercel/|favicon).*)"],
+  runtime: "nodejs",
 };
 
 export default createBotMiddleware({
