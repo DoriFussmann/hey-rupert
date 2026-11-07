@@ -5,6 +5,7 @@ import { AdminReply } from "@/components/setup/admin-reply";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
 import { TypedCopyReview, type ClientCoreEmail } from "@/app/portal/setup/email-copy/typed-copy-review";
+import { SourceCopyReview } from "@/app/portal/setup/email-copy/source-copy-review";
 import type { PreviewLeads } from "@/lib/outreach/preview";
 import {
   EMAIL_SEQUENCE_LABELS,
@@ -54,6 +55,20 @@ export function EmailCopyReview({
         ? "bg-primary text-white"
         : "border border-border bg-surface text-secondary hover:text-heading"
     }`;
+
+  if (copy.copy_version === 3 && copy.by_source) {
+    return (
+      <SourceCopyReview
+        copy={copy.by_source}
+        version={version}
+        open={open}
+        sentNotes={sentNotes}
+        adminNote={open ? <AdminReply note={adminNote} /> : null}
+        questions={questions}
+        readOnly={readOnly}
+      />
+    );
+  }
 
   if (copy.copy_version === 2 && copy.typed) {
     return (

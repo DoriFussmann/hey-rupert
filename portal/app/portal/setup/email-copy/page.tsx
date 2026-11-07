@@ -40,7 +40,11 @@ export default async function EmailCopyPage() {
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
         title="Email Copy"
-        description="Your investor emails: a first email and two follow-ups for each group. Personal details like the investor's name are filled in for every recipient; use Preview to see an email as a real investor on your list gets it."
+        description={
+          copy.copy_version === 3
+            ? "Your investor emails, grouped by why each fund is on your list: a short first email and one follow-up for each group. The highlighted parts, like the investor's name and the company their fund backed, are filled in for every recipient."
+            : "Your investor emails: a first email and two follow-ups for each group. Personal details like the investor's name are filled in for every recipient; use Preview to see an email as a real investor on your list gets it."
+        }
       />
       <ReviewStatus
         item={item}

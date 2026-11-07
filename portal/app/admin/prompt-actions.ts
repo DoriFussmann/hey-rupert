@@ -8,6 +8,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import {
   buildNarrative,
   draftEmailCopy,
+  draftSourceEmailCopy,
   draftTypedEmailCopy,
   draftEmailCopyEmail,
   draftIntakeBrief,
@@ -25,6 +26,7 @@ import { listPromptVersions, savePromptVersion } from "@/lib/prompts-server";
 import { asEmailCopy, asInvestorListDraft, asNarrative } from "@/lib/setup";
 import { loadSetupStep } from "@/lib/setup-server";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
+import { BUCKET_LABEL, SOURCE_SEQUENCE_LABELS } from "@/lib/outreach/source-copy";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -244,6 +246,23 @@ async function runTest(
           ...group.emails.map((item, index) => ({ label: `${name}, email ${index + 1} (${group.style.label})`, text: `${item.subject ? `Subject: ${item.subject}\n\n` : ""}${item.body}` })),
           ...Object.entries(group.tier_lines ?? {}).map(([tier, line]) => ({ label: `${name}: Tier ${tier} line`, text: line ?? "" })),
         ]),
+      },
+    };
+  }
+  if (key === "email_copy_source") {
+    const drafted = await draftSourceEmailCopy(supabase, clientId, { override });
+    if (!drafted.ok) return drafted;
+    const groups = drafted.value.copy.by_source?.groups ?? [];
+    return {
+      ok: true,
+      output: {
+        title,
+        sections: groups.flatMap((group) =>
+          group.emails.map((item, index) => ({
+            label: `${BUCKET_LABEL[group.bucket]}, ${SOURCE_SEQUENCE_LABELS[index]}`,
+            text: `${item.subject ? `Subject: ${item.subject}\n\n` : ""}${item.body}`,
+          })),
+        ),
       },
     };
   }

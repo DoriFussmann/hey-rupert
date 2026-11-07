@@ -46,6 +46,7 @@ import { loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxCon
 import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
 import { answerFounderQuestion } from "@/lib/brief-server";
 import { notifyAdmin as notifyGoLive } from "@/lib/notify";
+import { BUCKET_LABEL, asSourceBucket } from "@/lib/outreach/source-copy";
 import {
   loadSetupStep,
   loadSetupSteps,
@@ -408,6 +409,13 @@ function itemLabel(
   }
   if (step === "email_copy") {
     const copy = asEmailCopy(row.published);
+    if (copy.copy_version === 3) {
+      // Group keys are "source:competitor", "source:market".
+      return (key) => {
+        const bucket = asSourceBucket(key.split(":")[1]);
+        return key.startsWith("source:") && bucket ? BUCKET_LABEL[bucket] : key;
+      };
+    }
     if (copy.copy_version === 2) {
       // Group keys are "core:VC", "others:Angel group".
       return (key) => {

@@ -8,6 +8,7 @@ import { isClaudeConfigured } from "@/lib/anthropic";
 import {
   buildNarrative,
   draftEmailCopy,
+  draftSourceEmailCopy,
   draftTypedEmailCopy,
   runMaterialsAnalysis,
   saveIntakeBrief,
@@ -282,6 +283,39 @@ export async function draftClientTypedCopy(
 
   const keys = Array.isArray(only) ? only.map((key) => String(key).slice(0, 60)).slice(0, 20) : null;
   const result = await draftTypedEmailCopy(access.supabase, clientId, { only: keys });
+  if (!result.ok) return result;
+
+  const existing = await loadSetupStep(access.supabase, clientId, "email_copy");
+  if (!existing.ok) return existing;
+  const previous =
+    existing.row?.draft && typeof existing.row.draft === "object"
+      ? (existing.row.draft as Record<string, unknown>)
+      : {};
+  const draft = { ...result.value.copy, admin_note: undefined, client_email: asClientEmail(previous.client_email) };
+
+  const { error } = await access.supabase.from("setup_steps").upsert(
+    { client_id: clientId, step: "email_copy", draft, updated_at: nowIso() },
+    { onConflict: "client_id,step", ignoreDuplicates: false },
+  );
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+
+  revalidateClient(clientId);
+  return { ok: true, ...result.value };
+}
+
+/**
+ * Drafts the email copy by source (lists from the matching Plan) and saves it
+ * as the draft. `only` redrafts some groups (`source:bucket` keys).
+ */
+export async function draftClientSourceCopy(
+  clientId: string,
+  only?: string[] | null,
+): Promise<Result<{ copy: EmailCopyPayload; drafted: string[]; failed: { key: string; error: string }[] }>> {
+  const access = await requireAdminWithClaude();
+  if (!access.ok) return access;
+
+  const keys = Array.isArray(only) ? only.map((key) => String(key).slice(0, 60)).slice(0, 10) : null;
+  const result = await draftSourceEmailCopy(access.supabase, clientId, { only: keys });
   if (!result.ok) return result;
 
   const existing = await loadSetupStep(access.supabase, clientId, "email_copy");

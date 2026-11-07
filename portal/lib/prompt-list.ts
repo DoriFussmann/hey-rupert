@@ -20,6 +20,7 @@ export const PROMPT_LIST = [
   { key: "outreach_narrative", title: "Outreach narrative (before the brief)", group: "Company and narrative" },
   { key: "email_copy", title: "Email copy", group: "Company and narrative" },
   { key: "email_copy_typed", title: "Email copy by fund type", group: "Company and narrative" },
+  { key: "email_copy_source", title: "Email copy by source", group: "Company and narrative" },
   { key: "core_quick_facts", title: "Core: Quick Facts research", group: "Company and narrative" },
   { key: "core_email", title: "Core: personal emails", group: "Company and narrative" },
   { key: "warm_intro_blurb", title: "Warm intro blurb", group: "Company and narrative" },

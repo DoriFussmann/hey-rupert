@@ -5,6 +5,7 @@
 import { dropSectorFocus } from "./match/shared.ts";
 import type { Summary } from "./match/summary/core.ts";
 import { asTypedCopy, typedCopyIssues, typedHasContent, type TypedCopy } from "./outreach/copy.ts";
+import { asSourceCopy, sourceCopyIssues, sourceHasContent, type SourceCopy } from "./outreach/source-copy.ts";
 
 export type SetupStepId =
   | "materials"
@@ -515,9 +516,12 @@ export type EmailCopyPayload = {
   /**
    * 2: copy by fund type (lib/outreach/copy.ts), in `typed`. `tiers` is then
    * unused. Absent: one sequence per tier, as before.
+   * 3: copy by source (lib/outreach/source-copy.ts), in `by_source`, for lists
+   * that come from the Plan. `tiers` is then unused.
    */
-  copy_version?: 2;
+  copy_version?: 2 | 3;
   typed?: TypedCopy;
+  by_source?: SourceCopy;
   /** Rupert's reply when this version is sent back for confirmation. */
   admin_note?: string;
   questions?: SetupQuestion[];
@@ -1627,7 +1631,12 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
     });
   }
   const adminNote = str(raw.admin_note, NOTE_MAX).trim();
-  const typed = raw.copy_version === 2 ? { copy_version: 2 as const, typed: asTypedCopy(raw.typed) } : {};
+  const typed =
+    raw.copy_version === 2
+      ? { copy_version: 2 as const, typed: asTypedCopy(raw.typed) }
+      : raw.copy_version === 3
+        ? { copy_version: 3 as const, by_source: asSourceCopy(raw.by_source) }
+        : {};
   return {
     ...result,
     ...typed,
@@ -1639,6 +1648,7 @@ export function asEmailCopy(value: unknown): EmailCopyPayload {
 /** True when the copy has any text, in either shape. */
 export function emailCopyHasContent(copy: EmailCopyPayload) {
   if (copy.copy_version === 2) return typedHasContent(copy.typed ?? asTypedCopy(null));
+  if (copy.copy_version === 3) return sourceHasContent(copy.by_source ?? asSourceCopy(null));
   return fitTiersFor(copy.tier_scheme).some(({ tier }) =>
     tierEmails(copy, tier).some((email) => email.subject.trim() || email.body.trim()),
   );
@@ -1657,7 +1667,12 @@ export function emailCopyProblems(copy: EmailCopyPayload) {
       if (issue.level === "error") problems.push(`${issue.where}: ${issue.text}`);
     }
   }
-  for (const { tier, label } of copy.copy_version === 2 ? [] : fitTiersFor(copy.tier_scheme)) {
+  if (copy.copy_version === 3) {
+    for (const issue of sourceCopyIssues(copy.by_source ?? asSourceCopy(null))) {
+      if (issue.level === "error") problems.push(`${issue.where}: ${issue.text}`);
+    }
+  }
+  for (const { tier, label } of copy.copy_version === 2 || copy.copy_version === 3 ? [] : fitTiersFor(copy.tier_scheme)) {
     const emails = tierEmails(copy, tier);
     if (!emails[0]?.subject.trim()) {
       problems.push(`${label}: the first email needs a subject.`);

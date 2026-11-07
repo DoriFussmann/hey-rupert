@@ -24,6 +24,8 @@ const FIELD_LABEL: Record<string, string> = {
   fund_name: "fund name",
   quick_fact: "a fact about this investor",
   tier_line: "why this investor",
+  backed_company: "the company this fund backed",
+  focus: "the sector this fund invests in",
 };
 
 /** Text with each {{field}} shown as a highlighted, readable label. */
