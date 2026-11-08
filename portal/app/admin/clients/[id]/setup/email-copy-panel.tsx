@@ -94,10 +94,17 @@ export function EmailCopyPanel({
 }) {
   const initial = useMemo(() => {
     const draft = editable(row?.draft);
-    if (hasContent(draft)) return draft;
     const published = editable(row?.published);
-    return hasContent(published) ? published : emptyEmailCopy(listScheme);
-  }, [row, listScheme]);
+    const found = hasContent(draft) ? draft : hasContent(published) ? published : null;
+    // Lists from the matching Plan only ever have copy by source: anything
+    // else (an empty or older copy) starts as empty copy by source.
+    if (sourceMode) {
+      return found?.copy_version === SOURCE_COPY_VERSION
+        ? found
+        : ({ ...emptyEmailCopy(listScheme), copy_version: 3, by_source: { groups: [], opt_out_line: "" } } satisfies EmailCopyPayload);
+    }
+    return found ?? emptyEmailCopy(listScheme);
+  }, [row, listScheme, sourceMode]);
   const initialEmail = asClientEmail(
     row?.draft && typeof row.draft === "object"
       ? (row.draft as Record<string, unknown>).client_email
@@ -119,7 +126,7 @@ export function EmailCopyPanel({
   // lists by fund type (copy v2). Older copy stays as it was.
   const bySource = sourceMode;
   const byType = !bySource && listScheme === "four";
-  const sourceView = copy.copy_version === SOURCE_COPY_VERSION || (bySource && !hasContent(copy));
+  const sourceView = bySource || copy.copy_version === SOURCE_COPY_VERSION;
   const typedMode = !sourceView && (copy.copy_version === 2 || (byType && !hasContent(copy)));
   const clientNotes = row?.response?.item_notes ?? {};
   // Real leads to preview each email with; reloaded when the groups change.
@@ -361,12 +368,6 @@ export function EmailCopyPanel({
           </p>
         ) : null}
       </div>
-      {bySource && !sourceView ? (
-        <p role="alert" className="mx-lg mt-md rounded-md border border-warning/40 px-md py-sm text-body-sm text-warning">
-          This copy was written for an older list. Click Draft by source to rewrite it from the confirmed plan (it replaces
-          this draft; the copy already sent to the client is not changed).
-        </p>
-      ) : null}
       {sourceView ? (
         copy.by_source && copy.by_source.groups.length ? (
           <SourceCopyEditor
