@@ -291,6 +291,15 @@ export function sourceEmailIssues(email: CopyEmail, index: number, bucket: Sourc
   if (index > 0 && email.subject.trim()) {
     issues.push({ level: "warning", where: at, text: "has a subject, so it starts a new thread; leave it blank to reply in the same thread." });
   }
+  if (/\bI know (?:you're|you are|how) busy\b|\byour time is (?:valuable|precious)\b/i.test(email.body)) {
+    issues.push({ level: "warning", where: at, text: "says \"I know you're busy\" or similar; the three points already show it. Use the hook instead (\"…so you know this market\")." });
+  }
+  if (/\b(?:Q[1-4]|[1-4](?:st|nd|rd|th) quarter)\b/i.test(email.body)) {
+    issues.push({ level: "warning", where: at, text: "gives the close as a quarter; write a month or \"by year-end\"." });
+  }
+  if (/\$\d+(?:\.\d+)?[mk]\b/.test(email.body)) {
+    issues.push({ level: "warning", where: at, text: "writes an amount in lower case (\"$2m\"); write \"$2M\"." });
+  }
   if (/https?:\/\/|www\./i.test(email.body)) {
     issues.push({ level: "warning", where: at, text: "has a link; plain emails without links land better." });
   }

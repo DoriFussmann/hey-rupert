@@ -123,6 +123,12 @@ test("checks: the hook field, 'your fund', a follow-up subject, unknown fields, 
   assert.ok(long.some((i) => i.level === "warning" && i.text.includes("90")));
 
   assert.ok(sourceCopyIssues({ groups: [], opt_out_line: "" }).some((i) => i.level === "error"));
+
+  const filler = sourceEmailIssues({ subject: "S", body: "Your fund backed {{backed_company}} and I know you're busy. Raising $2m, targeting Q4 close." }, 0, "competitor");
+  assert.ok(filler.some((i) => i.text.includes("busy")));
+  assert.ok(filler.some((i) => i.text.includes("quarter")));
+  assert.ok(filler.some((i) => i.text.includes("$2M")));
+  assert.ok(!sourceEmailIssues({ subject: "S", body: "Your fund backed {{backed_company}}. Raising $2M, closing by year-end." }, 0, "competitor").some((i) => /busy|quarter|\$2M/.test(i.text)));
 });
 
 test("rendering fills the fund's values; the opt-out goes under the first email only", () => {
