@@ -28,12 +28,12 @@
   .rhf-rh { width: 100%; }
   .rhf-rh__frame {
     position: relative; width: 100%;
-    aspect-ratio: 600 / 390;
+    aspect-ratio: 600 / 410;
     background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
     overflow: hidden;
     box-shadow: 0 1px 2px rgba(26, 26, 46, 0.04), 0 12px 32px -18px rgba(26, 26, 46, 0.18);
   }
-  .rhf-rh__stage { position: absolute; left: 0; top: 0; width: 600px; height: 390px; transform-origin: 0 0; }
+  .rhf-rh__stage { position: absolute; left: 0; top: 0; width: 600px; height: 410px; transform-origin: 0 0; }
   .rhf-el { position: absolute; left: 0; top: 0; transition: transform var(--t) var(--ease), opacity var(--t) var(--ease), width var(--t) var(--ease), height var(--t) var(--ease), background-color var(--t) var(--ease), border-color var(--t) var(--ease), color var(--t) var(--ease); will-change: transform, opacity; }
 
   .rhf-head-label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; color: var(--brass-text); }
@@ -405,7 +405,7 @@ document.querySelectorAll<HTMLElement>(".rhf-rh").forEach((root0) => {
   });
   document.addEventListener("visibilitychange", () => (document.hidden ? pause() : resume()));
 
-  // ---- Scale the 600×390 stage to the frame.
+  // ---- Scale the 600×410 stage to the frame.
   const fit = () => { stage.style.transform = `scale(${frame.clientWidth / 600})`; };
   new ResizeObserver(fit).observe(frame);
   fit();

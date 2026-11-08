@@ -2,7 +2,7 @@
 import { Image } from "astro:assets";
 import { PORTAL_LOGIN_URL, SITE_NAME } from "../config/site";
 import { sitePath } from "../lib/url";
-import rupertPortrait from "../assets/brand/rupert-portrait.jpg";
+import rupertLockup from "../assets/brand/rupert-lockup.svg";
 
 // Buyer's path: what it is, why it's different, what it costs, who we are, resources. About covers Dori and the team.
 const links = [
@@ -21,14 +21,7 @@ const isCurrent = (href: string) => current === href || (href !== "/" && current
 <header class="site-header">
   <nav class="site-wrap site-header__bar" aria-label="Primary">
     <a class="site-logo" href={sitePath("/")} aria-label={SITE_NAME}>
-      <Image
-        class="site-logo__mark"
-        src={rupertPortrait}
-        alt=""
-        width={72}
-        height={72}
-        loading="eager"
-      />
+      <Image class="site-logo__lockup" src={rupertLockup} alt="" height={72} loading="eager" />
     </a>
 
     <div class="site-nav site-nav--desktop">

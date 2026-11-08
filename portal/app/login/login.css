@@ -76,6 +76,14 @@
   transform: translateY(-2.5rem);
 }
 
+.bp-panel__mark {
+  display: block;
+  width: 56px;
+  height: 56px;
+  margin-bottom: 20px;
+  color: #ffffff;
+}
+
 .bp-panel__title {
   margin: 0;
   font-size: 48px;
