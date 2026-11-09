@@ -14,7 +14,6 @@ tags:
   - investor outreach
 image: ../../assets/articles/series-a.png
 imageAlt: Founder reviewing Series A term sheet documents and a fundraising pipeline dashboard at a startup office desk
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

@@ -14,7 +14,6 @@ tags:
   - series a
 image: ../../assets/articles/early-stage-venture-capital.png
 imageAlt: A founder at a whiteboard mapping Pre-seed, Seed and Series A stages for a team around a table
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

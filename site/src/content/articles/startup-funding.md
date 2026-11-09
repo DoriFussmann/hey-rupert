@@ -14,7 +14,6 @@ tags:
   - Series A
 image: ../../assets/articles/startup-funding.png
 imageAlt: Founder reviewing a structured fundraising pipeline on a laptop, surrounded by investor notes and a cap table spreadsheet on a desk
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

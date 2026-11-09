@@ -14,7 +14,6 @@ tags:
   - investor outreach
 image: ../../assets/articles/angel-investors.png
 imageAlt: Founder reviewing a structured investor pipeline on a laptop at a clean desk, with handwritten notes on investor names and stages
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

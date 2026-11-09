@@ -13,7 +13,6 @@ tags:
   - startup funding stages
 image: ../../assets/articles/types-of-funding-for-startups.png
 imageAlt: A founder studying a side-by-side comparison chart of startup funding instruments including equity, SAFEs, convertible notes, and venture debt on a whiteboard
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

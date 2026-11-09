@@ -11,4 +11,7 @@ export const config = {
 
 export default createBotMiddleware({
   endpoint: "https://thenightventures.com/api/audit-snapshot?action=analytics.ingest",
+  // 308 /page -> /page/ and /x/index.html -> /x/ (seo-core >= 1.6.0).
+  // Paths proxied to the portal (vercel.json rewrites) are left alone.
+  trailingSlash: { exclude: ["/api", "/portal", "/admin", "/auth", "/login", "/_next"] },
 });

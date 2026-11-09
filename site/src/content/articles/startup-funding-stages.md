@@ -13,7 +13,6 @@ tags:
   - seed funding
 image: ../../assets/articles/startup-funding-stages.png
 imageAlt: A founder standing at a whiteboard mapping out the progression from pre-seed through Series C funding rounds with investor icons and milestone markers
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

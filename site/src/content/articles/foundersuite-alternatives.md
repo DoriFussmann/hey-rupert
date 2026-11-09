@@ -14,7 +14,6 @@ tags:
   - startup fundraising
 image: ../../assets/articles/find-investors-online-free.png
 imageAlt: A desk with a laptop, a notebook and tiles showing search, LinkedIn, email and handshake icons, representing the tools founders use for investor outreach
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

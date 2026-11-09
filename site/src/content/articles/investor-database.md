@@ -14,7 +14,6 @@ tags:
   - seed funding
 image: ../../assets/articles/investor-database.png
 imageAlt: Founder reviewing a structured investor database on a laptop screen showing filtered investor profiles by stage, sector, and check size
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

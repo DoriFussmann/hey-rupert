@@ -14,7 +14,6 @@ tags:
   - investor outreach
 image: ../../assets/articles/seed-pitch-deck.png
 imageAlt: Founder reviewing a seed pitch deck on a laptop at a desk, with investor feedback notes beside it
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

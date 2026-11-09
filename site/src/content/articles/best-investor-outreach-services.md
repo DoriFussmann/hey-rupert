@@ -14,7 +14,6 @@ tags:
   - seed funding
 image: ../../assets/articles/how-to-find-investors-for-startup.png
 imageAlt: An open notebook on a desk sketching an investor outreach flow from contacts to emails, next to printed fundraising reports and a telescope by a city window
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

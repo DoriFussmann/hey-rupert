@@ -13,7 +13,6 @@ tags:
   - investor research
 image: ../../assets/articles/biggest-venture-capital-firms.webp
 imageAlt: Large modern office tower at dusk with the logos of major VC firms displayed on illuminated signage, representing the scale and concentration of the biggest venture capital firms in 2026
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

@@ -15,7 +15,6 @@ tags:
   - Series A
 image: ../../assets/articles/pitch-deck.png
 imageAlt: Founder presenting a pitch deck on a large screen to a room of attentive investors in a modern conference setting
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

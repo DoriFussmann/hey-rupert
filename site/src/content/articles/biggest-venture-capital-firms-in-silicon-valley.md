@@ -15,7 +15,6 @@ tags:
   - how to find investors
 image: ../../assets/articles/biggest-venture-capital-firms-in-silicon-valley.webp
 imageAlt: Sand Hill Road in Menlo Park at dusk with venture capital firm office buildings lining the road
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

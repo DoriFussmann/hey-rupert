@@ -13,7 +13,6 @@ tags:
   - seed funding
 image: ../../assets/articles/angel-investors-vs-venture-capital.png
 imageAlt: Two founders at a whiteboard comparing angel investor and venture capital funding options side by side
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image

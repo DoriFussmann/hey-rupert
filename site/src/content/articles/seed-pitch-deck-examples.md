@@ -13,7 +13,6 @@ tags:
   - investor outreach
 image: ../../assets/articles/seed-pitch-deck-examples.png
 imageAlt: A founder reviewing multiple printed pitch deck slides spread across a desk, comparing structure and layout side by side
-robots: index, follow
 schemaType: BlogPosting
 locale: en-US
 twitterCard: summary_large_image
