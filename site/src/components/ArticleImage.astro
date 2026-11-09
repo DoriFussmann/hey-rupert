@@ -27,6 +27,9 @@ const card = {
 };
 
 const dims = variant === "card" ? card : hero;
+// An eager image is the article's above-the-fold hero and usually its LCP
+// element: ask the browser to fetch it ahead of other images.
+const fetchpriority = loading === "eager" ? "high" : "auto";
 ---
 
 <Image
@@ -39,4 +42,5 @@ const dims = variant === "card" ? card : hero;
   sizes={dims.sizes}
   fit="cover"
   loading={loading}
+  fetchpriority={fetchpriority}
 />
