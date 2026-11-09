@@ -83,7 +83,7 @@ There are four broad categories of help available, each with a distinct model an
 
 **Self-serve databases and CRM platforms** — including tools like Foundersuite — give founders searchable access to investor profiles and pipeline management features. Everything else: filtering, writing, follow-up, reply management, remains the founder's responsibility. These tools are the lowest-cost entry point but carry the highest time burden and the steepest learning curve for first-time raisers.
 
-**Expert-managed outreach services** like Rupert handle research, writing, and follow-up for a setup fee and a flat monthly fee — no percentage of the raise, no equity. Outreach goes from the founder's own inbox, so every investor relationship stays the founder's from the first email.
+**Expert-managed outreach services** like [Rupert](/book-call/) handle research, writing, and follow-up for a setup fee and a flat monthly fee — no percentage of the raise, no equity. Outreach goes from the founder's own inbox, so every investor relationship stays the founder's from the first email.
 
 ---
 

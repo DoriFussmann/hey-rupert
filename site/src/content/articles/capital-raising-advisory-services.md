@@ -24,13 +24,13 @@ keywords:
 draft: false
 internalLinks:
   - slug: best-investor-outreach-services
-    anchor: "The best investor outreach services and tools"
+    anchor: The best investor outreach services and tools
   - slug: capital-raising-services
-    anchor: "Capital raising services for startups"
+    anchor: Capital raising services for startups
   - slug: startup-fundraising-consultant
-    anchor: "Hiring a fundraising consultant"
+    anchor: Hiring a fundraising consultant
   - slug: capital-raising-fees
-    anchor: "What capital raising actually costs"
+    anchor: What capital raising actually costs
 
 externalLinks:
   - label: "SEC: Guide to Broker-Dealer Registration"
@@ -119,11 +119,11 @@ Issuers should include a tail period that applies only to introductions evidence
 
 ## The Quality Gap Inside the Advisory Category
 
-Regulatory label aside, the more practically dangerous distinction for most founders isn't advisor-versus-broker — it's the quality gap within the advisory category itself. The barrier to calling yourself a "capital raising advisor" or "investor outreach service" is essentially zero. No registration, no exam, no track record requirement. That means the category spans everything from genuinely experienced operators who have run fundraises, understand VC decision-making, and know how to build a targeted investor pipeline — all the way to firms that sell a list, send a batch of emails, and report back with open rates.
+Regulatory label aside, the more practically dangerous distinction for most founders isn't advisor-versus-broker — it's the quality gap within the advisory category itself. The barrier to calling yourself a "capital raising advisor" or "[investor outreach service](/articles/best-investor-outreach-services/)" is essentially zero. No registration, no exam, no track record requirement. That means the category spans everything from genuinely experienced operators who have run fundraises, understand VC decision-making, and know how to build a targeted investor pipeline — all the way to firms that sell a list, send a batch of emails, and report back with open rates.
 
 A pattern repeats across nearly every advisory engagement with founders raising venture capital today: genuinely strong companies arrive with clean metrics, yet unclear round structure and thin investor positioning sit quietly underneath — and investors simply cannot underwrite that story quickly, so even warm introductions tend to stall before serious conversations begin. The binding constraint almost always lives in narrative and proof, never in the underlying quality of the business.
 
-Rupert's founder, Dori Fussmann, who came to the advisory side from investment banking, describes the line Rupert draws this way: "Investor outreach is a professional service. We're responsible for identifying the right investors, matching, organizing and running the outreach. We're not the company, the product or the founders, and we don't control whether investors like the business or whether the valuation works. So we charge for the work, the expertise and the execution. The outcome belongs to the company."
+[Rupert](/book-call/)'s founder, Dori Fussmann, who came to the advisory side from investment banking, describes the line Rupert draws this way: "Investor outreach is a professional service. We're responsible for identifying the right investors, matching, organizing and running the outreach. We're not the company, the product or the founders, and we don't control whether investors like the business or whether the valuation works. So we charge for the work, the expertise and the execution. The outcome belongs to the company."
 
 A genuine advisory service does work that a list-seller cannot: it pressure-tests positioning before outreach begins, builds a thesis-matched investor target set rather than a generic database filter, and manages conversations in a way that preserves the founder's credibility with investors they may approach again in future rounds. The difference between those two service types is not always legible from a homepage. It shows up in the quality of the investor targeting, the depth of the personalization in outreach, and whether the advisor brings operator judgment to the process or simply executes a template.
 

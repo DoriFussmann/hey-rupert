@@ -22,27 +22,29 @@ keywords:
 draft: false
 internalLinks:
   - slug: investor-list
-    anchor: "How to build an investor list"
+    anchor: How to build an investor list
   - slug: investor-database
-    anchor: "Choosing and using an investor database"
+    anchor: Choosing and using an investor database
   - slug: investor-crm
-    anchor: "Running your raise in an investor CRM"
+    anchor: Running your raise in an investor CRM
   - slug: angel-investors
-    anchor: "Finding angel investors for your first check"
+    anchor: Finding angel investors for your first check
   - slug: angel-investors-vs-venture-capital
-    anchor: "Angel investors vs. venture capital"
+    anchor: Angel investors vs. venture capital
   - slug: investors-near-me
-    anchor: "Finding investors near you"
+    anchor: Finding investors near you
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
-    anchor: "Warm intros vs. cold outreach to investors"
+    anchor: Warm intros vs. cold outreach to investors
   - slug: biggest-venture-capital-firms
     anchor: "The biggest VC firms, and which write early checks"
   - slug: capital-raising-services
-    anchor: "Capital raising services for startups"
+    anchor: Capital raising services for startups
   - slug: startup-funding-stages
     anchor: "Startup funding stages, pre-seed to Series C"
   - slug: pitch-deck
-    anchor: "How to build a pitch deck"
+    anchor: How to build a pitch deck
+  - slug: early-stage-investor-report
+    anchor: early-stage investors
 
 externalLinks: []
 faqs:
@@ -187,7 +189,7 @@ At pre-seed stage, investors bet on you as a founder and the potential of your i
 
 You are selling a vision, but that vision must be grounded in early data points. The "Team" round exists precisely for this: founders with no product but a background at a recognisable company or a prior exit — investors bet on the jockeys, not the horse, and valuation is driven by track record.
 
-If your personal background alone isn't sufficient, advisors can meaningfully extend your credibility profile. A well-known operator or investor in your sector who has agreed to advise you signals to other investors that someone with pattern recognition has already looked at the opportunity and said yes. The same logic applies to accelerator acceptance: being accepted into a reputable programme is an external validation that your team and idea passed a competitive filter. Neither advisors nor accelerators are a substitute for domain insight, but both are legitimate credibility proxies that early-stage investors take seriously.
+If your personal background alone isn't sufficient, advisors can meaningfully extend your credibility profile. A well-known operator or investor in your sector who has agreed to advise you signals to other investors that someone with pattern recognition has already looked at the opportunity and said yes. The same logic applies to accelerator acceptance: being accepted into a reputable programme is an external validation that your team and idea passed a competitive filter. Neither advisors nor accelerators are a substitute for domain insight, but both are legitimate credibility proxies that [early-stage investors](/articles/early-stage-investor-report/) take seriously.
 
 A credible founding team means leadership with relevant experience and domain expertise
  — not necessarily a pedigree from a famous company, but a demonstrable and specific reason why *you* are the right people to solve this particular problem for this particular market. That answer needs to be in your deck, in your executive summary, and in the first sixty seconds of every investor conversation.

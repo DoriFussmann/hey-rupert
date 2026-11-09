@@ -22,19 +22,19 @@ keywords:
 draft: false
 internalLinks:
   - slug: best-investor-outreach-services
-    anchor: "The best investor outreach services and tools"
+    anchor: The best investor outreach services and tools
   - slug: foundersuite-alternatives
-    anchor: "Foundersuite alternatives for managed outreach"
+    anchor: Foundersuite alternatives for managed outreach
   - slug: startup-fundraising-consultant
-    anchor: "Hiring a fundraising consultant"
+    anchor: Hiring a fundraising consultant
   - slug: capital-raising-advisory-services
-    anchor: "Advisors vs. broker-dealers for capital raising"
+    anchor: Advisors vs. broker-dealers for capital raising
   - slug: capital-raising-fees
-    anchor: "What capital raising actually costs"
+    anchor: What capital raising actually costs
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: where-to-find-startup-investors-warm-intros-vs-cold-outreach
-    anchor: "Warm intros vs. cold outreach to investors"
+    anchor: Warm intros vs. cold outreach to investors
 
 externalLinks:
   - label: "SEC: Guide to Broker-Dealer Registration"
@@ -88,7 +88,7 @@ ProRaise takes a similar self-serve approach, positioning itself as a fundraisin
 
 Databases are powerful tools — but they are tools, not services. The founder must still research each investor, write each message, and manage every thread. That distinction matters enormously when the CEO's time is the company's most constrained resource.
 
-As Rupert's founder, Dori Fussmann, puts it: "Founders often buy investor databases without really knowing what they're buying. You get a spreadsheet with thousands of investors. Now what? How do you filter it, who do you approach first, and how do you track every follow-up and reply? Buying a database is buying raw material. Someone still has to turn it into a working pipeline."
+As [Rupert](/book-call/)'s founder, Dori Fussmann, puts it: "Founders often buy investor databases without really knowing what they're buying. You get a spreadsheet with thousands of investors. Now what? How do you filter it, who do you approach first, and how do you track every follow-up and reply? Buying a database is buying raw material. Someone still has to turn it into a working pipeline."
 
 ### Crowdfunding Portals
 
