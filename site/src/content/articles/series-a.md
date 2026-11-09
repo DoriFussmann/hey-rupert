@@ -40,13 +40,13 @@ faqs:
     answer: The capital creates an 18–24 month runway to hit the milestones needed for a strong Series B. In practice, the first 90 days should focus on building the executive team (typically a first VP of Sales, Engineering, or Marketing), establishing board governance with a quarterly meeting cadence, and setting quarterly revenue targets that work backward from Series B benchmarks — generally $8M–$15M ARR with sustained 2x year-over-year growth. The commitments embedded in your Series A pitch become the baseline investors use to price the next round.
 internalLinks:
   - slug: biggest-venture-capital-firms-in-silicon-valley
-    anchor: "The top Series A investors in Silicon Valley"
+    anchor: The top Series A investors in Silicon Valley
   - slug: early-stage-investor-report
     anchor: "Early-stage investors in 2026: the Rupert investor report"
   - slug: startup-funding-stages
     anchor: "Startup funding stages, pre-seed to Series C"
   - slug: seed-vs-series-a
-    anchor: "Seed vs. Series A"
+    anchor: Seed vs. Series A
   - slug: biggest-venture-capital-firms
     anchor: "The biggest VC firms, and which write early checks"
 
@@ -225,7 +225,7 @@ Series A due diligence takes 90–120 days on average, including financial revie
 
 The lead investor is the single most consequential decision in a Series A process. The lead sets price, takes a board seat, and signals quality to every future investor who will price the Series B.
 
-Build a complete list of the funds that actually lead Series A rounds in your sector, usually several dozen, and work through it systematically. In Rupert's database, 4,116 funds say they invest at Series A, but only a fraction lead rounds in any given sector, so filtering for leads matters more than the length of the list.
+Build a complete list of the funds that actually lead Series A rounds in your sector, usually several dozen, and work through it systematically. In [Rupert](/book-call/)'s database, 4,116 funds say they invest at Series A, but only a fraction lead rounds in any given sector, so filtering for leads matters more than the length of the list.
  This targeting logic is more important than most founders appreciate. A warm, personalized introduction to an investor who actively leads deals in your category is dramatically more effective than a broadcast to hundreds of funds. 
 When building your target list, focus on firms that have recent experience in your sector and stage. Review their portfolio for potential conflicts — a firm is unlikely to lead your round if they already back a direct competitor. Warm introductions from existing investors, other founders in the firm's portfolio, or mutual connections convert at a much higher rate than cold outreach.
 

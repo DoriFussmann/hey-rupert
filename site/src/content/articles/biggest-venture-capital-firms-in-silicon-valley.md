@@ -45,13 +45,13 @@ internalLinks:
   - slug: biggest-venture-capital-firms
     anchor: "The biggest VC firms in 2026, ranked by AUM"
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: investor-list
-    anchor: "How to build an investor list"
+    anchor: How to build an investor list
   - slug: how-to-cold-email-investors
-    anchor: "How to cold email investors"
+    anchor: How to cold email investors
   - slug: seed-vs-series-a
-    anchor: "Seed vs. Series A"
+    anchor: Seed vs. Series A
 externalLinks:
   - label: "Sequoia unveils $950M in new early-stage funds (TechCrunch)"
     url: "https://techcrunch.com/2025/10/27/sequoia-unveils-950m-in-new-early-stage-funds-as-it-strives-to-be-only-as-good-as-our-next-investment/"
@@ -78,7 +78,7 @@ This guide covers both: the data on the wider market first, then 15 firm profile
 
 Rankings of Silicon Valley venture firms usually start and end with the same ten names. That tells you who is famous. It doesn't tell you who you can realistically raise from. So before the profiles, here is what the wider market looks like.
 
-Rupert maintains a database of more than 7,600 investment firms, each mapped to the stages, sectors and geographies it says it invests in. Filtered to firms headquartered in the San Francisco Bay Area, it gives this picture:
+[Rupert](/book-call/) maintains a database of more than 7,600 investment firms, each mapped to the stages, sectors and geographies it says it invests in. Filtered to firms headquartered in the San Francisco Bay Area, it gives this picture:
 
 | Silicon Valley early-stage market | Figure |
 |---|---|

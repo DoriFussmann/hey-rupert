@@ -48,7 +48,7 @@ internalLinks:
   - slug: pre-seed-funding
     anchor: "Pre-seed funding: the complete guide"
   - slug: best-investor-outreach-services
-    anchor: "The best investor outreach services and tools"
+    anchor: The best investor outreach services and tools
 
 externalLinks:
   - label: "100 Top Angel Investors List for Startups (2026)"
@@ -88,7 +88,7 @@ Angel investors are individuals who invest their own money in startups, usually 
   </li>
 </ul>
 
-*Check sizes are typical ranges described later in this guide. Angel group count: Rupert fund database, November 2026.*
+*Check sizes are typical ranges described later in this guide. Angel group count: [Rupert](/book-call/) fund database, November 2026.*
 
 ## The Question Behind the Question
 

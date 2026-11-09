@@ -24,15 +24,15 @@ keywords:
 draft: false
 internalLinks:
   - slug: capital-raising-services
-    anchor: "Capital raising services for startups"
+    anchor: Capital raising services for startups
   - slug: startup-fundraising-consultant
-    anchor: "Hiring a fundraising consultant"
+    anchor: Hiring a fundraising consultant
   - slug: capital-raising-advisory-services
-    anchor: "Advisors vs. broker-dealers for capital raising"
+    anchor: Advisors vs. broker-dealers for capital raising
   - slug: best-investor-outreach-services
-    anchor: "The best investor outreach services and tools"
+    anchor: The best investor outreach services and tools
   - slug: foundersuite-alternatives
-    anchor: "Foundersuite alternatives for managed outreach"
+    anchor: Foundersuite alternatives for managed outreach
 
 externalLinks:
   - label: "Axial: 2026 M&A Fee Guide"
@@ -169,7 +169,7 @@ The test of a capital raising service is not whether it can send emails. It is w
 
 Not every service ties its pay to your raise. Some outreach and advisory services charge a setup fee and a flat monthly fee instead, with no success fee and no tail. The trade-off is simple: you pay for the work whether or not the round closes, and in exchange nothing is owed on the money you raise, during the engagement or after it.
 
-Rupert's founder, Dori Fussmann, came to this model from investment banking:
+[Rupert](/book-call/)'s founder, Dori Fussmann, came to this model from investment banking:
 
 "I know success fees well; they're standard in banking. But investor outreach is a different professional service. We're responsible for identifying the right investors, matching, organizing and running the outreach. We're not the company, the product or the founders, and we don't control whether investors like the business or whether the valuation works. There's also proportionality: a company raises a few million dollars, and a success fee for outreach can run to tens of thousands. That doesn't reflect the work involved. So we charge for the work, the expertise and the execution. The outcome belongs to the company."
 

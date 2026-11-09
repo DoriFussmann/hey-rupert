@@ -24,13 +24,13 @@ keywords:
 draft: false
 internalLinks:
   - slug: best-investor-outreach-services
-    anchor: "The best investor outreach services and tools"
+    anchor: The best investor outreach services and tools
   - slug: capital-raising-services
-    anchor: "Capital raising services for startups"
+    anchor: Capital raising services for startups
   - slug: capital-raising-fees
-    anchor: "What capital raising actually costs"
+    anchor: What capital raising actually costs
   - slug: capital-raising-advisory-services
-    anchor: "Advisors vs. broker-dealers for capital raising"
+    anchor: Advisors vs. broker-dealers for capital raising
 
 externalLinks:
   - label: "SEC: Guide to Broker-Dealer Registration"
@@ -73,7 +73,7 @@ If you have a compelling deck and a clear story but no bandwidth to research whi
 
 Before you start evaluating consultants, answer three questions honestly. Do you have a pitch that earns a second meeting, or does the positioning still need work? Do you have a way to identify investors who fund companies at your stage, sector, and geography — and do you have the time to systematically reach them? And do you have a process for tracking conversations, following up consistently, and maintaining momentum across a four-to-six-month raise? If the answer to the first question is no, fix that before hiring outreach help. If the answer to the second and third is no, a capital raising consultant is the right investment.
 
-There's a fourth question, and it's the hardest to answer honestly: is the company ready to raise at all? As Rupert's founder, Dori Fussmann, puts it: "I will tell a founder when I think they're not ready to raise. Sometimes the product, traction, business model or overall maturity doesn't support the round yet, and no amount of investor matching, outreach or clever messaging will fix that. We can get you in front of the right investors. We can't make your company investable." A good consultant should be willing to tell you the same thing before taking your retainer.
+There's a fourth question, and it's the hardest to answer honestly: is the company ready to raise at all? As [Rupert](/book-call/)'s founder, Dori Fussmann, puts it: "I will tell a founder when I think they're not ready to raise. Sometimes the product, traction, business model or overall maturity doesn't support the round yet, and no amount of investor matching, outreach or clever messaging will fix that. We can get you in front of the right investors. We can't make your company investable." A good consultant should be willing to tell you the same thing before taking your retainer.
 
 ## How to Vet a Fundraising Consultant Before You Sign
 

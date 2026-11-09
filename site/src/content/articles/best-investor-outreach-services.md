@@ -40,13 +40,13 @@ faqs:
     answer: "Start from a list filtered by fit rather than size, write to a named partner rather than a firm's general inbox, reference what that partner has backed, send in waves rather than all at once, and follow up on a schedule. Whether you do it yourself or use a service, the test is the same: every email should make sense only for the investor receiving it."
 internalLinks:
   - slug: foundersuite-alternatives
-    anchor: "Foundersuite alternatives for managed outreach"
+    anchor: Foundersuite alternatives for managed outreach
   - slug: capital-raising-services
     anchor: "Capital raising services: the definitive guide"
   - slug: investor-list
-    anchor: "How to build an investor list"
+    anchor: How to build an investor list
   - slug: how-to-cold-email-investors
-    anchor: "How to cold email investors"
+    anchor: How to cold email investors
 externalLinks:
   - label: "Waveup pricing"
     url: "https://waveup.com/pricing/"
@@ -58,7 +58,7 @@ externalLinks:
     url: "https://metal.so/pricing"
     addedAt: 2026-11-02
 ---
-*Disclosure: Rupert wrote this guide, and Rupert is one of the services in it. Every option is described from its own published information as of November 2026, with company-reported figures labelled as such. Prices change, so confirm them directly.*
+*Disclosure: [Rupert](/book-call/) wrote this guide, and Rupert is one of the services in it. Every option is described from its own published information as of November 2026, with company-reported figures labelled as such. Prices change, so confirm them directly.*
 
 ## The Short Answer
 

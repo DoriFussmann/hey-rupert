@@ -95,7 +95,7 @@ Startup funding stages are discrete rounds of investment that correspond to spec
 At the earliest stage, there is almost nothing to evaluate except the founder and the idea. By Series C, investors are underwriting a proven business with millions in revenue and a clear path to dominance.
 
 Understanding which stage you are actually in (not where you wish you were) is the most important strategic decision you will make before opening a raise. 
-The stage names matter because investors are stage-specialised. Pitching a Series B fund with a pre-seed deck wastes everyone's time. Match the stage first, then the sector. At the early end, though, the lines blur: in Rupert's database, 84% of early-stage funds say they invest at both Seed and Series A, so a fund's behavior (whether it leads, its check size, how early it goes) tells you more than its label.
+The stage names matter because investors are stage-specialised. Pitching a Series B fund with a pre-seed deck wastes everyone's time. Match the stage first, then the sector. At the early end, though, the lines blur: in [Rupert](/book-call/)'s database, 84% of early-stage funds say they invest at both Seed and Series A, so a fund's behavior (whether it leads, its check size, how early it goes) tells you more than its label.
  Misreading your own stage leads to targeting the wrong investors, telling the wrong story, and spending months building a pipeline that was never going to convert.
 
 This guide moves through each stage in turn — what it is, who invests, how much capital is typically involved, what you must prove, and what dilution to expect. The benchmarks reflect where the market actually sits in 2025–2026, not where it sat in the easy-money years.

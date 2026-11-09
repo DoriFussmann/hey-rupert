@@ -40,15 +40,15 @@ internalLinks:
   - slug: early-stage-investor-report
     anchor: "Early-stage investors in 2026: the Rupert investor report"
   - slug: biggest-venture-capital-firms-in-silicon-valley
-    anchor: "Top Silicon Valley VC firms for Seed and Series A"
+    anchor: Top Silicon Valley VC firms for Seed and Series A
   - slug: how-to-find-investors
-    anchor: "How to find the right investors"
+    anchor: How to find the right investors
   - slug: investor-list
-    anchor: "How to build an investor list"
+    anchor: How to build an investor list
   - slug: angel-investors-vs-venture-capital
-    anchor: "Angel investors vs. venture capital"
+    anchor: Angel investors vs. venture capital
   - slug: series-a
-    anchor: "Raising a Series A"
+    anchor: Raising a Series A
 
 externalLinks:
   - label: "Global venture capital"
@@ -191,7 +191,7 @@ Some of the highest-returning funds in VC history have been smaller vehicles dep
 Mega-funds have minimum check sizes that exclude most seed and early Series A rounds; raising from a firm that can't lead your current round wastes everyone's time.
  This is a structural reality, not a judgment. The math of fund management means a $10 billion fund needs to deploy capital at a scale that makes $500,000 checks economically irrelevant to portfolio construction. Most early-stage founders get better attention, better ownership economics, and more partner time from Tier 2 generalists or sector specialists who are built to lead rounds at the size they're actually raising.
 
-As Rupert's founder, Dori Fussmann, puts it: "Fund size doesn't matter. What matters is whether they can write you a check. If they invest in your stage and can write the check you need, they're worth approaching."
+As [Rupert](/book-call/)'s founder, Dori Fussmann, puts it: "Fund size doesn't matter. What matters is whether they can write you a check. If they invest in your stage and can write the check you need, they're worth approaching."
 
 ---
 

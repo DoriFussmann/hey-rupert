@@ -40,15 +40,15 @@ faqs:
     answer: "Ask who writes and sends the emails, and from whose inbox; whether you approve the messaging before anything goes out; how fees work, including any success fee or tail period; whether you can cancel month to month; and who owns the investor relationships and contact history when the engagement ends."
 internalLinks:
   - slug: best-investor-outreach-services
-    anchor: "The best investor outreach services and tools"
+    anchor: The best investor outreach services and tools
   - slug: capital-raising-services
     anchor: "Capital raising services: the definitive guide"
   - slug: capital-raising-fees
-    anchor: "Capital raising fees explained"
+    anchor: Capital raising fees explained
   - slug: investor-crm
-    anchor: "The best investor CRMs"
+    anchor: The best investor CRMs
   - slug: startup-fundraising-consultant
-    anchor: "Hiring a startup fundraising consultant"
+    anchor: Hiring a startup fundraising consultant
 externalLinks:
   - label: "Waveup: investor targeting and outreach"
     url: "https://waveup.com/investor-targeting-and-outreach/"
@@ -60,7 +60,7 @@ externalLinks:
     url: "https://www.usefundex.com/pricing"
     addedAt: 2026-11-02
 ---
-*Disclosure: Rupert wrote this guide, and Rupert is one of the options in it. Every option is described from its own published information as of November 2026, and we note where that information is unclear or conflicting. Prices change, so confirm them with each company.*
+*Disclosure: [Rupert](/book-call/) wrote this guide, and Rupert is one of the options in it. Every option is described from its own published information as of November 2026, and we note where that information is unclear or conflicting. Prices change, so confirm them with each company.*
 
 ## The Short Answer
 
