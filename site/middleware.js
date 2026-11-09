@@ -9,9 +9,15 @@ export const config = {
   runtime: "nodejs",
 };
 
+// Paths proxied to the portal app (vercel.json rewrites). The portal sets its
+// own headers and redirects, so the site middleware leaves these alone.
+const PORTAL_PATHS = ["/api", "/portal", "/admin", "/auth", "/login", "/_next"];
+
 export default createBotMiddleware({
   endpoint: "https://thenightventures.com/api/audit-snapshot?action=analytics.ingest",
   // 308 /page -> /page/ and /x/index.html -> /x/ (seo-core >= 1.6.0).
-  // Paths proxied to the portal (vercel.json rewrites) are left alone.
-  trailingSlash: { exclude: ["/api", "/portal", "/admin", "/auth", "/login", "/_next"] },
+  trailingSlash: { exclude: PORTAL_PATHS },
+  // nosniff, Referrer-Policy, X-Frame-Options, Permissions-Policy on site
+  // pages (seo-core >= 1.7.0; ignored by older versions).
+  securityHeaders: { exclude: PORTAL_PATHS },
 });

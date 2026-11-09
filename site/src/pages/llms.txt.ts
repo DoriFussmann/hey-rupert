@@ -2,6 +2,7 @@ import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
 import { generateLlmsTxt } from "seo-core";
 import { ARTICLES_BASE, AUTHOR_PATH, SITE_NAME, SITE_TAGLINE, SITE_URL } from "../config/site";
+import { TOPICS } from "../lib/topics";
 
 export const GET: APIRoute = async () => {
   const articles = (await getCollection("articles", ({ data }) => data.draft !== true)).sort(
@@ -43,6 +44,18 @@ export const GET: APIRoute = async () => {
         description:
           "Rupert charges a setup fee (two to four weeks of intake, narrative, expert feedback on company materials, messaging and investor matching), then a flat monthly fee from go-live. No success fee, no percentage of the raise, no equity. Month to month; cancel at any time.",
       },
+      {
+        title: "Our Database",
+        path: "/database/",
+        description:
+          "Rupert uses investor research to judge fit by thesis, stage, sector, geography, check size and mandate. The database is never sold as a contact list.",
+      },
+      // Topic hubs: one page per core subject, listing its articles.
+      ...TOPICS.map((topic) => ({
+        title: topic.h1,
+        path: `/topics/${topic.slug}/`,
+        description: topic.description,
+      })),
       {
         title: "Book a Free Consultation",
         path: "/book-call/",
