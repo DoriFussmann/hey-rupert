@@ -22,7 +22,9 @@ keywords:
   - investor outreach cost
   - capital raising services
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: best-investor-outreach-services
+    anchor: investor outreach services
 externalLinks:
   - label: The October 2026 US Venture Capital Funding Report AlleyWatch
     url: "https://www.alleywatch.com/2026/11/us-venture-capital-statistics-october-2026/"
@@ -55,9 +57,9 @@ When a founder pays for investor outreach help, they are actually paying for thr
 
 ## How Much Does Managed Investor Outreach Cost?
 
-The honest answer is that pricing varies significantly across service types, and the model matters as much as the headline number. Broadly, managed investor outreach services operate under one of three structures: a setup fee plus an ongoing monthly fee; a retainer combined with a success fee that takes a percentage of the capital raised; or a flat retainer under which the advisor provides guidance and materials while the founder conducts most of the actual outreach.
+The honest answer is that pricing varies significantly across service types, and the model matters as much as the headline number. Broadly, managed [investor outreach services](/articles/best-investor-outreach-services/) operate under one of three structures: a setup fee plus an ongoing monthly fee; a retainer combined with a success fee that takes a percentage of the capital raised; or a flat retainer under which the advisor provides guidance and materials while the founder conducts most of the actual outreach.
 
-Rupert charges a one-time setup fee and a flat monthly fee — no success fee, no percentage of the raise, and no equity. Because both fees depend on the company's stage, round size, and the scope of work required, Rupert quotes them after a free consultation rather than publishing a standard rate. The month-to-month structure means there is no long-term commitment and no minimum contract term: the founder pays only for the months outreach is active and can cancel at any time.
+[Rupert](/book-call/) charges a one-time setup fee and a flat monthly fee — no success fee, no percentage of the raise, and no equity. Because both fees depend on the company's stage, round size, and the scope of work required, Rupert quotes them after a free consultation rather than publishing a standard rate. The month-to-month structure means there is no long-term commitment and no minimum contract term: the founder pays only for the months outreach is active and can cancel at any time.
 
 That fee structure matters for a reason that goes beyond the headline number. A success-fee model pays the advisor more when the round closes faster and larger — which sounds aligned, but in practice creates pressure toward any close rather than the right close. A flat monthly fee with no percentage removes that pressure entirely, so the advice and execution stay focused on what is best for the company and the founder's long-term investor relationships.
 
