@@ -86,7 +86,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  if (user && isPortalRoute && role !== "client" && role !== "admin") {
+  if (
+    user &&
+    isPortalRoute &&
+    role !== "client" &&
+    role !== "viewer" &&
+    role !== "admin"
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);

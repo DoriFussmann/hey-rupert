@@ -95,6 +95,8 @@ import { getOnboardingItems, materialsStatus } from "@/lib/onboarding";
 import { nextTurn } from "@/lib/progress";
 import { isKickoffReady, kickoffDate } from "@/lib/service-order";
 import { getClientAccess } from "@/lib/password-setup";
+import { ViewersSection } from "@/app/admin/clients/[id]/viewers-section";
+import { listClientViewers } from "@/lib/viewers";
 
 export default async function ClientDetailPage({
   params,
@@ -107,7 +109,7 @@ export default async function ClientDetailPage({
     notFound();
   }
 
-  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel, matchProfile, feedback] =
+  const [sends, serviceOrderSends, ndaSends, access, interview, intake, emailPanel, matchProfile, feedback, viewerList] =
     await Promise.all([
       listSowSends(client.id),
       listServiceOrderSends(client.id),
@@ -118,6 +120,7 @@ export default async function ClientDetailPage({
       loadEmailPanel(client.id),
       loadMatchProfile(client.id),
       isServiceRoleConfigured() ? loadClientFeedback(createServiceClient(), client.id) : Promise.resolve({ ok: true as const, value: [] }),
+      listClientViewers(client.id),
     ]);
 
   const kickedOffAt = kickoffDate(client);
@@ -511,6 +514,11 @@ export default async function ClientDetailPage({
           firstName={client.first_name ?? ""}
           email={client.email ?? ""}
           access={access}
+        />
+        <ViewersSection
+          clientId={client.id}
+          viewers={viewerList.ok ? viewerList.viewers : []}
+          loadError={viewerList.ok ? null : viewerList.error}
         />
       </Disclosure>
     </>

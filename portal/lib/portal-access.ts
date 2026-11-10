@@ -3,18 +3,26 @@ import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 
+const VIEWER_ERROR =
+  "You have view-only access to this portal. Changes are disabled.";
+
 const VIEW_AS_ERROR =
   "You are viewing this portal as the client. Actions are disabled.";
 
 /**
  * Client actions run only for the client's own login. Admins previewing the
- * portal ("view as client") are refused here, whatever the UI shows.
+ * portal ("view as client") and view-only viewers are refused here, whatever
+ * the UI shows.
  */
 export async function requirePortalService() {
   const { user, role } = await getAuthContext();
 
   if (user && role === "admin") {
     return { ok: false as const, error: VIEW_AS_ERROR };
+  }
+
+  if (user && role === "viewer") {
+    return { ok: false as const, error: VIEWER_ERROR };
   }
 
   if (!user || role !== "client") {

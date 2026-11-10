@@ -1,6 +1,7 @@
 import type { User } from "@supabase/supabase-js";
 
-export type AppRole = "admin" | "client";
+// "viewer": a view-only login on one client's portal (lib/viewers.ts).
+export type AppRole = "admin" | "client" | "viewer";
 
 // Roles are read only from server-controlled fields. `user_metadata` is
 // writable by the signed-in user, so it is never trusted for access.
@@ -30,7 +31,9 @@ function decodeJwtClaims(accessToken: string): JwtClaims | null {
 }
 
 export function roleFromValue(value: unknown): AppRole | null {
-  return value === "admin" || value === "client" ? value : null;
+  return value === "admin" || value === "client" || value === "viewer"
+    ? value
+    : null;
 }
 
 /** Reads `role` from JWT claims (`auth.jwt() ->> 'role'`). */
@@ -54,7 +57,7 @@ export function roleFromUser(user: User | null): AppRole | null {
 
 export function homePathForRole(role: AppRole | null) {
   if (role === "admin") return "/admin";
-  if (role === "client") return "/portal";
+  if (role === "client" || role === "viewer") return "/portal";
   return "/login";
 }
 

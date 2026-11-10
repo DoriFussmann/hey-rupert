@@ -99,7 +99,12 @@ export async function requireAdmin() {
 export async function requirePortalUser() {
   const context = await getAuthContext();
 
-  if (!context.user || (context.role !== "client" && context.role !== "admin")) {
+  if (
+    !context.user ||
+    (context.role !== "client" &&
+      context.role !== "viewer" &&
+      context.role !== "admin")
+  ) {
     redirect("/login");
   }
 

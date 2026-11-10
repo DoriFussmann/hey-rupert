@@ -4,7 +4,7 @@ import { SetupUnavailable } from "@/app/auth/setup/setup-unavailable";
 import { AuthBrandPanel } from "@/components/auth-brand-panel";
 import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
 import { SETUP_LINK_UNAVAILABLE_MESSAGE } from "@/lib/password-policy";
-import { findActiveSetup } from "@/lib/password-setup";
+import { resolveSetupToken } from "@/lib/viewers";
 import { roleFromUser } from "@/lib/roles";
 import { createServiceClient } from "@/lib/supabase/admin";
 import "@/app/login/login.css";
@@ -33,17 +33,18 @@ async function loadSetup(token: string): Promise<SetupState> {
   }
 
   const supabase = createServiceClient();
-  const lookup = await findActiveSetup(supabase, token);
+  const lookup = await resolveSetupToken(supabase, token);
   if (!lookup.ok) return { kind: "unavailable", message: NOT_AVAILABLE_ERROR };
-  if (!lookup.clientId) {
+  if (!lookup.target) {
     return { kind: "unavailable", message: SETUP_LINK_UNAVAILABLE_MESSAGE };
   }
 
   const { data, error } = await supabase.auth.admin.getUserById(
-    lookup.clientId,
+    lookup.target.userId,
   );
   const user = data?.user;
-  if (error || !user?.email || roleFromUser(user) !== "client") {
+  // A client link only ever sets a client's password, a viewer link a viewer's.
+  if (error || !user?.email || roleFromUser(user) !== lookup.target.kind) {
     return { kind: "unavailable", message: SETUP_LINK_UNAVAILABLE_MESSAGE };
   }
 

@@ -701,6 +701,13 @@ export async function deleteClient(
 
   await supabase.from("notifications").delete().eq("client_id", clientId);
 
+  // Viewer rows go with the client; collect their logins first so those
+  // can be deleted too. Best effort: a missing table must not block this.
+  const { data: viewerRows } = await supabase
+    .from("client_viewers")
+    .select("id")
+    .eq("client_id", clientId);
+
   const { error } = await supabase.from("clients").delete().eq("id", clientId);
 
   if (error) {
@@ -708,6 +715,9 @@ export async function deleteClient(
   }
 
   await supabase.auth.admin.deleteUser(clientId);
+  for (const row of viewerRows ?? []) {
+    await supabase.auth.admin.deleteUser(String(row.id));
+  }
 
   revalidatePath("/admin");
   return { ok: true };

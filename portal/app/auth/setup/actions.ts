@@ -7,7 +7,8 @@ import {
   validateNewPassword,
 } from "@/lib/password-policy";
 import { notifyAdmin } from "@/lib/notify";
-import { findActiveSetup, markSetupUsed } from "@/lib/password-setup";
+import { markSetupUsed } from "@/lib/password-setup";
+import { getViewer, markViewerSetupUsed, resolveSetupToken } from "@/lib/viewers";
 import { roleFromUser } from "@/lib/roles";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -33,9 +34,9 @@ export async function completePasswordSetup(
 
   const supabase = createServiceClient();
 
-  const lookup = await findActiveSetup(supabase, token);
+  const lookup = await resolveSetupToken(supabase, token);
   if (!lookup.ok) return { ok: false, error: GENERIC_ERROR };
-  if (!lookup.clientId) {
+  if (!lookup.target) {
     return {
       ok: false,
       error: SETUP_LINK_UNAVAILABLE_MESSAGE,
@@ -43,32 +44,41 @@ export async function completePasswordSetup(
     };
   }
 
-  const clientId = lookup.clientId;
+  const { kind, userId } = lookup.target;
   const { data: userData, error: userError } =
-    await supabase.auth.admin.getUserById(clientId);
+    await supabase.auth.admin.getUserById(userId);
   const user = userData?.user;
 
-  if (userError || !user?.email || roleFromUser(user) !== "client") {
+  // A client link only ever sets a client's password, a viewer link a viewer's.
+  if (userError || !user?.email || roleFromUser(user) !== kind) {
     return { ok: false, error: GENERIC_ERROR };
   }
 
   const { error: passwordError } = await supabase.auth.admin.updateUserById(
-    clientId,
+    userId,
     { password, email_confirm: true },
   );
   // Supabase reports its own password-policy failures here; show them as-is.
   if (passwordError) return { ok: false, error: passwordError.message };
 
-  // The password is already saved, so the client must not be blocked by a
-  // bookkeeping failure: a link that fails to be marked used simply stays
-  // valid until it expires or is replaced by a reset.
-  await markSetupUsed(supabase, clientId, token);
+  if (kind === "viewer") {
+    const found = await getViewer(supabase, userId);
+    await markViewerSetupUsed(supabase, userId, token);
+    if (found.ok && found.viewer) {
+      revalidatePath(`/admin/clients/${found.viewer.clientId}`);
+    }
+  } else {
+    // The password is already saved, so the client must not be blocked by a
+    // bookkeeping failure: a link that fails to be marked used simply stays
+    // valid until it expires or is replaced by a reset.
+    await markSetupUsed(supabase, userId, token);
 
-  // Best effort: the admin notification must not block the client.
-  await notifyAdmin(supabase, clientId, "password_set", { email: true });
+    // Best effort: the admin notification must not block the client.
+    await notifyAdmin(supabase, userId, "password_set", { email: true });
 
-  revalidatePath("/admin", "layout");
-  revalidatePath(`/admin/clients/${clientId}`);
+    revalidatePath("/admin", "layout");
+    revalidatePath(`/admin/clients/${userId}`);
+  }
 
   const session = createClient();
   const { error: signInError } = await session.auth.signInWithPassword({
