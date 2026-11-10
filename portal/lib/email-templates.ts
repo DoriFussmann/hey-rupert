@@ -191,6 +191,7 @@ export type EmailTemplateKey =
   | `admin:${AdminEmailType}`
   | "reminder"
   | typeof WELCOME_EMAIL_KEY
+  | typeof VIEWER_WELCOME_KEY
   | typeof QUESTION_ANSWERED_KEY;
 
 export type EmailTemplateGroup = "client" | "admin" | "reminder";
@@ -306,6 +307,32 @@ const WELCOME_TEMPLATE: EmailTemplateDefinition = {
     "Thanks again, {first_name}.",
     "I'm looking forward to hopefully working together, and please reach out with any questions as you review everything.",
     "Dori",
+  ].join("\n\n"),
+  tokens: WELCOME_TOKENS_LIST,
+  switchable: false,
+};
+
+export const VIEWER_WELCOME_KEY = "viewer_welcome";
+
+/**
+ * Sent from the client page (Viewers → Send Welcome Email) to someone the
+ * client asked to be given view-only access to their portal.
+ */
+const VIEWER_WELCOME_TEMPLATE: EmailTemplateDefinition = {
+  key: VIEWER_WELCOME_KEY,
+  group: "client",
+  title: "Welcome email (viewer)",
+  trigger:
+    "When you click Send Welcome Email for a viewer on the client page (Client details & account → Viewers). {first_name} and {login_email} are the viewer's; {company} is the client. It goes even when automatic emails are paused, because you send it yourself.",
+  subject: "You've been added to {company}'s Rupert portal",
+  body: [
+    "{greeting}",
+    "{company} asked me to give you access to their Rupert Client Portal, so you can follow their fundraising outreach alongside them.",
+    "Your access is view-only: you'll see everything {company} sees, but you won't be able to edit, confirm or comment on anything.",
+    "Set your password here (link valid until {link_expires}):\n{setup_link}",
+    "You'll be taken straight into the portal. After that, log in any time at {portal_host} (Login, top-right corner) with {login_email} and the password you chose.",
+    "If anything doesn't work, just reply to this email.",
+    "{signature}",
   ].join("\n\n"),
   tokens: WELCOME_TOKENS_LIST,
   switchable: false,
@@ -560,6 +587,7 @@ const REMINDER_TEMPLATE: EmailTemplateDefinition = {
 
 export const EMAIL_TEMPLATES: EmailTemplateDefinition[] = [
   WELCOME_TEMPLATE,
+  VIEWER_WELCOME_TEMPLATE,
   ...CLIENT_TEMPLATES,
   QUESTION_ANSWERED_TEMPLATE,
   ...ADMIN_TEMPLATES,

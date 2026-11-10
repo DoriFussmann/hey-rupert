@@ -1,7 +1,7 @@
 import { AppShell } from "@/components/app-shell";
 import { BookCallLink } from "@/components/book-call-link";
 import { PortalNav } from "@/components/portal-nav";
-import { ViewAsBanner } from "@/components/view-as-banner";
+import { ViewAsBanner, ViewerBanner } from "@/components/view-as-banner";
 import { requirePortalUser } from "@/lib/auth";
 import { bookCallHref } from "@/lib/book-call";
 import { getPortalView } from "@/lib/data";
@@ -14,8 +14,9 @@ export const metadata = {
   description: "Your Rupert engagement, tracked in one place.",
 };
 
-function portalGreeting(client: Client | null) {
+function portalGreeting(client: Client | null, viewerFirstName?: string) {
   const firstName =
+    viewerFirstName?.trim() ||
     client?.first_name?.trim() ||
     client?.founder_name?.trim().split(/\s+/)[0] ||
     "";
@@ -38,12 +39,12 @@ export default async function PortalLayout({
     await requirePortalUser();
   }
 
-  const { client, viewAs } = await getPortalView();
+  const { client, viewAs, viewer } = await getPortalView();
   const setupItems = getSetupItems(client);
 
   return (
     <AppShell
-      brand={portalGreeting(client)}
+      brand={viewer ? portalGreeting(null, viewer.firstName) : portalGreeting(client)}
       eyebrow="Portal"
       navigation={
         <>
@@ -69,7 +70,13 @@ export default async function PortalLayout({
         </>
       }
     >
-      {viewAs && client ? <ViewAsBanner label={viewAsLabel(client)} /> : null}
+      {viewer ? (
+        client ? (
+          <ViewerBanner company={client.company_name?.trim() || "this portal"} />
+        ) : null
+      ) : viewAs && client ? (
+        <ViewAsBanner label={viewAsLabel(client)} />
+      ) : null}
       {children}
     </AppShell>
   );

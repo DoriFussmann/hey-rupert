@@ -1,5 +1,6 @@
 import { cache } from "react";
 import { getAuthContext } from "@/lib/auth";
+import { findViewerById } from "@/lib/viewers";
 import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
 import { createServiceClient } from "@/lib/supabase/admin";
 import {
@@ -441,8 +442,13 @@ export async function getIntakeInterview(
 
 export type PortalView = {
   client: Client | null;
-  /** True when an admin is previewing this client's portal (read-only). */
+  /**
+   * True when the portal is read-only: an admin previewing it, or a
+   * view-only viewer the client asked to be added.
+   */
   viewAs: boolean;
+  /** Set when the signed-in user is a view-only viewer of this client. */
+  viewer?: { firstName: string } | null;
 };
 
 async function loadClientById(id: string) {
@@ -487,6 +493,17 @@ export const getPortalView = cache(async (): Promise<PortalView> => {
     if (!clientId) return { client: null, viewAs: false };
     const client = await loadClientById(clientId);
     return { client, viewAs: Boolean(client) };
+  }
+
+  if (role === "viewer") {
+    // Always read-only, even when the client can't be loaded.
+    const viewer = await findViewerById(user.id);
+    const client = viewer ? await loadClientById(viewer.clientId) : null;
+    return {
+      client,
+      viewAs: true,
+      viewer: { firstName: viewer?.firstName ?? "" },
+    };
   }
 
   try {

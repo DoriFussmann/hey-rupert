@@ -19,3 +19,22 @@ export function ViewAsBanner({ label }: { label: string }) {
     </div>
   );
 }
+
+// Shown across the portal to a view-only viewer the client asked to be added.
+export function ViewerBanner({ company }: { company: string }) {
+  return (
+    <div
+      role="status"
+      className="mb-lg rounded-card border border-primary/30 bg-primary-tint px-lg py-sm"
+    >
+      <p className="text-body-sm text-heading">
+        You have view-only access to{" "}
+        <span className="font-medium">{company}</span>
+        <span className="text-secondary">
+          {" "}
+          · you can see everything, but can&apos;t make changes
+        </span>
+      </p>
+    </div>
+  );
+}

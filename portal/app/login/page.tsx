@@ -54,7 +54,7 @@ export default function LoginPage() {
         return;
       }
 
-      if (role === "client") {
+      if (role === "client" || role === "viewer") {
         router.replace("/portal");
         router.refresh();
         return;
