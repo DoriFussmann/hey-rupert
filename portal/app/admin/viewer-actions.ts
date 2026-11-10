@@ -7,12 +7,14 @@ import { loadEmailSettings } from "@/lib/email-settings";
 import { VIEWER_WELCOME_KEY, renderEmail } from "@/lib/email-templates";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/format";
+import { SETUP_LINK_TTL_DAYS } from "@/lib/password-setup";
 import { PORTAL_HOST } from "@/lib/portal-url";
 import { createServiceClient } from "@/lib/supabase/admin";
 import {
   describeViewerError,
   getViewer,
   issueViewerSetupLink,
+  type ClientViewer,
 } from "@/lib/viewers";
 
 // Viewers: view-only portal logins a client asked to be added. Managed from
@@ -113,6 +115,97 @@ export async function addClientViewer(
   return { ok: true };
 }
 
+type ServiceClient = ReturnType<typeof createServiceClient>;
+
+async function loadViewerAndCompany(supabase: ServiceClient, viewerId: string) {
+  const found = await getViewer(supabase, viewerId);
+  if (!found.ok) return found;
+  const viewer = found.viewer;
+  if (!viewer) return { ok: false as const, error: "Viewer not found." };
+
+  const { data: client, error: clientError } = await supabase
+    .from("clients")
+    .select("company_name")
+    .eq("id", viewer.clientId)
+    .maybeSingle();
+  if (clientError) return { ok: false as const, error: clientError.message };
+  if (!client) return { ok: false as const, error: "Client not found." };
+
+  return {
+    ok: true as const,
+    viewer,
+    company: String(client.company_name ?? "").trim() || "Your colleague",
+  };
+}
+
+async function renderViewerWelcome(
+  supabase: ServiceClient,
+  viewer: ClientViewer,
+  company: string,
+  link: { url: string; expires: string },
+) {
+  const settings = await loadEmailSettings(supabase);
+  const firstName = viewer.firstName.trim();
+  return renderEmail(settings.templates[VIEWER_WELCOME_KEY], {
+    greeting: firstName ? `Hi ${firstName},` : "Hi,",
+    first_name: firstName || "there",
+    company,
+    setup_link: link.url,
+    link_expires: link.expires,
+    login_email: viewer.email,
+    portal_host: PORTAL_HOST,
+    signature: settings.signature,
+  });
+}
+
+export type ViewerWelcomePreview =
+  | {
+      ok: true;
+      to: string;
+      subject: string;
+      body: string;
+      /** True when sending creates a new set-password link (shown as a placeholder here). */
+      newLink: boolean;
+    }
+  | { ok: false; error: string };
+
+/**
+ * The welcome email exactly as Send would send it, to read before sending.
+ * Changes nothing: when the current link is expired or already used, the new
+ * link is only created on send, so the preview shows a placeholder for it.
+ */
+export async function previewViewerWelcomeEmail(
+  viewerId: string,
+): Promise<ViewerWelcomePreview> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+  const { supabase } = access;
+
+  const loaded = await loadViewerAndCompany(supabase, viewerId);
+  if (!loaded.ok) return loaded;
+  const { viewer, company } = loaded;
+
+  const pending = viewer.access.status === "pending" ? viewer.access : null;
+  const rendered = await renderViewerWelcome(
+    supabase,
+    viewer,
+    company,
+    pending
+      ? { url: pending.url, expires: formatDate(pending.expiresAt) }
+      : {
+          url: "[new set-password link, created when you send]",
+          expires: `${SETUP_LINK_TTL_DAYS} days after you send`,
+        },
+  );
+  return {
+    ok: true,
+    to: viewer.email,
+    subject: rendered.subject,
+    body: rendered.body,
+    newLink: !pending,
+  };
+}
+
 /**
  * Emails the viewer their welcome email (Forms → Emails → "Welcome email
  * (viewer)") with a set-password link. A link that is still valid is reused;
@@ -126,18 +219,9 @@ export async function sendViewerWelcomeEmail(
   if (!access.ok) return access;
   const { supabase } = access;
 
-  const found = await getViewer(supabase, viewerId);
-  if (!found.ok) return found;
-  const viewer = found.viewer;
-  if (!viewer) return { ok: false, error: "Viewer not found." };
-
-  const { data: client, error: clientError } = await supabase
-    .from("clients")
-    .select("company_name")
-    .eq("id", viewer.clientId)
-    .maybeSingle();
-  if (clientError) return { ok: false, error: clientError.message };
-  if (!client) return { ok: false, error: "Client not found." };
+  const loaded = await loadViewerAndCompany(supabase, viewerId);
+  if (!loaded.ok) return loaded;
+  const { viewer, company } = loaded;
 
   let link: { url: string; expiresAt: string };
   if (viewer.access.status === "pending") {
@@ -148,17 +232,9 @@ export async function sendViewerWelcomeEmail(
     link = issued;
   }
 
-  const settings = await loadEmailSettings(supabase);
-  const firstName = viewer.firstName.trim();
-  const rendered = renderEmail(settings.templates[VIEWER_WELCOME_KEY], {
-    greeting: firstName ? `Hi ${firstName},` : "Hi,",
-    first_name: firstName || "there",
-    company: String(client.company_name ?? "").trim() || "Your colleague",
-    setup_link: link.url,
-    link_expires: formatDate(link.expiresAt),
-    login_email: viewer.email,
-    portal_host: PORTAL_HOST,
-    signature: settings.signature,
+  const rendered = await renderViewerWelcome(supabase, viewer, company, {
+    url: link.url,
+    expires: formatDate(link.expiresAt),
   });
 
   const sent = await sendClientEmail(supabase, {
