@@ -245,7 +245,8 @@
 
   .site-logo img.site-logo__lockup,
   .footer-logo img.site-logo__lockup {
-    height: 34px;
+    /* Rupert lockup in the top nav and footer: reduced 20% from 34px. */
+    height: 27px;
     width: auto;
   }
 
