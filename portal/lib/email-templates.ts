@@ -40,11 +40,8 @@ export type EmailToken =
 export const LAUNCH_CALL_URL = process.env.NEXT_PUBLIC_LAUNCH_CALL_URL || "https://cal.com/team-rupert-2zxrkh/30min";
 
 export function launchCallText(url: string = LAUNCH_CALL_URL) {
-  return [
-    "Before we launch: a 30-minute call",
-    "Once you've confirmed the emails, let's take 30 minutes before anything goes out. We'll walk through the launch plan together: who gets emailed first and when, the weekly pace (it starts at 10 emails a day from your inbox and builds to 30), how the follow-ups work, how replies reach you through Rupert, and what we'll need from you once investors start answering.",
-    `Book a time that suits you: ${url}`,
-  ].join("\n\n");
+  // One paragraph, the call named once, the link once: the portal already has "Book a call" in the left panel.
+  return `Once you've confirmed the emails, let's take 30 minutes before anything goes out, to walk through the launch plan: who gets emailed first and when, the weekly pace (it starts at 10 emails a day from your inbox and builds to 30), how the follow-ups work, how replies reach you through Rupert, and what we'll need from you once investors start answering. Pick a time here: ${url}`;
 }
 
 export const TOKEN_HELP: Record<EmailToken, string> = {
