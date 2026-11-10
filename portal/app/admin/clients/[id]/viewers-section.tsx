@@ -1,11 +1,13 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useId, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   addClientViewer,
+  previewViewerWelcomeEmail,
   removeClientViewer,
   sendViewerWelcomeEmail,
+  type ViewerWelcomePreview,
 } from "@/app/admin/viewer-actions";
 import { CopyButton } from "@/app/admin/setup-link-result";
 import { formatDate } from "@/lib/format";
@@ -41,7 +43,32 @@ function sendLabel(viewer: ClientViewer) {
 
 function ViewerRow({ viewer }: { viewer: ClientViewer }) {
   const router = useRouter();
+  const titleId = useId();
   const [pending, setPending] = useState<"send" | "remove" | null>(null);
+  // The welcome email, shown for a read-through before it is sent.
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [preview, setPreview] = useState<ViewerWelcomePreview | null>(null);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === "Escape" && pending === null) setPreviewOpen(false);
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [previewOpen, pending]);
+
+  async function openPreview() {
+    setPreviewOpen(true);
+    setPreview(null);
+    setMessage(null);
+    try {
+      setPreview(await previewViewerWelcomeEmail(viewer.id));
+    } catch {
+      setPreview({ ok: false, error: "Unable to load the email. Please try again." });
+    }
+  }
+
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -64,6 +91,7 @@ function ViewerRow({ viewer }: { viewer: ClientViewer }) {
     } finally {
       setPending(null);
       setConfirmRemove(false);
+      setPreviewOpen(false);
     }
   }
 
@@ -102,11 +130,11 @@ function ViewerRow({ viewer }: { viewer: ClientViewer }) {
             <>
               <button
                 type="button"
-                onClick={() => void run("send")}
+                onClick={() => void openPreview()}
                 disabled={pending !== null}
                 className={viewer.welcomeSentAt ? secondaryButton : primaryButton}
               >
-                {pending === "send" ? "Sending…" : sendLabel(viewer)}
+                {sendLabel(viewer)}
               </button>
               <button
                 type="button"
@@ -126,6 +154,74 @@ function ViewerRow({ viewer }: { viewer: ClientViewer }) {
             {viewer.access.url}
           </span>
           <CopyButton value={viewer.access.url} label="Copy Link" />
+        </div>
+      ) : null}
+      {previewOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-md">
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute inset-0 bg-heading/20"
+            onClick={() => (pending === null ? setPreviewOpen(false) : undefined)}
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            className="relative flex max-h-[90vh] w-full max-w-2xl flex-col rounded-card border border-border bg-surface shadow-lg"
+          >
+            <div className="border-b border-border px-lg py-lg">
+              <h2 id={titleId} className="text-h3">
+                {sendLabel(viewer)}
+              </h2>
+            </div>
+            <div className="flex-1 overflow-y-auto px-lg py-lg">
+              {!preview ? (
+                <p role="status" className="text-body-sm text-muted">
+                  Loading…
+                </p>
+              ) : !preview.ok ? (
+                <p role="alert" className="text-body-sm text-error">
+                  {preview.error}
+                </p>
+              ) : (
+                <>
+                  <p className={labelClass}>To</p>
+                  <p className="mt-xs text-body-sm text-body">{preview.to}</p>
+                  <p className={`mt-md ${labelClass}`}>Subject</p>
+                  <p className="mt-xs text-body-sm text-body">{preview.subject}</p>
+                  <p className={`mt-md ${labelClass}`}>Email</p>
+                  <div className="mt-xs whitespace-pre-wrap break-words rounded-md border border-border bg-background px-md py-md text-body-sm text-body">
+                    {preview.body}
+                  </div>
+                  <p className="mt-md text-body-sm text-muted">
+                    {preview.newLink
+                      ? "Sending creates a new set-password link and puts it in the email. "
+                      : ""}
+                    To change the wording, edit &quot;Welcome email (viewer)&quot; in Forms → Emails.
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-sm border-t border-border px-lg py-lg">
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                disabled={pending !== null}
+                className={secondaryButton}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => void run("send")}
+                disabled={pending !== null || !preview?.ok}
+                className={primaryButton}
+              >
+                {pending === "send" ? "Sending…" : "Send Email"}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
       {message ? (
