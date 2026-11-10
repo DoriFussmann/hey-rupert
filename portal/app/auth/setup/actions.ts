@@ -65,7 +65,14 @@ export async function completePasswordSetup(
     const found = await getViewer(supabase, userId);
     await markViewerSetupUsed(supabase, userId, token);
     if (found.ok && found.viewer) {
-      revalidatePath(`/admin/clients/${found.viewer.clientId}`);
+      const viewer = found.viewer;
+      // Best effort: the admin notification must not block the viewer.
+      await notifyAdmin(supabase, viewer.clientId, "viewer_password_set", {
+        email: true,
+        details: `${`${viewer.firstName} ${viewer.lastName}`.trim()} (${viewer.email}) set their password and now has view-only access to this client's portal.`,
+      });
+      revalidatePath("/admin", "layout");
+      revalidatePath(`/admin/clients/${viewer.clientId}`);
     }
   } else {
     // The password is already saved, so the client must not be blocked by a

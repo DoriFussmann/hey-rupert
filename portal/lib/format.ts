@@ -44,6 +44,7 @@ export function notificationLabel(type: string) {
   if (type === "service_order_agreed") return "Signed Service Order";
   if (type === "nda_signed") return "Signed NDA";
   if (type === "password_set") return "Set Portal Password";
+  if (type === "viewer_password_set") return "Viewer Set Portal Password";
   if (type === "kickoff_ready") return "Ready for Kick-off";
   if (type === "setup_fee_paid") return "Paid Setup Fee";
   if (type === "intake_completed") return "Completed Client Intake";
@@ -81,6 +82,9 @@ export function notificationAction(type: string) {
   if (type === "service_order_agreed") return "signed the Service Order";
   if (type === "nda_signed") return "signed the NDA";
   if (type === "password_set") return "set their portal password";
+  if (type === "viewer_password_set") {
+    return "has a viewer who set their portal password";
+  }
   if (type === "kickoff_ready") return "is ready for kick-off: issue the NDA";
   if (type === "setup_fee_paid") return "paid the Setup Fee";
   if (type === "intake_completed") return "completed the Client Intake";
