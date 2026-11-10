@@ -125,8 +125,10 @@ export function SourceCopyEditor({
           ) : null}
 
           {clientNotes[key]?.trim() ? (
-            <p className="mt-sm rounded-md border border-warning/40 px-md py-sm text-body-sm text-secondary">
-              <span className="text-heading">Client&apos;s note:</span> {clientNotes[key]}
+            <p className="mt-sm whitespace-pre-wrap rounded-md border border-warning/40 px-md py-sm text-body-sm text-secondary">
+              <span className="text-heading">Client&apos;s feedback:</span>
+              {"\n"}
+              {clientNotes[key]}
             </p>
           ) : null}
 

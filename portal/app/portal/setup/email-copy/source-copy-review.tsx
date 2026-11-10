@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
 import { WithFields } from "@/app/portal/setup/email-copy/typed-copy-review";
-import { NOTE_MAX, type SetupQuestion } from "@/lib/setup";
+import type { SetupQuestion } from "@/lib/setup";
+import {
+  ALL_EMAILS_LABEL,
+  feedbackPointCount,
+  feedbackPointsText,
+  type FeedbackPoint,
+} from "@/lib/outreach/feedback-points";
 import {
   BUCKET_DETAIL,
   BUCKET_LABEL,
@@ -19,7 +25,106 @@ const tabClass = (active: boolean) =>
     active ? "bg-primary text-white" : "border border-border bg-surface text-secondary hover:text-heading"
   }`;
 
-/** The client's view of copy by source: one tab per group, two emails each, a note per group. */
+const smallButton =
+  "rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
+
+// A group's points travel as one note (4,000 characters at most).
+const POINT_MAX = 400;
+const POINTS_PER_GROUP = 8;
+
+type About = FeedbackPoint["about"];
+type Feedback = {
+  /** Added points, by group key. */
+  points: Record<string, FeedbackPoint[]>;
+  /** Text typed but not added yet, by group key and email. It is sent too. */
+  drafts: Record<string, string>;
+};
+
+const EMPTY: Feedback = { points: {}, drafts: {} };
+const slotKey = (group: string, about: About) => `${group}|${about}`;
+const storageKey = (version: number) => `rupert:email-copy-feedback:v${version}`;
+
+/** A group's points, with what is typed but not added yet. */
+function groupPoints(feedback: Feedback, group: string, emails: number): FeedbackPoint[] {
+  const abouts: About[] = ["all", ...Array.from({ length: emails }, (_, position) => position)];
+  const typed = abouts
+    .map((about) => ({ id: `draft-${about}`, about, text: feedback.drafts[slotKey(group, about)] ?? "" }))
+    .filter((point) => point.text.trim());
+  return [...(feedback.points[group] ?? []), ...typed].slice(0, POINTS_PER_GROUP);
+}
+
+/** The points on one email (or on the whole group), and a box to add another. */
+function PointList({
+  label,
+  placeholder,
+  points,
+  draft,
+  full,
+  readOnly,
+  onDraft,
+  onAdd,
+  onRemove,
+}: {
+  label: string;
+  placeholder: string;
+  points: FeedbackPoint[];
+  draft: string;
+  /** The group has all the points it can take. */
+  full: boolean;
+  readOnly: boolean;
+  onDraft: (text: string) => void;
+  onAdd: () => void;
+  onRemove: (id: string) => void;
+}) {
+  return (
+    <div className="mt-md">
+      <p className="text-label uppercase tracking-label text-muted">{label}</p>
+      {points.length > 0 ? (
+        <ul className="mt-sm space-y-xs">
+          {points.map((point) => (
+            <li
+              key={point.id}
+              className="flex items-start justify-between gap-sm rounded-md border border-border bg-background px-sm py-xs text-body-sm text-body"
+            >
+              <span className="whitespace-pre-wrap">{point.text}</span>
+              <button type="button" className={smallButton} disabled={readOnly} onClick={() => onRemove(point.id)}>
+                Remove
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      {full ? (
+        <p className="mt-sm text-body-sm text-muted">
+          That&apos;s {POINTS_PER_GROUP} points on this group. Send these; you can add more on the next version.
+        </p>
+      ) : (
+        <div className="mt-sm flex items-start gap-sm">
+          <textarea
+            aria-label={label}
+            className="w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
+            rows={2}
+            maxLength={POINT_MAX}
+            value={draft}
+            disabled={readOnly}
+            onChange={(event) => onDraft(event.target.value)}
+            placeholder={placeholder}
+          />
+          <button type="button" className={smallButton} disabled={readOnly || !draft.trim()} onClick={onAdd}>
+            {points.length > 0 ? "Add Another" : "Add Point"}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The client's view of copy by source: one tab per group, two emails each.
+ * Feedback is a list of points: as many as they like on each email and on the
+ * group as a whole, across all groups. Nothing is sent, and the turn stays
+ * theirs, until they request changes (or confirm).
+ */
 export function SourceCopyReview({
   copy,
   version,
@@ -38,10 +143,99 @@ export function SourceCopyReview({
   readOnly: boolean;
 }) {
   const [active, setActive] = useState(0);
-  const [notes, setNotes] = useState<Record<string, string>>({});
+  const [feedback, setFeedback] = useState<Feedback>(EMPTY);
+  const [restored, setRestored] = useState(false);
   const index = Math.min(active, Math.max(copy.groups.length - 1, 0));
   const group = copy.groups[index];
   const key = group ? sourceGroupKey(group.bucket) : "";
+
+  // Points survive a refresh until they are sent or a new version arrives.
+  useEffect(() => {
+    if (readOnly) return;
+    if (!open) {
+      // Sent: the points are in the answer now.
+      try {
+        window.localStorage.removeItem(storageKey(version));
+      } catch {
+        // Storage is off.
+      }
+      return;
+    }
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(storageKey(version)) ?? "null") as Feedback | null;
+      if (saved && typeof saved.points === "object" && typeof saved.drafts === "object") setFeedback(saved);
+    } catch {
+      // Nothing saved, or storage is off: start empty.
+    }
+    setRestored(true);
+  }, [open, readOnly, version]);
+
+  useEffect(() => {
+    if (!restored) return;
+    try {
+      window.localStorage.setItem(storageKey(version), JSON.stringify(feedback));
+    } catch {
+      // Storage is off: the points live for this visit only.
+    }
+  }, [feedback, restored, version]);
+
+  // One note per group: its points, a line each.
+  const { notes, counts, total } = useMemo(() => {
+    const notes: Record<string, string> = {};
+    const counts: Record<string, number> = {};
+    let total = 0;
+    for (const entry of copy.groups) {
+      const groupKey = sourceGroupKey(entry.bucket);
+      const points = groupPoints(feedback, groupKey, entry.emails.length);
+      counts[groupKey] = feedbackPointCount(points);
+      total += counts[groupKey];
+      const text = feedbackPointsText(points, SOURCE_SEQUENCE_LABELS);
+      if (text) notes[groupKey] = text;
+    }
+    return { notes, counts, total };
+  }, [copy.groups, feedback]);
+
+  const added = feedback.points[key] ?? [];
+  const full = added.length >= POINTS_PER_GROUP;
+
+  function setDraft(about: About, text: string) {
+    setFeedback((existing) => ({ ...existing, drafts: { ...existing.drafts, [slotKey(key, about)]: text } }));
+  }
+
+  function addPoint(about: About) {
+    setFeedback((existing) => {
+      const slot = slotKey(key, about);
+      const text = (existing.drafts[slot] ?? "").trim();
+      const current = existing.points[key] ?? [];
+      if (!text || current.length >= POINTS_PER_GROUP) return existing;
+      const id = `${Date.now()}-${current.length}`;
+      return {
+        points: { ...existing.points, [key]: [...current, { id, about, text }] },
+        drafts: { ...existing.drafts, [slot]: "" },
+      };
+    });
+  }
+
+  function removePoint(id: string) {
+    setFeedback((existing) => ({
+      ...existing,
+      points: { ...existing.points, [key]: (existing.points[key] ?? []).filter((point) => point.id !== id) },
+    }));
+  }
+
+  const pointList = (about: About, label: string, placeholder: string) => (
+    <PointList
+      label={label}
+      placeholder={placeholder}
+      points={added.filter((point) => point.about === about)}
+      draft={feedback.drafts[slotKey(key, about)] ?? ""}
+      full={full}
+      readOnly={readOnly}
+      onDraft={(text) => setDraft(about, text)}
+      onAdd={() => addPoint(about)}
+      onRemove={removePoint}
+    />
+  );
 
   return (
     <>
@@ -57,7 +251,7 @@ export function SourceCopyReview({
             onClick={() => setActive(i)}
           >
             {BUCKET_LABEL[entry.bucket]} · {entry.funds} funds
-            {notes[sourceGroupKey(entry.bucket)]?.trim() ? " •" : ""}
+            {counts[sourceGroupKey(entry.bucket)] ? ` · ${counts[sourceGroupKey(entry.bucket)]} to change` : ""}
           </button>
         ))}
       </div>
@@ -88,30 +282,32 @@ export function SourceCopyReview({
                   <WithFields text={email.body} />
                   {position === 0 && copy.opt_out_line ? `\n\n${copy.opt_out_line}` : ""}
                 </div>
+                {open
+                  ? pointList(
+                      position,
+                      `Feedback on the ${SOURCE_SEQUENCE_LABELS[position].toLowerCase()}`,
+                      "One thing to change in this email",
+                    )
+                  : null}
               </li>
             ))}
           </ol>
 
           {sentNotes[key] ? (
-            <p className="mx-lg mb-md rounded-md bg-background px-sm py-xs text-body-sm text-secondary">
-              <span className="text-heading">Your note:</span> {sentNotes[key]}
+            <p className="mx-lg mb-md whitespace-pre-wrap rounded-md bg-background px-sm py-xs text-body-sm text-secondary">
+              <span className="text-heading">Your feedback:</span>
+              {"\n"}
+              {sentNotes[key]}
             </p>
           ) : null}
 
           {open ? (
-            <div className="border-t border-border px-lg py-md">
-              <label className="block text-label uppercase tracking-label text-muted">
-                Note on these emails (optional)
-                <textarea
-                  className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary"
-                  rows={3}
-                  maxLength={NOTE_MAX}
-                  value={notes[key] ?? ""}
-                  disabled={readOnly}
-                  onChange={(event) => setNotes((existing) => ({ ...existing, [key]: event.target.value }))}
-                  placeholder="Wording to change, claims to soften, anything for this group"
-                />
-              </label>
+            <div className="border-t border-border px-lg pb-lg">
+              {pointList(
+                "all",
+                `Feedback on ${ALL_EMAILS_LABEL.toLowerCase()}`,
+                "Something that goes for both emails in this group",
+              )}
             </div>
           ) : null}
         </section>
@@ -123,9 +319,12 @@ export function SourceCopyReview({
           step="email_copy"
           version={version}
           itemNotes={notes}
+          itemNoteCount={total}
+          itemNoun="feedback point"
+          itemNotesLabel="on the emails"
           confirmLabel="Confirm Emails"
-          itemNotesLabel="on the email groups"
-          intro="Confirm the emails to move forward, ask Rupert a question, or request changes."
+          changesLabel="Send Feedback"
+          intro="Add as many feedback points as you like, on any email in any group; nothing is sent until you choose Send Feedback. Or confirm the emails, or ask Rupert a question."
           readOnly={readOnly}
         />
       ) : null}

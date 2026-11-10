@@ -42,6 +42,9 @@ export function ReviewActions({
   intro = "Confirm to move forward, ask Rupert a question, or request changes.",
   readOnly,
   itemNotesLabel = "on specific funds",
+  itemNoteCount,
+  itemNoun = "note",
+  changesLabel = "Request Changes",
 }: {
   step: "framing" | "investor_list" | "email_copy";
   version: number;
@@ -51,6 +54,12 @@ export function ReviewActions({
   readOnly: boolean;
   /** How the item notes are named in "Your 2 notes … will be included". */
   itemNotesLabel?: string;
+  /** How many notes there are, when one item's note holds several points. */
+  itemNoteCount?: number;
+  /** What one of them is called: "note", "feedback point". */
+  itemNoun?: string;
+  /** The button that asks for changes. */
+  changesLabel?: string;
 }) {
   const router = useRouter();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -60,7 +69,9 @@ export function ReviewActions({
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState<string | null>(null);
 
-  const noteCount = Object.values(itemNotes ?? {}).filter((value) => value.trim()).length;
+  const noteCount = itemNoteCount ?? Object.values(itemNotes ?? {}).filter((value) => value.trim()).length;
+  // With points already written on the page, the box is for anything else.
+  const pointsReady = itemNoteCount !== undefined && noteCount > 0;
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -133,7 +144,7 @@ export function ReviewActions({
         <p className="text-body-sm text-muted">
           {intro}
           {noteCount > 0
-            ? ` Your ${noteCount} note${noteCount === 1 ? "" : "s"} ${itemNotesLabel} will be included.`
+            ? ` Your ${noteCount} ${itemNoun}${noteCount === 1 ? "" : "s"} ${itemNotesLabel} will be included.`
             : ""}
         </p>
         <div className="mt-sm flex flex-wrap items-center gap-sm">
@@ -144,7 +155,7 @@ export function ReviewActions({
             Ask a Question
           </button>
           <button type="button" className={secondaryButton} disabled={readOnly || pending !== null} onClick={() => open("changes")}>
-            Request Changes
+            {changesLabel}
           </button>
           {readOnly ? <p className="text-body-sm text-muted">Preview only: actions are disabled.</p> : null}
         </div>
@@ -169,11 +180,16 @@ export function ReviewActions({
         {current ? (
           <div className="px-lg py-lg">
             <h2 id="review-dialog-title" className="text-h3 text-heading">
-              {current.title}
+              {mode === "changes" ? changesLabel : current.title}
             </h2>
-            <p className="mt-xs text-body-sm text-muted">{current.detail}</p>
+            <p className="mt-xs text-body-sm text-muted">
+              {mode === "changes" && pointsReady
+                ? `Your ${noteCount} ${itemNoun}${noteCount === 1 ? "" : "s"} ${itemNotesLabel} will be sent. `
+                : ""}
+              {current.detail}
+            </p>
             <label className="mt-md block text-label uppercase tracking-label text-muted">
-              {current.label}
+              {mode === "changes" && pointsReady ? "Anything else (optional)" : current.label}
               <textarea
                 className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary"
                 rows={5}
@@ -190,7 +206,7 @@ export function ReviewActions({
             ) : null}
             <div className="mt-md flex flex-wrap gap-sm">
               <button type="button" className={primaryButton} disabled={pending !== null} onClick={() => void send()}>
-                {pending === mode ? "Sending…" : current.send}
+                {pending === mode ? "Sending…" : mode === "changes" && pointsReady ? changesLabel : current.send}
               </button>
               <button type="button" className={secondaryButton} disabled={pending !== null} onClick={() => setMode(null)}>
                 Cancel

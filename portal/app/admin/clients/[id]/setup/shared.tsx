@@ -171,7 +171,7 @@ export function EarlierRounds({ row }: { row: SetupStepState | null }) {
                     <span className="text-heading">
                       {entry.response!.item_labels[key] ?? key}:
                     </span>{" "}
-                    {note}
+                    <span className="whitespace-pre-wrap">{note}</span>
                   </p>
                 ))
               : null}

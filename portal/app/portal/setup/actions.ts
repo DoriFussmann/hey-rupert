@@ -437,7 +437,7 @@ function itemLabel(
 const ITEM_NOTES_HEADING: Record<ReviewStep, string> = {
   framing: "On the feedback",
   investor_list: "On specific funds",
-  email_copy: "By tier",
+  email_copy: "By group",
 };
 
 export async function respondToSetupStep(input: {
