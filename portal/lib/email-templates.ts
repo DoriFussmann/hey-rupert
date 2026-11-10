@@ -171,6 +171,7 @@ export type AdminEmailType =
   | "service_order_agreed"
   | "setup_fee_paid"
   | "password_set"
+  | "viewer_password_set"
   | "nda_signed"
   | "intake_completed"
   | "materials_submitted"
@@ -506,6 +507,7 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
   adminTemplate("service_order_agreed", "Service Order signed", "signed the Service Order"),
   adminTemplate("setup_fee_paid", "Setup Fee paid", "paid the Setup Fee"),
   adminTemplate("password_set", "Portal password set", "set their portal password"),
+  adminTemplate("viewer_password_set", "Viewer's portal password set", "has a viewer who set their portal password"),
   adminTemplate("nda_signed", "NDA signed", "signed the NDA"),
   adminTemplate("intake_completed", "Intake completed", "completed the Client Intake"),
   adminTemplate("materials_submitted", "Materials submitted", "submitted their company materials"),

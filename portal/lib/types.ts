@@ -156,6 +156,7 @@ export type NotificationType =
   | "service_order_agreed"
   | "nda_signed"
   | "password_set"
+  | "viewer_password_set"
   | "kickoff_ready"
   | "setup_fee_paid"
   | "intake_completed"
