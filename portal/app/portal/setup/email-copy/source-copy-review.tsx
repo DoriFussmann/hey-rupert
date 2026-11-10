@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
+import { addSetupFeedback } from "@/app/portal/setup/actions";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { ReviewActions } from "@/components/setup/review-actions";
 import { WithFields } from "@/app/portal/setup/email-copy/typed-copy-review";
-import type { SetupQuestion } from "@/lib/setup";
+import { NOTE_MAX, type SetupQuestion } from "@/lib/setup";
 import {
   ALL_EMAILS_LABEL,
   feedbackPointCount,
@@ -42,7 +44,18 @@ type Feedback = {
 
 const EMPTY: Feedback = { points: {}, drafts: {} };
 const slotKey = (group: string, about: About) => `${group}|${about}`;
-const storageKey = (version: number) => `rupert:email-copy-feedback:v${version}`;
+/** "first": their answer to this version. "more": added while Rupert works on it. */
+type Round = "first" | "more";
+const storageKey = (version: number, round: Round) =>
+  `rupert:email-copy-feedback:v${version}${round === "more" ? ":more" : ""}`;
+
+function forget(version: number, round: Round) {
+  try {
+    window.localStorage.removeItem(storageKey(version, round));
+  } catch {
+    // Storage is off.
+  }
+}
 
 /** A group's points, with what is typed but not added yet. */
 function groupPoints(feedback: Feedback, group: string, emails: number): FeedbackPoint[] {
@@ -123,12 +136,15 @@ function PointList({
  * The client's view of copy by source: one tab per group, two emails each.
  * Feedback is a list of points: as many as they like on each email and on the
  * group as a whole, across all groups. Nothing is sent, and the turn stays
- * theirs, until they request changes (or confirm).
+ * theirs, until they request changes (or confirm). While Rupert works on
+ * their request (`more`), they can keep sending points: those are added to
+ * what he has, and the turn stays his.
  */
 export function SourceCopyReview({
   copy,
   version,
   open,
+  more = false,
   sentNotes,
   adminNote,
   questions = [],
@@ -137,6 +153,8 @@ export function SourceCopyReview({
   copy: SourceCopy;
   version: number;
   open: boolean;
+  /** Rupert has their request for this version; they can add to it. */
+  more?: boolean;
   sentNotes: Record<string, string>;
   adminNote?: ReactNode;
   questions?: SetupQuestion[];
@@ -145,6 +163,12 @@ export function SourceCopyReview({
   const [active, setActive] = useState(0);
   const [feedback, setFeedback] = useState<Feedback>(EMPTY);
   const [restored, setRestored] = useState(false);
+  const router = useRouter();
+  const [extra, setExtra] = useState("");
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sentMore, setSentMore] = useState(false);
+  const round: Round | null = open ? "first" : more ? "more" : null;
   const index = Math.min(active, Math.max(copy.groups.length - 1, 0));
   const group = copy.groups[index];
   const key = group ? sourceGroupKey(group.bucket) : "";
@@ -152,32 +176,55 @@ export function SourceCopyReview({
   // Points survive a refresh until they are sent or a new version arrives.
   useEffect(() => {
     if (readOnly) return;
-    if (!open) {
-      // Sent: the points are in the answer now.
+    // What was written in an earlier round is in the answer now.
+    if (round !== "first") forget(version, "first");
+    if (!round) forget(version, "more");
+    let saved: Feedback | null = null;
+    if (round) {
       try {
-        window.localStorage.removeItem(storageKey(version));
+        saved = JSON.parse(window.localStorage.getItem(storageKey(version, round)) ?? "null") as Feedback | null;
       } catch {
-        // Storage is off.
+        // Nothing saved, or storage is off: start empty.
       }
-      return;
     }
-    try {
-      const saved = JSON.parse(window.localStorage.getItem(storageKey(version)) ?? "null") as Feedback | null;
-      if (saved && typeof saved.points === "object" && typeof saved.drafts === "object") setFeedback(saved);
-    } catch {
-      // Nothing saved, or storage is off: start empty.
-    }
-    setRestored(true);
-  }, [open, readOnly, version]);
+    setFeedback(saved && typeof saved.points === "object" && typeof saved.drafts === "object" ? saved : EMPTY);
+    setRestored(Boolean(round));
+  }, [round, readOnly, version]);
 
   useEffect(() => {
-    if (!restored) return;
+    if (!restored || !round) return;
     try {
-      window.localStorage.setItem(storageKey(version), JSON.stringify(feedback));
+      window.localStorage.setItem(storageKey(version, round), JSON.stringify(feedback));
     } catch {
       // Storage is off: the points live for this visit only.
     }
-  }, [feedback, restored, version]);
+  }, [feedback, restored, round, version]);
+
+  async function sendMore() {
+    if (sending) return;
+    if (total === 0 && !extra.trim()) {
+      setError("Add a feedback point first.");
+      return;
+    }
+    setSending(true);
+    setError(null);
+    setSentMore(false);
+    try {
+      const result = await addSetupFeedback({ version, note: extra, itemNotes: notes });
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setFeedback(EMPTY);
+      setExtra("");
+      setSentMore(true);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setSending(false);
+    }
+  }
 
   // One note per group: its points, a line each.
   const { notes, counts, total } = useMemo(() => {
@@ -282,7 +329,7 @@ export function SourceCopyReview({
                   <WithFields text={email.body} />
                   {position === 0 && copy.opt_out_line ? `\n\n${copy.opt_out_line}` : ""}
                 </div>
-                {open
+                {round
                   ? pointList(
                       position,
                       `Feedback on the ${SOURCE_SEQUENCE_LABELS[position].toLowerCase()}`,
@@ -301,7 +348,7 @@ export function SourceCopyReview({
             </p>
           ) : null}
 
-          {open ? (
+          {round ? (
             <div className="border-t border-border px-lg pb-lg">
               {pointList(
                 "all",
@@ -314,6 +361,49 @@ export function SourceCopyReview({
       ) : null}
 
       <QuestionThread questions={questions} />
+      {more && !open ? (
+        <section
+          aria-label="More feedback"
+          className="sticky bottom-md z-20 mt-lg rounded-card border border-primary/30 bg-surface px-lg py-md shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+        >
+          <p className="text-body-sm text-muted">
+            Rupert is working on your feedback. Thought of something else? Add points on any email above and send them:
+            they go with what he already has.
+          </p>
+          <label className="mt-sm block text-label uppercase tracking-label text-muted">
+            Anything else (optional)
+            <textarea
+              className="mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary"
+              rows={2}
+              maxLength={NOTE_MAX}
+              value={extra}
+              disabled={readOnly || sending}
+              onChange={(event) => setExtra(event.target.value)}
+            />
+          </label>
+          <div className="mt-sm flex flex-wrap items-center gap-sm">
+            <button
+              type="button"
+              className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
+              disabled={readOnly || sending || (total === 0 && !extra.trim())}
+              onClick={() => void sendMore()}
+            >
+              {sending ? "Sending…" : total > 0 ? `Send ${total} More Point${total === 1 ? "" : "s"}` : "Send More Feedback"}
+            </button>
+            {readOnly ? <p className="text-body-sm text-muted">Preview only: actions are disabled.</p> : null}
+            {sentMore ? (
+              <p role="status" className="text-body-sm text-success">
+                Sent. Rupert has it.
+              </p>
+            ) : null}
+            {error ? (
+              <p role="alert" className="text-body-sm text-error">
+                {error}
+              </p>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
       {open ? (
         <ReviewActions
           step="email_copy"

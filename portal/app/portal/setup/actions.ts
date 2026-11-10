@@ -20,6 +20,7 @@ import {
   MATERIALS_FEEDBACK_NOTE_KEY,
   NOTE_MAX,
   QUESTION_MAX,
+  RESPONSE_NOTE_MAX,
   addQuestion,
   questionsOf,
   asEmailCopy,
@@ -559,6 +560,97 @@ export async function respondToSetupStep(input: {
 
   revalidateSetup(access.user.id);
   return { ok: true };
+}
+
+/**
+ * More feedback on the email copy while Rupert is working on the client's
+ * request. It is added to what they sent (the note, and each group's note);
+ * the turn stays Rupert's and he is notified.
+ */
+export async function addSetupFeedback(input: {
+  version: number;
+  note: string;
+  itemNotes?: Record<string, string>;
+}): Promise<SetupActionResult> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const opened = await loadSetupClient(access);
+  if (!opened.ok) return opened;
+
+  const step: ReviewStep = "email_copy";
+  const note = String(input.note ?? "").trim().slice(0, NOTE_MAX);
+
+  // One retry when another write landed between the read and the save.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const loaded = await loadSetupStep(access.supabase, access.user.id, step);
+    if (!loaded.ok) return loaded;
+    const row = loaded.row;
+    if (row?.status === "with_client") {
+      return { ok: false, error: "Rupert has sent a new version. Refresh to see it; your feedback can go on that one." };
+    }
+    const sent = row?.response;
+    if (!row || row.status !== "changes_requested" || !sent || sent.version !== row.version) {
+      return { ok: false, error: "There is nothing open for feedback here." };
+    }
+    if (Number(input.version) !== row.version) {
+      return { ok: false, error: "Rupert has updated this since you opened it. Refresh to see the latest." };
+    }
+
+    const label = itemLabel(step, row);
+    const added: Record<string, string> = {};
+    for (const [key, value] of Object.entries(input.itemNotes ?? {})) {
+      const text = String(value ?? "").trim().slice(0, NOTE_MAX);
+      if (text && label(key) !== key) added[key] = text;
+    }
+    if (!note && Object.keys(added).length === 0) {
+      return { ok: false, error: "Write your feedback first." };
+    }
+
+    const itemNotes = { ...sent.item_notes };
+    const itemLabels = { ...sent.item_labels };
+    for (const [key, text] of Object.entries(added)) {
+      itemNotes[key] = [itemNotes[key], text].filter(Boolean).join("\n");
+      itemLabels[key] = label(key);
+    }
+    const fullNote = [sent.note, note].filter(Boolean).join("\n\n");
+    if ([fullNote, ...Object.values(itemNotes)].some((text) => text.length > RESPONSE_NOTE_MAX)) {
+      return { ok: false, error: "That's more than fits in one round. Use Book a call, or wait for Rupert's next version." };
+    }
+
+    const at = nowIso();
+    const response: SetupResponse = { ...sent, note: fullNote, item_notes: itemNotes, item_labels: itemLabels };
+    const history = row.history.map((entry) =>
+      entry.version === row.version ? { ...entry, response } : entry,
+    );
+    const { data, error } = await access.supabase
+      .from("setup_steps")
+      .update({ response, history, updated_at: at })
+      .eq("client_id", access.user.id)
+      .eq("step", step)
+      .eq("status", "changes_requested")
+      .eq("version", row.version)
+      .eq("updated_at", row.updated_at)
+      .select("client_id");
+
+    if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+    if (!data || data.length === 0) continue;
+
+    const notesText = Object.entries(added)
+      .map(([key, value]) => `${label(key)}:\n${value}`)
+      .join("\n\n");
+    const details = [
+      "More feedback, added to what they already sent on this version.",
+      note ? `Their note:\n${note}` : "",
+      notesText,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    await notifyAdmin(access.supabase, access.user.id, "email_copy_changes_requested", { email: true, details });
+
+    revalidateSetup(access.user.id);
+    return { ok: true };
+  }
+  return { ok: false, error: "Your feedback could not be saved. Please try again." };
 }
 
 const QUESTION_HEADING: Record<ReviewStep, string> = {

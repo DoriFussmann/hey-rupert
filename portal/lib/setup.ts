@@ -1698,7 +1698,7 @@ export function asResponse(value: unknown): SetupResponse | null {
       : {};
   const item_notes: Record<string, string> = {};
   for (const [key, note] of Object.entries(notes)) {
-    const text = str(note, NOTE_MAX).trim();
+    const text = str(note, RESPONSE_NOTE_MAX).trim();
     if (text) item_notes[str(key, 40)] = text;
   }
   const labels =
@@ -1711,7 +1711,7 @@ export function asResponse(value: unknown): SetupResponse | null {
   }
   return {
     decision: raw.decision,
-    note: str(raw.note, NOTE_MAX),
+    note: str(raw.note, RESPONSE_NOTE_MAX),
     item_notes,
     item_labels,
     version: Number(raw.version) || 0,
@@ -1720,6 +1720,8 @@ export function asResponse(value: unknown): SetupResponse | null {
 }
 
 export const NOTE_MAX = 4000;
+/** A stored answer's note: what was sent, plus what the client added while waiting. */
+export const RESPONSE_NOTE_MAX = 12000;
 
 // ---------------------------------------------------------------------------
 // Investor list

@@ -22,6 +22,7 @@ export function EmailCopyReview({
   counts,
   version,
   open,
+  more,
   sentNotes,
   adminNote,
   questions = [],
@@ -33,6 +34,8 @@ export function EmailCopyReview({
   counts: { tier: FitTier; count: number }[];
   version: number;
   open: boolean;
+  /** Rupert has their request for this version; they can add to it (copy by source). */
+  more?: boolean;
   sentNotes: Record<string, string>;
   /** Rupert's reply on versions pushed before each push came with an email. */
   adminNote?: string;
@@ -62,6 +65,7 @@ export function EmailCopyReview({
         copy={copy.by_source}
         version={version}
         open={open}
+        more={more}
         sentNotes={sentNotes}
         adminNote={open ? <AdminReply note={adminNote} /> : null}
         questions={questions}

@@ -51,7 +51,11 @@ export default async function EmailCopyPage() {
         row={row}
         clientTitle="Review the emails, then confirm them or ask Rupert a question."
         waitingTitle="Rupert has your note."
-        waitingDetail="He'll reply and send the emails back for you to confirm."
+        waitingDetail={
+          copy.copy_version === 3
+            ? "He'll reply and send the emails back for you to confirm. Meanwhile you can still add feedback below."
+            : "He'll reply and send the emails back for you to confirm."
+        }
       />
       {row?.status === "confirmed" && copy.copy_version === 2 ? (
         <p className="mb-lg text-body text-secondary">
@@ -69,6 +73,7 @@ export default async function EmailCopyPage() {
             counts={counts}
             version={row.version}
             open={row.status === "with_client"}
+            more={row.status === "changes_requested" && row.response?.version === row.version}
             sentNotes={sentNotes}
             adminNote={copy.admin_note}
             questions={questionsOf(row)}
