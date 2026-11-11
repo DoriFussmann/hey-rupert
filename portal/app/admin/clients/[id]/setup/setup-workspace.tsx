@@ -4,7 +4,7 @@ import { CampaignPanel } from "@/app/admin/clients/[id]/setup/campaign-panel";
 import { LivePanel } from "@/app/admin/clients/[id]/setup/live-panel";
 import { InvestorListPanel } from "@/app/admin/clients/[id]/setup/investor-list-panel";
 import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor";
-import { ViewerCommentsBlock } from "@/app/admin/clients/[id]/setup/viewer-comments-block";
+import { FeedbackInbox } from "@/app/admin/clients/[id]/setup/feedback-inbox";
 import {
   asFeedback,
   asInvestorList,
@@ -17,7 +17,9 @@ import {
 import type { ListAudit } from "@/lib/list-audit";
 import type { OutreachSteps } from "@/lib/outreach/progress-server";
 import type { StepState, StepTurn } from "@/lib/step-order";
-import type { ViewerComment } from "@/lib/viewer-comments";
+import { collectPoints } from "@/lib/feedback-points";
+import { withReplies, type ReplyRow } from "@/lib/feedback-points-server";
+import type { ViewerComment, ViewerCommentStep } from "@/lib/viewer-comments";
 
 export type WorkPanel = StepState & { node: React.ReactNode };
 
@@ -43,6 +45,7 @@ export function setupPanels({
   listAudit,
   outreach,
   viewerComments,
+  replyRows,
 }: {
   clientId: string;
   source: SetupSource;
@@ -58,8 +61,10 @@ export function setupPanels({
   listAudit: { value: ListAudit | null; error: string | null };
   /** Where Core contacts, the campaign and Go Live stand. */
   outreach: OutreachSteps;
-  /** What the client's viewers wrote, shown above the step they wrote it on. */
+  /** What the client's viewers wrote on the review steps. */
   viewerComments: ViewerComment[];
+  /** Rupert's saved replies to the feedback points. */
+  replyRows: ReplyRow[];
 }): WorkPanel[] {
   const items = getSetupItems(source);
   const rows = source.setup_steps ?? [];
@@ -74,6 +79,18 @@ export function setupPanels({
   const listScheme = investors.tier_scheme ?? "three";
   const counts = tierCounts(investors.rows, listScheme);
   const step = (id: SetupStepId) => ({ done: item(id).status === "done", turn: turnOf(item(id).status) });
+  // Every point of feedback on a step (the client's and the viewers'), with Rupert's reply.
+  const inbox = (id: ViewerCommentStep) =>
+    withReplies(
+      collectPoints({
+        history: row(id)?.history ?? [],
+        response: row(id)?.response ?? null,
+        comments: viewerComments.filter((comment) => comment.step === id),
+        clientName: clientFirstName,
+      }),
+      replyRows,
+      id,
+    );
 
   const panels: WorkPanel[] = [
     {
@@ -81,7 +98,7 @@ export function setupPanels({
       ...step("framing"),
       node: (
         <>
-          <ViewerCommentsBlock step="framing" comments={viewerComments} />
+          <FeedbackInbox clientId={clientId} step="framing" items={inbox("framing")} />
           <NarrativeEditor
             key={row("framing")?.updated_at ?? "new"}
             clientId={clientId}
@@ -101,7 +118,7 @@ export function setupPanels({
       ...step("investor_list"),
       node: (
         <>
-          <ViewerCommentsBlock step="investor_list" comments={viewerComments} />
+          <FeedbackInbox clientId={clientId} step="investor_list" items={inbox("investor_list")} />
           <InvestorListPanel
             clientId={clientId}
             item={item("investor_list")}
@@ -121,7 +138,7 @@ export function setupPanels({
       ...step("email_copy"),
       node: (
         <>
-          <ViewerCommentsBlock step="email_copy" comments={viewerComments} />
+          <FeedbackInbox clientId={clientId} step="email_copy" items={inbox("email_copy")} />
           <EmailCopyPanel
             clientId={clientId}
             item={item("email_copy")}
