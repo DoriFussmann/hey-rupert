@@ -4,6 +4,7 @@ import { CampaignPanel } from "@/app/admin/clients/[id]/setup/campaign-panel";
 import { LivePanel } from "@/app/admin/clients/[id]/setup/live-panel";
 import { InvestorListPanel } from "@/app/admin/clients/[id]/setup/investor-list-panel";
 import { NarrativeEditor } from "@/app/admin/clients/[id]/setup/narrative-editor";
+import { ViewerCommentsBlock } from "@/app/admin/clients/[id]/setup/viewer-comments-block";
 import {
   asFeedback,
   asInvestorList,
@@ -16,6 +17,7 @@ import {
 import type { ListAudit } from "@/lib/list-audit";
 import type { OutreachSteps } from "@/lib/outreach/progress-server";
 import type { StepState, StepTurn } from "@/lib/step-order";
+import type { ViewerComment } from "@/lib/viewer-comments";
 
 export type WorkPanel = StepState & { node: React.ReactNode };
 
@@ -40,6 +42,7 @@ export function setupPanels({
   claudeReady,
   listAudit,
   outreach,
+  viewerComments,
 }: {
   clientId: string;
   source: SetupSource;
@@ -55,6 +58,8 @@ export function setupPanels({
   listAudit: { value: ListAudit | null; error: string | null };
   /** Where Core contacts, the campaign and Go Live stand. */
   outreach: OutreachSteps;
+  /** What the client's viewers wrote, shown above the step they wrote it on. */
+  viewerComments: ViewerComment[];
 }): WorkPanel[] {
   const items = getSetupItems(source);
   const rows = source.setup_steps ?? [];
@@ -75,51 +80,60 @@ export function setupPanels({
       key: "framing",
       ...step("framing"),
       node: (
-        <NarrativeEditor
-          key={row("framing")?.updated_at ?? "new"}
-          clientId={clientId}
-          item={item("framing")}
-          row={row("framing")}
-          to={clientEmail}
-          materialsSubmitted={materialsSubmitted}
-          legacyFeedback={legacyFeedback}
-          claudeReady={claudeReady}
-          fileLinks={fileLinks}
-        />
+        <>
+          <ViewerCommentsBlock step="framing" comments={viewerComments} />
+          <NarrativeEditor
+            key={row("framing")?.updated_at ?? "new"}
+            clientId={clientId}
+            item={item("framing")}
+            row={row("framing")}
+            to={clientEmail}
+            materialsSubmitted={materialsSubmitted}
+            legacyFeedback={legacyFeedback}
+            claudeReady={claudeReady}
+            fileLinks={fileLinks}
+          />
+        </>
       ),
     },
     {
       key: "investor_list",
       ...step("investor_list"),
       node: (
-        <InvestorListPanel
-          clientId={clientId}
-          item={item("investor_list")}
-          row={row("investor_list")}
-          to={clientEmail}
-          companyName={companyName}
-          clientFirstName={clientFirstName}
-          adminName={adminName}
-          audit={listAudit}
-          claudeReady={claudeReady}
-        />
+        <>
+          <ViewerCommentsBlock step="investor_list" comments={viewerComments} />
+          <InvestorListPanel
+            clientId={clientId}
+            item={item("investor_list")}
+            row={row("investor_list")}
+            to={clientEmail}
+            companyName={companyName}
+            clientFirstName={clientFirstName}
+            adminName={adminName}
+            audit={listAudit}
+            claudeReady={claudeReady}
+          />
+        </>
       ),
     },
     {
       key: "email_copy",
       ...step("email_copy"),
       node: (
-        <EmailCopyPanel
-          clientId={clientId}
-          item={item("email_copy")}
-          row={row("email_copy")}
-          to={clientEmail}
-          tierCounts={counts}
-          listScheme={listScheme}
-          sourceMode={Boolean(investors.summaries)}
-          claudeReady={claudeReady}
-          pushWarning={investors.summaries ? null : outreach.coreWarning}
-        />
+        <>
+          <ViewerCommentsBlock step="email_copy" comments={viewerComments} />
+          <EmailCopyPanel
+            clientId={clientId}
+            item={item("email_copy")}
+            row={row("email_copy")}
+            to={clientEmail}
+            tierCounts={counts}
+            listScheme={listScheme}
+            sourceMode={Boolean(investors.summaries)}
+            claudeReady={claudeReady}
+            pushWarning={investors.summaries ? null : outreach.coreWarning}
+          />
+        </>
       ),
     },
   ];

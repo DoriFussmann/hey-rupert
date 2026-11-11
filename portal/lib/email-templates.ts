@@ -169,6 +169,7 @@ export type AdminEmailType =
   | "setup_fee_paid"
   | "password_set"
   | "viewer_password_set"
+  | "viewer_commented"
   | "nda_signed"
   | "intake_completed"
   | "materials_submitted"
@@ -326,7 +327,7 @@ const VIEWER_WELCOME_TEMPLATE: EmailTemplateDefinition = {
   body: [
     "{greeting}",
     "{company} asked me to give you access to their Rupert Client Portal, so you can follow their fundraising outreach alongside them.",
-    "Your access is view-only: you'll see everything {company} sees, but you won't be able to edit, confirm or comment on anything.",
+    "Your access is view-only: you'll see everything {company} sees and can leave comments, but you won't be able to edit or confirm anything.",
     "Set your password here (link valid until {link_expires}):\n{setup_link}",
     "You'll be taken straight into the portal. After that, log in any time at {portal_host} (Login, top-right corner) with {login_email} and the password you chose.",
     "If anything doesn't work, just reply to this email.",
@@ -505,6 +506,7 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
   adminTemplate("setup_fee_paid", "Setup Fee paid", "paid the Setup Fee"),
   adminTemplate("password_set", "Portal password set", "set their portal password"),
   adminTemplate("viewer_password_set", "Viewer's portal password set", "has a viewer who set their portal password"),
+  adminTemplate("viewer_commented", "Viewer's comment", "has a viewer who left a comment"),
   adminTemplate("nda_signed", "NDA signed", "signed the NDA"),
   adminTemplate("intake_completed", "Intake completed", "completed the Client Intake"),
   adminTemplate("materials_submitted", "Materials submitted", "submitted their company materials"),

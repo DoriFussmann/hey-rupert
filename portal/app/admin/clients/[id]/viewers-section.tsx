@@ -297,8 +297,9 @@ export function ViewersSection({
           <h2 className="text-h4">Viewers</h2>
           <p className="mt-xs text-body-sm text-muted">
             View-only logins for people the client asked to add. A viewer sees
-            exactly what the client sees, but can&apos;t edit, confirm or
-            comment on anything.
+            exactly what the client sees and can leave comments on the review
+            steps, shown under their name to you and the client. They
+            can&apos;t edit or confirm anything.
           </p>
         </div>
         {!open ? (
