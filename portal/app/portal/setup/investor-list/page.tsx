@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ResponseHistory } from "@/components/setup/response-history";
+import { FeedbackReplies } from "@/components/setup/feedback-replies";
 import { ViewerComments } from "@/components/setup/viewer-comments";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
 import { SummariesReview } from "@/app/portal/setup/investor-list/summaries-review";
@@ -118,6 +119,7 @@ export default async function InvestorListPage() {
       )}
       {visible && row ? (
         <>
+          <FeedbackReplies step="investor_list" />
           <ViewerComments step="investor_list" />
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { ResponseHistory } from "@/components/setup/response-history";
+import { FeedbackReplies } from "@/components/setup/feedback-replies";
 import { ViewerComments } from "@/components/setup/viewer-comments";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
@@ -82,6 +83,7 @@ export default async function EmailCopyPage() {
             coreEmails={coreEmails}
             previewLeads={previewLeads}
           />
+          <FeedbackReplies step="email_copy" />
           <ViewerComments step="email_copy" />
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
