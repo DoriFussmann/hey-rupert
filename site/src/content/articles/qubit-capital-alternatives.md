@@ -54,7 +54,7 @@ Qubit Capital positions itself as an AI-assisted fundraising platform that handl
 
 **Self-serve investor databases and CRMs** (such as Foundersuite) give you a searchable list of investors and tools to manage the pipeline. The founder does the research, writes every email, tracks every reply, and manages every follow-up. This is the highest-control, highest-effort model.
 
-**Expert-managed outreach services** research the investor list, write every email, manage the follow-up calendar, and report back through a founder-facing portal—while the outreach itself goes from the founder's own inbox. Rupert sits in this category.
+**Expert-managed outreach services** research the investor list, write every email, manage the follow-up calendar, and report back through a founder-facing portal—while the outreach itself goes from the founder's own inbox. [Rupert](/book-call/) sits in this category.
 
 Every category is a legitimate option. The right one depends on your situation, not on marketing claims.
 
