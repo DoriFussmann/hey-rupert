@@ -55,7 +55,7 @@ function tableError(message: string, code?: string) {
 async function loadClient(supabase: Service, clientId: string) {
   const { data, error } = await supabase
     .from("clients")
-    .select("id, first_name, founder_name, email, founder_email")
+    .select("id, first_name, email")
     .eq("id", clientId)
     .maybeSingle();
   if (error) return { ok: false as const, error: error.message };
@@ -64,8 +64,8 @@ async function loadClient(supabase: Service, clientId: string) {
   const text = (value: unknown) => (typeof value === "string" ? value.trim() : "");
   return {
     ok: true as const,
-    firstName: text(row.first_name) || text(row.founder_name).split(/\s+/)[0] || "",
-    email: text(row.email) || text(row.founder_email),
+    firstName: text(row.first_name),
+    email: text(row.email),
   };
 }
 
