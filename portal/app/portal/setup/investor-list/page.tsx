@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ResponseHistory } from "@/components/setup/response-history";
+import { ViewerComments } from "@/components/setup/viewer-comments";
 import { InvestorListReview } from "@/app/portal/setup/investor-list/investor-list-review";
 import { SummariesReview } from "@/app/portal/setup/investor-list/summaries-review";
 import { DEFAULT_SIGNATURE } from "@/lib/email-templates";
@@ -116,7 +117,10 @@ export default async function InvestorListPage() {
         </header>
       )}
       {visible && row ? (
-        <ResponseHistory history={row.history} currentVersion={row.version} />
+        <>
+          <ViewerComments step="investor_list" />
+          <ResponseHistory history={row.history} currentVersion={row.version} />
+        </>
       ) : null}
     </>
   );

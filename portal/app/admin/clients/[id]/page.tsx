@@ -97,6 +97,7 @@ import { isKickoffReady, kickoffDate } from "@/lib/service-order";
 import { getClientAccess } from "@/lib/password-setup";
 import { ViewersSection } from "@/app/admin/clients/[id]/viewers-section";
 import { listClientViewers } from "@/lib/viewers";
+import { listViewerComments } from "@/lib/viewer-comments-server";
 
 export default async function ClientDetailPage({
   params,
@@ -290,6 +291,7 @@ export default async function ClientDetailPage({
         claudeReady,
         listAudit,
         outreach,
+        viewerComments: await listViewerComments(client.id),
       }),
     );
   }

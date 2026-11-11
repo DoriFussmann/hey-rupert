@@ -32,7 +32,7 @@ export function ViewerBanner({ company }: { company: string }) {
         <span className="font-medium">{company}</span>
         <span className="text-secondary">
           {" "}
-          · you can see everything, but can&apos;t make changes
+          · you can see everything and leave comments, but can&apos;t make changes
         </span>
       </p>
     </div>

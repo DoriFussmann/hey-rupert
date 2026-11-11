@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { NarrativeView } from "@/components/setup/narrative-view";
 import { ResponseHistory } from "@/components/setup/response-history";
+import { ViewerComments } from "@/components/setup/viewer-comments";
 import { AdminReply } from "@/components/setup/admin-reply";
 import { NarrativeReview } from "@/components/setup/narrative-review";
 import { ReviewStatus } from "@/components/setup/review-status";
@@ -99,6 +100,7 @@ export default async function FramingPage() {
               ) : null
             }
           />
+          <ViewerComments step="framing" />
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
       ) : null}
