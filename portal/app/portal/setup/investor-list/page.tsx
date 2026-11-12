@@ -9,6 +9,7 @@ import { loadEmailSettings } from "@/lib/email-settings";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 import { adminFirstName } from "@/lib/investor-list-email";
+import { loadDealsDeck } from "@/lib/match/deals/server";
 import { loadProfileState } from "@/lib/match/profile-server";
 import { getPortalSetup } from "@/lib/portal-setup";
 import { asInvestorList, fitTiersFor, investorListIntro, questionsOf } from "@/lib/setup";
@@ -23,9 +24,14 @@ export default async function InvestorListPage() {
   const visible = Boolean(row && row.version > 0);
   const list = asInvestorList(row?.published);
   const service = visible && isServiceRoleConfigured() ? createServiceClient() : null;
-  const [settings, profile] = service && client
-    ? await Promise.all([loadEmailSettings(service), loadProfileState(service, client.id)])
-    : [null, null];
+  const [settings, profile, deck] = service && client
+    ? await Promise.all([
+        loadEmailSettings(service),
+        loadProfileState(service, client.id),
+        // Shown under the summaries only: the older list view has no place for it.
+        list.summaries ? loadDealsDeck(service, client.id) : null,
+      ])
+    : [null, null, null];
   const adminName = adminFirstName(settings?.signature || DEFAULT_SIGNATURE);
   const company = client?.company_name?.trim() || "Your company";
   const open = row?.status === "with_client";
@@ -81,6 +87,7 @@ export default async function InvestorListPage() {
       {visible && row && list.summaries ? (
         <SummariesReview
           summaries={list.summaries}
+          deck={deck}
           version={row.version}
           open={open}
           company={company}
