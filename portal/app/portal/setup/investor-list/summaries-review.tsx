@@ -5,7 +5,9 @@ import { useRouter } from "next/navigation";
 import { askSetupQuestion, respondToSetupStep } from "@/app/portal/setup/actions";
 import { QuestionThread } from "@/components/setup/question-thread";
 import { TurnBanner } from "@/components/setup/turn-banner";
+import { DealsDeckButton } from "@/components/setup/deals-deck";
 import { SummaryView } from "@/app/admin/matching/summary-view";
+import type { DealsDeck } from "@/lib/match/deals/core";
 import type { InvestorSummaries, SetupQuestion } from "@/lib/setup";
 
 const primaryButton =
@@ -18,10 +20,12 @@ type Mode = "question" | "changes" | "confirm";
 /**
  * The founder's view of the new matching: the Matching Summary and the
  * Competitive Landscape Overview, with Confirm, Ask a Question or Comment,
- * and Request Changes, and an offer to go through it on a call.
+ * and Request Changes, and an offer to go through it on a call. Under the
+ * summaries, the Competitive Landscape & Deals deck when one was prepared.
  */
 export function SummariesReview({
   summaries,
+  deck = null,
   version,
   open,
   company,
@@ -33,6 +37,8 @@ export function SummariesReview({
   heading = "h1",
 }: {
   summaries: InvestorSummaries;
+  /** The Competitive Landscape & Deals deck, when one was prepared for this client. */
+  deck?: DealsDeck | null;
   version: number;
   /** The client's turn: the actions show. */
   open: boolean;
@@ -123,6 +129,7 @@ export function SummariesReview({
         <SummaryView summary={summaries.matching} />
         {summaries.landscape ? <SummaryView summary={summaries.landscape} /> : null}
         {summaries.peers ? <SummaryView summary={summaries.peers} /> : null}
+        {deck ? <DealsDeckButton deck={deck} company={company} /> : null}
       </div>
 
       <p className="mt-lg text-body-sm text-secondary">

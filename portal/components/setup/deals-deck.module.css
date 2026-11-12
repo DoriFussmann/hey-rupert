@@ -1,0 +1,360 @@
+/* Competitive Landscape & Deals: the slides. Each slide is drawn at a fixed
+   1280 x 720 and scaled to the viewer, so the modal and the PDF are the same
+   page. The palette is the deck's own (navy, mint, orange on warm paper). */
+
+.slide {
+  --deck-bg: #f3f1eb;
+  --deck-navy: #152239;
+  --deck-ink: #1b2740;
+  --deck-body: #46526a;
+  --deck-muted: #6b7689;
+  --deck-teal: #1f7a63;
+  --deck-mint: #cfe7e0;
+  --deck-mint-ink: #14594a;
+  --deck-grey: #e2e5e9;
+  --deck-orange: #e4994a;
+  --deck-line: #e4e1d9;
+  --deck-rule: #efede7;
+
+  position: relative;
+  width: 1280px;
+  height: 720px;
+  padding: 58px 86px 0;
+  overflow: hidden;
+  background: var(--deck-bg);
+  color: var(--deck-ink);
+  font-family: Inter, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+  font-size: 12.5px;
+  line-height: 1.25;
+  text-align: left;
+  -webkit-print-color-adjust: exact;
+  print-color-adjust: exact;
+}
+
+.eyebrow {
+  font-size: 15px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--deck-teal);
+}
+
+.title {
+  margin-top: 8px;
+  font-size: 31px;
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+  color: var(--deck-ink);
+  /* One line when it fits: the slide has no room for a balanced second one. */
+  text-wrap: wrap;
+}
+
+.subtitle {
+  margin-top: 8px;
+  font-size: 14.5px;
+  line-height: 1.4;
+  color: var(--deck-body);
+}
+
+.footer {
+  position: absolute;
+  left: 86px;
+  right: 86px;
+  bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 12px;
+  color: var(--deck-muted);
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--deck-line);
+  border-radius: 12px;
+}
+
+/* Table slide */
+.tableCard {
+  margin-top: 18px;
+  padding: 4px 18px 6px;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  padding: 10px 10px 8px 0;
+  border-bottom: 1px solid var(--deck-line);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  text-align: left;
+  white-space: nowrap;
+  color: var(--deck-teal);
+}
+
+.table td {
+  height: 37.5px;
+  padding: 0 10px 0 0;
+  border-bottom: 1px solid var(--deck-rule);
+  vertical-align: middle;
+  font-size: 12.5px;
+  color: var(--deck-body);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table .right {
+  padding-right: 0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.company {
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: var(--deck-ink);
+}
+
+.strong {
+  font-weight: 500;
+  color: var(--deck-ink);
+}
+
+.sub {
+  display: block;
+  margin-top: 1px;
+  font-size: 10.5px;
+  font-weight: 400;
+  white-space: nowrap;
+  color: var(--deck-muted);
+}
+
+.tag {
+  display: inline-block;
+  margin-left: 7px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: var(--deck-orange);
+  font-size: 9.5px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  vertical-align: 1.5px;
+  color: var(--deck-navy);
+}
+
+.pill {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 7px;
+  font-size: 11.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.mint {
+  background: var(--deck-mint);
+  color: var(--deck-mint-ink);
+}
+
+.grey {
+  background: var(--deck-grey);
+  color: var(--deck-ink);
+}
+
+.orange {
+  background: var(--deck-orange);
+  color: var(--deck-navy);
+}
+
+.muted {
+  color: var(--deck-muted);
+}
+
+/* The band */
+.note {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-top: 12px;
+  padding: 13px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.noteLabel {
+  flex: 0 0 150px;
+}
+
+.noteNavy {
+  background: var(--deck-navy);
+  color: #fff;
+}
+
+.noteNavy .noteLabel {
+  color: var(--deck-orange);
+}
+
+.noteMint {
+  background: var(--deck-mint);
+  color: var(--deck-mint-ink);
+}
+
+.noteMint .noteLabel {
+  color: var(--deck-teal);
+}
+
+/* Investors slide */
+.stats {
+  display: grid;
+  grid-auto-columns: 1fr;
+  grid-auto-flow: column;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.stat {
+  padding: 11px 18px 12px;
+}
+
+.statValue {
+  font-size: 32px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--deck-ink);
+}
+
+.statLabel {
+  margin-top: 7px;
+  font-size: 12.5px;
+  line-height: 1.35;
+  color: var(--deck-body);
+}
+
+.statHighlight {
+  border-color: var(--deck-navy);
+  background: var(--deck-navy);
+}
+
+.statHighlight .statValue {
+  color: #fff;
+}
+
+.statHighlight .statLabel {
+  color: #c9d0dc;
+}
+
+.groups {
+  display: grid;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.group {
+  padding: 11px 18px 8px;
+}
+
+.groupTitle {
+  margin-bottom: 7px;
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--deck-teal);
+}
+
+.groupRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 2.5px 0;
+  border-top: 1px solid var(--deck-rule);
+}
+
+.groupRow:first-of-type {
+  border-top: none;
+}
+
+.groupCompany {
+  flex: 0 0 96px;
+  padding-top: 3px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--deck-ink);
+}
+
+.groupInvestors {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 5px;
+}
+
+.groupInvestors .pill {
+  padding: 2.5px 7px;
+  font-size: 11px;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 9px;
+  font-size: 11.5px;
+  color: var(--deck-muted);
+}
+
+.legend > span {
+  white-space: nowrap;
+}
+
+.legend .pill {
+  margin-right: 5px;
+  padding: 2px 7px;
+  font-size: 10.5px;
+}
+
+/* The viewer: a 16:9 stage that the slide is scaled into. */
+.stage {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f3f1eb;
+}
+
+.stage .slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: top left;
+}
+
+/* The copy that is printed: every slide, one per page, at full size. */
+.print {
+  display: none;
+}
+
+@media print {
+  .print {
+    display: block;
+  }
+
+  .print .slide {
+    break-after: page;
+    break-inside: avoid;
+  }
+
+  .print .slide:last-child {
+    break-after: auto;
+  }
+}
