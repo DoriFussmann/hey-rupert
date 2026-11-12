@@ -1,0 +1,156 @@
+---
+import { orgId } from "seo-core";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import CtaBanner from "../../components/CtaBanner.astro";
+import FaqBlock from "../../components/FaqBlock.astro";
+import { SITE_URL } from "../../config/site";
+import { absoluteUrl, sitePath } from "../../lib/url";
+
+const title = "Investor Outreach for Founders Outside the US | Rupert";
+const description =
+  "Rupert runs investor outreach for founders outside the United States who want US and European funds. You approve every email and keep every relationship.";
+
+// "69 countries" is the figure on the Our Database page (Rupert fund database, November 2026).
+const glance = [
+  { value: "Any country", label: "Rupert works with founders anywhere who can work in English" },
+  { value: "US and Europe", label: "One campaign can reach US funds and funds closer to home" },
+  { value: "69 countries", label: "Where the funds in Rupert's database are headquartered" },
+];
+
+const steps = [
+  {
+    title: "Find the funds that invest abroad",
+    body: "Your company is matched against the database by stage, sector, geography and type of financing. Then the investors behind funded companies like yours are added, and the funds that most resemble them.",
+  },
+  {
+    title: "Answer the US question first",
+    body: "Setup shapes the narrative, the deck feedback and the messaging around your plan for the US market, so the first email already answers what a US investor will ask.",
+  },
+  {
+    title: "Send from your own inbox",
+    body: "Every critical email is written for the specific investor, in English, and goes out from your inbox once you approve it. Replies come to you, and the relationships stay yours.",
+  },
+];
+
+const faqs = [
+  {
+    question: "Do US investors fund companies based outside the US?",
+    answer:
+      "Some do and some do not. It depends on the fund, the stage and the sector. The useful question is which funds already hold companies abroad, and that is what the investor matching looks for.",
+  },
+  {
+    question: "Do I need a US company before I approach US funds?",
+    answer:
+      "It varies by fund. Some US investors prefer or require a US parent company, and others invest in foreign companies directly. Ask your target funds early, and take the decision with a lawyer and a tax adviser. Rupert does not give legal or tax advice.",
+  },
+  {
+    question: "Which countries does Rupert work with?",
+    answer:
+      "Any country. The requirement is that you can work in English. Rupert's founder has run outreach for founders in the United Kingdom, Germany, Spain, Portugal and Poland.",
+  },
+  {
+    question: "Can Rupert reach European investors as well as US ones?",
+    answer:
+      "Yes. The database includes funds headquartered in 69 countries, and one campaign can cover US funds and European funds together.",
+  },
+  {
+    question: "Does Rupert guarantee meetings with US investors?",
+    answer:
+      "No. Rupert does not guarantee meetings or funding. The work is investor research, targeting, outreach written for each investor, and follow-up, with your approval before anything is sent.",
+  },
+];
+
+const jsonLd: Record<string, unknown>[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    name: "Investor outreach for founders outside the United States",
+    provider: { "@id": orgId(SITE_URL) },
+    serviceType: "Investor outreach",
+    description,
+    url: absoluteUrl("/founders-outside-the-us/"),
+    areaServed: "Worldwide",
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: { "@type": "Answer", text: faq.answer },
+    })),
+  },
+];
+---
+
+<BaseLayout title={title} description={description} canonicalPath="/founders-outside-the-us/" jsonLd={jsonLd}>
+  <main id="main-content" class="flex-1">
+    <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
+      <p class="type-label">For founders outside the US</p>
+      <h1 class="type-h1 mt-md">Reach US investors from wherever you're based.</h1>
+      <p class="type-body-lg mt-lg max-w-prose">
+        Rupert runs investor outreach for founders outside the United States
+        who have worked through their local investors and want US funds, and
+        more European funds, in the round. You approve every email, it goes
+        out from your own inbox, and every investor relationship stays yours.
+      </p>
+      <ul class="glance-grid glance-grid--3 mt-2xl" aria-label="At a glance">
+        {
+          glance.map((item) => (
+            <li class="experience-card experience-card--compact">
+              <p class="experience-card__value">{item.value}</p>
+              <p class="type-h4">{item.label}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="experience-heading">
+      <p class="type-label">Where this comes from</p>
+      <h2 id="experience-heading" class="type-h2 mt-md">Founders in the UK, Germany, Spain, Portugal and Poland.</h2>
+      <p class="type-body mt-md max-w-prose">
+        <a href={sitePath("/about/")}>Dori Fussmann</a>, Rupert's founder, has
+        run investor outreach for founders in each of those countries. They
+        came for the same reason: more access to US investors. The research
+        found US funds that fit, and more funds in Europe as well.
+      </p>
+      <p class="type-body mt-md max-w-prose">
+        The approach is the same as for a US founder. Nothing about it is
+        fundamentally different. What changes is one question.
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="question-heading">
+      <p class="type-label">The question you will be asked</p>
+      <h2 id="question-heading" class="type-h2 mt-md">"Will you win the US market?"</h2>
+      <p class="type-body mt-md max-w-prose">
+        That is the concern US investors raise most with a company based
+        abroad. The answer has to be yes, and your positioning has to show it
+        before they ask: the plan for the US, the customers or pipeline you
+        already have there, and who leads it.
+      </p>
+      <ol class="step-grid mt-2xl">
+        {
+          steps.map((step, index) => (
+            <li class="experience-card experience-card--compact">
+              <p class="step-card__step">Step {index + 1}</p>
+              <p class="experience-card__value">{step.title}</p>
+              <p class="type-h4">{step.body}</p>
+            </li>
+          ))
+        }
+      </ol>
+      <p class="mt-xl flex flex-wrap items-center gap-md">
+        <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
+        <a class="btn-quiet" href={sitePath("/how-it-works/")}>See how Rupert runs outreach</a>
+        <a class="btn-quiet" href={sitePath("/database/")}>See the investor database</a>
+      </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="faq-heading">
+      <FaqBlock faqs={faqs} bordered={false} />
+    </section>
+  </main>
+  <CtaBanner />
+</BaseLayout>
