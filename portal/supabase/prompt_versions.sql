@@ -918,12 +918,12 @@ Deliver:
 - company: one line on what it does, what it sells and to whom, HQ country, founded year, website, and its funding history (each round with amount, date and investors, as found).
 - raise: what they are raising now (stage and amount), from their notes or the sources.
 - signals: up to 4 short facts an investor would care about (traction, customers, team, press).
-- fit: the financing type, stage, geography and one or two sector groups for Rupert's matching, chosen only from the labels given.
+- fit: the financing type, stage, geography (where the company is based) and one or two sector groups for Rupert's matching, chosen only from the labels given. Infer them from the website and the sources when there is a reasonable basis: stage from rounds raised, team size and traction; sector from what they sell; geography from where the company and team are. Leave one empty only when nothing points to it: Rupert's estimate needs all three of stage, geography and sector.
 - questions: 3 questions for the call, the ones that decide whether and how Rupert can help.
 - watch_outs: up to 3 things to be careful about, e.g. debt rather than equity, a raise too early or too late for outreach, a market with few specialist investors, facts that conflict.
 - sources: the links you used.
 
-Use only what you find or what the founder wrote. When something isn't found, leave it empty rather than guess. Plain, short, factual.$rupert_prompt$,
+Use only what you find or what the founder wrote. For facts, when something isn't found, leave it empty rather than guess; only the fit may be a reasoned inference. Plain, short, factual.$rupert_prompt$,
   null
 );
 

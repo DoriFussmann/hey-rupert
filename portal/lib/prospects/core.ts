@@ -344,6 +344,27 @@ export function exampleFunds(funds: FundForExample[], max = 5): ExampleFund[] {
     .map(({ name, type, place, website }) => ({ name, type, place, website }));
 }
 
+/** The three steps an estimate needs. Without all of them the count means nothing, so none is shown. */
+export const ESTIMATE_NEEDS = [
+  { step: "stage", label: "stage" },
+  { step: "geography", label: "geography" },
+  { step: "sector", label: "sector" },
+] as const;
+
+/** What the estimate still lacks: [] when it is a real estimate. */
+export function estimateMissing(estimate: MatchEstimate | null): string[] {
+  return ESTIMATE_NEEDS.filter((n) => !estimate?.steps.some((s) => s.step === n.step && s.chosen.length)).map((n) => n.label);
+}
+
+export function estimateReady(estimate: MatchEstimate | null): estimate is MatchEstimate {
+  return Boolean(estimate) && estimateMissing(estimate).length === 0;
+}
+
+/** "stage and sector", "stage, geography and sector" */
+export function missingText(missing: string[]) {
+  return missing.length <= 1 ? missing.join("") : `${missing.slice(0, -1).join(", ")} and ${missing[missing.length - 1]}`;
+}
+
 /** "Equity · Pre-Seed, Seed · United States · Software & IT" */
 export function filtersLine(estimate: MatchEstimate) {
   return estimate.steps.map((s) => s.chosen.join(", ")).filter(Boolean).join(" · ");
@@ -472,10 +493,12 @@ export function prepEmail(prospect: ProspectForEmail, call: CallForEmail, pageUr
   } else {
     lines.push(prospect.briefError ? `No brief: ${prospect.briefError}` : "The brief isn't ready.", "");
   }
-  if (m) {
+  const missing = estimateMissing(m);
+  if (estimateReady(m)) {
     lines.push("INVESTOR FIT (FIRST ESTIMATE)", `About ${m.count.toLocaleString("en-US")} of ${m.total.toLocaleString("en-US")} funds: ${filtersLine(m)}`);
-    if (m.open.length) lines.push(`Open: ${m.open.join(", ")}`);
     lines.push(...m.examples.map((f) => `- ${f.name}${f.type ? ` (${f.type})` : ""}${f.place ? `, ${f.place}` : ""}`), "");
+  } else if (b || m) {
+    lines.push("INVESTOR FIT", `No estimate: ${missingText(missing)} not known yet. Ask on the call, then set them on the prospect page.`, "");
   }
   if (b?.questions.length) lines.push("ASK", ...b.questions.map((q, i) => `${i + 1}. ${q}`), "");
   if (b?.watchOuts.length) lines.push("WATCH OUT", ...b.watchOuts.map((w) => `- ${w}`), "");
@@ -491,11 +514,13 @@ export function prepEmail(prospect: ProspectForEmail, call: CallForEmail, pageUr
       (b.company.rounds.length ? para(`<strong>Rounds</strong>`) + list(b.company.rounds.map((r) => esc(roundLine(r)))) : "") +
       list(b.signals.map(esc))
     : para(esc(prospect.briefError ? `No brief: ${prospect.briefError}` : "The brief isn't ready yet; it's on the prospect page when it is."));
-  const fit = m
-    ? `<p style="margin:0 0 2px;font-size:28px;font-weight:600;color:${INK}">~${m.count.toLocaleString("en-US")} <span style="font-size:15px;font-weight:400;color:${MUTED}">of ${m.total.toLocaleString("en-US")} funds fit</span></p>` +
-      para(`<span style="color:${MUTED}">${esc(filtersLine(m))}${m.open.length ? ` · open: ${esc(m.open.join(", "))}` : ""}</span>`) +
-      list(m.examples.map((f) => `${f.website ? link(f.website, f.name) : esc(f.name)}${f.type || f.place ? ` <span style="color:${MUTED}">${esc([f.type, f.place].filter(Boolean).join(", "))}</span>` : ""}`))
-    : "";
+  const fit = !estimateReady(m)
+    ? b || m
+      ? para(`<span style="color:${MUTED}">No estimate: ${esc(missingText(missing))} not known yet. Ask on the call, then set them on the prospect page.</span>`)
+      : ""
+    : `<p style="margin:0 0 2px;font-size:28px;font-weight:600;color:${INK}">~${m.count.toLocaleString("en-US")} <span style="font-size:15px;font-weight:400;color:${MUTED}">of ${m.total.toLocaleString("en-US")} funds fit</span></p>` +
+      para(`<span style="color:${MUTED}">${esc(filtersLine(m))}</span>`) +
+      list(m.examples.map((f) => `${f.website ? link(f.website, f.name) : esc(f.name)}${f.type || f.place ? ` <span style="color:${MUTED}">${esc([f.type, f.place].filter(Boolean).join(", "))}</span>` : ""}`));
   const ask = b?.questions.length
     ? `<ol style="margin:0 0 8px;padding-left:20px;font-size:15px;line-height:1.55;color:${INK}">${b.questions.map((q) => `<li style="margin:0 0 4px">${esc(q)}</li>`).join("")}</ol>`
     : "";

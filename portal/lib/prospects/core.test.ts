@@ -9,6 +9,9 @@ import {
   checkinSendAt,
   cleanBrief,
   clientPrefill,
+  estimateMissing,
+  estimateReady,
+  missingText,
   exampleFunds,
   parseCalEvent,
   prepEmail,
@@ -161,11 +164,12 @@ const estimate: MatchEstimate = {
   steps: [
     { step: "financing", label: "Financing type", chosen: ["Equity"], left: 6000 },
     { step: "stage", label: "Stage", chosen: ["Pre-Seed", "Seed"], left: 3000 },
+    { step: "geography", label: "Geography", chosen: ["United States"], left: 1500 },
     { step: "sector", label: "Sector", chosen: ["Hardware & deep tech"], left: 412 },
   ],
   count: 412,
   examples: [{ name: "Space Capital", type: "VC", place: "New York, US", website: "https://spacecapital.com" }],
-  open: ["Geography"],
+  open: [],
   fundDbVersion: "v1",
   at: "2026-11-12T10:00:00Z",
 };
@@ -187,7 +191,7 @@ test("the prep email has the call, what they told us, the estimate and the links
   );
   assert.equal(email.subject, "In 30 min: Naga <Vinnakota>, Aegis 360 Inc (Seed, $9.8M)");
   assert.match(email.text, /Thu, Nov 12, 11:30\s?AM–12:00\s?PM PST/);
-  assert.match(email.text, /About 412 of 9,000 funds: Equity · Pre-Seed, Seed · Hardware & deep tech/);
+  assert.match(email.text, /About 412 of 9,000 funds: Equity · Pre-Seed, Seed · United States · Hardware & deep tech/);
   assert.match(email.text, /Heard about us: Google/);
   assert.match(email.text, /1\. Lead or follow\?/);
   assert.match(email.html, /Naga &lt;Vinnakota&gt;/);
@@ -230,4 +234,28 @@ test("prospects.sql seeds exactly the registry's text for both prospect prompts"
     assert.ok(sql.includes(`'${prompt.slug}'`), prompt.slug);
     assert.ok(sql.includes(`$rupert_prompt$${prompt.defaultText}$rupert_prompt$`), `${key}: text differs from the registry`);
   }
+});
+
+test("prospects_fit_inference.sql moves the brief prompt to exactly the registry's text", () => {
+  const sql = readFileSync(join(portal, "supabase/prospects_fit_inference.sql"), "utf8").replace(/\r\n/g, "\n");
+  const prompt = PROMPTS.find((p) => p.key === "prospect_brief")!;
+  assert.ok(sql.includes(`v_new text := $rupert_prompt$${prompt.defaultText}$rupert_prompt$`));
+  assert.ok(sql.includes("btrim(v_active) = btrim(v_old)"), "an edited prompt is left alone");
+});
+
+test("no estimate until stage, geography and sector are all known", () => {
+  const partial: MatchEstimate = { ...estimate, steps: estimate.steps.filter((s) => s.step !== "sector" && s.step !== "geography"), open: ["Geography", "Sector"] };
+  assert.deepEqual(estimateMissing(partial), ["geography", "sector"]);
+  assert.ok(!estimateReady(partial));
+  assert.ok(!estimateReady(null));
+  assert.equal(missingText(["stage", "geography", "sector"]), "stage, geography and sector");
+  assert.ok(estimateReady(estimate));
+  const email = prepEmail(
+    { name: "N", email: "n@x.com", companyName: "X", heardFrom: null, website: null, brief: cleanBrief({}, OPTIONS), briefError: null, match: partial },
+    { start: null, end: null, timeZone: "UTC", videoUrl: null, location: null, notes: null, guests: [], extraAnswers: [] },
+    "u",
+  );
+  assert.match(email.text, /No estimate: geography and sector not known yet/);
+  assert.ok(!email.text.includes("412"));
+  assert.ok(!email.html.includes("funds fit"));
 });

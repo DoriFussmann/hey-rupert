@@ -8,7 +8,7 @@ import { loadPrompt } from "@/lib/prompts-server";
 import { promptSystem } from "@/lib/prompts";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { loadTaxonomy } from "@/lib/taxonomy/server";
-import { answerText, cleanBrief, exampleFunds, filtersLine, firstName, type FitOptions, type MatchEstimate, type ProspectBrief } from "@/lib/prospects/core";
+import { answerText, cleanBrief, estimateReady, exampleFunds, filtersLine, firstName, type FitOptions, type MatchEstimate, type ProspectBrief } from "@/lib/prospects/core";
 import { PROSPECT_COLUMNS, getProspectRow, loadProspect, now, type CallRow, type ProspectRow } from "@/lib/prospects/data-server";
 
 // The AI side of prospects: the prep brief (with the Dry Match estimate it
@@ -274,7 +274,7 @@ export async function draftFollowUp(supabase: ServiceClient, prospectId: string,
     "## Dori's call notes",
     prospect.outcome_notes,
     b ? `## Brief\n${[b.company.oneLiner, b.company.what].filter(Boolean).join(" ")}\nRaising: ${[b.raise.stage, b.raise.amount].filter(Boolean).join(", ") || "not known"}` : "",
-    m ? `## Estimate\nAbout ${m.count} funds of ${m.total} fit: ${filtersLine(m)}\nExample funds: ${m.examples.map((f) => f.name).join(", ") || "none"}` : "",
+    estimateReady(m) ? `## Estimate\nAbout ${m.count} funds of ${m.total} fit: ${filtersLine(m)}\nExample funds: ${m.examples.map((f) => f.name).join(", ") || "none"}` : "",
   ]
     .filter(Boolean)
     .join("\n");
