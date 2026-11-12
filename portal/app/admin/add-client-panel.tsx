@@ -90,7 +90,10 @@ function SowPushStatus({
   );
 }
 
-export function AddClientButton() {
+export type AddClientPrefill = Partial<Record<TextField, string>>;
+
+/** The Add Client form. With `initial`, it opens filled in (Convert to client on a prospect's page). */
+export function AddClientButton({ initial, label = "Add Client" }: { initial?: AddClientPrefill; label?: string } = {}) {
   const router = useRouter();
   const titleId = useId();
   const [open, setOpen] = useState(false);
@@ -127,7 +130,7 @@ export function AddClientButton() {
   }
 
   function resetAll() {
-    setForm(emptyForm);
+    setForm({ ...emptyForm, ...initial });
     setTestPilot(false);
     setPushSow(true);
     setCreated(null);
@@ -201,7 +204,7 @@ export function AddClientButton() {
           }}
           className={primaryButton}
         >
-          Add Client
+          {label}
         </button>
       </div>
 

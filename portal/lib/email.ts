@@ -6,7 +6,8 @@ import "server-only";
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const TIMEOUT_MS = 8000;
 
-export type EmailResult = { ok: true } | { ok: false; reason: string };
+/** `id` is Resend's id for the email (used to cancel a scheduled one). */
+export type EmailResult = { ok: true; id?: string } | { ok: false; reason: string };
 
 export function adminAddresses() {
   return (process.env.ADMIN_NOTIFY_EMAIL ?? "")
@@ -35,6 +36,7 @@ export async function sendEmail({
   subject,
   text,
   html,
+  scheduledAt,
 }: {
   to: string[];
   /** Blind copies, e.g. a copy to Rupert of an email to a client. */
@@ -43,6 +45,8 @@ export async function sendEmail({
   text: string;
   /** HTML part. The plain-text body is always sent as well. */
   html?: string;
+  /** ISO time to deliver it later (Resend allows up to 30 days ahead). */
+  scheduledAt?: string;
 }): Promise<EmailResult> {
   const notConfigured = missingConfiguration();
   if (notConfigured) return { ok: false, reason: notConfigured };
@@ -70,6 +74,7 @@ export async function sendEmail({
         subject,
         text,
         ...(html?.trim() ? { html } : {}),
+        ...(scheduledAt ? { scheduled_at: scheduledAt } : {}),
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
       cache: "no-store",
@@ -82,7 +87,8 @@ export async function sendEmail({
       return { ok: false, reason };
     }
 
-    return { ok: true };
+    const sent = (await response.json().catch(() => null)) as { id?: unknown } | null;
+    return { ok: true, ...(typeof sent?.id === "string" ? { id: sent.id } : {}) };
   } catch (err) {
     const reason = `Email could not be sent: ${
       err instanceof Error ? err.message : String(err)
@@ -94,4 +100,23 @@ export async function sendEmail({
 
 export async function sendAdminEmail(subject: string, text: string) {
   return sendEmail({ to: adminAddresses(), subject, text });
+}
+
+/** Cancels an email scheduled with `scheduledAt`. Already sent or unknown: says so. */
+export async function cancelScheduledEmail(id: string): Promise<EmailResult> {
+  if (!process.env.RESEND_API_KEY) return { ok: false, reason: "RESEND_API_KEY is not configured." };
+  try {
+    const response = await fetch(`${RESEND_ENDPOINT}/${encodeURIComponent(id)}/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+      signal: AbortSignal.timeout(TIMEOUT_MS),
+      cache: "no-store",
+    });
+    if (!response.ok) {
+      return { ok: false, reason: `Resend did not cancel the email (${response.status}): ${(await response.text()).slice(0, 300)}` };
+    }
+    return { ok: true, id };
+  } catch (err) {
+    return { ok: false, reason: `Email could not be cancelled: ${err instanceof Error ? err.message : String(err)}` };
+  }
 }

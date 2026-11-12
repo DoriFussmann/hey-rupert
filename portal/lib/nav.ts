@@ -11,7 +11,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
     id: "clients",
     label: "Clients",
     items: [
-      { href: "/admin", label: "Clients" },
+      { href: "/admin", label: "Clients & Prospects" },
       { href: "/admin/timeline", label: "Timeline" },
       { href: "/admin/notifications", label: "Notify & Nudge" },
       { href: "/admin/replies", label: "Replies" },
@@ -63,7 +63,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
 
 /** Whether a page path belongs to a nav link (ignoring its hash). */
 export function navPathMatches(pathname: string, href: string) {
-  if (href === "/admin") return pathname === "/admin" || pathname.startsWith("/admin/clients");
+  if (href === "/admin") return pathname === "/admin" || pathname.startsWith("/admin/clients") || pathname.startsWith("/admin/prospects");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

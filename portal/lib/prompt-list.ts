@@ -1,11 +1,13 @@
 // The AI prompts Rupert uses, by name and area only: small enough for the
 // admin nav. Their texts and details are in lib/prompts.ts. Pure module.
 
-export type PromptGroup = "Intake" | "Company and narrative" | "Emails to founders" | "Matching" | "Taxonomy" | "Test Pilot";
+export type PromptGroup = "Prospects" | "Intake" | "Company and narrative" | "Emails to founders" | "Matching" | "Taxonomy" | "Test Pilot";
 
-export const PROMPT_GROUPS: PromptGroup[] = ["Intake", "Company and narrative", "Emails to founders", "Matching", "Taxonomy", "Test Pilot"];
+export const PROMPT_GROUPS: PromptGroup[] = ["Prospects", "Intake", "Company and narrative", "Emails to founders", "Matching", "Taxonomy", "Test Pilot"];
 
 export const PROMPT_LIST = [
+  { key: "prospect_brief", title: "Prospect brief (before a call)", group: "Prospects" },
+  { key: "prospect_follow_up", title: "Prospect follow-up email", group: "Prospects" },
   { key: "intake_interviewer", title: "Intake interviewer", group: "Intake" },
   { key: "intake_summary", title: "Intake summary (founder reviews)", group: "Intake" },
   { key: "intake_brief", title: "Intake brief (for Rupert)", group: "Intake" },
