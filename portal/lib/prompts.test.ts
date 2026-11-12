@@ -12,10 +12,10 @@ const read = (path: string) => readFileSync(join(portal, path), "utf8").replace(
 const row = (slug: string, content: string | null, version: number | null): PromptRow => ({ slug, content, active_version: version });
 const slug = (key: Parameters<typeof promptDefinition>[0]) => promptDefinition(key).slug;
 
-test("the registry: 40 prompts, each stored once, each starting text usable", () => {
-  assert.equal(PROMPTS.length, 40);
-  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 40);
-  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 40);
+test("the registry: 42 prompts, each stored once, each starting text usable", () => {
+  assert.equal(PROMPTS.length, 42);
+  assert.equal(new Set(PROMPTS.map((p) => p.key)).size, 42);
+  assert.equal(new Set(PROMPTS.map((p) => p.slug)).size, 42);
   for (const prompt of PROMPTS) {
     // The database only accepts these slugs as prompts.
     assert.ok(prompt.slug === "intake_prompt" || prompt.slug.startsWith("agent_prompt:"), prompt.slug);

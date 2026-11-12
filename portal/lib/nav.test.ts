@@ -42,8 +42,9 @@ test("the current page opens its group and highlights its link", () => {
   assert.equal(activeNavGroup("/admin/forms/agents"), "agents");
   assert.equal(activeNavGroup("/admin/forms/agents/feedback_email"), "agents");
   assert.equal(activeNavGroup("/nowhere"), null);
-  assert.ok(navItemActive("/admin/clients/x", "", item("clients", "Clients"), group("clients")));
-  assert.ok(!navItemActive("/admin/timeline", "", item("clients", "Clients"), group("clients")));
+  assert.ok(navItemActive("/admin/clients/x", "", item("clients", "Clients & Prospects"), group("clients")));
+  assert.ok(navItemActive("/admin/prospects/x", "", item("clients", "Clients & Prospects"), group("clients")));
+  assert.ok(!navItemActive("/admin/timeline", "", item("clients", "Clients & Prospects"), group("clients")));
 });
 
 test("section links: the one in the hash is current, the first one when there is no hash", () => {
@@ -62,7 +63,7 @@ test("Agents: one link per managed prompt; All prompts is current only on the li
   const all = item("agents", "All prompts");
   const narrative = item("agents", "Narrative email");
   assert.equal(narrative.href, "/admin/forms/agents/narrative_email");
-  assert.equal(agents.items.length, 5 + 40);
+  assert.equal(agents.items.length, 5 + 42);
   assert.ok(navItemActive("/admin/forms/agents", "", all, agents));
   assert.ok(!navItemActive("/admin/forms/agents/narrative_email", "", all, agents));
   assert.ok(navItemActive("/admin/forms/agents/narrative_email", "", narrative, agents));

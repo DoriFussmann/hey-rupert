@@ -32,6 +32,7 @@ import {
 } from "@/lib/form-fields";
 import { clientDisplayName } from "@/lib/format";
 import { sendAdminEmail, type EmailResult } from "@/lib/email";
+import { linkProspectToClient } from "@/lib/prospects/server";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { DEFAULT_NDA } from "@/lib/nda";
 import {
@@ -388,6 +389,9 @@ export async function createClientRecord(
     const pushed = await sendDefaultStatementOfWork(userId);
     sow = pushed.ok ? { ok: true } : { ok: false, error: pushed.error };
   }
+
+  // A prospect who booked a call with this email is now this client.
+  if (!testPilot) await linkProspectToClient(supabase, email, userId);
 
   revalidatePath("/admin");
   return {

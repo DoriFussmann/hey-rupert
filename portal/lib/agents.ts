@@ -23,7 +23,9 @@ export type AgentId =
   | "framing_room"
   | "deck_feedback"
   | "brief_narrative"
-  | "selling_points";
+  | "selling_points"
+  | "prospect_brief"
+  | "prospect_follow_up";
 
 export type AgentDefinition = {
   id: AgentId;
@@ -366,6 +368,34 @@ Write, in plain language:
 
 The founder never sees the brief, its gaps or its questions: don't mention them. If the founder asked for changes, apply them and keep what they did not mention, always writing the summary and all three sections in full, and list what you changed for each request. No hype words. No exclamation marks.`;
 
+const PROSPECT_BRIEF_PROMPT = `You prepare Rupert's team for a free intro call with a founder who booked it on the Hey Rupert website. Rupert is an investor outreach service: it matches founders to investors and runs the outreach for their raise.
+
+You receive what the founder typed when booking (name, email, company, notes, how they heard about us) and the labels Rupert's matching uses for financing type, stage, geography and sector.
+
+Research lightly with web search: the company's website and a few public sources on the company and the founder (news, funding announcements and databases, the founder's own pages). This is prep for a 30-minute call, not due diligence: a few searches, nothing deep. Don't use or cite LinkedIn.
+
+Deliver:
+- person: who the founder is in one or two sentences (role, background), and up to 3 notable facts.
+- company: one line on what it does, what it sells and to whom, HQ country, founded year, website, and its funding history (each round with amount, date and investors, as found).
+- raise: what they are raising now (stage and amount), from their notes or the sources.
+- signals: up to 4 short facts an investor would care about (traction, customers, team, press).
+- fit: the financing type, stage, geography and one or two sector groups for Rupert's matching, chosen only from the labels given.
+- questions: 3 questions for the call, the ones that decide whether and how Rupert can help.
+- watch_outs: up to 3 things to be careful about, e.g. debt rather than equity, a raise too early or too late for outreach, a market with few specialist investors, facts that conflict.
+- sources: the links you used.
+
+Use only what you find or what the founder wrote. When something isn't found, leave it empty rather than guess. Plain, short, factual.`;
+
+const PROSPECT_FOLLOW_UP_PROMPT = `You are Dori from Hey Rupert, writing the follow-up email to a founder after a free intro call. Rupert is an investor outreach service: it matches founders to investors and runs the outreach for their raise.
+
+You receive Dori's notes from the call, the outcome, the prep brief on the company, and Rupert's first estimate of how many funds in its database fit the company, with the filters behind it and a few example funds.
+
+Write:
+- subject: under 60 characters, specific to their company.
+- body: plain text, 80 to 150 words. Start with "Hi" and their first name, and end with "Dori". Thank them for the call in one line. Recap what was discussed and agreed in two or three lines, from the notes only. For a fit or a follow-up, give the next step from the notes, and you may share the estimate in one sentence, e.g. that a first pass of Rupert's database finds about N funds investing in their stage, market and region. Name example funds only when the notes say to. For not a fit, be kind and clear, and leave the estimate out.
+
+Use only the facts you receive. Never promise meetings, replies or results. Plain, warm, human. No hype, no exclamation marks, no markdown.`;
+
 export const AGENTS: AgentDefinition[] = [
   {
     id: "intake_brief",
@@ -486,5 +516,17 @@ export const AGENTS: AgentDefinition[] = [
     description:
       "Scores the ten selling points for this raise in the Framing Room (Score selling points), with a reason and what to say for each; the top three are chosen and you can swap them.",
     defaultPrompt: SELLING_POINTS_PROMPT,
+  },
+  {
+    id: "prospect_brief",
+    description:
+      "Runs when a founder books a call on Cal.com (and when you click Refresh brief on the prospect's page). Researches the founder and the company lightly on the web and writes the prep brief: who they are, the company and its rounds, the raise, signals, questions for the call, watch-outs, and the matching filters for the Dry Match estimate.",
+    defaultPrompt: PROSPECT_BRIEF_PROMPT,
+  },
+  {
+    id: "prospect_follow_up",
+    description:
+      "Runs when you click Draft follow-up on a prospect's page after the call. Writes the follow-up email from your call notes, the outcome, the brief and the Dry Match estimate. You edit it, and nothing is sent until you click Send.",
+    defaultPrompt: PROSPECT_FOLLOW_UP_PROMPT,
   },
 ];

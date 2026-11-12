@@ -7,13 +7,14 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "node --experimental-strip-types --test lib/*.test.ts lib/taxonomy/*.test.ts lib/company-profile/*.test.ts lib/match/tiers/*.test.ts lib/match/capacity/*.test.ts lib/match/dry/*.test.ts lib/match/landscape/*.test.ts lib/match/added/*.test.ts lib/match/roster/*.test.ts lib/match/plan/*.test.ts lib/match/proven/*.test.ts lib/match/summary/*.test.ts lib/outreach/*.test.ts"
+    "test": "node --experimental-strip-types --test lib/*.test.ts lib/taxonomy/*.test.ts lib/company-profile/*.test.ts lib/match/tiers/*.test.ts lib/match/capacity/*.test.ts lib/match/dry/*.test.ts lib/match/landscape/*.test.ts lib/match/added/*.test.ts lib/match/roster/*.test.ts lib/match/plan/*.test.ts lib/match/proven/*.test.ts lib/match/summary/*.test.ts lib/outreach/*.test.ts lib/prospects/*.test.ts"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",
     "@supabase/ssr": "^0.12.5",
     "@supabase/supabase-js": "^2.112.4",
     "@uiw/react-md-editor": "^4.1.2",
+    "@vercel/functions": "^3.11.2",
     "exceljs": "^4.4.0",
     "next": "^14.2.35",
     "react": "^18",
