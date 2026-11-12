@@ -60,6 +60,11 @@ export async function applyBooking(supabase: ServiceClient, booking: ParsedBooki
     .maybeSingle<Pick<ProspectRow, "id" | "name" | "company_name" | "website" | "heard_from" | "utm" | "status" | "client_id">>();
   if (findError) return { ok: false, error: tableError(findError.message, findError.code) };
 
+  // Clients book through the same Cal.com account (the portal's Book a call link): their calls are
+  // stored on the client's prospect record, with no brief and no prep emails.
+  const { data: client } = await supabase.from("clients").select("id").eq("email", booking.email).maybeSingle<{ id: string }>();
+  const clientId = existing?.client_id ?? client?.id ?? null;
+
   const isNew = ["BOOKING_CREATED", "BOOKING_REQUESTED", "BOOKING_RESCHEDULED"].includes(booking.trigger);
   let prospectId = existing?.id ?? null;
   if (!prospectId) {
@@ -72,7 +77,8 @@ export async function applyBooking(supabase: ServiceClient, booking: ParsedBooki
         website: websiteFromEmail(booking.email),
         heard_from: booking.heardFrom,
         utm: booking.utm,
-        status: booking.status === "CANCELLED" ? "cancelled" : "call_booked",
+        status: clientId ? "converted" : booking.status === "CANCELLED" ? "cancelled" : "call_booked",
+        ...(clientId ? { client_id: clientId, converted_at: now() } : {}),
       })
       .select("id")
       .single<{ id: string }>();
@@ -85,7 +91,8 @@ export async function applyBooking(supabase: ServiceClient, booking: ParsedBooki
     if (!existing!.website) patch.website = websiteFromEmail(booking.email);
     if (!existing!.heard_from && booking.heardFrom) patch.heard_from = booking.heardFrom;
     if (!existing!.utm && booking.utm) patch.utm = booking.utm;
-    if (isNew) patch.status = statusAfterBooking(isProspectStatus(existing!.status) ? existing!.status : null);
+    if (clientId && !existing!.client_id) Object.assign(patch, { client_id: clientId, status: "converted", converted_at: now() });
+    else if (isNew) patch.status = statusAfterBooking(isProspectStatus(existing!.status) ? existing!.status : null);
     const { error } = await supabase.from("prospects").update(patch).eq("id", prospectId);
     if (error) return { ok: false, error: tableError(error.message, error.code) };
   }
@@ -130,12 +137,13 @@ export async function applyBooking(supabase: ServiceClient, booking: ParsedBooki
     // Cancelled with no other call ahead: the prospect is marked cancelled (unless already decided).
     const calls = await callsOf(supabase, prospectId);
     const ahead = calls.ok && calls.calls.some((c) => c.status === "ACCEPTED" && c.end_time && Date.parse(c.end_time) > Date.now());
-    if (!ahead && (!existing || existing.status === "call_booked")) {
+    if (!clientId && !ahead && (!existing || existing.status === "call_booked")) {
       await supabase.from("prospects").update({ status: "cancelled", updated_at: now() }).eq("id", prospectId);
     }
     return { ok: true, outcome: `cancelled ${booking.uid}`, prospectId };
   }
   if (timeChanged && before) await cancelCallEmails(supabase, before);
+  if (clientId) return { ok: true, outcome: `${before ? "updated" : "stored"} ${booking.uid} (client)`, prospectId };
   return { ok: true, outcome: `${before ? "updated" : "stored"} ${booking.uid}`, prospectId, prepare: isNew || Boolean(timeChanged) };
 }
 
@@ -333,6 +341,7 @@ export async function dailyProspectSweep(supabase: ServiceClient) {
   );
   for (const id of ids) {
     const p = await getProspectRow(supabase, id);
+    if (p.ok && p.prospect.client_id) continue;
     if (p.ok && (p.prospect.brief_status === "failed" || (p.prospect.brief_status === "running" && !briefRunning(p.prospect)))) {
       const b = await buildBriefAndEstimate(supabase, id);
       if (b.ok) out.briefs += 1;
