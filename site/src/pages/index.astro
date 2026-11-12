@@ -192,6 +192,11 @@ const faqs = [
       "Databases and CRMs give you a list and a place to track it, and you still research, write and follow up yourself. Rupert does that work for you: it researches the investors, writes the outreach and runs the follow-up, with your approval. Rupert does not sell its investor database as a contact list.",
   },
   {
+    question: "How is Rupert different from a placement agent or a success-fee advisor?",
+    answer:
+      "Placement agents and success-fee advisors usually charge a retainer plus a percentage of the round, and often contact investors under their own name. Rupert charges a setup fee and a flat monthly fee, with no percentage and no equity. The outreach goes from your own inbox with your approval, and you negotiate and close the round yourself. Rupert is not a broker-dealer or a placement agent.",
+  },
+  {
     question: "Does Rupert work with companies in my sector?",
     answer:
       "Rupert is sector-agnostic. Its investor database covers almost every industry, and investors are matched to your company by sector, stage, geography and financing type.",
@@ -200,6 +205,21 @@ const faqs = [
     question: "Can founders outside the United States use Rupert?",
     answer:
       "Yes. Rupert works with founders in any country who can work in English. The investor database includes funds outside the United States as well as US funds.",
+  },
+  {
+    question: "Does Rupert help with my pitch deck?",
+    answer:
+      "Yes. Setup includes work on your narrative, ranked feedback on your deck and materials, and messaging for each type of investor, all before any outreach starts. Setup takes 2 to 4 weeks.",
+  },
+  {
+    question: "I already have an investor list. Can Rupert check it?",
+    answer:
+      "Yes. Rupert can run your list against its own database of over 10,000 funds, check each investor for fit with your stage, sector, geography and financing type, and enrich the list with what is missing.",
+  },
+  {
+    question: "What is Rupert's track record?",
+    answer:
+      "Rupert is run by its founder, Dori Fussmann, a former investment banker at Citi, Morgan Stanley and Ion Pacific, and the founder and former CEO of The Vets. As a fractional CFO and advisor he has helped companies raise over $250m, in most cases with the same tools and process Rupert uses today. Rupert, launched in 2026, is the name that work now runs under.",
   },
 ];
 
@@ -212,12 +232,7 @@ const jsonLd: Record<string, unknown>[] = [
     serviceType: "Investor outreach",
     description: `${description} No success fee or percentage of capital raised.`,
     url: absoluteUrl("/"),
-    areaServed: [
-      { "@type": "Country", name: "United States" },
-      { "@type": "Country", name: "Canada" },
-      { "@type": "Country", name: "United Kingdom" },
-      { "@type": "Country", name: "Ireland" },
-    ],
+    areaServed: "Worldwide",
   },
   {
     "@context": "https://schema.org",
@@ -444,7 +459,7 @@ const jsonLd: Record<string, unknown>[] = [
     </section>
 
     <section class="site-wrap section-block rule reveal" aria-labelledby="faq-heading">
-      <FaqBlock faqs={faqs} bordered={false} />
+      <FaqBlock faqs={faqs} bordered={false} columns={2} />
     </section>
   </main>
   <CtaBanner />
