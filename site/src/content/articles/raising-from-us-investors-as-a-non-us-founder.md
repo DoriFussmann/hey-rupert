@@ -73,7 +73,7 @@ A fund's website may say it invests globally. Its portfolio is what tells you th
 
 Filtering by portfolio geography is only one dimension. The list also needs to be filtered by stage, sector, and financing type. A fund that checks every other box but has never backed a company outside North America is probably not the right starting point. When a founder pulls a large list of US funds from a database such as ProRaise and finds that many of them do not appear to back non-US companies, the problem is usually that the initial list was filtered on stage and sector alone, without a portfolio-level geography check.
 
-Three passes over a well-structured database get you to a usable list: funds that fit the stage, sector, geography, and financing type; the investors behind funded competitors and comparable companies; and the funds whose portfolios most closely resemble what the company is building. Rupert's database covers over 10,000 funds, including non-US funds, and each search runs those three passes before human review and founder approval. The objective is not a large list — it is a right list.
+Three passes over a well-structured database get you to a usable list: funds that fit the stage, sector, geography, and financing type; the investors behind funded competitors and comparable companies; and the funds whose portfolios most closely resemble what the company is building. [Rupert](/book-call/)'s database covers over 10,000 funds, including non-US funds, and each search runs those three passes before human review and founder approval. The objective is not a large list — it is a right list.
 
 ## Should You Also Approach European Investors?
 
