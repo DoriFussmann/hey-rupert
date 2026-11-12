@@ -50,6 +50,12 @@ export const GET: APIRoute = async () => {
         description:
           "Rupert uses investor research to judge fit by thesis, stage, sector, geography, check size and mandate. The database is never sold as a contact list.",
       },
+      {
+        title: "Founders Outside the US",
+        path: "/founders-outside-the-us/",
+        description:
+          "Rupert runs investor outreach for founders based outside the United States who want to reach US and European funds. It works with founders in any country who can work in English; its founder has run outreach for founders in the UK, Germany, Spain, Portugal and Poland.",
+      },
       // Topic hubs: one page per core subject, listing its articles.
       ...TOPICS.map((topic) => ({
         title: topic.h1,
