@@ -2,24 +2,32 @@
 interface Props {
   faqs: { question: string; answer: string }[];
   bordered?: boolean;
+  /** 2 lays the questions out in two columns from tablet width up; they read down the first column, then the second. */
+  columns?: 1 | 2;
 }
 
-const { faqs, bordered = true } = Astro.props;
+const { faqs, bordered = true, columns = 1 } = Astro.props;
+const half = Math.ceil(faqs.length / 2);
+const groups = columns === 2 ? [faqs.slice(0, half), faqs.slice(half)] : [faqs];
 ---
 
 <section class:list={[{ "rule mt-2xl pt-xl": bordered }]}>
   <h2 id="faq-heading" class="type-h2">Frequently Asked Questions</h2>
-  <div class="faq-list mt-lg">
+  <div class:list={["mt-lg", { "faq-columns": columns === 2 }]}>
     {
-      faqs.map((faq) => (
-        <details class="faq-item">
-          <summary class="type-h4">{faq.question}</summary>
-          <div class="faq-item__panel">
-            <div class="faq-item__body">
-              <p class="type-body">{faq.answer}</p>
-            </div>
-          </div>
-        </details>
+      groups.map((group) => (
+        <div class="faq-list">
+          {group.map((faq) => (
+            <details class="faq-item">
+              <summary class="type-h4">{faq.question}</summary>
+              <div class="faq-item__panel">
+                <div class="faq-item__body">
+                  <p class="type-body">{faq.answer}</p>
+                </div>
+              </div>
+            </details>
+          ))}
+        </div>
       ))
     }
   </div>
