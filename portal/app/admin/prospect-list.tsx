@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { STATUS_LABEL, formatWhen } from "@/lib/prospects/core";
+import { STATUS_LABEL, estimateMissing, estimateReady, formatWhen } from "@/lib/prospects/core";
 import { ADMIN_TIME_ZONE, type ProspectListItem } from "@/lib/prospects/server";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -71,8 +71,10 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
                       </span>
                     </td>
                     <td className="px-lg py-md text-muted">
-                      {p.match ? (
+                      {estimateReady(p.match) ? (
                         <span className="text-body">~{p.match.count.toLocaleString("en-US")} funds</span>
+                      ) : p.brief_status === "ready" ? (
+                        `Needs ${estimateMissing(p.match).join(", ")}`
                       ) : p.brief_status === "running" || p.brief_status === "pending" ? (
                         "Preparing…"
                       ) : p.brief_status === "failed" ? (

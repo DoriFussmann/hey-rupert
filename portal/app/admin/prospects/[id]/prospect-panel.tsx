@@ -10,7 +10,7 @@ import {
   sendProspectFollowUp,
   updateProspectEstimate,
 } from "@/app/admin/prospect-actions";
-import { OUTCOMES, filtersLine, type FitOptions, type MatchEstimate, type ProspectBrief, type ProspectStatus } from "@/lib/prospects/core";
+import { OUTCOMES, estimateMissing, estimateReady, filtersLine, missingText, type FitOptions, type MatchEstimate, type ProspectBrief, type ProspectStatus } from "@/lib/prospects/core";
 
 export type PanelProspect = {
   id: string;
@@ -225,18 +225,19 @@ function FitCard({ prospect, options, optionsError }: { prospect: PanelProspect;
           </button>
         ) : null}
       </div>
-      {!m ? (
+      {!m && !prospect.brief ? (
         <p className="mt-sm text-body-sm text-muted">No estimate yet: it runs with the brief.</p>
+      ) : !estimateReady(m) ? (
+        <p className="mt-sm text-body-sm text-muted">
+          No estimate: {missingText(estimateMissing(m))} not known yet. The count needs all three; set them with Change filters once you know them.
+        </p>
       ) : (
         <>
           <p className="mt-sm text-h2 font-light text-heading">
             ~{m.count.toLocaleString("en-US")}{" "}
             <span className="text-body-sm text-muted">of {m.total.toLocaleString("en-US")} funds fit</span>
           </p>
-          <p className="text-body-sm text-muted">
-            {filtersLine(m)}
-            {m.open.length ? ` · open: ${m.open.join(", ")}` : ""}
-          </p>
+          <p className="text-body-sm text-muted">{filtersLine(m)}</p>
           <ol className="mt-sm grid gap-xs text-body-sm">
             {m.steps.map((s) => (
               <li key={s.step} className="flex justify-between gap-md border-b border-border pb-xs last:border-b-0">
