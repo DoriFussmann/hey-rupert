@@ -22,13 +22,21 @@ keywords:
   - raising from US investors as a non-US founder
   - how to find investors
 draft: false
-internalLinks: []
+internalLinks:
+  - slug: how-to-find-investors
+    anchor: How to find the right investors
+  - slug: investor-database
+    anchor: Choosing and using an investor database
+  - slug: investor-list
+    anchor: How to build an investor list that works
+  - slug: how-to-cold-email-investors
+    anchor: How to cold email investors and get replies
 externalLinks:
-  - label: "Sequoia&#x27;s London Exit Not a Sign US Investors Are Souring on Europe - Newsweek"
+  - label: "Sequoia's London Exit Not a Sign US Investors Are Souring on Europe - Newsweek"
     url: "https://www.newsweek.com/us-funds-europe-ai-startup-opportunities-12631324"
     addedAt: 2026-11-12
     kind: where-things-stand
-  - label: globenewswire.com
+  - label: "Venture Capital Market Witnesses Growth Driven by Rising Startup Investments - GlobeNewswire"
     url: "https://www.globenewswire.com/news-release/2026/11/10/3399346/0/en/venture-capital-market-witnesses-growth-driven-by-rising-startup-investments-and-innovation-funding-coherent-market-insights.html"
     addedAt: 2026-11-12
     kind: where-things-stand
@@ -51,7 +59,7 @@ faqs:
 
 Many US funds invest in companies founded and based abroad. Many do not. The honest answer is that it depends on the fund, the stage, and the sector — and the practical job is to find the ones that already have portfolio companies outside the US, rather than hoping a fund will make an exception for yours.
 
-Working with founders in the UK, Germany, Spain, Portugal, and Poland, the pattern holds every time: every one of them wanted more access to US investors, and in every case the search turned up relevant US funds — alongside more investors in Europe than the founders had on their original lists. Nothing about the approach is fundamentally different from working with a US-based founder. The same filters apply: stage fit, sector fit, financing type, geography. What changes is one specific question that US investors raise, almost without exception, before anything else.
+Working with founders in the UK, Germany, Spain, Portugal, and Poland, the pattern holds every time: every one of them wanted more access to US investors, and in every case the search turned up relevant US funds — alongside more investors in Europe than the founders had on their original lists. Nothing about the approach is fundamentally different from working with a US-based founder. The same filters apply: stage fit, sector fit, financing type, geography (the general process is in [how to find the right investors](/articles/how-to-find-investors/)). What changes is one specific question that US investors raise, almost without exception, before anything else.
 
 ## The One Question Every US Investor Will Ask
 
@@ -61,11 +69,11 @@ That means the first outreach email and the deck need to address the US plan dir
 
 ## Do You Need a Delaware Company Before Approaching US Funds?
 
-A Delaware flip is a legal restructuring in which a foreign company creates a Delaware C corporation as its parent entity, then transfers ownership of the business — including its assets and intellectual property — into that US entity. Non-US startups that want to accept funding from US investors can restructure and incorporate in Delaware by executing a "Delaware flip," setting up a corporation in Delaware to serve as the parent company and making the original foreign startup its subsidiary.
+A Delaware flip is a restructuring: the founders set up a new Delaware C corporation, the shareholders swap their shares in the existing company for shares in it, and the original company becomes its subsidiary. The business, its staff and its intellectual property stay where they are; what changes is the entity at the top that investors buy into.
 
-Whether you need to do this before approaching US funds depends on the fund and the stage. Some US investors will require a Delaware flip before they invest, since incorporation in Delaware can help facilitate more efficient portfolio management and stronger regulatory protections. Others will invest directly into a foreign entity, particularly at earlier stages. At seed, many US investors with established cross-border portfolios will invest in a UK or European company directly and will not force a Delaware flip for a small early round if the company is good.
+Whether you need to do this before approaching US funds depends on the fund and the stage. Some US investors require a flip before they invest, because a Delaware parent is the structure their lawyers, documents and fund terms are built around. Others will invest directly into a foreign entity, particularly at earlier stages. At seed, many US investors with established cross-border portfolios will invest in a UK or European company directly and will not force a Delaware flip for a small early round if the company is good.
 
-The practical guidance is to raise the question early with the funds you are approaching. Do not assume a flip is required, and do not assume it is not. US investors often request this structure, but founders should confirm the requirement before accepting the expense and tax exposure. And because a flip is a legal and tax decision — with real consequences for existing shareholders and their tax positions — it requires qualified legal counsel. This article does not provide legal advice.
+The practical guidance is to raise the question early with the funds you are approaching. Do not assume a flip is required, and do not assume it is not. A flip costs money and can create a tax bill, so confirm a fund actually requires it before you take that on. And because a flip is a legal and tax decision — with real consequences for existing shareholders and their tax positions — it requires qualified legal counsel. This article does not provide legal advice.
 
 ## How to Find US Funds That Actually Invest Abroad
 
@@ -73,7 +81,7 @@ A fund's website may say it invests globally. Its portfolio is what tells you th
 
 Filtering by portfolio geography is only one dimension. The list also needs to be filtered by stage, sector, and financing type. A fund that checks every other box but has never backed a company outside North America is probably not the right starting point. When a founder pulls a large list of US funds from a database such as ProRaise and finds that many of them do not appear to back non-US companies, the problem is usually that the initial list was filtered on stage and sector alone, without a portfolio-level geography check.
 
-Three passes over a well-structured database get you to a usable list: funds that fit the stage, sector, geography, and financing type; the investors behind funded competitors and comparable companies; and the funds whose portfolios most closely resemble what the company is building. [Rupert](/book-call/)'s database covers over 10,000 funds, including non-US funds, and each search runs those three passes before human review and founder approval. The objective is not a large list — it is a right list.
+Three passes over a well-structured database get you to a [usable list](/articles/investor-list/): funds that fit the stage, sector, geography, and financing type; the investors behind funded competitors and comparable companies; and the funds whose portfolios most closely resemble what the company is building. Rupert's [investor database](/database/) covers over 10,000 funds, including non-US funds, and each search runs those three passes before human review and founder approval. The objective is not a large list — it is a right list.
 
 ## Should You Also Approach European Investors?
 
@@ -87,13 +95,13 @@ They do, with the same conditions that apply to any cold outreach: the email has
 
 The mechanics are the same regardless of where the founder is based. The email goes from the founder's own inbox, not from a third-party sender or under another name. It addresses the US-market question directly, because that is the objection a US investor is already forming while reading the first paragraph. It references why this particular fund is relevant: a portfolio company in the sector, a stated thesis, a funded competitor. It does not attach the deck. It asks for a short call.
 
-A warm introduction converts better than cold outreach, every time. But most founders outside the US who want to reach US investors do not have warm paths into the funds that fit — especially not into funds in markets where they have no existing connections. The founder in Germany who has relied entirely on warm intros from their local network is not at a structural disadvantage when using cold outreach to reach London and US investors, as long as the email is specific and the target list is correct. Cold email, done properly, is a legitimate primary channel.
+A warm introduction converts better than cold outreach, every time. But most founders outside the US who want to reach US investors do not have warm paths into the funds that fit — especially not into funds in markets where they have no existing connections. The founder in Germany who has relied entirely on warm intros from their local network is not at a structural disadvantage when using cold outreach to reach London and US investors, as long as the email is specific and the target list is correct. Cold email, done properly, is a legitimate primary channel. The step-by-step mechanics are in [how to cold email investors](/articles/how-to-cold-email-investors/).
 
 ## What US Investors Expect in the Deck That Non-US Decks Often Miss
 
 The most consistent gap in decks prepared by non-US founders approaching US investors is the US market case. The slides on team, traction, business model, and technology may be strong. The US section is often either missing or thin: a market size slide that cites global TAM without a US-specific breakdown, a one-sentence entry plan, and no evidence of early US demand.
 
-US investors look for the same things in a non-US deck as in any other: a credible market size, a clear why-now, defensible unit economics, and a team that can execute. What they additionally need — and what non-US decks regularly omit — is a US-specific market entry plan that answers their primary concern directly. US customers in a pilot, a US enterprise in a sales process, or a US-based commercial hire already in place all carry weight. The absence of anything US-facing, when the round is being raised from US investors, is a gap investors notice immediately.
+US investors look for the same things in a non-US deck as in any other: a credible market size, a clear why-now, defensible unit economics, and a team that can execute. What they additionally need — and what non-US decks regularly omit — is a US-specific market entry plan that answers their primary concern directly. US customers in a pilot, a US enterprise in a sales process, or a US-based commercial hire already in place all carry weight. The absence of anything US-facing, when the round is being raised from US investors, is a gap investors notice immediately. For the rest of the deck, see [how to build a pitch deck that raises capital](/articles/pitch-deck/).
 
 ## Local Advisor, Self-Serve Database, or Managed Outreach?
 
@@ -101,7 +109,7 @@ For a founder outside the US who wants to reach funds abroad, there are three re
 
 A global investor database used on its own — self-serve software or a contact list — puts the full research, targeting, and writing workload on the founder. The database is as useful as the founder's ability to filter it correctly and write specific outreach for each fund. For a founder who is also running a company, that workload is the constraint: the pipeline stalls not because the tool is wrong, but because the founder's capacity runs out.
 
-Managed outreach sits between these. Someone else does the research, builds the target list, and writes the emails — but the founder approves everything before it goes out and the relationship with every investor stays entirely the founder's. That is the model Rupert runs: it works with founders in any country who can work in English, has run outreach for founders in the UK, Germany, Spain, Portugal, and Poland, and handles the research and writing while nothing is sent without the founder's approval. No success fee, no percentage of the raise, no equity. Outreach goes from the founder's own inbox. Every investor relationship stays the founder's. Rupert makes no guarantees of meetings or funding.
+Managed outreach sits between these. Someone else does the research, builds the target list, and writes the emails — but the founder approves everything before it goes out and the relationship with every investor stays entirely the founder's. That is the model [Rupert runs for founders outside the US](/founders-outside-the-us/): it works with founders in any country who can work in English, has run outreach for founders in the UK, Germany, Spain, Portugal, and Poland, and handles the research and writing while nothing is sent without the founder's approval. No success fee, no percentage of the raise, no equity. Outreach goes from the founder's own inbox. Every investor relationship stays the founder's. Rupert makes no guarantees of meetings or funding.
 
 The question for any founder is not which option sounds best in the abstract. It is which one actually gets qualified investor conversations started while the company keeps running.
 
@@ -111,7 +119,7 @@ The pattern that advisors and accelerator managers observe in stalled internatio
 
 The problem is pipeline structure, not the company. A fundraise that depends on warm intros from a local network reaches its limit quickly when the company needs international capital. What replaces it is a disciplined outreach process: a target list built on fit rather than convenience, specific emails for each investor, and a follow-up schedule that keeps conversations moving. Without that structure, the round stalls at the edges of the founder's existing network — which is exactly where it stalled before.
 
-If you are at this point — you have a credible story, some early conversations, and a clear sense that warm intros from your local network are not going to fill the pipeline — a free 30-minute consultation at [heyrupert.com/book-call/] is a reasonable next step. The conversation covers your round, your existing list if you have one, and whether the approach fits your situation. No commitment, no sales pressure.
+If you are at this point — you have a credible story, some early conversations, and a clear sense that warm intros from your local network are not going to fill the pipeline — a [free 30-minute consultation](/book-call/) is a reasonable next step. The conversation covers your round, your existing list if you have one, and whether the approach fits your situation. No commitment, no sales pressure.
 
 ## Where Things Stand
 <!-- WHERE-THINGS-STAND:START -->

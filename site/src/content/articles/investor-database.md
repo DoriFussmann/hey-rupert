@@ -124,7 +124,7 @@ Where institutional-grade platforms genuinely earn their cost for startups is be
 
 A database gives you raw material. Building a qualified [target list](/articles/investor-list/) requires layering judgment on top of filters.
 
-Start with the hard constraints: stage match, sector focus, check size range, and geography. These four filters eliminate the majority of investors in any database immediately. An investor who writes $5M–$15M Series A checks into enterprise SaaS is not relevant to a founder raising a $750K pre-seed round, regardless of how strong a connection you might have into that firm.
+Start with the hard constraints: stage match, sector focus, check size range, and geography. These four filters eliminate the majority of investors in any database immediately. An investor who writes $5M–$15M Series A checks into enterprise SaaS is not relevant to a founder raising a $750K pre-seed round, regardless of how strong a connection you might have into that firm. For geography, filter on where a fund's portfolio companies are based, not on what its website says; that check matters most for founders outside the US, covered in [raising from US investors as a non-US founder](/articles/raising-from-us-investors-as-a-non-us-founder/).
 
 Once the hard filters are applied, the second layer is active deployment signals. 
 The most useful databases pair deal records with a daily news feed, so track record and current signals always sit together in one search.
