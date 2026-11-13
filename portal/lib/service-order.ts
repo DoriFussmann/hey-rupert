@@ -1,7 +1,37 @@
 // Service Order: default template, client-field merge and the rules shared by
 // the admin generator, the client signing flow and onboarding progress.
 
+/** Default Setup Fee, used only when a Service Order doesn't state its own. */
 export const SETUP_FEE_LABEL = "$250";
+
+/** Reads "**Setup Fee:** $200" (Service Order) or "**Setup Fee:** $200" (SOW). */
+function feeAfter(content: string | null | undefined, label: string) {
+  if (!content) return null;
+  const pattern = new RegExp(`\\*\\*${label}:\\*\\*\\s*(\\$(?:[0-9][0-9,]*[0-9]|[0-9])(?:\\.[0-9]{2})?)`, "i");
+  return content.match(pattern)?.[1] ?? null;
+}
+
+/** The Setup Fee this document states, e.g. "$200". */
+export function setupFeeOf(content: string | null | undefined) {
+  return feeAfter(content, "Setup Fee");
+}
+
+/** The Monthly Campaign Fee this document states, e.g. "$600". */
+export function monthlyFeeOf(content: string | null | undefined) {
+  return feeAfter(content, "Monthly Campaign Fee");
+}
+
+/** The Setup Fee to show the client: the document's own, else the default. */
+export function setupFeeLabel(content: string | null | undefined) {
+  return setupFeeOf(content) ?? SETUP_FEE_LABEL;
+}
+
+/** "$200" → 20000 cents. */
+export function feeCents(label: string | null | undefined) {
+  if (!label) return null;
+  const value = Number(label.replace(/[$,]/g, ""));
+  return Number.isFinite(value) ? Math.round(value * 100) : null;
+}
 
 export const RUPERT_SIGNATORY = {
   company: "The Night Ventures, LLC, d/b/a Hey Rupert",

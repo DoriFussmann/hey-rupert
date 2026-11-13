@@ -1,4 +1,4 @@
-import { SETUP_FEE_LABEL, isKickoffReady } from "./service-order.ts";
+import { isKickoffReady, setupFeeLabel } from "./service-order.ts";
 
 export type OnboardingTimestamps = {
   sow_confirmed_at?: string | null;
@@ -173,7 +173,7 @@ export function getOnboardingItems(
       detail: paymentAt
         ? "Paid"
         : invoiceIssued
-          ? `Pay the ${SETUP_FEE_LABEL} setup invoice`
+          ? `Pay the ${setupFeeLabel(source?.service_order_content)} setup invoice`
           : "Rupert will issue",
       href: invoiceIssued ? SETUP_FEE_HREF : undefined,
       status: paymentAt

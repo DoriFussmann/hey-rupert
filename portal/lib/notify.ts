@@ -10,7 +10,9 @@ import {
   updatedSubject,
   type ClientTurn,
   type EmailSettings,
+  type EmailToken,
 } from "@/lib/email-templates";
+import { setupFeeLabel } from "@/lib/service-order";
 import {
   clientDisplayName,
   notificationAction,
@@ -153,8 +155,35 @@ export async function notifyClient(
   supabase: ServiceClient,
   clientId: string,
   turn: ClientTurn,
-  { note, updated }: { note?: string; updated?: boolean } = {},
+  options: { note?: string; updated?: boolean } = {},
 ): Promise<EmailResult> {
+  const rendered = await renderClientTurnEmail(supabase, clientId, turn, options);
+  if (!rendered.ok) return rendered;
+
+  return sendClientEmail(supabase, {
+    clientId,
+    kind: "automatic",
+    templateKey: `client:${turn}`,
+    to: [rendered.to],
+    subject: rendered.subject,
+    text: rendered.body,
+  });
+}
+
+/**
+ * The client turn email exactly as notifyClient would send it, without
+ * sending. `values` overrides fill-ins (e.g. a Setup Fee not yet saved).
+ */
+export async function renderClientTurnEmail(
+  supabase: ServiceClient,
+  clientId: string,
+  turn: ClientTurn,
+  {
+    note,
+    updated,
+    values,
+  }: { note?: string; updated?: boolean; values?: Partial<Record<EmailToken, string>> } = {},
+): Promise<{ ok: true; to: string; subject: string; body: string } | { ok: false; reason: string }> {
   const row = await loadClientRow(supabase, clientId);
   const address = clientAddress(row);
   if (!address) {
@@ -184,16 +213,16 @@ export async function notifyClient(
       ? " This is an updated version based on your feedback."
       : "",
     signature: settings.signature,
+    setup_fee: setupFeeLabel(text(row.service_order_content)),
+    ...values,
   });
 
-  return sendClientEmail(supabase, {
-    clientId,
-    kind: "automatic",
-    templateKey: key,
-    to: [address],
+  return {
+    ok: true,
+    to: address,
     subject: updated ? updatedSubject(rendered.subject) : rendered.subject,
-    text: rendered.body,
-  });
+    body: rendered.body,
+  };
 }
 
 export type PendingClientTurn = {
