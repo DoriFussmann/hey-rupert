@@ -1,5 +1,6 @@
 import { STATUS_LABEL, estimateMissing, estimateReady, formatWhen } from "@/lib/prospects/core";
 import { ADMIN_TIME_ZONE, type ProspectListItem } from "@/lib/prospects/server";
+import { ChevronDown } from "@/components/chevron";
 import { ProspectRow } from "@/app/admin/prospect-row-actions";
 
 const STATUS_STYLE: Record<string, string> = {
@@ -21,13 +22,19 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
   const rows = [...upcoming, ...rest];
 
   return (
-    <section className="mb-lg rounded-card border border-border bg-surface">
-      <div className="flex flex-wrap items-baseline justify-between gap-sm border-b border-border px-lg py-md">
+    <details className="group/calls mb-lg rounded-card border border-border bg-surface">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-sm px-lg py-md transition-colors duration-hover hover:bg-background group-open/calls:border-b group-open/calls:border-border [&::-webkit-details-marker]:hidden">
         <h2 className="text-h4">
           Calls booked <span className="text-muted">({prospects.length})</span>
+          {upcoming.length ? <span className="ml-sm text-body-sm text-primary">{upcoming.length} upcoming</span> : null}
         </h2>
-        <p className="text-body-sm text-muted">Booked a call on Cal.com, not a client yet. Click a row to edit or delete it.</p>
-      </div>
+        <span className="flex items-center gap-md">
+          <span className="hidden text-body-sm text-muted sm:inline">Booked a call on Cal.com, not a client yet. Click a row to edit or delete it.</span>
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-surface">
+            <ChevronDown className="h-4 w-4 transition-transform duration-hover group-open/calls:rotate-180" />
+          </span>
+        </span>
+      </summary>
       {error ? (
         <p className="px-lg py-lg text-body-sm text-error">{error}</p>
       ) : rows.length === 0 ? (
@@ -99,6 +106,6 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
           </table>
         </div>
       )}
-    </section>
+    </details>
   );
 }
