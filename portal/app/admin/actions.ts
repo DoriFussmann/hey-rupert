@@ -44,15 +44,18 @@ import {
 } from "@/lib/intake";
 import { callClaudeTool } from "@/lib/anthropic";
 import { loadIntakeSettings } from "@/lib/intake-server";
-import { notifyClient } from "@/lib/notify";
+import { notifyClient, renderClientTurnEmail } from "@/lib/notify";
 import {
   DEFAULT_SERVICE_ORDER,
   isKickoffReady,
   STRIPE_INVOICE_LINK_ERROR,
   isStripeInvoiceLink,
+  monthlyFeeOf,
+  setupFeeLabel,
+  setupFeeOf,
 } from "@/lib/service-order";
 import { DEFAULT_STATEMENT_OF_WORK } from "@/lib/statement-of-work";
-import { voidInvoice } from "@/lib/stripe";
+import { findInvoiceByHostedUrl, voidInvoice } from "@/lib/stripe";
 import {
   TEST_PILOT_MIGRATION_MISSING,
   isTestPilotColumnError,
@@ -1200,13 +1203,103 @@ function revalidateServiceOrderPaths(clientId: string) {
 
 export async function generateServiceOrder(
   clientId: string,
-): Promise<ActionResult & { content?: string }> {
+): Promise<ActionResult & { content?: string; source?: "client" | "template" }> {
   const access = await requireAdminService();
   if (!access.ok) return access;
-  void clientId;
+
+  // A client-specific Service Order (custom pricing) wins over the Forms
+  // template. Archiving clears it, so the next generate uses the template.
+  const { data: client } = await access.supabase
+    .from("clients")
+    .select("service_order_content")
+    .eq("id", clientId)
+    .maybeSingle();
+  const custom = String(client?.service_order_content ?? "").trim();
+  if (custom) return { ok: true, content: custom, source: "client" };
 
   const template = await getFormTemplate(SERVICE_ORDER_SLUG);
-  return { ok: true, content: template.content.trim() || DEFAULT_SERVICE_ORDER };
+  return {
+    ok: true,
+    content: template.content.trim() || DEFAULT_SERVICE_ORDER,
+    source: "template",
+  };
+}
+
+export type ServiceOrderPreview = {
+  setupFee: string | null;
+  monthlyFee: string | null;
+  sowSetupFee: string | null;
+  sowMonthlyFee: string | null;
+  invoice:
+    | { ok: true; amount: string; status: string; customerEmail: string | null; number: string | null }
+    | { ok: false; reason: string };
+  email:
+    | { ok: true; to: string; subject: string; body: string }
+    | { ok: false; reason: string };
+};
+
+/** Everything the client will receive, without sending anything. */
+export async function previewServiceOrderSend(
+  clientId: string,
+  content: string,
+  paymentLink: string,
+): Promise<ActionResult & { preview?: ServiceOrderPreview }> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+
+  const { data: client, error } = await access.supabase
+    .from("clients")
+    .select("statement_of_work_content, is_test_pilot")
+    .eq("id", clientId)
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!client) return { ok: false, error: "Client not found." };
+
+  const { data: sow } = await access.supabase
+    .from("statement_of_work_sends")
+    .select("content")
+    .eq("client_id", clientId)
+    .is("archived_at", null)
+    .order("sent_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const sowContent = sow?.content || client.statement_of_work_content || "";
+
+  const pasted = paymentLink.trim();
+  const invoice: ServiceOrderPreview["invoice"] = client.is_test_pilot
+    ? { ok: false, reason: "Test pilot: no invoice." }
+    : !pasted
+      ? { ok: false, reason: "No invoice link yet." }
+      : await (async () => {
+          const found = await findInvoiceByHostedUrl(pasted);
+          if (!found.ok) return { ok: false as const, reason: found.error };
+          const v = found.value;
+          return {
+            ok: true as const,
+            amount: `$${(v.amount_due / 100).toLocaleString("en-US", {
+              minimumFractionDigits: v.amount_due % 100 ? 2 : 0,
+            })}`,
+            status: v.status ?? "unknown",
+            customerEmail: v.customer_email,
+            number: v.number,
+          };
+        })();
+
+  const email = await renderClientTurnEmail(access.supabase, clientId, "service_order_ready", {
+    values: { setup_fee: setupFeeLabel(content) },
+  });
+
+  return {
+    ok: true,
+    preview: {
+      setupFee: setupFeeOf(content),
+      monthlyFee: monthlyFeeOf(content),
+      sowSetupFee: setupFeeOf(sowContent),
+      sowMonthlyFee: monthlyFeeOf(sowContent),
+      invoice,
+      email,
+    },
+  };
 }
 
 export async function sendServiceOrder(

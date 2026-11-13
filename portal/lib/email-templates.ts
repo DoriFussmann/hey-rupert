@@ -3,7 +3,6 @@
 // module: safe on the server and in the browser. Admin edits are stored in
 // `email_settings` and merged over these defaults (lib/email-settings.ts).
 
-import { SETUP_FEE_LABEL } from "@/lib/service-order";
 
 // ---------------------------------------------------------------------------
 // Fill-ins
@@ -31,7 +30,8 @@ export type EmailToken =
   | "question"
   | "answer"
   | "invoice_link"
-  | "launch_call";
+  | "launch_call"
+  | "setup_fee";
 
 /**
  * The 30-minute pre-launch call, offered under the Email Copy email. The
@@ -71,6 +71,7 @@ export const TOKEN_HELP: Record<EmailToken, string> = {
   question: "The client's question, as they wrote it",
   answer: "Your answer, as you wrote it",
   invoice_link: "The Stripe link to the client's first monthly invoice",
+  setup_fee: "The Setup Fee stated in the client's Service Order, e.g. $200",
   launch_call: "The offer of a 30-minute pre-launch call, with the booking link",
 };
 
@@ -98,6 +99,7 @@ export const SAMPLE_VALUES: Record<EmailToken, string> = {
   question: "Could we leave out funds that backed our main competitor?",
   answer: "Yes. I've marked them, and they won't be contacted.",
   invoice_link: "https://invoice.stripe.com/i/sample",
+  setup_fee: "$250",
   launch_call: launchCallText(),
 };
 
@@ -221,6 +223,7 @@ export const CLIENT_TOKENS_LIST: readonly EmailToken[] = [
   "note",
   "updated_line",
   "signature",
+  "setup_fee",
 ];
 
 export const ADMIN_TOKENS_LIST: readonly EmailToken[] = [
@@ -386,7 +389,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
     "When you push a Service Order and Setup Fee invoice.",
     "/portal/service-order",
     "Your Service Order and Setup Fee invoice are ready — you're up",
-    `Rupert has prepared your Service Order and the ${SETUP_FEE_LABEL} Setup Fee invoice.`,
+    "Rupert has prepared your Service Order and the {setup_fee} Setup Fee invoice.",
     "You're up: sign the Service Order and pay the Setup Fee in your portal, in either order. Once both are done, we kick off.",
   ),
   clientTemplate(

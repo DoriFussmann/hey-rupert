@@ -3,7 +3,7 @@
 import { signServiceOrder } from "@/app/portal/actions";
 import { SignableDocument } from "@/components/signable-document";
 import { formatDate } from "@/lib/format";
-import { SETUP_FEE_LABEL, type ServiceOrderFields } from "@/lib/service-order";
+import { setupFeeLabel, type ServiceOrderFields } from "@/lib/service-order";
 import type { ServiceOrderSignature } from "@/lib/types";
 
 const primaryButton =
@@ -61,6 +61,7 @@ export function ServiceOrderPanel({
 }) {
   const signed = Boolean(signedAt);
   const paid = Boolean(paidAt);
+  const setupFee = setupFeeLabel(signedContent || content);
 
   return (
     <>
@@ -102,7 +103,7 @@ export function ServiceOrderPanel({
               <p className="mt-xs text-h4 text-heading">
                 Pay the Setup Fee{" "}
                 <span className="font-mono text-mono text-secondary">
-                  {SETUP_FEE_LABEL}
+                  {setupFee}
                 </span>
               </p>
             </div>
@@ -125,7 +126,7 @@ export function ServiceOrderPanel({
                   rel="noopener noreferrer"
                   className={`${primaryButton} self-start`}
                 >
-                  Pay {SETUP_FEE_LABEL} with Stripe
+                  Pay {setupFee} with Stripe
                   <ExternalIcon />
                 </a>
               ) : (
@@ -134,7 +135,7 @@ export function ServiceOrderPanel({
                   disabled
                   className={`${primaryButton} self-start`}
                 >
-                  Pay {SETUP_FEE_LABEL} with Stripe
+                  Pay {setupFee} with Stripe
                   <ExternalIcon />
                 </button>
               )}

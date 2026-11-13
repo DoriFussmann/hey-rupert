@@ -5,14 +5,17 @@ import { useRouter } from "next/navigation";
 import {
   archiveServiceOrder,
   generateServiceOrder,
+  previewServiceOrderSend,
   sendServiceOrder,
+  type ServiceOrderPreview,
 } from "@/app/admin/actions";
 import { Disclosure } from "@/components/disclosure";
 import { MarkdownBody } from "@/components/markdown-body";
 import { formatDate, formatDateAtTime } from "@/lib/format";
 import {
-  SETUP_FEE_LABEL,
   STRIPE_INVOICE_LINK_ERROR,
+  feeCents,
+  setupFeeLabel,
   isStripeInvoiceLink,
   mergeServiceOrder,
 } from "@/lib/service-order";
@@ -51,6 +54,9 @@ export function GenerateServiceOrder({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [view, setView] = useState<"active" | "archived">("active");
+  const [source, setSource] = useState<"client" | "template" | null>(null);
+  const [preview, setPreview] = useState<ServiceOrderPreview | null>(null);
+  const [overrideMismatch, setOverrideMismatch] = useState(false);
 
   const activeSend = sends.find((send) => !send.archived_at) ?? null;
   const hasDraft = Boolean(draft.trim());
@@ -58,7 +64,10 @@ export function GenerateServiceOrder({
   const linkValid = testPilot
     ? true
     : isStripeInvoiceLink(paymentLink);
-  const canSend = hasDraft && linkValid && !activeSend && pending === null;
+  const canReview = hasDraft && linkValid && !activeSend && pending === null;
+  const mismatches = preview ? previewMismatches(preview, testPilot) : [];
+  const canSend =
+    canReview && preview !== null && (mismatches.length === 0 || overrideMismatch);
   const archivedCount = sends.filter((send) => send.archived_at).length;
 
   const status = hasDraft
@@ -100,13 +109,40 @@ export function GenerateServiceOrder({
         return;
       }
       setDraft(result.content);
+      setSource(result.source ?? "template");
+      setPreview(null);
+      const from =
+        result.source === "client"
+          ? "Loaded this client's own Service Order (custom terms)."
+          : "Generated from the Forms Service Order template.";
       setSuccess(
         testPilot
-          ? "Generated from the Service Order template. Test pilot: no invoice is needed. Push when ready."
-          : "Generated from the Service Order template. Add the Stripe invoice link, then push.",
+          ? `${from} Test pilot: no invoice is needed. Review, then push.`
+          : `${from} Add the Stripe invoice link, review, then push.`,
       );
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to generate.");
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function onReview() {
+    setLinkTouched(true);
+    if (!canReview) return;
+    setPending("review");
+    setError(null);
+    setSuccess(null);
+    setOverrideMismatch(false);
+    try {
+      const result = await previewServiceOrderSend(clientId, draft, paymentLink);
+      if (!result.ok) {
+        setError(result.error);
+        return;
+      }
+      setPreview(result.preview ?? null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to build the preview.");
     } finally {
       setPending(null);
     }
@@ -137,6 +173,8 @@ export function GenerateServiceOrder({
       setDraft("");
       setPaymentLink("");
       setLinkTouched(false);
+      setPreview(null);
+      setSource(null);
       setView("active");
       router.refresh();
     } catch (err) {
@@ -183,7 +221,7 @@ export function GenerateServiceOrder({
           <p className="mt-xs text-body-sm text-muted">
             {testPilot
               ? "Generate from the Forms template and push. A test pilot has no Setup Fee invoice."
-              : `Generate from the Forms template, add the Stripe invoice link for the ${SETUP_FEE_LABEL} Setup Fee, then push both to the client.`}{" "}
+              : `Generate (uses the client's own Service Order if it has one, else the Forms template), add the Stripe invoice link for the ${setupFeeLabel(draft)} Setup Fee, review, then push both to the client.`}{" "}
             One active Service Order at a time; archive it to issue a new one.
           </p>
         </div>
@@ -213,6 +251,7 @@ export function GenerateServiceOrder({
               value={paymentLink}
               onChange={(event) => {
                 setPaymentLink(event.target.value);
+                setPreview(null);
                 setError(null);
               }}
               onBlur={() => setLinkTouched(true)}
@@ -264,17 +303,37 @@ export function GenerateServiceOrder({
               <td className="px-lg py-md text-right">
                 <button
                   type="button"
-                  onClick={onSend}
-                  disabled={!canSend}
-                  className={primaryButton}
+                  onClick={onReview}
+                  disabled={!canReview}
+                  className={preview ? secondaryButton : primaryButton}
                 >
-                  {pending === "send" ? "Pushing…" : "Push to Client Portal"}
+                  {pending === "review"
+                    ? "Building preview…"
+                    : preview
+                      ? "Refresh preview"
+                      : "Review what the client gets"}
                 </button>
               </td>
             </tr>
           </tbody>
         </table>
       </div>
+
+      {preview && hasDraft && !activeSend ? (
+        <ReviewPanel
+          preview={preview}
+          draft={draft}
+          paymentLink={paymentLink}
+          testPilot={testPilot}
+          source={source}
+          mismatches={mismatches}
+          overrideMismatch={overrideMismatch}
+          onOverride={setOverrideMismatch}
+          canSend={canSend}
+          pending={pending}
+          onSend={onSend}
+        />
+      ) : null}
 
       {activeSend ? (
         <dl className="grid gap-x-lg gap-y-sm border-t border-border px-lg py-md text-body-sm sm:grid-cols-[auto_1fr]">
@@ -397,7 +456,13 @@ export function GenerateServiceOrder({
 
       {hasDraft ? (
         <div className="border-t border-border px-lg">
-          <Disclosure title="Service Order text — template from Forms">
+          <Disclosure
+            title={
+              source === "client"
+                ? "Service Order text — this client's custom version"
+                : "Service Order text — template from Forms"
+            }
+          >
             <div className="py-md">
               <p className="mb-md text-body-sm text-muted">
                 Client fields are filled in when they sign.
@@ -431,5 +496,169 @@ export function GenerateServiceOrder({
         </div>
       ) : null}
     </section>
+  );
+}
+
+function previewMismatches(preview: ServiceOrderPreview, testPilot: boolean) {
+  const out: string[] = [];
+  if (!preview.setupFee) out.push("The Service Order doesn't state a Setup Fee.");
+  if (!preview.monthlyFee) out.push("The Service Order doesn't state a Monthly Campaign Fee.");
+  if (preview.sowSetupFee && preview.setupFee && preview.sowSetupFee !== preview.setupFee) {
+    out.push(`Setup Fee is ${preview.setupFee} here but ${preview.sowSetupFee} in the Statement of Work.`);
+  }
+  if (preview.sowMonthlyFee && preview.monthlyFee && preview.sowMonthlyFee !== preview.monthlyFee) {
+    out.push(`Monthly fee is ${preview.monthlyFee} here but ${preview.sowMonthlyFee} in the Statement of Work.`);
+  }
+  if (!testPilot && preview.invoice.ok) {
+    if (feeCents(preview.invoice.amount) !== feeCents(preview.setupFee)) {
+      out.push(`The Stripe invoice is for ${preview.invoice.amount}, not ${preview.setupFee ?? "the Setup Fee"}.`);
+    }
+    if (preview.invoice.status !== "open") {
+      out.push(`The Stripe invoice status is "${preview.invoice.status}", not open.`);
+    }
+  }
+  return out;
+}
+
+function ReviewPanel({
+  preview,
+  draft,
+  paymentLink,
+  testPilot,
+  source,
+  mismatches,
+  overrideMismatch,
+  onOverride,
+  canSend,
+  pending,
+  onSend,
+}: {
+  preview: ServiceOrderPreview;
+  draft: string;
+  paymentLink: string;
+  testPilot: boolean;
+  source: "client" | "template" | null;
+  mismatches: string[];
+  overrideMismatch: boolean;
+  onOverride: (value: boolean) => void;
+  canSend: boolean;
+  pending: string | null;
+  onSend: () => void;
+}) {
+  const row = "grid gap-x-lg gap-y-xs sm:grid-cols-[12rem_1fr]";
+  const ok = (good: boolean) => (good ? "text-success" : "text-error");
+  const setupMatchesSow = !preview.sowSetupFee || preview.sowSetupFee === preview.setupFee;
+  const monthlyMatchesSow = !preview.sowMonthlyFee || preview.sowMonthlyFee === preview.monthlyFee;
+
+  return (
+    <div className="border-t border-border bg-background px-lg py-lg">
+      <h3 className="text-h4">Review before pushing</h3>
+      <p className="mt-xs text-body-sm text-muted">
+        This is exactly what goes to the client portal and inbox. Nothing has been sent yet.
+        {source === "client" ? " Using this client's custom Service Order." : " Using the Forms template."}
+      </p>
+
+      <div className="mt-md space-y-sm text-body-sm">
+        <div className={row}>
+          <span className="text-muted">Setup Fee</span>
+          <span className={ok(Boolean(preview.setupFee) && setupMatchesSow)}>
+            {preview.setupFee ?? "not stated"}
+            {preview.sowSetupFee ? ` · SOW: ${preview.sowSetupFee}` : ""}
+          </span>
+        </div>
+        <div className={row}>
+          <span className="text-muted">Monthly Campaign Fee</span>
+          <span className={ok(Boolean(preview.monthlyFee) && monthlyMatchesSow)}>
+            {preview.monthlyFee ?? "not stated"}
+            {preview.sowMonthlyFee ? ` · SOW: ${preview.sowMonthlyFee}` : ""}
+          </span>
+        </div>
+        {!testPilot ? (
+          <div className={row}>
+            <span className="text-muted">Stripe invoice</span>
+            <span className="min-w-0 break-all">
+              {preview.invoice.ok ? (
+                <span
+                  className={ok(
+                    feeCents(preview.invoice.amount) === feeCents(preview.setupFee) &&
+                      preview.invoice.status === "open",
+                  )}
+                >
+                  {preview.invoice.amount} · {preview.invoice.status}
+                  {preview.invoice.number ? ` · ${preview.invoice.number}` : ""}
+                  {preview.invoice.customerEmail ? ` · ${preview.invoice.customerEmail}` : ""}
+                </span>
+              ) : (
+                <span className="text-error">
+                  Couldn&apos;t verify the amount: {preview.invoice.reason} Open the link to check it.
+                </span>
+              )}{" "}
+              <a
+                href={paymentLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary no-underline hover:text-primary-hover"
+              >
+                Open invoice ↗
+              </a>
+            </span>
+          </div>
+        ) : null}
+        <div className={row}>
+          <span className="text-muted">Client sees</span>
+          <span>Pay {setupFeeLabel(draft)} with Stripe</span>
+        </div>
+      </div>
+
+      <div className="mt-lg rounded-card border border-border bg-surface p-md">
+        <p className="text-label uppercase tracking-label text-muted">Email</p>
+        {preview.email.ok ? (
+          <div className="mt-sm text-body-sm">
+            <p>
+              <span className="text-muted">To:</span> {preview.email.to}
+            </p>
+            <p>
+              <span className="text-muted">Subject:</span> {preview.email.subject}
+            </p>
+            <pre className="mt-sm whitespace-pre-wrap font-sans text-body">{preview.email.body}</pre>
+          </div>
+        ) : (
+          <p className="mt-sm text-body-sm text-error">
+            No email will be sent: {preview.email.reason}
+          </p>
+        )}
+      </div>
+
+      <div className="mt-lg rounded-card border border-border bg-surface p-md">
+        <p className="mb-sm text-label uppercase tracking-label text-muted">
+          Service Order, as the client will see it
+        </p>
+        <MarkdownBody content={mergeServiceOrder(draft, {})} emptyLabel="Nothing generated yet." />
+      </div>
+
+      {mismatches.length > 0 ? (
+        <div role="alert" className="mt-lg rounded-card border border-error/40 p-md text-body-sm text-error">
+          <ul className="list-disc pl-lg">
+            {mismatches.map((m) => (
+              <li key={m}>{m}</li>
+            ))}
+          </ul>
+          <label className="mt-sm flex items-center gap-sm text-body">
+            <input
+              type="checkbox"
+              checked={overrideMismatch}
+              onChange={(e) => onOverride(e.target.checked)}
+            />
+            I&apos;ve checked this and want to push anyway
+          </label>
+        </div>
+      ) : null}
+
+      <div className="mt-lg flex justify-end">
+        <button type="button" onClick={onSend} disabled={!canSend} className={primaryButton}>
+          {pending === "send" ? "Pushing…" : "Push to Client Portal"}
+        </button>
+      </div>
+    </div>
   );
 }

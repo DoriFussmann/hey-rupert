@@ -152,6 +152,39 @@ export async function createSetupFeeInvoice(input: {
   };
 }
 
+type StripeInvoiceDetail = StripeInvoice & {
+  amount_due: number;
+  currency: string;
+  customer_email: string | null;
+  number: string | null;
+};
+
+function sameInvoiceUrl(a: string, b: string) {
+  const clean = (v: string) => v.trim().replace(/[?#].*$/, "").replace(/\/+$/, "").toLowerCase();
+  return clean(a) === clean(b);
+}
+
+/**
+ * Finds the invoice behind a hosted invoice link (Stripe has no direct
+ * lookup by URL), searching open then draft/paid invoices, newest first.
+ */
+export async function findInvoiceByHostedUrl(
+  url: string,
+): Promise<StripeResult<StripeInvoiceDetail>> {
+  for (const status of ["open", "paid"]) {
+    const list = await stripe<{ data: StripeInvoiceDetail[] }>("GET", "/invoices", {
+      status,
+      limit: "100",
+    });
+    if (!list.ok) return list;
+    const hit = list.value.data.find(
+      (inv) => inv.hosted_invoice_url && sameInvoiceUrl(inv.hosted_invoice_url, url),
+    );
+    if (hit) return { ok: true, value: hit };
+  }
+  return { ok: false, error: "No open or paid Stripe invoice matches this link." };
+}
+
 /** Voids an unpaid Setup Fee invoice. Best effort: paid invoices stay as they are. */
 export async function voidInvoice(invoiceId: string): Promise<StripeResult<object>> {
   const current = await stripe<StripeInvoice>("GET", `/invoices/${invoiceId}`);
