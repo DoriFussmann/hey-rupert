@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { STATUS_LABEL, estimateMissing, estimateReady, formatWhen } from "@/lib/prospects/core";
 import { ADMIN_TIME_ZONE, type ProspectListItem } from "@/lib/prospects/server";
-import { ProspectRowActions } from "@/app/admin/prospect-row-actions";
+import { ProspectRow } from "@/app/admin/prospect-row-actions";
 
 const STATUS_STYLE: Record<string, string> = {
   call_booked: "bg-primary-tint text-primary",
@@ -27,7 +26,7 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
         <h2 className="text-h4">
           Calls booked <span className="text-muted">({prospects.length})</span>
         </h2>
-        <p className="text-body-sm text-muted">Booked a call on Cal.com, not a client yet. Convert one from their page.</p>
+        <p className="text-body-sm text-muted">Booked a call on Cal.com, not a client yet. Click a row to edit or delete it.</p>
       </div>
       {error ? (
         <p className="px-lg py-lg text-body-sm text-error">{error}</p>
@@ -35,7 +34,7 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
         <p className="px-lg py-lg text-body-sm text-muted">No booked calls yet. New bookings appear here with a prep brief.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[920px] text-left text-body-sm">
+          <table className="w-full min-w-[820px] text-left text-body-sm">
             <thead>
               <tr className="border-b border-border text-label uppercase tracking-label text-muted">
                 <th className="px-lg py-sm font-medium">Founder</th>
@@ -43,20 +42,28 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
                 <th className="px-lg py-sm font-medium">Call</th>
                 <th className="px-lg py-sm font-medium">Status</th>
                 <th className="px-lg py-sm font-medium">Investor fit</th>
-                <th className="px-lg py-sm font-medium"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
               {rows.map((p) => {
                 const call = p.nextCall ?? p.lastCall;
-                const href = `/admin/prospects/${p.id}`;
                 const raise = [p.brief?.raise.stage, p.brief?.raise.amount].filter(Boolean).join(", ");
                 return (
-                  <tr key={p.id} className="border-b border-border last:border-b-0 transition-colors duration-hover hover:bg-background">
+                  <ProspectRow
+                    key={p.id}
+                    prospect={{
+                      id: p.id,
+                      name: p.name,
+                      email: p.email,
+                      companyName: p.company_name,
+                      website: p.website,
+                      status: p.status,
+                      callId: call?.id ?? null,
+                      callStart: call?.start_time ?? null,
+                    }}
+                  >
                     <td className="px-lg py-md">
-                      <Link href={href} className="text-primary no-underline transition-colors duration-hover hover:text-primary-hover">
-                        {p.name || p.email}
-                      </Link>
+                      <span className="text-primary">{p.name || p.email}</span>
                       <p className="text-body-sm text-muted">{p.email}</p>
                     </td>
                     <td className="px-lg py-md text-body">
@@ -85,21 +92,7 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
                         "–"
                       )}
                     </td>
-                    <td className="px-lg py-md">
-                      <ProspectRowActions
-                        prospect={{
-                          id: p.id,
-                          name: p.name,
-                          email: p.email,
-                          companyName: p.company_name,
-                          website: p.website,
-                          status: p.status,
-                          callId: call?.id ?? null,
-                          callStart: call?.start_time ?? null,
-                        }}
-                      />
-                    </td>
-                  </tr>
+                  </ProspectRow>
                 );
               })}
             </tbody>
