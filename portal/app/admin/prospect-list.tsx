@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { STATUS_LABEL, estimateMissing, estimateReady, formatWhen } from "@/lib/prospects/core";
 import { ADMIN_TIME_ZONE, type ProspectListItem } from "@/lib/prospects/server";
+import { ProspectRowActions } from "@/app/admin/prospect-row-actions";
 
 const STATUS_STYLE: Record<string, string> = {
   call_booked: "bg-primary-tint text-primary",
@@ -34,7 +35,7 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
         <p className="px-lg py-lg text-body-sm text-muted">No booked calls yet. New bookings appear here with a prep brief.</p>
       ) : (
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[820px] text-left text-body-sm">
+          <table className="w-full min-w-[920px] text-left text-body-sm">
             <thead>
               <tr className="border-b border-border text-label uppercase tracking-label text-muted">
                 <th className="px-lg py-sm font-medium">Founder</th>
@@ -42,6 +43,7 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
                 <th className="px-lg py-sm font-medium">Call</th>
                 <th className="px-lg py-sm font-medium">Status</th>
                 <th className="px-lg py-sm font-medium">Investor fit</th>
+                <th className="px-lg py-sm font-medium"><span className="sr-only">Actions</span></th>
               </tr>
             </thead>
             <tbody>
@@ -82,6 +84,20 @@ export function ProspectList({ prospects, error }: { prospects: ProspectListItem
                       ) : (
                         "–"
                       )}
+                    </td>
+                    <td className="px-lg py-md">
+                      <ProspectRowActions
+                        prospect={{
+                          id: p.id,
+                          name: p.name,
+                          email: p.email,
+                          companyName: p.company_name,
+                          website: p.website,
+                          status: p.status,
+                          callId: call?.id ?? null,
+                          callStart: call?.start_time ?? null,
+                        }}
+                      />
                     </td>
                   </tr>
                 );

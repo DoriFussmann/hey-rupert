@@ -6,11 +6,14 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { isProspectStatus, type MatchEstimate, type ProspectBrief } from "@/lib/prospects/core";
 import {
   buildBriefAndEstimate,
+  deleteProspect as deleteProspectRow,
   draftFollowUp,
   recomputeEstimate,
   saveOutcome,
   scheduleCallEmails,
   sendFollowUp,
+  updateProspect as updateProspectRow,
+  type ProspectEdit,
 } from "@/lib/prospects/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -85,4 +88,36 @@ export async function sendProspectFollowUp(id: string, subject: string, body: st
   const sent = await sendFollowUp(a.supabase, id, String(subject ?? ""), String(body ?? ""));
   if (sent.ok) revalidatePath(page(id));
   return sent;
+}
+
+/** Edits a booked call from the admin list: the founder's details, status and the call time. */
+export async function updateProspect(id: string, edit: ProspectEdit): Promise<Result<{ notes: string[] }>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (!validId(id)) return { ok: false, error: "Unknown prospect." };
+  if (edit.callId != null && !validId(edit.callId)) return { ok: false, error: "Unknown call." };
+  const result = await updateProspectRow(a.supabase, id, {
+    name: String(edit.name ?? ""),
+    email: String(edit.email ?? ""),
+    companyName: String(edit.companyName ?? ""),
+    website: String(edit.website ?? ""),
+    status: edit.status,
+    callId: edit.callId ?? null,
+    callStart: edit.callStart ? String(edit.callStart) : null,
+  });
+  if (result.ok) {
+    revalidatePath(page(id));
+    revalidatePath("/admin");
+  }
+  return result;
+}
+
+/** Deletes a booked call (the prospect and their calls) from the admin list. */
+export async function deleteProspect(id: string): Promise<Result<object>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (!validId(id)) return { ok: false, error: "Unknown prospect." };
+  const result = await deleteProspectRow(a.supabase, id);
+  if (result.ok) revalidatePath("/admin");
+  return result;
 }

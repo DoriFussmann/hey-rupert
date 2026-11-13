@@ -309,6 +309,91 @@ export async function sendFollowUp(supabase: ServiceClient, prospectId: string, 
   return { ok: true };
 }
 
+// ---------------------------------------------------------------------------
+// Editing and deleting from the admin list
+
+export type ProspectEdit = {
+  name: string;
+  email: string;
+  companyName: string;
+  website: string;
+  status: ProspectStatus;
+  /** The call being edited and its new start (ISO). The length of the call is kept. */
+  callId?: string | null;
+  callStart?: string | null;
+};
+
+/**
+ * Edits the prospect and, when given, moves the call's time here (not on
+ * Cal.com). A moved call gets its prep email and check-in rescheduled.
+ */
+export async function updateProspect(supabase: ServiceClient, prospectId: string, edit: ProspectEdit): Promise<Result<{ notes: string[] }>> {
+  const email = edit.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return { ok: false, error: "Enter a valid email." };
+  if (!isProspectStatus(edit.status) || edit.status === "converted") return { ok: false, error: "Choose a status." };
+  const clean = (v: string, max = 300) => v.trim().slice(0, max) || null;
+  const { error } = await supabase
+    .from("prospects")
+    .update({
+      name: clean(edit.name),
+      email,
+      company_name: clean(edit.companyName),
+      website: clean(edit.website, 500),
+      status: edit.status,
+      updated_at: now(),
+    })
+    .eq("id", prospectId)
+    .is("client_id", null);
+  if (error) {
+    if (error.code === "23505") return { ok: false, error: "Another prospect already has that email." };
+    return { ok: false, error: tableError(error.message, error.code) };
+  }
+
+  const notes: string[] = [];
+  if (edit.callId && edit.callStart) {
+    const start = Date.parse(edit.callStart);
+    if (Number.isNaN(start)) return { ok: false, error: "Enter a valid call time." };
+    const { data: call, error: callError } = await supabase
+      .from("prospect_calls")
+      .select(CALL_COLUMNS)
+      .eq("id", edit.callId)
+      .eq("prospect_id", prospectId)
+      .maybeSingle<CallRow>();
+    if (callError) return { ok: false, error: tableError(callError.message, callError.code) };
+    if (!call) return { ok: false, error: "Call not found." };
+    if (call.start_time && Date.parse(call.start_time) === start) return { ok: true, notes };
+    const length = call.start_time && call.end_time ? Date.parse(call.end_time) - Date.parse(call.start_time) : 30 * 60_000;
+    await cancelCallEmails(supabase, call);
+    const { error: moveError } = await supabase
+      .from("prospect_calls")
+      .update({
+        start_time: new Date(start).toISOString(),
+        end_time: new Date(start + Math.max(length, 0)).toISOString(),
+        prep_email_status: null,
+        prep_email_id: null,
+        checkin_email_status: null,
+        checkin_email_id: null,
+        updated_at: now(),
+      })
+      .eq("id", call.id);
+    if (moveError) return { ok: false, error: moveError.message };
+    const scheduled = await scheduleCallEmails(supabase, prospectId);
+    if (!scheduled.ok) notes.push(scheduled.error);
+    else notes.push(...scheduled.notes);
+  }
+  return { ok: true, notes };
+}
+
+/** Deletes the prospect and its calls. Emails still waiting to go out are cancelled first. */
+export async function deleteProspect(supabase: ServiceClient, prospectId: string): Promise<Result<object>> {
+  const c = await callsOf(supabase, prospectId);
+  if (!c.ok) return c;
+  for (const call of c.calls) await cancelCallEmails(supabase, call);
+  const { error } = await supabase.from("prospects").delete().eq("id", prospectId).is("client_id", null);
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  return { ok: true };
+}
+
 /** A new client with the prospect's email: the prospect is marked converted. */
 export async function linkProspectToClient(supabase: ServiceClient, email: string, clientId: string) {
   const { error } = await supabase
