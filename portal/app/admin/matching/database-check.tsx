@@ -951,7 +951,8 @@ export function NextStepCard({ note }: { note?: string }) {
 
 /**
  * Step 2D: Try and Add to DB, as its own card once the check is confirmed:
- * the investors not in the database, funds and angels, with "Add all" per
+ * the investors not in the database, funds and angels, with one "Try and Add
+ * All" for everything missing, a smaller add per
  * kind, the list per kind, and what's been added so far.
  */
 function AddMissingCard({
@@ -987,6 +988,7 @@ function AddMissingCard({
     { key: "missing_angel" as const, label: "Angels not in the database", list: angels, what: "research, then the angel's email from Hunter (1 credit if found)" },
   ];
   const confirmed = !!check.addedConfirmedAt;
+  const missing = [...funds, ...angels];
   const contacts = added.reduce((sum, r) => sum + (r.added?.contacts ?? 0), 0);
   const approveAll = pending ? (
     <div className="mt-sm flex flex-wrap items-center gap-sm">
@@ -1086,10 +1088,35 @@ function AddMissingCard({
           Done adding: confirm {T.step}D
         </button>
       </div>
-      {adding ? (
-        <p className="mt-sm text-body-sm text-primary">
-          Adding {n(adding.done + 1)} of {n(adding.total)}: researching, then finding contacts with Hunter… (about a minute each; keep this page open)
-        </p>
+      {missing.length || adding ? (
+        <div className="mt-md flex flex-wrap items-center justify-between gap-md rounded-md border-2 border-primary bg-primary-tint px-lg py-md">
+          <div className="min-w-0 flex-1">
+            <p className="text-body font-medium text-heading">
+              {adding
+                ? `Adding ${n(adding.done + 1)} of ${n(adding.total)}…`
+                : `${n(missing.length)} not in the database: ${n(funds.length)} ${funds.length === 1 ? "fund" : "funds"}, ${n(angels.length)} ${angels.length === 1 ? "angel" : "angels"}`}
+            </p>
+            <p className="text-body-sm text-secondary">
+              {adding
+                ? "Researching, then finding contacts with Hunter. About a minute each; keep this page open."
+                : busy
+                  ? "Add All is unavailable while something else on this page is saving or finding websites."
+                  : "One by one: research, then up to 5 investing contacts from Hunter per fund. One that fails is listed and the rest carry on."}
+            </p>
+          </div>
+          <button
+            type="button"
+            className="shrink-0 rounded-md bg-heading px-lg py-sm text-body font-medium text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
+            disabled={busy || !!adding || !missing.length}
+            onClick={() => {
+              if (window.confirm(`Try and Add to DB for all ${missing.length}? About a minute each. Each waits for your review before other clients see it.`)) {
+                onAdd(missing.map((r) => r.investor.id));
+              }
+            }}
+          >
+            {adding ? "Adding…" : `Try and Add All ${n(missing.length)} to DB`}
+          </button>
+        </div>
       ) : null}
       <table className="mt-md w-full text-left text-body-sm">
         <thead className="text-label uppercase tracking-label text-muted">
@@ -1114,7 +1141,7 @@ function AddMissingCard({
                   </button>
                   <button
                     type="button"
-                    className={primaryButton}
+                    className={smallButton}
                     disabled={busy || !!adding || !k.list.length}
                     onClick={() => {
                       if (window.confirm(`Try and Add to DB for all ${k.list.length}? About a minute each. Each waits for your review before other clients see it.`)) {
@@ -1122,7 +1149,7 @@ function AddMissingCard({
                       }
                     }}
                   >
-                    Add all {n(k.list.length)}
+                    Add only these {n(k.list.length)}
                   </button>
                 </div>
               </td>
@@ -1339,19 +1366,25 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     let done = 0;
     let found = 0;
     setFinding({ done, total: ids.length });
-    for (let i = 0; i < ids.length; i += 4) {
-      const batch = ids.slice(i, i + 4);
-      const result = await findWebsitesFor(clientId, batch, kind);
-      done += batch.length;
-      setFinding({ done, total: ids.length });
-      if (!result.ok) {
-        setError(result.error);
-        break;
+    try {
+      for (let i = 0; i < ids.length; i += 4) {
+        const batch = ids.slice(i, i + 4);
+        const result = await findWebsitesFor(clientId, batch, kind);
+        done += batch.length;
+        setFinding({ done, total: ids.length });
+        if (!result.ok) {
+          setError(result.error);
+          break;
+        }
+        found += result.found;
+        setCheck(result.check);
       }
-      found += result.found;
-      setCheck(result.check);
+    } catch (err) {
+      setError(`Find websites stopped: ${err instanceof Error ? err.message : "failed"}`);
+    } finally {
+      // Always cleared: a search left "running" would keep Add All greyed until a reload.
+      setFinding(null);
     }
-    setFinding(null);
     setToast(`Find websites: ${n(found)} found for ${n(done)} investors. Saved.`);
   };
 
