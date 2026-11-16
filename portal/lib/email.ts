@@ -6,8 +6,20 @@ import "server-only";
 const RESEND_ENDPOINT = "https://api.resend.com/emails";
 const TIMEOUT_MS = 8000;
 
-/** `id` is Resend's id for the email (used to cancel a scheduled one). */
-export type EmailResult = { ok: true; id?: string } | { ok: false; reason: string };
+/**
+ * `id` is Resend's id for the email (used to cancel a scheduled one, and to
+ * match tracking events to it). `tracked` says it went out from the tracked sender.
+ */
+export type EmailResult = { ok: true; id?: string; tracked?: boolean } | { ok: false; reason: string };
+
+/**
+ * The sender on the subdomain that has open and click tracking switched on in
+ * Resend (EMAIL_FROM_TRACKED). Empty until that is set up: emails then go out
+ * from EMAIL_FROM, untracked, exactly as before.
+ */
+export function trackedSender() {
+  return (process.env.EMAIL_FROM_TRACKED ?? "").trim();
+}
 
 export function adminAddresses() {
   return (process.env.ADMIN_NOTIFY_EMAIL ?? "")
@@ -37,6 +49,7 @@ export async function sendEmail({
   text,
   html,
   scheduledAt,
+  tracked = false,
 }: {
   to: string[];
   /** Blind copies, e.g. a copy to Rupert of an email to a client. */
@@ -47,6 +60,8 @@ export async function sendEmail({
   html?: string;
   /** ISO time to deliver it later (Resend allows up to 30 days ahead). */
   scheduledAt?: string;
+  /** Send from the tracked sender, when one is configured. Client updates only. */
+  tracked?: boolean;
 }): Promise<EmailResult> {
   const notConfigured = missingConfiguration();
   if (notConfigured) return { ok: false, reason: notConfigured };
@@ -59,6 +74,9 @@ export async function sendEmail({
     .map((address) => address.trim())
     .filter((address) => address && !recipients.includes(address));
 
+  const isTracked = tracked && Boolean(trackedSender());
+  const from = isTracked ? trackedSender() : process.env.EMAIL_FROM;
+
   try {
     const response = await fetch(RESEND_ENDPOINT, {
       method: "POST",
@@ -67,7 +85,7 @@ export async function sendEmail({
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.EMAIL_FROM,
+        from,
         to: recipients,
         ...(blindCopies.length > 0 ? { bcc: blindCopies } : {}),
         reply_to: adminAddresses()[0],
@@ -88,7 +106,7 @@ export async function sendEmail({
     }
 
     const sent = (await response.json().catch(() => null)) as { id?: unknown } | null;
-    return { ok: true, ...(typeof sent?.id === "string" ? { id: sent.id } : {}) };
+    return { ok: true, tracked: isTracked, ...(typeof sent?.id === "string" ? { id: sent.id } : {}) };
   } catch (err) {
     const reason = `Email could not be sent: ${
       err instanceof Error ? err.message : String(err)

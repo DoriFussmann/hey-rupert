@@ -28,6 +28,7 @@ import { arrangeSteps } from "@/lib/step-order";
 import { outreachSteps } from "@/lib/outreach/progress-server";
 import { copyTierOf } from "@/lib/outreach/copy";
 import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
+import { portalViews, type StepView } from "@/lib/email-tracking";
 import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
 import { Disclosure } from "@/components/disclosure";
 import { ViewAsClientLink } from "@/components/eye-icon";
@@ -62,19 +63,32 @@ export const maxDuration = 300;
 async function loadEmailPanel(clientId: string): Promise<{
   signature: string;
   log: EmailLogResult;
+  /** Email id → when the client viewed the step that email announced. */
+  views: Record<string, string | null>;
 }> {
   if (!isServiceRoleConfigured()) {
     return {
       signature: DEFAULT_SIGNATURE,
       log: { ok: false, error: "Service role key is not configured." },
+      views: {},
     };
   }
   const supabase = createServiceClient();
-  const [settings, log] = await Promise.all([
+  const [settings, log, steps] = await Promise.all([
     loadEmailSettings(supabase),
     listEmailLog(supabase, clientId),
+    // Best effort: without it the history just shows no portal views.
+    supabase
+      .from("setup_steps")
+      .select("step, client_viewed_at")
+      .eq("client_id", clientId)
+      .returns<StepView[]>(),
   ]);
-  return { signature: settings.signature, log };
+  return {
+    signature: settings.signature,
+    log,
+    views: log.ok ? portalViews(log.entries, steps.data ?? []) : {},
+  };
 }
 
 /** The match profile, or null when there is none (or the table is missing). */
@@ -500,6 +514,7 @@ export default async function ClientDetailPage({
           signature={emailPanel.signature}
           history={emailPanel.log.ok ? emailPanel.log.entries : []}
           historyError={emailPanel.log.ok ? null : emailPanel.log.error}
+          portalViews={emailPanel.views}
         />
       </Disclosure>
       <Disclosure title="Timeline">

@@ -73,6 +73,7 @@ export function notificationLabel(type: string) {
   if (type === "founder_answered") return "Answered Rupert's Questions";
   if (type === "linkedin_needed") return "Upload the Founder's LinkedIn PDF";
   if (type === "sub_sector_unmatched") return "Sub-sector Not in the Taxonomy";
+  if (type === "email_bounced") return "Email to the Client Bounced";
   return statusLabel(type);
 }
 
@@ -127,6 +128,9 @@ export function notificationAction(type: string) {
   }
   if (type === "nudge_ready") {
     return "has a reminder ready to send under Notify & Nudge";
+  }
+  if (type === "email_bounced") {
+    return "did not get an email: it bounced or was marked as spam";
   }
   return notificationLabel(type).toLowerCase();
 }

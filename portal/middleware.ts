@@ -20,6 +20,8 @@ function isPublicPath(pathname: string) {
     pathname === "/api/cal/webhook" ||
     // Instantly calls this without a session; it checks INSTANTLY_WEBHOOK_SECRET.
     pathname === "/api/instantly/webhook" ||
+    // Resend calls this without a session; it checks RESEND_WEBHOOK_SECRET.
+    pathname === "/api/resend/webhook" ||
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon")
   );
