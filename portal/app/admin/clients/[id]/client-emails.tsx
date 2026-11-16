@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { sendManualEmail, setClientEmailsPaused } from "@/app/admin/email-actions";
 import { formatDateAtTime } from "@/lib/format";
 import type { EmailLogEntry, EmailLogKind } from "@/lib/email-log";
+import { trackingParts, type TrackingPart } from "@/lib/email-tracking";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm font-sans text-body-sm text-body outline-none focus:border-primary";
@@ -15,6 +16,12 @@ const KIND_LABELS: Record<EmailLogKind, string> = {
   automatic: "Automatic",
   reminder: "Reminder",
   manual: "Sent by you",
+};
+
+const PART_TONE: Record<TrackingPart["tone"], string> = {
+  ok: "text-success",
+  muted: "text-muted",
+  error: "text-error",
 };
 
 type Message = { kind: "ok" | "error"; text: string } | null;
@@ -42,6 +49,7 @@ export function ClientEmails({
   signature,
   history,
   historyError,
+  portalViews,
 }: {
   clientId: string;
   address: string;
@@ -49,6 +57,8 @@ export function ClientEmails({
   signature: string;
   history: EmailLogEntry[];
   historyError: string | null;
+  /** Email id → when the client viewed that step in the portal (null: not yet). Only for emails that announce a step. */
+  portalViews: Record<string, string | null>;
 }) {
   const router = useRouter();
   const [isPaused, setIsPaused] = useState(paused);
@@ -226,7 +236,12 @@ export function ClientEmails({
           </p>
         ) : (
           <ul className="mt-md divide-y divide-border rounded-md border border-border">
-            {history.map((entry) => (
+            {history.map((entry) => {
+              const parts =
+                entry.status === "sent"
+                  ? trackingParts(entry, portalViews[entry.id], formatDateAtTime)
+                  : [];
+              return (
               <li key={entry.id}>
                 <details>
                   <summary className="grid cursor-pointer grid-cols-[1fr_auto] gap-x-md gap-y-xs px-md py-sm text-body-sm sm:grid-cols-[9rem_7rem_1fr_auto]">
@@ -246,6 +261,23 @@ export function ClientEmails({
                     >
                       {entry.status === "sent" ? "Sent" : "Failed"}
                     </span>
+                    {parts.length > 0 ? (
+                      <span
+                        className="col-span-2 flex flex-wrap gap-x-sm sm:col-span-2 sm:col-start-3"
+                        title={
+                          entry.tracked
+                            ? "Opens are approximate: some mail apps load images automatically or block them. Clicks and portal views are exact."
+                            : undefined
+                        }
+                      >
+                        {parts.map((part, index) => (
+                          <span key={part.text} className={PART_TONE[part.tone]}>
+                            {index > 0 ? <span className="text-muted">· </span> : null}
+                            {part.text}
+                          </span>
+                        ))}
+                      </span>
+                    ) : null}
                   </summary>
                   <div className="border-t border-border bg-background px-md py-md text-body-sm">
                     <p className="text-muted">To: {entry.recipients.join(", ")}</p>
@@ -258,7 +290,8 @@ export function ClientEmails({
                   </div>
                 </details>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>
