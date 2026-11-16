@@ -59,9 +59,9 @@ faqs:
 
 ## Yes, Fundraising Support With No Success Fee Exists
 
-The short answer to whether fundraising services with no success fee exist: yes. Investor outreach services that charge no percentage of the raise, take no equity, and carry no long tail period tying up your capital are available. The more useful question is what you are actually getting when that is the structure, how it differs from the alternatives, and whether it fits what you are trying to do.
+The short answer to whether fundraising services with no success fee exist: yes. [Investor outreach services](/articles/best-investor-outreach-services/) that charge no percentage of the raise, take no equity, and carry no long tail period tying up your capital are available. The more useful question is what you are actually getting when that is the structure, how it differs from the alternatives, and whether it fits what you are trying to do.
 
-Rupert's Expert-Managed Investor Outreach charges a setup fee and a flat monthly fee—nothing else. No success fee, no percentage of the raise, no equity. The engagement is month to month and can be cancelled at any time. Outreach goes from the founder's own inbox, not under an advisor's name, so every investor relationship stays the founder's. Nothing is sent to any investor without the founder's explicit approval. That is the full fee structure.
+[Rupert](/book-call/)'s Expert-Managed Investor Outreach charges a setup fee and a flat monthly fee—nothing else. No success fee, no percentage of the raise, no equity. The engagement is month to month and can be cancelled at any time. Outreach goes from the founder's own inbox, not under an advisor's name, so every investor relationship stays the founder's. Nothing is sent to any investor without the founder's explicit approval. That is the full fee structure.
 
 Both fees are quoted after a free consultation, not published, because the right scope depends on your stage, sector, and round. The consultation is worth taking for its own sake—it is where investor matching and narrative approach are scoped, and that has standalone value before any commitment is made.
 
@@ -95,7 +95,7 @@ Flat-fee capital raising is one model in a market with several. Understanding th
 
 **Success-fee advisors and placement agents** typically charge a retainer plus a percentage of capital raised, and success fees usually run 2–6% of the round closed, often layered on top of a retainer . Advisors running this model usually conduct outreach under their own name, sitting between you and the investor. The relationship is theirs, the percentage is theirs, and the tail clause may follow you for some time after you stop working together.
 
-**Fundraising consultants on retainer** charge for advice and help with materials—narrative, deck feedback, investor targeting strategy—but leave the founder to run most of the actual outreach. The monthly fee buys expertise and guidance, not execution. If your calendar is already stretched, a consulting relationship adds to your workload rather than relieving it.
+**[Fundraising consultants](/articles/startup-fundraising-consultant/) on retainer** charge for advice and help with materials—narrative, deck feedback, investor targeting strategy—but leave the founder to run most of the actual outreach. The monthly fee buys expertise and guidance, not execution. If your calendar is already stretched, a consulting relationship adds to your workload rather than relieving it.
 
 **Self-serve software**—databases and CRMs, such as Foundersuite—gives you access to investor contact information and pipeline management tools, but you research, write, and follow up on everything. These tools are useful when you have the time and discipline to use them systematically. Most founders who are also running a company do not.
 
