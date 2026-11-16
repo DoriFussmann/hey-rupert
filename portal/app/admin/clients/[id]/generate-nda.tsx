@@ -36,6 +36,7 @@ export function GenerateNda({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [view, setView] = useState<"active" | "archived">("active");
+  const [editing, setEditing] = useState(false);
 
   const activeSend = sends.find((send) => !send.archived_at) ?? null;
   const hasDraft = Boolean(draft.trim());
@@ -79,7 +80,8 @@ export function GenerateNda({
         return;
       }
       setDraft(result.content);
-      setSuccess("Generated from the NDA template. Review it, then push.");
+      setEditing(false);
+      setSuccess("Generated from the NDA template. Review or edit it below, then push.");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to generate.");
     } finally {
@@ -106,6 +108,7 @@ export function GenerateNda({
         setError(`The client was not emailed. ${result.clientEmail.reason}`);
       }
       setDraft("");
+      setEditing(false);
       setView("active");
       router.refresh();
     } catch (err) {
@@ -310,17 +313,40 @@ export function GenerateNda({
 
       {hasDraft ? (
         <div className="border-t border-border px-lg">
-          <Disclosure title="NDA text — template from Forms">
-            <div className="py-md">
-              <p className="mb-md text-body-sm text-muted">
-                Client fields are filled in when they sign.
-              </p>
+          <div className="py-md">
+            <div className="mb-md flex flex-wrap items-center justify-between gap-md">
+              <div>
+                <h3 className="text-h4">NDA to push — review before sending</h3>
+                <p className="mt-xs text-body-sm text-muted">
+                  This is exactly what the client will see and sign. Edits apply to this
+                  client only; the Forms template is not changed. [CLIENT_EMAIL] and
+                  [CLIENT_COMPANY_NAME] are filled in when they sign.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditing((v) => !v)}
+                className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
+              >
+                {editing ? "Done editing" : "Edit text"}
+              </button>
+            </div>
+            {editing ? (
+              <textarea
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                rows={24}
+                aria-label="NDA text (markdown)"
+                className="mb-md w-full rounded-md border border-border bg-background p-sm font-mono text-body-sm text-body outline-none focus:border-primary"
+              />
+            ) : null}
+            <div className="rounded-card border border-border bg-background p-md">
               <MarkdownBody
                 content={mergeServiceOrder(draft, {})}
                 emptyLabel="Nothing generated yet."
               />
             </div>
-          </Disclosure>
+          </div>
         </div>
       ) : activeSend ? (
         <div className="border-t border-border px-lg">
