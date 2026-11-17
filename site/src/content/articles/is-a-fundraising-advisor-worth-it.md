@@ -113,7 +113,7 @@ The market for fundraising help has several distinct models, and the fee structu
 
 A setup fee plus flat monthly model changes the incentive structure entirely. The service is paid for the work it performs, not rewarded for maximizing the raise size or dragging out the engagement. No success fee also means no tail period: when the founder cancels, the engagement ends cleanly. The service's incentive is to run a good process every month—because that is what keeps the engagement going, not a percentage at the finish line.
 
-Fundraising consultants on a pure retainer typically provide advice and materials but leave the founder to run most of the outreach. Self-serve tools—databases and CRMs—put everything on the founder's plate. The question is not which model sounds best in the abstract; it is which model fits the specific problem. If the bottleneck is time and investor access, a service that researches, writes, and follows up while keeping every relationship with the founder is a different category from any of these alternatives.
+[Fundraising consultants](/articles/startup-fundraising-consultant/) on a pure retainer typically provide advice and materials but leave the founder to run most of the outreach. Self-serve tools—databases and CRMs—put everything on the founder's plate. The question is not which model sounds best in the abstract; it is which model fits the specific problem. If the bottleneck is time and investor access, a service that researches, writes, and follows up while keeping every relationship with the founder is a different category from any of these alternatives.
 
 ## What a Structured Investor Outreach Service Does, Week by Week
 
