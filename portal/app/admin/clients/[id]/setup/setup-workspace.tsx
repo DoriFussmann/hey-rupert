@@ -16,6 +16,8 @@ import {
   type SetupStepId,
 } from "@/lib/setup";
 import type { ListAudit } from "@/lib/list-audit";
+import type { BriefTopic, CompanyBrief } from "@/lib/brief";
+import { pointEvidence } from "@/lib/outreach/point-evidence";
 import type { OutreachSteps } from "@/lib/outreach/progress-server";
 import type { StepState, StepTurn } from "@/lib/step-order";
 import { collectPoints } from "@/lib/feedback-points";
@@ -47,6 +49,8 @@ export function setupPanels({
   outreach,
   viewerComments,
   replyRows,
+  brief = null,
+  briefTopics = [],
 }: {
   clientId: string;
   source: SetupSource;
@@ -66,6 +70,9 @@ export function setupPanels({
   viewerComments: ViewerComment[];
   /** Rupert's saved replies to the feedback points. */
   replyRows: ReplyRow[];
+  /** The Company Brief: what stands behind each narrative point, shown where the emails are written. */
+  brief?: CompanyBrief | null;
+  briefTopics?: BriefTopic[];
 }): WorkPanel[] {
   const items = getSetupItems(source);
   const rows = source.setup_steps ?? [];
@@ -83,7 +90,11 @@ export function setupPanels({
   const story = workingNarrative(row("framing"));
   const copyNarrative = {
     confirmed: row("framing")?.status === "confirmed",
-    points: story.statement?.points ?? [],
+    points: (() => {
+      const points = story.statement?.points ?? [];
+      const evidence = pointEvidence(points.map((point) => point.title), brief, briefTopics);
+      return points.map((point, index) => ({ ...point, evidence: evidence[index] }));
+    })(),
     text: story.statement ? "" : [story.core, story.key_messages].map((part) => part.trim()).filter(Boolean).join("\n\n"),
   };
   const step = (id: SetupStepId) => ({ done: item(id).status === "done", turn: turnOf(item(id).status) });

@@ -7,6 +7,7 @@ import { wordCount } from "@/lib/outreach/copy";
 import { insertAt } from "@/lib/merge-fields";
 import { previewFilled, type Segment } from "@/lib/outreach/preview";
 import type { CopyEmail } from "@/lib/setup";
+import type { PointEvidence } from "@/lib/outreach/point-evidence";
 import {
   BUCKET_LABEL,
   HOOK_FIELD,
@@ -30,7 +31,8 @@ import {
 /** The narrative the emails are written from. */
 export type CopyNarrative = {
   confirmed: boolean;
-  points: { title: string; claim: string }[];
+  /** Each point, with what the Company Brief holds behind it. */
+  points: { title: string; claim: string; evidence?: PointEvidence | null }[];
   /** Narratives from before the three points: their text. */
   text: string;
 };
@@ -51,6 +53,48 @@ const sentence = (value: string) => value.charAt(0).toUpperCase() + value.slice(
 const capFor = (position: number) => (position === 0 ? SOURCE_MAX_WORDS : Math.round(SOURCE_MAX_WORDS * 0.75));
 const hasText = (group: SourceGroupCopy) => group.emails.some((email) => email.subject.trim() || email.body.trim());
 
+/** Under a narrative point: what the Company Brief says about it, and the facts and sources behind it. */
+function Evidence({ evidence }: { evidence: PointEvidence }) {
+  const info = [
+    { label: "Why it's strong", text: evidence.why },
+    { label: "What to say", text: evidence.say },
+    { label: "Don't overstate", text: evidence.watchOut },
+  ].filter((item) => item.text);
+  return (
+    <details className="mt-sm rounded-md border border-border bg-surface">
+      <summary className="cursor-pointer px-sm py-xs text-body-sm text-primary hover:text-primary-hover">Evidence</summary>
+      <div className="space-y-md border-t border-border px-sm py-sm">
+        {info.length ? (
+          <div>
+            <p className="text-label uppercase tracking-label text-muted">More information</p>
+            <dl className="mt-xs space-y-sm">
+              {info.map((item) => (
+                <div key={item.label}>
+                  <dt className="text-heading">{item.label}</dt>
+                  <dd className="whitespace-pre-wrap text-secondary">{item.text}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
+        ) : null}
+        {evidence.sections.length ? (
+          <div>
+            <p className="text-label uppercase tracking-label text-muted">Source · Company Brief</p>
+            <div className="mt-xs space-y-sm">
+              {evidence.sections.map((section) => (
+                <div key={section.title}>
+                  <p className="text-heading">{section.title}</p>
+                  <p className="whitespace-pre-wrap break-words text-secondary">{section.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </details>
+  );
+}
+
 function Narrative({ narrative }: { narrative: CopyNarrative }) {
   return (
     <aside
@@ -68,6 +112,7 @@ function Narrative({ narrative }: { narrative: CopyNarrative }) {
                 {index + 1}. {point.title}
               </p>
               {point.claim ? <p className="mt-xs whitespace-pre-wrap text-secondary">{point.claim}</p> : null}
+              {point.evidence ? <Evidence evidence={point.evidence} /> : null}
             </li>
           ))}
         </ol>
@@ -295,7 +340,7 @@ export function SourceCopyEditor({
   const missingCount = group ? (workspace ? missing.length : group.missingHook ?? 0) : 0;
 
   return (
-    <div className="px-lg py-md lg:grid lg:grid-cols-[18rem_minmax(0,1fr)] lg:gap-lg">
+    <div className="px-lg py-md lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-lg">
       <Narrative narrative={narrative} />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-sm" role="tablist" aria-label="Group">
