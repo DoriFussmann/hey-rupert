@@ -1,10 +1,14 @@
 import { PageHeader } from "@/components/page-header";
 import { FormTemplateEditor } from "@/components/form-template-editor";
-import { getFormTemplate } from "@/app/admin/actions";
+import { LegalVersionHistory } from "@/components/legal-version-history";
+import { getFormTemplate, getLegalHistory } from "@/app/admin/actions";
 import { STATEMENT_OF_WORK_SLUG } from "@/lib/form-fields";
 
 export default async function StatementOfWorkFormPage() {
-  const template = await getFormTemplate(STATEMENT_OF_WORK_SLUG);
+  const [template, versions] = await Promise.all([
+    getFormTemplate(STATEMENT_OF_WORK_SLUG),
+    getLegalHistory(STATEMENT_OF_WORK_SLUG),
+  ]);
 
   return (
     <>
@@ -18,6 +22,7 @@ export default async function StatementOfWorkFormPage() {
         initialContent={template.content}
         defaultContent={template.defaultContent}
       />
+      <LegalVersionHistory history={versions.history} error={versions.error} done="Confirmed" waiting="Not confirmed" />
     </>
   );
 }

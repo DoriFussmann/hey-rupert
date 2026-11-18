@@ -24,6 +24,7 @@ import {
 } from "@/lib/checklists";
 import {
   FORM_TITLES,
+  LAUNCH_CONFIRMATION_SLUG,
   NDA_SLUG,
   SERVICE_ORDER_SLUG,
   STATEMENT_OF_WORK_SLUG,
@@ -35,6 +36,13 @@ import { sendAdminEmail, type EmailResult } from "@/lib/email";
 import { linkProspectToClient } from "@/lib/prospects/server";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { DEFAULT_NDA } from "@/lib/nda";
+import { DEFAULT_LAUNCH_CONFIRMATION } from "@/lib/launch-confirmation";
+import {
+  legalStamp,
+  loadLegalHistory,
+  saveLegalVersion,
+  type LegalHistory,
+} from "@/lib/legal-versions-server";
 import {
   DEFAULT_INTAKE_TOPICS,
   INTAKE_TOPICS_SLUG,
@@ -855,12 +863,14 @@ const FORM_DEFAULTS: Record<FormSlug, string> = {
   [STATEMENT_OF_WORK_SLUG]: DEFAULT_STATEMENT_OF_WORK,
   [SERVICE_ORDER_SLUG]: DEFAULT_SERVICE_ORDER,
   [NDA_SLUG]: DEFAULT_NDA,
+  [LAUNCH_CONFIRMATION_SLUG]: DEFAULT_LAUNCH_CONFIRMATION,
 };
 
 const FORM_PATHS: Record<FormSlug, string> = {
   [STATEMENT_OF_WORK_SLUG]: "/admin/forms/statement-of-work",
   [SERVICE_ORDER_SLUG]: "/admin/forms/service-order",
   [NDA_SLUG]: "/admin/forms/nda",
+  [LAUNCH_CONFIRMATION_SLUG]: "/admin/forms/launch-confirmation",
 };
 
 export async function getFormTemplate(
@@ -900,10 +910,15 @@ export async function getFormTemplate(
   };
 }
 
+/**
+ * Saves a legal document as its next version and makes that version the one
+ * in use. Documents already sent keep the version they were sent with.
+ */
 export async function saveFormTemplate(
   slug: string,
   content: string,
-): Promise<ActionResult> {
+  note = "",
+): Promise<ActionResult & { version?: number; unchanged?: boolean }> {
   const access = await requireAdminService();
   if (!access.ok) return access;
 
@@ -915,26 +930,22 @@ export async function saveFormTemplate(
     return { ok: false, error: "The document cannot be empty." };
   }
 
-  const { error } = await access.supabase.from("form_templates").upsert({
-    slug,
-    title: FORM_TITLES[slug],
-    content,
-    updated_at: new Date().toISOString(),
-  });
-
-  if (error) {
-    if (error.message.includes("form_templates") || error.code === "42P01") {
-      return {
-        ok: false,
-        error:
-          "The form_templates table is missing. Run portal/supabase/form_templates.sql in the Supabase SQL editor, then save again.",
-      };
-    }
-    return { ok: false, error: error.message };
-  }
+  const { user } = await getAuthContext();
+  const saved = await saveLegalVersion(access.supabase, slug, content, note, user?.email ?? null);
+  if (!saved.ok) return { ok: false, error: saved.error };
 
   revalidatePath(FORM_PATHS[slug]);
-  return { ok: true };
+  return { ok: true, version: saved.value.version, unchanged: saved.value.unchanged };
+}
+
+/** Every version of a legal document, with the clients on each. */
+export async function getLegalHistory(
+  slug: FormSlug,
+): Promise<{ history: LegalHistory | null; error: string | null }> {
+  const access = await requireAdminService();
+  if (!access.ok) return { history: null, error: access.error };
+  const loaded = await loadLegalHistory(access.supabase, slug);
+  return loaded.ok ? { history: loaded.value, error: null } : { history: null, error: loaded.error };
 }
 
 export async function generateStatementOfWork(
@@ -1013,6 +1024,7 @@ export async function sendStatementOfWork(
       client_id: clientId,
       content,
       sent_at: sentAt,
+      ...(await legalStamp(access.supabase, STATEMENT_OF_WORK_SLUG, content)),
     });
 
   if (insertError) {
@@ -1355,7 +1367,12 @@ export async function sendServiceOrder(
 
   const { error: insertError } = await supabase
     .from("service_order_sends")
-    .insert({ client_id: clientId, content, payment_link: pasted });
+    .insert({
+      client_id: clientId,
+      content,
+      payment_link: pasted,
+      ...(await legalStamp(supabase, SERVICE_ORDER_SLUG, content)),
+    });
 
   if (insertError) {
     if (insertError.code === "23505") return { ok: false, error: alreadySent };
@@ -1541,7 +1558,13 @@ export async function sendNda(
   const sentAt = new Date().toISOString();
   const { error: insertError } = await supabase
     .from("signed_documents")
-    .insert({ client_id: clientId, doc_type: "nda", content, sent_at: sentAt });
+    .insert({
+      client_id: clientId,
+      doc_type: "nda",
+      content,
+      sent_at: sentAt,
+      ...(await legalStamp(supabase, NDA_SLUG, content)),
+    });
 
   if (insertError) {
     if (insertError.code === "23505") return { ok: false, error: alreadySent };

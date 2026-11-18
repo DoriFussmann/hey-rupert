@@ -56,6 +56,7 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
       { href: "/admin/forms/statement-of-work", label: "Statement of Work" },
       { href: "/admin/forms/service-order", label: "Service Order" },
       { href: "/admin/forms/nda", label: "NDA" },
+      { href: "/admin/forms/launch-confirmation", label: "Launch Confirmation" },
       { href: "/admin/forms/materials", label: "Company Materials" },
     ],
   },
