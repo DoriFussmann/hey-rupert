@@ -6,12 +6,9 @@ import { FeedbackReplies } from "@/components/setup/feedback-replies";
 import { ViewerComments } from "@/components/setup/viewer-comments";
 import { ReviewStatus } from "@/components/setup/review-status";
 import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
+import type { ClientCoreEmail } from "@/app/portal/setup/email-copy/typed-copy-review";
 import { getPortalSetup } from "@/lib/portal-setup";
 import { asEmailCopy, asInvestorList, questionsOf, tierCounts } from "@/lib/setup";
-import { isServiceRoleConfigured } from "@/lib/env";
-import { loadApprovedCoreForClient } from "@/lib/outreach/core-server";
-import { loadPreviewLeads } from "@/lib/outreach/preview-server";
-import { createServiceClient } from "@/lib/supabase/admin";
 
 export default async function EmailCopyPage() {
   const { client, item, row, viewAs } = await getPortalSetup("email_copy");
@@ -24,14 +21,10 @@ export default async function EmailCopyPage() {
     (investors.tier_scheme ?? "three") === (copy.tier_scheme ?? "three")
       ? tierCounts(investors.rows, copy.tier_scheme)
       : [];
-  // The personal Core emails Rupert approved, for copy written by fund type.
-  const typedVisible = visible && client?.id && copy.copy_version === 2 && isServiceRoleConfigured();
-  const [coreEmails, previewLeads] = typedVisible
-    ? await Promise.all([
-        loadApprovedCoreForClient(createServiceClient(), client!.id),
-        loadPreviewLeads(createServiceClient(), client!.id, copy.typed),
-      ])
-    : [[], {}];
+  // The client reviews the templates, not the per-investor emails: those name
+  // the contacts, and contact details stay with Rupert (Service Order 8.4).
+  const coreEmails: ClientCoreEmail[] = [];
+  const previewLeads = {};
   const sentNotes =
     row && row.response && row.response.version === row.version
       ? row.response.item_notes

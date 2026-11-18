@@ -287,7 +287,8 @@ export async function clientLiveData(supabase: ServiceClient, clientId: string) 
     funds.push({
       firm_id: firmId,
       fund: rows[0].fund_name,
-      contacts: rows.map((r) => r.person.name).filter(Boolean).join(", "),
+      // A count, never names: contact details stay with Rupert (Service Order 8.4).
+      contacts: `${rows.length} investor${rows.length === 1 ? "" : "s"} contacted`,
       tier: rows[0].tier,
       stage,
     });

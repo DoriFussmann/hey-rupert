@@ -30,6 +30,7 @@ import {
   inboxStatusText,
   dripQueue,
   leadFor,
+  FALLBACK_OPT_OUT_LINE,
   testAddress,
   addDays,
   campaignWeek,
@@ -43,7 +44,16 @@ import {
   type PlanWeek,
 } from "@/lib/outreach/live";
 import { PORTAL_URL } from "@/lib/portal-url";
-import { isStripeInvoiceLink, STRIPE_INVOICE_LINK_ERROR } from "@/lib/service-order";
+import { isStripeInvoiceLink, monthlyFeeOf, STRIPE_INVOICE_LINK_ERROR } from "@/lib/service-order";
+import {
+  DEFAULT_LAUNCH_CONFIRMATION,
+  cleanPostalAddress,
+  fillLaunchConfirmation,
+  planMonthsOf,
+  postalAddressProblem,
+  withPostalAddress,
+} from "@/lib/launch-confirmation";
+import { LAUNCH_CONFIRMATION_SLUG, SERVICE_ORDER_SLUG } from "@/lib/form-fields";
 import { normalizeInvoiceUrl, type PaidInvoice } from "@/lib/stripe-webhook";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
@@ -153,13 +163,43 @@ export type LiveState = {
   requested: { at: string; by: string | null } | null;
   /** Week by week: projected before launch, with the current week once live. */
   plan: PlanWeek[];
+  /** The Launch Confirmation the client confirmed when approving the launch. */
+  confirmation: { at: string; version: number | null; text: string } | null;
+  /** The client's postal address, for the foot of the first email. */
+  postalAddress: string;
 };
 
+/** What the client confirmed and their postal address. Empty before launch_confirmation.sql has run. */
+async function loadConfirmed(supabase: ServiceClient, clientId: string) {
+  const [doc, client] = await Promise.all([
+    supabase
+      .from("signed_documents")
+      .select("signed_content, signed_at, template_version")
+      .eq("client_id", clientId)
+      .eq("doc_type", LAUNCH_CONFIRMATION_SLUG)
+      .is("archived_at", null)
+      .maybeSingle(),
+    supabase.from("clients").select("postal_address").eq("id", clientId).maybeSingle(),
+  ]);
+  return {
+    confirmation:
+      doc.data?.signed_at && doc.data.signed_content
+        ? {
+            at: String(doc.data.signed_at),
+            version: doc.data.template_version != null ? Number(doc.data.template_version) : null,
+            text: String(doc.data.signed_content),
+          }
+        : null,
+    postalAddress: cleanPostalAddress(client.data?.postal_address != null ? String(client.data.postal_address) : ""),
+  };
+}
+
 export async function loadLiveState(supabase: ServiceClient, clientId: string): Promise<Result<LiveState>> {
-  const [row, campaign, messages] = await Promise.all([
+  const [row, campaign, messages, confirmed] = await Promise.all([
     loadLiveRow(supabase, clientId),
     loadCampaignState(supabase, clientId),
     loadOutreachMessages(supabase, clientId),
+    loadConfirmed(supabase, clientId),
   ]);
   if (!row.ok) return row;
   if (!campaign.ok) return campaign;
@@ -233,6 +273,8 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
       testRecipient: testMode ? testRecipientOf(r.settings) : "",
       requested: r.launch_requested_at ? { at: r.launch_requested_at, by: r.launch_requested_by } : null,
       plan,
+      confirmation: confirmed.confirmation,
+      postalAddress: confirmed.postalAddress,
     },
   };
 }
@@ -358,7 +400,14 @@ async function optOutLine(supabase: ServiceClient, clientId: string) {
   const grouped = await loadSetupSteps(supabase, [clientId]);
   const row = (grouped.get(clientId) ?? []).find((item) => item.step === "email_copy");
   const copy = asEmailCopy(row?.published);
-  return copy.typed?.opt_out_line ?? "";
+  // Every campaign email carries an opt-out line (Service Order 7.5).
+  return copy.typed?.opt_out_line?.trim() || FALLBACK_OPT_OUT_LINE;
+}
+
+/** The client's postal address, for the foot of the first email. */
+async function postalAddressOf(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase.from("clients").select("postal_address").eq("id", clientId).maybeSingle();
+  return cleanPostalAddress(data?.postal_address != null ? String(data.postal_address) : "");
 }
 
 
@@ -404,13 +453,13 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
     limit,
   });
   if (leads.length === 0) return { ok: true, value: 0 };
-  const optOut = await optOutLine(supabase, clientId);
+  const [optOut, postalAddress] = await Promise.all([optOutLine(supabase, clientId), postalAddressOf(supabase, clientId)]);
   let pushed = 0;
   for (let i = 0; i < leads.length; i += 1000) {
     const chunk = leads.slice(i, i + 1000);
     const added = await addLeads(
       campaignId,
-      chunk.map((m) => leadFor(m, optOut, testMode ? testAddress(recipient, m) : undefined)),
+      chunk.map((m) => leadFor(m, optOut, testMode ? testAddress(recipient, m) : undefined, postalAddress)),
     );
     if (!added.ok) return { ok: false, error: `${added.error} ${pushed} contacts were added before this.` };
     const now = new Date().toISOString();
@@ -466,25 +515,142 @@ export async function checkWebhookReachable(): Promise<Result<null>> {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Launch Confirmation: the agreement the client confirms when approving launch
+
+export type LaunchConfirmation = {
+  /** The text for this client, with the postal address still to fill in (withPostalAddress). */
+  text: string;
+  /** The Launch Confirmation version in use; null when it has no versions yet. */
+  version: number | null;
+  /** The address on file, to start the field with. */
+  postalAddress: string;
+  /** What the client confirmed, once they have. */
+  confirmed: { at: string; version: number | null; text: string } | null;
+};
+
+const longDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { timeZone: "America/Los_Angeles", year: "numeric", month: "long", day: "numeric" });
+
+/** The Launch Confirmation as this client would confirm it now, and their confirmation if they have. */
+export async function loadLaunchConfirmation(
+  supabase: ServiceClient,
+  clientId: string,
+  state: Pick<LiveState, "counts" | "inbox" | "plan" | "confirmation">,
+): Promise<Result<LaunchConfirmation>> {
+  const [templates, client, order] = await Promise.all([
+    supabase.from("form_templates").select("slug, content, active_version").in("slug", [LAUNCH_CONFIRMATION_SLUG, SERVICE_ORDER_SLUG]),
+    supabase.from("clients").select("company_name, postal_address, service_order_content").eq("id", clientId).maybeSingle(),
+    supabase
+      .from("service_order_sends")
+      .select("content, signed_at, template_version")
+      .eq("client_id", clientId)
+      .is("archived_at", null)
+      .maybeSingle(),
+  ]);
+  if (templates.error) return { ok: false, error: templates.error.message };
+  if (client.error) return { ok: false, error: client.error.message };
+  if (!client.data) return { ok: false, error: "Client not found." };
+  if (order.error) return { ok: false, error: tableError(order.error.message, order.error.code) };
+
+  const bySlug = new Map((templates.data ?? []).map((row) => [String(row.slug), row]));
+  const template = bySlug.get(LAUNCH_CONFIRMATION_SLUG);
+  const activeOrder = bySlug.get(SERVICE_ORDER_SLUG)?.active_version;
+  const orderContent = String(order.data?.content ?? client.data.service_order_content ?? "");
+  const signedVersion = order.data?.template_version != null ? Number(order.data.template_version) : null;
+  // A client whose signed Service Order is an earlier version moves to the one in use.
+  const earlier =
+    order.data?.signed_at && activeOrder != null && signedVersion != null && signedVersion < Number(activeOrder)
+      ? { currentVersion: Number(activeOrder), signedOn: longDate(String(order.data.signed_at)) }
+      : null;
+  const contacts = state.counts.wave1 + state.counts.wave2;
+  const text = fillLaunchConfirmation(String(template?.content ?? "").trim() || DEFAULT_LAUNCH_CONFIRMATION, {
+    company: String(client.data.company_name ?? ""),
+    funds: state.counts.funds,
+    contacts,
+    inbox: state.inbox?.email ?? "",
+    monthlyFee: monthlyFeeOf(orderContent) ?? "$1,000",
+    planMonths: planMonthsOf(state.plan.length),
+    earlierServiceOrder: earlier,
+  });
+  return {
+    ok: true,
+    value: {
+      text,
+      version: template?.active_version != null ? Number(template.active_version) : null,
+      postalAddress: cleanPostalAddress(client.data.postal_address != null ? String(client.data.postal_address) : ""),
+      confirmed: state.confirmation,
+    },
+  };
+}
+
 /**
- * The client approves the launch: their consent is recorded, Rupert is told,
- * and he clicks Go Live (within 24 hours). Nothing is sent yet.
+ * The client approves the launch: they confirm the Launch Confirmation (kept
+ * exactly as they saw it, with its version), their postal address is saved
+ * for the campaign emails, their consent is recorded, Rupert is told, and he
+ * clicks Go Live (within 24 hours). Nothing is sent yet.
  */
-export async function requestLaunch(supabase: ServiceClient, clientId: string, actor: string | null, consent: boolean): Promise<Result<{ already: boolean }>> {
-  if (!consent) return { ok: false, error: "Tick the authorization to approve the launch." };
+export async function requestLaunch(
+  supabase: ServiceClient,
+  clientId: string,
+  actor: string | null,
+  consent: boolean,
+  input: { postalAddress: string; ip?: string | null; userAgent?: string | null },
+): Promise<Result<{ already: boolean }>> {
+  if (!consent) return { ok: false, error: "Tick the box to confirm and approve the launch." };
   const state = await loadLiveState(supabase, clientId);
   if (!state.ok) return state;
   if (state.value.live) return { ok: false, error: "Your campaign is already live." };
   if (state.value.requested) return { ok: true, value: { already: true } };
   if (state.value.gaps.length > 0) return { ok: false, error: state.value.gaps.join(" ") };
+  const problem = postalAddressProblem(input.postalAddress);
+  if (problem) return { ok: false, error: problem };
+  const postalAddress = cleanPostalAddress(input.postalAddress);
   const row = await loadLiveRow(supabase, clientId);
   if (!row.ok) return row;
+  const confirmation = await loadLaunchConfirmation(supabase, clientId, state.value);
+  if (!confirmation.ok) return confirmation;
+
+  const { error: addressError } = await supabase.from("clients").update({ postal_address: postalAddress }).eq("id", clientId);
+  if (addressError) return { ok: false, error: launchConfirmationError(addressError.message, addressError.code) };
+
+  const at = new Date().toISOString();
+  const text = withPostalAddress(confirmation.value.text, postalAddress);
+  // An earlier confirmation (a launch that was reset) is kept, archived.
+  const archived = await supabase
+    .from("signed_documents")
+    .update({ archived_at: at })
+    .eq("client_id", clientId)
+    .eq("doc_type", LAUNCH_CONFIRMATION_SLUG)
+    .is("archived_at", null);
+  if (archived.error) return { ok: false, error: launchConfirmationError(archived.error.message, archived.error.code) };
+  const { error: insertError } = await supabase.from("signed_documents").insert({
+    client_id: clientId,
+    doc_type: LAUNCH_CONFIRMATION_SLUG,
+    content: text,
+    sent_at: at,
+    signed_at: at,
+    signer_email: actor,
+    signed_content: text,
+    signed_ip: input.ip ?? null,
+    signed_user_agent: input.userAgent ?? null,
+    template_version: confirmation.value.version,
+    customized: false,
+  });
+  if (insertError) return { ok: false, error: launchConfirmationError(insertError.message, insertError.code) };
+
   const saved = await saveLive(supabase, clientId, {
-    launch_requested_at: new Date().toISOString(),
+    launch_requested_at: at,
     launch_requested_by: actor,
     consent_text: CONSENT_TEXT(row.value.inbox_email ?? ""),
   });
   return saved.ok ? { ok: true, value: { already: false } } : saved;
+}
+
+function launchConfirmationError(message: string, code?: string) {
+  return code === "42703" || code === "23514" || /postal_address|signed_documents_doc_type_check|template_version/.test(message)
+    ? "The Launch Confirmation isn't set up in the database yet. Run portal/supabase/launch_confirmation.sql in Supabase."
+    : message;
 }
 
 /**
@@ -647,7 +813,7 @@ export async function sendTest(supabase: ServiceClient, clientId: string, to: st
   const name = `TEST · ${await companyName(supabase, clientId)} · ${new Date().toISOString().slice(0, 16)}`;
   const created = await createCampaign(campaignBody(name, row.value.inbox_email, row.value.settings, { test: true }));
   if (!created.ok) return created;
-  const added = await addLeads(created.value.id, [leadFor(sample, await optOutLine(supabase, clientId), to)]);
+  const added = await addLeads(created.value.id, [leadFor(sample, await optOutLine(supabase, clientId), to, await postalAddressOf(supabase, clientId))]);
   if (!added.ok) return added;
   const activated = await activateCampaign(created.value.id);
   if (!activated.ok) return activated;

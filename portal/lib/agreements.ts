@@ -2,14 +2,14 @@
  * "Your Agreements" on What Rupert Knows: the founder's record of what they
  * confirmed, signed and paid. Pure, so it can be tested without Supabase.
  *
- * Levels: the Statement of Work is confirmed, the Service Order is signed,
- * an invoice is paid. Rows only appear once Rupert has issued the document.
+ * Levels: the Statement of Work and the Launch Confirmation are confirmed,
+ * the Service Order is signed, an invoice is paid. Rows only appear once Rupert has issued the document.
  */
 
 export type AgreementStatus = "done" | "pending";
 
 export type AgreementRow = {
-  id: "sow" | "service_order" | "setup_invoice" | "monthly_invoice";
+  id: "sow" | "service_order" | "setup_invoice" | "monthly_invoice" | "launch_confirmation";
   title: string;
   /** What the level is: Confirmation, Signature or Payment. */
   level: string;
@@ -34,6 +34,8 @@ export type AgreementInput = {
   setupPaidAt: string | null;
   monthlyInvoiceUrl: string | null;
   monthlyPaidAt: string | null;
+  /** When the client confirmed the Launch Confirmation (Go Live, step 3). */
+  launchConfirmedAt?: string | null;
 };
 
 const clean = (value: string | null | undefined) => (value && value.trim() ? value.trim() : null);
@@ -86,6 +88,21 @@ export function agreementRows(input: AgreementInput): AgreementRow[] {
       by: null,
       href: url,
       external: Boolean(url),
+    });
+  }
+
+  const launchAt = clean(input.launchConfirmedAt);
+  if (launchAt) {
+    rows.push({
+      id: "launch_confirmation",
+      title: "Launch Confirmation",
+      level: "Confirmation",
+      status: "done",
+      label: "Confirmed",
+      at: launchAt,
+      by: null,
+      href: "/portal/setup/go-live",
+      external: false,
     });
   }
 

@@ -55,3 +55,11 @@ test("a paid invoice without a link still shows, with no link", () => {
   assert.equal(rows[0].href, null);
   assert.equal(rows[0].external, false);
 });
+
+test("the Launch Confirmation appears once confirmed", () => {
+  assert.equal(agreementRows(none).some((row) => row.id === "launch_confirmation"), false);
+  const rows = agreementRows({ ...none, launchConfirmedAt: "2026-11-20T10:00:00Z" });
+  const row = rows.find((item) => item.id === "launch_confirmation");
+  assert.equal(row?.label, "Confirmed");
+  assert.equal(row?.href, "/portal/setup/go-live");
+});

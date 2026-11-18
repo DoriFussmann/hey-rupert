@@ -1,10 +1,96 @@
-import { CLIENT_TOKENS } from "@/lib/service-order";
+import { CLIENT_TOKENS } from "./service-order.ts";
 
-// Launch Confirmation: signed with the first Monthly Campaign Fee invoice,
-// before Go Live. It names the Approved Inbox and postal address, restates the
-// Sending Plan, and moves a client who signed an earlier Service Order onto
-// the current one. The bracketed fields other than the client tokens are
-// filled in per client before it is sent.
+// Launch Confirmation: the agreement a client confirms (no signature) as the
+// last step of Go Live, after connecting the inbox and paying the first
+// Monthly Campaign Fee. It names the Approved Inbox and postal address,
+// restates the Sending Plan, and moves a client who signed an earlier Service
+// Order onto the current one. Pure module, safe on the server and in the
+// browser.
+
+export const LAUNCH_TOKENS = {
+  fund_count: "[FUND_COUNT]",
+  contact_count: "[CONTACT_COUNT]",
+  inbox: "[APPROVED_INBOX]",
+  postal_address: "[CLIENT_POSTAL_ADDRESS]",
+  plan_months: "[PLAN_MONTHS]",
+  monthly_fee: "[MONTHLY_FEE]",
+  service_order_version: "[SERVICE_ORDER_VERSION]",
+  service_order_signed_date: "[SERVICE_ORDER_SIGNED_DATE]",
+} as const;
+
+/** Marks the paragraph that applies only to a client who signed an earlier Service Order. */
+export const LEGACY_MARKER = "[Include only for a Client who signed an earlier Service Order version.]";
+
+export type LaunchConfirmationFields = {
+  company: string;
+  funds: number;
+  contacts: number;
+  inbox: string;
+  monthlyFee: string;
+  planMonths: number;
+  /** Set when the client signed an earlier Service Order version than the one in use. */
+  earlierServiceOrder: { currentVersion: number; signedOn: string } | null;
+};
+
+// Client-entered text sits inside markdown, so markdown syntax is escaped.
+const escapeMarkdown = (value: string) => value.replace(/[\\`*_{}[\]()<>#+!|~]/g, "\\$&");
+
+/**
+ * The Launch Confirmation for one client, with everything filled in except
+ * the postal address (see withPostalAddress): the client types that on the
+ * Go Live page. The earlier-Service-Order paragraph is kept only for a client
+ * it applies to.
+ */
+export function fillLaunchConfirmation(template: string, fields: LaunchConfirmationFields) {
+  const legacy = fields.earlierServiceOrder;
+  const paragraphs = template
+    .split(/\n{2,}/)
+    .filter((paragraph) => legacy || !paragraph.includes(LEGACY_MARKER))
+    .map((paragraph) => paragraph.replace(LEGACY_MARKER, "").replace(/ {2,}/g, " "));
+  return paragraphs
+    .join("\n\n")
+    .replaceAll(CLIENT_TOKENS.company_name, escapeMarkdown(fields.company.trim()) || "[Company name]")
+    .replaceAll(LAUNCH_TOKENS.fund_count, String(fields.funds))
+    .replaceAll(LAUNCH_TOKENS.contact_count, String(fields.contacts))
+    .replaceAll(LAUNCH_TOKENS.inbox, escapeMarkdown(fields.inbox.trim()) || "[your inbox]")
+    .replaceAll(LAUNCH_TOKENS.monthly_fee, fields.monthlyFee)
+    .replaceAll(LAUNCH_TOKENS.plan_months, String(Math.max(1, fields.planMonths)))
+    .replaceAll(LAUNCH_TOKENS.service_order_version, legacy ? String(legacy.currentVersion) : "")
+    .replaceAll(LAUNCH_TOKENS.service_order_signed_date, legacy ? legacy.signedOn : "");
+}
+
+/** Puts the postal address in. Blank shows a bracketed label, so a preview still reads clearly. */
+export function withPostalAddress(text: string, address: string) {
+  const clean = cleanPostalAddress(address);
+  return text.replaceAll(LAUNCH_TOKENS.postal_address, clean ? escapeMarkdown(clean) : "[your postal address]");
+}
+
+/** One line, single spaces. */
+export function cleanPostalAddress(value: string | null | undefined) {
+  return String(value ?? "")
+    .replace(/\s*\n+\s*/g, ", ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export const POSTAL_ADDRESS_MAX = 200;
+
+/** Why the address can't be used, or null. It goes into every campaign email, so it must look like one. */
+export function postalAddressProblem(value: string | null | undefined) {
+  const clean = cleanPostalAddress(value);
+  if (!clean) return "Enter your company's postal address.";
+  if (clean.length < 10 || !/\d/.test(clean) || !/[A-Za-z]/.test(clean)) {
+    return "Enter a full postal address: street or P.O. box, city, state or region, and postal code.";
+  }
+  if (clean.length > POSTAL_ADDRESS_MAX) return `Keep the address under ${POSTAL_ADDRESS_MAX} characters.`;
+  return null;
+}
+
+/** Months the sending plan takes, for the illustration: weeks of sending, rounded up to whole months. */
+export function planMonthsOf(weeks: number) {
+  return Math.max(1, Math.ceil((weeks * 7) / 30.4375));
+}
+
 export const DEFAULT_LAUNCH_CONFIRMATION = `# Hey Rupert - Launch Confirmation
 
 This Launch Confirmation is between The Night Ventures, LLC, doing business as Hey Rupert ("Rupert"), and ${CLIENT_TOKENS.company_name} ("Client"), under the Service Order between them. Setup is complete. By signing, Client confirms its decision to launch on the terms below. Terms defined in the Service Order mean the same here.

@@ -71,6 +71,7 @@ export default async function WhatRupertKnowsPage({
     sowConfirmedAt: client.sow_confirmed_at ?? null,
     serviceOrderIssued: Boolean((serviceOrder?.content || client.service_order_content || "").trim()),
     serviceOrderSignedAt: client.service_order_agreed_at ?? null,
+    launchConfirmedAt: live?.ok ? live.value.confirmation?.at ?? null : null,
     signerName: serviceOrder?.signature?.signer_name ?? null,
     setupInvoiceUrl: client.setup_invoice_url || serviceOrder?.payment_link || null,
     setupPaidAt: client.payment_received_at ?? null,

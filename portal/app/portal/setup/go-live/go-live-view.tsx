@@ -7,6 +7,8 @@ import { approveLaunchAction, pollInboxConnectAction, sendMeTestAction, startInb
 import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
 import { LaunchTimeline } from "@/components/launch-timeline";
+import { MarkdownBody } from "@/components/markdown-body";
+import { postalAddressProblem, withPostalAddress } from "@/lib/launch-confirmation";
 import { weekLabel, type PlanWeek } from "@/lib/outreach/live";
 
 const POLL_MS = 3000;
@@ -44,6 +46,7 @@ export function GoLiveView({
   requested,
   plan,
   inboxEmail,
+  confirmation,
 }: {
   readOnly: boolean;
   campaignReady: boolean;
@@ -58,10 +61,13 @@ export function GoLiveView({
   requested: { at: string } | null;
   plan: PlanWeek[];
   inboxEmail: string | null;
+  /** The Launch Confirmation for this client (postal address still to fill in), and what they confirmed. */
+  confirmation: { text: string; postalAddress: string; confirmed: { at: string; text: string } | null } | null;
 }) {
   const router = useRouter();
   const [connecting, setConnecting] = useState(false);
   const [consent, setConsent] = useState(false);
+  const [address, setAddress] = useState(confirmation?.postalAddress ?? "");
   const [launching, setLaunching] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
@@ -124,11 +130,16 @@ export function GoLiveView({
   }
 
   async function launch() {
-    if (!window.confirm("Approve the launch? Rupert runs a final check and starts sending within 24 hours.")) return;
+    const problem = postalAddressProblem(address);
+    if (problem) {
+      setError(problem);
+      return;
+    }
+    if (!window.confirm("Confirm the Launch Confirmation and approve the launch? Rupert runs a final check and starts sending within 24 hours.")) return;
     setLaunching(true);
     setError(null);
     try {
-      const result = await approveLaunchAction(consent);
+      const result = await approveLaunchAction(consent, address);
       if (!result.ok) setError(result.error);
       else router.refresh();
     } finally {
@@ -161,13 +172,25 @@ export function GoLiveView({
           </div>
         </div>
         <p className="mt-md max-w-prose text-body-sm text-secondary">
-          Each investor gets a first email and up to two follow-ups, 5 days apart, in the same thread; anyone who replies gets no more.
-          The pace starts low so your inbox builds a good sending record, and never goes above 30 emails a day.
+          Each investor gets a first email and a follow-up 5 business days later, in the same thread; anyone who replies gets no more.
+          The pace starts at up to 15 emails a day for the first 10 business days, so your inbox builds a good sending record, and
+          never goes above 30 emails a day.
           {live ? "" : " Dates assume sending starts the next weekday."}
         </p>
         <LaunchTimeline weeks={plan} live={Boolean(live)} requested={Boolean(requested)} />
       </section>
     ) : null;
+
+  const confirmedBlock = confirmation?.confirmed ? (
+    <details className="mt-lg rounded-card border border-border bg-surface px-lg py-md">
+      <summary className="cursor-pointer text-body-sm text-primary">
+        Your Launch Confirmation, confirmed {formatDateTime(confirmation.confirmed.at)}
+      </summary>
+      <div className="mt-md">
+        <MarkdownBody content={confirmation.confirmed.text} emptyLabel="" />
+      </div>
+    </details>
+  ) : null;
 
   if (live) {
     return (
@@ -181,6 +204,7 @@ export function GoLiveView({
             Open Live Campaign
           </Link>
         </LiveBanner>
+        {confirmedBlock}
         {planBlock}
       </>
     );
@@ -200,10 +224,11 @@ export function GoLiveView({
           <ul className="mt-sm grid gap-xs text-body-sm">
             <li>✓ Inbox connected{inboxEmail ? `: ${inboxEmail}` : ""}</li>
             <li>✓ First monthly invoice paid</li>
-            <li>✓ Launch approved by you</li>
+            <li>✓ Launch Confirmation confirmed and launch approved by you</li>
             <li className="text-muted">○ Rupert starts sending</li>
           </ul>
         </section>
+        {confirmedBlock}
         {planBlock}
       </>
     );
@@ -261,16 +286,15 @@ export function GoLiveView({
             <p>Rupert sends it when your campaign is ready.</p>
           )}
         </Step>
-        <Step n={3} done={false} title="Review and approve the launch">
+        <Step n={3} done={false} title="Confirm and approve the launch">
           <ul className="mb-md max-w-prose list-disc pl-lg">
             <li>
-              Never more than 30 emails a day from your inbox, follow-ups included, building up from 10 a day. New investors are
-              added each weekday, mixed across your tiers, until all {total} are reached. The second contact at a fund starts a few
-              days after the first.
+              Up to 15 emails a day from your inbox for the first 10 business days, then never more than 30 a day, follow-ups
+              included. New investors are added each weekday, mixed across your tiers, until all {total} are reached.
             </li>
-            <li>Once you approve, Rupert runs a final check and starts sending within 24 hours. You&apos;re emailed when it&apos;s live.</li>
-            <li>Each investor gets the first email and up to two follow-ups, as replies in the same thread. Anyone who replies gets no more follow-ups.</li>
+            <li>Each investor gets a first email and a follow-up 5 business days later, in the same thread. Anyone who replies gets no follow-up.</li>
             <li>Emails go out from your inbox, in your name. Rupert reads every reply first; the ones that need you appear in your Investor Inbox.</li>
+            <li>Once you approve, Rupert runs a final check and starts sending within 24 hours. You&apos;re emailed when it&apos;s live.</li>
           </ul>
           {inbox ? (
             <div className="mb-md">
@@ -282,11 +306,32 @@ export function GoLiveView({
               </span>
             </div>
           ) : null}
-          {consentText ? (
-            <label className="flex max-w-prose items-start gap-sm">
-              <input type="checkbox" className="mt-1" checked={consent} disabled={readOnly || !ready} onChange={(e) => setConsent(e.target.checked)} />
-              <span>{consentText}</span>
-            </label>
+          {confirmation && consentText ? (
+            <>
+              <label className="block max-w-prose">
+                <span className="text-heading">Your company&apos;s postal address</span>
+                <span className="block text-muted">
+                  It goes at the foot of each first email, with a line that lets an investor opt out. A street address or a
+                  P.O. box both work.
+                </span>
+                <input
+                  className="mt-xs w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none"
+                  value={address}
+                  disabled={readOnly}
+                  maxLength={200}
+                  placeholder="Street or P.O. box, city, state, postal code"
+                  onChange={(e) => setAddress(e.target.value)}
+                />
+              </label>
+              <p className="mt-md text-heading">Launch Confirmation</p>
+              <div className="sow-compact mt-xs max-h-[420px] max-w-prose overflow-y-auto rounded-md border border-border bg-background px-md py-md">
+                <MarkdownBody content={withPostalAddress(confirmation.text, address)} emptyLabel="" />
+              </div>
+              <label className="mt-md flex max-w-prose items-start gap-sm">
+                <input type="checkbox" className="mt-1" checked={consent} disabled={readOnly || !ready} onChange={(e) => setConsent(e.target.checked)} />
+                <span>I have read and confirm the Launch Confirmation above. {consentText}</span>
+              </label>
+            </>
           ) : (
             <p>Connect your inbox first.</p>
           )}
@@ -297,8 +342,8 @@ export function GoLiveView({
               ))}
             </ul>
           ) : null}
-          <button type="button" className={`${primary} mt-md`} disabled={readOnly || !ready || !consent || launching} onClick={launch}>
-            {launching ? "Approving…" : "Approve launch"}
+          <button type="button" className={`${primary} mt-md`} disabled={readOnly || !ready || !consent || launching || !confirmation} onClick={launch}>
+            {launching ? "Approving…" : "Confirm and approve launch"}
           </button>
         </Step>
       </ol>

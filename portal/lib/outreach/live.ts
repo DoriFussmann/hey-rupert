@@ -26,7 +26,7 @@ export type LiveSettings = {
   /** Days after a fund's first contact is sent before its other contacts start. */
   wave2_delay_days: number;
   track_opens: boolean;
-  /** The first weeks' email caps, before full pace: [10, 20] = 10 emails a day in week 1, 20 in week 2. */
+  /** The first weeks' email caps, before full pace: [15, 15] = 15 emails a day in weeks 1 and 2. */
   ramp: number[];
   /** Test mode (Test Pilot clients only): every email goes to a + address of this inbox. */
   test_recipient: string;
@@ -45,11 +45,13 @@ export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
   timezone: EASTERN,
   from: "09:00",
   to: "17:00",
-  // The same spacing the campaign Plan uses (lib/match/capacity/schedule.ts).
-  followup_days: [5, 5],
+  // Calendar days: 7 = 5 business days, the follow-up timing in the Service
+  // Order and the campaign Plan (lib/match/plan/core.ts).
+  followup_days: [7, 7],
   wave2_delay_days: 3,
   track_opens: true,
-  ramp: [10, 20],
+  // The warm-up in the Service Order: up to 15 a day for the first 10 business days.
+  ramp: [15, 15],
   test_recipient: "",
 };
 
@@ -222,12 +224,16 @@ export function toInstantlyHtml(value: string) {
 
 export type LeadMessage = Pick<CoreMessage, "id" | "person" | "fund_name" | "emails" | "slot" | "status" | "approved_hash" | "position">;
 
-/** One contact as an Instantly lead: their own three emails as variables. */
-export function leadFor(message: LeadMessage, optOutLine: string, overrideEmail?: string) {
+/**
+ * One contact as an Instantly lead: their own emails as variables. The first
+ * email ends with the opt-out line and the client's postal address.
+ */
+export function leadFor(message: LeadMessage, optOutLine: string, overrideEmail?: string, postalAddress = "") {
   const vars: Record<string, string> = {};
   message.emails.forEach((email: CopyEmail, index) => {
     const optOut = optOutFor(index, optOutLine).trim();
-    const body = optOut ? `${email.body.trimEnd()}\n\n${optOut}` : email.body;
+    const footer = [optOut, index === 0 ? postalAddress.trim() : ""].filter(Boolean).join("\n");
+    const body = footer ? `${email.body.trimEnd()}\n\n${footer}` : email.body;
     vars[`subject_${index + 1}`] = email.subject.trim();
     vars[`body_${index + 1}`] = toInstantlyHtml(body);
   });
@@ -443,7 +449,7 @@ export function sendingPlan(input: {
     }
     if (newInvestors === 0 && emails === 0) break;
     const range = weekRange(start, w);
-    const phase: PlanPhase = newInvestors === 0 ? "Follow-ups only" : w <= settings.ramp.length ? (w === 1 ? "Warm-up" : "Ramp-up") : "Full pace";
+    const phase: PlanPhase = newInvestors === 0 ? "Follow-ups only" : w <= settings.ramp.length ? (cap === capForWeek(settings, 1) ? "Warm-up" : "Ramp-up") : "Full pace";
     const status = !input.today ? (w === 1 ? "next" : "planned") : w < currentWeek ? "done" : w === currentWeek ? "current" : "planned";
     cumulative += newInvestors;
     const nextByTier = proportional(cumulative, tiers.map((t) => t.count));
@@ -472,6 +478,9 @@ export type GoLiveInput = {
   invoicePaid: boolean;
   alreadyLive: boolean;
 };
+
+/** The opt-out line when the copy sets none: every campaign email has one. */
+export const FALLBACK_OPT_OUT_LINE = "If this isn't relevant, tell me and I won't follow up.";
 
 /** What still stands between the client and Go Live, in the client's words. */
 export function goLiveGaps(input: GoLiveInput): string[] {

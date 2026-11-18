@@ -260,6 +260,29 @@ export function LivePanel({ clientId }: { clientId: string }) {
             label="Client approved the launch"
             detail={state.requested ? `${formatDateTime(state.requested.at)}${state.requested.by ? ` by ${state.requested.by}` : ""}` : state.testMode ? "Not needed for a Test Pilot." : undefined}
           />
+          <Check
+            done={Boolean(state.confirmation)}
+            label="Launch Confirmation confirmed"
+            detail={
+              state.confirmation ? (
+                <>
+                  {formatDateTime(state.confirmation.at)}
+                  {state.confirmation.version ? ` · version ${state.confirmation.version}` : ""}
+                  {state.postalAddress ? ` · postal address: ${state.postalAddress}` : ""}
+                  <details className="mt-xs">
+                    <summary className="cursor-pointer text-primary">What they confirmed</summary>
+                    <span className="mt-xs block whitespace-pre-wrap rounded-md border border-border bg-background px-md py-sm text-body">
+                      {state.confirmation.text}
+                    </span>
+                  </details>
+                </>
+              ) : state.testMode ? (
+                "Not needed for a Test Pilot."
+              ) : (
+                "The client confirms it, with their postal address, when approving the launch."
+              )
+            }
+          />
           <Check done={Boolean(live)} label="Live" detail={live ? `${formatDateTime(live.at)}${live.by ? ` by ${live.by}` : ""}` : "You click Go Live once the client approves."} />
         </ul>
 

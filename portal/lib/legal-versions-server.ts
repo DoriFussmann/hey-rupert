@@ -93,14 +93,16 @@ type SendRow = {
 };
 
 async function loadSends(supabase: ServiceClient, slug: FormSlug): Promise<Result<SendRow[]>> {
-  if (slug === LAUNCH_CONFIRMATION_SLUG) return { ok: true, value: [] };
   const columns = "client_id, template_version, customized, sent_at, archived_at";
   const query =
     slug === STATEMENT_OF_WORK_SLUG
       ? supabase.from("statement_of_work_sends").select(columns)
       : slug === SERVICE_ORDER_SLUG
         ? supabase.from("service_order_sends").select(`${columns}, signed_at`)
-        : supabase.from("signed_documents").select(`${columns}, signed_at`).eq("doc_type", NDA_SLUG);
+        : supabase
+            .from("signed_documents")
+            .select(`${columns}, signed_at`)
+            .eq("doc_type", slug === LAUNCH_CONFIRMATION_SLUG ? LAUNCH_CONFIRMATION_SLUG : NDA_SLUG);
   const { data, error } = await query;
   if (error) return { ok: false, error: legalError(error.message, error.code) };
   return { ok: true, value: (data ?? []) as unknown as SendRow[] };

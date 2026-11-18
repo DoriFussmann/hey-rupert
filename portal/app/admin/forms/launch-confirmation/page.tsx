@@ -14,16 +14,16 @@ export default async function LaunchConfirmationFormPage() {
     <>
       <PageHeader
         title="Launch Confirmation"
-        description="The confirmation a client signs with the first monthly invoice, before Go Live. Sending and signing it in the portal is not built yet; for now, send it by email."
+        description="The agreement a client confirms as the last step of Go Live, after connecting the inbox and paying the first monthly invoice. No signature: they tick a box, and the text they confirmed is kept with its version."
       />
       <FormTemplateEditor
         slug={LAUNCH_CONFIRMATION_SLUG}
         title={template.title}
         initialContent={template.content}
         defaultContent={template.defaultContent}
-        note="Fill in the bracketed fields for each client before sending."
+        note="The bracketed fields are filled in for each client: funds, contacts, inbox, postal address, monthly fee and plan length. The Current terms paragraph is shown only to a client who signed an earlier Service Order version."
       />
-      <LegalVersionHistory history={versions.history} error={versions.error} done="Signed" waiting="Not signed" />
+      <LegalVersionHistory history={versions.history} error={versions.error} done="Confirmed" waiting="Not confirmed" />
     </>
   );
 }
