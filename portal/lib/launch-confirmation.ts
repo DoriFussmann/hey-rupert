@@ -93,9 +93,9 @@ export function planMonthsOf(weeks: number) {
 
 export const DEFAULT_LAUNCH_CONFIRMATION = `# Hey Rupert - Launch Confirmation
 
-This Launch Confirmation is between The Night Ventures, LLC, doing business as Hey Rupert ("Rupert"), and ${CLIENT_TOKENS.company_name} ("Client"), under the Service Order between them. Setup is complete. By signing, Client confirms its decision to launch on the terms below. Terms defined in the Service Order mean the same here.
+This Launch Confirmation is between The Night Ventures, LLC, doing business as Hey Rupert ("Rupert"), and ${CLIENT_TOKENS.company_name} ("Client"), under the Service Order between them. Setup is complete. By confirming it in the Rupert Client Portal, Client confirms its decision to launch on the terms below. No signature is needed. Terms defined in the Service Order mean the same here.
 
-**1. What Client has approved.** Client has approved the investor target list ([FUND_COUNT] funds, [CONTACT_COUNT] contacts), the campaign positioning and the outreach messaging, as shown in the Rupert Client Portal on the date of signature.
+**1. What Client has approved.** Client has approved the investor target list ([FUND_COUNT] funds, [CONTACT_COUNT] contacts), the campaign positioning and the outreach messaging, as shown in the Rupert Client Portal on the date of confirmation.
 
 **2. Approved Inbox.** The campaign is sent from one inbox: [APPROVED_INBOX]. Client owns it, authorizes Rupert to access and send from it, will keep that access working, and will not use it for other bulk or automated sending during the campaign.
 
@@ -124,7 +124,7 @@ Client's approved list of [CONTACT_COUNT] contacts would take about [PLAN_MONTHS
 
 **7. Fund names and contact details.** The names of the funds on the approved list are Client's to keep. The contact details of individuals at those funds are Rupert's property and are used only inside the campaign Rupert runs; Client will not extract or use them outside it. When an investor replies, that reply and that contact belong to Client.
 
-**8. Launch.** The campaign launches after Client signs this Launch Confirmation and pays the first Monthly Campaign Fee invoice.
+**8. Launch.** The campaign launches after Client confirms this Launch Confirmation and pays the first Monthly Campaign Fee invoice.
 
 **9. Part of the Service Order.** This Launch Confirmation is part of the Service Order. Rupert issues it through the Rupert Client Portal, which is Rupert's signature to it.
 

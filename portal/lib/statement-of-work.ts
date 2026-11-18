@@ -45,7 +45,7 @@ If Setup is finished and you are not ready to launch, the engagement goes on hol
 
 **Term:** Month-to-month
 
-When Setup is complete, you receive a Launch Confirmation and the first monthly invoice. The campaign goes live when you sign and pay. The first monthly service period starts on the day the campaign first sends.
+When Setup is complete, you receive a Launch Confirmation and the first monthly invoice. The campaign goes live when you confirm it and pay. The first monthly service period starts on the day the campaign first sends.
 
 During the active campaign, Rupert manages the approved investor outreach campaign and underlying outreach infrastructure.
 
@@ -157,7 +157,7 @@ Rupert does not act as a broker, placement agent, legal advisor or financial adv
 
 **Cancellation:** 7 days' notice before the next renewal
 
-**Launch:** After Setup, your approvals, the signed Launch Confirmation and the first monthly payment
+**Launch:** After Setup, your approvals, the confirmed Launch Confirmation and the first monthly payment
 
 ## Next Step
 
