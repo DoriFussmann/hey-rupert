@@ -1,11 +1,15 @@
 import { PageHeader } from "@/components/page-header";
 import { FormTemplateEditor } from "@/components/form-template-editor";
-import { getFormTemplate } from "@/app/admin/actions";
+import { LegalVersionHistory } from "@/components/legal-version-history";
+import { getFormTemplate, getLegalHistory } from "@/app/admin/actions";
 import { NDA_SLUG } from "@/lib/form-fields";
 import { CLIENT_TOKENS } from "@/lib/service-order";
 
 export default async function NdaFormPage() {
-  const template = await getFormTemplate(NDA_SLUG);
+  const [template, versions] = await Promise.all([
+    getFormTemplate(NDA_SLUG),
+    getLegalHistory(NDA_SLUG),
+  ]);
 
   return (
     <>
@@ -20,6 +24,7 @@ export default async function NdaFormPage() {
         defaultContent={template.defaultContent}
         note={`${CLIENT_TOKENS.company_name} and ${CLIENT_TOKENS.signer_email} are filled in by the client when they sign. Signature blocks are added automatically.`}
       />
+      <LegalVersionHistory history={versions.history} error={versions.error} done="Signed" waiting="Not signed" />
     </>
   );
 }

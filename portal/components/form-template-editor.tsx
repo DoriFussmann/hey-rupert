@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { saveFormTemplate } from "@/app/admin/actions";
 import { MarkdownBody } from "@/components/markdown-body";
 import { setAdminFlash, useAdminFlash } from "@/lib/admin-flash";
 import type { FormSlug } from "@/lib/form-fields";
+import { LEGAL_NOTE_MAX } from "@/lib/legal-versions";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm font-sans text-body-sm text-body outline-none";
@@ -22,7 +24,9 @@ export function FormTemplateEditor({
   defaultContent: string;
   note?: string;
 }) {
+  const router = useRouter();
   const [value, setValue] = useState(initialContent);
+  const [change, setChange] = useState("");
   const [pending, setPending] = useState(false);
   const flashKey = `${slug}-template`;
   const flash = useAdminFlash(flashKey);
@@ -32,12 +36,19 @@ export function FormTemplateEditor({
     setAdminFlash(flashKey, null);
 
     try {
-      const result = await saveFormTemplate(slug, value);
+      const result = await saveFormTemplate(slug, value, change);
       if (!result.ok) {
         setAdminFlash(flashKey, { kind: "error", text: result.error });
         return;
       }
-      setAdminFlash(flashKey, { kind: "ok", text: "Saved." });
+      setAdminFlash(flashKey, {
+        kind: "ok",
+        text: result.unchanged
+          ? `No changes. Version ${result.version} is still in use.`
+          : `Saved as version ${result.version}. Documents already sent keep their version.`,
+      });
+      if (!result.unchanged) setChange("");
+      router.refresh();
     } catch (err) {
       setAdminFlash(flashKey, {
         kind: "error",
@@ -78,6 +89,15 @@ export function FormTemplateEditor({
             spellCheck
           />
         </label>
+        <label className="block text-label uppercase tracking-label text-muted">
+          What changed (kept with the version)
+          <input
+            className={fieldClass}
+            value={change}
+            maxLength={LEGAL_NOTE_MAX}
+            onChange={(event) => setChange(event.target.value)}
+          />
+        </label>
         <div>
           <p className="text-label uppercase tracking-label text-muted">
             Preview
@@ -94,7 +114,7 @@ export function FormTemplateEditor({
           disabled={pending}
           className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
         >
-          {pending ? "Saving…" : "Save"}
+          {pending ? "Saving…" : "Save as new version"}
         </button>
         <button
           type="button"
