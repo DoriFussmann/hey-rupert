@@ -1,5 +1,5 @@
 ---
-import HeroNote from "../components/HeroNote.astro";
+import HeroStack from "../components/HeroStack.astro";
 import { Image } from "astro:assets";
 import { getEntry } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
@@ -283,7 +283,7 @@ const jsonLd: Record<string, unknown>[] = [
           </p>
         </div>
         <div class="hero-reveal md:col-span-6">
-          <HeroNote />
+          <HeroStack />
         </div>
       </div>
     </section>
