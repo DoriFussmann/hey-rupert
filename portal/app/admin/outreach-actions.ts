@@ -14,6 +14,9 @@ import { loadPreviewLeads } from "@/lib/outreach/preview-server";
 import type { PreviewLeads } from "@/lib/outreach/preview";
 import { asEmailCopy } from "@/lib/setup";
 import { loadSetupStep } from "@/lib/setup-server";
+import { loadOutreachPlan } from "@/lib/outreach/source-server";
+import { loadOutreachStyles } from "@/lib/outreach/settings-server";
+import { sourceWorkspace, type SourceWorkspace } from "@/lib/outreach/source-copy";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -81,3 +84,15 @@ export async function loadPreviewLeadsAction(clientId: string): Promise<{ ok: tr
   return { ok: true, leads: await loadPreviewLeads(supabase, clientId, typed) };
 }
 
+
+/** The confirmed Plan's groups and a few funds per group, for writing and previewing the copy by source. */
+export async function loadSourceWorkspaceAction(clientId: string): Promise<Result<{ workspace: SourceWorkspace }>> {
+  const { user, role } = await getAuthContext();
+  if (!user || role !== "admin") return { ok: false, error: "You do not have permission to do that." };
+  if (!isServiceRoleConfigured()) return { ok: false, error: "Service role key is not configured." };
+  if (!/^[0-9a-f-]{36}$/i.test(String(clientId))) return { ok: false, error: "Unknown client." };
+  const supabase = createServiceClient();
+  const [plan, styles] = await Promise.all([loadOutreachPlan(supabase, clientId), loadOutreachStyles(supabase)]);
+  if (!plan.ok) return plan;
+  return { ok: true, workspace: sourceWorkspace(plan.value.funds, plan.value.planId, styles.styles.opt_out_line) };
+}

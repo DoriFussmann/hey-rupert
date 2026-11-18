@@ -152,3 +152,14 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Dynamic fields ({{first_name}}) in the email editor: see paintFields. */
+::highlight(merge-field) {
+  background-color: #e6ede3;
+  color: #476148;
+}
+
+::highlight(merge-field-unknown) {
+  background-color: #f6e3e0;
+  color: #c0392b;
+}

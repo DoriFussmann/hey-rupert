@@ -27,9 +27,11 @@ const MISSING_TEXT: Record<string, string> = {
   fund_name: "[fund name]",
   quick_fact: "[their personal line: written for each investor under Core contacts]",
   tier_line: "[why this investor]",
+  backed_company: "[no backed company on file]",
+  focus: "[no focus on file]",
 };
 
-function fill(template: string, values: Record<string, string | null | undefined>): Segment[] {
+export function fill(template: string, values: Record<string, string | null | undefined>): Segment[] {
   const out: Segment[] = [];
   for (const part of template.split(/(\{\{\s*[^{}]*?\s*\}\})/g)) {
     if (!part) continue;
@@ -69,6 +71,14 @@ export function previewEmail(
   };
   const optOut = optOutFor(index, optOutLine).trim();
   const body = fill(email.body.trimEnd(), values);
+  if (optOut) body.push({ text: `\n\n${optOut}` });
+  return { subject: fill(email.subject, values), body };
+}
+
+/** One email with the fields filled in, as pieces, so filled and missing values can be shown apart. */
+export function previewFilled(email: CopyEmail, values: Record<string, string | null | undefined>, optOutLine = ""): { subject: Segment[]; body: Segment[] } {
+  const body = fill(email.body.trimEnd(), values);
+  const optOut = optOutLine.trim();
   if (optOut) body.push({ text: `\n\n${optOut}` });
   return { subject: fill(email.subject, values), body };
 }

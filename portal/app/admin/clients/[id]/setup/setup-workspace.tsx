@@ -11,6 +11,7 @@ import {
   isSharedWithClient,
   getSetupItems,
   tierCounts,
+  workingNarrative,
   type SetupSource,
   type SetupStepId,
 } from "@/lib/setup";
@@ -78,6 +79,13 @@ export function setupPanels({
   const investors = asInvestorList(row("investor_list")?.published);
   const listScheme = investors.tier_scheme ?? "three";
   const counts = tierCounts(investors.rows, listScheme);
+  // What the emails are written from: the three points the founder approved.
+  const story = workingNarrative(row("framing"));
+  const copyNarrative = {
+    confirmed: row("framing")?.status === "confirmed",
+    points: story.statement?.points ?? [],
+    text: story.statement ? "" : [story.core, story.key_messages].map((part) => part.trim()).filter(Boolean).join("\n\n"),
+  };
   const step = (id: SetupStepId) => ({ done: item(id).status === "done", turn: turnOf(item(id).status) });
   // Every point of feedback on a step (the client's and the viewers'), with Rupert's reply.
   const inbox = (id: ViewerCommentStep) =>
@@ -147,6 +155,7 @@ export function setupPanels({
             tierCounts={counts}
             listScheme={listScheme}
             sourceMode={Boolean(investors.summaries)}
+            narrative={copyNarrative}
             claudeReady={claudeReady}
             pushWarning={investors.summaries ? null : outreach.coreWarning}
           />
