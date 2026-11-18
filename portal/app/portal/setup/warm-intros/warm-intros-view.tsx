@@ -8,7 +8,7 @@ import type { KnownFund } from "@/lib/outreach/campaign-server";
 const fieldClass =
   "w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary";
 
-function FundCard({ fund, ask, blurb, readOnly }: { fund: KnownFund; ask: string; blurb: string; readOnly: boolean }) {
+function FundCard({ fund, ask, blurb, readOnly }: { fund: ClientKnownFund; ask: string; blurb: string; readOnly: boolean }) {
   const [status, setStatus] = useState<WarmIntroStatus>(fund.status);
   const [note, setNote] = useState(fund.client_note);
   const [saved, setSaved] = useState({ status: fund.status, note: fund.client_note });
@@ -55,10 +55,9 @@ function FundCard({ fund, ask, blurb, readOnly }: { fund: KnownFund; ask: string
           Rupert added this fund to the email campaign, so it will also get an email from you.
         </p>
       ) : null}
-      {fund.contacts.length ? (
+      {fund.contact_count ? (
         <p className="mt-sm text-body-sm text-secondary">
-          <span className="text-heading">Who to ask about: </span>
-          {fund.contacts.map((c) => [c.name, c.title].filter(Boolean).join(", ")).join("; ")}
+          {fund.contact_count} investing contact{fund.contact_count === 1 ? "" : "s"} on file at this fund.
         </p>
       ) : null}
 
@@ -103,7 +102,10 @@ function FundCard({ fund, ask, blurb, readOnly }: { fund: KnownFund; ask: string
   );
 }
 
-export function WarmIntrosView({ funds, ask, blurb, readOnly }: { funds: KnownFund[]; ask: string; blurb: string; readOnly: boolean }) {
+/** A known fund as the client sees it: how many contacts, never who. */
+export type ClientKnownFund = KnownFund & { contact_count: number };
+
+export function WarmIntrosView({ funds, ask, blurb, readOnly }: { funds: ClientKnownFund[]; ask: string; blurb: string; readOnly: boolean }) {
   return (
     <ul className="grid gap-md">
       {funds.map((fund) => (

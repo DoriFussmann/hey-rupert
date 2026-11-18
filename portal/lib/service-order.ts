@@ -174,7 +174,7 @@ This Service Order is a binding agreement between the parties below for a Hey Ru
 - **Setup Fee:** $250, one-time, non-refundable, due on signing
 - **Setup Period:** Typically 2 to 4 weeks from Kick-off; extended by any Client delay
 - **Monthly Campaign Fee:** $1,000 per Service Month, invoiced and paid in advance
-- **First Monthly Invoice:** Issued with the Launch Confirmation when Setup is complete; signing and paying is the Client's decision to launch
+- **First Monthly Invoice:** Issued with the Launch Confirmation when Setup is complete; confirming it and paying is the Client's decision to launch
 - **Basic package:** One Client-approved inbox. Up to 15 emails per Business Day for the first 10 Business Days, then up to 30 per Business Day, including one follow-up per contact
 - **Term:** Month-to-month after Launch
 - **Cancellation by the Client:** Written notice at least 7 days before the next Renewal Date; effective at that Renewal Date
@@ -188,7 +188,7 @@ If this summary conflicts with the sections below, the sections below control.
 
 ## 1. Agreement and Kick-off
 
-1.1 **Entire agreement.** This Service Order, together with the Launch Confirmation once the Client signs it, is the entire agreement between the parties for the services. It supersedes the Statement of Work and all prior proposals, emails and discussions. The Statement of Work is not part of this agreement.
+1.1 **Entire agreement.** This Service Order, together with the Launch Confirmation once the Client confirms it, is the entire agreement between the parties for the services. It supersedes the Statement of Work and all prior proposals, emails and discussions. The Statement of Work is not part of this agreement.
 
 1.2 **NDA.** The parties will sign a separate non-disclosure agreement (the "NDA") after this Service Order and before Client Intake. The NDA governs the Client's confidential information. Section 9.1 governs Rupert's proprietary information. If the NDA conflicts with this Service Order on any other subject, this Service Order controls.
 
@@ -234,11 +234,11 @@ If this summary conflicts with the sections below, the sections below control.
 
 3.2 **Approvals required.** Before Launch, the Client must approve the investor target list, campaign positioning and outreach messaging. Approval may be given in writing by email or through the Rupert Client Portal. Rupert will not launch any campaign without these approvals.
 
-3.3 **Launch Confirmation.** When Setup is complete and the approvals in Section 3.2 are given, Rupert will issue a Launch Confirmation and the first Monthly Campaign Fee invoice. The Launch Confirmation names the Approved Inbox and the postal address for the campaign emails, and confirms the Sending Plan. The Client may choose whether to sign and pay. Signing and paying confirms the Client's decision to launch.
+3.3 **Launch Confirmation.** When Setup is complete and the approvals in Section 3.2 are given, Rupert will issue a Launch Confirmation and the first Monthly Campaign Fee invoice. The Launch Confirmation names the Approved Inbox and the postal address for the campaign emails, and confirms the Sending Plan. The Client may choose whether to confirm it and pay. Confirming it in the Rupert Client Portal and paying is the Client's decision to launch. No signature is needed.
 
-3.4 **Launch.** The campaign launches only after all of (a) the approvals in Section 3.2, (b) the signed Launch Confirmation, and (c) payment of the first Monthly Campaign Fee. The date the campaign first sends is the "Launch Date."
+3.4 **Launch.** The campaign launches only after all of (a) the approvals in Section 3.2, (b) the Launch Confirmation confirmed by the Client, and (c) payment of the first Monthly Campaign Fee. The date the campaign first sends is the "Launch Date."
 
-3.5 **On Hold.** Before Launch, the engagement is "On Hold" whenever Rupert is waiting for the Client to provide information, materials, access, an approval, the signed Launch Confirmation, or payment of the first Monthly Campaign Fee. While the engagement is On Hold, Rupert has no obligation to perform any work and is not in breach. The Client may resume by providing what is outstanding, subject to Sections 3.6 and 3.7.
+3.5 **On Hold.** Before Launch, the engagement is "On Hold" whenever Rupert is waiting for the Client to provide information, materials, access, an approval, the confirmed Launch Confirmation, or payment of the first Monthly Campaign Fee. While the engagement is On Hold, Rupert has no obligation to perform any work and is not in breach. The Client may resume by providing what is outstanding, subject to Sections 3.6 and 3.7.
 
 3.6 **Refresh after 45 days.** If the engagement is On Hold for more than 45 consecutive days, investor data and campaign materials may be out of date. Before resuming, Rupert may require a refresh fee equal to the Setup Fee and may apply its then-current Monthly Campaign Fee.
 

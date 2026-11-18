@@ -3,7 +3,7 @@ import { BackLink } from "@/components/back-link";
 import { GoLiveView } from "@/app/portal/setup/go-live/go-live-view";
 import { getPortalSetup } from "@/lib/portal-setup";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { loadLiveState } from "@/lib/outreach/live-server";
+import { loadLaunchConfirmation, loadLiveState } from "@/lib/outreach/live-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 export const dynamic = "force-dynamic";
@@ -12,6 +12,8 @@ export default async function GoLivePage() {
   const { client, viewAs } = await getPortalSetup();
   const loaded = client?.id && isServiceRoleConfigured() ? await loadLiveState(createServiceClient(), client.id) : null;
   const state = loaded?.ok ? loaded.value : null;
+  const confirmationRead = state && client?.id ? await loadLaunchConfirmation(createServiceClient(), client.id, state) : null;
+  const confirmation = confirmationRead?.ok ? confirmationRead.value : null;
 
   return (
     <>
@@ -34,6 +36,15 @@ export default async function GoLivePage() {
           requested={state.requested ? { at: state.requested.at } : null}
           plan={state.plan}
           inboxEmail={state.inbox?.email ?? null}
+          confirmation={
+            confirmation
+              ? {
+                  text: confirmation.text,
+                  postalAddress: confirmation.postalAddress,
+                  confirmed: confirmation.confirmed ? { at: confirmation.confirmed.at, text: confirmation.confirmed.text } : null,
+                }
+              : null
+          }
         />
       ) : (
         <p className="rounded-card border border-border bg-surface px-lg py-md text-body-sm text-muted">

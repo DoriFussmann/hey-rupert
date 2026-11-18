@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { randomUUID } from "crypto";
 import { loadMaterialFields } from "@/lib/material-fields-server";
@@ -892,13 +893,18 @@ export async function pollInboxConnectAction(): Promise<
  * email and in the app, and he clicks Go Live within 24 hours. Nothing is
  * sent until then.
  */
-export async function approveLaunchAction(consent: boolean): Promise<SetupActionResult> {
+export async function approveLaunchAction(consent: boolean, postalAddress: string): Promise<SetupActionResult> {
   const access = await requirePortalService();
   if (!access.ok) return access;
   const opened = await loadSetupStep(access.supabase, access.user.id, "go_live");
   if (!opened.ok) return opened;
   if (!opened.row || opened.row.version === 0) return { ok: false, error: "Go Live opens once Rupert sends you your campaign." };
-  const requested = await requestLaunch(access.supabase, access.user.id, access.user.email ?? null, Boolean(consent));
+  const origin = headers();
+  const requested = await requestLaunch(access.supabase, access.user.id, access.user.email ?? null, Boolean(consent), {
+    postalAddress: String(postalAddress ?? ""),
+    ip: origin.get("x-forwarded-for")?.split(",")[0]?.trim() || origin.get("x-real-ip"),
+    userAgent: origin.get("user-agent")?.slice(0, 500) || null,
+  });
   if (!requested.ok) return requested;
   if (!requested.value.already) {
     await confirmGoLiveStep(access.supabase, access.user.id, access.user.email ?? null);

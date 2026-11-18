@@ -59,7 +59,7 @@ test("the campaign: three variable steps, follow-ups in the same thread, stop fo
   const steps = body.sequences[0].steps;
   assert.equal(steps.length, 3);
   assert.deepEqual(steps.map((s) => s.variants[0].subject), ["{{subject_1}}", "", ""]);
-  assert.deepEqual(steps.map((s) => s.delay), [5, 5, 0]);
+  assert.deepEqual(steps.map((s) => s.delay), [7, 7, 0]);
   assert.equal(body.stop_for_company, true);
   assert.deepEqual(body.email_list, ["dana@acme.com"]);
   assert.deepEqual(Object.entries(body.campaign_schedule.schedules[0].days).filter(([, on]) => on).map(([d]) => d), ["1", "2", "3", "4", "5"]);
@@ -72,6 +72,9 @@ test("a lead carries its own emails as HTML variables, opt-out on the first only
   assert.equal(lead.custom_variables.body_1, "Hi Ana,<br/><br/>Three &lt;lines&gt;.<br/><br/>Dana<br/><br/>Not relevant? Tell me.");
   assert.equal(lead.custom_variables.body_2, "One more.<br/><br/>Dana");
   assert.equal(lead.last_name, "Lopez");
+  const withAddress = leadFor(message("a"), "Not relevant? Tell me.", undefined, "12 Main St, Austin, TX 78701");
+  assert.ok(withAddress.custom_variables.body_1.endsWith("Not relevant? Tell me.<br/>12 Main St, Austin, TX 78701"));
+  assert.equal(withAddress.custom_variables.body_2, "One more.<br/><br/>Dana");
   assert.equal(leadFor(message("a"), "", "dori@test.com").email, "dori@test.com");
   assert.equal(toInstantlyHtml("a & b\r\nc"), "a &amp; b<br/>c");
 });
@@ -182,9 +185,9 @@ test("Eastern by default; America/New_York becomes Instantly's America/Detroit",
   assert.deepEqual(asLiveSettings({ ramp: [5, "x", 80] }).ramp, [5, 30]);
 });
 
-test("the email cap: 10 a day in week 1, 20 in week 2, then 30, never more", () => {
+test("the email cap: 15 a day in weeks 1 and 2, then 30, never more", () => {
   const s = asLiveSettings(null);
-  assert.deepEqual([1, 2, 3, 9].map((w) => capForWeek(s, w)), [10, 20, 30, 30]);
+  assert.deepEqual([1, 2, 3, 9].map((w) => capForWeek(s, w)), [15, 15, 30, 30]);
   assert.equal(capForWeek({ ramp: [], daily_limit: 99 }, 1), 30);
 });
 
@@ -216,8 +219,10 @@ test("the sending plan reaches everyone, marks the current week, then follow-ups
   const plan = sendingPlan({ total: 300, settings: DEFAULT_LIVE_SETTINGS, launchDay: "2026-11-02", today: "2026-11-17" });
   assert.equal(plan.reduce((n, w) => n + w.newInvestors, 0), 300);
   assert.deepEqual(plan.slice(0, 3).map((w) => [w.phase, w.cap, w.status]), [
-    ["Warm-up", 10, "done"],
-    ["Ramp-up", 20, "done"],
+    ["Warm-up", 15, "done"],
+    // Follow-ups go 7 calendar days (5 business days) after the first email and
+    // come first, so week 2 is week 1's follow-ups.
+    ["Follow-ups only", 15, "done"],
     ["Full pace", 30, "current"],
   ]);
   assert.equal(plan[plan.length - 1].phase, "Follow-ups only");

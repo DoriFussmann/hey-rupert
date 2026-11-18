@@ -41,7 +41,7 @@ export const LAUNCH_CALL_URL = process.env.NEXT_PUBLIC_LAUNCH_CALL_URL || "https
 
 export function launchCallText(url: string = LAUNCH_CALL_URL) {
   // One paragraph, the call named once, the link once: the portal already has "Book a call" in the left panel.
-  return `Once you've confirmed the emails, let's take 30 minutes before anything goes out, to walk through the launch plan: who gets emailed first and when, the weekly pace (it starts at 10 emails a day from your inbox and builds to 30), how the follow-ups work, how replies reach you through Rupert, and what we'll need from you once investors start answering. Pick a time here: ${url}`;
+  return `Once you've confirmed the emails, let's take 30 minutes before anything goes out, to walk through the launch plan: who gets emailed first and when, the pace (up to 15 emails a day from your inbox for the first 10 business days, then up to 30), how the follow-ups work, how replies reach you through Rupert, and what we'll need from you once investors start answering. Pick a time here: ${url}`;
 }
 
 export const TOKEN_HELP: Record<EmailToken, string> = {

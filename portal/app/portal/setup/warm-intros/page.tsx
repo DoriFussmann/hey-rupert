@@ -12,7 +12,9 @@ export default async function WarmIntrosPage() {
   const [known, blurb] = supabase
     ? await Promise.all([loadKnownFunds(supabase, client!.id), loadWarmIntroBlurb(supabase, client!.id)])
     : [{ ok: true as const, value: [] }, { ask: "", blurb: "" }];
-  const funds = known.ok ? known.value : [];
+  // The client sees how many contacts Rupert has at each fund, never who they
+  // are: contact details stay with Rupert (Service Order 8.4).
+  const funds = (known.ok ? known.value : []).map((fund) => ({ ...fund, contacts: [], contact_count: fund.contacts.length }));
 
   return (
     <>

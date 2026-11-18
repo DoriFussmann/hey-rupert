@@ -330,7 +330,7 @@ export const PLAN_LIMITS: Record<keyof PlanInputs, { min: number; max: number; l
   warmupWeeks: { min: 0, max: 12, label: "Warm-up weeks" },
   warmupPercent: { min: 0, max: 100, label: "Warm-up capacity (%)", hint: "One percentage for the whole warm-up." },
   followUps: { min: 0, max: 5, label: "Follow-ups per contact", hint: "1 = two emails." },
-  followUpDelayDays: { min: 1, max: 30, label: "Days between email and follow-up", hint: "Calendar days. 7 = 5 working days." },
+  followUpDelayDays: { min: 1, max: 30, label: "Days between email and follow-up", hint: "Calendar days. 7 = 5 business days, the follow-up timing in the Service Order." },
   contactsPerFund: { min: 0, max: 20, label: "Contacts per fund (cap)", hint: "Off: every usable contact at each fund." },
   months: { min: 1, max: 12, label: "Campaign length (months)" },
 };

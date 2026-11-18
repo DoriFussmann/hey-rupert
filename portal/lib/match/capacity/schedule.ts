@@ -10,8 +10,9 @@
 //     30 per inbox, follow-ups included). During the warm-up weeks it ramps up
 //     evenly: the first warm-up week sends the warm-up percentage, each later
 //     one steps up by the same amount towards full. With 2 warm-up weeks at
-//     33% of 30: 10 a day in week 1, 20 in week 2, 30 from week 3 — the
-//     same ramp the live campaign sends (lib/outreach/live.ts).
+//     33% of 30: 10 a day in week 1, 20 in week 2, 30 from week 3. (The live
+//     campaign and the campaign Plan now use the Service Order's warm-up, 15 a
+//     day for two weeks: lib/outreach/live.ts, lib/match/plan/core.ts.)
 //   - A firm is started on a day by emailing each of its contacts (one
 //     initial email per contact). Follow-up k goes `followUpDelayDays`
 //     calendar days after the email before it, on the first sending day with
