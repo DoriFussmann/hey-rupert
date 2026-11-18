@@ -167,3 +167,60 @@ test("stored copy round-trips as copy v3 and blocks the push while a check fails
   assert.equal(messy.groups[1].emails.length, 2);
   assert.ok(!emailCopyHasContent(asEmailCopy({ copy_version: 3, by_source: emptySourceCopy(sourceGroups(outreachFunds(plan)), "") })));
 });
+
+// ---------------------------------------------------------------------------
+// Writing by hand: the Plan's groups, status, preview
+
+import { groupStatus, sourceWorkspace, withPlanGroups } from "./source-copy.ts";
+import { previewFilled } from "./preview.ts";
+
+const handFunds: OutreachFund[] = [
+  { firmId: "a", name: "Alpha", tier: "core", type: "VC", bucket: "competitor", contacts: 2, hook: "Rival Inc" },
+  { firmId: "b", name: "Beta", tier: "sphere", type: "VC", bucket: "competitor", contacts: 1, hook: "" },
+  { firmId: "c", name: "Gamma", tier: "tier3", type: "PE", bucket: "market", contacts: 1, hook: "Fintech" },
+];
+
+test("the workspace gives each Plan group its funds to preview with, and names the funds with no hook", () => {
+  const workspace = sourceWorkspace(handFunds, "plan-1", "Reply stop to opt out.");
+  assert.deepEqual(workspace.groups.map((group) => [group.bucket, group.funds]), [["competitor", 2], ["market", 1]]);
+  assert.deepEqual(workspace.samples.competitor, [{ fund: "Alpha", hook: "Rival Inc" }, { fund: "Beta", hook: "" }]);
+  assert.deepEqual(workspace.missing, { competitor: ["Beta"] });
+  assert.equal(workspace.samples.lookalike, undefined);
+});
+
+test("new copy starts with an empty group per Plan group; written groups are never touched", () => {
+  const workspace = sourceWorkspace(handFunds, "plan-1", "Reply stop to opt out.");
+  const fresh = withPlanGroups({ groups: [], opt_out_line: "" }, workspace);
+  assert.deepEqual(fresh.groups.map((group) => group.bucket), ["competitor", "market"]);
+  assert.equal(fresh.opt_out_line, "Reply stop to opt out.");
+  assert.equal(fresh.plan_id, "plan-1");
+  assert.ok(fresh.groups.every((group) => group.emails.length === 2 && group.emails.every((email) => !email.subject && !email.body)));
+
+  // Copy written earlier (by AI or by hand) with one group: it stays as it is, the missing group is added.
+  const written = { ...fresh, groups: [{ ...fresh.groups[1], funds: 9, emails: [{ subject: "S", body: "B" }, { subject: "", body: "F" }] }], opt_out_line: "" };
+  const merged = withPlanGroups(written, workspace);
+  assert.deepEqual(merged.groups.map((group) => group.bucket), ["competitor", "market"]);
+  assert.deepEqual(merged.groups[1], written.groups[0]);
+  assert.equal(merged.opt_out_line, "");
+  // Nothing missing: the same object, so the editor sees no change.
+  assert.equal(withPlanGroups(merged, workspace), merged);
+});
+
+test("a group is empty, a draft while something stops the push, then ready", () => {
+  const empty = [{ subject: "", body: "" }, { subject: "", body: "" }];
+  assert.equal(groupStatus({ bucket: "market", emails: empty }), "empty");
+  const first = { subject: "Payments for clinics, $2M seed", body: "Hi {{first_name}},\n\nYour fund invests in {{focus}}. Worth a look?\n\nAna" };
+  assert.equal(groupStatus({ bucket: "market", emails: [first, { subject: "", body: "" }] }), "draft");
+  assert.equal(groupStatus({ bucket: "market", emails: [first, { subject: "", body: "{{first_name}}, one more point. Worth a look?\n\nAna" }] }), "ready");
+  // A field this group doesn't have stops the push.
+  assert.equal(groupStatus({ bucket: "market", emails: [{ ...first, body: `${first.body} {{backed_company}}` }, { subject: "", body: "Follow up.\n\nAna" }] }), "draft");
+});
+
+test("the preview fills the fields for one fund and marks a value the data doesn't have", () => {
+  const email = { subject: "For {{fund_name}}", body: "Hi {{first_name}},\nYour fund backed {{backed_company}}.\n" };
+  const filled = previewFilled(email, { first_name: "Sarah", fund_name: "Alpha", backed_company: "Rival Inc" }, "Reply stop to opt out.");
+  assert.equal(filled.subject.map((s) => s.text).join(""), "For Alpha");
+  assert.equal(filled.body.map((s) => s.text).join(""), "Hi Sarah,\nYour fund backed Rival Inc.\n\nReply stop to opt out.");
+  const missing = previewFilled(email, { first_name: "Sarah", fund_name: "Beta" });
+  assert.deepEqual(missing.body.filter((s) => s.missing).map((s) => s.field), ["backed_company"]);
+});

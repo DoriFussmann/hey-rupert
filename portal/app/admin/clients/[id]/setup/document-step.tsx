@@ -107,7 +107,7 @@ export function DocumentStep({
   warning?: string | null;
   /** The panel is busy (analyzing, building): actions wait. */
   busy: boolean;
-  /** What Push to Client Portal & Send puts in the portal. */
+  /** What Push to Client Portal & Send puts in the portal. Empty: no line. */
   pushSummary: string;
   /** The client's page as it will look after the push. Adds Preview as client. */
   clientPreview?: React.ReactNode;
@@ -319,7 +319,7 @@ export function DocumentStep({
       </section>
 
       <section className="border-t border-border bg-background px-lg py-md">
-        <p className="max-w-prose text-body-sm text-secondary">{pushSummary}</p>
+        {pushSummary ? <p className="max-w-prose text-body-sm text-secondary">{pushSummary}</p> : null}
         {sendHint ? <p className="mt-sm text-body text-secondary">{sendHint}</p> : null}
         <div className="mt-md flex flex-wrap items-center gap-sm">
           <button

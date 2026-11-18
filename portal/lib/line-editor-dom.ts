@@ -3,6 +3,7 @@
 // bullet) and set in from the margin. The plain text stays the source of truth.
 
 import { bulletOf } from "./text-bullets.ts";
+import { fieldSpans } from "./merge-fields.ts";
 
 /** How far a bullet sits in from the margin, per level. */
 const INSET_EM = { 1: 1, 2: 2 } as const;
@@ -128,4 +129,66 @@ export function setSelection(root: HTMLElement, start: number, end = start) {
   range.setEnd(en, eo);
   sel.removeAllRanges();
   sel.addRange(range);
+}
+
+// ---------------------------------------------------------------------------
+// Dynamic fields ({{first_name}}) shown in colour, with the CSS Custom
+// Highlight API: the text and the DOM stay exactly as they are. Browsers
+// without it show the fields as plain text.
+
+const KNOWN = "merge-field";
+const UNKNOWN = "merge-field-unknown";
+const painted = new WeakMap<HTMLElement, Range[]>();
+
+function highlightOf(name: string) {
+  if (typeof CSS === "undefined" || !("highlights" in CSS) || typeof Highlight === "undefined") return null;
+  let highlight = CSS.highlights.get(name);
+  if (!highlight) {
+    highlight = new Highlight();
+    CSS.highlights.set(name, highlight);
+  }
+  return highlight;
+}
+
+/** The text node and offset at a position in one line div. */
+function inLine(div: HTMLElement, offset: number): [Node, number] | null {
+  let left = offset;
+  const nodes = Array.from(div.childNodes).filter((n) => n.nodeType === Node.TEXT_NODE);
+  for (let i = 0; i < nodes.length; i++) {
+    const len = (nodes[i].textContent ?? "").length;
+    if (left <= len) return [nodes[i], left];
+    left -= len;
+  }
+  return null;
+}
+
+/**
+ * Colours every {{field}} in the editor: allowed ones one way, any other
+ * (a typo, or a field this group doesn't have) another. `allowed` null
+ * removes the colours (also on unmount).
+ */
+export function paintFields(root: HTMLElement, allowed: readonly string[] | null) {
+  const known = highlightOf(KNOWN);
+  const unknown = highlightOf(UNKNOWN);
+  if (!known || !unknown) return;
+  for (const range of painted.get(root) ?? []) {
+    known.delete(range);
+    unknown.delete(range);
+  }
+  painted.delete(root);
+  if (!allowed) return;
+  const ranges: Range[] = [];
+  for (const div of Array.from(root.children) as HTMLElement[]) {
+    for (const span of fieldSpans(div.textContent ?? "", allowed)) {
+      const from = inLine(div, span.start);
+      const to = inLine(div, span.end);
+      if (!from || !to) continue;
+      const range = document.createRange();
+      range.setStart(from[0], from[1]);
+      range.setEnd(to[0], to[1]);
+      (span.known ? known : unknown).add(range);
+      ranges.push(range);
+    }
+  }
+  painted.set(root, ranges);
 }

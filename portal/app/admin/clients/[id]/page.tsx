@@ -283,8 +283,9 @@ export default async function ClientDetailPage({
           goLivePushed: (setupSource.setup_steps.find((row) => row.step === "go_live")?.version ?? 0) > 0,
         })
       : { core: { done: false, turn: "none" as const }, campaign: { done: false, turn: "none" as const }, live: { done: false, turn: "none" as const }, coreWarning: null };
+    let briefData: Awaited<ReturnType<typeof loadBriefPanel>> | null = null;
     if (service) {
-      const briefData = await loadBriefPanel(service, client.id);
+      briefData = await loadBriefPanel(service, client.id);
       const framingRow = setupSource.setup_steps.find((row) => row.step === "framing");
       const briefDone = (framingRow?.version ?? 0) > 0;
       panels.push({
@@ -308,6 +309,8 @@ export default async function ClientDetailPage({
         outreach,
         viewerComments: await listViewerComments(client.id),
         replyRows: await listReplyRows(client.id),
+        brief: briefData?.brief ?? null,
+        briefTopics: briefData?.topics ?? [],
       }),
     );
   }

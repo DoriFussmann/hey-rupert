@@ -61,6 +61,14 @@ export const SOURCE_FIELD_HELP: Record<string, string> = {
   focus: "The fund's sector that matches the company",
 };
 
+/** What a field is called on its button. */
+export const SOURCE_FIELD_LABEL: Record<string, string> = {
+  first_name: "First name",
+  fund_name: "Fund name",
+  backed_company: "Backed company",
+  focus: "Focus",
+};
+
 /** Note key for one group, used by the client's per-group notes. */
 export function sourceGroupKey(bucket: SourceBucket) {
   return `source:${bucket}`;
@@ -178,6 +186,37 @@ export function sourceGroups(funds: OutreachFund[]): SourceGroup[] {
   });
 }
 
+/** A fund to preview a group's emails with. */
+export type SourceSample = { fund: string; hook: string };
+
+/** What the editor needs from the confirmed Plan. */
+export type SourceWorkspace = {
+  planId: string;
+  /** The opt-out line new copy starts with. */
+  optOutLine: string;
+  groups: SourceGroup[];
+  /** A few funds per group, in Plan order, to preview with. */
+  samples: Partial<Record<SourceBucket, SourceSample[]>>;
+  /** Per group, the funds with no value for its hook field. */
+  missing: Partial<Record<SourceBucket, string[]>>;
+};
+
+export function sourceWorkspace(funds: OutreachFund[], planId: string, optOutLine: string, perGroup = 8): SourceWorkspace {
+  const samples: SourceWorkspace["samples"] = {};
+  const missing: SourceWorkspace["missing"] = {};
+  for (const bucket of SOURCE_BUCKETS) {
+    const inBucket = funds.filter((fund) => fund.bucket === bucket);
+    if (!inBucket.length) continue;
+    samples[bucket] = inBucket.slice(0, perGroup).map((fund) => ({ fund: fund.name, hook: fund.hook }));
+    const without = inBucket.filter((fund) => !fund.hook).map((fund) => fund.name);
+    if (without.length) missing[bucket] = without.slice(0, 50);
+  }
+  return { planId, optOutLine, groups: sourceGroups(funds), samples, missing };
+}
+
+/** First names to preview with: the Plan holds funds, not the people at them. */
+export const SAMPLE_FIRST_NAMES = ["Sarah", "David", "Priya", "Michael", "Elena", "James", "Aisha", "Tom"] as const;
+
 /** Merge values for one fund; the investor's first name is added per contact. */
 export function sourceValues(fund: Pick<OutreachFund, "name" | "bucket" | "hook">, firstName?: string): Record<string, string> {
   const values: Record<string, string> = { fund_name: fund.name };
@@ -262,6 +301,35 @@ export function asSourceCopy(value: unknown): SourceCopy {
   return { groups, opt_out_line: text(raw.opt_out_line, 300).trim(), ...(planId ? { plan_id: planId } : {}) };
 }
 
+/**
+ * The copy with an empty group for every Plan group it doesn't have yet, so
+ * each can be written. Groups already there are left exactly as they are.
+ * Returns the same object when nothing is missing.
+ */
+export function withPlanGroups(copy: SourceCopy, workspace: Pick<SourceWorkspace, "groups" | "optOutLine" | "planId">): SourceCopy {
+  const have = new Set(copy.groups.map((group) => group.bucket));
+  const add = workspace.groups.filter((group) => !have.has(group.bucket));
+  if (!add.length) return copy;
+  const fresh = copy.groups.length === 0;
+  const groups = [...copy.groups, ...add.map((group) => ({ ...group, emails: emptySequence() }))];
+  groups.sort((a, b) => SOURCE_BUCKETS.indexOf(a.bucket) - SOURCE_BUCKETS.indexOf(b.bucket));
+  return {
+    ...copy,
+    groups,
+    opt_out_line: fresh && !copy.opt_out_line ? workspace.optOutLine : copy.opt_out_line,
+    ...(fresh && !copy.plan_id && workspace.planId ? { plan_id: workspace.planId } : {}),
+  };
+}
+
+export type GroupStatus = "empty" | "draft" | "ready";
+
+/** Where a group's writing stands: nothing yet, in progress, or nothing left that stops the push. */
+export function groupStatus(group: Pick<SourceGroupCopy, "bucket" | "emails">): GroupStatus {
+  if (!group.emails.some((email) => email.subject.trim() || email.body.trim())) return "empty";
+  const blocked = group.emails.some((email, index) => sourceEmailIssues(email, index, group.bucket).some((issue) => issue.level === "error"));
+  return blocked ? "draft" : "ready";
+}
+
 export function sourceHasContent(copy: SourceCopy) {
   return copy.groups.some((group) => group.emails.some((email) => email.subject.trim() || email.body.trim()));
 }
@@ -310,7 +378,7 @@ export function sourceEmailIssues(email: CopyEmail, index: number, bucket: Sourc
 export function sourceCopyIssues(copy: SourceCopy): CopyIssue[] {
   const issues: CopyIssue[] = [];
   if (copy.groups.length === 0) {
-    issues.push({ level: "error", where: "Email copy", text: "has no groups. Draft it from the confirmed plan." });
+    issues.push({ level: "error", where: "Email copy", text: "has no groups: the confirmed plan reaches no funds." });
   }
   for (const group of copy.groups) {
     const where = BUCKET_LABEL[group.bucket];

@@ -1,13 +1,13 @@
 "use client";
 
 import type { PreviewLeads } from "@/lib/outreach/preview";
-import { loadPreviewLeadsAction } from "@/app/admin/outreach-actions";
+import { loadPreviewLeadsAction, loadSourceWorkspaceAction } from "@/app/admin/outreach-actions";
 import { EmailBodyField } from "@/components/email-body-field";
 import { useEffect, useMemo, useState } from "react";
-import { draftClientEmailCopy, draftClientSourceCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
+import { draftClientEmailCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
 import { TypedCopyEditor } from "@/app/admin/clients/[id]/setup/typed-copy-editor";
-import { SourceCopyEditor } from "@/app/admin/clients/[id]/setup/source-copy-editor";
-import { BUCKET_LABEL, SOURCE_COPY_VERSION, asSourceBucket } from "@/lib/outreach/source-copy";
+import { SourceCopyEditor, type CopyNarrative } from "@/app/admin/clients/[id]/setup/source-copy-editor";
+import { SOURCE_COPY_VERSION, asSourceCopy, withPlanGroups, type SourceWorkspace } from "@/lib/outreach/source-copy";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { EmailCopyReview } from "@/app/portal/setup/email-copy/email-copy-review";
 import {
@@ -48,19 +48,6 @@ function typedDraftMessage(result: { drafted: string[]; failed: { key: string; e
   return parts.join(" ");
 }
 
-function sourceDraftMessage(result: { drafted: string[]; failed: { key: string; error: string }[] }) {
-  const name = (key: string) => {
-    const bucket = asSourceBucket(key.split(":")[1]);
-    return bucket ? BUCKET_LABEL[bucket] : key;
-  };
-  const parts = [`Drafted ${result.drafted.length} group${result.drafted.length === 1 ? "" : "s"} and saved.`];
-  if (result.failed.length) {
-    parts.push(`Not written (kept as before): ${result.failed.map((item) => `${name(item.key)} (${item.error})`).join("; ")}.`);
-  }
-  parts.push("Edit, then push.");
-  return parts.join(" ");
-}
-
 /** The copy as Rupert edits it: no reply and no questions (those live on the published version). */
 function editable(value: unknown): EmailCopyPayload {
   return { ...asEmailCopy(value), admin_note: undefined, questions: undefined };
@@ -74,6 +61,7 @@ export function EmailCopyPanel({
   tierCounts,
   listScheme,
   sourceMode = false,
+  narrative,
   claudeReady,
   pushWarning = null,
 }: {
@@ -88,6 +76,8 @@ export function EmailCopyPanel({
   listScheme: TierScheme;
   /** The confirmed list comes from the matching Plan: the copy is written by source. */
   sourceMode?: boolean;
+  /** The narrative the emails are written from. */
+  narrative: CopyNarrative;
   claudeReady: boolean;
   /** Core contacts not written and approved yet: the copy can't be pushed. */
   pushWarning?: string | null;
@@ -143,6 +133,33 @@ export function EmailCopyPanel({
     };
   }, [clientId, groupsKey]);
 
+  // Copy by source is written by hand: the confirmed Plan gives the groups to
+  // write and the funds to preview with.
+  const [workspace, setWorkspace] = useState<SourceWorkspace | null>(null);
+  const [workspaceError, setWorkspaceError] = useState<string | null>(null);
+  useEffect(() => {
+    if (!bySource) return;
+    let live = true;
+    void loadSourceWorkspaceAction(clientId)
+      .then((result) => {
+        if (!live) return;
+        if (!result.ok) return setWorkspaceError(result.error);
+        setWorkspace(result.workspace);
+        // A group with nothing written yet is not an unsaved change.
+        const fill = (value: EmailCopyPayload): EmailCopyPayload => {
+          const current = value.by_source ?? asSourceCopy(null);
+          const next = withPlanGroups(current, result.workspace);
+          return next === current ? value : { ...value, by_source: next };
+        };
+        setCopy(fill);
+        setSavedKey((key) => JSON.stringify(fill(JSON.parse(key) as EmailCopyPayload)));
+      })
+      .catch((err) => live && setWorkspaceError(err instanceof Error ? err.message : "Unable to load the plan's funds."));
+    return () => {
+      live = false;
+    };
+  }, [clientId, bySource]);
+
   function tierName(value: FitTier) {
     return tiers.find((entry) => entry.tier === value)?.label ?? `Tier ${value}`;
   }
@@ -184,17 +201,6 @@ export function EmailCopyPanel({
     setDrafting(true);
     setMessage(null);
     try {
-      if (bySource) {
-        const result = await draftClientSourceCopy(clientId, null);
-        if (!result.ok) {
-          setMessage({ kind: "error", text: result.error });
-          return;
-        }
-        setCopy(result.copy);
-        setSavedKey(JSON.stringify(result.copy));
-        setMessage({ kind: result.failed.length ? "error" : "ok", text: sourceDraftMessage(result) });
-        return;
-      }
       if (byType) {
         const result = await draftClientTypedCopy(clientId, null);
         if (!result.ok) {
@@ -219,37 +225,6 @@ export function EmailCopyPanel({
         kind: "error",
         text: err instanceof Error ? err.message : "Unable to draft the emails.",
       });
-    } finally {
-      setDrafting(false);
-    }
-  }
-
-  /** Redrafts one source group. Local edits to the other groups are kept. */
-  async function onRedraftSource(key: string) {
-    const current = copy.by_source;
-    if (!current) return;
-    if (!window.confirm("Redraft this group with AI? Its emails are replaced; every other group stays as it is.")) return;
-    setDrafting(true);
-    setMessage(null);
-    try {
-      const result = await draftClientSourceCopy(clientId, [key]);
-      if (!result.ok) {
-        setMessage({ kind: "error", text: result.error });
-        return;
-      }
-      const bucket = asSourceBucket(key.split(":")[1]);
-      const written = result.copy.by_source?.groups.find((group) => group.bucket === bucket);
-      // The server saved its merge; the editor keeps unsaved edits elsewhere.
-      setSavedKey(JSON.stringify(result.copy));
-      if (written) {
-        setCopy((existing) => {
-          const source = existing.by_source ?? current;
-          return { ...existing, by_source: { ...source, groups: source.groups.map((group) => (group.bucket === bucket ? written : group)) } };
-        });
-      }
-      setMessage({ kind: result.failed.length ? "error" : "ok", text: sourceDraftMessage(result) });
-    } catch (err) {
-      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to redraft." });
     } finally {
       setDrafting(false);
     }
@@ -318,7 +293,7 @@ export function EmailCopyPanel({
       item={item}
       intro={
         bySource
-          ? "Written by why each fund is on the list: backed a competitor, backed a company like this one, or market fit. One short template per group: a first email (I'll be brief, three lines, one question) and one follow-up in the same thread. {{backed_company}} or {{focus}} is filled in per fund from the matching data."
+          ? undefined
           : byType
           ? "Written by fund type, in the styles set under Emails → Investor email styles. Core: an approach and a template per fund type; each Core contact later gets a personal version from {{quick_fact}}. Sphere, Tier 3 and Tier 4: one sequence per fund type, with a line per tier as {{tier_line}}. Funds the client marked as known are left out."
           : "A first email and two follow-ups for each fit tier. Leave a follow-up subject blank to send it in the same thread. Use placeholders like {{first_name}} and {{fund_name}} for personal details."
@@ -327,6 +302,7 @@ export function EmailCopyPanel({
       <p className="px-lg pt-md text-body-sm text-muted">{sendStatus(row)}</p>
       <ClientAnswer row={row} hideWaiting />
       <ClientQuestions clientId={clientId} step="email_copy" row={row} />
+      {bySource ? null : (
       <div className="flex flex-wrap items-center gap-sm border-b border-border px-lg py-md">
         <button
           type="button"
@@ -338,24 +314,18 @@ export function EmailCopyPanel({
             ? "Drafting…"
             : changesRequested
               ? "Rebuild with client's changes"
-              : bySource
-                ? "Draft by source"
-                : byType
+              : byType
                 ? "Draft by fund type"
                 : "Draft with AI"}
         </button>
         <p className="text-body-sm text-muted" aria-live="polite">
           {drafting
-            ? bySource
-              ? "Writing the copy for each group. Usually under a minute."
-              : byType
+            ? byType
               ? "Writing the copy for each fund type. Usually under a minute."
               : `Writing the ${tiers.length * 3} emails. Usually under a minute.`
             : !claudeReady
               ? "Claude is not configured (ANTHROPIC_API_KEY)."
-              : bySource
-                ? "Uses the AI Agents → Email copy by source instructions."
-                : byType
+              : byType
                 ? "Uses the AI Agents → Email copy by fund type instructions."
                 : "Uses the AI Agents → Email copy instructions."}
         </p>
@@ -368,20 +338,19 @@ export function EmailCopyPanel({
           </p>
         ) : null}
       </div>
+      )}
       {sourceView ? (
         copy.by_source && copy.by_source.groups.length ? (
           <SourceCopyEditor
             copy={copy.by_source}
             onChange={(by_source) => setCopy((current) => ({ ...current, by_source }))}
-            onRedraft={onRedraftSource}
-            busy={drafting}
-            canDraft={claudeReady}
             clientNotes={clientNotes}
+            narrative={narrative}
+            workspace={workspace}
           />
         ) : (
-          <p className="px-lg py-lg text-body-sm text-muted">
-            No copy yet. Click Draft by source: it groups the confirmed plan&apos;s funds by why they are on the list and
-            writes a short template for each group.
+          <p className={`px-lg py-lg text-body-sm ${workspaceError ? "text-error" : "text-muted"}`} role={workspaceError ? "alert" : undefined}>
+            {workspaceError ?? (bySource ? "Loading the plan's funds…" : "No copy yet.")}
           </p>
         )
       ) : null}
@@ -505,7 +474,7 @@ export function EmailCopyPanel({
         onSaved={() => setSavedKey(JSON.stringify(copy))}
         problem={[...problems, ...(pushWarning && typedMode ? [pushWarning] : [])].join(" ") || null}
         busy={drafting}
-        pushSummary="Pushes the emails above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."
+        pushSummary={bySource ? "" : "Pushes the emails above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."}
         clientPreview={
           <EmailCopyReview
             copy={copy}

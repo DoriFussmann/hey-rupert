@@ -2,21 +2,25 @@
 
 For investor lists pushed from the matching (the list holds the summaries, not rows). Replaces copy by fund type and the Core Quick Facts for these clients. The plan is in the project doc `claude/outreach-copy-plan.md`.
 
+**Written by hand.** Rupert writes every email, client by client. There is no AI draft and no prompt for this copy (the "Email copy by source" prompt was retired; copy the AI wrote earlier opens in the editor as text).
+
 | What | Where |
 |---|---|
-| Groups, hooks, checks, rendering (pure) | `source-copy.ts` |
+| Groups, hooks, checks, rendering, the editor's Plan data (pure) | `source-copy.ts` |
 | The Plan's funds (current finalization → `match_plans`) | `source-server.ts` |
-| Generator (one Claude call per group) | `draftSourceEmailCopy` in `lib/agents-server.ts`, prompt `email_copy_source` |
-| Admin editing | Client → Setup → Email Copy → Draft by source (`source-copy-editor.tsx`) |
+| Admin editor | Client → Setup → Email Copy (`source-copy-editor.tsx`); Plan data from `loadSourceWorkspaceAction` |
+| Fields in colour, insert at the cursor | `components/email-body-field.tsx`, `lib/line-editor-dom.ts` (`paintFields`), `lib/merge-fields.ts` |
 | Client review | `/portal/setup/email-copy` (`source-copy-review.tsx`) |
 
-**Setup:** run `supabase/outreach_source_copy.sql` once (seeds the prompt).
-
 - **Which funds.** The Plan's planned funds, with their contact slots.
-- **Groups**, first that applies: backed a competitor (Step 2), backed a company like this one (Step 3), market fit (everything else). Tier sets the order of outreach, not the copy; fund type is only a hint to the writer.
-- **Hook.** `{{backed_company}}` (the competitor backed at the client's stage first, else the first one; or the first company like this one) or `{{focus}}` (the sub-sector that placed the fund). No web research.
-- **Two emails:** a first email (I'll be brief, three lines, one question; 75 words) and one follow-up in the same thread (blank subject).
-- **Checks.** Errors block the push: missing subject or body, unknown fields, the hook field missing from a competitor or look-alike first email, the usual hype and placeholder checks. Warnings: over the word cap, "you backed" instead of "your fund backed", a follow-up subject, links, funds with no hook value.
+- **Groups**, first that applies: backed a competitor (Step 2), backed a company like this one (Step 3), market fit (everything else). Tier sets the order of outreach, not the copy.
+- **The editor.** The approved narrative's points sit beside the emails. One tab per group with its fund count and status (Empty, Draft, Ready: nothing left that stops the push). A group the Plan has and the copy doesn't is added empty.
+- **Fields.** A pill per field (`{{first_name}}`, `{{fund_name}}`, and the group's `{{backed_company}}` or `{{focus}}`) puts it at the cursor, in the subject or the body, whichever was used last. Fields show in colour in the body; a field the group doesn't have shows in the error colour. The colour uses the CSS Custom Highlight API; browsers without it show plain text.
+- **Preview.** Both emails as one of the group's real funds gets them, with Next fund. First names are samples: the Plan holds funds, not people. A value the data doesn't have is marked.
+- **Copy from** another group that has text.
+- **Hook.** `{{backed_company}}` (the competitor backed at the client's stage first, else the first one; or the first company like this one) or `{{focus}}` (the sub-sector that placed the fund). Funds with no value are named above the emails.
+- **Two emails:** a first email and one follow-up in the same thread (no subject).
+- **Checks.** Unchanged. Errors block the push: missing subject or body, unknown fields, the hook field missing from a competitor or look-alike first email, the usual hype and placeholder checks. Warnings: "you backed" instead of "your fund backed", a follow-up subject, links. The word count is shown beside each email.
 - **Storage.** The `email_copy` setup step with `copy_version: 3` and `by_source`.
 - **Not built yet:** the campaign build and Go Live for these clients (they still read list rows and three-step sequences).
 

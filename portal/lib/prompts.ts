@@ -297,11 +297,6 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     "The confirmed narrative, the fund groups of the confirmed list (fund type, funds per tier; never names), the style for each group (rules, word cap, proof points, call to action, example), the intake summary, the analysis and any requested changes; the answer format (Core approach and three emails; the others' three emails and a line per tier). The code checks every email against the style.",
     true,
   ),
-  email_copy_source: agentDetails(
-    "email_copy_source",
-    "The confirmed narrative, one group of the confirmed Plan's funds (why they are on the list, funds and contacts, fund types, tiers, example values of the personal field; never names), the intake summary, the analysis and any requested changes; the answer format (a first email and one follow-up). The code checks every email: fields, the personal line, \"your fund\", word caps.",
-    true,
-  ),
   prospect_brief: agentDetails(
     "prospect_brief",
     "What the founder typed when booking (name, email, company, notes, how they heard about us), the financing, stage, geography and sector labels of the matching, web search (up to 5 searches), and the answer format. The code keeps only labels that exist, then runs the Dry Match estimate on them.",

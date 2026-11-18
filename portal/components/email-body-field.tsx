@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
 import { continueBullet, indentBullets, toggleBullets } from "@/lib/text-bullets";
-import { isClean, readSelection, readText, render, restyle, setSelection } from "@/lib/line-editor-dom";
+import { isClean, paintFields, readSelection, readText, render, restyle, setSelection } from "@/lib/line-editor-dom";
 
 /** Grows with its text: no scrollbar inside the box. */
 function useAutoHeight(value: string) {
@@ -31,6 +31,8 @@ type Edit = { text: string; start: number; end: number };
  * line), and removes it when every selected line has one. Indent / Outdent (or
  * Tab / Shift+Tab on a bullet) make a sub-bullet "  ◦ " and back. Enter on a
  * bullet starts the next one; Enter on an empty bullet ends the list.
+ * With `fields`, every {{field}} is shown in colour (one not in the list in
+ * the error colour), and `insertRef` lets a button outside put text at the cursor.
  */
 export function EmailBodyField({
   value,
@@ -40,6 +42,9 @@ export function EmailBodyField({
   placeholder,
   disabled,
   maxLength = 10000,
+  fields,
+  insertRef,
+  onFocus,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -48,22 +53,41 @@ export function EmailBodyField({
   placeholder?: string;
   disabled?: boolean;
   maxLength?: number;
+  /** The dynamic fields allowed here. Given: {{fields}} are shown in colour. */
+  fields?: readonly string[];
+  /** Set to a function that puts text at the cursor (or at the end, before the first click). */
+  insertRef?: React.MutableRefObject<((piece: string) => void) | null>;
+  onFocus?: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   // The text the editor shows; a new value from outside (Draft Email) re-renders it.
   const shown = useRef<string | null>(null);
   const pending = useRef<{ start: number; end: number } | null>(null);
 
+  const fieldsKey = fields ? fields.join(",") : null;
+  const paint = useCallback(() => {
+    if (ref.current && fieldsKey !== null) paintFields(ref.current, fieldsKey.split(",").filter(Boolean));
+  }, [fieldsKey]);
+
   useLayoutEffect(() => {
     const el = ref.current;
     if (!el || value === shown.current) return;
     render(el, value);
     shown.current = value;
+    paint();
     if (pending.current) {
       setSelection(el, pending.current.start, pending.current.end);
       pending.current = null;
     }
-  }, [value]);
+  }, [value, paint]);
+
+  // The allowed fields changed (another group), or the editor is going away.
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    paintFields(el, fieldsKey === null ? null : fieldsKey.split(",").filter(Boolean));
+    return () => paintFields(el, null);
+  }, [fieldsKey]);
 
   // Fonts can load after the first render: measure the bullets again then.
   useEffect(() => {
@@ -78,6 +102,7 @@ export function EmailBodyField({
     const text = next.text.slice(0, maxLength);
     render(el, text);
     shown.current = text;
+    paint();
     el.focus();
     setSelection(el, Math.min(next.start, text.length), Math.min(next.end, text.length));
     onChange(text);
@@ -104,6 +129,15 @@ export function EmailBodyField({
     });
   }
 
+  // Kept current: `insert` reads the editor as it is when the button is clicked.
+  useEffect(() => {
+    if (!insertRef) return;
+    insertRef.current = insert;
+    return () => {
+      insertRef.current = null;
+    };
+  });
+
   function onInput() {
     const el = ref.current;
     if (!el) return;
@@ -117,6 +151,7 @@ export function EmailBodyField({
       restyle(el);
     }
     shown.current = text;
+    paint();
     onChange(text);
   }
 
@@ -201,6 +236,7 @@ export function EmailBodyField({
           // Spaces are text here (a bullet's "• "), so they must not collapse.
           style={{ whiteSpace: "pre-wrap", overflowWrap: "break-word" }}
           onInput={onInput}
+          onFocus={onFocus}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
         />
