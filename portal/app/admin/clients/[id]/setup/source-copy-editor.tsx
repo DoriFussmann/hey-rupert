@@ -99,7 +99,7 @@ function Narrative({ narrative }: { narrative: CopyNarrative }) {
   return (
     <aside
       aria-label="Narrative"
-      className="mb-lg rounded-md border border-border bg-background px-md py-md lg:sticky lg:top-md lg:mb-0 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto"
+      className="mb-lg rounded-md border border-border bg-background px-md py-md lg:sticky lg:top-[4.5rem] lg:mb-0 lg:max-h-[calc(100vh-5.5rem)] lg:self-start lg:overflow-y-auto"
     >
       <p className="text-label uppercase tracking-label text-muted">
         {narrative.confirmed ? "Approved narrative" : "Narrative · not approved yet"}

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activeNavGroup, adminNavGroups, navItemActive } from "./nav.ts";
+import { activeNavGroup, adminNavGroups, navItemActive, navSections } from "./nav.ts";
 
 const group = (id: string) => adminNavGroups.find((item) => item.id === id)!;
 const item = (id: string, label: string) => group(id).items.find((entry) => entry.label === label)!;
@@ -67,4 +67,18 @@ test("Agents: one link per managed prompt; All prompts is current only on the li
   assert.ok(navItemActive("/admin/forms/agents", "", all, agents));
   assert.ok(!navItemActive("/admin/forms/agents/narrative_email", "", all, agents));
   assert.ok(navItemActive("/admin/forms/agents/narrative_email", "", narrative, agents));
+});
+
+test("menus: Agents is split into the lists and the prompts by area, every link once; search narrows it", () => {
+  const agents = group("agents");
+  const sections = navSections(agents);
+  assert.equal(sections[0].label, "Lists");
+  assert.deepEqual(sections[0].items.map((entry) => entry.label), ["All prompts", "Intake topics", "Brief topics", "Selling points", "Feedback topics"]);
+  assert.equal(sections.reduce((sum, section) => sum + section.items.length, 0), agents.items.length);
+  assert.ok(sections.some((section) => section.label === "Emails to founders"));
+  const found = navSections(agents, "narrative email");
+  assert.ok(found.length > 0 && found.every((section) => section.items.every((entry) => /narrative/i.test(entry.label) && /email/i.test(entry.label))));
+  assert.deepEqual(navSections(agents, "zzzz"), []);
+  // The other groups are one plain list.
+  assert.deepEqual(navSections(group("clients")).map((section) => [section.label, section.items.length]), [[null, 4]]);
 });

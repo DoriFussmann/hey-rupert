@@ -1,6 +1,5 @@
 import { countUnreadNotifications } from "@/app/admin/actions";
-import { AppShell } from "@/components/app-shell";
-import { AdminNav } from "@/components/admin-nav";
+import { AdminShell } from "@/components/admin-nav";
 import { requireAdmin } from "@/lib/auth";
 import { isSupabaseConfigured } from "@/lib/env";
 
@@ -21,12 +20,6 @@ export default async function AdminLayout({
   }
 
   return (
-    <AppShell
-      brand="Rupert"
-      eyebrow="Admin"
-      navigation={<AdminNav unreadCount={unreadCount} />}
-    >
-      {children}
-    </AppShell>
+    <AdminShell unreadCount={unreadCount}>{children}</AdminShell>
   );
 }

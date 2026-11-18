@@ -1,11 +1,11 @@
-import { PROMPT_LIST, promptPath } from "./prompt-list.ts";
+import { PROMPT_GROUPS, PROMPT_LIST, promptPath } from "./prompt-list.ts";
 
 /** One link in the admin nav. `hash` links jump to a section of the page; `exact` links don't cover the pages below them. */
 export type AdminNavItem = { href: string; label: string; hash?: string; exact?: boolean };
 
 export type AdminNavGroup = { id: string; label: string; items: readonly AdminNavItem[] };
 
-/** The admin nav: groups that open and close, each with its pages. */
+/** The admin nav: a top bar of groups, each opening a menu of its pages. */
 export const adminNavGroups: readonly AdminNavGroup[] = [
   {
     id: "clients",
@@ -79,4 +79,24 @@ export function navItemActive(pathname: string, hash: string, item: AdminNavItem
 /** The group holding the current page, or null. */
 export function activeNavGroup(pathname: string) {
   return adminNavGroups.find((group) => group.items.some((item) => navPathMatches(pathname, item.href)))?.id ?? null;
+}
+
+/** A titled part of a group's menu. No label: the menu is one plain list. */
+export type AdminNavSection = { label: string | null; items: AdminNavItem[] };
+
+/**
+ * A group's menu, in parts. Agents is long, so it is split: the lists Rupert
+ * edits first, then the prompts by area. `query` keeps the links whose label
+ * has every word typed; parts left empty are dropped.
+ */
+export function navSections(group: AdminNavGroup, query = ""): AdminNavSection[] {
+  const words = query.toLowerCase().split(/\s+/).filter(Boolean);
+  const keep = (item: AdminNavItem) => words.every((word) => item.label.toLowerCase().includes(word));
+  if (group.id !== "agents") return [{ label: null, items: group.items.filter(keep) }].filter((section) => section.items.length > 0);
+  const area = new Map<string, string>(PROMPT_LIST.map((prompt) => [promptPath(prompt.key), prompt.group]));
+  const sections: AdminNavSection[] = [
+    { label: "Lists", items: group.items.filter((item) => !area.has(item.href)) },
+    ...PROMPT_GROUPS.map((label) => ({ label, items: group.items.filter((item) => area.get(item.href) === label) })),
+  ];
+  return sections.map((section) => ({ ...section, items: section.items.filter(keep) })).filter((section) => section.items.length > 0);
 }
