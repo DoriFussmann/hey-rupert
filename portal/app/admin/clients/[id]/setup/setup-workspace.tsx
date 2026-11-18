@@ -127,7 +127,6 @@ export function setupPanels({
         <>
           <FeedbackInbox clientId={clientId} step="framing" items={inbox("framing")} />
           <NarrativeEditor
-            key={row("framing")?.updated_at ?? "new"}
             clientId={clientId}
             item={item("framing")}
             row={row("framing")}

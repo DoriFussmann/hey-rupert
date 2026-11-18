@@ -310,6 +310,7 @@ export function InvestorListPanel({
         onSaved={() => setSavedNote(note)}
         problem={investorListProblem(list)}
         busy={false}
+        autoSave
         pushSummary={
           summaries
             ? "Pushes the two summaries above and your note to the client's portal as a new version, and sends them this email. They comment, ask questions, request changes or confirm there."

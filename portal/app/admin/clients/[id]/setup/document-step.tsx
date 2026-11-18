@@ -140,6 +140,13 @@ export function DocumentStep({
   // saved. One save at a time; a change made meanwhile is saved next. After
   // a failure it waits for the next change, and Save Draft still works.
   const [auto, setAuto] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  // A short notice each time an auto-save lands; it goes away by itself.
+  const [notice, setNotice] = useState(0);
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(0), 2500);
+    return () => clearTimeout(timer);
+  }, [notice]);
   const saving = useRef(false);
   const failedKey = useRef<string | null>(null);
   const fullKey = JSON.stringify(fullDraft);
@@ -156,6 +163,7 @@ export function DocumentStep({
           // Marks this version as saved; anything typed since stays unsaved.
           markSaved();
           setAuto("saved");
+          setNotice((count) => count + 1);
         })
         .catch(() => {
           saving.current = false;
@@ -410,10 +418,8 @@ export function DocumentStep({
                 : unsaved
                   ? auto === "failed"
                     ? "Not saved. Click Save Draft."
-                    : "Saving soon…"
-                  : auto === "saved"
-                    ? "Draft saved"
-                    : ""}
+                    : ""
+                  : ""}
             </p>
           ) : unsaved ? (
             <p className="text-body-sm text-warning">Unsaved changes</p>
@@ -434,6 +440,18 @@ export function DocumentStep({
           </p>
         ) : null}
       </section>
+
+      {autoSave ? (
+        <p
+          role="status"
+          aria-hidden={!notice}
+          className={`pointer-events-none fixed bottom-lg right-lg z-50 rounded-md border border-border bg-surface px-md py-sm text-body-sm text-success shadow-[0_8px_24px_rgba(0,0,0,0.08)] transition-opacity duration-300 ${
+            notice ? "opacity-100" : "opacity-0"
+          }`}
+        >
+          Draft saved
+        </p>
+      ) : null}
 
       {clientPreview && previewing ? (
         <section

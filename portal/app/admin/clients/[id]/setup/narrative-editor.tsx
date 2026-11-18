@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { saveNarrativeInternalUpdate } from "@/app/admin/setup-actions";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
 import { FilesLinksEditor } from "@/app/admin/clients/[id]/setup/files-links-editor";
@@ -46,12 +46,40 @@ function snapshot(narrative: unknown) {
   return JSON.stringify(editable(narrative));
 }
 
+/** Two drafts are the same text when only spacing differs (the server tidies what it saves). */
+const loose = (value: string) => value.replace(/\s+/g, "");
+
+type EditorState = { dirty: boolean; text: string };
+type EditorProps = Parameters<typeof NarrativeEditorInner>[0];
+
+/**
+ * The editor starts again from the stored draft when that draft changed
+ * somewhere else (the Company Brief rebuilds the narrative). Its own saves,
+ * auto-saves included, leave it as it is: nothing typed since is lost and
+ * the cursor stays where it was.
+ */
+export function NarrativeEditor(props: Omit<EditorProps, "live">) {
+  const stamp = props.row?.updated_at ?? "new";
+  const [key, setKey] = useState(stamp);
+  const seen = useRef(stamp);
+  const live = useRef<EditorState | null>(null);
+  const stored = loose(snapshot(props.row?.draft ?? props.row?.published));
+  useEffect(() => {
+    if (seen.current === stamp) return;
+    seen.current = stamp;
+    const now = live.current;
+    if (now && (now.dirty || now.text === stored)) return;
+    setKey(stamp);
+  }, [stamp, stored]);
+  return <NarrativeEditorInner key={key} {...props} live={live} />;
+}
+
 /**
  * Rupert's one turn after the intake: Analyze writes the Company Materials
  * Feedback, Build narrative writes the narrative from it, and one push sends
  * both. The client confirms the narrative; the feedback is for them to read.
  */
-export function NarrativeEditor({
+function NarrativeEditorInner({
   clientId,
   item,
   row,
@@ -60,7 +88,10 @@ export function NarrativeEditor({
   legacyFeedback,
   claudeReady,
   fileLinks,
+  live,
 }: {
+  /** Where the editor stands, for the wrapper that decides when to start it again. */
+  live: React.MutableRefObject<EditorState | null>;
   clientId: string;
   item: SetupItem;
   row: SetupStepState | null;
@@ -84,6 +115,11 @@ export function NarrativeEditor({
   const [pending, setPending] = useState<null | "analyze" | "build" | "internal">(null);
   const [message, setMessage] = useState<Message>(null);
   const [internalAt, setInternalAt] = useState(internalNarrativeUpdate(row?.draft)?.at ?? null);
+
+  const current = snapshot(narrative);
+  useEffect(() => {
+    live.current = { dirty: current !== saved, text: loose(current) };
+  });
 
   const changesRequested = row?.status === "changes_requested";
   const confirmed = row?.status === "confirmed";
@@ -281,6 +317,7 @@ export function NarrativeEditor({
         problem={sendProblem}
         clientPreview={hasText ? <NarrativeClientPreview narrative={narrative} fileLinks={fileLinks} version={(row?.version ?? 0) + 1} /> : undefined}
         busy={pending !== null}
+        autoSave
         pushSummary="Pushes The Outreach Narrative (and what happens next), the Company Materials Feedback, the questions for the founder, and the files and links above to the client's portal as a new version, and sends them this email. They confirm the narrative there, ask a question or ask for changes, and can comment on the feedback. The core story, key messages and approach stay with you; the emails are written from them."
       />
     </StepFrame>
