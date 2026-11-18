@@ -311,6 +311,8 @@ export default async function ClientDetailPage({
         replyRows: await listReplyRows(client.id),
         brief: briefData?.brief ?? null,
         briefTopics: briefData?.topics ?? [],
+        profileAnswers: matchProfile?.answers ?? null,
+        intakeBrief: interview?.admin_brief ?? null,
       }),
     );
   }

@@ -2,6 +2,8 @@
 
 import { Fragment, useRef, useState } from "react";
 import { EmailBodyField } from "@/components/email-body-field";
+import { ChevronDown } from "@/components/chevron";
+import type { CompanyInfo } from "@/lib/outreach/company-info";
 import { inputClass } from "@/app/admin/clients/[id]/setup/shared";
 import { wordCount } from "@/lib/outreach/copy";
 import { insertAt } from "@/lib/merge-fields";
@@ -53,6 +55,21 @@ const sentence = (value: string) => value.charAt(0).toUpperCase() + value.slice(
 const capFor = (position: number) => (position === 0 ? SOURCE_MAX_WORDS : Math.round(SOURCE_MAX_WORDS * 0.75));
 const hasText = (group: SourceGroupCopy) => group.emails.some((email) => email.subject.trim() || email.body.trim());
 
+/** A small panel that opens: the title, and the standard chevron in its small size. */
+function Fold({ title, className = "", children }: { title: string; className?: string; children: React.ReactNode }) {
+  return (
+    <details className={`group/fold rounded-md border border-border bg-surface text-body-sm ${className}`}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-sm px-sm py-xs text-secondary transition-colors duration-hover hover:text-heading [&::-webkit-details-marker]:hidden">
+        <span>{title}</span>
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-border bg-surface">
+          <ChevronDown className="h-3 w-3 transition-transform duration-hover group-open/fold:rotate-180" />
+        </span>
+      </summary>
+      <div className="border-t border-border px-sm py-sm">{children}</div>
+    </details>
+  );
+}
+
 /** Under a narrative point: what the Company Brief says about it, and the facts and sources behind it. */
 function Evidence({ evidence }: { evidence: PointEvidence }) {
   const info = [
@@ -61,9 +78,8 @@ function Evidence({ evidence }: { evidence: PointEvidence }) {
     { label: "Don't overstate", text: evidence.watchOut },
   ].filter((item) => item.text);
   return (
-    <details className="mt-sm rounded-md border border-border bg-surface">
-      <summary className="cursor-pointer px-sm py-xs text-body-sm text-primary hover:text-primary-hover">Evidence</summary>
-      <div className="space-y-md border-t border-border px-sm py-sm">
+    <Fold title="Evidence" className="mt-sm">
+      <div className="space-y-md">
         {info.length ? (
           <div>
             <p className="text-label uppercase tracking-label text-muted">More information</p>
@@ -91,16 +107,42 @@ function Evidence({ evidence }: { evidence: PointEvidence }) {
           </div>
         ) : null}
       </div>
-    </details>
+    </Fold>
   );
 }
 
-function Narrative({ narrative }: { narrative: CopyNarrative }) {
+/** The company at a glance: the one-liner, then the Company Profile's sections, each opening to its fields. */
+function Company({ company }: { company: CompanyInfo }) {
+  if (!company.oneLiner && company.sections.length === 0) return null;
+  return (
+    <div className="mb-md">
+      {company.oneLiner ? <p className="mb-sm text-body text-heading">{company.oneLiner}</p> : null}
+      <div className="space-y-xs">
+        {company.sections.map((section) => (
+          <Fold key={section.title} title={section.title}>
+            {section.summary ? <p className="mb-sm whitespace-pre-wrap text-secondary">{section.summary}</p> : null}
+            <dl className="space-y-xs">
+              {section.rows.map((row) => (
+                <div key={row.label}>
+                  <dt className="text-muted">{row.label}</dt>
+                  <dd className="whitespace-pre-wrap break-words text-heading">{row.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </Fold>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Narrative({ narrative, company }: { narrative: CopyNarrative; company: CompanyInfo }) {
   return (
     <aside
-      aria-label="Narrative"
+      aria-label="Company and narrative"
       className="mb-lg rounded-md border border-border bg-background px-md py-md lg:sticky lg:top-[4.5rem] lg:mb-0 lg:max-h-[calc(100vh-5.5rem)] lg:self-start lg:overflow-y-auto"
     >
+      <Company company={company} />
       <p className="text-label uppercase tracking-label text-muted">
         {narrative.confirmed ? "Approved narrative" : "Narrative · not approved yet"}
       </p>
@@ -301,6 +343,7 @@ export function SourceCopyEditor({
   onChange,
   clientNotes,
   narrative,
+  company,
   workspace,
 }: {
   copy: SourceCopy;
@@ -308,6 +351,7 @@ export function SourceCopyEditor({
   /** The client's notes on the last version, by group key. */
   clientNotes: Record<string, string>;
   narrative: CopyNarrative;
+  company: CompanyInfo;
   /** The confirmed Plan's funds, once loaded. */
   workspace: SourceWorkspace | null;
 }) {
@@ -341,7 +385,7 @@ export function SourceCopyEditor({
 
   return (
     <div className="px-lg py-md lg:grid lg:grid-cols-[20rem_minmax(0,1fr)] lg:gap-lg">
-      <Narrative narrative={narrative} />
+      <Narrative narrative={narrative} company={company} />
       <div className="min-w-0">
         <div className="flex flex-wrap items-center gap-sm" role="tablist" aria-label="Group">
           {copy.groups.map((entry, i) => {

@@ -6,6 +6,7 @@ import { EmailBodyField } from "@/components/email-body-field";
 import { useEffect, useMemo, useState } from "react";
 import { draftClientEmailCopy, draftClientTypedCopy } from "@/app/admin/agent-actions";
 import { TypedCopyEditor } from "@/app/admin/clients/[id]/setup/typed-copy-editor";
+import type { CompanyInfo } from "@/lib/outreach/company-info";
 import { SourceCopyEditor, type CopyNarrative } from "@/app/admin/clients/[id]/setup/source-copy-editor";
 import { SOURCE_COPY_VERSION, asSourceCopy, withPlanGroups, type SourceWorkspace } from "@/lib/outreach/source-copy";
 import { DocumentStep, sendStatus } from "@/app/admin/clients/[id]/setup/document-step";
@@ -62,6 +63,7 @@ export function EmailCopyPanel({
   listScheme,
   sourceMode = false,
   narrative,
+  company,
   claudeReady,
   pushWarning = null,
 }: {
@@ -78,6 +80,8 @@ export function EmailCopyPanel({
   sourceMode?: boolean;
   /** The narrative the emails are written from. */
   narrative: CopyNarrative;
+  /** The company at a glance, shown above the narrative. */
+  company: CompanyInfo;
   claudeReady: boolean;
   /** Core contacts not written and approved yet: the copy can't be pushed. */
   pushWarning?: string | null;
@@ -346,6 +350,7 @@ export function EmailCopyPanel({
             onChange={(by_source) => setCopy((current) => ({ ...current, by_source }))}
             clientNotes={clientNotes}
             narrative={narrative}
+            company={company}
             workspace={workspace}
           />
         ) : (
@@ -474,6 +479,7 @@ export function EmailCopyPanel({
         onSaved={() => setSavedKey(JSON.stringify(copy))}
         problem={[...problems, ...(pushWarning && typedMode ? [pushWarning] : [])].join(" ") || null}
         busy={drafting}
+        autoSave
         pushSummary={bySource ? "" : "Pushes the emails above to the client's portal as a new version, and sends them this email. They confirm there, ask a question, or ask for changes."}
         clientPreview={
           <EmailCopyReview

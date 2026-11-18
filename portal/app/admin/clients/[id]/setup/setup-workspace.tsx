@@ -18,6 +18,9 @@ import {
 import type { ListAudit } from "@/lib/list-audit";
 import type { BriefTopic, CompanyBrief } from "@/lib/brief";
 import { pointEvidence } from "@/lib/outreach/point-evidence";
+import { companyInfo } from "@/lib/outreach/company-info";
+import type { MatchAnswers } from "@/lib/match/shared";
+import type { IntakeBrief } from "@/lib/intake";
 import type { OutreachSteps } from "@/lib/outreach/progress-server";
 import type { StepState, StepTurn } from "@/lib/step-order";
 import { collectPoints } from "@/lib/feedback-points";
@@ -51,6 +54,8 @@ export function setupPanels({
   replyRows,
   brief = null,
   briefTopics = [],
+  profileAnswers = null,
+  intakeBrief = null,
 }: {
   clientId: string;
   source: SetupSource;
@@ -73,6 +78,9 @@ export function setupPanels({
   /** The Company Brief: what stands behind each narrative point, shown where the emails are written. */
   brief?: CompanyBrief | null;
   briefTopics?: BriefTopic[];
+  /** The Company Profile's fields and the intake brief: the company at a glance, beside the emails. */
+  profileAnswers?: MatchAnswers | null;
+  intakeBrief?: IntakeBrief | null;
 }): WorkPanel[] {
   const items = getSetupItems(source);
   const rows = source.setup_steps ?? [];
@@ -167,6 +175,7 @@ export function setupPanels({
             listScheme={listScheme}
             sourceMode={Boolean(investors.summaries)}
             narrative={copyNarrative}
+            company={companyInfo(profileAnswers, intakeBrief)}
             claudeReady={claudeReady}
             pushWarning={investors.summaries ? null : outreach.coreWarning}
           />

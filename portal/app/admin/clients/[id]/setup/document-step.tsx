@@ -1,7 +1,7 @@
 "use client";
 
 import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   draftSetupEmail,
@@ -88,6 +88,7 @@ export function DocumentStep({
   pushSummary,
   clientPreview,
   sendHint,
+  autoSave = false,
 }: {
   clientId: string;
   step: SetupDocumentStep;
@@ -113,6 +114,8 @@ export function DocumentStep({
   clientPreview?: React.ReactNode;
   /** Shown above Send. The investor list uses it to say sending makes the list visible. */
   sendHint?: string;
+  /** Saves the draft by itself shortly after each change. The client still sees nothing until a push. */
+  autoSave?: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState<ClientEmailDraft>(initialEmail);
@@ -132,6 +135,46 @@ export function DocumentStep({
     onSaved();
     setSavedEmail(JSON.stringify(email));
   }
+
+  // Auto-save: a moment after the last change, the draft as it is then is
+  // saved. One save at a time; a change made meanwhile is saved next. After
+  // a failure it waits for the next change, and Save Draft still works.
+  const [auto, setAuto] = useState<"idle" | "saving" | "saved" | "failed">("idle");
+  const saving = useRef(false);
+  const failedKey = useRef<string | null>(null);
+  const fullKey = JSON.stringify(fullDraft);
+  useEffect(() => {
+    if (!autoSave || !unsaved || busy || pending !== null || saving.current || failedKey.current === fullKey) return;
+    const timer = setTimeout(() => {
+      saving.current = true;
+      setAuto("saving");
+      saveSetupDraft(clientId, step, fullDraft)
+        .then((result) => {
+          if (!result.ok) throw new Error(result.error);
+          saving.current = false;
+          failedKey.current = null;
+          // Marks this version as saved; anything typed since stays unsaved.
+          markSaved();
+          setAuto("saved");
+        })
+        .catch(() => {
+          saving.current = false;
+          failedKey.current = fullKey;
+          setAuto("failed");
+        });
+    }, 2000);
+    return () => clearTimeout(timer);
+    // `fullDraft` and `markSaved` are this render's: exactly the version `fullKey` names.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSave, unsaved, busy, pending, fullKey, auto, clientId, step]);
+
+  // Leaving with a change not saved yet asks first.
+  useEffect(() => {
+    if (!autoSave || !unsaved) return;
+    const warn = (event: BeforeUnloadEvent) => event.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [autoSave, unsaved]);
 
   async function onSave() {
     setPending("save");
@@ -360,7 +403,21 @@ export function DocumentStep({
               {previewing ? "Close Preview" : "Preview as Client"}
             </button>
           ) : null}
-          {unsaved ? <p className="text-body-sm text-warning">Unsaved changes</p> : null}
+          {autoSave ? (
+            <p className={`text-body-sm ${auto === "failed" && unsaved ? "text-error" : "text-muted"}`} aria-live="polite">
+              {auto === "saving"
+                ? "Saving…"
+                : unsaved
+                  ? auto === "failed"
+                    ? "Not saved. Click Save Draft."
+                    : "Saving soon…"
+                  : auto === "saved"
+                    ? "Draft saved"
+                    : ""}
+            </p>
+          ) : unsaved ? (
+            <p className="text-body-sm text-warning">Unsaved changes</p>
+          ) : null}
         </div>
         {clientPreview && email.body.trim() && !previewing && !row?.version ? (
           <p className="mt-sm text-body-sm text-muted">Before you send: Preview as Client shows their portal page and the email exactly as they&apos;ll get them.</p>
