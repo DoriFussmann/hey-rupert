@@ -4,7 +4,7 @@ h1: Every Real Alternative to Startup Intro Services
 description: "Compare the main alternatives to startup intro services on cost, time, and relationship ownership — so you can pick the right approach for your raise."
 slug: startup-intros-alternatives
 date: "2026-11-12"
-updatedDate: "2026-11-12"
+updatedDate: "2026-11-19"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -42,11 +42,17 @@ faqs:
     answer: "Self-serve tools give you access to investor data and a CRM to track your pipeline, but all the research, writing, and follow-up falls on you. For founders who have the time and expertise to identify genuinely fit investors, craft compelling cold emails, and maintain consistent follow-up while running their company, these tools can work. For operators who cannot afford to spend months on outreach execution, the time cost is the real constraint."
 ---
 
+*Disclosure: Rupert wrote this guide and is one of the services it mentions.*
+
+## The Short Answer
+
+The main alternatives to startup intro services are **success-fee advisors and placement agents** (paid a percentage of the raise), **fundraising consultants** (a retainer; you run the outreach), **investor databases and CRMs** (software; you do the work) and **managed outreach services** such as Rupert (research, writing and follow-up for a setup fee and flat monthly fee, no percentage). If you are short of time, use a managed service; if you are short of budget, a database; if you need strategy, a consultant.
+
 ## What Are the Alternatives to Startup Intro Services?
 
 Before comparing options, it is worth being clear about what "startup intro services" covers. The term is used loosely to describe any arrangement where a third party connects a founder with investors—from curated matchmaking databases to placement agents to fully managed outreach campaigns. The more important question is not which of these services has the best branding, but which model fits what you actually need: someone to hand you a list, someone to advise you on strategy, or someone to research, write, and execute the whole thing.
 
-The main alternatives fall into four categories: success-fee advisors and placement agents, who run outreach and charge a percentage of your raise; fundraising consultants on retainer, who help with narrative and targeting but leave execution to you; self-serve investor databases and CRMs, where you do everything yourself with software support; and expert-managed outreach services, which research investors, write every email, and follow up on a schedule without taking equity or a cut of the capital raised. Each model differs on three dimensions that matter most—who does the work, how the provider is paid, and who owns the investor relationship at the end.
+The main alternatives fall into four categories: success-fee advisors and placement agents, who run outreach and charge a percentage of your raise; fundraising consultants on retainer, who help with narrative and targeting but leave execution to you; self-serve investor databases and CRMs, where you do everything yourself with software support; and expert-managed outreach services, which research investors, write every email, and follow up on a schedule without taking equity or a cut of the capital raised. Rupert, which wrote this guide, is one of these. Each model differs on three dimensions that matter most—who does the work, how the provider is paid, and who owns the investor relationship at the end.
 
 No single option is right for every founder. The right choice depends on how much time you can spend on outreach, your budget structure, and how protective you are of your brand with investors. The rest of this article works through each category so you can make that call with full information.
 
