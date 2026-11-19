@@ -36,7 +36,7 @@ export const GET: APIRoute = async () => {
         title: "Case Studies",
         path: "/case-studies/",
         description:
-          "Anonymized client raises run with Rupert, including a $2M Seed round for a first-time healthcare founder (three months), a $100M Series B for a US FinTech company (closed in three months) and a $10M Series A for a US sustainable-finance company that was reorganized before it raised (four months).",
+          "Anonymized client raises run with Rupert, including a $500K Pre-Seed round for a bootstrapped accessibility software company in Israel (150 investors targeted, six months), a $2M Seed round for a first-time healthcare founder (three months), a $1.5M round for a Swedish veterinary care company to buy its clinic (four months), a $10M Series A for a US sustainable-finance company that was reorganized before it raised (four months) and a $100M Series B for a US FinTech company (closed in three months).",
       },
       {
         title: "Pricing",
