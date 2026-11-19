@@ -47,6 +47,8 @@ internalLinks:
     anchor: Finding investors near you
   - slug: pre-seed-funding
     anchor: "Pre-seed funding: the complete guide"
+  - slug: angel-investors-for-startups
+    anchor: "Angel investors for startups: 10 groups to know"
   - slug: best-investor-outreach-services
     anchor: The best investor outreach services and tools
 

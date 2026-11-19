@@ -231,16 +231,6 @@
       "permanent": true
     },
     {
-      "source": "/articles/angel-investors-for-startups",
-      "destination": "/articles/angel-investors/",
-      "permanent": true
-    },
-    {
-      "source": "/articles/angel-investors-for-startups/",
-      "destination": "/articles/angel-investors/",
-      "permanent": true
-    },
-    {
       "source": "/articles/angel-investors-for-pre-seed-funding",
       "destination": "/articles/angel-investors/",
       "permanent": true
