@@ -3,7 +3,7 @@ title: "Capital Raising Fees Explained: What Founders Actually Pay"
 description: "Received a capital raising proposal? Plain-English answers on success fees, retainer credits, tail periods, and what you can negotiate before signing."
 slug: capital-raising-fees
 date: "2026-09-29"
-updatedDate: "2026-11-03"
+updatedDate: "2026-11-19"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -56,9 +56,11 @@ faqs:
     answer: "A tail period is the window after an engagement ends during which the advisor can still earn a success fee if you close capital from an investor they introduced. Tails typically run 12 to 24 months. A long tail with a broad covered-party definition can restrict your ability to raise independently long after the engagement is over. Negotiate the shortest tail you can, get a named exclusion list for existing relationships, and make sure the contract specifies exactly what qualifies as an introduction for fee purposes."
 ---
 
+*Disclosure: Rupert wrote this guide and is one of the services it mentions.*
+
 ## The Short Answer
 
-For Seed to Series A rounds, capital raising advisors typically charge a **success fee of 3% to 6%** of the money raised, often on top of a **monthly retainer of about $5,000 to $15,000**, with a **tail period of 12 to 24 months** during which the fee still applies. Flat-fee services charge for the work instead, with no percentage of the raise, so compare the full structure, not just the percentage.
+For Seed to Series A rounds, capital raising advisors typically charge a **success fee of 3% to 6%** of the money raised, often on top of a **monthly retainer of about $5,000 to $15,000**, with a **tail period of 12 to 24 months** during which the fee still applies. Flat-fee services charge for the work instead: Rupert, for example, charges a setup fee and a flat monthly fee, with no success fee, no percentage of the raise and no equity. Compare the full structure, not just the percentage.
 
 | Fee model | How you pay | Typical range (Seed–Series A) | Watch for |
 |---|---|---|---|
@@ -78,6 +80,8 @@ Fees for venture capital fundraising should be evaluated by structure, not headl
 
 The useful question is not what the fee percentage is. It is what exactly triggers payment, how much execution risk sits with the operator, and what total economics apply across the full engagement period.
  A service with a lower headline success fee but no retainer credit, a 24-month tail, and a vague covered-party definition can cost you far more — in real dollars and in lost flexibility — than a higher-percentage engagement with tightly negotiated terms. Understanding each component before you sign is the only way to know what you are actually agreeing to.
+
+Not every service charges a success fee. Flat-fee outreach services, Rupert among them, charge a setup fee and a monthly fee and take nothing from the round, so there is no percentage and no tail period to negotiate.
 
 ---
 

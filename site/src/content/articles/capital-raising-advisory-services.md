@@ -3,7 +3,7 @@ title: "Advisory Services vs. Capital Raising Brokers: What to Know"
 description: Not all capital raising help is equal — advisory services and broker-dealers are legally distinct models with very different consequences for founders.
 slug: capital-raising-advisory-services
 date: "2026-09-29"
-updatedDate: "2026-11-03"
+updatedDate: "2026-11-19"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -47,9 +47,11 @@ faqs:
     answer: "The key clauses to review and negotiate are: (1) tail period — scope, duration, and which investors it covers; (2) ownership of introductions — the contract should specify that the founder retains all investor relationships after the engagement ends; (3) exclusivity — whether you can run parallel outreach or accept inbound investor interest during the engagement; and (4) termination rights — you should be able to exit the engagement without owing fees on investors you independently converted after a defined period."
 ---
 
+*Disclosure: Rupert wrote this guide and is one of the services it mentions.*
+
 ## The Short Answer
 
-A capital raising **advisor** helps you prepare and run a fundraising process and is usually paid a retainer, project fee or flat fee. A **broker-dealer** (or placement agent) is registered with the SEC and FINRA, formally places securities with investors, and is usually paid a success fee on the capital raised. For most Seed and Series A rounds, an advisory or outreach service is the closer fit; any arrangement that pays someone a percentage of the money raised should be reviewed by securities counsel first.
+A capital raising **advisor** helps you prepare and run a fundraising process and is usually paid a retainer, project fee or flat fee. A **broker-dealer** (or placement agent) is registered with the SEC and FINRA, formally places securities with investors, and is usually paid a success fee on the capital raised. For most Seed and Series A rounds, an advisory or outreach service is the closer fit. Rupert, for example, is a managed investor outreach service that charges a setup fee and a flat monthly fee, with no success fee and no percentage of the raise. Any arrangement that pays someone a percentage of the money raised should be reviewed by securities counsel first.
 
 | | Advisory or outreach service | Broker-dealer or placement agent |
 |---|---|---|
