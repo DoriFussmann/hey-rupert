@@ -17,6 +17,8 @@ import { CompanyProfileCard } from "@/app/admin/clients/[id]/company-profile-car
 import { CompanyMaterialsCard } from "@/app/admin/clients/[id]/company-materials-card";
 import { ReanalyzeBanner } from "@/app/admin/clients/[id]/reanalyze-banner";
 import { WelcomeEmailButton } from "@/app/admin/clients/[id]/welcome-email";
+import { NudgeButton } from "@/app/admin/clients/[id]/nudge-button";
+import { loadNudgeDetail } from "@/lib/nudge-server";
 import { NextAction, type NextActionTurn } from "@/app/admin/clients/[id]/next-action";
 import { EngagementProgress } from "@/app/admin/clients/[id]/engagement-progress";
 import { ProgressOverview } from "@/app/admin/clients/[id]/progress-overview";
@@ -172,6 +174,9 @@ export default async function ClientDetailPage({
       ? loadMaterialFields(service)
       : Promise.resolve(DEFAULT_MATERIAL_FIELDS),
   ]);
+  // Best effort: without it the header just has no Nudge button.
+  const nudgeLoaded = service && !client.archived_at ? await loadNudgeDetail(service, client.id) : null;
+  const nudgeDetail = nudgeLoaded?.ok ? nudgeLoaded.detail : null;
   const claudeReady = isClaudeConfigured();
   const auditLoaded = service && isSetupOpen(client.stage) ? await latestAudit(service, client.id) : null;
   const listAudit: { value: ListAudit | null; error: string | null } = auditLoaded
@@ -410,6 +415,7 @@ export default async function ClientDetailPage({
             >
               Matching
             </Link>
+            {nudgeDetail ? <NudgeButton detail={nudgeDetail} /> : null}
             <ViewAsClientLink
               clientId={client.id}
               label={client.company_name}

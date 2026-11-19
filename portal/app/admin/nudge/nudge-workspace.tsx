@@ -22,7 +22,7 @@ function errorText(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
 }
 
-function History({ entries }: { entries: NudgeHistoryEntry[] }) {
+export function History({ entries }: { entries: NudgeHistoryEntry[] }) {
   const thisRound = entries.filter((entry) => entry.thisRound).length;
   if (entries.length === 0) {
     return <p className="mt-md text-body-sm text-muted">Not nudged or reminded on this step yet.</p>;
@@ -52,7 +52,7 @@ function History({ entries }: { entries: NudgeHistoryEntry[] }) {
   );
 }
 
-function NudgeEditor({
+export function NudgeEditor({
   clientId,
   turn,
   to,
