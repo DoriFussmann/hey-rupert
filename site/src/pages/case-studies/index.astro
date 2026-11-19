@@ -10,6 +10,43 @@ const description =
 // Clients stay anonymous at their request. Add a case by adding an entry here.
 const cases = [
   {
+    id: "accessibility-pre-seed",
+    round: "pre-seed",
+    tag: "Pre-Seed · Accessibility software · Israel",
+    title: "A $500K Pre-Seed round to launch a new accessibility product in Israel",
+    facts: [
+      { label: "Round", value: "$500K" },
+      { label: "Stage", value: "Pre-Seed, new product" },
+      { label: "Sector", value: "Accessibility software" },
+      { label: "Geography", value: "Israel" },
+      { label: "Investors targeted", value: "150" },
+      { label: "Timeline", value: "6 months, end to end" },
+    ],
+    result: "Round closed",
+    situation: [
+      "An established Israeli accessibility software company, already serving enterprise and public-sector customers, had built a new product: developer tools that fix accessibility issues directly in the code of websites and mobile apps.",
+      "It built the product without outside money and signed two paying clients and two design partners. To take it to market it needed a small round of its own, raised on the new product's traction rather than on the company's history.",
+    ],
+    steps: [
+      {
+        title: "Made the new product's traction the story",
+        body: "Built the narrative around what the new product had already proved, paying clients and design partners, backed by the company's track record in accessibility.",
+      },
+      {
+        title: "Built a wide, targeted investor list",
+        body: "Targeted 150 investors that fit a small, early round in accessibility and developer tools.",
+      },
+      {
+        title: "Ran the outreach and follow-up",
+        body: "Structured outreach and follow-up, kept going until the round was done.",
+      },
+      {
+        title: "Closed the round",
+        body: "Raised $500K and finished the process within six months.",
+      },
+    ],
+  },
+  {
     id: "healthcare-seed",
     round: "seed",
     tag: "Seed · Healthcare · US & Canada",
@@ -48,6 +85,43 @@ const cases = [
     quote:
       "I didn't know where to start. Having a structured, organized approach is what really led to consistent outreach, and to results.",
     quoteBy: "Founder & CEO, healthcare company, US & Canada",
+  },
+  {
+    id: "veterinary-seed",
+    round: "seed",
+    tag: "Seed · Veterinary care · Sweden",
+    title: "A $1.5M round for a Swedish veterinary care company to buy its clinic",
+    facts: [
+      { label: "Round", value: "$1.5M" },
+      { label: "Stage", value: "Seed" },
+      { label: "Sector", value: "Veterinary care" },
+      { label: "Geography", value: "Sweden" },
+      { label: "Use of funds", value: "Buying a clinic" },
+      { label: "Timeline", value: "4 months, end to end" },
+    ],
+    result: "Round closed",
+    situation: [
+      "A Stockholm-based company providing veterinary care, including visits at home. It had already closed its first seed round.",
+      "To keep growing it needed a clinic of its own, and it had to decide whether to build one or buy one. Either way, that took more capital than it had.",
+    ],
+    steps: [
+      {
+        title: "Framed the round around the clinic",
+        body: "Built the story around what the money would do: a clinic of its own.",
+      },
+      {
+        title: "Built the investor list",
+        body: "Targeted the investors that fit the round's size, stage and sector.",
+      },
+      {
+        title: "Ran the outreach and follow-up",
+        body: "Structured outreach and follow-up, through to the close.",
+      },
+      {
+        title: "Closed the round",
+        body: "Raised $1.5M in four months. The company went on to buy its clinic.",
+      },
+    ],
   },
   {
     id: "fintech-series-b",
@@ -133,7 +207,8 @@ const cases = [
 
 // Round filter: one button per round that has a case, in this order.
 const roundOrder = [
-  { id: "seed", label: "Pre-Seed & Seed" },
+  { id: "pre-seed", label: "Pre-Seed" },
+  { id: "seed", label: "Seed" },
   { id: "series-a", label: "Series A" },
   { id: "series-b", label: "Series B" },
 ];
