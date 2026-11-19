@@ -4,7 +4,7 @@ h1: When a Fundraising Advisor Is Actually Worth It
 description: "A fundraising advisor is worth it when investor access and outreach capacity are the bottleneck, not readiness. How to evaluate the right structure."
 slug: is-a-fundraising-advisor-worth-it
 date: "2026-11-17"
-updatedDate: "2026-11-17"
+updatedDate: "2026-11-19"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -69,9 +69,11 @@ faqs:
     answer: "Before engaging any advisor, you should be able to articulate clearly what problem you are solving, who your customer is, why now, and what makes the team credible. An advisor can sharpen the narrative and provide ranked feedback on your deck, but if the story itself is not coherent, more outreach will only accelerate rejection. Setup feedback matters precisely for this reason: the deck and the message need to be investor-ready before the first email goes out."
 ---
 
+*Disclosure: Rupert wrote this guide and is one of the services it mentions.*
+
 ## The Short Answer
 
-A fundraising advisor is worth it when your bottleneck is **outreach execution and investor access**, not company readiness—and only if the structure keeps every investor relationship in your hands. **Self-serve tools** (databases, CRMs) may be enough if you have strong VC relationships at the right stage and time to run a disciplined process. **A managed outreach service** that researches, writes, and follows up is worth it when fundraising is competing with running the company. For Pre-Seed, Seed, and Series A founders, evaluate any service on who sends the outreach and who owns the relationships after the engagement ends.
+A fundraising advisor is worth it when your bottleneck is **outreach execution and investor access**, not company readiness—and only if the structure keeps every investor relationship in your hands. **Self-serve tools** (databases, CRMs) may be enough if you have strong VC relationships at the right stage and time to run a disciplined process. **A managed outreach service** that researches, writes, and follows up, such as Rupert (a flat monthly fee, no success fee), is worth it when fundraising is competing with running the company. Whatever you choose, check who sends the outreach and who owns the relationships afterward.
 
 ## The Real Bottleneck Is Execution Capacity, Not Networking
 
@@ -79,7 +81,7 @@ The biggest misconception in startup fundraising is that getting investor meetin
 
 A fundraising advisor is worth paying for when they solve a problem the founder cannot efficiently solve themselves. That might be access to the right investors at the right stage, the ability to build a qualified pipeline quickly, the expertise to develop a fundraising narrative, or simply the operational bandwidth to manage the outreach workload without consuming the founder's calendar. The mistake is treating "advisor" as a synonym for "someone who makes calls on your behalf." The right framing is different: an advisor should make the founder more effective, not become an intermediary between the founder and potential investors. The investor should know and communicate with the founder, not a hired representative.
 
-There is a critical distinction between outsourcing the work and outsourcing the relationship. Research, investor matching, email preparation, follow-ups, and pipeline management can all be delegated without giving anything up. The actual conversations, the relationship building, and every decision in the process must remain with the founder. That distinction is what separates a service that adds real leverage from one that creates problems with the investors you most want to reach.
+There is a critical distinction between outsourcing the work and outsourcing the relationship. Research, investor matching, email preparation, follow-ups, and pipeline management can all be delegated without giving anything up. The actual conversations, the relationship building, and every decision in the process must remain with the founder. That distinction is what separates a service that adds real leverage from one that creates problems with the investors you most want to reach. It is how Rupert is set up: Rupert does the research, matching, writing and follow-up, nothing goes out without the founder's approval, every email is sent from the founder's own inbox, and every investor relationship stays with the founder.
 
 Fundraising is not a numbers game in the simplistic sense of sending as many emails as possible. It is about identifying the right investors, understanding why each one might be interested, and approaching them with a relevant, credible message. A service that blasts generic campaigns is not a fundraising advisor—it is a liability. Ultimately, the question is not whether a founder needs an advisor. It is whether the founder has the time, investor access, and operational capacity to run a proper fundraising process while continuing to build the company.
 

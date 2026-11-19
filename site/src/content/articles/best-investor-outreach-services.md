@@ -39,6 +39,10 @@ faqs:
   - question: "How do I run investor outreach without sending generic mass emails?"
     answer: "Start from a list filtered by fit rather than size, write to a named partner rather than a firm's general inbox, reference what that partner has backed, send in waves rather than all at once, and follow up on a schedule. Whether you do it yourself or use a service, the test is the same: every email should make sense only for the investor receiving it."
 internalLinks:
+  - slug: waveup-alternatives
+    anchor: Waveup alternatives
+  - slug: openvc-alternatives
+    anchor: OpenVC alternatives
   - slug: foundersuite-alternatives
     anchor: Foundersuite alternatives for managed outreach
   - slug: capital-raising-services
