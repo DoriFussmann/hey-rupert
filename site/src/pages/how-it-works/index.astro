@@ -3,6 +3,7 @@ import { Image } from "astro:assets";
 import type { ImageMetadata } from "astro";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import CtaBanner from "../../components/CtaBanner.astro";
+import FaqBlock from "../../components/FaqBlock.astro";
 import { sitePath } from "../../lib/url";
 import howItWorks1 from "../../assets/how-it-works/how-it-works-01.png";
 import howItWorks2 from "../../assets/how-it-works/how-it-works-02.png";
@@ -116,9 +117,47 @@ const promises = [
   { value: "Your inbox", label: "Outreach is sent in your name, from your email" },
   { value: "Your relationships", label: "Every investor conversation stays yours" },
 ];
+
+const faqs = [
+  {
+    question: "How much of the founder's time does it take?",
+    answer:
+      "During setup, an intake conversation with Dori and reviews of the brief, the investor list and the messaging. Once outreach is live, about one to two hours a week for approvals, replies and meeting preparation, plus the investor meetings themselves. Rupert does the research, the writing, the sending and the follow-up.",
+  },
+  {
+    question: "What do I approve, and when?",
+    answer:
+      "Before anything goes out, you approve the investor list, the strategy and the messaging. After go-live you also approve each critical email, the ones written for a specific investor. Rupert then sends from your inbox and runs the follow-up on the messaging you approved.",
+  },
+  {
+    question: "Who keeps the fundraising tracker?",
+    answer:
+      "Rupert does, in your client portal: every investor contacted, every reply, and which conversations are real interest. You can give teammates, such as a chief of staff or an ops lead, view-only access to the portal, and they can leave comments on the review steps. Coordination stays with your team; the tracking work doesn't.",
+  },
+  {
+    question: "Who takes the investor meetings?",
+    answer:
+      "You do. Rupert prepares you for each meeting worth taking, with the likely questions and the proof points that investor will care about, but doesn't sit between you and the investor and doesn't negotiate or close the round.",
+  },
+  {
+    question: "Does Rupert rebuild my pitch deck?",
+    answer:
+      "No. Rupert reviews the deck and your other materials and ranks the fixes that matter most to investors; you or your designer make the changes. There is no separate charge for deck work.",
+  },
+];
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: { "@type": "Answer", text: faq.answer },
+  })),
+};
 ---
 
-<BaseLayout title={title} description={description} canonicalPath="/how-it-works/">
+<BaseLayout title={title} description={description} canonicalPath="/how-it-works/" jsonLd={[jsonLd]}>
   <main id="main-content" class="flex-1">
     <section class="site-wrap pb-xl pt-2xl lg:pb-2xl lg:pt-3xl">
       <p class="type-label">The process</p>
@@ -201,6 +240,10 @@ const promises = [
         <a class="btn-primary" href={sitePath("/book-call/")}>Book a Free Consultation</a>
         <a class="btn-quiet" href={sitePath("/pricing/")}>See how Rupert charges</a>
       </p>
+    </section>
+
+    <section class="site-wrap section-block rule" aria-labelledby="faq-heading">
+      <FaqBlock faqs={faqs} bordered={false} />
     </section>
   </main>
   <CtaBanner />
