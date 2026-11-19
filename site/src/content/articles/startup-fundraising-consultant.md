@@ -3,7 +3,7 @@ title: "Hiring a Startup Fundraising Consultant: A Founder's Guide"
 description: "A step-by-step guide for founders on how to find, vet, and onboard a startup fundraising consultant — without wasting time, money, or momentum."
 slug: startup-fundraising-consultant
 date: "2026-09-29"
-updatedDate: "2026-11-03"
+updatedDate: "2026-11-19"
 author: dori-fussmann
 category: capital raising services
 pillarKeyword: capital raising services
@@ -49,9 +49,11 @@ faqs:
     answer: "A tail period (sometimes called a tail clause or survival period) is the window after your engagement ends during which the consultant can still claim a success fee if you close with an investor they introduced. Tails commonly run 6 to 24 months; 12 months is a reasonable target at early stage. The critical detail is which investors are excluded: any investor you knew independently before the engagement should be carved out by name in the contract. If a consultant resists listing specific carve-outs, treat that as a red flag."
 ---
 
+*Disclosure: Rupert wrote this guide and is one of the services it mentions.*
+
 ## The Short Answer
 
-Before you hire a startup fundraising consultant, be clear on three things: what you need help with (materials and positioning, or running the outreach), whether the company is ready to raise, and how the consultant is paid (retainer, success fee, both, or a flat fee). Then vet for real investor knowledge, a track record at your stage, full transparency, and a contract that leaves every investor relationship with you.
+Before you hire a startup fundraising consultant, be clear on three things: what you need help with (materials and positioning, or running the outreach), whether the company is ready to raise, and how the consultant is paid (retainer, success fee, both, or a flat fee). Then vet for real investor knowledge, a track record at your stage, full transparency, and a contract that leaves every investor relationship with you. If the outreach itself is what you need to hand off, a managed service such as Rupert builds the investor list and runs the outreach for a flat fee, with no success fee, and every investor relationship stays yours.
 
 **Before you sign, check:**
 
@@ -69,7 +71,7 @@ Hiring a fundraising consultant feels like a shortcut. It often isn't — and th
 
 The most common mistake founders make before hiring a startup fundraising consultant is conflating several distinct types of work into a single mandate. Investor targeting and outreach management is a fundamentally different service from pitch deck refinement, financial modeling, or narrative coaching. Each requires different expertise, a different fee structure, and a different kind of person.
 
-If you have a compelling deck and a clear story but no bandwidth to research which investors actually fund companies like yours — and no process for managing a pipeline of 60 to 100 conversations — what you need is an outreach specialist. If your deck is unclear and your narrative is unformed, what you need first is a positioning advisor. Hiring a generalist to do both rarely produces the outcome of hiring the right specialist for the job you actually have.
+If you have a compelling deck and a clear story but no bandwidth to research which investors actually fund companies like yours — and no process for managing a pipeline of 60 to 100 conversations — what you need is an outreach specialist. That is the work a managed outreach service such as Rupert does: it matches the company to investors, writes the outreach for your approval and runs the follow-up. If your deck is unclear and your narrative is unformed, what you need first is a positioning advisor. Hiring a generalist to do both rarely produces the outcome of hiring the right specialist for the job you actually have.
 
 Before you start evaluating consultants, answer three questions honestly. Do you have a pitch that earns a second meeting, or does the positioning still need work? Do you have a way to identify investors who fund companies at your stage, sector, and geography — and do you have the time to systematically reach them? And do you have a process for tracking conversations, following up consistently, and maintaining momentum across a four-to-six-month raise? If the answer to the first question is no, fix that before hiring outreach help. If the answer to the second and third is no, a capital raising consultant is the right investment.
 
