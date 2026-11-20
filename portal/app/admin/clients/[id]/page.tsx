@@ -298,7 +298,7 @@ export default async function ClientDetailPage({
         key: "brief",
         done: briefDone,
         turn: briefDone || !briefData.canBuild ? "none" : "admin",
-        node: <BriefPanel clientId={client.id} data={briefData} claudeReady={claudeReady} founderName={[client.first_name, client.last_name].map((part) => part?.trim()).filter(Boolean).join(" ") || client.founder_name?.trim() || ""} />,
+        node: <BriefPanel clientId={client.id} data={briefData} claudeReady={claudeReady} clientEmail={client.email ?? client.founder_email ?? ""} founderName={[client.first_name, client.last_name].map((part) => part?.trim()).filter(Boolean).join(" ") || client.founder_name?.trim() || ""} />,
       });
     }
     panels.push(

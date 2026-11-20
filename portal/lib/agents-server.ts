@@ -587,7 +587,8 @@ export async function draftNarrativeEmail(
   version: number,
   override?: PromptOverride | null,
 ): Promise<AgentResult<ClientEmailDraft>> {
-  if (!narrative.core.trim()) {
+  // The Company Brief writes a statement narrative (summary); older narratives have a core story.
+  if (!narrative.summary.trim() && !narrative.core.trim()) {
     return { ok: false, error: "Write the narrative first: the email is drafted from it." };
   }
   const loaded = await loadClient(supabase, clientId);
@@ -609,12 +610,19 @@ export async function draftNarrativeEmail(
 
   const context = [
     ...founderLines(loaded.client, version),
-    "## Core story",
-    narrative.core,
-    "## Key messages",
-    narrative.key_messages || "(none)",
-    "## Approach",
-    narrative.approach || "(none)",
+    ...(narrative.statement || !narrative.core.trim()
+      ? ["## The Outreach Narrative (what the founder reads and confirms)", narrative.summary]
+      : [
+          "## Core story",
+          narrative.core,
+          "## Key messages",
+          narrative.key_messages || "(none)",
+          "## Approach",
+          narrative.approach || "(none)",
+        ]),
+    (narrative.founder_questions ?? []).length > 0
+      ? `## Questions for the founder, on the same page\n${(narrative.founder_questions ?? []).map((item) => `- ${item.question}`).join("\n")}`
+      : "",
     sharedLine(narrative.attachments, narrative.links),
     clientAsk ? `## What the founder asked to change\n${clientAsk}` : "",
     clientAsk

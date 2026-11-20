@@ -12,6 +12,7 @@ import {
   getSetupItems,
   tierCounts,
   workingNarrative,
+  asNarrative,
   type SetupSource,
   type SetupStepId,
 } from "@/lib/setup";
@@ -96,6 +97,9 @@ export function setupPanels({
   const counts = tierCounts(investors.rows, listScheme);
   // What the emails are written from: the three points the founder approved.
   const story = workingNarrative(row("framing"));
+  // Built in the Company Brief (a statement narrative): drafted and sent from its stage 5.
+  const briefNarrative = Boolean(asNarrative(row("framing")?.draft ?? row("framing")?.published).statement);
+  const framingSent = (row("framing")?.version ?? 0) > 0;
   const copyNarrative = {
     confirmed: row("framing")?.status === "confirmed",
     points: (() => {
@@ -124,6 +128,11 @@ export function setupPanels({
       key: "framing",
       ...step("framing"),
       node: (
+        // A narrative built in the Company Brief is drafted and sent from its stage 5;
+        // here only the client's comments show, once it has been sent.
+        briefNarrative ? (
+          <FeedbackInbox clientId={clientId} step="framing" items={inbox("framing")} />
+        ) : (
         <>
           <FeedbackInbox clientId={clientId} step="framing" items={inbox("framing")} />
           <NarrativeEditor
@@ -137,6 +146,7 @@ export function setupPanels({
             fileLinks={fileLinks}
           />
         </>
+        )
       ),
     },
     {
@@ -195,5 +205,6 @@ export function setupPanels({
       { key: "go_live", ...outreach.live, node: <LivePanel clientId={clientId} /> },
     );
   }
-  return panels;
+  // Before it is sent, there is nothing here that stage 5 does not already show.
+  return briefNarrative && !framingSent ? panels.filter((panel) => panel.key !== "framing") : panels;
 }

@@ -1004,6 +1004,7 @@ export async function loadBriefPanel(supabase: ServiceClient, clientId: string) 
     questions_confirmed_at: draft.questions_confirmed_at ?? null,
     status: framingRow?.status ?? null,
     version: framingRow?.version ?? 0,
+    draft: (framingRow?.draft ?? framingRow?.published ?? null) as Record<string, unknown> | null,
   };
   const linkedinUrls = sources.ok ? linkedinLinks(sources.value.text) : [];
   // LinkedIn PDFs added before they were company files: put them in the materials once.
@@ -1052,6 +1053,8 @@ export type BriefNarrative = {
   /** The send step: null before the first push, then pushed, confirmed, changes_requested… */
   status: string | null;
   version: number;
+  /** The stored narrative draft, as stage 5 sends it (with the email). */
+  draft: Record<string, unknown> | null;
 };
 
 /** LinkedIn profile links found in what the founder shared (links form, intake answers). */
