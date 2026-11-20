@@ -3,8 +3,9 @@ import "server-only";
 // Minimal Claude Messages API client (no SDK). Each call offers a single
 // tool and asks Claude to reply through it, so the reply comes back as
 // structured input we validate. Some models do not allow forcing a tool, so
-// the choice is left to the model ("auto"); callers can supply a fallback
-// that turns a plain-text reply into usable input.
+// the first request leaves the choice to the model ("auto"). If it answers
+// in plain text, we retry once with the tool forced; only if that fails too
+// does the caller's fallback turn the plain-text reply into usable input.
 const ENDPOINT = "https://api.anthropic.com/v1/messages";
 const API_VERSION = "2023-06-01";
 const DEFAULT_MODEL = "claude-sonnet-5-5";
@@ -51,7 +52,12 @@ export async function callClaudeTool<T>({
     return { ok: false, reason: "ANTHROPIC_API_KEY is not configured." };
   }
 
-  try {
+  type ToolChoice = { type: "auto" } | { type: "tool"; name: string };
+  type Reply =
+    | { ok: true; input: unknown; text: string }
+    | { ok: false; reason: string; status?: number };
+
+  const send = async (toolChoice: ToolChoice): Promise<Reply> => {
     const response = await fetch(ENDPOINT, {
       method: "POST",
       headers: {
@@ -65,7 +71,7 @@ export async function callClaudeTool<T>({
         system,
         messages,
         tools: [tool],
-        tool_choice: { type: "auto" },
+        tool_choice: toolChoice,
       }),
       signal: AbortSignal.timeout(timeoutMs),
       cache: "no-store",
@@ -73,9 +79,11 @@ export async function callClaudeTool<T>({
 
     if (!response.ok) {
       const detail = (await response.text()).slice(0, 500);
-      const reason = `Claude API error (${response.status}): ${detail}`;
-      console.error(reason);
-      return { ok: false, reason };
+      return {
+        ok: false,
+        reason: `Claude API error (${response.status}): ${detail}`,
+        status: response.status,
+      };
     }
 
     const data = (await response.json()) as {
@@ -89,17 +97,39 @@ export async function callClaudeTool<T>({
     const block = data.content?.find(
       (item) => item.type === "tool_use" && item.name === tool.name,
     );
-    if (block && block.input && typeof block.input === "object") {
-      return { ok: true, input: block.input as T };
-    }
-
     const text = (data.content ?? [])
       .filter((item) => item.type === "text" && typeof item.text === "string")
       .map((item) => item.text as string)
       .join("\n\n")
       .trim();
+    const input =
+      block && block.input && typeof block.input === "object" ? block.input : null;
+    return { ok: true, input, text };
+  };
+
+  try {
+    const first = await send({ type: "auto" });
+    if (!first.ok) {
+      console.error(first.reason);
+      return { ok: false, reason: first.reason };
+    }
+    if (first.input) return { ok: true, input: first.input as T };
+
+    // Claude answered in plain text. The caller needs the structured fields
+    // (a text fallback loses them silently, e.g. intake topic coverage), so
+    // ask once more with the tool forced. Models that refuse forcing return
+    // an error here, and we fall back to the first plain-text answer.
+    console.warn(`Claude skipped the ${tool.name} tool; retrying with it forced.`);
+    const forced = await send({ type: "tool", name: tool.name });
+    if (forced.ok && forced.input) return { ok: true, input: forced.input as T };
+    if (!forced.ok) console.warn(`Forced ${tool.name} retry failed: ${forced.reason}`);
+
+    const text = first.text;
     const fallback = text && fallbackFromText ? fallbackFromText(text) : null;
-    if (fallback) return { ok: true, input: fallback };
+    if (fallback) {
+      console.warn(`Using plain-text fallback for ${tool.name}; structured fields are lost.`);
+      return { ok: true, input: fallback };
+    }
 
     return { ok: false, reason: "Claude returned no structured reply." };
   } catch (err) {
