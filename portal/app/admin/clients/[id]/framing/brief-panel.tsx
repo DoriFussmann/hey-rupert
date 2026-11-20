@@ -19,7 +19,7 @@ export type BriefPanelData = {
 };
 
 /** Setup step 1 on the client page: the Company Brief. */
-export function BriefPanel({ clientId, data, claudeReady }: { clientId: string; data: BriefPanelData; claudeReady: boolean }) {
+export function BriefPanel({ clientId, data, claudeReady, founderName }: { clientId: string; data: BriefPanelData; claudeReady: boolean; founderName: string }) {
   return (
     <section id="setup-brief" className="mt-lg rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-lg">
@@ -47,6 +47,7 @@ export function BriefPanel({ clientId, data, claudeReady }: { clientId: string; 
             canBuild={data.canBuild}
             buildNote={data.buildNote}
             claudeReady={claudeReady}
+            founderName={founderName}
           />
         )}
       </div>
