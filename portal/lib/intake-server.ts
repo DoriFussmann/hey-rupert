@@ -486,8 +486,9 @@ export async function nextInterviewTurn(
     tool: RESPOND_TOOL,
     maxTokens: files ? 4000 : 1024,
     timeoutMs: files ? FILES_TURN_TIMEOUT_MS : undefined,
-    // A plain-text answer is still shown to the client; topic coverage is
-    // simply left unchanged for that turn.
+    // Last resort, after callClaudeTool's forced-tool retry has failed too:
+    // the plain-text answer is still shown to the client, but topic coverage
+    // is left unchanged for that turn.
     fallbackFromText: (text) => ({ reply: text, topics: [] }),
   });
   if (!result.ok) return result;
