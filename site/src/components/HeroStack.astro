@@ -67,15 +67,14 @@ const result = {
           <p class="hero-card__role">Founder, Rupert</p>
         </div>
       </div>
-      <p class="hero-card__body">
+      <p class="hero-card__body hero-card__body--lead">
         I've been the banker, the founder and the CFO in the room. Now I run
         investor outreach for founders.<br />
-        I learn your business, understand your market, identify and carefully
-        match potential investors, work with you to craft the messaging, and
-        execute the outreach together.<br />
-        Every step is deliberate, transparent and structured.<br />
-        Let's talk.
+        I learn your business and market, match you with the right investors,
+        and we run the outreach together.<br />
+        Every step is deliberate, transparent and structured.
       </p>
+      <p class="hero-card__body hero-card__cta">Let's talk.</p>
       <ul class="hero-card__foot hero-card__logos" aria-label="Where Dori has worked and mentors">
         {
           logos.map((logo) => (
@@ -300,6 +299,15 @@ const result = {
     font-size: 1rem;
     line-height: 1.65;
     color: var(--body);
+  }
+
+  /* One blank line between the note and "Let's talk." */
+  .hero-card__body--lead {
+    margin-bottom: 0 !important;
+  }
+
+  .hero-card__cta {
+    margin-top: 1.65em !important;
   }
 
   .hero-card__logos {
