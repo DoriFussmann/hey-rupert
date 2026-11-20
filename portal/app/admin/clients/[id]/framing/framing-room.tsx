@@ -88,8 +88,10 @@ export function FramingRoom({
   canBuild,
   buildNote,
   claudeReady,
+  founderName,
 }: {
   clientId: string;
+  founderName: string;
   initialBrief: CompanyBrief | null;
   initialVersions: BriefVersionRow[];
   founderQuestions: FounderQuestion[];
@@ -250,6 +252,7 @@ export function FramingRoom({
           files={linkedin}
           error={linkedinError}
           urls={linkedinUrls}
+          founderName={founderName}
           hasBrief={Boolean(brief)}
           disabled={busy !== null}
           onChange={setLinkedin}
@@ -1520,12 +1523,57 @@ function PointsPanel({
   );
 }
 
+/** The founder's name with a copy icon, to paste into LinkedIn search. */
+function CopyName({ name }: { name: string }) {
+  const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!copied) return;
+    const timer = window.setTimeout(() => setCopied(false), 2000);
+    return () => window.clearTimeout(timer);
+  }, [copied]);
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(name);
+      setCopied(true);
+    } catch {
+      setCopied(false);
+    }
+  }
+
+  return (
+    <p className="mt-xs flex items-center gap-xs text-body">
+      <span className="text-heading">{name}</span>
+      <button
+        type="button"
+        onClick={() => void copy()}
+        aria-label={copied ? "Copied" : `Copy ${name}`}
+        title={copied ? "Copied" : "Copy name"}
+        className="inline-flex h-6 w-6 items-center justify-center rounded-sm text-muted hover:bg-background hover:text-heading"
+      >
+        {copied ? (
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 8.5l3 3 7-7" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+            <rect x="5" y="5" width="8.5" height="8.5" rx="1.5" />
+            <path d="M3 10.5V3.5A1 1 0 0 1 4 2.5h6.5" strokeLinecap="round" />
+          </svg>
+        )}
+      </button>
+      {copied ? <span className="text-body-sm text-muted">Copied</span> : null}
+    </p>
+  );
+}
+
 /** The founder's LinkedIn, as a PDF Dori uploads: AI can't open LinkedIn. The first brief waits for it. */
 function LinkedinCard({
   clientId,
   files,
   error,
   urls,
+  founderName,
   hasBrief,
   disabled,
   onChange,
@@ -1534,6 +1582,7 @@ function LinkedinCard({
   files: BriefFiles;
   error: string | null;
   urls: string[];
+  founderName: string;
   hasBrief: boolean;
   disabled: boolean;
   onChange: (files: BriefFiles) => void;
@@ -1600,6 +1649,7 @@ function LinkedinCard({
   return (
     <section className={`${card} border-primary/30 px-lg py-md`}>
       <h3 className="text-h4">Founder&apos;s LinkedIn</h3>
+      {founderName ? <CopyName name={founderName} /> : null}
       <p className="mt-xs max-w-prose text-body-sm text-muted">
         AI can&apos;t open LinkedIn. Open each founder&apos;s profile, choose More → Save to PDF, and upload them here (you can pick several at once). When they&apos;re all in, click Build brief.
       </p>
