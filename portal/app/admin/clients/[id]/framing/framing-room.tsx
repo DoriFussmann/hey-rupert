@@ -1150,11 +1150,14 @@ function SendStage({
     { label: "Company Materials Feedback confirmed", done: Boolean(brief.deck.confirmed_at) },
     { label: "Questions for the founder confirmed", done: Boolean(narrative.questions_confirmed_at) },
   ];
+  // Stages 1 to 4 unlock Draft Email; the drafted email is the 5th check, then Push & Send.
   const ready = checks.every((check) => check.done);
   const sent = narrative.version > 0;
   const stored = (narrative.draft?.client_email ?? null) as { subject?: string; body?: string } | null;
   const [subject, setSubject] = useState(stored?.subject ?? "");
   const [body, setBody] = useState(stored?.body ?? "");
+  const drafted = Boolean(subject.trim() && body.trim());
+  const allChecks = [...checks, { label: "Email drafted", done: ready && drafted }];
   const [pending, setPending] = useState<"draft" | "send" | null>(null);
   const [message, setMessage] = useState<Notice>(null);
   useEffect(() => {
@@ -1228,17 +1231,19 @@ function SendStage({
               ? "Client asked for changes"
               : sent
                 ? `Sent (v${narrative.version})`
-                : ready
+                : ready && drafted
                   ? "Ready to send"
-                  : "After stages 1 to 4"
+                  : ready
+                    ? "Draft the email"
+                    : "After stages 1 to 4"
         }
         tone={narrative.status === "confirmed" ? "done" : ready ? "open" : "locked"}
       />
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        Draft the email, then push to the client&apos;s portal and send it: they confirm or comment on the narrative, read the feedback and answer the questions. Then matching.
+        Once stages 1 to 4 are done, draft the email, then push to the client&apos;s portal and send it: they confirm or comment on the narrative, read the feedback and answer the questions. Then matching.
       </p>
       <ul className="mt-md grid gap-xs text-body-sm">
-        {checks.map((check) => (
+        {allChecks.map((check) => (
           <li key={check.label} className={check.done ? "text-success" : "text-muted"}>
             {check.done ? "✓" : "○"} {check.label}
           </li>
@@ -1309,8 +1314,8 @@ function SendStage({
         <button
           type="button"
           className={primaryButton}
-          disabled={locked || !subject.trim() || !body.trim()}
-          title={!ready ? "Finish stages 1 to 4 first." : !body.trim() ? "Draft the email first." : undefined}
+          disabled={locked || !drafted}
+          title={!ready ? "Finish stages 1 to 4 first." : !drafted ? "Draft the email first." : undefined}
           onClick={() => void onSend()}
         >
           {pending === "send" ? "Sending…" : sent ? "Push New Version & Send" : "Push to Client Portal & Send"}
