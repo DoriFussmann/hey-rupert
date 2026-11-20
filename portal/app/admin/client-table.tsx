@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ProgressBar } from "@/components/progress-bar";
 import { StagePill } from "@/components/stage-pill";
+import { NudgeButton } from "@/app/admin/clients/[id]/nudge-button";
 import { nextActionText, overallProgress } from "@/lib/progress";
 import type { Client } from "@/lib/types";
 import { isKickoffReady } from "@/lib/service-order";
@@ -40,7 +41,7 @@ function matches(client: Client, needle: string) {
  * Clients in three groups: Active (Service Order signed and Setup Fee paid),
  * Prospects (not signed or paid yet), and Archived, folded away at the bottom.
  */
-export function ClientTable({ clients }: { clients: Client[] }) {
+export function ClientTable({ clients, nudgeable = [] }: { clients: Client[]; nudgeable?: string[] }) {
   const [query, setQuery] = useState("");
   const needle = query.trim().toLowerCase();
 
@@ -82,6 +83,7 @@ export function ClientTable({ clients }: { clients: Client[] }) {
         hint="Not signed or paid yet: Statement of Work and Service Order."
         clients={groups.prospects}
         empty={empty ?? "No prospects right now."}
+        nudgeable={nudgeable}
       />
       {groups.archived.length > 0 || !needle ? (
         <details
@@ -117,11 +119,13 @@ function ClientSection({
   hint,
   clients,
   empty,
+  nudgeable,
 }: {
   title: string;
   hint: string;
   clients: Client[];
   empty: string;
+  nudgeable?: string[];
 }) {
   return (
     <section className="rounded-card border border-border bg-surface">
@@ -131,12 +135,21 @@ function ClientSection({
         </h2>
         <p className="text-body-sm text-muted">{hint}</p>
       </div>
-      <ClientRows clients={clients} empty={empty} />
+      <ClientRows clients={clients} empty={empty} nudgeable={nudgeable} />
     </section>
   );
 }
 
-function ClientRows({ clients, empty }: { clients: Client[]; empty: string }) {
+function ClientRows({
+  clients,
+  empty,
+  nudgeable,
+}: {
+  clients: Client[];
+  empty: string;
+  /** Set on the Prospects table: these rows get a Nudge button. */
+  nudgeable?: string[];
+}) {
   const router = useRouter();
   if (clients.length === 0)
     return <p className="px-lg py-lg text-body-sm text-muted">{empty}</p>;
@@ -150,6 +163,7 @@ function ClientRows({ clients, empty }: { clients: Client[]; empty: string }) {
             <th className="px-lg py-sm font-medium">Stage</th>
             <th className="px-lg py-sm font-medium">Progress</th>
             <th className="px-lg py-sm font-medium">Next action</th>
+            {nudgeable ? <th className="px-lg py-sm font-medium" aria-label="Nudge" /> : null}
           </tr>
         </thead>
         <tbody>
@@ -193,6 +207,11 @@ function ClientRows({ clients, empty }: { clients: Client[]; empty: string }) {
                 <td className="px-lg py-md text-muted">
                   {nextActionText(client)}
                 </td>
+                {nudgeable ? (
+                  <td className="px-lg py-md text-right">
+                    {nudgeable.includes(client.id) ? <NudgeButton clientId={client.id} /> : null}
+                  </td>
+                ) : null}
               </tr>
             );
           })}

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { draftClientNudge, sendClientNudge } from "@/app/admin/nudge-actions";
 import {
@@ -56,10 +56,13 @@ export function NudgeEditor({
   clientId,
   turn,
   to,
+  autoDraft = false,
 }: {
   clientId: string;
   turn: NudgeTurn;
   to: string;
+  /** Write a draft as soon as the editor opens. */
+  autoDraft?: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState<ClientEmailDraft>({ subject: "", body: "" });
@@ -127,6 +130,14 @@ export function NudgeEditor({
       setMessage({ kind: "error", text: `Could not copy the ${what.toLowerCase()}. Select it and copy by hand.` });
     }
   }
+
+  const drafted = useRef(false);
+  useEffect(() => {
+    if (!autoDraft || drafted.current) return;
+    drafted.current = true;
+    void onDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDraft]);
 
   const locked = pending !== null;
 

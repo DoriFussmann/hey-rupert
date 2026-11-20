@@ -248,6 +248,46 @@ function historyText(entries: NudgeHistoryEntry[]) {
   ].join("\n");
 }
 
+/** Steps a founder reaches before they are a client: nudged as a post-call check-in. */
+const PROSPECT_TURNS = new Set<string>(["sow", "service_order"]);
+
+/** When the founder's most recent call with Rupert started, if they booked one through Cal.com. */
+async function lastCallAt(supabase: ServiceClient, clientId: string): Promise<string | null> {
+  const { data: prospects } = await supabase.from("prospects").select("id").eq("client_id", clientId);
+  const ids = (prospects ?? []).map((row) => text((row as Record<string, unknown>).id)).filter(Boolean);
+  if (ids.length === 0) return null;
+  const { data: calls } = await supabase
+    .from("prospect_calls")
+    .select("start_time, status")
+    .in("prospect_id", ids)
+    .lte("start_time", new Date().toISOString())
+    .order("start_time", { ascending: false })
+    .limit(10);
+  const held = (calls ?? []).find((call) => {
+    const status = text((call as Record<string, unknown>).status).toUpperCase();
+    return status !== "CANCELLED" && status !== "REJECTED" && status !== "RESCHEDULED";
+  });
+  return held ? text((held as Record<string, unknown>).start_time) || null : null;
+}
+
+/** How long since the call, in words, or null when there is no call on record. */
+function sinceCallText(callAt: string | null) {
+  const days = daysSince(callAt, new Date());
+  if (days == null) return null;
+  if (days === 0) return "earlier today";
+  return days === 1 ? "yesterday" : `${days} days ago`;
+}
+
+/** The check-in written without Claude, when Claude is not set up. */
+function prospectCheckin(turn: NudgeTurn, callAt: string | null) {
+  const days = daysSince(callAt, new Date());
+  const opener =
+    days != null && days > 0
+      ? `It's been ${days === 1 ? "a day" : `${days} days`} since our call, and I wanted to check in on the ${turn.label}.`
+      : `I wanted to check in on the ${turn.label} I sent over.`;
+  return `${opener} Do you have any questions about it, or is there anything I can help with? Happy to jump on a quick call if that's easier.`;
+}
+
 /**
  * A nudge for one waiting step: the middle by Claude (or the reminder wording
  * from Forms → Emails when Claude is not set up), with the greeting, portal
@@ -268,6 +308,23 @@ export async function draftNudge(
   const portalLink = `${PORTAL_URL}${turn.path}`;
   const pausedNote = detail.paused ? NUDGE_PAUSED_NOTE : null;
   const row = { first_name: detail.firstName };
+  const prospect = PROSPECT_TURNS.has(turn.key);
+  const callAt = prospect ? await lastCallAt(supabase, clientId) : null;
+
+  if (!isClaudeConfigured() && prospect) {
+    return {
+      ok: true,
+      pausedNote,
+      email: {
+        subject: "Checking in after our call",
+        body: tidyBody(
+          [greetingFor(row), prospectCheckin(turn, callAt), `Open your portal: ${portalLink}`, settings.signature].join(
+            "\n\n",
+          ),
+        ),
+      },
+    };
+  }
 
   if (!isClaudeConfigured()) {
     const rendered = renderEmail(settings.templates.reminder, {
@@ -283,7 +340,21 @@ export async function draftNudge(
   }
 
   const others = detail.clientTurns.filter((item) => item.key !== turn.key);
+  const sinceCall = sinceCallText(callAt);
+  const framing = prospect
+    ? [
+        "## How to write this one",
+        "This founder is not a client yet. You spoke with them on an intro call, then sent them the " +
+          `${turn.label}. This is a friendly, personal check-in after that call, not a reminder about an investor campaign.`,
+        sinceCall
+          ? `The call was ${sinceCall} (${formatDateAtTime(callAt ?? "")}). Open with that, e.g. "It's been N days since our call, and I wanted to check in on the ${turn.label}."`
+          : `There is no call on record; open by saying you wanted to check in on the ${turn.label} you sent over.`,
+        "Then ask if they have any questions, or if there is anything you can help with, and offer a quick call. " +
+          "No pressure and no selling. 30–80 words. A plain subject such as \"Checking in after our call\" is right here.",
+      ].join("\n")
+    : "";
   const context = [
+    framing,
     `Founder: ${detail.firstName || "unknown"}`,
     `Company: ${detail.company}`,
     `Stage: ${detail.stageLabel}`,
