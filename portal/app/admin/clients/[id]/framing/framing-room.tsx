@@ -23,6 +23,8 @@ import {
 } from "@/app/admin/brief-actions";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
 import { createSetupUpload } from "@/app/admin/agent-actions";
+import { draftSetupEmail, saveSetupDraft, sendSetupDocument } from "@/app/admin/setup-actions";
+import { EmailBodyField } from "@/components/email-body-field";
 
 /** Text written as "- " lines shows as a bullet list; anything else as a paragraph. */
 function Bullets({ text, className = "" }: { text: string; className?: string }) {
@@ -89,9 +91,11 @@ export function FramingRoom({
   buildNote,
   claudeReady,
   founderName,
+  clientEmail,
 }: {
   clientId: string;
   founderName: string;
+  clientEmail: string;
   initialBrief: CompanyBrief | null;
   initialVersions: BriefVersionRow[];
   founderQuestions: FounderQuestion[];
@@ -326,7 +330,7 @@ export function FramingRoom({
               busy={busy}
               setBusy={setBusy}
             />
-            <SendStage clientId={clientId} brief={brief} narrative={narrative} founderQuestions={founderQuestions} />
+            <SendStage clientId={clientId} brief={brief} narrative={narrative} founderQuestions={founderQuestions} clientEmail={clientEmail} claudeReady={claudeReady} />
           </>
         ) : null}
       </div>
@@ -1122,18 +1126,23 @@ function QuestionsStage({
   );
 }
 
-/** Stage 5: once stages 1 to 4 are confirmed, draft the email and push it all to the client's portal. */
+/** Stage 5: once stages 1 to 4 are confirmed, draft the email, then push it all to the client's portal and send it. */
 function SendStage({
   clientId,
   brief,
   narrative,
   founderQuestions,
+  clientEmail,
+  claudeReady,
 }: {
   clientId: string;
   brief: CompanyBrief;
   narrative: BriefNarrative;
   founderQuestions: FounderQuestion[];
+  clientEmail: string;
+  claudeReady: boolean;
 }) {
+  const router = useRouter();
   const answered = founderQuestions.filter((item) => item.answer);
   const checks = [
     { label: "3 strongest selling points confirmed", done: Boolean(brief.points.confirmed_at) },
@@ -1143,6 +1152,69 @@ function SendStage({
   ];
   const ready = checks.every((check) => check.done);
   const sent = narrative.version > 0;
+  const stored = (narrative.draft?.client_email ?? null) as { subject?: string; body?: string } | null;
+  const [subject, setSubject] = useState(stored?.subject ?? "");
+  const [body, setBody] = useState(stored?.body ?? "");
+  const [pending, setPending] = useState<"draft" | "send" | null>(null);
+  const [message, setMessage] = useState<Notice>(null);
+  useEffect(() => {
+    setSubject(stored?.subject ?? "");
+    setBody(stored?.body ?? "");
+  }, [stored?.subject, stored?.body]);
+
+  const fullDraft = () => ({ ...(narrative.draft ?? {}), client_email: { subject, body } });
+
+  async function onDraft() {
+    setPending("draft");
+    setMessage(null);
+    try {
+      const result = await draftSetupEmail(clientId, "framing", fullDraft());
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      setSubject(result.email.subject);
+      setBody(result.email.body);
+      // Keep it if the page is left before sending.
+      await saveSetupDraft(clientId, "framing", { ...(narrative.draft ?? {}), client_email: result.email });
+      setMessage({ kind: "ok", text: result.pausedNote ?? "Drafted. Edit it, then Push to Client Portal & Send." });
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to draft the email." });
+    } finally {
+      setPending(null);
+    }
+  }
+
+  async function onSend() {
+    const to = clientEmail || "the client";
+    const question = sent
+      ? `Push a new version to the client's portal and email it to ${to}? It replaces what they have now.`
+      : `Push the narrative, the materials feedback and the questions to the client's portal, and email ${to}?`;
+    if (!window.confirm(question)) return;
+    setPending("send");
+    setMessage(null);
+    try {
+      const result = await sendSetupDocument(clientId, "framing", fullDraft());
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      const emailed = result.clientEmail.ok;
+      setMessage({
+        kind: emailed ? "ok" : "error",
+        text: emailed
+          ? `Version ${result.version} is in the client's portal and the email went to ${to}.`
+          : `Version ${result.version} is in the client's portal, but the email failed: ${result.clientEmail.ok ? "" : result.clientEmail.reason}`,
+      });
+      router.refresh();
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to send." });
+    } finally {
+      setPending(null);
+    }
+  }
+
+  const locked = !ready || pending !== null;
 
   return (
     <section className={`${card} px-lg py-md`}>
@@ -1155,7 +1227,7 @@ function SendStage({
             : narrative.status === "changes_requested"
               ? "Client asked for changes"
               : sent
-                ? "Sent"
+                ? `Sent (v${narrative.version})`
                 : ready
                   ? "Ready to send"
                   : "After stages 1 to 4"
@@ -1163,7 +1235,7 @@ function SendStage({
         tone={narrative.status === "confirmed" ? "done" : ready ? "open" : "locked"}
       />
       <p className="mt-xs max-w-prose text-body-sm text-muted">
-        Draft the email and push to the client&apos;s portal: they confirm or comment on the narrative, read the feedback and answer the questions. Then matching.
+        Draft the email, then push to the client&apos;s portal and send it: they confirm or comment on the narrative, read the feedback and answer the questions. Then matching.
       </p>
       <ul className="mt-md grid gap-xs text-body-sm">
         {checks.map((check) => (
@@ -1172,6 +1244,13 @@ function SendStage({
           </li>
         ))}
       </ul>
+
+      {narrative.status === "changes_requested" && narrative.client_note ? (
+        <div className="mt-md">
+          <p className={label}>The Client Asked</p>
+          <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{narrative.client_note}</p>
+        </div>
+      ) : null}
 
       {answered.length > 0 ? (
         <div className="mt-md">
@@ -1187,16 +1266,55 @@ function SendStage({
         </div>
       ) : null}
 
+      {ready ? (
+        <div className="mt-md border-t border-border pt-md">
+          <div className="flex flex-wrap items-center justify-between gap-sm">
+            <p className={label}>Email to the client{clientEmail ? ` (${clientEmail})` : ""}</p>
+            <button type="button" className={body.trim() ? secondaryButton : primaryButton} disabled={locked || !claudeReady} onClick={() => void onDraft()}>
+              {pending === "draft" ? "Drafting…" : body.trim() ? "Redraft Email" : "Draft Email"}
+            </button>
+          </div>
+          <label className={`${label} mt-md block`}>
+            Subject
+            <input
+              className={`${inputClass} mt-sm normal-case tracking-normal`}
+              value={subject}
+              maxLength={300}
+              disabled={pending !== null}
+              onChange={(event) => setSubject(event.target.value)}
+            />
+          </label>
+          <div className="mt-md">
+            <p className={label}>Email</p>
+            <EmailBodyField
+              className={`${inputClass} min-h-[160px] normal-case tracking-normal`}
+              value={body}
+              maxLength={10000}
+              label="Email"
+              placeholder="Click Draft Email to write it from the narrative, the feedback and the questions."
+              disabled={pending !== null}
+              onChange={setBody}
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {message ? (
+        <p role={message.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${message.kind === "ok" ? "text-success" : "text-error"}`}>
+          {message.text}
+        </p>
+      ) : null}
+
       <div className="mt-md flex flex-wrap items-center gap-sm">
-        {ready ? (
-          <Link href={`/admin/clients/${clientId}#setup-framing`} className={`${primaryButton} no-underline`}>
-            {sent ? "Open the Send Step" : "Draft Email & Push"}
-          </Link>
-        ) : (
-          <span className={`${primaryButton} cursor-not-allowed opacity-40`} aria-disabled>
-            Draft Email & Push
-          </span>
-        )}
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={locked || !subject.trim() || !body.trim()}
+          title={!ready ? "Finish stages 1 to 4 first." : !body.trim() ? "Draft the email first." : undefined}
+          onClick={() => void onSend()}
+        >
+          {pending === "send" ? "Sending…" : sent ? "Push New Version & Send" : "Push to Client Portal & Send"}
+        </button>
       </div>
     </section>
   );
