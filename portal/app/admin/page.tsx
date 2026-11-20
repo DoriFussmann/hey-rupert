@@ -6,6 +6,7 @@ import { ProspectList } from "@/app/admin/prospect-list";
 import { listClients } from "@/lib/data";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { listProspects, type ProspectListItem } from "@/lib/prospects/server";
+import { loadNudgeOverview } from "@/lib/nudge-server";
 import { createServiceClient } from "@/lib/supabase/admin";
 
 async function loadProspects(): Promise<{ prospects: ProspectListItem[]; error?: string }> {
@@ -14,8 +15,18 @@ async function loadProspects(): Promise<{ prospects: ProspectListItem[]; error?:
   return result.ok ? { prospects: result.prospects } : { prospects: [], error: result.error };
 }
 
+/** Prospects waiting on the Statement of Work or the Service Order: they get a Nudge button. */
+async function loadNudgeable(): Promise<string[]> {
+  if (!isServiceRoleConfigured()) return [];
+  const result = await loadNudgeOverview(createServiceClient());
+  if (!result.ok) return [];
+  return result.clients
+    .filter((client) => client.clientTurns.some((turn) => turn.key === "sow" || turn.key === "service_order"))
+    .map((client) => client.id);
+}
+
 export default async function AdminClientsPage() {
-  const [clients, prospects] = await Promise.all([listClients(), loadProspects()]);
+  const [clients, prospects, nudgeable] = await Promise.all([listClients(), loadProspects(), loadNudgeable()]);
 
   return (
     <>
@@ -31,7 +42,7 @@ export default async function AdminClientsPage() {
           description="New clients will appear here once they are added."
         />
       ) : (
-        <ClientTable clients={clients} />
+        <ClientTable clients={clients} nudgeable={nudgeable} />
       )}
     </>
   );

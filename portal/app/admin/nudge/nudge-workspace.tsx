@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { draftClientNudge, sendClientNudge } from "@/app/admin/nudge-actions";
 import {
@@ -22,7 +22,7 @@ function errorText(err: unknown, fallback: string) {
   return err instanceof Error ? err.message : fallback;
 }
 
-function History({ entries }: { entries: NudgeHistoryEntry[] }) {
+export function History({ entries }: { entries: NudgeHistoryEntry[] }) {
   const thisRound = entries.filter((entry) => entry.thisRound).length;
   if (entries.length === 0) {
     return <p className="mt-md text-body-sm text-muted">Not nudged or reminded on this step yet.</p>;
@@ -52,14 +52,17 @@ function History({ entries }: { entries: NudgeHistoryEntry[] }) {
   );
 }
 
-function NudgeEditor({
+export function NudgeEditor({
   clientId,
   turn,
   to,
+  autoDraft = false,
 }: {
   clientId: string;
   turn: NudgeTurn;
   to: string;
+  /** Write a draft as soon as the editor opens. */
+  autoDraft?: boolean;
 }) {
   const router = useRouter();
   const [email, setEmail] = useState<ClientEmailDraft>({ subject: "", body: "" });
@@ -127,6 +130,14 @@ function NudgeEditor({
       setMessage({ kind: "error", text: `Could not copy the ${what.toLowerCase()}. Select it and copy by hand.` });
     }
   }
+
+  const drafted = useRef(false);
+  useEffect(() => {
+    if (!autoDraft || drafted.current) return;
+    drafted.current = true;
+    void onDraft();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoDraft]);
 
   const locked = pending !== null;
 

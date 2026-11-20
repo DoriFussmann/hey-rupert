@@ -3,7 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { draftNudge, sendNudge } from "@/lib/nudge-server";
+import { draftNudge, loadNudgeDetail, sendNudge } from "@/lib/nudge-server";
+import type { NudgeDetail } from "@/lib/nudge";
 import { settleReadyNudge } from "@/lib/reminders";
 import { createServiceClient } from "@/lib/supabase/admin";
 import type { EmailResult } from "@/lib/email";
@@ -20,6 +21,13 @@ async function requireAdmin() {
     return { ok: false as const, error: "Service role key is not configured." };
   }
   return { ok: true as const, supabase: createServiceClient() };
+}
+
+/** What is waiting on one client, with past nudges: for the Nudge button on the client list. */
+export async function loadClientNudge(clientId: string): Promise<Result<{ detail: NudgeDetail }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  return loadNudgeDetail(access.supabase, String(clientId));
 }
 
 /** Drafts a nudge for one step waiting on the client. Nothing is sent or saved. */
@@ -43,6 +51,7 @@ export async function sendClientNudge(
   const result = await sendNudge(access.supabase, String(clientId), String(turnKey), email);
   if (result.ok) {
     revalidatePath("/admin/nudge");
+    revalidatePath("/admin");
     revalidatePath(`/admin/clients/${clientId}`);
   }
   return result;
