@@ -439,7 +439,8 @@ export default async function ClientDetailPage({
             : null
         }
       />
-      <ReanalyzeBanner clientId={client.id} state={reanalysis} claudeReady={claudeReady} />
+      {/* First run goes step by step (Build Brief first); the banner only flags later founder updates. */}
+      {reanalysis.firstRun ? null : <ReanalyzeBanner clientId={client.id} state={reanalysis} claudeReady={claudeReady} />}
       {currentPanel ? (
         <div id="current-step" className="scroll-mt-lg">
           {currentPanel.node}

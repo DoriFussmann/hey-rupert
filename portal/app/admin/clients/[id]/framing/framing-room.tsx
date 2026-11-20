@@ -149,7 +149,7 @@ export function FramingRoom({
   return (
     <div className="grid gap-lg">
       <div className="grid min-w-0 content-start gap-lg">
-        <section className={`${card} px-lg py-md`}>
+        <section>
           <div className="flex flex-wrap items-center justify-between gap-sm">
             <div>
               <h2 className="text-h4">Company Brief</h2>
