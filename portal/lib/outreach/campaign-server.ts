@@ -11,12 +11,20 @@ import {
   exportRows,
   otherGroupFor,
   otherTierOf,
+  planTierNumber,
   renderOtherEmails,
+  renderSourceContact,
   tidyGreeting,
   type WarmIntroStatus,
 } from "@/lib/outreach/campaign";
+import { FALLBACK_OPT_OUT_LINE } from "@/lib/outreach/live";
+import { loadOutreachPlan } from "@/lib/outreach/source-server";
+import type { SourceCopy } from "@/lib/outreach/source-copy";
+import { contactStates, planFundPeople } from "@/lib/match/tiers/server";
+import { peopleOf, type PersonRecord } from "@/lib/match/tiers/core";
+import { verifyStateOf } from "@/lib/match/tiers/export";
 import { copyTierOf, outreachRows, type TypedCopy } from "@/lib/outreach/copy";
-import { asCorePerson, emailsHash, perFirmOf } from "@/lib/outreach/core";
+import { asCorePerson, emailsHash, perFirmOf, selectCoreContacts } from "@/lib/outreach/core";
 import { contactRow, loadOutreachMessages, pickContacts } from "@/lib/outreach/core-server";
 import { loadKnownFundRows, loadOverrides } from "@/lib/outreach/known-server";
 import { asEmailCopy, asInvestorList, type InvestorRow, type SetupStepState } from "@/lib/setup";
@@ -60,7 +68,29 @@ async function loadCampaignRow(supabase: ServiceClient, clientId: string): Promi
   };
 }
 
-type Steps = { list: ReturnType<typeof asInvestorList> | null; listConfirmed: boolean; copyRow: SetupStepState | null; typed: TypedCopy | null };
+type Steps = {
+  list: ReturnType<typeof asInvestorList> | null;
+  listConfirmed: boolean;
+  copyRow: SetupStepState | null;
+  typed: TypedCopy | null;
+  /** Copy by source (v3): the campaign is built from the confirmed Plan. */
+  source: SourceCopy | null;
+  /** The Plan of the current finalized matching, for copy by source. */
+  planId: string | null;
+};
+
+/** The Plan of the client's current finalized matching, or null. */
+async function currentPlanId(supabase: ServiceClient, clientId: string) {
+  const { data } = await supabase
+    .from("match_finalizations")
+    .select("plan_id")
+    .eq("client_id", clientId)
+    .is("cleared_at", null)
+    .order("finalized_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ plan_id: string | null }>();
+  return data?.plan_id ?? null;
+}
 
 async function loadSteps(supabase: ServiceClient, clientId: string): Promise<Steps> {
   const grouped = await loadSetupSteps(supabase, [clientId]);
@@ -68,11 +98,14 @@ async function loadSteps(supabase: ServiceClient, clientId: string): Promise<Ste
   const listRow = rows.find((item) => item.step === "investor_list");
   const copyRow = rows.find((item) => item.step === "email_copy") ?? null;
   const published = asEmailCopy(copyRow?.published);
+  const source = published.copy_version === 3 && published.by_source ? published.by_source : null;
   return {
     list: listRow ? asInvestorList(listRow.published) : null,
     listConfirmed: listRow?.status === "confirmed",
     copyRow,
     typed: published.copy_version === 2 && published.typed ? published.typed : null,
+    source,
+    planId: source ? await currentPlanId(supabase, clientId) : null,
   };
 }
 
@@ -253,10 +286,25 @@ export type CampaignState = {
   blurb: { ask: string; blurb: string };
 };
 
+/** Why a copy-by-source campaign can't be built yet. Empty: it can. */
+function sourceBlockers(steps: Steps): string[] {
+  const blockers: string[] = [];
+  if (steps.copyRow?.status !== "confirmed") blockers.push("The client hasn't confirmed the email copy yet.");
+  if (!steps.planId) blockers.push("The matching isn't finalized, or was reopened: finalize it again.");
+  else if (steps.source?.plan_id && steps.source.plan_id !== steps.planId) {
+    blockers.push("The email copy was written for an earlier Plan. Update the copy and send it to the client again.");
+  }
+  return blockers;
+}
+
 function staleReason(campaign: CampaignRow | null, steps: Steps) {
   if (!campaign?.built_at || campaign.live_at) return null;
   if (steps.copyRow?.status !== "confirmed") return "The email copy changed since the campaign was built and the client hasn't confirmed it again.";
   if (campaign.copy_version !== steps.copyRow.version) return "The client confirmed a newer version of the email copy. Build the campaign again.";
+  if (steps.source) {
+    if (steps.planId && campaign.run_id !== steps.planId) return "The Plan changed since the campaign was built. Build it again.";
+    return null;
+  }
   if (steps.list?.run_id && campaign.run_id !== steps.list.run_id) return "The investor list changed since the campaign was built. Build it again.";
   return null;
 }
@@ -271,7 +319,9 @@ export async function loadCampaignState(supabase: ServiceClient, clientId: strin
   const known = await loadKnownFunds(supabase, clientId, steps);
   if (!known.ok) return known;
   const coreFunds = steps.list ? outreachRows(steps.list, await loadOverrides(supabase, clientId)).rows.filter((row) => copyTierOf(row) === 1).length : 0;
-  const blockers = steps.listConfirmed
+  const blockers = steps.source
+    ? sourceBlockers(steps)
+    : steps.listConfirmed
     ? buildBlockers({
         copyConfirmed: steps.copyRow?.status === "confirmed",
         copyByType: Boolean(steps.typed),
@@ -316,6 +366,7 @@ export async function buildCampaign(
   if (!state.ok) return state;
   if (state.value.blockers.length > 0) return { ok: false, error: state.value.blockers.join(" ") };
   const steps = await loadSteps(supabase, clientId);
+  if (steps.source && steps.copyRow && steps.planId) return buildFromPlan(supabase, clientId, actor, steps.source, steps.copyRow.version, steps.planId);
   if (!steps.list || !steps.list.run_id || !steps.typed || !steps.copyRow) return { ok: false, error: "The confirmed list or copy is missing." };
   const typed = steps.typed;
   const version = steps.copyRow.version;
@@ -374,6 +425,104 @@ export async function buildCampaign(
   return { ok: true, value: { contacts, unwritten } };
 }
 
+/**
+ * Copy by source (v3): every fund of the confirmed Plan gets as many contacts
+ * as the Plan gives it, picked from the fund's people as the engine ranks them
+ * (Primary, Backup, then the rest), leaving out contacts verification found a
+ * problem with or that Rupert removed. The next ones are reserves. Each gets
+ * its group's emails, filled in and approved by the client's confirmation.
+ * A fund is left out, and named, when its group has no copy, it has no usable
+ * contact, or its emails would still hold an empty {{field}}.
+ */
+async function buildFromPlan(
+  supabase: ServiceClient,
+  clientId: string,
+  actor: string | null,
+  copy: SourceCopy,
+  version: number,
+  planId: string,
+): Promise<Result<{ contacts: number; unwritten: string[] }>> {
+  const [plan, people] = await Promise.all([loadOutreachPlan(supabase, clientId), planFundPeople(supabase, clientId)]);
+  if (!plan.ok) return plan;
+  if (!people.ok) return people;
+  if (!people.value || people.value.planId !== planId || plan.value.planId !== planId) {
+    return { ok: false, error: "The Plan changed while building. Try again." };
+  }
+  const byFirm = new Map(people.value.funds.map((fund) => [fund.firmId, fund]));
+  const fids = Array.from(new Set(people.value.funds.flatMap((fund) => fund.ranked.map((c) => c.fid))));
+  const states = await contactStates(supabase, clientId, fids);
+  if (!states.ok) return states;
+  const problems = new Set(["email_bad", "left_firm", "role_changed", "not_found"]);
+  const blocked = (person: PersonRecord) => {
+    const decision = states.value.get(`${person.fid}|${person.key}`)?.decision ?? null;
+    return decision === "remove" || (problems.has(verifyStateOf(person, states.value)) && decision !== "keep");
+  };
+  const groups = new Map(copy.groups.map((group) => [group.bucket, group]));
+  const approvedBy = `client confirmation (copy v${version})`;
+  const now = new Date().toISOString();
+  const inserts: Record<string, unknown>[] = [];
+  const unwritten: string[] = [];
+
+  for (const fund of plan.value.funds) {
+    const group = groups.get(fund.bucket);
+    if (!group || !group.emails.some((email) => email.body.trim())) {
+      unwritten.push(`${fund.name} (no copy for its group)`);
+      continue;
+    }
+    const found = byFirm.get(fund.firmId);
+    // Advisors and ops never get the email, unless the engine made them the Primary or Backup.
+    const ranked = (found?.ranked ?? []).filter((c) => c.email?.trim() && c.role !== "ops" && (c.seq || c.role !== "advisor"));
+    const chosen = selectCoreContacts(peopleOf(ranked), (person) => blocked(person as PersonRecord), fund.contacts);
+    if (chosen.active.length === 0) {
+      unwritten.push(`${fund.name} (no usable contact${chosen.leftOut ? `: ${chosen.leftOut} left out after verification` : ""})`);
+      continue;
+    }
+    const tier = planTierNumber(fund.tier);
+    const row = { id: fund.firmId, fund_name: fund.name, fund_type: fund.type } as InvestorRow;
+    const rendered = [...chosen.active, ...chosen.reserve].map((person, index) => ({
+      person: person as PersonRecord,
+      slot: index < chosen.active.length ? ("active" as const) : ("reserve" as const),
+      index,
+      ...renderSourceContact(group, fund, asCorePerson(person).first_name),
+    }));
+    const missing = rendered.find((item) => item.slot === "active" && item.missing.length)?.missing;
+    if (missing) {
+      unwritten.push(`${fund.name} (no value for ${missing.map((field) => `{{${field}}}`).join(", ")})`);
+      continue;
+    }
+    for (const item of rendered) {
+      const base = contactRow(clientId, planId, row, item.person, item.slot, item.index, tier);
+      inserts.push(
+        item.slot === "active"
+          ? { ...base, emails: item.emails, status: "approved", approved_by: approvedBy, approved_at: now, approved_hash: emailsHash(item.emails) }
+          : { ...base, emails: item.emails },
+      );
+    }
+  }
+
+  const removed = await supabase.from("outreach_messages").delete().eq("client_id", clientId);
+  if (removed.error) return { ok: false, error: tableError(removed.error.message, removed.error.code) };
+  for (let i = 0; i < inserts.length; i += 500) {
+    const { error } = await supabase.from("outreach_messages").insert(inserts.slice(i, i + 500));
+    if (error) return { ok: false, error: tableError(error.message, error.code) };
+  }
+  const contacts = inserts.filter((row) => row.slot === "active").length;
+  const { error } = await supabase.from("outreach_campaigns").upsert(
+    {
+      client_id: clientId,
+      copy_version: version,
+      run_id: planId,
+      built_at: now,
+      built_by: actor,
+      summary: { unwritten, other_contacts: contacts, opt_out_line: copy.opt_out_line.trim() || FALLBACK_OPT_OUT_LINE },
+      updated_at: now,
+    },
+    { onConflict: "client_id" },
+  );
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  return { ok: true, value: { contacts, unwritten } };
+}
+
 /** The Instantly CSV rows. Refused while the build is missing or stale. */
 export async function campaignExport(supabase: ServiceClient, clientId: string, wave: 1 | 2 | null) {
   const [steps, campaign, messages] = await Promise.all([
@@ -385,6 +534,7 @@ export async function campaignExport(supabase: ServiceClient, clientId: string, 
   const stale = staleReason(campaign, steps);
   if (stale) return { ok: false as const, error: stale };
   if (!messages.ok) return { ok: false as const, error: messages.error };
-  if (!steps.typed) return { ok: false as const, error: "The confirmed copy isn't written by fund type." };
-  return { ok: true as const, value: exportRows(messages.value, steps.typed.opt_out_line, wave) };
+  const optOut = steps.typed?.opt_out_line ?? (steps.source ? steps.source.opt_out_line.trim() || FALLBACK_OPT_OUT_LINE : null);
+  if (optOut == null) return { ok: false as const, error: "The confirmed copy isn't written by fund type or by source." };
+  return { ok: true as const, value: exportRows(messages.value, optOut, wave) };
 }

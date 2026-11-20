@@ -2,6 +2,7 @@ import "server-only";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { selectAll } from "@/lib/match/db-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
+import { emailsPerContact } from "@/lib/outreach/campaign";
 import { isApproved } from "@/lib/outreach/core";
 import { computeAnalytics, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply } from "@/lib/outreach/analytics";
 import {
@@ -42,6 +43,8 @@ export type CampaignData = {
   replies: (AnalyticsReply & { visibility: string; fund_name: string; label: string | null })[];
   plan: PlanWeek[];
   activeTotal: number;
+  /** Follow-ups per contact: 2 for copy by fund type, 1 for copy by source. */
+  followups: number;
 };
 
 /** Everything a live campaign's analytics need. Null: not live. */
@@ -86,6 +89,7 @@ export async function loadCampaignData(supabase: ServiceClient, clientId: string
   const launchDay = localDate(String(live.live_at), tz);
   const today = localDate(Date.now(), tz);
   const activeTotal = active.filter((m) => isApproved(m)).length;
+  const followups = emailsPerContact(messages.value) - 1;
   return {
     ok: true,
     value: {
@@ -130,12 +134,14 @@ export async function loadCampaignData(supabase: ServiceClient, clientId: string
         settings,
         launchDay,
         today,
+        followups,
         tiers: [1, 2, 3, 4].map((tier) => ({
           label: ["", "Core", "Sphere", "Tier 3", "Tier 4"][tier],
           count: active.filter((m) => m.tier === tier && isApproved(m)).length,
         })),
       }),
       activeTotal,
+      followups,
     },
   };
 }

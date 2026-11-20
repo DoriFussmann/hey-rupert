@@ -18,6 +18,7 @@ import {
 } from "@/lib/instantly";
 import { advanceStage } from "@/lib/kickoff";
 import { loadCampaignState } from "@/lib/outreach/campaign-server";
+import { emailsPerContact } from "@/lib/outreach/campaign";
 import { asEmailCopy } from "@/lib/setup";
 import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
@@ -156,9 +157,13 @@ export type LiveState = {
   step: { version: number; pushedAt: string | null; emailedAt: string | null; status: string } | null;
   testSentAt: string | null;
   consentText: string | null;
-  /** Test Pilot client: every email goes to a + address of `testRecipient`. */
+  /** Test Pilot client: every email goes to a + address of `testRecipient`, minutes apart. */
   testMode: boolean;
+  /** A real client in a test run: every email goes to a + address of `testRecipient`, at the real pace. */
+  redirected: boolean;
   testRecipient: string;
+  /** Emails each contact gets: 3 for copy by fund type, 2 for copy by source. */
+  emailsPerContact: number;
   /** The client approved the launch; Rupert clicks Go Live (within 24 hours). */
   requested: { at: string; by: string | null } | null;
   /** Week by week: projected before launch, with the current week once live. */
@@ -217,8 +222,11 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
   const healthy = inboxHealthy(r.inbox_status);
   const pushed = messages.value.filter((m) => m.pushed_at).length;
   const testMode = await isTestPilot(supabase, clientId);
+  const redirected = !testMode && r.settings.redirect_to_test_inbox;
+  const perContact = emailsPerContact(messages.value);
   const waiting = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && isApproved(m)).length;
-  const total = (c.summary?.wave1 ?? 0) + (c.summary?.wave2 ?? 0) || messages.value.filter((m) => m.slot === "active" && isApproved(m)).length;
+  const all = (c.summary?.wave1 ?? 0) + (c.summary?.wave2 ?? 0) || messages.value.filter((m) => m.slot === "active" && isApproved(m)).length;
+  const total = (testMode || redirected) && r.settings.contact_limit > 0 ? Math.min(all, r.settings.contact_limit) : all;
   const today = localDate(Date.now(), r.settings.timezone);
   const approvedActive = messages.value.filter((m) => m.slot === "active" && isApproved(m));
   const tiers = [1, 2, 3, 4].map((tier) => ({ label: TIER_NAMES[tier], count: approvedActive.filter((m) => m.tier === tier).length }));
@@ -228,6 +236,7 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
     settings: r.settings,
     launchDay: r.live_at ? localDate(r.live_at, r.settings.timezone) : nextWeekday(addDays(today, 1)),
     today: r.live_at ? today : null,
+    followups: perContact - 1,
   });
   const stepRead = await loadSetupStep(supabase, clientId, "go_live");
   const stepRow = stepRead.ok ? stepRead.row : null;
@@ -270,7 +279,9 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
       testSentAt: r.test_sent_at,
       consentText: r.inbox_email ? CONSENT_TEXT(r.inbox_email) : null,
       testMode,
-      testRecipient: testMode ? testRecipientOf(r.settings) : "",
+      redirected,
+      testRecipient: testMode || redirected ? testRecipientOf(r.settings) : "",
+      emailsPerContact: perContact,
       requested: r.launch_requested_at ? { at: r.launch_requested_at, by: r.launch_requested_by } : null,
       plan,
       confirmation: confirmed.confirmation,
@@ -401,7 +412,7 @@ async function optOutLine(supabase: ServiceClient, clientId: string) {
   const row = (grouped.get(clientId) ?? []).find((item) => item.step === "email_copy");
   const copy = asEmailCopy(row?.published);
   // Every campaign email carries an opt-out line (Service Order 7.5).
-  return copy.typed?.opt_out_line?.trim() || FALLBACK_OPT_OUT_LINE;
+  return (copy.copy_version === 3 ? copy.by_source?.opt_out_line?.trim() : copy.typed?.opt_out_line?.trim()) || FALLBACK_OPT_OUT_LINE;
 }
 
 /** The client's postal address, for the foot of the first email. */
@@ -443,10 +454,15 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
   const tz = settings.timezone;
   const today = localDate(Date.now(), tz);
   const week = row.value.live_at ? campaignWeek(localDate(row.value.live_at, tz), today) : 1;
-  const limit = newInvestorRoom(messages.value, today, settings, capForWeek(settings, week));
+  const followups = emailsPerContact(messages.value) - 1;
+  const room = newInvestorRoom(messages.value, today, settings, capForWeek(settings, week), followups);
+  // A test run's contact limit (test runs only): never more than that many contacts in Instantly.
+  const redirect = testMode || settings.redirect_to_test_inbox;
+  const pushedSoFar = messages.value.filter((m) => m.pushed_at).length;
+  const limit = redirect && settings.contact_limit > 0 ? Math.min(room, settings.contact_limit - pushedSoFar) : room;
   if (limit <= 0) return { ok: true, value: 0 };
-  const recipient = testMode ? testRecipientOf(settings) : "";
-  if (testMode && !recipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
+  const recipient = redirect ? testRecipientOf(settings) : "";
+  if (redirect && !recipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
   const leads = dripQueue(messages.value, {
     delayDays: settings.wave2_delay_days,
     releasedEarly: Boolean(row.value.wave2_pushed_at),
@@ -459,7 +475,7 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
     const chunk = leads.slice(i, i + 1000);
     const added = await addLeads(
       campaignId,
-      chunk.map((m) => leadFor(m, optOut, testMode ? testAddress(recipient, m) : undefined, postalAddress)),
+      chunk.map((m) => leadFor(m, optOut, redirect ? testAddress(recipient, m) : undefined, postalAddress)),
     );
     if (!added.ok) return { ok: false, error: `${added.error} ${pushed} contacts were added before this.` };
     const now = new Date().toISOString();
@@ -670,7 +686,8 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
   if (!row.ok) return row;
   const inbox = row.value.inbox_email!;
   const testMode = state.value.testMode;
-  if (testMode && !state.value.testRecipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
+  const redirected = state.value.redirected;
+  if ((testMode || redirected) && !state.value.testRecipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
   if (!testMode && !row.value.launch_requested_at) return { ok: false, error: "The client hasn't approved the launch yet." };
   if (!row.value.instantly_webhook_id) {
     const reachable = await checkWebhookReachable();
@@ -679,8 +696,10 @@ export async function goLive(supabase: ServiceClient, clientId: string, actor: s
 
   let campaignId = row.value.instantly_campaign_id;
   if (!campaignId) {
-    const name = `${testMode ? "TEST · " : ""}${await companyName(supabase, clientId)} · investor outreach`;
-    const created = await createCampaign(campaignBody(name, inbox, { ...row.value.settings, daily_limit: capForWeek(row.value.settings, 1) }, { testMode }));
+    const name = `${testMode || redirected ? "TEST · " : ""}${await companyName(supabase, clientId)} · investor outreach`;
+    const created = await createCampaign(
+      campaignBody(name, inbox, { ...row.value.settings, daily_limit: capForWeek(row.value.settings, 1) }, { testMode, redirected, steps: state.value.emailsPerContact }),
+    );
     if (!created.ok) return created;
     campaignId = created.value.id;
     const saved = await saveLive(supabase, clientId, { instantly_campaign_id: campaignId });
@@ -811,7 +830,7 @@ export async function sendTest(supabase: ServiceClient, clientId: string, to: st
   const sample = messages.value.find((m) => m.slot === "active" && m.tier === 1 && isApproved(m)) ?? messages.value.find((m) => m.slot === "active" && isApproved(m));
   if (!sample) return { ok: false, error: "Build the campaign first: the test sends one approved contact's emails." };
   const name = `TEST · ${await companyName(supabase, clientId)} · ${new Date().toISOString().slice(0, 16)}`;
-  const created = await createCampaign(campaignBody(name, row.value.inbox_email, row.value.settings, { test: true }));
+  const created = await createCampaign(campaignBody(name, row.value.inbox_email, row.value.settings, { test: true, steps: emailsPerContact(messages.value) }));
   if (!created.ok) return created;
   const added = await addLeads(created.value.id, [leadFor(sample, await optOutLine(supabase, clientId), to, await postalAddressOf(supabase, clientId))]);
   if (!added.ok) return added;

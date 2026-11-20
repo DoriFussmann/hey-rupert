@@ -281,6 +281,7 @@ export default async function ClientDetailPage({
       ? await outreachSteps(service, client.id, {
           listConfirmed: listRow?.status === "confirmed",
           fourTier: list.tier_scheme === "four",
+          bySource: Boolean(list.summaries),
           copyConfirmed: copyRow?.status === "confirmed",
           copyVersion: copyRow?.version ?? 0,
           runId: list.run_id ?? null,

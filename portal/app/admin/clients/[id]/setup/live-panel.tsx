@@ -181,6 +181,15 @@ export function LivePanel({ clientId }: { clientId: string }) {
             day, minutes apart, so the whole sequence arrives within the hour.
           </p>
         ) : null}
+        {state.redirected ? (
+          <p className="mt-sm rounded-card border border-warning/40 px-md py-sm text-body-sm text-warning">
+            Test run: every email goes to{" "}
+            <strong>{state.testRecipient ? state.testRecipient.replace("@", "+…@") : "nobody yet — set a test inbox below"}</strong>, never to the
+            investors on the list
+            {settings.contact_limit > 0 ? `, and at most ${settings.contact_limit} contacts go out` : ""}. Everything else is real: the
+            client&apos;s approval, the pace (weekdays, days between emails), the daily batches and reply tracking.
+          </p>
+        ) : null}
         {!state.instantlyReady ? (
           <p className="mt-sm text-body-sm text-warning">
             Instantly isn&apos;t set up: add INSTANTLY_API_KEY and INSTANTLY_WEBHOOK_SECRET in Vercel.
@@ -437,10 +446,12 @@ export function LivePanel({ clientId }: { clientId: string }) {
               <input className={`${inputClass} mt-xs w-48`} value={settings.timezone} onChange={(e) => field({ timezone: e.target.value })} />
             </label>
             <label>
-              Follow-ups after (days)
+              {state.emailsPerContact === 2 ? "Follow-up after (days)" : "Follow-ups after (days)"}
               <span className="mt-xs flex items-center gap-xs">
                 <input type="number" min={1} max={30} className={`${inputClass} w-16`} value={settings.followup_days[0]} onChange={(e) => field({ followup_days: [Number(e.target.value), settings.followup_days[1]] })} />
-                <input type="number" min={1} max={30} className={`${inputClass} w-16`} value={settings.followup_days[1]} onChange={(e) => field({ followup_days: [settings.followup_days[0], Number(e.target.value)] })} />
+                {state.emailsPerContact === 2 ? null : (
+                  <input type="number" min={1} max={30} className={`${inputClass} w-16`} value={settings.followup_days[1]} onChange={(e) => field({ followup_days: [settings.followup_days[0], Number(e.target.value)] })} />
+                )}
               </span>
             </label>
             <label>
@@ -463,10 +474,22 @@ export function LivePanel({ clientId }: { clientId: string }) {
               Then, emails a day (max 30)
               <input type="number" min={1} max={30} className={`${inputClass} mt-xs w-20`} value={settings.daily_limit} onChange={(e) => field({ daily_limit: Number(e.target.value) })} />
             </label>
-            {state.testMode ? (
+            {state.testMode || settings.redirect_to_test_inbox ? (
               <label>
-                Test inbox (Test Pilot)
+                Test inbox{state.testMode ? " (Test Pilot)" : ""}
                 <input className={`${inputClass} mt-xs w-64`} value={settings.test_recipient} placeholder="you@yourcompany.com" onChange={(e) => field({ test_recipient: e.target.value })} />
+              </label>
+            ) : null}
+            {!state.testMode ? (
+              <label className="flex items-end gap-xs pb-sm">
+                <input type="checkbox" checked={settings.redirect_to_test_inbox} onChange={(e) => field({ redirect_to_test_inbox: e.target.checked })} />
+                Test run: send every email to a test inbox
+              </label>
+            ) : null}
+            {state.testMode || settings.redirect_to_test_inbox ? (
+              <label>
+                Contacts, at most (0 = all)
+                <input type="number" min={0} className={`${inputClass} mt-xs w-20`} value={settings.contact_limit} onChange={(e) => field({ contact_limit: Number(e.target.value) })} />
               </label>
             ) : null}
             <label className="flex items-end gap-xs pb-sm">
@@ -482,7 +505,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
               type="button"
               className={secondaryButton}
               disabled={busy || !state.inbox || !state.instantlyReady}
-              title="Sends one approved contact's three emails to you, from the client's inbox, two minutes apart."
+              title={`Sends one approved contact's ${state.emailsPerContact === 2 ? "two" : "three"} emails to you, from the client's inbox, two minutes apart.`}
               onClick={() => {
                 if (!window.confirm("Send yourself a test from the client's inbox? It will also appear in their Sent folder.")) return;
                 void run(() => sendTestAction(clientId), (r) => `Test started to ${r.testTo}: ${r.testFund}'s emails, two minutes apart. Check formatting and that the follow-ups stay in the thread.`);

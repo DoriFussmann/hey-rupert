@@ -17,7 +17,7 @@ type Message = { kind: "ok" | "error"; text: string } | null;
 
 const TIER_LABEL: Record<number, string> = { 1: "Core", 2: "Sphere", 3: "Tier 3", 4: "Tier 4" };
 
-export function CampaignPanel({ clientId, claudeReady }: { clientId: string; claudeReady: boolean }) {
+export function CampaignPanel({ clientId, claudeReady, bySource = false }: { clientId: string; claudeReady: boolean; bySource?: boolean }) {
   const [state, setState] = useState<CampaignState | null>(null);
   const [message, setMessage] = useState<Message>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -58,7 +58,7 @@ export function CampaignPanel({ clientId, claudeReady }: { clientId: string; cla
       apply(result.state);
       setMessage({
         kind: result.unwritten.length ? "error" : "ok",
-        text: `Built. ${result.contacts} Sphere, Tier 3 and Tier 4 contacts written from the confirmed copy.${
+        text: `Built. ${result.contacts} ${bySource ? "" : "Sphere, Tier 3 and Tier 4 "}contacts written from the confirmed copy.${
           result.unwritten.length ? ` Not written: ${result.unwritten.join("; ")}.` : ""
         }`,
       });
@@ -100,8 +100,9 @@ export function CampaignPanel({ clientId, claudeReady }: { clientId: string; cla
       <div className="border-b border-border px-lg py-lg">
         <h3 className="text-h4">Campaign</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
-          Once the client confirms the copy and every Core contact is approved, build the campaign: every contact&apos;s
-          emails, final and locked. Edited text is left out of the export until it&apos;s approved again.
+          {bySource
+            ? "Once the client confirms the copy, build the campaign: every Plan fund gets its contacts (Primary and Backup first, leaving out anyone verification flagged) and its group's two emails, final and locked. Run Verify Emails on the Matching page first, then build."
+            : "Once the client confirms the copy and every Core contact is approved, build the campaign: every contact's emails, final and locked. Edited text is left out of the export until it's approved again."}
         </p>
       </div>
 
@@ -132,7 +133,9 @@ export function CampaignPanel({ clientId, claudeReady }: { clientId: string; cla
             </p>
           ) : null}
           {state.unwritten.length ? (
-            <p className="mt-xs text-body-sm text-warning">Not written (no copy for their type): {state.unwritten.join("; ")}</p>
+            <p className="mt-xs text-body-sm text-warning">
+              Not written{bySource ? "" : " (no copy for their type)"}: {state.unwritten.join("; ")}
+            </p>
           ) : null}
 
           <div className="mt-md flex flex-wrap items-center gap-sm">
@@ -168,6 +171,7 @@ export function CampaignPanel({ clientId, claudeReady }: { clientId: string; cla
         </div>
       ) : null}
 
+      {bySource ? null : (
       <div className="border-t border-border px-lg py-md">
         <h4 className="text-body text-heading">Warm intros: funds the client knows</h4>
         <p className="mt-xs text-body-sm text-muted">
@@ -240,6 +244,7 @@ export function CampaignPanel({ clientId, claudeReady }: { clientId: string; cla
           </div>
         ) : null}
       </div>
+      )}
 
       {message ? (
         <p role={message.kind === "error" ? "alert" : "status"} className={`border-t border-border px-lg py-sm text-body-sm ${message.kind === "error" ? "text-error" : "text-success"}`}>

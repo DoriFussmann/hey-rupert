@@ -28,8 +28,16 @@ export type LiveSettings = {
   track_opens: boolean;
   /** The first weeks' email caps, before full pace: [15, 15] = 15 emails a day in weeks 1 and 2. */
   ramp: number[];
-  /** Test mode (Test Pilot clients only): every email goes to a + address of this inbox. */
+  /** Test mode (Test Pilot clients, or any client with redirect_to_test_inbox): every email goes to a + address of this inbox. */
   test_recipient: string;
+  /**
+   * A test run for a real (non Test Pilot) client: every email goes to a +
+   * address of test_recipient instead of the investor, at the real pace
+   * (weekdays, days between emails), after the client's own approval.
+   */
+  redirect_to_test_inbox: boolean;
+  /** At most this many contacts ever go to Instantly. 0: no limit. */
+  contact_limit: number;
 };
 
 /**
@@ -53,6 +61,8 @@ export const DEFAULT_LIVE_SETTINGS: LiveSettings = {
   // The warm-up in the Service Order: up to 15 a day for the first 10 business days.
   ramp: [15, 15],
   test_recipient: "",
+  redirect_to_test_inbox: false,
+  contact_limit: 0,
 };
 
 const int = (value: unknown, min: number, max: number, fallback: number) => {
@@ -83,6 +93,8 @@ export function asLiveSettings(value: unknown): LiveSettings {
     track_opens: typeof raw.track_opens === "boolean" ? raw.track_opens : d.track_opens,
     ramp,
     test_recipient: typeof raw.test_recipient === "string" && EMAIL.test(raw.test_recipient.trim()) ? raw.test_recipient.trim().toLowerCase() : "",
+    redirect_to_test_inbox: raw.redirect_to_test_inbox === true,
+    contact_limit: int(raw.contact_limit, 0, 100000, 0),
   };
 }
 
@@ -165,14 +177,16 @@ export function dripQueue<T extends QueueMessage>(
 // The Instantly campaign: three steps whose subject and body are per-lead variables
 
 /**
- * Follow-ups are always sent as replies in the same thread (blank subject),
- * so a follow-up subject written in the copy is not used.
+ * One step per email each contact gets (`steps`: 3 for copy by fund type, 2
+ * for copy by source). Follow-ups are always sent as replies in the same
+ * thread (blank subject), so a follow-up subject written in the copy is not
+ * used. A step's delay is the wait before the next one.
  */
 export function campaignBody(
   name: string,
   inbox: string,
   settings: LiveSettings,
-  options: { test?: boolean; testMode?: boolean } = {},
+  options: { test?: boolean; testMode?: boolean; redirected?: boolean; steps?: number } = {},
 ) {
   // A test send, or a Test Pilot campaign in test mode: every day, minutes instead of days.
   const fast = Boolean(options.test || options.testMode);
@@ -180,6 +194,13 @@ export function campaignBody(
   const delayUnit = fast ? "minutes" : "days";
   // Test send: 2 minutes apart. Test mode: the settings' days, read as minutes.
   const delays = options.test ? [2, 2] : settings.followup_days;
+  const count = Math.max(1, Math.min(3, Math.round(options.steps ?? 3)));
+  const steps = Array.from({ length: count }, (_, i) => ({
+    type: "email",
+    delay: i < count - 1 ? delays[i] : 0,
+    delay_unit: delayUnit,
+    variants: [{ subject: i === 0 ? "{{subject_1}}" : "", body: `{{body_${i + 1}}}` }],
+  }));
   return {
     name: name.slice(0, 200),
     campaign_schedule: {
@@ -192,20 +213,12 @@ export function campaignBody(
         },
       ],
     },
-    sequences: [
-      {
-        steps: [
-          { type: "email", delay: delays[0], delay_unit: delayUnit, variants: [{ subject: "{{subject_1}}", body: "{{body_1}}" }] },
-          { type: "email", delay: delays[1], delay_unit: delayUnit, variants: [{ subject: "", body: "{{body_2}}" }] },
-          { type: "email", delay: 0, delay_unit: delayUnit, variants: [{ subject: "", body: "{{body_3}}" }] },
-        ],
-      },
-    ],
+    sequences: [{ steps }],
     email_list: [inbox],
     daily_limit: Math.min(MAX_DAILY_EMAILS, settings.daily_limit),
     stop_on_reply: true,
     // Test addresses all share one domain: stopping "for the company" would stop them all.
-    stop_for_company: !fast,
+    stop_for_company: !fast && !options.redirected,
     stop_on_auto_reply: false,
     open_tracking: settings.track_opens,
     link_tracking: false,
@@ -230,7 +243,7 @@ export type LeadMessage = Pick<CoreMessage, "id" | "person" | "fund_name" | "ema
  */
 export function leadFor(message: LeadMessage, optOutLine: string, overrideEmail?: string, postalAddress = "") {
   const vars: Record<string, string> = {};
-  message.emails.forEach((email: CopyEmail, index) => {
+  message.emails.filter((email: CopyEmail) => email.body.trim()).forEach((email: CopyEmail, index) => {
     const optOut = optOutFor(index, optOutLine).trim();
     const footer = [optOut, index === 0 ? postalAddress.trim() : ""].filter(Boolean).join("\n");
     const body = footer ? `${email.body.trimEnd()}\n\n${footer}` : email.body;
@@ -328,13 +341,19 @@ export function capForWeek(settings: Pick<LiveSettings, "ramp" | "daily_limit">,
 }
 
 /**
- * The days an investor's two follow-ups go out, when their first email went
- * out on `firstDay`: Instantly counts the delays in calendar days and sends
- * on the next weekday.
+ * The days an investor's follow-ups go out (`followups` of them: 2 for copy
+ * by fund type, 1 for copy by source), when their first email went out on
+ * `firstDay`: Instantly counts the delays in calendar days and sends on the
+ * next weekday.
  */
-export function followupDaysFor(firstDay: string, followupDays: [number, number]) {
-  const d1 = nextWeekday(addDays(firstDay, followupDays[0]));
-  return [d1, nextWeekday(addDays(d1, followupDays[1]))] as const;
+export function followupDaysFor(firstDay: string, followupDays: [number, number], followups = 2): string[] {
+  const days: string[] = [];
+  let day = firstDay;
+  for (let i = 0; i < Math.max(0, Math.min(2, followups)); i += 1) {
+    day = nextWeekday(addDays(day, followupDays[i]));
+    days.push(day);
+  }
+  return days;
 }
 
 type PacedContact = {
@@ -355,6 +374,7 @@ export function newInvestorRoom(
   day: string,
   settings: Pick<LiveSettings, "followup_days" | "timezone">,
   cap: number,
+  followups = 2,
 ) {
   let used = 0;
   for (const c of contacts) {
@@ -365,8 +385,7 @@ export function newInvestorRoom(
       continue;
     }
     if (c.replied_at || c.bounced_at || c.unsubscribed_at) continue;
-    const [d1, d2] = followupDaysFor(first, settings.followup_days);
-    if (d1 === day || d2 === day) used += 1;
+    if (followupDaysFor(first, settings.followup_days, followups).includes(day)) used += 1;
   }
   return Math.max(0, cap - used);
 }
@@ -407,9 +426,9 @@ export function proportional(total: number, counts: number[]) {
 /**
  * The week-by-week sending plan for `total` contacts from `launchDay`. Each
  * weekday sends at most that week's cap; follow-ups due go first and new
- * investors fill the rest. Each investor is assumed to get all three emails,
- * so the plan is the slower case. `today` marks the current week (or,
- * before launch, the first week as next).
+ * investors fill the rest. Each investor is assumed to get every follow-up
+ * (`followups`), so the plan is the slower case. `today` marks the current
+ * week (or, before launch, the first week as next).
  */
 export function sendingPlan(input: {
   total: number;
@@ -418,6 +437,8 @@ export function sendingPlan(input: {
   today: string | null;
   /** Investors per tier (Core, Sphere, …), to show which tiers each week reaches. */
   tiers?: { label: string; count: number }[];
+  /** Follow-ups per investor: 2 for copy by fund type, 1 for copy by source. */
+  followups?: number;
 }): PlanWeek[] {
   const { settings } = input;
   const tiers = (input.tiers ?? []).filter((t) => t.count > 0);
@@ -441,7 +462,7 @@ export function sendingPlan(input: {
       remaining -= fresh;
       newInvestors += fresh;
       if (fresh > 0) {
-        for (const d of followupDaysFor(day, settings.followup_days)) due.set(d, (due.get(d) ?? 0) + fresh);
+        for (const d of followupDaysFor(day, settings.followup_days, input.followups ?? 2)) due.set(d, (due.get(d) ?? 0) + fresh);
       }
       const sent = Math.min(cap, backlog + fresh);
       backlog = backlog + fresh - sent;

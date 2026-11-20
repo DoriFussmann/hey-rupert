@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "node:crypto";
-import type { FundDb, SiteResult } from "@/lib/match/engine/index.mjs";
+import RME, { type Contact, type Firm, type FundDb, type RankedContact, type SiteResult } from "@/lib/match/engine/index.mjs";
 import { applyCorrections, loadChecksForFirms, loadDecisions } from "@/lib/match/corrections-server";
 import { addedAsDb, withAdded } from "@/lib/match/added/server";
 import { applyProven, loadProven } from "@/lib/match/proven/server";
@@ -619,6 +619,81 @@ export async function liveFourTier(supabase: ServiceClient, clientId: string): P
   const tiers = await runFourTierEngine(supabase, prepared.value);
   if (!tiers.ok) return tiers;
   return { ok: true, value: { run: prepared.value.run, tiers: tiers.value } };
+}
+
+/** One fund of the confirmed Plan with its contacts, ranked as the engine ranks them. */
+export type PlanFundPeople = {
+  firmId: string;
+  /** The Plan tier: core, sphere, tier3 or tier4. */
+  tier: string;
+  /** Contacts the Plan gives this fund. */
+  slots: number;
+  firm: Firm;
+  /** Primary and Backup. */
+  seq: RankedContact[];
+  /** Everyone at the fund, best first; Primary and Backup carry their seq. */
+  ranked: RankedContact[];
+};
+
+/**
+ * The confirmed Plan of the current finalized matching (Step 5, match_plans)
+ * with every planned fund's contacts from the client's fund data (added
+ * funds, proof and corrections applied), ranked by the engine. This is who
+ * the campaign emails and what verification checks. Null when the client
+ * has no finalized Plan.
+ */
+export async function planFundPeople(
+  supabase: ServiceClient,
+  clientId: string,
+): Promise<Result<{ planId: string; funds: PlanFundPeople[]; run: MatchContext } | null>> {
+  const fin = await supabase
+    .from("match_finalizations")
+    .select("plan_id")
+    .eq("client_id", clientId)
+    .is("cleared_at", null)
+    .order("finalized_at", { ascending: false })
+    .limit(1)
+    .maybeSingle<{ plan_id: string | null }>();
+  if (fin.error) return { ok: false, error: fin.error.message };
+  if (!fin.data?.plan_id) return { ok: true, value: null };
+  const plan = await supabase
+    .from("match_plans")
+    .select("id, planned")
+    .eq("id", fin.data.plan_id)
+    .maybeSingle<{ id: string; planned: { firmId: string; tier: string; rank: number; slots: number }[] | null }>();
+  if (plan.error) return { ok: false, error: plan.error.message };
+  if (!plan.data) return { ok: true, value: null };
+
+  const prepared = await prepare(supabase, clientId, null);
+  if (!prepared.ok) return prepared;
+  const { db, run } = prepared.value;
+  const firms = new Map(db.firms.map((firm) => [firm.id, firm]));
+  const byFirm = new Map<string, Contact[]>();
+  for (const contact of db.contacts) {
+    const list = byFirm.get(contact.fid);
+    if (list) list.push(contact);
+    else byFirm.set(contact.fid, [contact]);
+  }
+  const funds: PlanFundPeople[] = [];
+  for (const entry of plan.data.planned ?? []) {
+    const firm = firms.get(entry.firmId);
+    if (!firm || !(entry.slots > 0)) continue;
+    const ranked = RME.rankContacts(firm, byFirm.get(firm.id) ?? [], run.profile);
+    const seq = RME.pickSequence(ranked);
+    const label = new Map(seq.map((c) => [`${c.fid}|${c.email.trim().toLowerCase()}`, c.seq]));
+    funds.push({
+      firmId: entry.firmId,
+      tier: entry.tier,
+      slots: entry.slots,
+      firm,
+      seq,
+      ranked: ranked.map((c) => {
+        const s = label.get(`${c.fid}|${c.email.trim().toLowerCase()}`);
+        return s ? { ...c, seq: s } : c;
+      }),
+    });
+  }
+  return { ok: true, value: { planId: plan.data.id, funds, run } };
 }
 
 /**

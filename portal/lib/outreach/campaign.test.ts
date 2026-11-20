@@ -4,6 +4,10 @@ import {
   EXPORT_COLUMNS,
   buildBlockers,
   campaignSummary,
+  emailsPerContact,
+  planTierNumber,
+  renderSourceContact,
+  unfilledFields,
   exportRows,
   otherGroupFor,
   renderOtherEmails,
@@ -100,4 +104,34 @@ test("the CSV parses back with every column, multi-line bodies intact", () => {
 test("summary counts active contacts by tier and wave", () => {
   const summary = campaignSummary([message("a"), message("b", { position: 1, tier: 2, firm_id: "F2" }), message("r", { slot: "reserve" })]);
   assert.deepEqual(summary, { funds: 2, contacts: 2, wave1: 1, wave2: 1, byTier: { Core: 1, Sphere: 1 }, approved: 2 });
+});
+
+test("copy by source: a contact's two emails, filled in, without the opt-out line", () => {
+  const group = {
+    emails: [
+      { subject: "Argentl: AI collections, $2M round", body: "Hi {{first_name}},\n\nYour fund backed {{backed_company}}, so you know this market.\n\nNabil" },
+      { subject: "", body: "{{first_name}}, one more thing.\n\nNabil" },
+    ],
+  };
+  const fund = { name: "North Fund", bucket: "competitor" as const, hook: "Tesorio" };
+  const named = renderSourceContact(group, fund, "Ana");
+  assert.deepEqual(named.missing, []);
+  assert.equal(named.emails.length, 2);
+  assert.equal(named.emails[0].body, "Hi Ana,\n\nYour fund backed Tesorio, so you know this market.\n\nNabil");
+  assert.equal(named.emails[1].body, "Ana, one more thing.\n\nNabil");
+  const nameless = renderSourceContact(group, fund, "");
+  assert.match(nameless.emails[0].body, /^Hi,\n/);
+  assert.equal(nameless.emails[1].body, "One more thing.\n\nNabil");
+  const noHook = renderSourceContact(group, { ...fund, hook: "" }, "Ana");
+  assert.deepEqual(noHook.missing, ["backed_company"], "never sent with {{backed_company}} in it");
+});
+
+test("copy by source: an empty follow-up isn't an email; Plan tiers as numbers", () => {
+  const out = renderSourceContact({ emails: [{ subject: "S", body: "Hi {{first_name}}" }, { subject: "", body: " " }] }, { name: "F", bucket: "market", hook: "Fintech" }, "Ana");
+  assert.equal(out.emails.length, 1);
+  assert.deepEqual(unfilledFields([{ subject: "{{ fund_name }}", body: "{{focus}} x" }]).sort(), ["focus", "fund_name"]);
+  assert.deepEqual(["core", "sphere", "tier3", "tier4", "other"].map(planTierNumber), [1, 2, 3, 4, 4]);
+  const two = { slot: "active" as const, emails: out.emails.concat({ subject: "", body: "Again" }) };
+  assert.equal(emailsPerContact([two, { slot: "reserve" as const, emails: [{ subject: "", body: "a" }, { subject: "", body: "b" }, { subject: "", body: "c" }] }]), 2);
+  assert.equal(emailsPerContact([]), 3, "nothing built: the three-email default");
 });

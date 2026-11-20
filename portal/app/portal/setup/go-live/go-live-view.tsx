@@ -80,7 +80,7 @@ export function GoLiveView({
     try {
       const result = await sendMeTestAction();
       if (!result.ok) setError(result.error);
-      else setTestNote(`On its way to ${result.to}: the three emails ${result.fund} would get, a couple of minutes apart.`);
+      else setTestNote(`On its way to ${result.to}: the emails ${result.fund} would get, a couple of minutes apart.`);
     } finally {
       setTesting(false);
     }

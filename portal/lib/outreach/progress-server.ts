@@ -47,9 +47,19 @@ export async function coreReadiness(supabase: ServiceClient, clientId: string, c
 export async function outreachSteps(
   supabase: ServiceClient,
   clientId: string,
-  input: { listConfirmed: boolean; fourTier: boolean; copyConfirmed: boolean; copyVersion: number; runId: string | null; coreFunds: number; goLivePushed: boolean },
+  input: {
+    listConfirmed: boolean;
+    fourTier: boolean;
+    /** Copy by source (v3, lists pushed as summaries): no Core contacts; the campaign is built from the Plan. */
+    bySource?: boolean;
+    copyConfirmed: boolean;
+    copyVersion: number;
+    runId: string | null;
+    coreFunds: number;
+    goLivePushed: boolean;
+  },
 ): Promise<OutreachSteps> {
-  if (!input.listConfirmed || !input.fourTier) return { core: NONE, campaign: NONE, live: NONE, coreWarning: null };
+  if (!input.listConfirmed || !(input.fourTier || input.bySource)) return { core: NONE, campaign: NONE, live: NONE, coreWarning: null };
   try {
     const [messages, campaignRead] = await Promise.all([
       loadOutreachMessages(supabase, clientId),
@@ -60,8 +70,8 @@ export async function outreachSteps(
     const live = Boolean(campaign?.live_at);
 
     // Core: every active Core contact written and approved.
-    const core = rows.filter((m) => m.tier === 1);
-    const coreDone = live || (core.length > 0 && core.every((m) => isApproved(m)));
+    const core = input.bySource ? [] : rows.filter((m) => m.tier === 1);
+    const coreDone = live || Boolean(input.bySource) || (core.length > 0 && core.every((m) => isApproved(m)));
 
     // Campaign: built from the copy the client confirmed, on today's list, with every contact approved.
     const built =
@@ -74,7 +84,7 @@ export async function outreachSteps(
     // Go Live: Rupert pushes it with the invoice; then the client connects, pays and clicks.
     const liveTurn: StepTurn = live ? "none" : !campaignDone ? "none" : input.goLivePushed ? "client" : "admin";
 
-    const coreWarning = live ? null : coreBlocker(core, input.coreFunds);
+    const coreWarning = live || input.bySource ? null : coreBlocker(core, input.coreFunds);
     return {
       coreWarning,
       core: { done: coreDone, turn: coreDone ? "none" : "admin" },

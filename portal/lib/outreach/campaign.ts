@@ -17,6 +17,7 @@ import {
   type TypedGroupCopy,
 } from "./copy.ts";
 import { emailsHash, firstNameOf, isApproved, type CoreMessage, type CorePerson } from "./core.ts";
+import { renderSourceEmail, sourceValues, type OutreachFund, type SourceGroupCopy } from "./source-copy.ts";
 import { interleaveByTier } from "./mix.ts";
 
 // ---------------------------------------------------------------------------
@@ -62,6 +63,65 @@ export function renderOtherEmails(group: TypedGroupCopy, tier: OtherTier, person
 /** Greeting fix when a contact has no first name: "Hi ," becomes "Hi,". */
 export function tidyGreeting(emails: CopyEmail[]): CopyEmail[] {
   return emails.map((email) => ({ ...email, body: email.body.replace(/^(Hi|Hello|Dear)\s+,/m, "$1,") }));
+}
+
+// ---------------------------------------------------------------------------
+// Copy by source (v3): every Plan fund's contacts get their group's emails
+
+/** The Plan's tiers as the numbers outreach_messages stores (Core 1 … Tier 4). */
+export const PLAN_TIER_NUMBER: Record<string, number> = { core: 1, sphere: 2, tier3: 3, tier4: 4 };
+
+export function planTierNumber(tier: string) {
+  return PLAN_TIER_NUMBER[tier] ?? 4;
+}
+
+/** The fields still written as {{field}} in a set of emails. */
+export function unfilledFields(emails: CopyEmail[]) {
+  const found = new Set<string>();
+  for (const email of emails) {
+    `${email.subject}\n${email.body}`.replace(/\{\{\s*([^{}]*?)\s*\}\}/g, (match, field: string) => {
+      found.add(field);
+      return match;
+    });
+  }
+  return Array.from(found);
+}
+
+/**
+ * One contact's emails at a Plan fund: the group's first email and follow-up
+ * with the fund, its hook and the person's first name filled in. Stored
+ * without the opt-out line, which is added when the lead goes to Instantly.
+ * Emails the copy leaves empty are not sent. With no first name, "Hi ," reads
+ * "Hi," and a follow-up that opens with the name opens with the next word.
+ * `missing`: fields with no value for this contact (it must not be sent).
+ */
+export function renderSourceContact(
+  group: Pick<SourceGroupCopy, "emails">,
+  fund: Pick<OutreachFund, "name" | "bucket" | "hook">,
+  firstName: string,
+): { emails: CopyEmail[]; missing: string[] } {
+  const values = { ...sourceValues(fund), first_name: firstName.trim() };
+  const emails = group.emails
+    .map((_, index) => index)
+    .filter((index) => group.emails[index].body.trim())
+    .map((index) => renderSourceEmail(group, index, values, ""))
+    .map((email) => ({
+      subject: email.subject,
+      body: email.body
+        .replace(/^(Hi|Hello|Dear)\s+,/m, "$1,")
+        .replace(/^\s*,\s*([a-z])/, (_, letter: string) => letter.toUpperCase()),
+    }));
+  return { emails, missing: unfilledFields(emails) };
+}
+
+/** How many emails each contact gets: the most any active contact has (2 for copy by source). */
+export function emailsPerContact(messages: Pick<CampaignMessage, "slot" | "emails">[], fallback = SEQUENCE_LENGTH) {
+  let most = 0;
+  for (const m of messages) {
+    if (m.slot !== "active") continue;
+    most = Math.max(most, m.emails.filter((email) => email.body.trim()).length);
+  }
+  return most || fallback;
 }
 
 /** The copy tier of a list row, as a number 2–4 (Core is 1). */
