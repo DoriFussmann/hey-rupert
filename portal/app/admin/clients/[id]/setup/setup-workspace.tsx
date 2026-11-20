@@ -182,7 +182,13 @@ export function setupPanels({
       ),
     },
   ];
-  if (listScheme === "four" && row("investor_list")?.status === "confirmed") {
+  if (investors.summaries && row("investor_list")?.status === "confirmed") {
+    // Copy by source: no Core contacts; the campaign is built from the confirmed Plan.
+    panels.push(
+      { key: "campaign", ...outreach.campaign, node: <CampaignPanel clientId={clientId} claudeReady={claudeReady} bySource /> },
+      { key: "go_live", ...outreach.live, node: <LivePanel clientId={clientId} /> },
+    );
+  } else if (listScheme === "four" && row("investor_list")?.status === "confirmed") {
     panels.push(
       { key: "core_contacts", ...outreach.core, node: <CoreContactsPanel clientId={clientId} claudeReady={claudeReady} /> },
       { key: "campaign", ...outreach.campaign, node: <CampaignPanel clientId={clientId} claudeReady={claudeReady} /> },

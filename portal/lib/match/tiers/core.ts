@@ -781,7 +781,7 @@ function personName(c: { prefix: string; first: string; last: string }) {
   return [c.prefix, c.first, c.last].filter(Boolean).join(" ").trim() || "(no name)";
 }
 
-function peopleOf(ranked: RankedContact[]): PersonRecord[] {
+export function peopleOf(ranked: RankedContact[]): PersonRecord[] {
   return ranked
     .filter((c) => c.role !== "ops")
     .map((c) => ({

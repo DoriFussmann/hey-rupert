@@ -22,7 +22,8 @@ For investor lists pushed from the matching (the list holds the summaries, not r
 - **Two emails:** a first email and one follow-up in the same thread (no subject).
 - **Checks.** Unchanged. Errors block the push: missing subject or body, unknown fields, the hook field missing from a competitor or look-alike first email, the usual hype and placeholder checks. Warnings: "you backed" instead of "your fund backed", a follow-up subject, links. The word count is shown beside each email.
 - **Storage.** The `email_copy` setup step with `copy_version: 3` and `by_source`.
-- **Not built yet:** the campaign build and Go Live for these clients (they still read list rows and three-step sequences).
+- **Campaign and Go Live** (Setup → Campaign, then Go Live; no Core contacts). Build: every Plan fund gets the Plan's number of contacts from the fund data, ranked by the engine (Primary, Backup, then the rest), leaving out contacts verification flagged or Rupert removed; the next ones are reserves (`buildFromPlan` in `campaign-server.ts`, people from `planFundPeople` in `lib/match/tiers/server.ts`). Emails are the group's two, filled in (`renderSourceContact`), approved by the client's confirmation. A fund with no copy, no usable contact or an empty hook field is listed and not sent. Verify Emails (Matching page) checks the same funds and contacts: run it before building. Instantly gets two steps (first email, follow-up 7 days later, same thread); pacing counts one follow-up.
+- **Test run for a real client.** Go Live panel → Sending settings → "Test run": every email goes to a + address of the test inbox (replies map back to the contact), at the real pace, after the client's own approval; "Contacts, at most" caps how many ever go out. Test Pilot clients keep the fast test mode (minutes, every day).
 
 # Investor outreach copy (Phase 5, part 1)
 

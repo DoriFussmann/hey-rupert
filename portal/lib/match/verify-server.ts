@@ -15,7 +15,7 @@ import {
 import { MATCH_MIGRATION_MISSING, selectAll } from "@/lib/match/db-server";
 import { rankedContactId } from "@/lib/match/run-server";
 import { TIER_INFO, TIER_KEYS } from "@/lib/match/tiers/core";
-import { latestTierRun, liveFourTier } from "@/lib/match/tiers/server";
+import { latestTierRun, liveFourTier, planFundPeople } from "@/lib/match/tiers/server";
 import { promptSystem, type ActivePrompt } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
 import { rowKey } from "@/lib/match/tiers/record";
@@ -139,6 +139,27 @@ async function planScope(supabase: ServiceClient, clientId: string): Promise<Res
  * generalists with Tier 4), or every tiered fund when there is no plan.
  */
 async function loadScope(supabase: ServiceClient, clientId: string): Promise<Result<ScopeSource>> {
+  // A client with a finalized Plan (Step 5): exactly the Plan's funds and the
+  // contacts the campaign picks from, ranked the same way.
+  const people = await planFundPeople(supabase, clientId);
+  if (!people.ok) return people;
+  if (people.value) {
+    const funds: ScopeFund[] = people.value.funds.map((fund) => ({ tier: fund.tier, firm: fund.firm, seq: fund.seq, ranked: fund.ranked }));
+    const fids = Array.from(new Set(funds.flatMap((fund) => fund.ranked.map((contact) => contact.fid))));
+    const checks = await loadChecksForFirms(supabase, fids);
+    if (!checks.ok) return checks;
+    return {
+      ok: true,
+      value: {
+        tiers: TIER_KEYS.map((key) => ({ key, label: TIER_INFO[key].label })),
+        planFunds: funds.length,
+        funds,
+        checks: checks.value,
+        corrections: people.value.run.corrections,
+        decisions: people.value.run.decisions,
+      },
+    };
+  }
   const [live, planned] = await Promise.all([liveFourTier(supabase, clientId), planScope(supabase, clientId)]);
   if (!live.ok) return live;
   if (!planned.ok) return planned;

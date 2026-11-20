@@ -246,3 +246,55 @@ test("each week's new investors split across tiers in proportion, adding up exac
   }
   assert.deepEqual(plan[0].byTier.map((t) => t.label), ["Core", "Sphere", "Tier 3", "Tier 4"]);
 });
+
+test("copy by source: two steps, no third email, the follow-up last with no delay after it", () => {
+  const body = campaignBody("Argentl · investor outreach", "nabil@argentl.com", DEFAULT_LIVE_SETTINGS, { steps: 2 });
+  const steps = body.sequences[0].steps;
+  assert.equal(steps.length, 2);
+  assert.deepEqual(steps.map((s) => [s.variants[0].subject, s.variants[0].body, s.delay]), [
+    ["{{subject_1}}", "{{body_1}}", 7],
+    ["", "{{body_2}}", 0],
+  ]);
+  assert.equal(body.stop_for_company, true);
+  assert.equal(campaignBody("x", "a@b.co", DEFAULT_LIVE_SETTINGS).sequences[0].steps.length, 3, "copy by fund type keeps three");
+});
+
+test("a lead never carries an empty email", () => {
+  const two = [emails[0], emails[1], { subject: "", body: "  " }];
+  const lead = leadFor({ ...message("m1"), emails: two }, "Not relevant? Tell me.", undefined, "1 Main St, Austin, TX");
+  assert.deepEqual(Object.keys(lead.custom_variables).sort(), ["body_1", "body_2", "subject_1", "subject_2"]);
+  assert.match(lead.custom_variables.body_1, /Not relevant\? Tell me\.<br\/>1 Main St, Austin, TX$/);
+  assert.doesNotMatch(lead.custom_variables.body_2, /Main St/);
+});
+
+test("one follow-up: only that day is held back, and the plan is shorter than with two", () => {
+  const s = asLiveSettings(null);
+  const contacts = [{ slot: "active", pushed_at: "2026-11-02T15:00:00Z" }];
+  // First email Mon Nov 2; follow-up Mon Nov 9; a second follow-up would be Mon Nov 16.
+  assert.equal(newInvestorRoom(contacts, "2026-11-09", s, 15, 1), 14);
+  assert.equal(newInvestorRoom(contacts, "2026-11-16", s, 15, 1), 15, "no second follow-up");
+  assert.equal(newInvestorRoom(contacts, "2026-11-16", s, 15, 2), 14);
+  const one = sendingPlan({ total: 525, settings: s, launchDay: "2026-11-30", today: null, followups: 1 });
+  const two = sendingPlan({ total: 525, settings: s, launchDay: "2026-11-30", today: null, followups: 2 });
+  assert.equal(one.reduce((n, w) => n + w.newInvestors, 0), 525);
+  assert.ok(one.length < two.length, "fewer weeks with one follow-up");
+  assert.deepEqual(one.slice(0, 3).map((w) => [w.cap, w.newInvestors]), [
+    [15, 75],
+    // Week 2 is week 1's follow-ups; week 3 has the room of full pace.
+    [15, 0],
+    [30, 150],
+  ]);
+});
+
+test("a test run for a real client: redirect and contact limit are kept, off by default", () => {
+  assert.equal(DEFAULT_LIVE_SETTINGS.redirect_to_test_inbox, false);
+  assert.equal(DEFAULT_LIVE_SETTINGS.contact_limit, 0);
+  const s = asLiveSettings({ redirect_to_test_inbox: true, contact_limit: 20, test_recipient: "DoriFussmann@gmail.com" });
+  assert.deepEqual([s.redirect_to_test_inbox, s.contact_limit, s.test_recipient], [true, 20, "dorifussmann@gmail.com"]);
+  assert.equal(asLiveSettings({ redirect_to_test_inbox: "yes", contact_limit: -5 }).redirect_to_test_inbox, false);
+  assert.equal(asLiveSettings({ contact_limit: -5 }).contact_limit, 0);
+  const body = campaignBody("TEST · Acme", "a@b.co", s, { redirected: true, steps: 2 });
+  assert.equal(body.stop_for_company, false, "every test address shares one domain");
+  assert.equal(body.campaign_schedule.schedules[0].days["0"], false, "real pace: weekdays only");
+  assert.equal(body.sequences[0].steps[0].delay_unit, "days");
+});

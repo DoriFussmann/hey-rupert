@@ -63,7 +63,7 @@ function summarize(data: CampaignData, company: string, test: boolean, inbox: st
   const tomorrow = nextWeekday(addDays(today, 1));
   const tomorrowCap = capForWeek(data.settings, campaignWeek(data.launchDay, tomorrow));
   const remaining = Math.max(0, data.activeTotal - started);
-  const tomorrowRoom = newInvestorRoom(data.messages, tomorrow, data.settings, tomorrowCap);
+  const tomorrowRoom = newInvestorRoom(data.messages, tomorrow, data.settings, tomorrowCap, data.followups);
   const tomorrowNew = Math.min(tomorrowRoom, remaining);
   const lastFirst = [...data.plan].reverse().find((w) => w.newInvestors > 0);
 
