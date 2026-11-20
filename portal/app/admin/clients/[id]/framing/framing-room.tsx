@@ -111,6 +111,12 @@ export function FramingRoom({
   const [versions, setVersions] = useState<BriefVersionRow[]>(initialVersions);
   const [busy, setBusy] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+  // Errors show under the header; bring them into view, since the button
+  // clicked may be far down the page.
+  const noticeRef = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    if (notice?.kind === "error") noticeRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [notice]);
   const [linkedin, setLinkedin] = useState<BriefFiles>(initialLinkedin);
   const linkedinReady = linkedin.linkedin.length > 0 || linkedin.skipped;
 
@@ -214,7 +220,7 @@ export function FramingRoom({
           </div>
           {!claudeReady ? <p className="mt-sm text-body-sm text-warning">Claude is not configured (ANTHROPIC_API_KEY).</p> : null}
           {notice ? (
-            <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>
+            <p ref={noticeRef} role={notice.kind === "error" ? "alert" : "status"} className={`mt-sm text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>
               {notice.text}
             </p>
           ) : null}
