@@ -22,15 +22,12 @@ export type BriefPanelData = {
 export function BriefPanel({ clientId, data, claudeReady, founderName }: { clientId: string; data: BriefPanelData; claudeReady: boolean; founderName: string }) {
   return (
     <section id="setup-brief" className="mt-lg rounded-card border border-border bg-surface">
-      <div className="border-b border-border px-lg py-lg">
-        <h3 className="text-h4">Company Brief</h3>
-        <p className="mt-xs max-w-prose text-body-sm text-muted">
-          Rupert&apos;s read of the company, then five stages: the 3 strongest selling points, the Outreach Narrative, the Company Materials Feedback, the questions for the founder, and sending them to the client. The brief itself never reaches the founder. To dig deeper, Download for AI, work it in ChatGPT, and paste the results back with Edit.
-        </p>
-      </div>
       <div className="px-lg py-md">
         {data.error ? (
-          <p role="alert" className="text-body-sm text-error">{data.error}</p>
+          <>
+            <h2 className="text-h4">Company Brief</h2>
+            <p role="alert" className="mt-xs text-body-sm text-error">{data.error}</p>
+          </>
         ) : (
           <FramingRoom
             clientId={clientId}
