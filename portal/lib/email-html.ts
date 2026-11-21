@@ -67,10 +67,27 @@ function blockHtml(lines: string[]) {
   return out.join("");
 }
 
-/** The email's text as an HTML document. A line "[Label] → https://…" on its own becomes a button. */
-export function plainEmailHtml(text: string) {
-  const blocks = text.replace(/\r\n/g, "\n").trim().split(/\n{2,}/);
-  const html = blocks
+/** A line that is only "///" opens or closes a framed section (the portal link in the welcome email). */
+const BOX_MARK = /^[ \t]*\/\/\/[ \t]*$/;
+
+const BOX_STYLE = "margin:0 0 16px;padding:16px 20px 0;border:1px solid #D9D6CC;border-radius:8px;background:#FFFFFF";
+
+/** The text without its "///" lines, for the plain-text part of an email. */
+export function withoutBoxMarks(text: string) {
+  return text
+    .replace(/\r\n/g, "\n")
+    .split("\n")
+    .filter((line) => !BOX_MARK.test(line))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+function blocksHtml(text: string) {
+  return text
+    .trim()
+    .split(/\n{2,}/)
+    .filter((block) => block.trim())
     .map((block) => {
       const lines = block.split("\n");
       const cta = lines.length === 1 ? lines[0].match(/^\[(.+?)\]\s*→\s*(https?:\/\/\S+)\s*$/) : null;
@@ -78,6 +95,24 @@ export function plainEmailHtml(text: string) {
         return `<p style="margin:24px 0"><a href="${escapeHtml(cta[2])}" style="display:inline-block;background:#5C7A5E;color:#ffffff;text-decoration:none;font-size:16px;line-height:1.4;padding:12px 20px;border-radius:6px">${escapeHtml(cta[1])}</a></p>`;
       }
       return blockHtml(lines);
+    })
+    .join("");
+}
+
+/**
+ * The email's text as an HTML document. A line "[Label] → https://…" on its
+ * own becomes a button. Text between two "///" lines is framed in a box.
+ */
+export function plainEmailHtml(text: string) {
+  const sections: { boxed: boolean; lines: string[] }[] = [{ boxed: false, lines: [] }];
+  for (const line of text.replace(/\r\n/g, "\n").split("\n")) {
+    if (BOX_MARK.test(line)) sections.push({ boxed: !sections[sections.length - 1].boxed, lines: [] });
+    else sections[sections.length - 1].lines.push(line);
+  }
+  const html = sections
+    .map((section) => {
+      const inner = blocksHtml(section.lines.join("\n"));
+      return section.boxed && inner ? `<div style="${BOX_STYLE}">${inner}</div>` : inner;
     })
     .join("");
   return `<!DOCTYPE html><html><body style="margin:0;padding:24px;background:#FAF9F5;color:#2D2D2D;font-family:Inter,Helvetica,Arial,sans-serif">${html}</body></html>`;

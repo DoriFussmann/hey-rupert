@@ -133,6 +133,7 @@ export function WelcomeEmailButton({ clientId }: { clientId: string }) {
                     subject={result.welcome.subject}
                     emailDraft={emailDraft}
                     setEmailDraft={setEmailDraft}
+                    send={{ clientId, kind: "welcome" }}
                   />
                 </>
               ) : (

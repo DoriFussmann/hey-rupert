@@ -263,6 +263,7 @@ export function AddClientButton({ initial, label = "Add Client" }: { initial?: A
                       subject={created.subject}
                       emailDraft={emailDraft}
                       setEmailDraft={setEmailDraft}
+                      send={{ clientId: created.clientId, kind: "welcome" }}
                     />
                   ) : null}
                 </div>

@@ -3,12 +3,16 @@
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
 import { PORTAL_HOST } from "@/lib/portal-url";
+import { sendSetupEmail, type SetupEmailKind } from "@/app/admin/actions";
 
 export const EMAIL_SUBJECT = "Your Rupert Portal & Statement of Work";
+export const RESET_EMAIL_SUBJECT = "Set a new password for your Rupert Portal";
 
 const fieldClass =
   "mt-sm w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
 const labelClass = "block text-label uppercase tracking-label text-muted";
+const sendButtonClass =
+  "shrink-0 rounded-md bg-primary px-sm py-xs text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
 const copyButtonClass =
   "shrink-0 rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading";
 
@@ -81,19 +85,47 @@ export function CopyButton({
 }
 
 // Email / link / expiry / subject rows with copy buttons, plus the editable
-// email body.
+// email body. With `send`, a Send to client button sends it from the portal.
 export function SetupLinkResult({
   details,
   subject = EMAIL_SUBJECT,
   emailDraft,
   setEmailDraft,
+  send,
 }: {
   details: SetupLinkDetails;
   subject?: string;
   emailDraft: string;
   setEmailDraft: (value: string) => void;
+  /** The client and which email this is, to send it from the portal. */
+  send?: { clientId: string; kind: SetupEmailKind };
 }) {
   const { copied, copy } = useCopy();
+  const [sending, setSending] = useState(false);
+  const [sentDraft, setSentDraft] = useState<string | null>(null);
+  const [sendMessage, setSendMessage] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
+  const alreadySent = sentDraft !== null && sentDraft === emailDraft;
+
+  async function sendToClient() {
+    if (!send) return;
+    const again = sentDraft !== null ? " again" : "";
+    if (!window.confirm(`Send this email${again} to ${details.email} now, from the portal's address?`)) return;
+    setSending(true);
+    setSendMessage(null);
+    try {
+      const result = await sendSetupEmail(send.clientId, send.kind, subject, emailDraft);
+      if (result.ok) {
+        setSentDraft(emailDraft);
+        setSendMessage({ kind: "ok", text: `Sent to ${result.to}. It's in the client's email history.` });
+      } else {
+        setSendMessage({ kind: "error", text: result.error });
+      }
+    } catch (err) {
+      setSendMessage({ kind: "error", text: err instanceof Error ? err.message : "The email wasn't sent." });
+    } finally {
+      setSending(false);
+    }
+  }
 
   const rows = [
     { key: "email", label: "Email", value: details.email },
@@ -130,14 +162,34 @@ export function SetupLinkResult({
       <div>
         <div className="flex items-center justify-between">
           <span className={labelClass}>Email (editable)</span>
-          <button
-            type="button"
-            className={copyButtonClass}
-            onClick={() => copy(emailDraft, "body")}
-          >
-            {copied === "body" ? "Copied" : "Copy email"}
-          </button>
+          <span className="flex items-center gap-sm">
+            <button
+              type="button"
+              className={copyButtonClass}
+              onClick={() => copy(emailDraft, "body")}
+            >
+              {copied === "body" ? "Copied" : "Copy email"}
+            </button>
+            {send ? (
+              <button
+                type="button"
+                className={sendButtonClass}
+                disabled={sending || alreadySent}
+                onClick={() => void sendToClient()}
+              >
+                {sending ? "Sending…" : alreadySent ? "Sent" : "Send to client"}
+              </button>
+            ) : null}
+          </span>
         </div>
+        {sendMessage ? (
+          <p
+            role={sendMessage.kind === "error" ? "alert" : "status"}
+            className={`mt-sm text-body-sm ${sendMessage.kind === "error" ? "text-error" : "text-success"}`}
+          >
+            {sendMessage.text}
+          </p>
+        ) : null}
         <textarea
           aria-label="Email body"
           className={fieldClass + " font-mono"}

@@ -7,6 +7,7 @@ import {
   CopyButton,
   SetupLinkResult,
   buildResetEmail,
+  RESET_EMAIL_SUBJECT,
   type SetupLinkDetails,
 } from "@/app/admin/setup-link-result";
 import { formatDate } from "@/lib/format";
@@ -186,8 +187,10 @@ export function ResetPasswordSection({
                   </p>
                   <SetupLinkResult
                     details={result}
+                    subject={RESET_EMAIL_SUBJECT}
                     emailDraft={emailDraft}
                     setEmailDraft={setEmailDraft}
+                    send={{ clientId, kind: "reset" }}
                   />
                 </div>
                 <div className="flex justify-end gap-sm border-t border-border px-lg py-lg">
