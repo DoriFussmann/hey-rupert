@@ -1018,28 +1018,28 @@ export function IntakeExperience({
   ) : null;
 
   // Below the conversation: where the intake stands and the way on.
+  const noDeckNow = () =>
+    void deliver("no_deck", { text: "I don't have a pitch deck yet.", files: [] }, () => declareNoDeck("Not ready yet."));
   const doneStrip =
     readOnly || reviewing || !(essentialsDone || completed) ? null : (
-      <div role="status" className="flex flex-wrap items-center gap-sm border-t border-primary/30 bg-primary-tint px-lg py-sm">
-        <CoverageIcon coverage={completed || intakeDone ? "covered" : "partial"} />
-        <p className="min-w-0 flex-1 text-body-sm text-heading">
+      <div role="status" className="border-t border-primary/30 bg-primary-tint px-lg py-md">
+        <p className="text-body-sm text-heading">
           {completed ? (
             <>
-              <span className="font-medium">Your intake is complete.</span> You can still add a comment or new files here.
+              <span className="font-medium">Your intake is complete.</span> You can still add a comment or new files here any time.
             </>
           ) : intakeDone ? (
             <>
-              <span className="font-medium">You&apos;re done.</span> Review what Rupert gathered and confirm it
-              {extras.done ? "." : ". The extras are optional."}
+              <span className="font-medium">You&apos;re done.</span> Rupert has what he needs. Review the summary and confirm it to finish.
             </>
           ) : (
             <>
-              <span className="font-medium">The essentials are done.</span> One thing left: your deck, or tell Rupert you don&apos;t
-              have one yet.
+              <span className="font-medium">The essentials are done.</span> Last step: upload your pitch deck, or tell Rupert you don&apos;t have one
+              yet. Then you can review your summary.
             </>
           )}
         </p>
-        <div className="flex flex-wrap gap-sm">
+        <div className="mt-sm flex flex-wrap gap-sm">
           {completed ? (
             <Link href="/portal" className={`${primaryButton} no-underline`}>
               Back to your portal
@@ -1056,18 +1056,10 @@ export function IntakeExperience({
           ) : (
             <>
               <button type="button" className={primaryButton} disabled={!canWrite} onClick={() => fileRef.current?.click()}>
-                Share your deck
+                Upload pitch deck
               </button>
-              <button
-                type="button"
-                className={secondaryButton}
-                disabled={!canWrite}
-                onClick={() => {
-                  setNoDeckOpen(true);
-                  document.getElementById("intake-materials-title")?.scrollIntoView({ behavior: "smooth", block: "center" });
-                }}
-              >
-                I don&apos;t have a deck yet
+              <button type="button" className={secondaryButton} disabled={!canWrite} onClick={noDeckNow}>
+                {pending === "no_deck" ? "Telling Rupert…" : "I don't have a deck yet"}
               </button>
             </>
           )}
