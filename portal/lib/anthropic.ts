@@ -54,10 +54,14 @@ export async function callClaudeTool<T>({
 
   type ToolChoice = { type: "auto" } | { type: "tool"; name: string };
   type Reply =
-    | { ok: true; input: unknown; text: string }
+    | { ok: true; input: unknown; text: string; truncated: boolean }
     | { ok: false; reason: string; status?: number };
 
-  const send = async (toolChoice: ToolChoice): Promise<Reply> => {
+  // A reply cut off at max_tokens can carry a tool call with only its first
+  // fields (the intake's reply without its topic coverage): asked again once
+  // with more room.
+  const MAX_TOKENS_CEILING = 8000;
+  const send = async (toolChoice: ToolChoice, tokens = maxTokens): Promise<Reply> => {
     const response = await fetch(ENDPOINT, {
       method: "POST",
       headers: {
@@ -67,7 +71,7 @@ export async function callClaudeTool<T>({
       },
       body: JSON.stringify({
         model: process.env.ANTHROPIC_MODEL || DEFAULT_MODEL,
-        max_tokens: maxTokens,
+        max_tokens: tokens,
         system,
         messages,
         tools: [tool],
@@ -87,6 +91,7 @@ export async function callClaudeTool<T>({
     }
 
     const data = (await response.json()) as {
+      stop_reason?: string;
       content?: {
         type?: string;
         name?: string;
@@ -104,11 +109,20 @@ export async function callClaudeTool<T>({
       .trim();
     const input =
       block && block.input && typeof block.input === "object" ? block.input : null;
-    return { ok: true, input, text };
+    return { ok: true, input, text, truncated: data.stop_reason === "max_tokens" };
+  };
+
+  /** Sends, and once more with more room when the reply was cut off. */
+  const sendWhole = async (toolChoice: ToolChoice): Promise<Reply> => {
+    const reply = await send(toolChoice);
+    if (!reply.ok || !reply.truncated || maxTokens >= MAX_TOKENS_CEILING) return reply;
+    console.warn(`Claude's ${tool.name} reply was cut off at ${maxTokens} tokens; asking again with more room.`);
+    const roomier = await send(toolChoice, Math.min(MAX_TOKENS_CEILING, Math.max(maxTokens * 4, 4000)));
+    return roomier.ok ? roomier : reply;
   };
 
   try {
-    const first = await send({ type: "auto" });
+    const first = await sendWhole({ type: "auto" });
     if (!first.ok) {
       console.error(first.reason);
       return { ok: false, reason: first.reason };
@@ -120,7 +134,7 @@ export async function callClaudeTool<T>({
     // ask once more with the tool forced. Models that refuse forcing return
     // an error here, and we fall back to the first plain-text answer.
     console.warn(`Claude skipped the ${tool.name} tool; retrying with it forced.`);
-    const forced = await send({ type: "tool", name: tool.name });
+    const forced = await sendWhole({ type: "tool", name: tool.name });
     if (forced.ok && forced.input) return { ok: true, input: forced.input as T };
     if (!forced.ok) console.warn(`Forced ${tool.name} retry failed: ${forced.reason}`);
 
