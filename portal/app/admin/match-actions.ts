@@ -688,3 +688,18 @@ async function publishSandboxList(
   }
   return { ok: true };
 }
+
+/** Whether the client has a company profile for matching, and whether one can be built. */
+export async function matchProfileStatus(
+  clientId: string,
+): Promise<Result<{ exists: boolean; intakeComplete: boolean }>> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+  const [state, client] = await Promise.all([
+    loadProfileState(access.supabase, clientId),
+    access.supabase.from("clients").select("intake_completed_at").eq("id", clientId).maybeSingle(),
+  ]);
+  if (!state.ok) return state;
+  if (client.error) return { ok: false, error: client.error.message };
+  return { ok: true, exists: Boolean(state.value), intakeComplete: Boolean(client.data?.intake_completed_at) };
+}
