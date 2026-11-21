@@ -34,7 +34,8 @@ import {
 import { clientDisplayName } from "@/lib/format";
 import { sendAdminEmail, type EmailResult } from "@/lib/email";
 import { sendClientEmail } from "@/lib/email-log";
-import { plainEmailHtml, withoutBoxMarks } from "@/lib/email-html";
+import { withoutBoxMarks } from "@/lib/email-html";
+import { createPriceInvoice, isStripeConfigured, listInvoicePrices, type InvoicePrice } from "@/lib/stripe";
 import { WELCOME_EMAIL_KEY } from "@/lib/email-templates";
 import { linkProspectToClient } from "@/lib/prospects/server";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
@@ -1741,9 +1742,51 @@ export async function sendSetupEmail(
     templateKey: kind === "welcome" ? WELCOME_EMAIL_KEY : "password_reset",
     to: [to],
     subject: cleanSubject,
+    // Plain text, like every other "your turn" email: it reads as written by a person.
     text: withoutBoxMarks(text),
-    html: plainEmailHtml(text),
   });
   revalidatePath(`/admin/clients/${client.id}`);
   return sent.ok ? { ok: true, to } : { ok: false, error: sent.reason };
+}
+
+/** The Stripe catalog's prices, for the Create invoice picker. */
+export async function listStripePricesAction(): Promise<{ ok: true; prices: InvoicePrice[] } | { ok: false; error: string }> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+  if (!isStripeConfigured()) return { ok: false, error: "Stripe isn't connected (STRIPE_SECRET_KEY is not set in Vercel)." };
+  const prices = await listInvoicePrices();
+  if (!prices.ok) return prices;
+  if (prices.value.length === 0) return { ok: false, error: "No active products with a fixed price in Stripe. Add one under Product catalog." };
+  return { ok: true, prices: prices.value };
+}
+
+/** Creates and finalizes a Stripe invoice for the client from a catalog price; returns its link. */
+export async function createStripeInvoiceAction(
+  clientId: string,
+  priceId: string,
+  kind: "setup_fee" | "monthly",
+  attempt: string,
+): Promise<{ ok: true; url: string; label: string } | { ok: false; error: string }> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+  if (!isStripeConfigured()) return { ok: false, error: "Stripe isn't connected (STRIPE_SECRET_KEY is not set in Vercel)." };
+  const { data: client, error } = await access.supabase
+    .from("clients")
+    .select("id, email, company_name, first_name, last_name")
+    .eq("id", String(clientId))
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!client?.email) return { ok: false, error: "This client has no email address for the invoice." };
+  const name = String(client.company_name || [client.first_name, client.last_name].filter(Boolean).join(" ") || client.email);
+  const created = await createPriceInvoice({
+    clientId: String(client.id),
+    email: String(client.email),
+    name,
+    priceId: String(priceId),
+    kind: kind === "monthly" ? "monthly" : "setup_fee",
+    attempt: String(attempt).slice(0, 80) || String(Date.now()),
+  });
+  if (!created.ok) return created;
+  const amount = new Intl.NumberFormat("en-US", { style: "currency", currency: created.value.currency.toUpperCase() }).format(created.value.amount / 100);
+  return { ok: true, url: created.value.url, label: `${created.value.product}, ${amount}` };
 }

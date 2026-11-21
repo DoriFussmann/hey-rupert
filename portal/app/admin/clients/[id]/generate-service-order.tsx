@@ -20,6 +20,7 @@ import {
   mergeServiceOrder,
 } from "@/lib/service-order";
 import type { ServiceOrderSend } from "@/lib/types";
+import { StripeInvoicePicker } from "@/app/admin/stripe-invoice-picker";
 
 const inputClass =
   "mt-sm w-full rounded-md border bg-background px-sm py-sm text-body-sm normal-case tracking-normal text-body outline-none focus:border-primary";
@@ -148,9 +149,42 @@ export function GenerateServiceOrder({
     }
   }
 
-  async function onSend() {
+  // Push without opening the review: the same checks run first, and the
+  // review opens only when the Service Order doesn't match the client.
+  async function onPushDirect() {
     setLinkTouched(true);
-    if (!canSend) return;
+    if (!canReview) return;
+    if (!window.confirm(testPilot ? "Push the Service Order to the client portal?" : "Push the Service Order and Setup Fee invoice to the client portal and email the client?")) return;
+    setPending("send");
+    setError(null);
+    setSuccess(null);
+    setOverrideMismatch(false);
+    try {
+      const checked = await previewServiceOrderSend(clientId, draft, paymentLink);
+      if (!checked.ok) {
+        setError(checked.error);
+        setPending(null);
+        return;
+      }
+      const found = checked.preview ? previewMismatches(checked.preview, testPilot) : [];
+      if (!checked.preview || found.length > 0) {
+        setPreview(checked.preview ?? null);
+        setError("Not pushed: the Service Order doesn't match the client record. Check the review below.");
+        setPending(null);
+        return;
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to check the Service Order.");
+      setPending(null);
+      return;
+    }
+    setPending(null);
+    await onSend(true);
+  }
+
+  async function onSend(checked: boolean = false) {
+    setLinkTouched(true);
+    if (checked !== true && !canSend) return;
     setPending("send");
     setError(null);
     setSuccess(null);
@@ -274,6 +308,15 @@ export function GenerateServiceOrder({
                 : "Required. The client sees a Pay button that opens this link."}
             </span>
           </label>
+          <StripeInvoicePicker
+            clientId={clientId}
+            kind="setup_fee"
+            disabled={pending !== null}
+            onCreated={(url) => {
+              setPaymentLink(url);
+              setLinkTouched(true);
+            }}
+          />
         </div>
       ) : null}
 
@@ -301,18 +344,28 @@ export function GenerateServiceOrder({
                     : "—"}
               </td>
               <td className="px-lg py-md text-right">
-                <button
-                  type="button"
-                  onClick={onReview}
-                  disabled={!canReview}
-                  className={preview ? secondaryButton : primaryButton}
-                >
-                  {pending === "review"
-                    ? "Building preview…"
-                    : preview
-                      ? "Refresh preview"
-                      : "Review what the client gets"}
-                </button>
+                <span className="inline-flex flex-wrap justify-end gap-sm">
+                  <button
+                    type="button"
+                    onClick={onReview}
+                    disabled={!canReview}
+                    className={secondaryButton}
+                  >
+                    {pending === "review"
+                      ? "Building preview…"
+                      : preview
+                        ? "Refresh preview"
+                        : "Review what the client gets"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void onPushDirect()}
+                    disabled={!canReview}
+                    className={primaryButton}
+                  >
+                    {pending === "send" ? "Pushing…" : "Push to client"}
+                  </button>
+                </span>
               </td>
             </tr>
           </tbody>
@@ -331,7 +384,7 @@ export function GenerateServiceOrder({
           onOverride={setOverrideMismatch}
           canSend={canSend}
           pending={pending}
-          onSend={onSend}
+          onSend={() => void onSend()}
         />
       ) : null}
 
