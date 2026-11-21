@@ -21,6 +21,7 @@ import {
   reopenTheMatching,
 } from "@/app/admin/summary-actions";
 import type { Finalization } from "@/lib/match/summary/server";
+import { buildMatchProfile, matchProfileStatus } from "@/app/admin/match-actions";
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString("en-US", {
@@ -163,6 +164,35 @@ export function MatchingSteps({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [panelOpen, setPanelOpen] = useState(false);
+  // The company profile matching runs on: built from the confirmed intake
+  // (and the Company Brief) the first time Matching opens.
+  const [profile, setProfile] = useState<"checking" | "building" | "ready" | "no_intake" | "failed">("checking");
+  const [profileError, setProfileError] = useState<string | null>(null);
+
+  const ensureProfile = useCallback(async () => {
+    setProfileError(null);
+    setProfile("checking");
+    const status = await matchProfileStatus(clientId);
+    if (!status.ok) {
+      setProfileError(status.error);
+      setProfile("failed");
+      return;
+    }
+    if (status.exists) return setProfile("ready");
+    if (!status.intakeComplete) return setProfile("no_intake");
+    setProfile("building");
+    const built = await buildMatchProfile(clientId);
+    if (!built.ok) {
+      setProfileError(built.error);
+      setProfile("failed");
+      return;
+    }
+    setProfile("ready");
+  }, [clientId]);
+
+  useEffect(() => {
+    void ensureProfile();
+  }, [ensureProfile]);
 
   useEffect(() => {
     let live = true;
@@ -199,6 +229,29 @@ export function MatchingSteps({
   const errorLine = error ? (
     <p className="mt-sm text-body-sm text-error">{error}</p>
   ) : null;
+  if (profile !== "ready") {
+    return (
+      <div className="rounded-card border border-border bg-surface px-lg py-md text-body-sm">
+        {profile === "checking" ? (
+          <p className="text-muted">Loading…</p>
+        ) : profile === "building" ? (
+          <>
+            <p className="text-heading">Building the company profile from the confirmed intake and the Company Brief…</p>
+            <p className="mt-xs text-muted">The first time only. It takes about a minute; then Step 1 opens.</p>
+          </>
+        ) : profile === "no_intake" ? (
+          <p className="text-muted">Matching opens once the client confirms the intake: the company profile is built from it.</p>
+        ) : (
+          <>
+            <p className="text-error">The company profile couldn&apos;t be built: {profileError}</p>
+            <button type="button" className={`${secondaryButton} mt-sm`} onClick={() => void ensureProfile()}>
+              Try again
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
   if (fin === undefined)
     return <p className="text-body-sm text-muted">Loading…</p>;
 
