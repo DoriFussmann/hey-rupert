@@ -336,6 +336,11 @@ async function takeTurn(
     settings.topics,
   );
   const conflicts = mergeConflicts(interview.conflicts, turn.turn.conflicts, at);
+  // "I don't have a deck yet" said in the chat counts as the panel's button.
+  if (turn.turn.noDeck && view.files.length === 0 && !view.noDeck) {
+    const saved = await saveNoDeckNote(supabase, user.id, turn.turn.noDeck);
+    if (!saved.ok) console.error(`No-deck note from the chat not saved: ${saved.error}`);
+  }
   const sectorPick = answeredPick ?? (await pickAfterTurn(access, interview, turn.turn.sectorNames, at));
 
   // Guard against a second tab writing at the same time: only update if the

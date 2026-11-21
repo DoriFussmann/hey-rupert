@@ -643,13 +643,13 @@ export function IntakeExperience({
           <h2 id="intake-materials-title" className="text-h4">
             Company materials
           </h2>
-          <p className="mt-xs text-body-sm text-muted">
-            {materials.files.length > 0
-              ? `${materials.files.length} of ${MATERIAL_MAX_FILES} files shared`
-              : materials.noDeck
-                ? "No deck yet. That's fine."
-                : "Start with your pitch deck. Add a one-pager, financials or anything else useful."}
-          </p>
+          {materials.files.length > 0 || materials.noDeck ? (
+            <p className="mt-xs text-body-sm text-muted">
+              {materials.files.length > 0
+                ? `${materials.files.length} of ${MATERIAL_MAX_FILES} files shared`
+                : "No deck yet. That's fine."}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -679,7 +679,7 @@ export function IntakeExperience({
               setPanelDragging(false);
               if (canWrite) void onFiles(event.dataTransfer.files);
             }}
-            className={`flex flex-col items-center justify-center rounded-card border-2 border-dashed px-md py-lg text-center transition-colors duration-hover ${
+            className={`flex items-center gap-sm rounded-card border-2 border-dashed px-md py-sm transition-colors duration-hover ${
               canWrite ? "cursor-pointer" : "cursor-not-allowed opacity-60"
             } ${
               panelDragging
@@ -687,7 +687,7 @@ export function IntakeExperience({
                 : "border-border bg-background hover:border-primary/50"
             }`}
           >
-            <svg className="h-7 w-7 text-primary" viewBox="0 0 24 24" aria-hidden>
+            <svg className="h-6 w-6 shrink-0 text-primary" viewBox="0 0 24 24" aria-hidden>
               <path
                 fill="none"
                 stroke="currentColor"
@@ -697,17 +697,18 @@ export function IntakeExperience({
                 d="M12 16V4m0 0-4.5 4.5M12 4l4.5 4.5M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"
               />
             </svg>
-            <p className="mt-sm text-body-sm text-heading">
-              {uploading ? "Rupert is reading…" : (
-                <>
-                  Drop files here, or <span className="text-primary">browse</span>
-                </>
-              )}
-            </p>
-            <p className="mt-xs text-body-sm text-muted">
-              PDF works best. PowerPoint, Word, Excel, CSV and images too, up to{" "}
-              {formatBytes(MATERIAL_MAX_BYTES)} each.
-            </p>
+            <div className="min-w-0 text-left">
+              <p className="text-body-sm text-heading">
+                {uploading ? "Rupert is reading…" : (
+                  <>
+                    Drop files here, or <span className="text-primary">browse</span>
+                  </>
+                )}
+              </p>
+              <p className="text-label text-muted">
+                PDF best · PPT, Word, Excel, CSV, images · up to {formatBytes(MATERIAL_MAX_BYTES)}
+              </p>
+            </div>
           </div>
         </div>
       ) : null}
@@ -837,23 +838,6 @@ export function IntakeExperience({
           </p>
           <ul>{extraTopics.map(topicRow)}</ul>
         </>
-      ) : null}
-      {!completed && !reviewing ? (
-        <div className="border-t border-border px-lg py-md">
-          <button
-            type="button"
-            className={`${intakeDone ? primaryButton : secondaryButton} w-full`}
-            disabled={!intakeDone || pending !== null || readOnly}
-            onClick={() => void run("summary", requestIntakeSummary)}
-          >
-            {pending === "summary" ? "Writing your summary…" : "Review Summary"}
-          </button>
-          <p className="mt-sm text-center text-body-sm text-muted">
-            {intakeDone
-              ? "Check what Rupert gathered and confirm it. The extras are optional."
-              : "Opens once the essentials and your materials are in."}
-          </p>
-        </div>
       ) : null}
     </aside>
   );
@@ -1033,6 +1017,64 @@ export function IntakeExperience({
     </details>
   ) : null;
 
+  // Below the conversation: where the intake stands and the way on.
+  const doneStrip =
+    readOnly || reviewing || !(essentialsDone || completed) ? null : (
+      <div role="status" className="flex flex-wrap items-center gap-sm border-t border-primary/30 bg-primary-tint px-lg py-sm">
+        <CoverageIcon coverage={completed || intakeDone ? "covered" : "partial"} />
+        <p className="min-w-0 flex-1 text-body-sm text-heading">
+          {completed ? (
+            <>
+              <span className="font-medium">Your intake is complete.</span> You can still add a comment or new files here.
+            </>
+          ) : intakeDone ? (
+            <>
+              <span className="font-medium">You&apos;re done.</span> Review what Rupert gathered and confirm it
+              {extras.done ? "." : ". The extras are optional."}
+            </>
+          ) : (
+            <>
+              <span className="font-medium">The essentials are done.</span> One thing left: your deck, or tell Rupert you don&apos;t
+              have one yet.
+            </>
+          )}
+        </p>
+        <div className="flex flex-wrap gap-sm">
+          {completed ? (
+            <Link href="/portal" className={`${primaryButton} no-underline`}>
+              Back to your portal
+            </Link>
+          ) : intakeDone ? (
+            <button
+              type="button"
+              className={primaryButton}
+              disabled={pending !== null}
+              onClick={() => void run("summary", requestIntakeSummary)}
+            >
+              {pending === "summary" ? "Writing your summary…" : "Review Summary"}
+            </button>
+          ) : (
+            <>
+              <button type="button" className={primaryButton} disabled={!canWrite} onClick={() => fileRef.current?.click()}>
+                Share your deck
+              </button>
+              <button
+                type="button"
+                className={secondaryButton}
+                disabled={!canWrite}
+                onClick={() => {
+                  setNoDeckOpen(true);
+                  document.getElementById("intake-materials-title")?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }}
+              >
+                I don&apos;t have a deck yet
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+
   const comeBackLine =
     "You can come back any time to add a comment here or share new materials. Rupert's team sees everything you add.";
 
@@ -1050,67 +1092,23 @@ export function IntakeExperience({
             </span>{" "}
             Confirmed{completedAt ? ` on ${formatDate(completedAt)}` : ""}. {comeBackLine}
           </p>
-          {materials.submitted ? null : (
-            <Link
-              href="/portal/materials"
-              className={`${primaryButton} mt-sm no-underline`}
-            >
-              Share Materials
+          <div className="mt-sm flex flex-wrap gap-sm">
+            <Link href="/portal" className={`${primaryButton} no-underline`}>
+              Back to your portal
             </Link>
-          )}
+            {materials.submitted ? null : (
+              <Link
+                href="/portal/materials"
+                className={`${secondaryButton} no-underline`}
+              >
+                Share Materials
+              </Link>
+            )}
+          </div>
         </div>
       </div>
       {summaryDetails}
       <ConflictList conflicts={conflicts} />
-    </section>
-  ) : essentialsDone ? (
-    <section
-      role="status"
-      className="mb-lg flex flex-wrap items-start gap-md rounded-card border border-primary/30 bg-primary-tint px-lg py-md"
-    >
-      <CoverageIcon coverage={intakeDone ? "covered" : "partial"} />
-      <div className="min-w-0 flex-1">
-        <p className="text-body-sm text-heading">
-          {!intakeDone ? (
-            <>
-              <span className="font-medium">The essentials are done.</span>{" "}
-              One thing left: share your deck in the materials panel, or tell
-              Rupert you don&apos;t have one yet.
-            </>
-          ) : (
-            <>
-              <span className="font-medium">You&apos;re done. Your intake is 100% complete.</span>{" "}
-              Rupert has everything he needs. Review your summary and confirm it.
-              {extras.done
-                ? ""
-                : " The extras are optional: a few more minutes on them can make your campaign sharper."}{" "}
-              {comeBackLine}
-            </>
-          )}
-        </p>
-        {intakeDone ? (
-          <div className="mt-sm flex flex-wrap items-center gap-md">
-            <button
-              type="button"
-              className={primaryButton}
-              disabled={readOnly || pending !== null}
-              onClick={() => void run("summary", requestIntakeSummary)}
-            >
-              {pending === "summary" ? "Writing your summary…" : "Review Summary"}
-            </button>
-            {!extras.done ? (
-              <button
-                type="button"
-                className="text-body-sm text-primary hover:text-primary-hover disabled:opacity-40"
-                disabled={readOnly || limitReached}
-                onClick={() => inputRef.current?.focus()}
-              >
-                Add the extras
-              </button>
-            ) : null}
-          </div>
-        ) : null}
-      </div>
     </section>
   ) : null;
 
@@ -1218,6 +1216,7 @@ export function IntakeExperience({
               onStillNone={() => void run("sub_sector", subSectorStillNone)}
             />
           ) : null}
+          {doneStrip}
           <form onSubmit={onSend} className="border-t border-border px-lg py-md">
             {canWrite && messages.length > 0 && messages[messages.length - 1].role === "assistant" ? (
               <div className="mb-sm flex flex-wrap gap-xs" aria-label="Quick replies">
