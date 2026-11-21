@@ -135,3 +135,10 @@ test("copy by source: an empty follow-up isn't an email; Plan tiers as numbers",
   assert.equal(emailsPerContact([two, { slot: "reserve" as const, emails: [{ subject: "", body: "a" }, { subject: "", body: "b" }, { subject: "", body: "c" }] }]), 2);
   assert.equal(emailsPerContact([]), 3, "nothing built: the three-email default");
 });
+
+test("an approved two-email contact stays approved when read back padded to three", () => {
+  const two = [{ subject: "S", body: "First" }, { subject: "", body: "Follow-up" }];
+  const padded = [...two, { subject: "", body: "" }];
+  assert.equal(emailsHash(padded), emailsHash(two));
+  assert.notEqual(emailsHash([...two, { subject: "", body: "Third" }]), emailsHash(two));
+});
