@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { plainEmailHtml } from "./email-html.ts";
+import { plainEmailHtml, withoutBoxMarks } from "./email-html.ts";
 
 const body = (html: string) => html.replace(/^.*?<body[^>]*>/, "").replace(/<\/body><\/html>$/, "").replace(/ style="[^"]*"/g, "");
 
@@ -29,4 +29,14 @@ test("text is escaped; punctuation after a link stays outside it", () => {
 test('a "[Label] → link" line on its own becomes a button', () => {
   const html = plainEmailHtml("Ready.\n\n[Review your investor matching] → https://www.heyrupert.com/portal\n\nDori");
   assert.equal(body(html), '<p>Ready.</p><p><a href="https://www.heyrupert.com/portal">Review your investor matching</a></p><p>Dori</p>');
+});
+
+test("a /// section is framed in the HTML and the marks leave the plain text", () => {
+  const text = "Hi Ana,\n\nYour portal link is below.\n\n///\nYour Rupert Portal\n\nSet your password here:\nhttps://portal.heyrupert.com/setup?t=abc\n///\n\nThanks,\nDori";
+  const html = plainEmailHtml(text);
+  assert.equal((html.match(/<div style="[^"]*border:1px solid/g) ?? []).length, 1);
+  assert.match(html, /<div[^>]*><p[^>]*>Your Rupert Portal<\/p><p[^>]*>Set your password here:<br><a href="https:\/\/portal\.heyrupert\.com\/setup\?t=abc"/);
+  assert.doesNotMatch(html, /\/\/\//);
+  assert.equal(withoutBoxMarks(text), "Hi Ana,\n\nYour portal link is below.\n\nYour Rupert Portal\n\nSet your password here:\nhttps://portal.heyrupert.com/setup?t=abc\n\nThanks,\nDori");
+  assert.equal(withoutBoxMarks("No box here.\n\nhttps://a.co/x///y"), "No box here.\n\nhttps://a.co/x///y", "only a line that is just ///");
 });

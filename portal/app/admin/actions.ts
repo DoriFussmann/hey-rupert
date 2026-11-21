@@ -33,6 +33,9 @@ import {
 } from "@/lib/form-fields";
 import { clientDisplayName } from "@/lib/format";
 import { sendAdminEmail, type EmailResult } from "@/lib/email";
+import { sendClientEmail } from "@/lib/email-log";
+import { plainEmailHtml, withoutBoxMarks } from "@/lib/email-html";
+import { WELCOME_EMAIL_KEY } from "@/lib/email-templates";
 import { linkProspectToClient } from "@/lib/prospects/server";
 import { advanceStage, advanceToKickoff } from "@/lib/kickoff";
 import { DEFAULT_NDA } from "@/lib/nda";
@@ -1699,4 +1702,48 @@ export async function testClaudeConnection(): Promise<
     reply: String(result.input.reply ?? "").trim() || "(empty reply)",
     model: process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5",
   };
+}
+
+export type SetupEmailKind = "welcome" | "reset";
+
+/**
+ * Sends the welcome or set-password email to the client from the portal's
+ * address (EMAIL_FROM), exactly as Rupert edited it, and records it in the
+ * client's email history. Never tracked: it carries a one-time login link.
+ * The address is the client's login email on file, never one from the page.
+ */
+export async function sendSetupEmail(
+  clientId: string,
+  kind: SetupEmailKind,
+  subject: string,
+  body: string,
+): Promise<{ ok: true; to: string } | { ok: false; error: string }> {
+  const access = await requireAdminService();
+  if (!access.ok) return access;
+  const cleanSubject = String(subject ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
+  const text = String(body ?? "").trim().slice(0, 20000);
+  if (!cleanSubject || !text) return { ok: false, error: "Write the subject and the email first." };
+  if (!/https?:\/\/\S+/.test(text)) return { ok: false, error: "The email has no set-password link. Put it back before sending." };
+
+  const { data: client, error } = await access.supabase
+    .from("clients")
+    .select("id, email, is_test_pilot")
+    .eq("id", String(clientId))
+    .maybeSingle();
+  if (error) return { ok: false, error: error.message };
+  if (!client) return { ok: false, error: "Client not found." };
+  const to = String(client.email ?? "").trim();
+  if (!to || /@example\.com$/i.test(to)) return { ok: false, error: "This client has no email address to send to." };
+
+  const sent = await sendClientEmail(access.supabase, {
+    clientId: String(client.id),
+    kind: "manual",
+    templateKey: kind === "welcome" ? WELCOME_EMAIL_KEY : "password_reset",
+    to: [to],
+    subject: cleanSubject,
+    text: withoutBoxMarks(text),
+    html: plainEmailHtml(text),
+  });
+  revalidatePath(`/admin/clients/${client.id}`);
+  return sent.ok ? { ok: true, to } : { ok: false, error: sent.reason };
 }

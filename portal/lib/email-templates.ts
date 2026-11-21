@@ -261,8 +261,8 @@ export const WELCOME_TOKENS_LIST: readonly EmailToken[] = [
 ];
 
 /**
- * The welcome email Rupert copies and sends himself after adding a client:
- * never sent by the portal. The set-password details are filled in.
+ * The welcome email for a new client, with the set-password details filled
+ * in. Rupert sends it from the admin (Send to client) or copies it.
  */
 export const QUESTION_ANSWERED_KEY = "client:question_answered";
 
@@ -290,7 +290,7 @@ const WELCOME_TEMPLATE: EmailTemplateDefinition = {
   group: "client",
   title: "Welcome email (new client)",
   trigger:
-    "Drafted when you add a client, and again from Welcome Email on the client page. You copy it and send it yourself; the portal never sends it.",
+    "Drafted when you add a client, and again from Welcome Email on the client page. Edit it there, then Send to client (from the portal's address, never tracked) or copy it and send it yourself.",
   subject: "Your Rupert Portal & Statement of Work",
   body: [
     "{greeting}",

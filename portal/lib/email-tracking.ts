@@ -15,6 +15,8 @@ const UNTRACKED_KEYS = new Set([
   "nudge:service_order",
   "nudge:nda",
   "viewer_welcome",
+  "welcome",
+  "password_reset",
 ]);
 
 export function isTrackedEmail(templateKey: string | null | undefined) {
