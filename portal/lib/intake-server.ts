@@ -484,7 +484,8 @@ export async function nextInterviewTurn(
     ),
     messages: turns,
     tool: RESPOND_TOOL,
-    maxTokens: files ? 4000 : 1024,
+    // A reply plus a note for every topic: a long founder message needs the room.
+    maxTokens: files ? 4000 : 2500,
     timeoutMs: files ? FILES_TURN_TIMEOUT_MS : undefined,
     // Last resort, after callClaudeTool's forced-tool retry has failed too:
     // the plain-text answer is still shown to the client, but topic coverage
