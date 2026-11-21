@@ -216,7 +216,11 @@ export function hasBlockingIssues(emails: CopyEmail[], maxWords: number) {
 
 /** A stable fingerprint of the emails: an approval holds only for the text approved. */
 export function emailsHash(emails: CopyEmail[]) {
-  const textValue = JSON.stringify(emails.map((email) => [email.subject.trim(), email.body.trim()]));
+  // Trailing empty emails don't count: copy by source has two, and the
+  // stored list is read back padded to three.
+  const pairs = emails.map((email) => [email.subject.trim(), email.body.trim()]);
+  while (pairs.length && !pairs[pairs.length - 1][0] && !pairs[pairs.length - 1][1]) pairs.pop();
+  const textValue = JSON.stringify(pairs);
   let hash = 0x811c9dc5;
   for (let i = 0; i < textValue.length; i += 1) {
     hash ^= textValue.charCodeAt(i);
