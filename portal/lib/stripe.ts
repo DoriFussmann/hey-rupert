@@ -193,3 +193,109 @@ export async function voidInvoice(invoiceId: string): Promise<StripeResult<objec
   const voided = await stripe<StripeInvoice>("POST", `/invoices/${invoiceId}/void`);
   return voided.ok ? { ok: true, value: {} } : voided;
 }
+
+/** A price from the Stripe product catalog, for the admin's invoice picker. */
+export type InvoicePrice = {
+  priceId: string;
+  product: string;
+  amount: number;
+  currency: string;
+  /** "month", "year" … for recurring prices; null for one-time. */
+  interval: string | null;
+};
+
+type StripePrice = {
+  id: string;
+  active: boolean;
+  unit_amount: number | null;
+  currency: string;
+  recurring: { interval: string } | null;
+  product: { id: string; name: string; active: boolean; deleted?: boolean } | string;
+};
+
+/** Active prices with a fixed amount, of active products, by product name. */
+export async function listInvoicePrices(): Promise<StripeResult<InvoicePrice[]>> {
+  const list = await stripe<{ data: StripePrice[] }>("GET", "/prices", {
+    active: "true",
+    limit: "100",
+    "expand[]": "data.product",
+  });
+  if (!list.ok) return list;
+  const prices = list.value.data
+    .filter((p) => p.unit_amount != null && typeof p.product === "object" && p.product.active && !p.product.deleted)
+    .map((p) => ({
+      priceId: p.id,
+      product: (p.product as { name: string }).name,
+      amount: p.unit_amount as number,
+      currency: p.currency,
+      interval: p.recurring?.interval ?? null,
+    }))
+    .sort((a, b) => a.product.localeCompare(b.product) || a.amount - b.amount);
+  return { ok: true, value: prices };
+}
+
+/**
+ * Creates and finalizes a one-off invoice for the client with one line: the
+ * chosen catalog price (its product name and amount; a recurring price is
+ * billed once, as this month's fee). Stripe does not email it; the portal
+ * shows the link. Returns the hosted link.
+ */
+export async function createPriceInvoice(input: {
+  clientId: string;
+  email: string;
+  name: string;
+  priceId: string;
+  /** "setup_fee" or "monthly", kept on the invoice's metadata. */
+  kind: string;
+  /** One per click, so a retry of the same click never bills twice. */
+  attempt: string;
+}): Promise<StripeResult<{ id: string; url: string; amount: number; currency: string; product: string }>> {
+  const price = await stripe<StripePrice>("GET", `/prices/${encodeURIComponent(input.priceId)}`, { "expand[]": "product" });
+  if (!price.ok) return price;
+  const product = typeof price.value.product === "object" ? price.value.product.name : "Hey Rupert";
+  if (!price.value.active || price.value.unit_amount == null) return { ok: false, error: "That Stripe price is inactive or has no fixed amount." };
+
+  const customer = await findOrCreateCustomer(input);
+  if (!customer.ok) return customer;
+
+  const key = `${input.kind}-${input.clientId}-${input.attempt}`;
+  const invoice = await stripe<StripeInvoice>(
+    "POST",
+    "/invoices",
+    {
+      customer: customer.value,
+      collection_method: "send_invoice",
+      days_until_due: String(DAYS_UNTIL_DUE),
+      auto_advance: "false",
+      pending_invoice_items_behavior: "exclude",
+      description: `Hey Rupert: ${product}`,
+      "metadata[client_id]": input.clientId,
+      "metadata[kind]": input.kind,
+      "metadata[price_id]": input.priceId,
+    },
+    `${key}-invoice`,
+  );
+  if (!invoice.ok) return invoice;
+
+  const item = await stripe<{ id: string }>(
+    "POST",
+    "/invoiceitems",
+    {
+      customer: customer.value,
+      invoice: invoice.value.id,
+      amount: String(price.value.unit_amount),
+      currency: price.value.currency,
+      description: product,
+    },
+    `${key}-item`,
+  );
+  if (!item.ok) return item;
+
+  const finalized = await stripe<StripeInvoice>("POST", `/invoices/${invoice.value.id}/finalize`, {}, `${key}-finalize`);
+  if (!finalized.ok) return finalized;
+  if (!finalized.value.hosted_invoice_url) return { ok: false, error: "Stripe did not return a payment link for the invoice." };
+  return {
+    ok: true,
+    value: { id: finalized.value.id, url: finalized.value.hosted_invoice_url, amount: price.value.unit_amount, currency: price.value.currency, product },
+  };
+}

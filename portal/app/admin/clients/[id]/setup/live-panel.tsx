@@ -21,6 +21,7 @@ import {
   startWave2Action,
 } from "@/app/admin/outreach-live-actions";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
+import { StripeInvoicePicker } from "@/app/admin/stripe-invoice-picker";
 import { AutoTextarea } from "@/components/email-body-field";
 import type { LiveSettings } from "@/lib/outreach/live";
 import type { LiveState } from "@/lib/outreach/live-server";
@@ -302,6 +303,18 @@ export function LivePanel({ clientId }: { clientId: string }) {
                 First monthly invoice (Stripe invoice link)
                 <input className={`${inputClass} mt-xs`} value={invoice} placeholder="https://invoice.stripe.com/…" onChange={(e) => setInvoice(e.target.value)} />
               </label>
+              {!state.invoice.paidAt ? (
+                <StripeInvoicePicker
+                  clientId={clientId}
+                  kind="monthly"
+                  disabled={busy}
+                  onCreated={(url) => {
+                    setInvoice(url);
+                    // A drafted email carries the old link: draft it again.
+                    setEmail(null);
+                  }}
+                />
+              ) : null}
               {email ? (
                 <div className="grid gap-sm rounded-card border border-border px-md py-md">
                   <p className="text-label uppercase tracking-label text-muted">Email to the client</p>
