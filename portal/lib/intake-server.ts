@@ -359,6 +359,11 @@ const RESPOND_TOOL = {
           required: ["id", "topic_id", "file", "file_says", "founder_says", "status", "resolution"],
         },
       },
+      no_deck: {
+        type: "string",
+        description:
+          "Only when the founder said in this message that they don't have a pitch deck yet: their reason in a few words, or \"No deck yet\" when they gave none. This records it, exactly as the \"I don't have a deck yet\" button does, so never tell them it is recorded unless you fill this. Empty otherwise.",
+      },
       sector_names: {
         type: "array",
         description:
@@ -379,6 +384,8 @@ export type InterviewTurn = {
   conflicts: unknown;
   /** The sector names the founder chose in this turn (empty when they didn't answer that). */
   sectorNames: string[];
+  /** The founder said in this turn they have no deck yet: their reason (empty otherwise). */
+  noDeck: string;
 };
 
 function readTurn(input: unknown): InterviewTurn | null {
@@ -389,6 +396,7 @@ function readTurn(input: unknown): InterviewTurn | null {
     files?: unknown;
     conflicts?: unknown;
     sector_names?: unknown;
+    no_deck?: unknown;
   };
   const reply = typeof value.reply === "string" ? value.reply.trim() : "";
   if (!reply) return null;
@@ -420,7 +428,8 @@ function readTurn(input: unknown): InterviewTurn | null {
   const sectorNames = Array.isArray(value.sector_names)
     ? value.sector_names.filter((x): x is string => typeof x === "string").map((x) => x.trim().slice(0, 80)).filter(Boolean).slice(0, 5)
     : [];
-  return { reply, topics, fileFacts, conflicts: value.conflicts ?? [], sectorNames };
+  const noDeck = typeof value.no_deck === "string" ? value.no_deck.trim().slice(0, 500) : "";
+  return { reply, topics, fileFacts, conflicts: value.conflicts ?? [], sectorNames, noDeck };
 }
 
 // Reading files takes longer than a chat reply.
