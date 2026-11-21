@@ -369,6 +369,7 @@ export function IntakeExperience({
   const [error, setError] = useState<string | null>(null);
   const [aiUnavailable, setAiUnavailable] = useState(false);
   const [answers, setAnswers] = useState<Record<string, string>>({});
+  const [editingTopic, setEditingTopic] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const startedRef = useRef(false);
@@ -938,47 +939,74 @@ export function IntakeExperience({
   }
 
   if (reviewing && interview?.summary) {
+    const summary = interview.summary;
     return (
       <div className="grid gap-lg lg:grid-cols-[minmax(0,1fr)_320px]">
-        <section className="rounded-card border border-border bg-surface">
-          <div className="flex items-center gap-md border-b border-border px-lg py-lg">
-            <RupertAvatar size={48} />
-            <div>
-              <h2 className="text-h4">Here is what I gathered</h2>
-              <p className="mt-xs text-body-sm text-muted">
-                Edit anything that is off, then confirm. This is what Rupert
-                will work from.
+        <section className="flex flex-col rounded-card border border-border bg-surface">
+          <div className="sow-compact max-h-[min(74vh,860px)] overflow-y-auto overscroll-contain px-lg py-lg lg:px-xl">
+            <div className="sow-markdown max-w-none">
+              <h1>Intake Summary</h1>
+              <p className="text-muted">
+                What Rupert gathered{firstName ? ` from you, ${firstName}` : ""}. It is what he works from for your campaign. Read it
+                through, fix anything that is off, then confirm.
               </p>
+              {summary.map((item) => {
+                const value = answers[item.topic_id] ?? item.answer;
+                const editing = editingTopic === item.topic_id;
+                return (
+                  <div key={item.topic_id}>
+                    <h2 className="flex items-baseline justify-between gap-md">
+                      <span>{item.title}</span>
+                      {!readOnly ? (
+                        <button
+                          type="button"
+                          className="text-body-sm font-normal text-primary hover:text-primary-hover disabled:opacity-40"
+                          disabled={pending !== null}
+                          onClick={() => setEditingTopic(editing ? null : item.topic_id)}
+                        >
+                          {editing ? "Done" : "Edit"}
+                        </button>
+                      ) : null}
+                    </h2>
+                    {editing ? (
+                      <textarea
+                        aria-label={item.title}
+                        autoFocus
+                        className="mt-sm min-h-[120px] w-full resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary"
+                        value={value}
+                        maxLength={INTAKE_LIMITS.messageMaxChars}
+                        onChange={(event) =>
+                          setAnswers((current) => ({
+                            ...current,
+                            [item.topic_id]: event.target.value,
+                          }))
+                        }
+                      />
+                    ) : (
+                      value
+                        .split(/\n{2,}/)
+                        .filter((paragraph) => paragraph.trim())
+                        .map((paragraph, index) => (
+                          <p key={index} className="whitespace-pre-wrap">
+                            {paragraph.trim()}
+                          </p>
+                        ))
+                    )}
+                  </div>
+                );
+              })}
             </div>
+            <ConflictList conflicts={conflicts} />
           </div>
-          <div className="divide-y divide-border">
-            {interview.summary.map((item) => (
-              <label key={item.topic_id} className="block px-lg py-md">
-                <span className="text-label uppercase tracking-label text-muted">
-                  {item.title}
-                </span>
-                <textarea
-                  className="mt-sm min-h-[88px] w-full resize-y rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none focus:border-primary disabled:opacity-60"
-                  value={answers[item.topic_id] ?? item.answer}
-                  maxLength={INTAKE_LIMITS.messageMaxChars}
-                  disabled={readOnly || pending !== null}
-                  onChange={(event) =>
-                    setAnswers((current) => ({
-                      ...current,
-                      [item.topic_id]: event.target.value,
-                    }))
-                  }
-                />
-              </label>
-            ))}
-          </div>
-          <ConflictList conflicts={conflicts} />
           <div className="flex flex-wrap items-center gap-sm border-t border-border px-lg py-md">
             <button
               type="button"
               className={primaryButton}
               disabled={readOnly || pending !== null}
-              onClick={() => void onConfirm()}
+              onClick={() => {
+                setEditingTopic(null);
+                void onConfirm();
+              }}
             >
               {pending === "confirm" ? "Confirming…" : "Confirm intake"}
             </button>
@@ -1006,14 +1034,23 @@ export function IntakeExperience({
       <summary className="cursor-pointer px-md py-sm text-body-sm text-primary hover:text-primary-hover">
         View Your Summary
       </summary>
-      <dl className="divide-y divide-border border-t border-border px-md">
-        {interview.summary.map((item) => (
-          <div key={item.topic_id} className="py-sm">
-            <dt className="text-label uppercase tracking-label text-muted">{item.title}</dt>
-            <dd className="mt-xs whitespace-pre-wrap text-body-sm text-body">{item.answer}</dd>
-          </div>
-        ))}
-      </dl>
+      <div className="sow-compact border-t border-border px-lg py-md">
+        <div className="sow-markdown max-w-none">
+          {interview.summary.map((item) => (
+            <div key={item.topic_id}>
+              <h2>{item.title}</h2>
+              {item.answer
+                .split(/\n{2,}/)
+                .filter((paragraph) => paragraph.trim())
+                .map((paragraph, index) => (
+                  <p key={index} className="whitespace-pre-wrap">
+                    {paragraph.trim()}
+                  </p>
+                ))}
+            </div>
+          ))}
+        </div>
+      </div>
     </details>
   ) : null;
 
