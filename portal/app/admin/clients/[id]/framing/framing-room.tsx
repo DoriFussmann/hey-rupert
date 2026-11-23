@@ -23,7 +23,7 @@ import {
 } from "@/app/admin/brief-actions";
 import { inputClass, primaryButton, secondaryButton } from "@/app/admin/clients/[id]/setup/shared";
 import { createSetupUpload } from "@/app/admin/agent-actions";
-import { draftSetupEmail, saveSetupDraft, sendSetupDocument } from "@/app/admin/setup-actions";
+import { applyNarrativeChanges, draftSetupEmail, saveSetupDraft, sendSetupDocument } from "@/app/admin/setup-actions";
 import { EmailBodyField } from "@/components/email-body-field";
 
 /** Text written as "- " lines shows as a bullet list; anything else as a paragraph. */
@@ -1158,7 +1158,7 @@ function SendStage({
   const [body, setBody] = useState(stored?.body ?? "");
   const drafted = Boolean(subject.trim() && body.trim());
   const allChecks = [...checks, { label: "Email drafted", done: ready && drafted }];
-  const [pending, setPending] = useState<"draft" | "send" | null>(null);
+  const [pending, setPending] = useState<"draft" | "send" | "apply" | null>(null);
   const [message, setMessage] = useState<Notice>(null);
   useEffect(() => {
     setSubject(stored?.subject ?? "");
@@ -1212,6 +1212,37 @@ function SendStage({
       router.refresh();
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to send." });
+    } finally {
+      setPending(null);
+    }
+  }
+
+  const changesAsked = narrative.status === "changes_requested";
+
+  async function onApply() {
+    const withEmail = drafted;
+    const question = withEmail
+      ? `Save this as the new version, mark it confirmed (no second confirmation), email ${clientEmail || "the client"} and open matching?`
+      : "Save this as the new version and mark it confirmed (no second confirmation), without an email, and open matching?";
+    if (!window.confirm(question)) return;
+    setPending("apply");
+    setMessage(null);
+    try {
+      const result = await applyNarrativeChanges(clientId, fullDraft());
+      if (!result.ok) {
+        setMessage({ kind: "error", text: result.error });
+        return;
+      }
+      const mail = result.clientEmail;
+      setMessage({
+        kind: mail && !mail.ok ? "error" : "ok",
+        text:
+          `Version ${result.version} is confirmed and matching is open.` +
+          (mail ? (mail.ok ? " The client was emailed." : ` The email failed: ${mail.reason}`) : " No email was sent."),
+      });
+      router.refresh();
+    } catch (err) {
+      setMessage({ kind: "error", text: err instanceof Error ? err.message : "Unable to apply the changes." });
     } finally {
       setPending(null);
     }
@@ -1320,6 +1351,17 @@ function SendStage({
         >
           {pending === "send" ? "Sending…" : sent ? "Push New Version & Send" : "Push to Client Portal & Send"}
         </button>
+        {changesAsked ? (
+          <button
+            type="button"
+            className={secondaryButton}
+            disabled={!ready || pending !== null}
+            title="For fine-tuning: saves your edits as the confirmed version and opens matching, without asking the client to confirm again."
+            onClick={() => void onApply()}
+          >
+            {pending === "apply" ? "Applying…" : "Apply Changes & Move to Matching"}
+          </button>
+        ) : null}
       </div>
     </section>
   );
