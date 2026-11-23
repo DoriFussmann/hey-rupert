@@ -1251,7 +1251,7 @@ function SendStage({
   const locked = !ready || pending !== null;
 
   return (
-    <section className={`${card} px-lg py-md`}>
+    <section id="brief-send" className={`${card} scroll-mt-lg px-lg py-md`}>
       <StageHead
         n={5}
         title="Send to Client"

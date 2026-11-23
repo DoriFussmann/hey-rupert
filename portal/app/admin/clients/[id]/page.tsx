@@ -293,11 +293,24 @@ export default async function ClientDetailPage({
     if (service) {
       briefData = await loadBriefPanel(service, client.id);
       const framingRow = setupSource.setup_steps.find((row) => row.step === "framing");
-      const briefDone = (framingRow?.version ?? 0) > 0;
+      // The brief (with the narrative's Send to Client stage) stays open until
+      // the client confirms the narrative: when they ask for changes it is
+      // Rupert's move again, so it comes back to the top.
+      const framingSent = (framingRow?.version ?? 0) > 0;
+      const briefDone = framingRow?.status === "confirmed";
+      const briefTurn = briefDone
+        ? "none"
+        : framingSent
+          ? framingRow?.status === "changes_requested"
+            ? "admin"
+            : "client"
+          : briefData.canBuild
+            ? "admin"
+            : "none";
       panels.push({
         key: "brief",
         done: briefDone,
-        turn: briefDone || !briefData.canBuild ? "none" : "admin",
+        turn: briefTurn,
         node: <BriefPanel clientId={client.id} data={briefData} claudeReady={claudeReady} clientEmail={client.email ?? client.founder_email ?? ""} founderName={[client.first_name, client.last_name].map((part) => part?.trim()).filter(Boolean).join(" ") || client.founder_name?.trim() || ""} />,
       });
     }
@@ -429,7 +442,16 @@ export default async function ClientDetailPage({
       <NextAction
         clientId={client.id}
         turn={nextActionTurn}
-        targetId={currentPanel ? "current-step" : turn.owner === "none" ? null : "section-progress"}
+        targetId={
+          currentPanel?.key === "brief" &&
+          (setupSource.setup_steps.find((row) => row.step === "framing")?.version ?? 0) > 0
+            ? "brief-send"
+            : currentPanel
+              ? "current-step"
+              : turn.owner === "none"
+                ? null
+                : "section-progress"
+        }
         testPilot={
           client.is_test_pilot
             ? {
