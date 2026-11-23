@@ -5,7 +5,12 @@ import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { intakeFileProblem } from "@/lib/intake";
-import { attachMaterialFile, loadMaterialsView, safeFileName } from "@/lib/materials-server";
+import {
+  attachMaterialFile,
+  detachMaterialFile,
+  loadMaterialsView,
+  safeFileName,
+} from "@/lib/materials-server";
 import { MATERIALS_BUCKET, MATERIAL_MAX_FILES, type MaterialFile } from "@/lib/setup";
 import { createServiceClient } from "@/lib/supabase/admin";
 
@@ -76,4 +81,33 @@ export async function registerAdminMaterialFile(
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/portal", "layout");
   return { ok: true, file: attached.file };
+}
+
+/**
+ * Rupert removes a file from the client's company materials (any file,
+ * including the founder's own, e.g. a deck replaced by a newer version).
+ * The client no longer sees it, and the next analysis won't read it.
+ */
+export async function removeAdminMaterialFile(
+  clientId: string,
+  path: string,
+): Promise<Result<{ removed: string }>> {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const filePath = String(path ?? "");
+  if (!filePath.startsWith(`${clientId}/`) || filePath.includes("..")) {
+    return { ok: false, error: "That file does not belong to this client." };
+  }
+  const detached = await detachMaterialFile(access.supabase, clientId, filePath);
+  if (!detached.ok) return detached;
+  // A LinkedIn PDF is also listed on the brief; keep the two in step.
+  await access.supabase
+    .from("brief_files")
+    .delete()
+    .eq("client_id", clientId)
+    .eq("kind", "linkedin")
+    .eq("path", filePath);
+  revalidatePath(`/admin/clients/${clientId}`);
+  revalidatePath("/portal", "layout");
+  return { ok: true, removed: detached.file.name };
 }

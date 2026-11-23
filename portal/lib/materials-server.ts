@@ -156,6 +156,45 @@ export async function detachAdminMaterialFile(
   return { ok: true };
 }
 
+/**
+ * Rupert takes any file out of the client's materials (draft and, once
+ * submitted, what Rupert has), e.g. an old deck replaced by a newer one.
+ * The stored object is kept, so a removal can be undone from storage.
+ */
+export async function detachMaterialFile(
+  supabase: ServiceClient,
+  clientId: string,
+  path: string,
+): Promise<{ ok: true; file: MaterialFile } | { ok: false; error: string }> {
+  const loaded = await loadOrCreateMaterials(supabase, clientId);
+  if (!loaded.ok) return loaded;
+  const row = loaded.row;
+  const submitted = row.status === "submitted";
+  const shown = asMaterials(submitted ? row.published : row.draft);
+  const file = shown.files.find((item) => item.path === path);
+  if (!file) return { ok: false, error: "That file is no longer in the materials." };
+  const without = (value: unknown): MaterialsPayload => {
+    const payload = asMaterials(value);
+    return { ...payload, files: payload.files.filter((item) => item.path !== path) };
+  };
+  const { data, error } = await supabase
+    .from("setup_steps")
+    .update({
+      draft: without(row.draft),
+      ...(submitted ? { published: without(row.published) } : {}),
+      updated_at: nowIso(),
+    })
+    .eq("client_id", clientId)
+    .eq("step", "materials")
+    .eq("updated_at", row.updated_at)
+    .select("client_id");
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  if (!data || data.length === 0) {
+    return { ok: false, error: "The materials changed meanwhile. Refresh and try again." };
+  }
+  return { ok: true, file };
+}
+
 /** Records the founder's reason for having no deck yet, on the draft. */
 export async function saveNoDeckNote(
   supabase: ServiceClient,
