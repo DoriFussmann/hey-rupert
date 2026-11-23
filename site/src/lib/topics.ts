@@ -44,6 +44,15 @@ export const TOPICS = [
     "h1": "Pitch decks",
     "description": "How to build a pitch deck investors read: slide-by-slide templates, real examples, seed deck guidance, and how the Sequoia, YC and Kawasaki formats compare.",
     "intro": "How to build a pitch deck that gets read: the slides investors expect, a slide-by-slide template, real examples, and how the main deck formats compare."
+  },
+  {
+    "name": "startup fundraising process",
+    "slug": "fundraising-process",
+    "pillar": "startup-fundraising-process",
+    "title": "Startup Fundraising Process: Guides for Founders | Rupert",
+    "h1": "The fundraising process",
+    "description": "How a startup raise runs from start to close: timelines, CEO time, fundraising while running the company, and turning investor interest into momentum.",
+    "intro": "How a raise actually runs, from preparation to close: how long it takes, how much of the CEO's time it needs, how to keep the company moving meanwhile, and how to turn replies into momentum."
   }
 ] as const;
 
