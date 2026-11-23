@@ -244,25 +244,63 @@ function FixRecord({ row, note, busy, options, onFix }: { row: CheckRow; note: s
 }
 
 /** A fund in the database but not in the shortlist: why, and the decision. */
+/** What the admin ticked or wrote for one fund not in the shortlist, before Submit all. */
+type ListAnswer = "bring_back" | "leave_out" | "wrong" | "remove" | "default";
+type ListPick = { answer?: ListAnswer; note?: string; lesson?: boolean };
+
+/** The answer already saved for the fund (none while it is still on its default). */
+const savedAnswer = (row: CheckRow): ListAnswer | undefined => (row.defaulted ? undefined : row.action ?? undefined);
+
+/** The change a fund's ticks and note stand for; null when nothing differs from what is saved. */
+function listPatch(row: CheckRow, pick: ListPick | undefined): Parameters<typeof decideOnInvestor>[2] | null {
+  if (!pick) return null;
+  const patch: NonNullable<Parameters<typeof decideOnInvestor>[2]> = {};
+  if (pick.answer === "remove") patch.removed = true;
+  else if (pick.answer === "wrong") patch.firmId = null;
+  else if (pick.answer === "default") patch.action = null;
+  else if (pick.answer && pick.answer !== savedAnswer(row)) patch.action = pick.answer;
+  if (pick.note !== undefined && pick.note !== (row.decision?.note ?? "")) patch.note = pick.note;
+  if (pick.lesson !== undefined && pick.lesson !== (row.decision?.lesson ?? false)) patch.lesson = pick.lesson;
+  return Object.keys(patch).length ? patch : null;
+}
+
 function NotInListRow({
   row,
   busy,
   onDecide,
+  pick,
+  onPick,
   fixOptions,
   onFix,
 }: {
   row: CheckRow;
   busy: boolean;
   onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  pick: ListPick | undefined;
+  onPick: (pick: ListPick) => void;
   fixOptions: FixOptions;
   onFix: OnFix;
 }) {
-  const [note, setNote] = useState(row.decision?.note ?? "");
-  const [lesson, setLesson] = useState(row.decision?.lesson ?? false);
-  const action = row.action;
-  const noteChanged = note !== (row.decision?.note ?? "") || lesson !== (row.decision?.lesson ?? false);
+  const note = pick?.note ?? row.decision?.note ?? "";
+  const lesson = pick?.lesson ?? row.decision?.lesson ?? false;
+  const [more, setMore] = useState(!!row.decision?.note || !!row.decision?.lesson || !!row.fixes?.length);
+  const saved = savedAnswer(row);
+  const shown = pick?.answer ?? saved;
+  const byDefault = REASONS.find((r) => r.key === reasonOf(row))?.def;
+  const tick = (answer: Exclude<ListAnswer, "default">, on: boolean) => {
+    // Ticking the saved answer again is no change; unticking it puts the fund back on its default.
+    if (on) onPick({ ...pick, answer: answer === saved ? undefined : answer });
+    else onPick({ ...pick, answer: answer === saved ? "default" : undefined });
+  };
+  const box = "flex items-center gap-sm text-body-sm text-heading";
+  const options: { key: Exclude<ListAnswer, "default">; label: string; title?: string }[] = [
+    { key: "bring_back", label: "Bring back" },
+    { key: "leave_out", label: "Leave out" },
+    { key: "wrong", label: "Wrong match", title: "This database record is a different firm" },
+    { key: "remove", label: "Remove: not relevant", title: "Out of this step, the Roster and the client's summaries" },
+  ];
   return (
-    <tr className="border-t border-border align-top">
+    <tr className={`border-t border-border align-top ${listPatch(row, pick) ? "bg-primary-tint/30" : ""}`}>
       <td className="py-sm pr-md">
         <p className="text-heading">{row.investor.name}</p>
         <p className="text-muted">Backed {backedText(row)}</p>
@@ -295,62 +333,41 @@ function NotInListRow({
         )}
       </td>
       <td className="py-sm">
-        <p className="mb-xs text-body-sm text-muted">{row.defaulted ? "Default (not decided by you yet)" : "Your decision"}</p>
-        <div className="flex flex-wrap gap-xs">
-          <button
-            type="button"
-            disabled={busy}
-            className={action === "bring_back" ? primaryButton : secondaryButton}
-            onClick={() => onDecide({ action: "bring_back" })}
-          >
-            Bring back
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className={action === "leave_out" ? primaryButton : secondaryButton}
-            onClick={() => onDecide({ action: "leave_out" })}
-          >
-            Leave out
-          </button>
-          <button type="button" disabled={busy} className={smallButton} onClick={() => onDecide({ firmId: null })} title="This database record is a different firm">
-            Wrong match
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className={row.unsure ? `${smallButton} !border-warning text-warning` : smallButton}
-            onClick={() => onDecide({ unsure: !row.unsure })}
-          >
-            {row.unsure ? "Not sure ✓" : "Not sure"}
-          </button>
-          <RemoveButton row={row} busy={busy} onDecide={onDecide} />
+        <div className="flex flex-col gap-xs">
+          {options.map((o) => (
+            <label key={o.key} className={box} title={o.title}>
+              <input
+                type="checkbox"
+                className="accent-primary"
+                disabled={busy}
+                checked={shown === o.key}
+                onChange={(e) => tick(o.key, e.target.checked)}
+              />
+              {o.label}
+              {o.key === byDefault ? <Pill tone="quiet">default</Pill> : null}
+              {o.key === saved && shown === saved ? <span className="text-muted">saved</span> : null}
+            </label>
+          ))}
         </div>
-        <textarea
-          className={`${inputClass} mt-xs`}
-          rows={2}
-          placeholder="Why (optional)"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-        />
-        <div className="mt-xs flex flex-wrap items-center justify-between gap-sm">
-          <label className="flex items-center gap-xs text-body-sm text-secondary">
-            <input type="checkbox" className="accent-primary" checked={lesson} onChange={(e) => setLesson(e.target.checked)} />
-            Lesson for Rupert: the database or taxonomy needs fixing
-          </label>
-          {noteChanged ? (
-            <button type="button" disabled={busy} className={smallButton} onClick={() => onDecide({ note, lesson })}>
-              Save note
-            </button>
-          ) : null}
-        </div>
+        <button type="button" className="mt-xs text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={() => setMore(!more)}>
+          {more ? "Hide the note ▴" : "Add a note or a lesson for Rupert ▾"}
+        </button>
+        {more ? (
+          <>
+            <textarea className={`${inputClass} mt-xs`} rows={2} placeholder="Why (optional)" value={note} disabled={busy} onChange={(e) => onPick({ ...pick, note: e.target.value })} />
+            <label className="mt-xs flex items-center gap-xs text-body-sm text-secondary">
+              <input type="checkbox" className="accent-primary" checked={lesson} disabled={busy} onChange={(e) => onPick({ ...pick, lesson: e.target.checked })} />
+              Lesson for Rupert: the database or taxonomy needs fixing
+            </label>
+          </>
+        ) : null}
         {(row.fixes ?? []).map((f) => (
           <p key={f.field} className="mt-xs text-body-sm text-success">
             ✓ Fund Database fixed: {f.labels.join(", ")} added to its {DRY_STEP_LABEL[f.field]}, for every client
             {f.by ? ` (${f.by})` : ""}.
           </p>
         ))}
-        {lesson || row.fixes?.length ? <FixRecord row={row} note={note} busy={busy} options={fixOptions} onFix={onFix} /> : null}
+        {more && (lesson || row.fixes?.length) ? <FixRecord row={row} note={note} busy={busy} options={fixOptions} onFix={onFix} /> : null}
       </td>
     </tr>
   );
@@ -657,40 +674,99 @@ function DecisionQueue({
   rows,
   busy,
   onDecide,
+  onSubmit,
   fixOptions,
   onFix,
 }: {
   rows: CheckRow[];
   busy: boolean;
+  /** Saved at once: Undo on a fund. */
   onDecide: (row: CheckRow, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  /** Submit all: every tick and note saved in one write, the check run once. True when saved. */
+  onSubmit: (items: DecisionItem[]) => Promise<boolean>;
   fixOptions: FixOptions;
   onFix: OnFix;
 }) {
   const [showDecided, setShowDecided] = useState(false);
+  const [picks, setPicks] = useState<Record<string, ListPick>>({});
   const todo = rows.filter((r) => r.defaulted && !r.unsure);
   const later = rows.filter((r) => r.unsure);
   const done = rows.filter((r) => !r.defaulted);
+  const items = rows.flatMap((row) => {
+    const patch = listPatch(row, picks[row.investor.id]);
+    return patch ? [{ investorId: row.investor.id, patch }] : [];
+  });
+  /** Still on its default, with no answer ticked: what "tick the default" fills in. */
+  const open = rows.filter((r) => r.defaulted && r.action && !picks[r.investor.id]?.answer);
   const head = (
     <thead className="text-label uppercase tracking-label text-muted">
       <tr>
         <th className="py-xs pr-md font-medium">Investor</th>
         <th className="py-xs pr-md font-medium">Why it isn&apos;t in the shortlist</th>
-        <th className="py-xs font-medium">Decision</th>
+        <th className="py-xs font-medium">Your answer</th>
       </tr>
     </thead>
   );
+  const row = (r: CheckRow) => (
+    <NotInListRow
+      key={r.investor.id}
+      row={r}
+      busy={busy}
+      onDecide={(p) => onDecide(r, p)}
+      pick={picks[r.investor.id]}
+      onPick={(pick) => setPicks({ ...picks, [r.investor.id]: pick })}
+      fixOptions={fixOptions}
+      onFix={onFix}
+    />
+  );
+  const bar = (
+    <div className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-border bg-background px-md py-sm">
+      <p className="min-w-0 flex-1 text-body-sm text-secondary">
+        <span className={items.length ? "font-medium text-heading" : ""}>
+          {n(items.length)} {items.length === 1 ? "change" : "changes"} to save.
+        </span>{" "}
+        Nothing is saved until you submit.
+      </p>
+      <div className="flex flex-wrap items-center gap-xs">
+        {open.length ? (
+          <button
+            type="button"
+            className={smallButton}
+            disabled={busy}
+            onClick={() => setPicks({ ...picks, ...Object.fromEntries(open.map((r) => [r.investor.id, { ...picks[r.investor.id], answer: r.action as ListAnswer }])) })}
+          >
+            Tick the default for the rest ({n(open.length)})
+          </button>
+        ) : null}
+        {items.length ? (
+          <button type="button" className={smallButton} disabled={busy} onClick={() => setPicks({})}>
+            Clear
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={busy || !items.length}
+          onClick={() => {
+            void onSubmit(items).then((ok) => {
+              if (ok) setPicks({});
+            });
+          }}
+        >
+          Submit all ({n(items.length)})
+        </button>
+      </div>
+    </div>
+  );
   return (
     <>
+      <div className="mt-md">{bar}</div>
       {todo.length ? (
         <>
           <p className="mt-md text-body-sm text-warning">{n(todo.length)} to decide</p>
           <table className="mt-xs w-full text-left text-body-sm">
             {head}
-            <tbody>
-              {todo.map((row) => (
-                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} fixOptions={fixOptions} onFix={onFix} />
-              ))}
-            </tbody>
+            <tbody>{todo.map(row)}</tbody>
           </table>
         </>
       ) : (
@@ -701,11 +777,7 @@ function DecisionQueue({
           <p className="text-body-sm text-warning">Not sure · {n(later.length)} (decide later)</p>
           <table className="mt-xs w-full text-left text-body-sm">
             {head}
-            <tbody>
-              {later.map((row) => (
-                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} fixOptions={fixOptions} onFix={onFix} />
-              ))}
-            </tbody>
+            <tbody>{later.map(row)}</tbody>
           </table>
         </div>
       ) : null}
@@ -716,17 +788,14 @@ function DecisionQueue({
             {n(done.filter((r) => r.action === "leave_out").length)} left out)
           </button>
           {showDecided ? (
-            <table className="mt-xs w-full text-left text-body-sm opacity-80">
+            <table className="mt-xs w-full text-left text-body-sm">
               {head}
-              <tbody>
-                {done.map((row) => (
-                  <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} fixOptions={fixOptions} onFix={onFix} />
-                ))}
-              </tbody>
+              <tbody>{done.map(row)}</tbody>
             </table>
           ) : null}
         </div>
       ) : null}
+      {todo.length + later.length + (showDecided ? done.length : 0) > 5 ? <div className="mt-sm">{bar}</div> : null}
     </>
   );
 }
@@ -767,6 +836,7 @@ function DecisionSummary({
   openKey,
   onOpen,
   onDecide,
+  onSubmit,
   fixOptions,
   onFix,
   onApplyDefaults,
@@ -778,6 +848,7 @@ function DecisionSummary({
   openKey: string | null;
   onOpen: (key: string | null) => void;
   onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  onSubmit: (items: DecisionItem[]) => Promise<boolean>;
   fixOptions: FixOptions;
   onFix: OnFix;
   onApplyDefaults: () => void;
@@ -918,7 +989,7 @@ function DecisionSummary({
                   <tr>
                     <td colSpan={6} className="border-t border-border bg-background/60 px-md pb-md pt-sm shadow-[inset_3px_0_0_#5C7A5E]">
                       <div className="rounded-card border border-border bg-surface px-md pb-sm">
-                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} fixOptions={fixOptions} onFix={onFix} />
+                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} onSubmit={onSubmit} fixOptions={fixOptions} onFix={onFix} />
                       </div>
                       <button type="button" className="mt-sm text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={toggle}>
                         Close {r.label} ▴
@@ -1951,7 +2022,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
               })()
             : null}
           {current === "not_in_list" ? (
-            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} fixOptions={check.fixOptions} onFix={(...args) => void fix(...args)} />
+            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} onSubmit={submitMany} fixOptions={check.fixOptions} onFix={(...args) => void fix(...args)} />
           ) : current === "confirm" ? (
             <ConfirmList rows={byBucket(current)} busy={frozen} onSubmit={submitMany} />
           ) : (
@@ -1981,6 +2052,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         openKey={openReason}
         onOpen={setOpenReason}
         onDecide={(id, patch) => void decide(id, patch)}
+        onSubmit={submitMany}
         fixOptions={check.fixOptions}
         onFix={(...args) => void fix(...args)}
         onApplyDefaults={() => void applyAll()}
