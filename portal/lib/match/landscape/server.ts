@@ -9,7 +9,9 @@ import type { createServiceClient } from "@/lib/supabase/admin";
 import { MAX_COMPETITORS, cleanUrl, orderCompetitors, sameName, type Competitor, type LinkState } from "./core.ts";
 import { cleanInvestor, cleanInvestorList, mergeInvestor, orderInvestors, type Investor, type ResearchState } from "./investors.ts";
 import { checkInvestors, domainOf, type Bucket, type CheckRow, type InvestorDecision, type WebsiteSuggestion } from "./check.ts";
-import { buildDryData, type DryStep } from "@/lib/match/dry/core";
+import { GEO_BUCKETS, buildDryData, expandStage, type DryStep } from "@/lib/match/dry/core";
+import { cleanLabels } from "@/lib/match/lessons/core";
+import { loadLessons, saveLesson } from "@/lib/match/lessons/server";
 import { matchDataSnapshot } from "@/lib/match/tiers/server";
 import { addFund, addedForLandscape } from "@/lib/match/added/server";
 import { lookAlikes } from "./lookalike.ts";
@@ -759,6 +761,11 @@ export type CheckResult = {
   /** Investments of this landscape already recorded in the database (null: the table isn't there yet). */
   recorded: number | null;
   counts: Record<Bucket, number>;
+  /**
+   * What a lesson for Rupert can add to a fund's record, per Step 1 filter (taxonomy labels): every
+   * geography choice; for the others, this client's own values (the ones the fund was removed for lacking).
+   */
+  fixOptions: Record<DryStep, string[]>;
   dryListId: string;
   dryConfirmedAt: string;
   fundDbVersion: string;
@@ -817,7 +824,19 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
   const suggestions = await loadSuggestions(supabase, land.id);
   const confirmation = await loadCheckConfirmation(supabase, land.id);
   const addedFunds = await addedForLandscape(supabase, land.id);
-  const rows = checkInvestors({
+  const lessons = await loadLessons(supabase);
+  const labelOf = (id: string) => index.nodes.get(id)?.label ?? "";
+  const chosenLabels = (step: DryStep) => {
+    const ids = dry.steps.find((s) => s.step === step)?.chosen ?? [];
+    return (step === "stage" ? expandStage(ids) : ids).map(labelOf).filter(Boolean);
+  };
+  const fixOptions: Record<DryStep, string[]> = {
+    financing: chosenLabels("financing"),
+    stage: chosenLabels("stage"),
+    geography: GEO_BUCKETS.map((b) => labelOf(b.node)).filter(Boolean),
+    sector: clientSectors,
+  };
+  const checked = checkInvestors({
     added: Object.fromEntries(
       Object.entries(addedFunds).map(([id, f]) => [id, { id: f.id, firmId: f.firmId, status: f.status, contacts: f.contacts.length, website: f.website }]),
     ),
@@ -831,12 +850,48 @@ export async function checkAgainstDatabase(supabase: ServiceClient, clientId: st
     clientSectors,
     competitorSectors,
   });
+  const rows = checked.map((r) => {
+    const fixes = r.firmId ? lessons.filter((l) => l.firmId === r.firmId && l.labels.length).map((l) => ({ field: l.field, labels: l.labels, by: l.by, at: l.at })) : [];
+    return fixes.length ? { ...r, fixes } : r;
+  });
   const counts = { confirm: 0, in_list: 0, not_in_list: 0, missing_fund: 0, missing_angel: 0, added: 0, removed: 0 } as Record<Bucket, number>;
   rows.forEach((r) => (counts[r.bucket] += 1));
   return {
     ok: true,
-    value: { addedConfirmedAt: confirmation.addedAt, addedConfirmedBy: confirmation.addedBy, confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: snapshot.value.dataVersion },
+    value: { addedConfirmedAt: confirmation.addedAt, addedConfirmedBy: confirmation.addedBy, confirmedAt: confirmation.at, confirmedBy: confirmation.by, rows, websitesReady: !suggestions.missing, counts, fixOptions, clientSectors, recorded: await recordedCount(supabase, land.id), dryListId: dry.id, dryConfirmedAt: dry.confirmed_at, fundDbVersion: snapshot.value.dataVersion },
   };
+}
+
+/**
+ * A lesson for Rupert, applied: adds values to one Step 1 field of the Fund Database record this
+ * investor matched (e.g. Geography: United States), for every client. The field's earlier lesson is
+ * replaced; no labels removes it. Only for a fund in the database, while the check is open.
+ */
+export async function fixFundRecord(
+  supabase: ServiceClient,
+  clientId: string,
+  investorId: string,
+  field: DryStep,
+  labels: unknown,
+  note: string,
+  actor: string | null,
+  kind: LandscapeKind = "competitors",
+): Promise<Result<{ added: string[] }>> {
+  const current = await currentLandscape(supabase, clientId, kind);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land) return { ok: false, error: "Confirm the investor list first." };
+  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to fix a fund's record." };
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
+  if (!check.ok) return check;
+  const row = check.value.rows.find((r) => r.investor.id === investorId);
+  if (!row?.firmId) return { ok: false, error: "This investor isn't matched to a Fund Database record, so there is no record to fix." };
+  if (row.bucket === "added") return { ok: false, error: "This fund was added by Rupert: edit it on the Fund Database page (Added by Rupert)." };
+  const clean = cleanLabels(labels, check.value.fixOptions[field] ?? []);
+  if (Array.isArray(labels) && labels.length && !clean.length) return { ok: false, error: "Those values can't be added to this field." };
+  const saved = await saveLesson(supabase, { firmId: row.firmId, field, labels: clean, note, clientId, landscapeId: land.id, investorName: row.firmName ?? row.investor.name, by: actor });
+  if (!saved.ok) return saved;
+  return { ok: true, value: { added: clean } };
 }
 
 /** Records the admin's decision on one investor: the record it is, bring back or leave out, and a note. */

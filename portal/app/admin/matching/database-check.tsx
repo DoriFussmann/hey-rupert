@@ -3,8 +3,9 @@
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { Fragment, useEffect, useState } from "react";
 import { approveAllAdded } from "@/app/admin/added-funds-actions";
-import { addInvestorToDb, applyDefaultsToAll, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, applyDefaultsToAll, fixFundFromLesson, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
+import { DRY_STEPS, DRY_STEP_LABEL, type DryStep } from "@/lib/match/dry/core";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult, LookAlikePreview } from "@/lib/match/landscape/server";
 import { inputClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
@@ -162,8 +163,93 @@ function SuggestionBlock({ row, busy, onDecide }: { row: CheckRow; busy: boolean
   );
 }
 
+type FixOptions = Record<DryStep, string[]>;
+type OnFix = (investorId: string, field: DryStep, labels: string[], note: string) => void;
+
+/**
+ * A lesson for Rupert, applied: pick what the fund's record is missing (e.g. Geography: United
+ * States) and it is added to the record in the Fund Database, for every client.
+ */
+function FixRecord({ row, note, busy, options, onFix }: { row: CheckRow; note: string; busy: boolean; options: FixOptions; onFix: OnFix }) {
+  const fixes = row.fixes ?? [];
+  const [field, setField] = useState<DryStep>(row.failure?.step ?? fixes[0]?.field ?? "geography");
+  const saved = fixes.find((f) => f.field === field)?.labels ?? [];
+  const savedKey = saved.join("|");
+  const [picked, setPicked] = useState<string[]>(saved);
+  useEffect(() => {
+    setPicked(savedKey ? savedKey.split("|") : []);
+  }, [savedKey, field]);
+  const list = Array.from(new Set([...(options[field] ?? []), ...saved]));
+  const same = picked.length === saved.length && picked.every((x) => saved.includes(x));
+  return (
+    <div className="mt-xs rounded-md border border-primary/30 bg-primary-tint/40 px-md py-sm">
+      <div className="flex flex-wrap items-center gap-sm">
+        <p className="text-body-sm font-medium text-heading">Fix the fund&apos;s record: it also invests in</p>
+        <select
+          aria-label="The field to fix"
+          className="rounded-md border border-border bg-surface px-sm py-[3px] text-body-sm text-secondary outline-none focus:border-primary"
+          value={field}
+          disabled={busy}
+          onChange={(e) => setField(e.target.value as DryStep)}
+        >
+          {DRY_STEPS.map((step) => (
+            <option key={step} value={step}>
+              {DRY_STEP_LABEL[step]}
+              {row.failure?.step === step ? " (removed here)" : ""}
+            </option>
+          ))}
+        </select>
+      </div>
+      {list.length ? (
+        <div className="mt-xs flex flex-wrap gap-xs">
+          {list.map((label) => {
+            const on = picked.includes(label);
+            return (
+              <button
+                key={label}
+                type="button"
+                disabled={busy}
+                aria-pressed={on}
+                className={`rounded-full border px-sm py-[2px] text-body-sm transition-colors duration-hover disabled:opacity-40 ${
+                  on ? "border-primary bg-primary text-white" : "border-border bg-surface text-secondary hover:text-heading"
+                }`}
+                onClick={() => setPicked(on ? picked.filter((x) => x !== label) : [...picked, label])}
+              >
+                {on ? "✓ " : "+ "}
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      ) : (
+        <p className="mt-xs text-body-sm text-muted">Nothing to add for this field: this client has no value for it.</p>
+      )}
+      <div className="mt-sm flex flex-wrap items-center gap-sm">
+        <button type="button" className={primaryButton} disabled={busy || same} onClick={() => onFix(row.investor.id, field, picked, note)}>
+          {saved.length && !picked.length ? "Remove the fix" : saved.length ? "Update the fix" : "Fix the database"}
+        </button>
+        <p className="min-w-0 flex-1 text-body-sm text-muted">
+          Changes {row.firmName ?? "this fund"} in the Fund Database for every client, not only this one. Your note is saved with it.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 /** A fund in the database but not in the shortlist: why, and the decision. */
-function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+function NotInListRow({
+  row,
+  busy,
+  onDecide,
+  fixOptions,
+  onFix,
+}: {
+  row: CheckRow;
+  busy: boolean;
+  onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  fixOptions: FixOptions;
+  onFix: OnFix;
+}) {
   const [note, setNote] = useState(row.decision?.note ?? "");
   const [lesson, setLesson] = useState(row.decision?.lesson ?? false);
   const action = row.action;
@@ -251,6 +337,13 @@ function NotInListRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
             </button>
           ) : null}
         </div>
+        {(row.fixes ?? []).map((f) => (
+          <p key={f.field} className="mt-xs text-body-sm text-success">
+            ✓ Fund Database fixed: {f.labels.join(", ")} added to its {DRY_STEP_LABEL[f.field]}, for every client
+            {f.by ? ` (${f.by})` : ""}.
+          </p>
+        ))}
+        {lesson || row.fixes?.length ? <FixRecord row={row} note={note} busy={busy} options={fixOptions} onFix={onFix} /> : null}
       </td>
     </tr>
   );
@@ -397,10 +490,14 @@ function DecisionQueue({
   rows,
   busy,
   onDecide,
+  fixOptions,
+  onFix,
 }: {
   rows: CheckRow[];
   busy: boolean;
   onDecide: (row: CheckRow, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  fixOptions: FixOptions;
+  onFix: OnFix;
 }) {
   const [showDecided, setShowDecided] = useState(false);
   const todo = rows.filter((r) => r.defaulted && !r.unsure);
@@ -424,7 +521,7 @@ function DecisionQueue({
             {head}
             <tbody>
               {todo.map((row) => (
-                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} />
+                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} fixOptions={fixOptions} onFix={onFix} />
               ))}
             </tbody>
           </table>
@@ -439,7 +536,7 @@ function DecisionQueue({
             {head}
             <tbody>
               {later.map((row) => (
-                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} />
+                <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} fixOptions={fixOptions} onFix={onFix} />
               ))}
             </tbody>
           </table>
@@ -456,7 +553,7 @@ function DecisionQueue({
               {head}
               <tbody>
                 {done.map((row) => (
-                  <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} />
+                  <NotInListRow key={row.investor.id} row={row} busy={busy} onDecide={(p) => onDecide(row, p)} fixOptions={fixOptions} onFix={onFix} />
                 ))}
               </tbody>
             </table>
@@ -503,6 +600,8 @@ function DecisionSummary({
   openKey,
   onOpen,
   onDecide,
+  fixOptions,
+  onFix,
   onApplyDefaults,
 }: {
   rows: CheckRow[];
@@ -512,6 +611,8 @@ function DecisionSummary({
   openKey: string | null;
   onOpen: (key: string | null) => void;
   onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
+  fixOptions: FixOptions;
+  onFix: OnFix;
   onApplyDefaults: () => void;
 }) {
   const reasons: Reason[] = REASONS.map((r) => ({ ...r, rows: rows.filter((x) => reasonOf(x) === r.key) }))
@@ -650,7 +751,7 @@ function DecisionSummary({
                   <tr>
                     <td colSpan={6} className="border-t border-border bg-background/60 px-md pb-md pt-sm shadow-[inset_3px_0_0_#5C7A5E]">
                       <div className="rounded-card border border-border bg-surface px-md pb-sm">
-                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} />
+                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} fixOptions={fixOptions} onFix={onFix} />
                       </div>
                       <button type="button" className="mt-sm text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={toggle}>
                         Close {r.label} ▴
@@ -1286,6 +1387,23 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(`${name}: ${what}. Saved.`);
   };
 
+  /** A lesson for Rupert, applied: the values are added to the fund's record in the Fund Database, for every client. */
+  const fix = async (investorId: string, field: DryStep, labels: string[], note: string) => {
+    setBusy(true);
+    setError(null);
+    const row = check?.rows.find((r) => r.investor.id === investorId);
+    const name = row?.firmName ?? row?.investor.name ?? "Fund";
+    const result = await fixFundFromLesson(clientId, investorId, field, labels, note, kind);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setCheck(result.check);
+    setToast(
+      result.added.length
+        ? `${name}: ${result.added.join(", ")} added to its ${DRY_STEP_LABEL[field]} in the Fund Database, for every client. Saved.`
+        : `${name}: the fix to its ${DRY_STEP_LABEL[field]} was removed. Saved.`,
+    );
+  };
+
   const group = async (ids: string[], action: "bring_back" | "leave_out" | null) => {
     const targets = (check?.rows ?? []).filter((r) => ids.includes(r.investor.id));
     const already = targets.filter((r) => (action ? !r.defaulted && r.action === action : r.defaulted)).length;
@@ -1535,6 +1653,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         openKey={openReason}
         onOpen={setOpenReason}
         onDecide={(id, patch) => void decide(id, patch)}
+        fixOptions={check.fixOptions}
+        onFix={(...args) => void fix(...args)}
         onApplyDefaults={() => void applyAll()}
       />
       {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
@@ -1604,7 +1724,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
               })()
             : null}
           {current === "not_in_list" ? (
-            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} />
+            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} fixOptions={check.fixOptions} onFix={(...args) => void fix(...args)} />
           ) : (
           <table className="mt-xs w-full text-left text-body-sm">
             <tbody>

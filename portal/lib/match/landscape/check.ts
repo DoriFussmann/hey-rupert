@@ -158,6 +158,9 @@ export function defaultAction(failure: { step: DryStep } | null, clientOverlap: 
   return failure?.step === "sector" && clientOverlap.length > 0 ? "bring_back" : "leave_out";
 }
 
+/** A fix to a fund's record (a lesson for Rupert): values added to one Step 1 field. */
+export type FundFix = { field: DryStep; labels: string[]; by: string | null; at: string };
+
 export type CheckRow = {
   investor: Investor;
   match: FirmMatch;
@@ -181,6 +184,8 @@ export type CheckRow = {
   overlap: { client: string[]; competitor: string[] };
   /** When Try and Add to DB added it: the added fund. */
   added: AddedSummary | null;
+  /** Lessons for Rupert already saved on this fund's record: the values added to it, for every client. */
+  fixes?: FundFix[];
   /** Find websites' suggestion, and the database record with that website, if exactly one. */
   suggestion: (WebsiteSuggestion & { firm: { id: string; name: string } | null; firmCount: number }) | null;
 };

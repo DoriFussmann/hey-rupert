@@ -8,6 +8,7 @@ import { asLandscapeKind } from "@/lib/match/landscape/kind";
 import { lockedError } from "@/lib/match/summary/server";
 import {
   checkAgainstDatabase,
+  fixFundRecord,
   layerDone,
   decideInvestor,
   addMissingInvestor,
@@ -203,6 +204,37 @@ export async function decideOnInvestor(
     return runInvestorCheck(clientId, kind);
   } catch (err) {
     return fail(err, "The decision was not saved.");
+  }
+}
+
+/**
+ * A lesson for Rupert, applied: adds values to one Step 1 field of the fund's record in the Fund
+ * Database (for every client), saves the note with the lesson flag on the decision, then the check again.
+ */
+export async function fixFundFromLesson(
+  clientId: string,
+  investorId: string,
+  field: string,
+  labels: string[],
+  note: string,
+  kind?: unknown,
+): Promise<Result<{ check: CheckResult; added: string[] }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (typeof investorId !== "string" || !investorId || investorId.length > 64) return { ok: false, error: "Unknown investor." };
+  if (field !== "financing" && field !== "stage" && field !== "geography" && field !== "sector") return { ok: false, error: "Unknown field." };
+  const text = typeof note === "string" ? note : "";
+  try {
+    const k = asLandscapeKind(kind);
+    const fixed = await fixFundRecord(a.supabase, a.clientId, investorId, field, labels, text, a.email, k);
+    if (!fixed.ok) return { ok: false, error: fixed.error };
+    // The note and the flag stay on the decision, so the review list shows why.
+    const saved = await decideInvestor(a.supabase, a.clientId, investorId, { note: text, lesson: fixed.value.added.length > 0 }, a.email, false, k);
+    if (!saved.ok) return { ok: false, error: saved.error };
+    const again = await runInvestorCheck(clientId, kind);
+    return again.ok ? { ok: true, check: again.check, added: fixed.value.added } : again;
+  } catch (err) {
+    return fail(err, "The fund's record was not fixed.");
   }
 }
 
