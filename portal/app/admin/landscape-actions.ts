@@ -9,6 +9,7 @@ import { lockedError } from "@/lib/match/summary/server";
 import {
   checkAgainstDatabase,
   fixFundRecord,
+  fixFundRecords,
   layerDone,
   decideInvestor,
   decideInvestors,
@@ -188,20 +189,29 @@ function cleanPatch(patch: DecisionPatch | null | undefined): DecisionPatch {
 /** Several decisions saved in one write (the confirmation list's "Submit all"), then the check once. */
 export async function decideOnInvestors(
   clientId: string,
-  items: { investorId: string; patch: DecisionPatch }[],
+  items: { investorId: string; patch: DecisionPatch; fix?: { field: string; labels: string[] } }[],
   kind?: unknown,
-): Promise<Result<{ check: CheckResult; saved: number }>> {
+): Promise<Result<{ check: CheckResult; saved: number; updated: number }>> {
   const a = await access(clientId);
   if (!a.ok) return a;
   if (!Array.isArray(items) || !items.length || items.length > 500) return { ok: false, error: "Nothing to save." };
   const clean = items
     .filter((item) => item && typeof item.investorId === "string" && item.investorId && item.investorId.length <= 64)
-    .map((item) => ({ investorId: item.investorId, patch: cleanPatch(item.patch) }));
+    .map((item) => ({ investorId: item.investorId, patch: cleanPatch(item.patch), fix: item.fix }));
+  // "Bring back and update the database": the values to add to the fund's record, for every client.
+  const fixes = clean.flatMap((item) => {
+    const f = item.fix;
+    if (!f || (f.field !== "financing" && f.field !== "stage" && f.field !== "geography" && f.field !== "sector") || !Array.isArray(f.labels)) return [];
+    return [{ investorId: item.investorId, field: f.field as "financing" | "stage" | "geography" | "sector", labels: f.labels, note: item.patch.note ?? "" }];
+  });
   try {
-    const saved = await decideInvestors(a.supabase, a.clientId, clean, a.email, asLandscapeKind(kind));
+    const k = asLandscapeKind(kind);
+    const fixed = await fixFundRecords(a.supabase, a.clientId, fixes, a.email, k);
+    if (!fixed.ok) return { ok: false, error: fixed.error };
+    const saved = await decideInvestors(a.supabase, a.clientId, clean.map(({ investorId, patch }) => ({ investorId, patch })), a.email, k);
     if (!saved.ok) return { ok: false, error: saved.error };
     const again = await runInvestorCheck(clientId, kind);
-    return again.ok ? { ok: true, check: again.check, saved: saved.value } : again;
+    return again.ok ? { ok: true, check: again.check, saved: saved.value, updated: fixed.value } : again;
   } catch (err) {
     return fail(err, "The decisions were not saved.");
   }

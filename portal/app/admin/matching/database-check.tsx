@@ -3,7 +3,7 @@
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { approveAllAdded } from "@/app/admin/added-funds-actions";
-import { addInvestorToDb, applyDefaultsToAll, decideOnInvestors, fixFundFromLesson, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, applyDefaultsToAll, decideOnInvestors, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, isDecided, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { DRY_STEPS, DRY_STEP_LABEL, type DryStep } from "@/lib/match/dry/core";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
@@ -171,99 +171,48 @@ function SuggestionBlock({ row, busy, onDecide }: { row: CheckRow; busy: boolean
 }
 
 type FixOptions = Record<DryStep, string[]>;
-type OnFix = (investorId: string, field: DryStep, labels: string[], note: string) => void;
 
-/**
- * A lesson for Rupert, applied: pick what the fund's record is missing (e.g. Geography: United
- * States) and it is added to the record in the Fund Database, for every client.
- */
-function FixRecord({ row, note, busy, options, onFix }: { row: CheckRow; note: string; busy: boolean; options: FixOptions; onFix: OnFix }) {
-  const fixes = row.fixes ?? [];
-  const [field, setField] = useState<DryStep>(row.failure?.step ?? fixes[0]?.field ?? "geography");
-  const saved = fixes.find((f) => f.field === field)?.labels ?? [];
-  const savedKey = saved.join("|");
-  const [picked, setPicked] = useState<string[]>(saved);
-  useEffect(() => {
-    setPicked(savedKey ? savedKey.split("|") : []);
-  }, [savedKey, field]);
-  const list = Array.from(new Set([...(options[field] ?? []), ...saved]));
-  const same = picked.length === saved.length && picked.every((x) => saved.includes(x));
-  return (
-    <div className="mt-xs rounded-md border border-primary/30 bg-primary-tint/40 px-md py-sm">
-      <div className="flex flex-wrap items-center gap-sm">
-        <p className="text-body-sm font-medium text-heading">Fix the fund&apos;s record: it also invests in</p>
-        <select
-          aria-label="The field to fix"
-          className="rounded-md border border-border bg-surface px-sm py-[3px] text-body-sm text-secondary outline-none focus:border-primary"
-          value={field}
-          disabled={busy}
-          onChange={(e) => setField(e.target.value as DryStep)}
-        >
-          {DRY_STEPS.map((step) => (
-            <option key={step} value={step}>
-              {DRY_STEP_LABEL[step]}
-              {row.failure?.step === step ? " (removed here)" : ""}
-            </option>
-          ))}
-        </select>
-      </div>
-      {list.length ? (
-        <div className="mt-xs flex flex-wrap gap-xs">
-          {list.map((label) => {
-            const on = picked.includes(label);
-            return (
-              <button
-                key={label}
-                type="button"
-                disabled={busy}
-                aria-pressed={on}
-                className={`rounded-full border px-sm py-[2px] text-body-sm transition-colors duration-hover disabled:opacity-40 ${
-                  on ? "border-primary bg-primary text-white" : "border-border bg-surface text-secondary hover:text-heading"
-                }`}
-                onClick={() => setPicked(on ? picked.filter((x) => x !== label) : [...picked, label])}
-              >
-                {on ? "✓ " : "+ "}
-                {label}
-              </button>
-            );
-          })}
-        </div>
-      ) : (
-        <p className="mt-xs text-body-sm text-muted">Nothing to add for this field: this client has no value for it.</p>
-      )}
-      <div className="mt-sm flex flex-wrap items-center gap-sm">
-        <button type="button" className={primaryButton} disabled={busy || same} onClick={() => onFix(row.investor.id, field, picked, note)}>
-          {saved.length && !picked.length ? "Remove the fix" : saved.length ? "Update the fix" : "Fix the database"}
-        </button>
-        <p className="min-w-0 flex-1 text-body-sm text-muted">
-          Changes {row.firmName ?? "this fund"} in the Fund Database for every client, not only this one. Your note is saved with it.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-/** A fund in the database but not in the shortlist: why, and the decision. */
 /** What the admin ticked or wrote for one fund not in the shortlist, before Submit all. */
-type ListAnswer = "bring_back" | "leave_out" | "wrong" | "remove" | "default";
-type ListPick = { answer?: ListAnswer; note?: string; lesson?: boolean };
+type ListAnswer = "leave_out" | "bring_back" | "update" | "wrong" | "remove" | "default";
+type ListPick = { answer?: ListAnswer; note?: string; /** For "update": the field, and the values the record should also list. */ field?: DryStep; labels?: string[] };
+/** One change for Submit all: the decision, and for "bring back and update" the values to add to the fund's record. */
+type DecisionItem = { investorId: string; patch: Parameters<typeof decideOnInvestor>[2]; fix?: { field: DryStep; labels: string[] } };
 
 /** The answer already saved for the fund (none while it is still on its default). */
 const savedAnswer = (row: CheckRow): ListAnswer | undefined => (row.defaulted ? undefined : row.action ?? undefined);
+/** The field an update is about: the one picked, else the filter that removed the fund. */
+const updateField = (row: CheckRow, pick: ListPick | undefined): DryStep => pick?.field ?? row.failure?.step ?? row.fixes?.[0]?.field ?? "geography";
+/** The values an earlier update already added to that field. */
+const updatedLabels = (row: CheckRow, field: DryStep) => row.fixes?.find((f) => f.field === field)?.labels ?? [];
 
-/** The change a fund's ticks and note stand for; null when nothing differs from what is saved. */
-function listPatch(row: CheckRow, pick: ListPick | undefined): Parameters<typeof decideOnInvestor>[2] | null {
+/** The change a fund's ticks and note stand for; null when nothing differs from what is saved (or an update names no value yet). */
+function listItem(row: CheckRow, pick: ListPick | undefined): DecisionItem | null {
   if (!pick) return null;
   const patch: NonNullable<Parameters<typeof decideOnInvestor>[2]> = {};
+  let fix: DecisionItem["fix"];
+  const note = pick.note ?? row.decision?.note ?? "";
   if (pick.answer === "remove") patch.removed = true;
   else if (pick.answer === "wrong") patch.firmId = null;
   else if (pick.answer === "default") patch.action = null;
-  else if (pick.answer && pick.answer !== savedAnswer(row)) patch.action = pick.answer;
+  else if (pick.answer === "update") {
+    const field = updateField(row, pick);
+    const before = updatedLabels(row, field);
+    const labels = pick.labels ?? before;
+    const same = labels.length === before.length && labels.every((x) => before.includes(x));
+    if (same && !labels.length) return null;
+    if (!same) {
+      fix = { field, labels };
+      // The note travels with the update: it is why the record changed.
+      patch.note = note;
+      patch.lesson = labels.length > 0;
+    }
+    if (savedAnswer(row) !== "bring_back") patch.action = "bring_back";
+  } else if (pick.answer && pick.answer !== savedAnswer(row)) patch.action = pick.answer;
   if (pick.note !== undefined && pick.note !== (row.decision?.note ?? "")) patch.note = pick.note;
-  if (pick.lesson !== undefined && pick.lesson !== (row.decision?.lesson ?? false)) patch.lesson = pick.lesson;
-  return Object.keys(patch).length ? patch : null;
+  return Object.keys(patch).length || fix ? { investorId: row.investor.id, patch, fix } : null;
 }
 
+/** A fund in the database but not in the shortlist: why, and the answer to tick. */
 function NotInListRow({
   row,
   busy,
@@ -271,7 +220,6 @@ function NotInListRow({
   pick,
   onPick,
   fixOptions,
-  onFix,
 }: {
   row: CheckRow;
   busy: boolean;
@@ -279,11 +227,9 @@ function NotInListRow({
   pick: ListPick | undefined;
   onPick: (pick: ListPick) => void;
   fixOptions: FixOptions;
-  onFix: OnFix;
 }) {
   const note = pick?.note ?? row.decision?.note ?? "";
-  const lesson = pick?.lesson ?? row.decision?.lesson ?? false;
-  const [more, setMore] = useState(!!row.decision?.note || !!row.decision?.lesson || !!row.fixes?.length);
+  const [more, setMore] = useState(!!row.decision?.note);
   const saved = savedAnswer(row);
   const shown = pick?.answer ?? saved;
   const byDefault = REASONS.find((r) => r.key === reasonOf(row))?.def;
@@ -294,13 +240,18 @@ function NotInListRow({
   };
   const box = "flex items-center gap-sm text-body-sm text-heading";
   const options: { key: Exclude<ListAnswer, "default">; label: string; title?: string }[] = [
-    { key: "bring_back", label: "Bring back" },
     { key: "leave_out", label: "Leave out" },
+    { key: "bring_back", label: "Bring back", title: "For this client only: the fund's record stays as it is" },
+    { key: "update", label: "Bring back and update the database", title: "The fund's record is wrong or incomplete: correct it for every client, and bring the fund back" },
     { key: "wrong", label: "Wrong match", title: "This database record is a different firm" },
     { key: "remove", label: "Remove: not relevant", title: "Out of this step, the Roster and the client's summaries" },
   ];
+  const field = updateField(row, pick);
+  const before = updatedLabels(row, field);
+  const labels = pick?.labels ?? before;
+  const choices = Array.from(new Set([...(fixOptions[field] ?? []), ...before]));
   return (
-    <tr className={`border-t border-border align-top ${listPatch(row, pick) ? "bg-primary-tint/30" : ""}`}>
+    <tr className={`border-t border-border align-top ${listItem(row, pick) ? "bg-primary-tint/30" : ""}`}>
       <td className="py-sm pr-md">
         <p className="text-heading">{row.investor.name}</p>
         <p className="text-muted">Backed {backedText(row)}</p>
@@ -336,38 +287,74 @@ function NotInListRow({
         <div className="flex flex-col gap-xs">
           {options.map((o) => (
             <label key={o.key} className={box} title={o.title}>
-              <input
-                type="checkbox"
-                className="accent-primary"
-                disabled={busy}
-                checked={shown === o.key}
-                onChange={(e) => tick(o.key, e.target.checked)}
-              />
+              <input type="checkbox" className="accent-primary" disabled={busy} checked={shown === o.key} onChange={(e) => tick(o.key, e.target.checked)} />
               {o.label}
               {o.key === byDefault ? <Pill tone="quiet">default</Pill> : null}
               {o.key === saved && shown === saved ? <span className="text-muted">saved</span> : null}
             </label>
           ))}
         </div>
-        <button type="button" className="mt-xs text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={() => setMore(!more)}>
-          {more ? "Hide the note ▴" : "Add a note or a lesson for Rupert ▾"}
-        </button>
-        {more ? (
-          <>
-            <textarea className={`${inputClass} mt-xs`} rows={2} placeholder="Why (optional)" value={note} disabled={busy} onChange={(e) => onPick({ ...pick, note: e.target.value })} />
-            <label className="mt-xs flex items-center gap-xs text-body-sm text-secondary">
-              <input type="checkbox" className="accent-primary" checked={lesson} disabled={busy} onChange={(e) => onPick({ ...pick, lesson: e.target.checked })} />
-              Lesson for Rupert: the database or taxonomy needs fixing
-            </label>
-          </>
+        {shown === "update" ? (
+          <div className="mt-xs rounded-md border border-primary/30 bg-primary-tint/40 px-md py-sm">
+            <div className="flex flex-wrap items-center gap-sm">
+              <p className="text-body-sm font-medium text-heading">{row.firmName ?? "This fund"} also invests in</p>
+              <select
+                aria-label="The field to update"
+                className="rounded-md border border-border bg-surface px-sm py-[3px] text-body-sm text-secondary outline-none focus:border-primary"
+                value={field}
+                disabled={busy}
+                onChange={(e) => onPick({ ...pick, field: e.target.value as DryStep, labels: undefined })}
+              >
+                {DRY_STEPS.map((step) => (
+                  <option key={step} value={step}>
+                    {DRY_STEP_LABEL[step]}
+                    {row.failure?.step === step ? " (removed here)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {choices.length ? (
+              <div className="mt-xs flex flex-wrap gap-xs">
+                {choices.map((label) => {
+                  const on = labels.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      disabled={busy}
+                      aria-pressed={on}
+                      className={`rounded-full border px-sm py-[2px] text-body-sm transition-colors duration-hover disabled:opacity-40 ${
+                        on ? "border-primary bg-primary text-white" : "border-border bg-surface text-secondary hover:text-heading"
+                      }`}
+                      onClick={() => onPick({ ...pick, field, labels: on ? labels.filter((x) => x !== label) : [...labels, label] })}
+                    >
+                      {on ? "✓ " : "+ "}
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <p className="mt-xs text-body-sm text-muted">Nothing to add for this field: this client has no value for it.</p>
+            )}
+            <p className="mt-xs text-body-sm text-muted">
+              {labels.length || before.length ? "" : "Pick at least one value. "}
+              Saved with Submit all, to the fund&apos;s record in the Fund Database: it counts for every client, not only this one.
+            </p>
+          </div>
         ) : null}
         {(row.fixes ?? []).map((f) => (
           <p key={f.field} className="mt-xs text-body-sm text-success">
-            ✓ Fund Database fixed: {f.labels.join(", ")} added to its {DRY_STEP_LABEL[f.field]}, for every client
+            ✓ Fund Database updated: {f.labels.join(", ")} added to its {DRY_STEP_LABEL[f.field]}, for every client
             {f.by ? ` (${f.by})` : ""}.
           </p>
         ))}
-        {more && (lesson || row.fixes?.length) ? <FixRecord row={row} note={note} busy={busy} options={fixOptions} onFix={onFix} /> : null}
+        <button type="button" className="mt-xs block text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={() => setMore(!more)}>
+          {more ? "Hide the note ▴" : "Add a note ▾"}
+        </button>
+        {more ? (
+          <textarea className={`${inputClass} mt-xs`} rows={2} placeholder="Why (optional)" value={note} disabled={busy} onChange={(e) => onPick({ ...pick, note: e.target.value })} />
+        ) : null}
       </td>
     </tr>
   );
@@ -375,8 +362,6 @@ function NotInListRow({
 
 /** What the admin ticked for one unclear investor, before Submit all. */
 type ConfirmPick = { kind: "confirm" } | { kind: "remove" } | { kind: "site"; url: string } | { kind: "record"; firmId: string };
-type DecisionItem = { investorId: string; patch: Parameters<typeof decideOnInvestor>[2] };
-
 /** The website the row's answer rests on: the admin's own if given, else the one Find websites found. */
 const siteOf = (row: CheckRow) => row.decision?.website || row.suggestion?.website || "";
 
@@ -676,7 +661,6 @@ function DecisionQueue({
   onDecide,
   onSubmit,
   fixOptions,
-  onFix,
 }: {
   rows: CheckRow[];
   busy: boolean;
@@ -685,7 +669,6 @@ function DecisionQueue({
   /** Submit all: every tick and note saved in one write, the check run once. True when saved. */
   onSubmit: (items: DecisionItem[]) => Promise<boolean>;
   fixOptions: FixOptions;
-  onFix: OnFix;
 }) {
   const [showDecided, setShowDecided] = useState(false);
   const [picks, setPicks] = useState<Record<string, ListPick>>({});
@@ -693,8 +676,8 @@ function DecisionQueue({
   const later = rows.filter((r) => r.unsure);
   const done = rows.filter((r) => !r.defaulted);
   const items = rows.flatMap((row) => {
-    const patch = listPatch(row, picks[row.investor.id]);
-    return patch ? [{ investorId: row.investor.id, patch }] : [];
+    const item = listItem(row, picks[row.investor.id]);
+    return item ? [item] : [];
   });
   /** Still on its default, with no answer ticked: what "tick the default" fills in. */
   const open = rows.filter((r) => r.defaulted && r.action && !picks[r.investor.id]?.answer);
@@ -716,7 +699,6 @@ function DecisionQueue({
       pick={picks[r.investor.id]}
       onPick={(pick) => setPicks({ ...picks, [r.investor.id]: pick })}
       fixOptions={fixOptions}
-      onFix={onFix}
     />
   );
   const bar = (
@@ -838,7 +820,6 @@ function DecisionSummary({
   onDecide,
   onSubmit,
   fixOptions,
-  onFix,
   onApplyDefaults,
 }: {
   rows: CheckRow[];
@@ -850,7 +831,6 @@ function DecisionSummary({
   onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
   onSubmit: (items: DecisionItem[]) => Promise<boolean>;
   fixOptions: FixOptions;
-  onFix: OnFix;
   onApplyDefaults: () => void;
 }) {
   const reasons: Reason[] = REASONS.map((r) => ({ ...r, rows: rows.filter((x) => reasonOf(x) === r.key) }))
@@ -989,7 +969,7 @@ function DecisionSummary({
                   <tr>
                     <td colSpan={6} className="border-t border-border bg-background/60 px-md pb-md pt-sm shadow-[inset_3px_0_0_#5C7A5E]">
                       <div className="rounded-card border border-border bg-surface px-md pb-sm">
-                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} onSubmit={onSubmit} fixOptions={fixOptions} onFix={onFix} />
+                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} onSubmit={onSubmit} fixOptions={fixOptions} />
                       </div>
                       <button type="button" className="mt-sm text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={toggle}>
                         Close {r.label} ▴
@@ -1336,7 +1316,12 @@ function AddMissingCard({
   const { T } = useLandscapeKind();
   const [approving, setApproving] = useState(false);
   const [approvedNote, setApprovedNote] = useState("");
-  const [open, setOpen] = useState<"missing_fund" | "missing_angel" | "added" | null>(null);
+  // The funds' list starts open, so the boxes to tick are in view.
+  const [open, setOpen] = useState<"missing_fund" | "missing_angel" | "added" | null>(() =>
+    check.rows.some((r) => r.bucket === "missing_fund") ? "missing_fund" : check.rows.some((r) => r.bucket === "missing_angel") ? "missing_angel" : null,
+  );
+  /** The investors ticked to add, before "Try and Add to DB". */
+  const [ticked, setTicked] = useState<Set<string>>(new Set());
   const rows = (b: Bucket) => check.rows.filter((r) => r.bucket === b);
   const funds = rows("missing_fund");
   const angels = rows("missing_angel");
@@ -1425,20 +1410,73 @@ function AddMissingCard({
       </Card>
     );
   }
+  const tickedIds = missing.filter((r) => ticked.has(r.investor.id)).map((r) => r.investor.id);
+  const setTicks = (ids: string[], on: boolean) => {
+    const next = new Set(ticked);
+    ids.forEach((id) => (on ? next.add(id) : next.delete(id)));
+    setTicked(next);
+  };
+  const groups = [
+    ...kinds.map((k) => ({ key: k.key as "missing_fund" | "missing_angel" | "added", label: k.label, note: `Each: ${k.what}.`, list: k.list, dot: DOT[k.key] })),
+    { key: "added" as const, label: "Added so far", note: `${n(pending)} pending review · ${n(approved)} approved.`, list: added, dot: DOT.added },
+  ];
+  const bar = (
+    <div className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-border bg-background px-md py-sm">
+      <p className="min-w-0 flex-1 text-body-sm text-secondary">
+        {adding ? (
+          <span className="font-medium text-heading">
+            Adding {n(adding.done + 1)} of {n(adding.total)}: researching, then finding contacts with Hunter. About a minute each; keep this page open.
+          </span>
+        ) : (
+          <>
+            <span className={tickedIds.length ? "font-medium text-heading" : ""}>
+              {n(tickedIds.length)} of {n(missing.length)} ticked.
+            </span>{" "}
+            Each one is researched, then gets its contacts from Hunter: about a minute each. One that fails is listed and the rest carry on.
+          </>
+        )}
+      </p>
+      <div className="flex flex-wrap items-center gap-xs">
+        {tickedIds.length < missing.length ? (
+          <button type="button" className={smallButton} disabled={busy || !!adding} onClick={() => setTicks(missing.map((r) => r.investor.id), true)}>
+            Tick all ({n(missing.length)})
+          </button>
+        ) : null}
+        {tickedIds.length ? (
+          <button type="button" className={smallButton} disabled={busy || !!adding} onClick={() => setTicked(new Set())}>
+            Clear
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={busy || !!adding || !tickedIds.length}
+          onClick={() => {
+            if (tickedIds.length > 1 && !window.confirm(`Try and Add to DB for ${tickedIds.length}? About a minute each. Each waits for your review before other clients see it.`)) return;
+            onAdd(tickedIds);
+            setTicked(new Set());
+          }}
+        >
+          {adding ? "Adding…" : `Try and Add to DB (${n(tickedIds.length)})`}
+        </button>
+      </div>
+    </div>
+  );
+  const shownList = open ? rows(open) : [];
   return (
     <Card>
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
           <h3 className="text-h4 text-heading">Step {T.step}D: Try and Add to DB</h3>
-          <p className="text-body-sm text-muted">
-            The investors your database doesn&apos;t have. Each one added is researched, gets its contacts from Hunter, and waits for
-            your review on the Fund Database page (Added by Rupert). It counts for this client right away, and for every client once you approve it.
-            When you&apos;re done adding, &ldquo;Done adding&rdquo; closes this step: whatever isn&apos;t added counts as skipped (Reopen to add more).
+          <p className="max-w-prose text-body-sm text-muted">
+            The investors your database doesn&apos;t have. Tick the ones to add: each is researched, gets its contacts from Hunter, and waits for your
+            review on the Fund Database page (Added by Rupert). It counts for this client right away, and for every client once you approve it.
+            &ldquo;Done adding&rdquo; closes this step: whatever isn&apos;t added counts as skipped (Reopen to add more).
           </p>
         </div>
         <button
           type="button"
-          className={`${primaryButton} shrink-0`}
+          className={`${secondaryButton} shrink-0`}
           disabled={busy || !!adding}
           onClick={() => {
             const left = funds.length + angels.length;
@@ -1448,104 +1486,140 @@ function AddMissingCard({
           Done adding: confirm {T.step}D
         </button>
       </div>
-      {missing.length || adding ? (
-        <div className="mt-md flex flex-wrap items-center justify-between gap-md rounded-md border-2 border-primary bg-primary-tint px-lg py-md">
-          <div className="min-w-0 flex-1">
-            <p className="text-body font-medium text-heading">
-              {adding
-                ? `Adding ${n(adding.done + 1)} of ${n(adding.total)}…`
-                : `${n(missing.length)} not in the database: ${n(funds.length)} ${funds.length === 1 ? "fund" : "funds"}, ${n(angels.length)} ${angels.length === 1 ? "angel" : "angels"}`}
-            </p>
-            <p className="text-body-sm text-secondary">
-              {adding
-                ? "Researching, then finding contacts with Hunter. About a minute each; keep this page open."
-                : busy
-                  ? "Add All is unavailable while something else on this page is saving or finding websites."
-                  : "One by one: research, then up to 5 investing contacts from Hunter per fund. One that fails is listed and the rest carry on."}
-            </p>
-          </div>
-          <button
-            type="button"
-            className="shrink-0 rounded-md bg-heading px-lg py-sm text-body font-medium text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
-            disabled={busy || !!adding || !missing.length}
-            onClick={() => {
-              if (window.confirm(`Try and Add to DB for all ${missing.length}? About a minute each. Each waits for your review before other clients see it.`)) {
-                onAdd(missing.map((r) => r.investor.id));
-              }
-            }}
-          >
-            {adding ? "Adding…" : `Try and Add All ${n(missing.length)} to DB`}
-          </button>
-        </div>
-      ) : null}
-      <table className="mt-md w-full text-left text-body-sm">
-        <thead className="text-label uppercase tracking-label text-muted">
-          <tr>
-            <th className="py-xs pr-md font-medium">Group</th>
-            <th className="py-xs pr-md text-right font-medium">Investors</th>
-            <th className="py-xs font-medium" />
-          </tr>
-        </thead>
-        <tbody>
-          {kinds.map((k) => (
-            <tr key={k.key} className="border-t border-border align-top">
-              <td className="py-xs pr-md">
-                <p className="text-heading">{k.label}</p>
-                <p className="text-muted">Each: {k.what}.</p>
-              </td>
-              <td className="py-xs pr-md text-right text-heading">{n(k.list.length)}</td>
-              <td className="py-xs text-right">
-                <div className="inline-flex flex-wrap justify-end gap-xs">
-                  <button type="button" className={smallButton} disabled={!k.list.length} onClick={() => setOpen(open === k.key ? null : k.key)}>
-                    {open === k.key ? "Hide list" : "Show list"}
-                  </button>
-                  <button
-                    type="button"
-                    className={smallButton}
-                    disabled={busy || !!adding || !k.list.length}
-                    onClick={() => {
-                      if (window.confirm(`Try and Add to DB for all ${k.list.length}? About a minute each. Each waits for your review before other clients see it.`)) {
-                        onAdd(k.list.map((r) => r.investor.id));
-                      }
+      <div className="mt-md overflow-hidden rounded-card border border-border bg-surface">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[560px] text-left text-body-sm">
+            <thead className="border-b border-border bg-background text-label uppercase tracking-label text-muted">
+              <tr>
+                <th className={headCell}>Group</th>
+                <th className={`${headCell} text-right`}>Investors</th>
+                <th className={headCell}>Ticked</th>
+                <th className={headCell} />
+              </tr>
+            </thead>
+            <tbody>
+              {groups.map((g, i) => {
+                const isOpen = open === g.key;
+                const count = g.list.length;
+                const inGroup = g.list.filter((r) => ticked.has(r.investor.id)).length;
+                const toggle = () => {
+                  if (count) setOpen(isOpen ? null : g.key);
+                };
+                return (
+                  <tr
+                    key={g.key}
+                    tabIndex={count ? 0 : -1}
+                    aria-expanded={count ? isOpen : undefined}
+                    className={`transition-colors duration-hover focus:outline-none ${i ? "border-t border-border" : ""} ${
+                      count ? "cursor-pointer hover:bg-background focus:bg-background" : ""
+                    } ${isOpen && count ? "bg-primary-tint/40 hover:bg-primary-tint/40" : ""}`}
+                    onClick={toggle}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") toggle();
                     }}
                   >
-                    Add only these {n(k.list.length)}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-          <tr className="border-t-2 border-primary align-top">
-            <td className="py-xs pr-md">
-              <p className="text-success">Added so far</p>
-              <p className="text-muted">
-                {n(pending)} pending review · {n(approved)} approved.{" "}
-                <a href="/admin/fund-database#added-by-rupert" className="underline">
-                  Review on the Fund Database page
-                </a>
-              </p>
-            </td>
-            <td className="py-xs pr-md text-right text-heading">{n(added.length)}</td>
-            <td className="py-xs text-right">
-              <button type="button" className={smallButton} disabled={!added.length} onClick={() => setOpen(open === "added" ? null : "added")}>
-                {open === "added" ? "Hide list" : "Show list"}
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-      {open ? (
-        <div className="mt-md">
-          <p className="text-label uppercase tracking-label text-muted">
-            {open === "added" ? "Added so far" : kinds.find((k) => k.key === open)?.label} · {n(rows(open).length)}
-          </p>
-          {open !== "added" ? (
-            <p className="text-body-sm text-muted">The research finds each website itself. To give one yourself first, Reopen the check and set it in the details.</p>
-          ) : null}
-          <table className="mt-xs w-full text-left text-body-sm">
-            <tbody>{rows(open).map((row) => renderRow(row))}</tbody>
+                    <td className={`px-md py-sm ${isOpen && count ? "shadow-[inset_3px_0_0_#5C7A5E]" : ""}`}>
+                      <div className={`flex items-start gap-sm ${count ? "" : "opacity-50"}`}>
+                        <span className={`mt-[9px] block h-[8px] w-[8px] shrink-0 rounded-full ${g.dot}`} aria-hidden="true" />
+                        <div className="min-w-0">
+                          <p className="text-body font-medium text-heading">{g.label}</p>
+                          <p className="text-muted">
+                            {g.note}
+                            {g.key === "added" ? (
+                              <>
+                                {" "}
+                                <a href="/admin/fund-database#added-by-rupert" className="underline" onClick={(event) => event.stopPropagation()}>
+                                  Review on the Fund Database page
+                                </a>
+                              </>
+                            ) : null}
+                          </p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-md py-sm text-right text-h3 font-normal tabular-nums ${count ? "text-heading" : "text-muted/60"}`}>{n(count)}</td>
+                    <td className="px-md py-sm">
+                      {g.key === "added" ? count ? <Pill tone="done">✓ Added</Pill> : null : inGroup ? <Pill tone="action">{n(inGroup)} to add</Pill> : count ? <Pill tone="quiet">None ticked</Pill> : null}
+                    </td>
+                    <td className="whitespace-nowrap px-md py-sm text-right text-primary">{count ? (isOpen ? "Hide ▴" : "Show ▾") : ""}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
           </table>
         </div>
+      </div>
+      {missing.length || adding ? <div className="mt-md">{bar}</div> : null}
+      {open && shownList.length ? (
+        <section aria-label={groups.find((g) => g.key === open)?.label} className="mt-md overflow-hidden rounded-card border border-border bg-surface">
+          <div className="flex flex-wrap items-start justify-between gap-md border-b border-border bg-background px-md py-md">
+            <div className="min-w-0 flex-1">
+              <p className="text-label uppercase tracking-label text-muted">
+                Group open · {n(shownList.length)} {shownList.length === 1 ? "investor" : "investors"}
+              </p>
+              <h4 className="text-h3 text-heading">{groups.find((g) => g.key === open)?.label}</h4>
+              {open !== "added" ? (
+                <p className="max-w-prose text-body-sm text-secondary">The research finds each website itself. To give one yourself first, Reopen the check and set it in the details.</p>
+              ) : null}
+            </div>
+            <button type="button" className={`${smallButton} shrink-0`} onClick={() => setOpen(null)}>
+              Close ▴
+            </button>
+          </div>
+          <div className="px-md pb-md pt-sm">
+            {open === "added" ? (
+              <table className="w-full text-left text-body-sm">
+                <tbody>{shownList.map((row) => renderRow(row))}</tbody>
+              </table>
+            ) : (
+              <table className="w-full text-left text-body-sm">
+                <thead className="text-label uppercase tracking-label text-muted">
+                  <tr>
+                    <th className="w-[1%] py-xs pr-md font-medium">
+                      <input
+                        type="checkbox"
+                        className="accent-primary"
+                        aria-label="Tick all in this group"
+                        disabled={busy || !!adding}
+                        checked={shownList.every((r) => ticked.has(r.investor.id))}
+                        onChange={(e) => setTicks(shownList.map((r) => r.investor.id), e.target.checked)}
+                      />
+                    </th>
+                    <th className="py-xs pr-md font-medium">Investor</th>
+                    <th className="py-xs pr-md font-medium">Backed</th>
+                    <th className="py-xs font-medium">Website</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {shownList.map((row) => {
+                    const on = ticked.has(row.investor.id);
+                    const isAdding = adding?.current === row.investor.id;
+                    return (
+                      <tr key={row.investor.id} className={`border-t border-border align-top ${on ? "bg-primary-tint/30" : ""}`}>
+                        <td className="py-sm pr-md">
+                          <input
+                            type="checkbox"
+                            className="accent-primary"
+                            aria-label={`Add ${row.investor.name}`}
+                            disabled={busy || !!adding}
+                            checked={on}
+                            onChange={(e) => setTicks([row.investor.id], e.target.checked)}
+                          />
+                        </td>
+                        <td className="py-sm pr-md text-heading">
+                          {row.investor.name}
+                          {isAdding ? <span className="ml-sm text-primary">Adding…</span> : null}
+                        </td>
+                        <td className="py-sm pr-md text-secondary">{backedText(row)}</td>
+                        <td className="py-sm text-secondary">{row.investor.website ? <Site url={row.investor.website} /> : <span className="text-muted">Found by the research</span>}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
+          </div>
+        </section>
       ) : null}
     </Card>
   );
@@ -1660,25 +1734,12 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
       return false;
     }
     setCheck(result.check);
-    setToast(`${n(result.saved)} ${result.saved === 1 ? "decision" : "decisions"} saved.`);
-    return true;
-  };
-
-  /** A lesson for Rupert, applied: the values are added to the fund's record in the Fund Database, for every client. */
-  const fix = async (investorId: string, field: DryStep, labels: string[], note: string) => {
-    setBusy(true);
-    setError(null);
-    const row = check?.rows.find((r) => r.investor.id === investorId);
-    const name = row?.firmName ?? row?.investor.name ?? "Fund";
-    const result = await fixFundFromLesson(clientId, investorId, field, labels, note, kind);
-    setBusy(false);
-    if (!result.ok) return setError(result.error);
-    setCheck(result.check);
     setToast(
-      result.added.length
-        ? `${name}: ${result.added.join(", ")} added to its ${DRY_STEP_LABEL[field]} in the Fund Database, for every client. Saved.`
-        : `${name}: the fix to its ${DRY_STEP_LABEL[field]} was removed. Saved.`,
+      `${n(result.saved)} ${result.saved === 1 ? "decision" : "decisions"} saved${
+        result.updated ? `, ${n(result.updated)} fund ${result.updated === 1 ? "record" : "records"} updated in the Fund Database for every client` : ""
+      }.`,
     );
+    return true;
   };
 
   const group = async (ids: string[], action: "bring_back" | "leave_out" | null) => {
@@ -2022,7 +2083,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
               })()
             : null}
           {current === "not_in_list" ? (
-            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} onSubmit={submitMany} fixOptions={check.fixOptions} onFix={(...args) => void fix(...args)} />
+            <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} onSubmit={submitMany} fixOptions={check.fixOptions} />
           ) : current === "confirm" ? (
             <ConfirmList rows={byBucket(current)} busy={frozen} onSubmit={submitMany} />
           ) : (
@@ -2054,7 +2115,6 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
         onDecide={(id, patch) => void decide(id, patch)}
         onSubmit={submitMany}
         fixOptions={check.fixOptions}
-        onFix={(...args) => void fix(...args)}
         onApplyDefaults={() => void applyAll()}
       />
       {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}

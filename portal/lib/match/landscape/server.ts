@@ -988,6 +988,42 @@ export async function decideInvestors(
   return { ok: true, value: changed };
 }
 
+/**
+ * Several funds' records updated in one go (the list's "Bring back and update the database"): the check
+ * is read once, every update is checked against it, then each is saved. As fixFundRecord, per fund.
+ */
+export async function fixFundRecords(
+  supabase: ServiceClient,
+  clientId: string,
+  fixes: { investorId: string; field: DryStep; labels: unknown; note: string }[],
+  actor: string | null,
+  kind: LandscapeKind = "competitors",
+): Promise<Result<number>> {
+  if (!fixes.length) return { ok: true, value: 0 };
+  const current = await currentLandscape(supabase, clientId, kind);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land) return { ok: false, error: "Confirm the investor list first." };
+  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to update a fund's record." };
+  const check = await checkAgainstDatabase(supabase, clientId, kind);
+  if (!check.ok) return check;
+  const ready: Parameters<typeof saveLesson>[1][] = [];
+  for (const fix of fixes) {
+    const row = check.value.rows.find((r) => r.investor.id === fix.investorId);
+    const name = row?.firmName ?? row?.investor.name ?? "A fund";
+    if (!row?.firmId) return { ok: false, error: `${name}: not matched to a Fund Database record, so there is no record to update. Nothing was saved.` };
+    if (row.bucket === "added") return { ok: false, error: `${name}: added by Rupert, edit it on the Fund Database page. Nothing was saved.` };
+    const clean = cleanLabels(fix.labels, check.value.fixOptions[fix.field] ?? []);
+    if (Array.isArray(fix.labels) && fix.labels.length && !clean.length) return { ok: false, error: `${name}: those values can't be added to that field. Nothing was saved.` };
+    ready.push({ firmId: row.firmId, field: fix.field, labels: clean, note: fix.note, clientId, landscapeId: land.id, investorName: name, by: actor });
+  }
+  for (const lesson of ready) {
+    const saved = await saveLesson(supabase, lesson);
+    if (!saved.ok) return saved;
+  }
+  return { ok: true, value: ready.length };
+}
+
 /** Records the admin's decision on one investor: the record it is, bring back or leave out, and a note. */
 export async function decideInvestor(
   supabase: ServiceClient,
