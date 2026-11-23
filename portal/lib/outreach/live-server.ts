@@ -18,6 +18,16 @@ import {
 } from "@/lib/instantly";
 import { advanceStage } from "@/lib/kickoff";
 import { loadCampaignState } from "@/lib/outreach/campaign-server";
+import {
+  launchStage,
+  resolveStuck,
+  runActivate,
+  runAddLeads,
+  settingsBlocker,
+  type LaunchRow,
+  type LaunchStage,
+  type PushOutcome,
+} from "@/lib/outreach/launch";
 import { emailsPerContact } from "@/lib/outreach/campaign";
 import { asEmailCopy } from "@/lib/setup";
 import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
@@ -100,6 +110,11 @@ export type LiveRow = {
   test_sent_at: string | null;
   launch_requested_at: string | null;
   launch_requested_by: string | null;
+  /** Go Live step 1 (Add leads, paused): claimed, then done. See lib/outreach/launch.ts. */
+  leads_adding_at: string | null;
+  leads_added_at: string | null;
+  leads_added_count: number | null;
+  leads_add_note: string | null;
 };
 
 const s = (value: unknown) => (value == null || value === "" ? null : String(value));
@@ -131,7 +146,21 @@ async function loadLiveRow(supabase: ServiceClient, clientId: string): Promise<R
       test_sent_at: s(row.test_sent_at),
       launch_requested_at: s(row.launch_requested_at),
       launch_requested_by: s(row.launch_requested_by),
+      leads_adding_at: s(row.leads_adding_at),
+      leads_added_at: s(row.leads_added_at),
+      leads_added_count: row.leads_added_count == null ? null : Number(row.leads_added_count),
+      leads_add_note: s(row.leads_add_note),
     },
+  };
+}
+
+function launchRowOf(row: LiveRow): LaunchRow {
+  return {
+    live_at: row.live_at,
+    leads_adding_at: row.leads_adding_at,
+    leads_added_at: row.leads_added_at,
+    leads_added_count: row.leads_added_count,
+    leads_add_note: row.leads_add_note,
   };
 }
 
@@ -164,6 +193,15 @@ export type LiveState = {
   testRecipient: string;
   /** Emails each contact gets: 3 for copy by fund type, 2 for copy by source. */
   emailsPerContact: number;
+  /** Go Live in two steps: Add leads (paused), then Activate. */
+  launch: {
+    stage: LaunchStage;
+    addingSince: string | null;
+    addedAt: string | null;
+    addedCount: number;
+    note: string | null;
+    campaignId: string | null;
+  };
   /** The client approved the launch; Rupert clicks Go Live (within 24 hours). */
   requested: { at: string; by: string | null } | null;
   /** Week by week: projected before launch, with the current week once live. */
@@ -282,6 +320,14 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
       redirected,
       testRecipient: testMode || redirected ? testRecipientOf(r.settings) : "",
       emailsPerContact: perContact,
+      launch: {
+        stage: launchStage(launchRowOf(r)),
+        addingSince: r.leads_adding_at,
+        addedAt: r.leads_added_at,
+        addedCount: r.leads_added_count ?? 0,
+        note: r.leads_add_note,
+        campaignId: r.instantly_campaign_id,
+      },
       requested: r.launch_requested_at ? { at: r.launch_requested_at, by: r.launch_requested_by } : null,
       plan,
       confirmation: confirmed.confirmation,
@@ -398,7 +444,8 @@ export async function recordCampaignInvoicePayment(supabase: ServiceClient, invo
 export async function saveLiveSettings(supabase: ServiceClient, clientId: string, value: unknown): Promise<Result<LiveSettings>> {
   const row = await loadLiveRow(supabase, clientId);
   if (!row.ok) return row;
-  if (row.value.live_at) return { ok: false, error: "The campaign is live; change its settings in Instantly." };
+  const blocked = settingsBlocker(launchRowOf(row.value));
+  if (blocked) return { ok: false, error: blocked };
   const settings = asLiveSettings(value);
   const saved = await saveLive(supabase, clientId, { settings });
   return saved.ok ? { ok: true, value: settings } : saved;
@@ -441,13 +488,20 @@ export function testRecipientOf(settings: LiveSettings) {
  * address is replaced with a + address of the test inbox.
  */
 async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: string): Promise<Result<number>> {
+  const outcome = await pushBatchDetailed(supabase, clientId, campaignId);
+  return outcome.ok ? { ok: true, value: outcome.pushed } : { ok: false, error: outcome.error };
+}
+
+/** pushBatch, saying whether any request reached Instantly when it fails. */
+async function pushBatchDetailed(supabase: ServiceClient, clientId: string, campaignId: string): Promise<PushOutcome> {
+  const fail = (error: string, pushed = 0, touched = false): PushOutcome => ({ ok: false, error, pushed, touched });
   const [row, messages, testMode] = await Promise.all([
     loadLiveRow(supabase, clientId),
     loadOutreachMessages(supabase, clientId),
     isTestPilot(supabase, clientId),
   ]);
-  if (!row.ok) return row;
-  if (!messages.ok) return messages;
+  if (!row.ok) return fail(row.error);
+  if (!messages.ok) return fail(messages.error);
   const settings = row.value.settings;
   // Today's room under this week's email cap (the ramp, then full pace; never
   // above 30): follow-ups due today and first emails already added come first.
@@ -460,15 +514,15 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
   const redirect = testMode || settings.redirect_to_test_inbox;
   const pushedSoFar = messages.value.filter((m) => m.pushed_at).length;
   const limit = redirect && settings.contact_limit > 0 ? Math.min(room, settings.contact_limit - pushedSoFar) : room;
-  if (limit <= 0) return { ok: true, value: 0 };
+  if (limit <= 0) return { ok: true, pushed: 0 };
   const recipient = redirect ? testRecipientOf(settings) : "";
-  if (redirect && !recipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
+  if (redirect && !recipient) return fail("Test mode needs a test inbox: set it in the Go Live panel.");
   const leads = dripQueue(messages.value, {
     delayDays: settings.wave2_delay_days,
     releasedEarly: Boolean(row.value.wave2_pushed_at),
     limit,
   });
-  if (leads.length === 0) return { ok: true, value: 0 };
+  if (leads.length === 0) return { ok: true, pushed: 0 };
   const [optOut, postalAddress] = await Promise.all([optOutLine(supabase, clientId), postalAddressOf(supabase, clientId)]);
   let pushed = 0;
   for (let i = 0; i < leads.length; i += 1000) {
@@ -477,7 +531,8 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
       campaignId,
       chunk.map((m) => leadFor(m, optOut, redirect ? testAddress(recipient, m) : undefined, postalAddress)),
     );
-    if (!added.ok) return { ok: false, error: `${added.error} ${pushed} contacts were added before this.` };
+    // A failed request may still have added some leads in Instantly: from here on, "touched".
+    if (!added.ok) return fail(`${added.error} ${pushed} contacts were added before this.`, pushed, true);
     const now = new Date().toISOString();
     const ids = new Map((added.value.created_leads ?? []).map((lead) => [lead.index, lead.id]));
     for (let index = 0; index < chunk.length; index += 1) {
@@ -485,11 +540,11 @@ async function pushBatch(supabase: ServiceClient, clientId: string, campaignId: 
         .from("outreach_messages")
         .update({ pushed_at: now, instantly_lead_id: ids.get(index) ?? null })
         .eq("id", chunk[index].id);
-      if (error) return { ok: false, error: tableError(error.message, error.code) };
+      if (error) return fail(tableError(error.message, error.code), pushed + index, true);
     }
     pushed += chunk.length;
   }
-  return { ok: true, value: pushed };
+  return { ok: true, pushed };
 }
 
 async function companyName(supabase: ServiceClient, clientId: string) {
@@ -670,77 +725,165 @@ function launchConfirmationError(message: string, code?: string) {
 }
 
 /**
- * Rupert's Go Live, after the client approved the launch (Test Pilot clients
- * need no approval): creates the Instantly campaign and its webhook, adds the
- * first batch and starts it. Each step saves its progress, so a retry after a
- * failure continues where it stopped.
+ * Go Live step 1, after the client approved the launch (Test Pilot clients
+ * need no approval): creates the Instantly campaign (paused: a new campaign
+ * doesn't send until it is activated), its webhook and the inbox cap, and
+ * adds the first batch, so Rupert can check every lead in Instantly before
+ * anything is sent. Never adds a second first batch: see runAddLeads.
  */
-export async function goLive(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ wave1: number }>> {
+export async function addLeadsPaused(
+  supabase: ServiceClient,
+  clientId: string,
+): Promise<Result<{ added: number; already: boolean; note: string | null; campaignId: string | null }>> {
   if (!isInstantlyConfigured() || !process.env.INSTANTLY_WEBHOOK_SECRET) {
     return { ok: false, error: "Sending isn't set up yet (INSTANTLY_API_KEY, INSTANTLY_WEBHOOK_SECRET)." };
   }
-  const state = await loadLiveState(supabase, clientId);
-  if (!state.ok) return state;
-  if (state.value.gaps.length > 0) return { ok: false, error: state.value.gaps.join(" ") };
   const row = await loadLiveRow(supabase, clientId);
   if (!row.ok) return row;
-  const inbox = row.value.inbox_email!;
-  const testMode = state.value.testMode;
-  const redirected = state.value.redirected;
-  if ((testMode || redirected) && !state.value.testRecipient) return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
-  if (!testMode && !row.value.launch_requested_at) return { ok: false, error: "The client hasn't approved the launch yet." };
-  if (!row.value.instantly_webhook_id) {
-    const reachable = await checkWebhookReachable();
-    if (!reachable.ok) return reachable;
+  const launch = launchRowOf(row.value);
+  // Already claimed, added or live: no checks needed, runAddLeads answers without touching Instantly.
+  if (launchStage(launch) === "ready") {
+    const state = await loadLiveState(supabase, clientId);
+    if (!state.ok) return state;
+    if (state.value.gaps.length > 0) return { ok: false, error: state.value.gaps.join(" ") };
+    if ((state.value.testMode || state.value.redirected) && !state.value.testRecipient) {
+      return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
+    }
+    if (!state.value.testMode && !row.value.launch_requested_at) return { ok: false, error: "The client hasn't approved the launch yet." };
   }
 
   let campaignId = row.value.instantly_campaign_id;
-  if (!campaignId) {
-    const name = `${testMode || redirected ? "TEST · " : ""}${await companyName(supabase, clientId)} · investor outreach`;
-    const created = await createCampaign(
-      campaignBody(name, inbox, { ...row.value.settings, daily_limit: capForWeek(row.value.settings, 1) }, { testMode, redirected, steps: state.value.emailsPerContact }),
-    );
-    if (!created.ok) return created;
-    campaignId = created.value.id;
-    const saved = await saveLive(supabase, clientId, { instantly_campaign_id: campaignId });
-    if (!saved.ok) return saved;
-  }
+  const result = await runAddLeads(launch, {
+    now: () => new Date().toISOString(),
+    async claim(now) {
+      const { data, error } = await supabase
+        .from("outreach_campaigns")
+        .update({ leads_adding_at: now, updated_at: now })
+        .eq("client_id", clientId)
+        .is("leads_adding_at", null)
+        .is("leads_added_at", null)
+        .is("live_at", null)
+        .select("client_id");
+      if (error) throw new Error(tableError(error.message, error.code));
+      return (data ?? []).length === 1;
+    },
+    async reload() {
+      const fresh = await loadLiveRow(supabase, clientId);
+      if (!fresh.ok) throw new Error(fresh.error);
+      return launchRowOf(fresh.value);
+    },
+    async release() {
+      const saved = await saveLive(supabase, clientId, { leads_adding_at: null });
+      if (!saved.ok) console.error(`Go Live: claim not released for ${clientId}: ${saved.error}`);
+    },
+    async markAdded(now, count, note) {
+      const saved = await saveLive(supabase, clientId, { leads_added_at: now, leads_added_count: count, leads_add_note: note });
+      if (!saved.ok) throw new Error(`Leads were added but not recorded: ${saved.error}. Don't click again; tell Rupert's developer.`);
+    },
+    async setup() {
+      const fresh = await loadLiveRow(supabase, clientId);
+      if (!fresh.ok) return fresh;
+      const state = await loadLiveState(supabase, clientId);
+      if (!state.ok) return state;
+      const inbox = fresh.value.inbox_email!;
+      const { testMode, redirected } = state.value;
+      if (!fresh.value.instantly_webhook_id) {
+        const reachable = await checkWebhookReachable();
+        if (!reachable.ok) return reachable;
+      }
+      campaignId = fresh.value.instantly_campaign_id;
+      if (!campaignId) {
+        const name = `${testMode || redirected ? "TEST · " : ""}${await companyName(supabase, clientId)} · investor outreach`;
+        const created = await createCampaign(
+          campaignBody(name, inbox, { ...fresh.value.settings, daily_limit: capForWeek(fresh.value.settings, 1) }, { testMode, redirected, steps: state.value.emailsPerContact }),
+        );
+        if (!created.ok) return created;
+        campaignId = created.value.id;
+        const saved = await saveLive(supabase, clientId, { instantly_campaign_id: campaignId });
+        if (!saved.ok) return saved;
+      }
+      if (!fresh.value.instantly_webhook_id) {
+        const hook = await createWebhook({
+          target_hook_url: `${PORTAL_URL}/api/instantly/webhook`,
+          event_type: "all_events",
+          campaign: campaignId,
+          name: `Hey Rupert ${clientId.slice(0, 8)}`,
+          headers: { Authorization: `Bearer ${process.env.INSTANTLY_WEBHOOK_SECRET}` },
+        });
+        if (!hook.ok) return hook;
+        const saved = await saveLive(supabase, clientId, { instantly_webhook_id: hook.value.id });
+        if (!saved.ok) return saved;
+      }
+      // The inbox itself never sends more than 30 a day, whatever the campaign.
+      const capped = await updateAccount(inbox, { daily_limit: MAX_DAILY_EMAILS });
+      if (!capped.ok) console.error(`Instantly account daily limit not set for ${inbox}: ${capped.error}`);
+      return { ok: true };
+    },
+    async push() {
+      if (!campaignId) return { ok: false, error: "No Instantly campaign.", pushed: 0, touched: false };
+      return pushBatchDetailed(supabase, clientId, campaignId);
+    },
+  }).catch((err: unknown) => ({ ok: false as const, error: err instanceof Error ? err.message : "Adding leads failed." }));
+  if (!result.ok) return result;
+  return { ok: true, value: { added: result.added, already: result.already, note: result.note, campaignId: campaignId ?? null } };
+}
 
-  if (!row.value.instantly_webhook_id) {
-    const hook = await createWebhook({
-      target_hook_url: `${PORTAL_URL}/api/instantly/webhook`,
-      event_type: "all_events",
-      campaign: campaignId,
-      name: `Hey Rupert ${clientId.slice(0, 8)}`,
-      headers: { Authorization: `Bearer ${process.env.INSTANTLY_WEBHOOK_SECRET}` },
-    });
-    if (!hook.ok) return hook;
-    const saved = await saveLive(supabase, clientId, { instantly_webhook_id: hook.value.id });
-    if (!saved.ok) return saved;
-  }
+/** Go Live step 2: starts the paused campaign. Adds no leads. */
+export async function activateLaunch(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ already: boolean }>> {
+  const row = await loadLiveRow(supabase, clientId);
+  if (!row.ok) return row;
+  const campaignId = row.value.instantly_campaign_id;
+  const result = await runActivate(launchRowOf(row.value), {
+    now: () => new Date().toISOString(),
+    async activate() {
+      if (!campaignId) return { ok: false, error: "No Instantly campaign." };
+      const started = await activateCampaign(campaignId);
+      return started.ok ? { ok: true } : started;
+    },
+    async markLive(now) {
+      const saved = await saveLive(supabase, clientId, {
+        live_at: now,
+        live_by: actor,
+        ...(row.value.launch_requested_at ? {} : { consent_text: CONSENT_TEXT(row.value.inbox_email ?? "") }),
+      });
+      if (!saved.ok) throw new Error(`The campaign started in Instantly but wasn't recorded as live: ${saved.error}.`);
+      await advanceStage(supabase, clientId, LIVE_STAGES_FROM, "live");
+      // The client's go-live date, shown on their Live card. Kept if already set.
+      await supabase.from("clients").update({ live_at: now }).eq("id", clientId).is("live_at", null);
+    },
+  }).catch((err: unknown) => ({ ok: false as const, error: err instanceof Error ? err.message : "Activate failed." }));
+  if (!result.ok) return result;
+  return { ok: true, value: { already: result.already } };
+}
 
-  // The inbox itself never sends more than 30 a day, whatever the campaign.
-  const capped = await updateAccount(inbox, { daily_limit: MAX_DAILY_EMAILS });
-  if (!capped.ok) console.error(`Instantly account daily limit not set for ${inbox}: ${capped.error}`);
+/**
+ * A stuck Add leads (its server stopped after claiming): Rupert looked at the
+ * campaign in Instantly. "added": leads are there, keep them as the first
+ * batch. "empty": no leads there, Add leads can run again.
+ */
+export async function resolveStuckLaunch(supabase: ServiceClient, clientId: string, choice: "added" | "empty"): Promise<Result<null>> {
+  const [row, messages] = await Promise.all([loadLiveRow(supabase, clientId), loadOutreachMessages(supabase, clientId)]);
+  if (!row.ok) return row;
+  if (!messages.ok) return messages;
+  const pushedHere = messages.value.filter((m) => m.pushed_at).length;
+  const checked = resolveStuck(launchRowOf(row.value), choice, pushedHere);
+  if (!checked.ok) return checked;
+  return choice === "added"
+    ? saveLive(supabase, clientId, {
+        leads_added_at: new Date().toISOString(),
+        leads_added_count: pushedHere,
+        leads_add_note: `Resolved by Rupert: the leads were in Instantly (${pushedHere} recorded here).`,
+      })
+    : saveLive(supabase, clientId, { leads_adding_at: null });
+}
 
-  // The first daily batch: a proportional mix of first contacts.
-  const wave1 = await pushBatch(supabase, clientId, campaignId);
-  if (!wave1.ok) return wave1;
-
-  const activated = await activateCampaign(campaignId);
-  if (!activated.ok) return activated;
-
-  const now = new Date().toISOString();
-  const saved = await saveLive(supabase, clientId, {
-    live_at: now,
-    live_by: actor,
-    ...(row.value.launch_requested_at ? {} : { consent_text: CONSENT_TEXT(inbox) }),
-  });
-  if (!saved.ok) return saved;
-  await advanceStage(supabase, clientId, LIVE_STAGES_FROM, "live");
-  // The client's go-live date, shown on their Live card. Kept if already set.
-  await supabase.from("clients").update({ live_at: now }).eq("id", clientId).is("live_at", null);
-  return { ok: true, value: { wave1: wave1.value } };
+/** Both steps at once, for Test Pilot clients (fast test mode). */
+export async function goLive(supabase: ServiceClient, clientId: string, actor: string | null): Promise<Result<{ wave1: number }>> {
+  const added = await addLeadsPaused(supabase, clientId);
+  if (!added.ok) return added;
+  const started = await activateLaunch(supabase, clientId, actor);
+  if (!started.ok) return started;
+  return { ok: true, value: { wave1: added.value.added } };
 }
 
 /**

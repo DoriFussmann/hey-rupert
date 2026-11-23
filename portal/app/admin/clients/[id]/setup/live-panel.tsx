@@ -4,7 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import {
   draftGoLiveEmailAction,
   checkReplyTrackingAction,
-  goLiveNowAction,
+  activateNowAction,
+  addLeadsPausedAction,
+  resolveStuckLaunchAction,
   sendSummaryNowAction,
   goLiveTestAction,
   pushGoLiveAction,
@@ -147,7 +149,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
         return false;
       }
       apply(result.state);
-      if (success) setMessage({ kind: "ok", text: success(result) });
+      // An action can succeed (fresh state) and still report a failure, e.g. Add leads.
+      if (success) setMessage({ kind: (result as { failed?: unknown }).failed ? "error" : "ok", text: success(result) });
       return true;
     } catch (err) {
       setMessage({ kind: "error", text: err instanceof Error ? err.message : "Something went wrong." });
@@ -208,25 +211,86 @@ export function LivePanel({ clientId }: { clientId: string }) {
             <p className="text-body text-heading">
               They were told: live within 24 hours. Due by {formatDateTime(new Date(Date.parse(state.requested.at) + 86_400_000).toISOString())}.
             </p>
-            <div className="mt-md flex flex-wrap items-center gap-sm">
-              <button
-                type="button"
-                className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
-                style={{ backgroundColor: "#0e816c" }}
-                disabled={busy || state.gaps.length > 0}
-                title={state.gaps.join(" ") || undefined}
-                onClick={() => {
-                  if (!window.confirm("Go Live now? The Instantly campaign is created, the first investors are added and sending starts in the next weekday window. The client is emailed.")) return;
-                  void run(
-                    () => goLiveNowAction(clientId),
-                    (r) => `Live: ${String(r.added)} investors added.${r.emailError ? ` The client email didn't go out: ${String(r.emailError)}` : " The client was emailed."}`,
-                  );
-                }}
-              >
-                {busy ? "Working…" : "Go Live now"}
-              </button>
-              <span className="text-body-sm text-secondary">Send yourself a test first (below) if you haven&apos;t.</span>
-            </div>
+            {state.launch.stage === "ready" ? (
+              <div className="mt-md flex flex-wrap items-center gap-sm">
+                <button
+                  type="button"
+                  className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
+                  style={{ backgroundColor: "#0e816c" }}
+                  disabled={busy || state.gaps.length > 0}
+                  title={state.gaps.join(" ") || undefined}
+                  onClick={() => {
+                    if (!window.confirm("Step 1 of 2: create the Instantly campaign, paused, and add today's first batch? Nothing is sent and the client isn't told. You check the leads in Instantly, then Activate.")) return;
+                    void run(
+                      () => addLeadsPausedAction(clientId),
+                      (r) => (r.failed ? `Not added: ${String(r.note)}` : `${String(r.added)} leads added to a paused campaign. Check every address in Instantly → Leads, then Activate.`),
+                    );
+                  }}
+                >
+                  {busy ? "Working…" : "1. Add leads (paused)"}
+                </button>
+                <span className="text-body-sm text-secondary">Send yourself a test first (below) if you haven&apos;t.</span>
+              </div>
+            ) : state.launch.stage === "added" ? (
+              <div className="mt-md space-y-sm">
+                <p className="text-body text-heading">
+                  {state.launch.addedCount} leads are in a <strong>paused</strong> Instantly campaign
+                  {state.launch.addedAt ? ` (added ${formatDateTime(state.launch.addedAt)})` : ""}. Nothing has been sent.
+                </p>
+                <p className="text-body-sm text-secondary">
+                  In Instantly, open “{state.redirected ? "TEST · " : ""}… · investor outreach”
+                  {state.launch.campaignId ? ` (id ${state.launch.campaignId})` : ""} → Leads, and check every address
+                  {state.redirected && state.testRecipient ? ` is ${state.testRecipient.replace("@", "+…@")}` : ""}. Then activate.
+                </p>
+                {state.launch.note ? <p className="text-body-sm text-warning">{state.launch.note}</p> : null}
+                <button
+                  type="button"
+                  className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
+                  style={{ backgroundColor: "#0e816c" }}
+                  disabled={busy}
+                  onClick={() => {
+                    if (!window.confirm("Step 2 of 2: activate the campaign? Sending starts in the next weekday window and the client is emailed that they're live.")) return;
+                    void run(
+                      () => activateNowAction(clientId),
+                      (r) => (r.already ? "Already live." : `Live.${r.emailError ? ` The client email didn't go out: ${String(r.emailError)}` : " The client was emailed."}`),
+                    );
+                  }}
+                >
+                  {busy ? "Working…" : "2. Activate"}
+                </button>
+              </div>
+            ) : state.launch.stage === "stuck" ? (
+              <div className="mt-md space-y-sm">
+                <p className="text-body-sm text-warning">
+                  Adding leads started{state.launch.addingSince ? ` at ${formatDateTime(state.launch.addingSince)}` : ""} and didn&apos;t finish. Nothing more is added
+                  from here until you say what Instantly shows: open the campaign{state.launch.campaignId ? ` (id ${state.launch.campaignId})` : ""} → Leads.
+                </p>
+                <div className="flex flex-wrap gap-sm">
+                  <button
+                    type="button"
+                    className={primaryButton}
+                    disabled={busy}
+                    onClick={() => {
+                      if (!window.confirm("Instantly shows leads in the campaign: keep them as the first batch (nothing more is added today)?")) return;
+                      void run(() => resolveStuckLaunchAction(clientId, "added"), () => "Kept as the first batch. Check them, then Activate.");
+                    }}
+                  >
+                    Leads are in Instantly: keep them
+                  </button>
+                  <button
+                    type="button"
+                    className={secondaryButton}
+                    disabled={busy}
+                    onClick={() => {
+                      if (!window.confirm("Instantly shows NO leads in the campaign? Only then: Add leads can run again.")) return;
+                      void run(() => resolveStuckLaunchAction(clientId, "empty"), () => "Cleared. Add leads can run again.");
+                    }}
+                  >
+                    Instantly has no leads: try again
+                  </button>
+                </div>
+              </div>
+            ) : null}
           </LiveBanner>
         </div>
       ) : null}

@@ -6,6 +6,9 @@ import { isClaudeConfigured } from "@/lib/anthropic";
 import { isServiceRoleConfigured } from "@/lib/env";
 import {
   goLive,
+  addLeadsPaused,
+  activateLaunch,
+  resolveStuckLaunch,
   isTestPilot,
   pollInboxConnect,
   startInboxConnect,
@@ -195,20 +198,45 @@ function revalidateClient(clientId: string) {
 }
 
 /**
- * The real Go Live, after the client approved the launch: the campaign is
- * created and starts, the client is emailed that they're live.
+ * Go Live step 1, after the client approved the launch: the Instantly
+ * campaign is created paused and the first batch is added. Nothing is sent
+ * and the client isn't told: check the leads in Instantly, then Activate.
  */
-export async function goLiveNowAction(clientId: string) {
+export async function addLeadsPausedAction(clientId: string) {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
-  const launched = await goLive(access.supabase, clientId, access.actor);
-  if (!launched.ok) return launched;
+  const added = await addLeadsPaused(access.supabase, clientId);
+  if (!added.ok) {
+    revalidatePath(`/admin/clients/${clientId}`);
+    return withState(clientId, access.supabase, { added: 0, already: false, note: added.error, failed: true });
+  }
+  revalidatePath(`/admin/clients/${clientId}`);
+  return withState(clientId, access.supabase, { added: added.value.added, already: added.value.already, note: added.value.note, failed: false });
+}
+
+/** Go Live step 2: starts the paused campaign; the client is emailed that they're live. */
+export async function activateNowAction(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const started = await activateLaunch(access.supabase, clientId, access.actor);
+  if (!started.ok) return started;
+  if (started.value.already) return withState(clientId, access.supabase, { emailError: null, already: true });
   await confirmGoLiveStep(access.supabase, clientId, access.actor);
   await notifyAdmin(access.supabase, clientId, "went_live", { email: false });
   const emailed = await notifyClient(access.supabase, clientId, "campaign_live");
   revalidateClient(clientId);
   revalidatePath("/portal/live-campaign");
-  return withState(clientId, access.supabase, { added: launched.value.wave1, emailError: emailed.ok ? null : emailed.reason });
+  return withState(clientId, access.supabase, { emailError: emailed.ok ? null : emailed.reason, already: false });
+}
+
+/** A stuck Add leads, after Rupert checked the campaign's leads in Instantly. */
+export async function resolveStuckLaunchAction(clientId: string, choice: "added" | "empty") {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const resolved = await resolveStuckLaunch(access.supabase, clientId, choice === "empty" ? "empty" : "added");
+  if (!resolved.ok) return resolved;
+  revalidatePath(`/admin/clients/${clientId}`);
+  return withState(clientId, access.supabase, {});
 }
 
 /** Emails Rupert today's daily summary now (it also goes out weekdays at 5pm Eastern). */
