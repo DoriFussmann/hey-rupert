@@ -63,6 +63,13 @@ const BUCKET_NOTE: Record<Bucket, string> = {
   removed: "Marked not relevant by you: out of this step and the Roster.",
 };
 
+/** The longer explanation on top of an open group, where the one-liner isn't enough. */
+const PANEL_NOTE: Partial<Record<Bucket, string>> = {
+  confirm:
+    "A separate job from the decisions below: here the question is who the investor is. The research named each of these, but the name is close to one or more Fund Database records without matching exactly. For each one, pick the record it is, say it isn't in the database, or give its website. Find websites looks each one up and suggests the answer.",
+  not_in_list: "Every fund of this group in one list. The same decisions as in the table below, which groups them by the filter that removed them.",
+};
+
 const PILL = {
   action: "border-warning/40 bg-warning/10 text-warning",
   done: "border-success/30 bg-success/10 text-success",
@@ -1646,30 +1653,25 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </table>
         </div>
       </div>
-      <DecisionSummary
-        rows={notInList}
-        busy={frozen}
-        onGroup={(ids, action) => void group(ids, action)}
-        openKey={openReason}
-        onOpen={setOpenReason}
-        onDecide={(id, patch) => void decide(id, patch)}
-        fixOptions={check.fixOptions}
-        onFix={(...args) => void fix(...args)}
-        onApplyDefaults={() => void applyAll()}
-      />
-      {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
-
-      {recorded ? (
-        <p className="mt-md text-body-sm text-muted">
-          {n(recorded)} investments (which fund backed which competitor) saved to the funds&apos; records for future clients.
-        </p>
-      ) : null}
-
       {current && byBucket(current).length ? (
-        <section className="mt-lg">
-          <h4 className="text-label uppercase tracking-label text-muted">
-            {BUCKET_LABEL[current]} · {n(byBucket(current).length)}
-          </h4>
+        <section
+          aria-label={BUCKET_LABEL[current]}
+          className={`mt-lg overflow-hidden rounded-card border bg-surface ${current === "confirm" ? "border-warning/50" : "border-border"}`}
+        >
+          <div className="flex flex-wrap items-start justify-between gap-md border-b border-border bg-background px-md py-md">
+            <div className="min-w-0 flex-1">
+              <p className="text-label uppercase tracking-label text-muted">Group open · {n(byBucket(current).length)} {byBucket(current).length === 1 ? "investor" : "investors"}</p>
+              <h4 className="flex items-center gap-sm text-h3 text-heading">
+                <span className={`block h-[8px] w-[8px] shrink-0 rounded-full ${DOT[current]}`} aria-hidden="true" />
+                {BUCKET_LABEL[current]}
+              </h4>
+              <p className="max-w-prose text-body-sm text-secondary">{PANEL_NOTE[current] ?? BUCKET_NOTE[current]}</p>
+            </div>
+            <button type="button" className={`${smallButton} shrink-0`} onClick={() => setShow("none")}>
+              Close ▴
+            </button>
+          </div>
+          <div className="px-md pb-md pt-sm">
           {current === "missing_fund" || current === "missing_angel" ? (
             <div className="mt-xs flex flex-wrap items-center gap-sm">
               {adding ? (
@@ -1726,7 +1728,17 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           {current === "not_in_list" ? (
             <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} fixOptions={check.fixOptions} onFix={(...args) => void fix(...args)} />
           ) : (
-          <table className="mt-xs w-full text-left text-body-sm">
+          <table className="mt-md w-full text-left text-body-sm">
+            {current === "confirm" ? (
+              <thead className="text-label uppercase tracking-label text-muted">
+                <tr>
+                  <th className="py-xs pr-md font-medium">Investor, as the research names it</th>
+                  <th className="py-xs font-medium" colSpan={2}>
+                    Which record is it?
+                  </th>
+                </tr>
+              </thead>
+            ) : null}
             <tbody>
               {[...byBucket(current)].sort((a, b) => Number(a.unsure) - Number(b.unsure)).map((row) =>
                 current === "confirm" ? (
@@ -1746,8 +1758,28 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
             </tbody>
           </table>
           )}
+          </div>
         </section>
       ) : null}
+      <DecisionSummary
+        rows={notInList}
+        busy={frozen}
+        onGroup={(ids, action) => void group(ids, action)}
+        openKey={openReason}
+        onOpen={setOpenReason}
+        onDecide={(id, patch) => void decide(id, patch)}
+        fixOptions={check.fixOptions}
+        onFix={(...args) => void fix(...args)}
+        onApplyDefaults={() => void applyAll()}
+      />
+      {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
+
+      {recorded ? (
+        <p className="mt-md text-body-sm text-muted">
+          {n(recorded)} investments (which fund backed which competitor) saved to the funds&apos; records for future clients.
+        </p>
+      ) : null}
+
       <ReviewAndConfirm check={check} busy={busy} onDecide={(id, p) => void decide(id, p)} onConfirm={(c) => void confirmCheck(c)} />
     </Card>
   );
