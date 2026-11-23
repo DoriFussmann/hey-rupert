@@ -18,6 +18,7 @@ import {
   type WarmIntroStatus,
 } from "@/lib/outreach/campaign";
 import { FALLBACK_OPT_OUT_LINE } from "@/lib/outreach/live";
+import { rebuildBlocker } from "@/lib/outreach/launch";
 import { loadOutreachPlan } from "@/lib/outreach/source-server";
 import type { SourceCopy } from "@/lib/outreach/source-copy";
 import { contactStates, planFundPeople } from "@/lib/match/tiers/server";
@@ -361,7 +362,17 @@ export async function buildCampaign(
   actor: string | null,
 ): Promise<Result<{ contacts: number; unwritten: string[] }>> {
   const live = await supabase.from("outreach_campaigns").select("*").eq("client_id", clientId).maybeSingle();
-  if (live.data?.live_at) return { ok: false, error: "The campaign is live. It can't be rebuilt: what was sent stays as sent." };
+  if (live.error) return { ok: false, error: tableError(live.error.message, live.error.code) };
+  const launched = live.data
+    ? rebuildBlocker({
+        live_at: live.data.live_at ?? null,
+        leads_adding_at: live.data.leads_adding_at ?? null,
+        leads_added_at: live.data.leads_added_at ?? null,
+        leads_added_count: live.data.leads_added_count ?? null,
+        leads_add_note: live.data.leads_add_note ?? null,
+      })
+    : null;
+  if (launched) return { ok: false, error: launched };
   const state = await loadCampaignState(supabase, clientId);
   if (!state.ok) return state;
   if (state.value.blockers.length > 0) return { ok: false, error: state.value.blockers.join(" ") };
