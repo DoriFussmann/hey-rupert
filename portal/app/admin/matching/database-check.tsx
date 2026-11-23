@@ -41,15 +41,39 @@ function Site({ url, label }: { url: string | null | undefined; label?: string }
 }
 
 const ORDER: Bucket[] = ["in_list", "not_in_list", "confirm", "missing_fund", "missing_angel", "added", "removed"];
-const TONE: Record<Bucket, string> = {
-  confirm: "text-warning",
-  in_list: "text-success",
-  not_in_list: "text-heading",
-  missing_fund: "text-heading",
-  missing_angel: "text-heading",
-  added: "text-success",
-  removed: "text-muted",
+/** The dot (and share bar) colour of each group. */
+const DOT: Record<Bucket, string> = {
+  confirm: "bg-warning",
+  in_list: "bg-success",
+  not_in_list: "bg-heading",
+  missing_fund: "bg-secondary",
+  missing_angel: "bg-secondary/60",
+  added: "bg-success",
+  removed: "bg-muted/50",
 };
+/** One line under each group's name: what the group is. */
+const BUCKET_NOTE: Record<Bucket, string> = {
+  in_list: "Matched to a database record that Step 1 already shortlisted.",
+  not_in_list: "Matched to a database record, but a Step 1 filter removed it. Decided in the table below.",
+  confirm: "The match is unclear: pick the right record, or say it isn't in the database.",
+  missing_fund: "No database record. Candidates for Try and Add to DB.",
+  missing_angel: "No database record. Candidates for Try and Add to DB.",
+  added: "Added by Try and Add to DB: counts for this client now.",
+  removed: "Marked not relevant by you: out of this step and the Roster.",
+};
+
+const PILL = {
+  action: "border-warning/40 bg-warning/10 text-warning",
+  done: "border-success/30 bg-success/10 text-success",
+  quiet: "border-border bg-background text-secondary",
+} as const;
+
+/** A small status label, in a rounded outline. */
+function Pill({ tone, children }: { tone: keyof typeof PILL; children: React.ReactNode }) {
+  return <span className={`inline-flex items-center whitespace-nowrap rounded-full border px-sm py-[1px] text-[12px] font-medium leading-[1.6] ${PILL[tone]}`}>{children}</span>;
+}
+
+const headCell = "whitespace-nowrap px-md py-sm font-medium";
 
 /** Removes an investor from this step as not relevant (or restores it). */
 function RemoveButton({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
@@ -453,15 +477,16 @@ function Toast({ text }: { text: string | null }) {
   );
 }
 
-type Reason = { key: string; label: string; rows: CheckRow[]; note: string };
+type Decision = "bring_back" | "leave_out";
+type Reason = { key: string; label: string; rows: CheckRow[]; note: string; why: string; def: Decision };
 
 const REASONS: Omit<Reason, "rows">[] = [
-  { key: "sector_shared", label: "Sector only, lists the client's sub-sector", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
-  { key: "sector_none", label: "Sector only, no shared sub-sector", note: "Backed a direct competitor, but lists none of the client's sub-sectors: left out by default." },
-  { key: "stage", label: "Stage", note: "A different stage: left out by default." },
-  { key: "geography", label: "Geography", note: "Another geography: left out by default." },
-  { key: "financing", label: "Financing", note: "Another financing type: left out by default." },
-  { key: "none", label: "Passes Step 1 today", note: "The database changed after Step 1: left out by default." },
+  { key: "sector_shared", label: "Sector only, lists the client's sub-sector", why: "Backed a direct competitor and lists the client's Secondary 1 or 2.", def: "bring_back", note: "Backed a direct competitor and lists Secondary 1 or 2: brought back by default." },
+  { key: "sector_none", label: "Sector only, no shared sub-sector", why: "Backed a direct competitor, but lists none of the client's sub-sectors.", def: "leave_out", note: "Backed a direct competitor, but lists none of the client's sub-sectors: left out by default." },
+  { key: "stage", label: "Stage", why: "Invests at a different stage.", def: "leave_out", note: "A different stage: left out by default." },
+  { key: "geography", label: "Geography", why: "Invests in another geography.", def: "leave_out", note: "Another geography: left out by default." },
+  { key: "financing", label: "Financing", why: "Offers another financing type.", def: "leave_out", note: "Another financing type: left out by default." },
+  { key: "none", label: "Passes Step 1 today", why: "The database changed after Step 1 was confirmed.", def: "leave_out", note: "The database changed after Step 1: left out by default." },
 ];
 
 /** Which reason group a fund in the database but not in the shortlist falls in. */
@@ -538,121 +563,145 @@ function DecisionSummary({
   const reasons: Reason[] = REASONS.map((r) => ({ ...r, rows: rows.filter((x) => reasonOf(x) === r.key) }))
     .filter((r) => r.rows.length);
   if (!reasons.length) return null;
-  const count = (list: CheckRow[], a: "bring_back" | "leave_out") => list.filter((x) => x.action === a).length;
+  const count = (list: CheckRow[], a: Decision) => list.filter((x) => x.action === a).length;
   const mine = (list: CheckRow[]) => list.filter((x) => !x.defaulted).length;
+  const left = rows.length - mine(rows);
+  const num = (value: number, strong = false) => (
+    <span className={value ? (strong ? "text-heading" : "text-body") : "text-muted/60"}>{n(value)}</span>
+  );
+  const status = (list: CheckRow[]) => {
+    const open = list.length - mine(list);
+    return (
+      <div className="flex flex-col items-start gap-[2px]">
+        {open ? <Pill tone="action">{n(open)} to decide</Pill> : <Pill tone="done">✓ Decided</Pill>}
+        <span className="whitespace-nowrap text-[12px] text-muted">
+          {n(mine(list))} of {n(list.length)} decided
+        </span>
+      </div>
+    );
+  };
   return (
-    <div className="mt-lg">
-      <h4 className="text-label uppercase tracking-label text-muted">In the database, not in the shortlist: decisions</h4>
-      <p className="text-body-sm">
-        <span className={rows.length - mine(rows) ? "text-warning" : "text-success"}>
-          {rows.length - mine(rows) ? `${n(rows.length - mine(rows))} of ${n(rows.length)} still to decide` : `All ${n(rows.length)} decided`}
-        </span>
-        <span className="text-muted">
-          {" "}
-          · Click a row to see its funds.
-        </span>
-      </p>
-      {rows.length - mine(rows) ? (
-        <div className="mt-xs flex flex-wrap items-center gap-sm">
-          <button type="button" className={primaryButton} disabled={busy} onClick={onApplyDefaults}>
-            Apply Default to All
-          </button>
-          <span className="text-body-sm text-muted">
-            The {n(rows.length - mine(rows))} still to decide (Not sure included) take their default: {n(rows.filter((x) => x.defaulted && x.action === "bring_back").length)} brought back,{" "}
-            {n(rows.filter((x) => x.defaulted && x.action === "leave_out").length)} left out. Decisions already made stay.
-          </span>
+    <div className="mt-lg overflow-hidden rounded-card border border-border bg-surface">
+      <div className="border-b border-border bg-background px-md py-md">
+        <div className="flex flex-wrap items-start justify-between gap-md">
+          <div className="min-w-0 flex-1">
+            <p className="text-label uppercase tracking-label text-muted">In the database, not in the shortlist</p>
+            <h4 className="text-h3 text-heading">
+              What to do with {rows.length === 1 ? "this fund" : `these ${n(rows.length)} funds`}
+            </h4>
+            <p className="max-w-prose text-body-sm text-secondary">
+              Grouped by the Step 1 filter that removed them. Every group has a default. Decide a whole group on its row, or open a row to decide fund by fund.
+            </p>
+          </div>
+          {left ? (
+            <button type="button" className={`${primaryButton} shrink-0`} disabled={busy} onClick={onApplyDefaults}>
+              Apply Default to All
+            </button>
+          ) : null}
         </div>
-      ) : null}
-      <table className="mt-xs w-full text-left text-body-sm">
-        <thead className="text-label uppercase tracking-label text-muted">
-          <tr>
-            <th className="py-xs pr-md font-medium">Removed at</th>
-            <th className="py-xs pr-md text-right font-medium">Funds</th>
-            <th className="py-xs pr-md text-right font-medium">Bring back</th>
-            <th className="py-xs pr-md text-right font-medium">Leave out</th>
-            <th className="py-xs pr-md text-right font-medium">Decided</th>
-            <th className="py-xs pr-md text-right font-medium">To decide</th>
-            <th className="py-xs font-medium" />
-          </tr>
-        </thead>
-        <tbody>
-          {reasons.map((r) => {
-            const ids = r.rows.map((x) => x.investor.id);
-
-            return (
-              <tr
-                key={r.key}
-                tabIndex={0}
-                className={`cursor-pointer border-t border-border align-top hover:bg-background focus:bg-background focus:outline-none ${mine(r.rows) === r.rows.length ? "bg-success/5" : ""}`}
-                onClick={() => onOpen(r.key)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter") onOpen(r.key);
-                }}
-              >
-                <td className="py-xs pr-md">
-                  <p className="text-heading underline decoration-border underline-offset-4">{r.label}</p>
-                  <p className="text-muted">{r.note}</p>
-                </td>
-                <td className="py-xs pr-md text-right text-heading">{n(r.rows.length)}</td>
-                <td className="py-xs pr-md text-right">{n(count(r.rows, "bring_back"))}</td>
-                <td className="py-xs pr-md text-right">{n(count(r.rows, "leave_out"))}</td>
-                <td className="py-xs pr-md text-right text-secondary">{n(mine(r.rows))}</td>
-                <td className={`py-xs pr-md text-right ${r.rows.length - mine(r.rows) ? "text-warning" : "text-success"}`}>
-                  {r.rows.length - mine(r.rows) ? n(r.rows.length - mine(r.rows)) : "✓"}
-                </td>
-                <td className="py-xs text-right" onClick={(event) => event.stopPropagation()}>
-                  {(() => {
-                    const decidedAll = mine(r.rows) === r.rows.length;
-                    const allBack = decidedAll && count(r.rows, "bring_back") === r.rows.length;
-                    const allOut = decidedAll && count(r.rows, "leave_out") === r.rows.length;
-                    const seg = "px-sm py-[3px] text-body-sm transition-colors duration-hover disabled:cursor-default";
-                    return (
-                      <div className="inline-flex flex-col items-end gap-xs">
-                        <div className="inline-flex overflow-hidden rounded-md border border-border">
-                          <button
-                            type="button"
-                            disabled={busy || allBack}
-                            aria-pressed={allBack}
-                            className={`${seg} ${allBack ? "bg-primary text-white" : "bg-surface text-secondary hover:text-heading"}`}
-                            onClick={() => onGroup(ids, "bring_back")}
-                          >
-                            {allBack ? "✓ All brought back" : "Bring back all"}
-                          </button>
-                          <button
-                            type="button"
-                            disabled={busy || allOut}
-                            aria-pressed={allOut}
-                            className={`${seg} border-l border-border ${allOut ? "bg-primary text-white" : "bg-surface text-secondary hover:text-heading"}`}
-                            onClick={() => onGroup(ids, "leave_out")}
-                          >
-                            {allOut ? "✓ All left out" : "Leave out all"}
-                          </button>
-                        </div>
-                        {mine(r.rows) ? (
-                          <button type="button" disabled={busy} className="text-body-sm text-muted underline hover:text-heading" onClick={() => onGroup(ids, null)}>
-                            Back to default
-                          </button>
-                        ) : null}
+        <div className="mt-sm flex flex-wrap items-center gap-x-md gap-y-xs">
+          <span className="block h-[6px] w-40 overflow-hidden rounded-full bg-border" aria-hidden="true">
+            <span className={`block h-full rounded-full ${left ? "bg-warning" : "bg-success"}`} style={{ width: `${rows.length ? (mine(rows) / rows.length) * 100 : 0}%` }} />
+          </span>
+          <span className={`text-body-sm font-medium ${left ? "text-warning" : "text-success"}`}>
+            {left ? `${n(left)} of ${n(rows.length)} still to decide` : `✓ All ${n(rows.length)} decided`}
+          </span>
+          {left ? (
+            <span className="text-body-sm text-muted">
+              Apply Default to All: {n(rows.filter((x) => x.defaulted && x.action === "bring_back").length)} brought back,{" "}
+              {n(rows.filter((x) => x.defaulted && x.action === "leave_out").length)} left out (Not sure included). Decisions already made stay.
+            </span>
+          ) : null}
+        </div>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[820px] text-left text-body-sm">
+          <thead className="border-b border-border text-label uppercase tracking-label text-muted">
+            <tr>
+              <th className={headCell}>Why it was removed</th>
+              <th className={`${headCell} text-right`}>Funds</th>
+              <th className={`${headCell} text-right`}>Bring back</th>
+              <th className={`${headCell} text-right`}>Leave out</th>
+              <th className={headCell}>Status</th>
+              <th className={`${headCell} text-right`}>Decide for the group</th>
+            </tr>
+          </thead>
+          <tbody>
+            {reasons.map((r, i) => {
+              const ids = r.rows.map((x) => x.investor.id);
+              const decidedAll = mine(r.rows) === r.rows.length;
+              const allBack = decidedAll && count(r.rows, "bring_back") === r.rows.length;
+              const allOut = decidedAll && count(r.rows, "leave_out") === r.rows.length;
+              const seg = "whitespace-nowrap px-md py-[5px] text-body-sm transition-colors duration-hover disabled:cursor-default";
+              return (
+                <tr
+                  key={r.key}
+                  tabIndex={0}
+                  className={`group cursor-pointer align-top transition-colors duration-hover hover:bg-background focus:bg-background focus:outline-none ${i ? "border-t border-border" : ""}`}
+                  onClick={() => onOpen(r.key)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") onOpen(r.key);
+                  }}
+                >
+                  <td className="px-md py-md">
+                    <p className="text-body font-medium text-heading">{r.label}</p>
+                    <p className="text-secondary">{r.why}</p>
+                    <p className="mt-xs flex flex-wrap items-center gap-sm">
+                      <Pill tone="quiet">Default: {r.def === "bring_back" ? "bring back" : "leave out"}</Pill>
+                      <span className="text-primary underline decoration-primary/40 underline-offset-2 group-hover:text-primary-hover">
+                        View {r.rows.length === 1 ? "the fund" : `the ${n(r.rows.length)} funds`} ›
+                      </span>
+                    </p>
+                  </td>
+                  <td className="px-md py-md text-right text-h3 font-normal tabular-nums text-heading">{n(r.rows.length)}</td>
+                  <td className="px-md py-md text-right tabular-nums">{num(count(r.rows, "bring_back"))}</td>
+                  <td className="px-md py-md text-right tabular-nums">{num(count(r.rows, "leave_out"))}</td>
+                  <td className="px-md py-md">{status(r.rows)}</td>
+                  <td className="cursor-default px-md py-md text-right" onClick={(event) => event.stopPropagation()}>
+                    <div className="inline-flex flex-col items-end gap-xs">
+                      <div className="inline-flex overflow-hidden rounded-md border border-border">
+                        <button
+                          type="button"
+                          disabled={busy || allBack}
+                          aria-pressed={allBack}
+                          className={`${seg} ${allBack ? "bg-primary text-white" : "bg-surface text-secondary hover:bg-primary-tint hover:text-heading"}`}
+                          onClick={() => onGroup(ids, "bring_back")}
+                        >
+                          {allBack ? "✓ All brought back" : "Bring back all"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy || allOut}
+                          aria-pressed={allOut}
+                          className={`${seg} border-l border-border ${allOut ? "bg-primary text-white" : "bg-surface text-secondary hover:bg-primary-tint hover:text-heading"}`}
+                          onClick={() => onGroup(ids, "leave_out")}
+                        >
+                          {allOut ? "✓ All left out" : "Leave out all"}
+                        </button>
                       </div>
-                    );
-                  })()}
-                </td>
-              </tr>
-            );
-          })}
-          <tr className="border-t-2 border-primary">
-            <td className="py-xs pr-md text-heading">All</td>
-            <td className="py-xs pr-md text-right text-heading">{n(rows.length)}</td>
-            <td className="py-xs pr-md text-right text-heading">{n(count(rows, "bring_back"))}</td>
-            <td className="py-xs pr-md text-right text-heading">{n(count(rows, "leave_out"))}</td>
-            <td className="py-xs pr-md text-right text-secondary">{n(mine(rows))}</td>
-            <td className={`py-xs pr-md text-right ${rows.length - mine(rows) ? "text-warning" : "text-success"}`}>
-              {rows.length - mine(rows) ? n(rows.length - mine(rows)) : "✓"}
-            </td>
-            <td />
-          </tr>
-        </tbody>
-      </table>
+                      {mine(r.rows) ? (
+                        <button type="button" disabled={busy} className="text-[12px] text-muted underline hover:text-heading" onClick={() => onGroup(ids, null)}>
+                          Back to default
+                        </button>
+                      ) : null}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot>
+            <tr className="border-t-2 border-primary/60 bg-background align-top">
+              <td className="px-md py-sm font-medium text-heading">All {n(rows.length)} funds</td>
+              <td className="px-md py-sm text-right font-medium tabular-nums text-heading">{n(rows.length)}</td>
+              <td className="px-md py-sm text-right tabular-nums">{num(count(rows, "bring_back"), true)}</td>
+              <td className="px-md py-sm text-right tabular-nums">{num(count(rows, "leave_out"), true)}</td>
+              <td className="px-md py-sm">{status(rows)}</td>
+              <td />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }
@@ -1418,41 +1467,95 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           {n(check.rows.length)} investors · Step 1 list confirmed {new Date(check.dryConfirmedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
         </p>
       </div>
-      <table className="mt-md w-full text-left text-body-sm">
-        <thead className="text-label uppercase tracking-label text-muted">
-          <tr>
-            <th className="py-xs pr-md font-medium">Group</th>
-            <th className="py-xs pr-md text-right font-medium">Investors</th>
-            <th className="py-xs pr-md text-right font-medium">Share</th>
-            <th className="py-xs font-medium" />
-          </tr>
-        </thead>
-        <tbody>
-          {ORDER.filter((b) => b !== "added" || check.counts.added > 0).map((b) => (
-            <tr
-              key={b}
-              tabIndex={0}
-              aria-expanded={current === b}
-              className={`cursor-pointer border-t border-border hover:bg-background ${current === b ? "bg-primary-tint/50" : ""}`}
-              onClick={() => setShow(current === b ? "none" : b)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") setShow(current === b ? "none" : b);
-              }}
-            >
-              <td className={`py-xs pr-md ${TONE[b]}`}>{BUCKET_LABEL[b]}</td>
-              <td className="py-xs pr-md text-right text-heading">{n(check.counts[b])}</td>
-              <td className="py-xs pr-md text-right text-secondary">{pct(check.counts[b], total)}</td>
-              <td className="py-xs text-right text-muted">{check.counts[b] ? (current === b ? "Hide ▴" : "Show ▾") : ""}</td>
-            </tr>
-          ))}
-          <tr className="border-t-2 border-primary">
-            <td className="py-xs pr-md text-heading">All investors</td>
-            <td className="py-xs pr-md text-right text-heading">{n(total)}</td>
-            <td className="py-xs pr-md text-right text-secondary">100%</td>
-            <td />
-          </tr>
-        </tbody>
-      </table>
+      <div className="mt-md overflow-hidden rounded-card border border-border bg-surface">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[680px] text-left text-body-sm">
+            <thead className="border-b border-border bg-background text-label uppercase tracking-label text-muted">
+              <tr>
+                <th className={headCell}>Where each investor stands</th>
+                <th className={`${headCell} text-right`}>Investors</th>
+                <th className={headCell}>Share</th>
+                <th className={headCell}>Status</th>
+                <th className={headCell} />
+              </tr>
+            </thead>
+            <tbody>
+              {ORDER.filter((b) => b !== "added" || check.counts.added > 0).map((b, i) => {
+                const count = check.counts[b];
+                const rowsOf = byBucket(b);
+                const toDecide = rowsOf.filter((r) => r.defaulted && !r.unsure).length;
+                const notSure = rowsOf.filter((r) => r.unsure).length;
+                const toggle = () => {
+                  if (count) setShow(current === b ? "none" : b);
+                };
+                const status = !count ? null : b === "confirm" ? (
+                  <Pill tone="action">{n(count)} to confirm</Pill>
+                ) : b === "not_in_list" ? (
+                  toDecide ? (
+                    <Pill tone="action">{n(toDecide)} to decide</Pill>
+                  ) : notSure ? (
+                    <Pill tone="action">{n(notSure)} not sure</Pill>
+                  ) : (
+                    <Pill tone="done">✓ Decided</Pill>
+                  )
+                ) : b === "in_list" ? (
+                  <Pill tone="done">✓ Nothing to do</Pill>
+                ) : b === "added" ? (
+                  <Pill tone="done">✓ Added</Pill>
+                ) : b === "removed" ? (
+                  <Pill tone="quiet">Out</Pill>
+                ) : (
+                  <Pill tone="quiet">Add in Step {T.step}D</Pill>
+                );
+                return (
+                  <tr
+                    key={b}
+                    tabIndex={count ? 0 : -1}
+                    aria-expanded={count ? current === b : undefined}
+                    className={`transition-colors duration-hover focus:outline-none ${i ? "border-t border-border" : ""} ${
+                      count ? "cursor-pointer hover:bg-background focus:bg-background" : ""
+                    } ${current === b && count ? "bg-primary-tint/40 hover:bg-primary-tint/40" : ""}`}
+                    onClick={toggle}
+                    onKeyDown={(event) => {
+                      if (event.key === "Enter") toggle();
+                    }}
+                  >
+                    <td className={`px-md py-sm ${current === b && count ? "shadow-[inset_3px_0_0_#5C7A5E]" : ""}`}>
+                      <div className={`flex items-start gap-sm ${count ? "" : "opacity-50"}`}>
+                        <span className={`mt-[9px] block h-[8px] w-[8px] shrink-0 rounded-full ${DOT[b]}`} aria-hidden="true" />
+                        <div className="min-w-0">
+                          <p className="text-body font-medium text-heading">{BUCKET_LABEL[b]}</p>
+                          <p className="text-muted">{BUCKET_NOTE[b]}</p>
+                        </div>
+                      </div>
+                    </td>
+                    <td className={`px-md py-sm text-right text-h3 font-normal tabular-nums ${count ? "text-heading" : "text-muted/60"}`}>{n(count)}</td>
+                    <td className="px-md py-sm">
+                      <div className="flex items-center gap-sm">
+                        <span className="block h-[6px] w-24 shrink-0 overflow-hidden rounded-full bg-border/70" aria-hidden="true">
+                          <span className={`block h-full rounded-full ${DOT[b]}`} style={{ width: `${total ? (count / total) * 100 : 0}%` }} />
+                        </span>
+                        <span className="w-[4ch] text-right tabular-nums text-secondary">{pct(count, total)}</span>
+                      </div>
+                    </td>
+                    <td className="px-md py-sm">{status}</td>
+                    <td className="whitespace-nowrap px-md py-sm text-right text-primary">{count ? (current === b ? "Hide ▴" : "Show ▾") : ""}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-primary/60 bg-background">
+                <td className="px-md py-sm font-medium text-heading">All investors</td>
+                <td className="px-md py-sm text-right text-h3 font-normal tabular-nums text-heading">{n(total)}</td>
+                <td className="px-md py-sm text-secondary">100%</td>
+                <td />
+                <td />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      </div>
       <DecisionSummary rows={notInList} busy={frozen} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} onApplyDefaults={() => void applyAll()} />
       {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
       {openReason ? (
