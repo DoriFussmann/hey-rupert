@@ -1,10 +1,10 @@
 "use client";
 
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState } from "react";
 import { approveAllAdded } from "@/app/admin/added-funds-actions";
 import { addInvestorToDb, applyDefaultsToAll, fixFundFromLesson, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
-import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
+import { BUCKET_LABEL, isDecided, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { DRY_STEPS, DRY_STEP_LABEL, type DryStep } from "@/lib/match/dry/core";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
 import type { CheckResult, LookAlikePreview } from "@/lib/match/landscape/server";
@@ -66,7 +66,7 @@ const BUCKET_NOTE: Record<Bucket, string> = {
 /** The longer explanation on top of an open group, where the one-liner isn't enough. */
 const PANEL_NOTE: Partial<Record<Bucket, string>> = {
   confirm:
-    "A separate job from the decisions below: here the question is who the investor is. The research named each of these, but the name is close to one or more Fund Database records without matching exactly. For each one, pick the record it is, say it isn't in the database, or give its website. Find websites looks each one up and suggests the answer.",
+    "A separate job from the decisions below: here the question is who the investor is. The research named each of these, but the name is close to one or more Fund Database records without matching exactly. For each one, pick the record it is, say it isn't in the database, or give its website. Websites are looked up automatically when the check opens: one found with high confidence settles the match by itself, so what stays here is what the website couldn't settle.",
   not_in_list: "Every fund of this group in one list. The same decisions as in the table below, which groups them by the filter that removed them.",
 };
 
@@ -268,7 +268,7 @@ function NotInListRow({
         <p className="text-muted">Backed {backedText(row)}</p>
         <p className="text-muted">
           Database: {row.firmName}
-          {row.decision?.firmId ? " (chosen by you)" : row.match.how === "website" ? " (same website)" : " (same name)"}
+          {row.decision?.firmId ? " (chosen by you)" : row.match.how === "website" ? (row.siteFound ? " (same website: the one found for it)" : " (same website)") : " (same name)"}
         </p>
         <p className="flex flex-wrap gap-x-md">
           <Site url={row.firmWeb} label="Database" />
@@ -455,6 +455,7 @@ function SimpleRow({
           <span className="flex flex-col">
             <span>{row.firmName}</span>
             <Site url={row.firmWeb ?? row.investor.website} />
+            {row.siteFound && row.match.how === "website" ? <span className="text-muted">Matched by the website found for it.</span> : null}
           </span>
         ) : row.suggestion?.website && row.suggestion.website !== row.investor.website ? (
           <SuggestionBlock row={row} busy={busy} onDecide={onDecide} />
@@ -1364,6 +1365,30 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     return () => clearTimeout(t);
   }, [toast]);
 
+  /** Set to stop Find websites after the batch in flight (the Stop button, or leaving the page). */
+  const stopFinding = useRef(false);
+  const autoFound = useRef(false);
+  const findWebsitesRef = useRef<(ids: string[]) => Promise<void>>(async () => {});
+  useEffect(
+    () => () => {
+      stopFinding.current = true;
+    },
+    [],
+  );
+  // The domain identifies a fund better than its name: when the check opens, every fund the research
+  // left without a website is looked up once, the unclear ones first. Angels rarely have a site of their
+  // own, and an investor the admin already decided on keeps its match: both are skipped.
+  useEffect(() => {
+    if (!check || autoFound.current || check.confirmedAt || !check.websitesReady) return;
+    autoFound.current = true;
+    const order: Partial<Record<Bucket, number>> = { confirm: 0, missing_fund: 1, not_in_list: 2, in_list: 3 };
+    const ids = check.rows
+      .filter((r) => order[r.bucket] !== undefined && r.investor.kind !== "angel" && !r.investor.website && !r.lookedUp && !isDecided(r.decision))
+      .sort((a, b) => order[a.bucket]! - order[b.bucket]!)
+      .map((r) => r.investor.id);
+    if (ids.length) void findWebsitesRef.current(ids);
+  }, [check]);
+
   const decide = async (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => {
     setBusy(true);
     setError(null);
@@ -1511,9 +1536,12 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setError(null);
     let done = 0;
     let found = 0;
+    stopFinding.current = false;
     setFinding({ done, total: ids.length });
     try {
       for (let i = 0; i < ids.length; i += 4) {
+        // Stopped by the admin, or the page was left.
+        if (stopFinding.current) break;
         const batch = ids.slice(i, i + 4);
         const result = await findWebsitesFor(clientId, batch, kind);
         done += batch.length;
@@ -1533,6 +1561,8 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     }
     setToast(`Find websites: ${n(found)} found for ${n(done)} investors. Saved.`);
   };
+
+  findWebsitesRef.current = findWebsites;
 
   if (!check) {
     return (
@@ -1556,6 +1586,26 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const frozen = busy || !!check.confirmedAt;
   const current: Bucket | null = show === "none" ? null : show ?? (check.counts.confirm ? "confirm" : check.counts.not_in_list ? "not_in_list" : null);
 
+  const findingBanner = finding ? (
+    <div className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-primary/40 bg-primary-tint/40 px-md py-sm">
+      <p className="min-w-0 flex-1 text-body-sm text-heading">
+        Finding the investors&apos; websites: {n(finding.done)} of {n(finding.total)}.{" "}
+        <span className="text-secondary">
+          A website found with high confidence settles the match by itself, so the groups update as they come in. Keep this page open.
+        </span>
+      </p>
+      <button
+        type="button"
+        className={`${smallButton} shrink-0`}
+        onClick={() => {
+          stopFinding.current = true;
+        }}
+      >
+        Stop
+      </button>
+    </div>
+  ) : null;
+
   const details = (
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
@@ -1564,6 +1614,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           {n(check.rows.length)} investors · Step 1 list confirmed {new Date(check.dryConfirmedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
         </p>
       </div>
+      {findingBanner ? <div className="mt-md">{findingBanner}</div> : null}
       <div className="mt-md overflow-hidden rounded-card border border-border bg-surface">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[680px] text-left text-body-sm">
@@ -1801,6 +1852,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           Try and Add to DB: adding {n(adding.done + 1)} of {n(adding.total)}… keep this page open (closing it stops after the current one).
         </p>
       ) : null}
+      {showDetails ? null : findingBanner}
       {check.confirmedAt && openNow ? (
         <p className="rounded-md border border-warning/40 bg-surface px-md py-sm text-body-sm text-warning">
           {n(openNow)} {openNow === 1 ? "investor needs" : "investors need"} a decision since the check was confirmed (the database changed, e.g. funds added in

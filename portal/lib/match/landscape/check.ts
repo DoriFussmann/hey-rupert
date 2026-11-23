@@ -170,6 +170,10 @@ export type CheckRow = {
   /** The record's website in the Fund Database. */
   firmWeb: string | null;
   bucket: Bucket;
+  /** The investor's website is the one Find websites found (high confidence), used automatically for the match. */
+  siteFound?: boolean;
+  /** Find websites already looked this investor up (whether or not it found a website). */
+  lookedUp?: boolean;
   /** For not_in_list: the Step 1 filter that removed it. */
   failure: ReturnType<typeof firstFailure>;
   /** Candidate records to choose from, for confirm. */
@@ -189,6 +193,30 @@ export type CheckRow = {
   /** Find websites' suggestion, and the database record with that website, if exactly one. */
   suggestion: (WebsiteSuggestion & { firm: { id: string; name: string } | null; firmCount: number }) | null;
 };
+
+/** The admin has settled this investor (a record, a website, an action, or removed): its match stays as decided. */
+export function isDecided(decision: InvestorDecision | null | undefined) {
+  return !!decision && (decision.firmId !== undefined || !!decision.website || !!decision.action || !!decision.removed);
+}
+
+/** The found website to use as the investor's own: only a high-confidence one whose site opens, and only while undecided. */
+export function trustedWebsite(suggestion: WebsiteSuggestion | null | undefined, decision: InvestorDecision | null | undefined): string | null {
+  if (!suggestion?.website || suggestion.confidence !== "high" || suggestion.link === "broken") return null;
+  return isDecided(decision) ? null : suggestion.website;
+}
+
+/**
+ * Matching with a trusted website: the domain decides. One record with it is the match; several are
+ * unclear (duplicates in the database). None: an exact, single name match still counts (the record's own
+ * website may be missing or old); names that are only similar, or shared by several records, don't, so
+ * the investor is not in the database.
+ */
+export function matchByTrustedSite(inv: Pick<Investor, "name" | "website">, index: FirmIndex): FirmMatch {
+  const match = matchInvestor(inv, index);
+  const byDomain = index.byDomain.get(domainOf(inv.website)) ?? [];
+  if (byDomain.length === 0 && (match.how === "similar" || match.how === "ambiguous")) return { how: "none", firmIds: [] };
+  return match;
+}
 
 export function checkInvestors(input: {
   investors: Investor[];
@@ -210,7 +238,10 @@ export function checkInvestors(input: {
   const fundById = new Map(input.data.funds.map((f) => [f.id, f]));
   return input.investors.map((original) => {
     const decision = input.decisions[original.id] ?? null;
-    const investor = decision?.website ? { ...original, website: decision.website } : original;
+    // A website Find websites is sure of (high confidence, and the site opens) is used as the investor's own,
+    // unless the admin already decided on this investor: the domain identifies a fund better than its name.
+    const trusted = trustedWebsite(input.suggestions?.[original.id], decision);
+    const investor = decision?.website ? { ...original, website: decision.website } : trusted ? { ...original, website: trusted } : original;
     // The admin's website is their research: it alone decides (one record with it, or none).
     const byAdminSite = decision?.website ? index.byDomain.get(domainOf(decision.website)) ?? [] : null;
     const match: FirmMatch = byAdminSite
@@ -219,7 +250,9 @@ export function checkInvestors(input: {
         : byAdminSite.length > 1
           ? { how: "ambiguous", firmIds: byAdminSite }
           : { how: "none", firmIds: [] }
-      : matchInvestor(investor, index);
+      : trusted
+        ? matchByTrustedSite(investor, index)
+        : matchInvestor(investor, index);
     let firmId: string | null = null;
     let bucket: Bucket;
     if (decision && decision.firmId !== undefined) firmId = decision.firmId && firmById.has(decision.firmId) ? decision.firmId : null;
@@ -258,6 +291,8 @@ export function checkInvestors(input: {
       firmName: firmId ? firmById.get(firmId)?.name ?? null : null,
       firmWeb: firmId ? firmById.get(firmId)?.web || null : null,
       bucket,
+      siteFound: !!trusted,
+      lookedUp: !!input.suggestions?.[original.id],
       failure,
       candidates: match.firmIds.map((id) => firmById.get(id)).filter((f): f is DbFirm => !!f),
       decision,

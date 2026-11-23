@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import type { DryData } from "../dry/core.ts";
-import { checkInvestors, indexFirms, matchInvestor } from "./check.ts";
+import { checkInvestors, indexFirms, matchByTrustedSite, matchInvestor, trustedWebsite } from "./check.ts";
 import { cleanInvestor } from "./investors.ts";
 
 const firms = [
@@ -202,4 +202,45 @@ test("an investor matching a fund added for this client (e.g. its partner) count
   assert.equal(rows[0].bucket, "added");
   assert.equal(rows[1].firmId, "RUP-K");
   assert.equal(rows[1].bucket, "added");
+});
+
+const sug = (website: string, confidence: "high" | "medium" | "low", link: "live" | "broken" | "unchecked" = "live") => ({ website, confidence, foundIn: "", portfolioUrl: "", note: "", link, at: "" });
+
+test("a found website is trusted only at high confidence, when the site opens, and while undecided", () => {
+  assert.equal(trustedWebsite(sug("acme.vc", "high"), null), "acme.vc");
+  assert.equal(trustedWebsite(sug("acme.vc", "high", "unchecked"), null), "acme.vc");
+  assert.equal(trustedWebsite(sug("acme.vc", "medium"), null), null);
+  assert.equal(trustedWebsite(sug("acme.vc", "high", "broken"), null), null);
+  assert.equal(trustedWebsite(sug("", "high"), null), null);
+  assert.equal(trustedWebsite(sug("acme.vc", "high"), { action: "leave_out", by: null, at: "" }), null);
+  assert.equal(trustedWebsite(sug("acme.vc", "high"), { firmId: null, by: null, at: "" }), null);
+  // A note or "Not sure" alone is not a decision.
+  assert.equal(trustedWebsite(sug("acme.vc", "high"), { note: "check", unsure: true, by: null, at: "" }), "acme.vc");
+});
+
+test("a trusted website decides the match: the domain's record, else an exact name, else not in the database", () => {
+  // "Acme" alone is unclear by name (Acme Ventures, Acme Capital); the domain settles it.
+  assert.deepEqual(matchByTrustedSite({ name: "Acme", website: "acme.vc" }, index), { how: "website", firmIds: ["F3"] });
+  // The domain is in no record and the name is only unclear or similar: not in the database.
+  assert.equal(matchByTrustedSite({ name: "Acme", website: "acme-other.com" }, index).how, "none");
+  // The domain is in no record but the name is exact and single: the name still counts.
+  assert.deepEqual(matchByTrustedSite({ name: "Footwork", website: "footwork.com" }, index), { how: "name", firmIds: ["F2"] });
+});
+
+test("checkInvestors uses a high-confidence found website automatically, and leaves decided investors alone", () => {
+  const base = { firms, data, steps, shortlist: new Set(["F3"]) };
+  const investors = [inv("i5", "Acme"), inv("i6", "Acme"), inv("i7", "Acme")];
+  const rows = checkInvestors({
+    ...base,
+    investors,
+    decisions: { i7: { firmId: "F4", by: null, at: "" } },
+    suggestions: { i5: sug("https://acme.vc", "high"), i6: sug("https://acme.vc", "medium"), i7: sug("https://acme.vc", "high") },
+  });
+  assert.equal(rows[0].bucket, "in_list");
+  assert.equal(rows[0].firmId, "F3");
+  assert.equal(rows[0].siteFound, true);
+  assert.equal(rows[1].bucket, "confirm");
+  assert.equal(rows[1].siteFound, false);
+  assert.equal(rows[2].firmId, "F4");
+  assert.equal(rows[2].siteFound, false);
 });
