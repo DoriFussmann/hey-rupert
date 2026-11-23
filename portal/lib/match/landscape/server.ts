@@ -894,6 +894,100 @@ export async function fixFundRecord(
   return { ok: true, value: { added: clean } };
 }
 
+/** A change to the admin's decision on one investor. */
+export type DecisionPatch = {
+  firmId?: string | null;
+  action?: "bring_back" | "leave_out" | null;
+  note?: string;
+  lesson?: boolean;
+  website?: string;
+  resetMatch?: boolean;
+  clear?: boolean;
+  unsure?: boolean;
+  removed?: boolean;
+};
+
+/** The decision after a change (everything but Undo, which removes it). */
+function nextDecision(previous: InvestorDecision | undefined, patch: DecisionPatch, actor: string | null, at: string): Result<InvestorDecision> {
+  const next: InvestorDecision = { ...(previous ?? {}), by: actor, at };
+  if (patch.firmId !== undefined) {
+    next.firmId = patch.firmId;
+    // A different record means a different reason: the earlier choice no longer applies.
+    if (previous?.firmId !== patch.firmId) delete next.action;
+  }
+  if (patch.action !== undefined) {
+    if (patch.action === null) delete next.action;
+    else next.action = patch.action;
+  }
+  if (patch.website !== undefined) {
+    const url = cleanUrl(patch.website);
+    if (patch.website.trim() && !url) return { ok: false, error: "That is not a website address." };
+    if (url) next.website = url;
+    else delete next.website;
+  }
+  // Match again automatically (e.g. by the new website): the earlier record choice and decision go.
+  if (patch.resetMatch) {
+    delete next.firmId;
+    delete next.action;
+  }
+  if (patch.note !== undefined) next.note = patch.note.trim().slice(0, 1000);
+  // A real decision (a record, a website, an action) settles a "Not sure".
+  if (patch.firmId !== undefined || patch.website !== undefined || patch.action) delete next.unsure;
+  if (patch.unsure !== undefined) {
+    if (patch.unsure) next.unsure = true;
+    else delete next.unsure;
+  }
+  if (patch.lesson !== undefined) next.lesson = patch.lesson === true;
+  // Removed as not relevant: settled, nothing else to decide. Restoring brings back what was decided before.
+  if (patch.removed !== undefined) {
+    if (patch.removed) {
+      next.removed = true;
+      delete next.unsure;
+    } else delete next.removed;
+  }
+  return { ok: true, value: next };
+}
+
+/**
+ * Several investors' decisions in one write (the confirmation list's "Submit all"): each change as
+ * decideInvestor would make it. Nothing is saved if one of them is wrong.
+ */
+export async function decideInvestors(
+  supabase: ServiceClient,
+  clientId: string,
+  items: { investorId: string; patch: DecisionPatch }[],
+  actor: string | null,
+  kind: LandscapeKind = "competitors",
+): Promise<Result<number>> {
+  const current = await currentLandscape(supabase, clientId, kind);
+  if (!current.ok) return current;
+  const land = current.value;
+  if (!land || land.investorsStatus !== "confirmed") return { ok: false, error: "Confirm the investor list first." };
+  if (await checkLocked(supabase, land.id)) return { ok: false, error: "The check is confirmed. Reopen it to change a decision." };
+  const decisions = await loadDecisions(supabase, land.id);
+  if (!decisions.ok) return decisions;
+  const names = new Map(land.investors.map((i) => [i.id, i.name]));
+  const at = new Date().toISOString();
+  const next = { ...decisions.value };
+  let changed = 0;
+  for (const item of items) {
+    const name = names.get(item.investorId);
+    if (name === undefined) continue;
+    if (item.patch.clear) {
+      delete next[item.investorId];
+    } else {
+      const built = nextDecision(next[item.investorId], item.patch, actor, at);
+      if (!built.ok) return { ok: false, error: `${name}: ${built.error} Nothing was saved.` };
+      next[item.investorId] = built.value;
+    }
+    changed += 1;
+  }
+  if (!changed) return { ok: true, value: 0 };
+  const { error } = await supabase.from("competitor_landscapes").update({ investor_decisions: next, updated_at: at }).eq("id", land.id);
+  if (error) return { ok: false, error: landscapeTableError(error.message, error.code) };
+  return { ok: true, value: changed };
+}
+
 /** Records the admin's decision on one investor: the record it is, bring back or leave out, and a note. */
 export async function decideInvestor(
   supabase: ServiceClient,
@@ -934,42 +1028,9 @@ export async function decideInvestor(
       .eq("id", land.id);
     return error ? { ok: false, error: landscapeTableError(error.message, error.code) } : { ok: true, value: null };
   }
-  const next: InvestorDecision = { ...(previous ?? {}), by: actor, at: new Date().toISOString() };
-  if (patch.firmId !== undefined) {
-    next.firmId = patch.firmId;
-    // A different record means a different reason: the earlier choice no longer applies.
-    if (previous?.firmId !== patch.firmId) delete next.action;
-  }
-  if (patch.action !== undefined) {
-    if (patch.action === null) delete next.action;
-    else next.action = patch.action;
-  }
-  if (patch.website !== undefined) {
-    const url = cleanUrl(patch.website);
-    if (patch.website.trim() && !url) return { ok: false, error: "That is not a website address." };
-    if (url) next.website = url;
-    else delete next.website;
-  }
-  // Match again automatically (e.g. by the new website): the earlier record choice and decision go.
-  if (patch.resetMatch) {
-    delete next.firmId;
-    delete next.action;
-  }
-  if (patch.note !== undefined) next.note = patch.note.trim().slice(0, 1000);
-  // A real decision (a record, a website, an action) settles a "Not sure".
-  if (patch.firmId !== undefined || patch.website !== undefined || patch.action) delete next.unsure;
-  if (patch.unsure !== undefined) {
-    if (patch.unsure) next.unsure = true;
-    else delete next.unsure;
-  }
-  if (patch.lesson !== undefined) next.lesson = patch.lesson === true;
-  // Removed as not relevant: settled, nothing else to decide. Restoring brings back what was decided before.
-  if (patch.removed !== undefined) {
-    if (patch.removed) {
-      next.removed = true;
-      delete next.unsure;
-    } else delete next.removed;
-  }
+  const built = nextDecision(previous, patch, actor, new Date().toISOString());
+  if (!built.ok) return built;
+  const next = built.value;
   const { error } = await supabase
     .from("competitor_landscapes")
     .update({ investor_decisions: { ...decisions.value, [investorId]: next }, updated_at: next.at })

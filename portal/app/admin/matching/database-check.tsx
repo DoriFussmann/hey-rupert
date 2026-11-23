@@ -3,7 +3,7 @@
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { Fragment, useEffect, useRef, useState } from "react";
 import { approveAllAdded } from "@/app/admin/added-funds-actions";
-import { addInvestorToDb, applyDefaultsToAll, fixFundFromLesson, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
+import { addInvestorToDb, applyDefaultsToAll, decideOnInvestors, fixFundFromLesson, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, isDecided, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
 import { DRY_STEPS, DRY_STEP_LABEL, type DryStep } from "@/lib/match/dry/core";
 import { KIND_LABEL } from "@/lib/match/landscape/investors";
@@ -66,7 +66,7 @@ const BUCKET_NOTE: Record<Bucket, string> = {
 /** The longer explanation on top of an open group, where the one-liner isn't enough. */
 const PANEL_NOTE: Partial<Record<Bucket, string>> = {
   confirm:
-    "A separate job from the decisions below: here the question is who the investor is. The research named each of these, but the name is close to one or more Fund Database records without matching exactly. For each one, pick the record it is, say it isn't in the database, or give its website. Websites are looked up automatically when the check opens: one found with high confidence settles the match by itself, so what stays here is what the website couldn't settle.",
+    "A separate job from the decisions below: here the question is who the investor is. The research named each of these, but the name is close to one or more Fund Database records without matching exactly. For each one, tick an answer: nothing is saved until you click Submit all, which saves every tick at once. Websites are looked up automatically when the check opens: one found with high confidence settles the match by itself, so what stays here is what the website couldn't settle.",
   not_in_list: "Every fund of this group in one list. The same decisions as in the table below, which groups them by the filter that removed them.",
 };
 
@@ -356,49 +356,208 @@ function NotInListRow({
   );
 }
 
-/** An unclear match: pick the record, or say it isn't in the database. */
-function ConfirmRow({ row, busy, onDecide }: { row: CheckRow; busy: boolean; onDecide: (patch: Parameters<typeof decideOnInvestor>[2]) => void }) {
+/** What the admin ticked for one unclear investor, before Submit all. */
+type ConfirmPick = { kind: "confirm" } | { kind: "remove" } | { kind: "site"; url: string } | { kind: "record"; firmId: string };
+type DecisionItem = { investorId: string; patch: Parameters<typeof decideOnInvestor>[2] };
+
+/** The website the row's answer rests on: the admin's own if given, else the one Find websites found. */
+const siteOf = (row: CheckRow) => row.decision?.website || row.suggestion?.website || "";
+
+/** The database records sharing that website, when there are several: the one case a website can't settle. */
+function recordsSharingSite(row: CheckRow) {
+  const site = siteOf(row);
+  if (!site) return [];
+  const same = row.candidates.filter((c) => c.web && host(c.web) === host(site));
+  return same.length > 1 ? same : [];
+}
+
+/** The change a tick stands for. */
+function patchOf(row: CheckRow, pick: ConfirmPick): Parameters<typeof decideOnInvestor>[2] | null {
+  if (pick.kind === "remove") return { removed: true };
+  if (pick.kind === "record") return { firmId: pick.firmId };
+  if (pick.kind === "site") return pick.url.trim() ? { website: pick.url.trim(), resetMatch: true } : null;
+  const s = row.suggestion;
+  if (!s?.website) return null;
+  // Exactly one record has the website: it is that record. Otherwise the website is kept and matched again.
+  return s.firm ? { firmId: s.firm.id } : { website: s.website, resetMatch: true };
+}
+
+/** One unclear investor: who it is on the left; the website found, and three boxes to tick. */
+function ConfirmRow({ row, busy, pick, onPick }: { row: CheckRow; busy: boolean; pick: ConfirmPick | undefined; onPick: (pick: ConfirmPick | undefined) => void }) {
+  const s = row.suggestion;
+  const shared = recordsSharingSite(row);
+  const [url, setUrl] = useState("");
+  const box = "flex items-center gap-sm text-body-sm text-heading";
+  const toggle = (next: ConfirmPick, on: boolean) => onPick(on ? next : undefined);
   return (
-    <tr className="border-t border-border align-top">
-      <td className="py-sm pr-md">
+    <tr className={`border-t border-border align-top ${pick ? "bg-primary-tint/30" : ""}`}>
+      <td className="py-md pr-md">
         <p className="text-heading">{row.investor.name}</p>
         <p className="text-muted">
           {KIND_LABEL[row.investor.kind]} · backed {backedText(row)}
         </p>
-        <Site url={row.investor.website} label="Research" />
         <p className="text-muted">{row.match.how === "ambiguous" ? "More than one database record has this name or website." : "Similar names in the database."}</p>
       </td>
-      <td className="py-sm" colSpan={2}>
-        <SuggestionBlock row={row} busy={busy} onDecide={onDecide} />
-        {row.suggestion?.website ? <p className="mb-xs text-body-sm text-muted">Other options</p> : null}
-        <div className="flex flex-wrap gap-xs">
-          {row.candidates.map((c) => (
-            <span key={c.id} className="inline-flex items-center gap-xs rounded-md border border-border bg-surface pl-xs">
-              <Site url={c.web} />
-              <button type="button" disabled={busy} className={secondaryButton} onClick={() => onDecide({ firmId: c.id })}>
+      <td className="py-md pr-md">
+        {row.decision?.website ? (
+          <p className="flex flex-wrap items-center gap-sm">
+            <Site url={row.decision.website} />
+            <Pill tone="quiet">given by you</Pill>
+          </p>
+        ) : s?.website ? (
+          <p className="flex flex-wrap items-center gap-sm">
+            <Site url={s.website} />
+            <Pill tone={s.confidence === "high" ? "done" : s.confidence === "medium" ? "action" : "quiet"}>{s.confidence} confidence</Pill>
+            {s.link === "broken" ? <span className="text-error">site didn&apos;t open</span> : null}
+          </p>
+        ) : (
+          <p className="text-muted">{row.lookedUp ? "No website found." : "Not looked up yet."}</p>
+        )}
+        {shared.length ? <p className="mt-xs text-warning">{n(shared.length)} database records share this website: pick the one it is.</p> : null}
+      </td>
+      <td className="py-md">
+        <div className="flex flex-col gap-xs">
+          {shared.length ? (
+            shared.map((c) => (
+              <label key={c.id} className={box}>
+                <input
+                  type="checkbox"
+                  className="accent-primary"
+                  disabled={busy}
+                  checked={pick?.kind === "record" && pick.firmId === c.id}
+                  onChange={(e) => toggle({ kind: "record", firmId: c.id }, e.target.checked)}
+                />
                 It&apos;s {c.name}
-              </button>
-            </span>
-          ))}
-          <button type="button" disabled={busy} className={secondaryButton} onClick={() => onDecide({ firmId: null })}>
-            Not in the database
-          </button>
-          <button
-            type="button"
-            disabled={busy}
-            className={row.unsure ? `${secondaryButton} !border-warning text-warning` : secondaryButton}
-            onClick={() => onDecide({ unsure: !row.unsure })}
-          >
-            {row.unsure ? "Not sure ✓ (later)" : "Not sure"}
-          </button>
-          <RemoveButton row={row} busy={busy} onDecide={onDecide} />
-        </div>
-        <div className="mt-sm">
-          <p className="mb-xs text-body-sm text-muted">Neither? Give the correct website: it is matched again, and kept for adding it to the database.</p>
-          <WebsiteInput initial="" busy={busy} label="Use this website" onSave={(url) => onDecide({ website: url, resetMatch: true })} />
+              </label>
+            ))
+          ) : (
+            <label className={`${box} ${s?.website && !row.decision?.website ? "" : "opacity-40"}`}>
+              <input
+                type="checkbox"
+                className="accent-primary"
+                disabled={busy || !s?.website || !!row.decision?.website}
+                checked={pick?.kind === "confirm"}
+                onChange={(e) => toggle({ kind: "confirm" }, e.target.checked)}
+              />
+              Confirm website
+            </label>
+          )}
+          <label className={box}>
+            <input type="checkbox" className="accent-primary" disabled={busy} checked={pick?.kind === "remove"} onChange={(e) => toggle({ kind: "remove" }, e.target.checked)} />
+            Remove: not relevant
+          </label>
+          <div className="flex flex-wrap items-center gap-sm">
+            <label className={box}>
+              <input
+                type="checkbox"
+                className="accent-primary"
+                disabled={busy || !url.trim()}
+                checked={pick?.kind === "site"}
+                onChange={(e) => toggle({ kind: "site", url }, e.target.checked)}
+              />
+              Add correct website
+            </label>
+            <input
+              className={`${inputClass} max-w-[240px] !py-[3px]`}
+              placeholder="e.g. fundname.com"
+              aria-label={`Correct website for ${row.investor.name}`}
+              value={url}
+              disabled={busy}
+              onChange={(e) => {
+                setUrl(e.target.value);
+                // Typing a website ticks its box; clearing it unticks.
+                if (e.target.value.trim()) onPick({ kind: "site", url: e.target.value });
+                else if (pick?.kind === "site") onPick(undefined);
+              }}
+            />
+          </div>
         </div>
       </td>
     </tr>
+  );
+}
+
+/**
+ * The unclear investors, decided in one go: tick a box per investor (nothing is saved yet), then
+ * Submit all saves every tick in one write and runs the check once.
+ */
+function ConfirmList({ rows, busy, onSubmit }: { rows: CheckRow[]; busy: boolean; onSubmit: (items: DecisionItem[]) => Promise<boolean> }) {
+  const [picks, setPicks] = useState<Record<string, ConfirmPick>>({});
+  const items = rows.flatMap((row) => {
+    const pick = picks[row.investor.id];
+    const patch = pick ? patchOf(row, pick) : null;
+    return patch ? [{ investorId: row.investor.id, patch }] : [];
+  });
+  const suggested = rows.filter((r) => r.suggestion?.website && !r.decision?.website && !recordsSharingSite(r).length);
+  const bar = (
+    <div className="flex flex-wrap items-center justify-between gap-sm rounded-md border border-border bg-background px-md py-sm">
+      <p className="min-w-0 flex-1 text-body-sm text-secondary">
+        <span className={items.length ? "font-medium text-heading" : ""}>
+          {n(items.length)} of {n(rows.length)} ticked.
+        </span>{" "}
+        Nothing is saved until you submit.
+      </p>
+      <div className="flex flex-wrap items-center gap-xs">
+        {suggested.some((r) => !picks[r.investor.id]) ? (
+          <button
+            type="button"
+            className={smallButton}
+            disabled={busy}
+            onClick={() => setPicks({ ...picks, ...Object.fromEntries(suggested.filter((r) => !picks[r.investor.id]).map((r) => [r.investor.id, { kind: "confirm" } as ConfirmPick])) })}
+          >
+            Tick &ldquo;Confirm website&rdquo; for the rest ({n(suggested.filter((r) => !picks[r.investor.id]).length)})
+          </button>
+        ) : null}
+        {items.length ? (
+          <button type="button" className={smallButton} disabled={busy} onClick={() => setPicks({})}>
+            Clear
+          </button>
+        ) : null}
+        <button
+          type="button"
+          className={primaryButton}
+          disabled={busy || !items.length}
+          onClick={() => {
+            void onSubmit(items).then((ok) => {
+              if (ok) setPicks({});
+            });
+          }}
+        >
+          Submit all ({n(items.length)})
+        </button>
+      </div>
+    </div>
+  );
+  return (
+    <>
+      <div className="mt-md">{bar}</div>
+      <table className="mt-sm w-full text-left text-body-sm">
+        <thead className="text-label uppercase tracking-label text-muted">
+          <tr>
+            <th className="py-xs pr-md font-medium">Investor, as the research names it</th>
+            <th className="py-xs pr-md font-medium">Suggested website</th>
+            <th className="py-xs font-medium">Your answer</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <ConfirmRow
+              key={row.investor.id}
+              row={row}
+              busy={busy}
+              pick={picks[row.investor.id]}
+              onPick={(pick) => {
+                const next = { ...picks };
+                if (pick) next[row.investor.id] = pick;
+                else delete next[row.investor.id];
+                setPicks(next);
+              }}
+            />
+          ))}
+        </tbody>
+      </table>
+      {rows.length > 6 ? <div className="mt-sm">{bar}</div> : null}
+    </>
   );
 }
 
@@ -1419,6 +1578,21 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
     setToast(`${name}: ${what}. Saved.`);
   };
 
+  /** The confirmation list's Submit all: every tick saved in one write, the check run once. True when saved. */
+  const submitMany = async (items: DecisionItem[]) => {
+    setBusy(true);
+    setError(null);
+    const result = await decideOnInvestors(clientId, items, kind);
+    setBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      return false;
+    }
+    setCheck(result.check);
+    setToast(`${n(result.saved)} ${result.saved === 1 ? "decision" : "decisions"} saved.`);
+    return true;
+  };
+
   /** A lesson for Rupert, applied: the values are added to the fund's record in the Fund Database, for every client. */
   const fix = async (investorId: string, field: DryStep, labels: string[], note: string) => {
     setBusy(true);
@@ -1778,34 +1952,22 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
             : null}
           {current === "not_in_list" ? (
             <DecisionQueue rows={byBucket(current)} busy={frozen} onDecide={(row, p) => void decide(row.investor.id, p)} fixOptions={check.fixOptions} onFix={(...args) => void fix(...args)} />
+          ) : current === "confirm" ? (
+            <ConfirmList rows={byBucket(current)} busy={frozen} onSubmit={submitMany} />
           ) : (
           <table className="mt-md w-full text-left text-body-sm">
-            {current === "confirm" ? (
-              <thead className="text-label uppercase tracking-label text-muted">
-                <tr>
-                  <th className="py-xs pr-md font-medium">Investor, as the research names it</th>
-                  <th className="py-xs font-medium" colSpan={2}>
-                    Which record is it?
-                  </th>
-                </tr>
-              </thead>
-            ) : null}
             <tbody>
-              {[...byBucket(current)].sort((a, b) => Number(a.unsure) - Number(b.unsure)).map((row) =>
-                current === "confirm" ? (
-                  <ConfirmRow key={row.investor.id} row={row} busy={frozen} onDecide={(p) => void decide(row.investor.id, p)} />
-                ) : (
-                  <SimpleRow
-                    key={row.investor.id}
-                    row={row}
-                    busy={frozen || !!adding}
-                    onDecide={(p) => void decide(row.investor.id, p)}
-                    onAdd={() => void addToDb([row.investor.id])}
-                    adding={adding?.current === row.investor.id}
-                    addDisabled={busy || !!adding}
-                  />
-                ),
-              )}
+              {byBucket(current).map((row) => (
+                <SimpleRow
+                  key={row.investor.id}
+                  row={row}
+                  busy={frozen || !!adding}
+                  onDecide={(p) => void decide(row.investor.id, p)}
+                  onAdd={() => void addToDb([row.investor.id])}
+                  adding={adding?.current === row.investor.id}
+                  addDisabled={busy || !!adding}
+                />
+              ))}
             </tbody>
           </table>
           )}

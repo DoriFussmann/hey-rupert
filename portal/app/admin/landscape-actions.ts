@@ -11,6 +11,8 @@ import {
   fixFundRecord,
   layerDone,
   decideInvestor,
+  decideInvestors,
+  type DecisionPatch,
   addMissingInvestor,
   confirmAdded,
   confirmCheck,
@@ -168,6 +170,43 @@ export async function runInvestorCheck(clientId: string, kind?: unknown): Promis
   }
 }
 
+/** Only the fields a decision may carry, each in its type and length. */
+function cleanPatch(patch: DecisionPatch | null | undefined): DecisionPatch {
+  const clean: DecisionPatch = {};
+  if (patch?.firmId === null || typeof patch?.firmId === "string") clean.firmId = patch.firmId === null ? null : patch.firmId.slice(0, 64);
+  if (patch?.action === null || patch?.action === "bring_back" || patch?.action === "leave_out") clean.action = patch.action;
+  if (typeof patch?.note === "string") clean.note = patch.note;
+  if (typeof patch?.lesson === "boolean") clean.lesson = patch.lesson;
+  if (typeof patch?.website === "string") clean.website = patch.website.slice(0, 500);
+  if (patch?.resetMatch === true) clean.resetMatch = true;
+  if (patch?.clear === true) clean.clear = true;
+  if (typeof patch?.unsure === "boolean") clean.unsure = patch.unsure;
+  if (typeof patch?.removed === "boolean") clean.removed = patch.removed;
+  return clean;
+}
+
+/** Several decisions saved in one write (the confirmation list's "Submit all"), then the check once. */
+export async function decideOnInvestors(
+  clientId: string,
+  items: { investorId: string; patch: DecisionPatch }[],
+  kind?: unknown,
+): Promise<Result<{ check: CheckResult; saved: number }>> {
+  const a = await access(clientId);
+  if (!a.ok) return a;
+  if (!Array.isArray(items) || !items.length || items.length > 500) return { ok: false, error: "Nothing to save." };
+  const clean = items
+    .filter((item) => item && typeof item.investorId === "string" && item.investorId && item.investorId.length <= 64)
+    .map((item) => ({ investorId: item.investorId, patch: cleanPatch(item.patch) }));
+  try {
+    const saved = await decideInvestors(a.supabase, a.clientId, clean, a.email, asLandscapeKind(kind));
+    if (!saved.ok) return { ok: false, error: saved.error };
+    const again = await runInvestorCheck(clientId, kind);
+    return again.ok ? { ok: true, check: again.check, saved: saved.value } : again;
+  } catch (err) {
+    return fail(err, "The decisions were not saved.");
+  }
+}
+
 /** Records a decision on one investor, then returns the check again. */
 export async function decideOnInvestor(
   clientId: string,
@@ -188,16 +227,7 @@ export async function decideOnInvestor(
   const a = await access(clientId);
   if (!a.ok) return a;
   if (typeof investorId !== "string" || !investorId || investorId.length > 64) return { ok: false, error: "Unknown investor." };
-  const clean: typeof patch = {};
-  if (patch?.firmId === null || typeof patch?.firmId === "string") clean.firmId = patch.firmId === null ? null : patch.firmId.slice(0, 64);
-  if (patch?.action === null || patch?.action === "bring_back" || patch?.action === "leave_out") clean.action = patch.action;
-  if (typeof patch?.note === "string") clean.note = patch.note;
-  if (typeof patch?.lesson === "boolean") clean.lesson = patch.lesson;
-  if (typeof patch?.website === "string") clean.website = patch.website.slice(0, 500);
-  if (patch?.resetMatch === true) clean.resetMatch = true;
-  if (patch?.clear === true) clean.clear = true;
-  if (typeof patch?.unsure === "boolean") clean.unsure = patch.unsure;
-  if (typeof patch?.removed === "boolean") clean.removed = patch.removed;
+  const clean = cleanPatch(patch);
   try {
     const saved = await decideInvestor(a.supabase, a.clientId, investorId, clean, a.email, false, asLandscapeKind(kind));
     if (!saved.ok) return { ok: false, error: saved.error };
