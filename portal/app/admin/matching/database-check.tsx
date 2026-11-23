@@ -1,7 +1,7 @@
 "use client";
 
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { approveAllAdded } from "@/app/admin/added-funds-actions";
 import { addInvestorToDb, applyDefaultsToAll, confirmAddedStep, confirmInvestorCheck, loadLookAlikes, decideForGroup, decideOnInvestor, findWebsitesFor, recordInvestmentsInDb, runInvestorCheck } from "@/app/admin/landscape-actions";
 import { BUCKET_LABEL, type Bucket, type CheckRow } from "@/lib/match/landscape/check";
@@ -495,69 +495,23 @@ function reasonOf(row: CheckRow) {
   return step === "sector" ? (row.overlap.client.length ? "sector_shared" : "sector_none") : step;
 }
 
-/** The funds of one reason group, in a modal, each with its details and decision. */
-function ReasonModal({
-  reason,
-  rows,
-  busy,
-  onDecide,
-  onClose,
-}: {
-  reason: Omit<Reason, "rows">;
-  rows: CheckRow[];
-  busy: boolean;
-  onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
-  onClose: () => void;
-}) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-heading/40 p-md" onClick={onClose} role="presentation">
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label={reason.label}
-        className="animate-slide-in max-h-[88vh] w-full max-w-5xl overflow-auto rounded-card border border-border bg-surface px-lg py-md shadow-lg"
-        onClick={(event) => event.stopPropagation()}
-      >
-        <div className="flex items-start justify-between gap-md">
-          <div>
-            <h3 className="text-h3 text-heading">
-              {reason.label} · {n(rows.length)}
-            </h3>
-            <p className="text-body-sm text-muted">{reason.note}</p>
-          </div>
-          <button type="button" className={smallButton} onClick={onClose}>
-            Close
-          </button>
-        </div>
-        {rows.length ? (
-          <DecisionQueue rows={rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} />
-        ) : (
-          <p className="mt-md text-body-sm text-muted">No funds left in this group.</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
 /** Funds in the database but not in the shortlist, by the Step 1 filter that removed them: the defaults, and "apply to all". */
 function DecisionSummary({
   rows,
   busy,
   onGroup,
+  openKey,
   onOpen,
+  onDecide,
   onApplyDefaults,
 }: {
   rows: CheckRow[];
   busy: boolean;
   onGroup: (ids: string[], action: "bring_back" | "leave_out" | null) => void;
-  onOpen: (key: string) => void;
+  /** The reason group open beneath its row (one at a time), and the toggle. */
+  openKey: string | null;
+  onOpen: (key: string | null) => void;
+  onDecide: (investorId: string, patch: Parameters<typeof decideOnInvestor>[2]) => void;
   onApplyDefaults: () => void;
 }) {
   const reasons: Reason[] = REASONS.map((r) => ({ ...r, rows: rows.filter((x) => reasonOf(x) === r.key) }))
@@ -590,7 +544,7 @@ function DecisionSummary({
               What to do with {rows.length === 1 ? "this fund" : `these ${n(rows.length)} funds`}
             </h4>
             <p className="max-w-prose text-body-sm text-secondary">
-              Grouped by the Step 1 filter that removed them. Every group has a default. Decide a whole group on its row, or open a row to decide fund by fund.
+              Grouped by the Step 1 filter that removed them. Every group has a default. Decide a whole group on its row, or click a row to open its funds beneath it and decide one by one.
             </p>
           </div>
           {left ? (
@@ -633,23 +587,28 @@ function DecisionSummary({
               const allBack = decidedAll && count(r.rows, "bring_back") === r.rows.length;
               const allOut = decidedAll && count(r.rows, "leave_out") === r.rows.length;
               const seg = "whitespace-nowrap px-md py-[5px] text-body-sm transition-colors duration-hover disabled:cursor-default";
+              const isOpen = openKey === r.key;
+              const toggle = () => onOpen(isOpen ? null : r.key);
               return (
+                <Fragment key={r.key}>
                 <tr
-                  key={r.key}
                   tabIndex={0}
-                  className={`group cursor-pointer align-top transition-colors duration-hover hover:bg-background focus:bg-background focus:outline-none ${i ? "border-t border-border" : ""}`}
-                  onClick={() => onOpen(r.key)}
+                  aria-expanded={isOpen}
+                  className={`group cursor-pointer align-top transition-colors duration-hover focus:outline-none ${i ? "border-t border-border" : ""} ${
+                    isOpen ? "bg-primary-tint/40" : "hover:bg-background focus:bg-background"
+                  }`}
+                  onClick={toggle}
                   onKeyDown={(event) => {
-                    if (event.key === "Enter") onOpen(r.key);
+                    if (event.key === "Enter" && event.target === event.currentTarget) toggle();
                   }}
                 >
-                  <td className="px-md py-md">
+                  <td className={`px-md py-md ${isOpen ? "shadow-[inset_3px_0_0_#5C7A5E]" : ""}`}>
                     <p className="text-body font-medium text-heading">{r.label}</p>
                     <p className="text-secondary">{r.why}</p>
                     <p className="mt-xs flex flex-wrap items-center gap-sm">
                       <Pill tone="quiet">Default: {r.def === "bring_back" ? "bring back" : "leave out"}</Pill>
                       <span className="text-primary underline decoration-primary/40 underline-offset-2 group-hover:text-primary-hover">
-                        View {r.rows.length === 1 ? "the fund" : `the ${n(r.rows.length)} funds`} ›
+                        {isOpen ? "Hide" : "Show"} {r.rows.length === 1 ? "the fund" : `the ${n(r.rows.length)} funds`} {isOpen ? "▴" : "▾"}
                       </span>
                     </p>
                   </td>
@@ -687,6 +646,19 @@ function DecisionSummary({
                     </div>
                   </td>
                 </tr>
+                {isOpen ? (
+                  <tr>
+                    <td colSpan={6} className="border-t border-border bg-background/60 px-md pb-md pt-sm shadow-[inset_3px_0_0_#5C7A5E]">
+                      <div className="rounded-card border border-border bg-surface px-md pb-sm">
+                        <DecisionQueue rows={r.rows} busy={busy} onDecide={(row, p) => onDecide(row.investor.id, p)} />
+                      </div>
+                      <button type="button" className="mt-sm text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={toggle}>
+                        Close {r.label} ▴
+                      </button>
+                    </td>
+                  </tr>
+                ) : null}
+                </Fragment>
               );
             })}
           </tbody>
@@ -1556,17 +1528,16 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           </table>
         </div>
       </div>
-      <DecisionSummary rows={notInList} busy={frozen} onGroup={(ids, action) => void group(ids, action)} onOpen={setOpenReason} onApplyDefaults={() => void applyAll()} />
+      <DecisionSummary
+        rows={notInList}
+        busy={frozen}
+        onGroup={(ids, action) => void group(ids, action)}
+        openKey={openReason}
+        onOpen={setOpenReason}
+        onDecide={(id, patch) => void decide(id, patch)}
+        onApplyDefaults={() => void applyAll()}
+      />
       {busy ? <p className="mt-xs text-body-sm text-primary">Saving…</p> : notice ? <p className="mt-xs text-body-sm text-success">{notice}</p> : null}
-      {openReason ? (
-        <ReasonModal
-          reason={REASONS.find((r) => r.key === openReason) ?? REASONS[0]}
-          rows={notInList.filter((r) => reasonOf(r) === openReason)}
-          busy={frozen}
-          onDecide={(id, patch) => void decide(id, patch)}
-          onClose={() => setOpenReason(null)}
-        />
-      ) : null}
 
       {recorded ? (
         <p className="mt-md text-body-sm text-muted">
