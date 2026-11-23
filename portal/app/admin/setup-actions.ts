@@ -445,6 +445,87 @@ export async function pushSetupDocument(clientId: string, step: SetupDocumentSte
   return { ok: true, version: pushed.version };
 }
 
+/**
+ * Apply Changes & Move to Matching, for the Outreach Narrative: when the
+ * client asked for changes that only fine-tune it, Rupert makes them and
+ * records the new version as confirmed, without a second round of
+ * confirmation. The client's portal shows the updated narrative as
+ * confirmed, and the investor list opens. The email is optional: when a
+ * subject and body are given, it tells the client it's done.
+ */
+export async function applyNarrativeChanges(
+  clientId: string,
+  draft: unknown,
+): Promise<
+  | { ok: true; version: number; clientEmail: EmailResult | null }
+  | { ok: false; error: string }
+> {
+  const access = await requireAdmin();
+  if (!access.ok) return access;
+
+  const loaded = await loadSetupStep(access.supabase, clientId, "framing");
+  if (!loaded.ok) return loaded;
+  const before = loaded.row;
+  if (!before || before.status !== "changes_requested") {
+    return { ok: false, error: "This is only for a narrative the client asked to change." };
+  }
+  const askedIn = before.version;
+
+  const pushed = await writePush(access.supabase, clientId, "framing", draft);
+  if (!pushed.ok) return pushed;
+
+  const after = await loadSetupStep(access.supabase, clientId, "framing");
+  if (!after.ok) return after;
+  const row = after.row;
+  if (!row || row.version !== pushed.version) {
+    return { ok: false, error: "The narrative changed meanwhile. Refresh and try again." };
+  }
+  const at = nowIso();
+  const response = {
+    decision: "confirmed" as const,
+    note: `Rupert made the changes you asked for in version ${askedIn}.`,
+    item_notes: {},
+    item_labels: {},
+    version: row.version,
+    at,
+  };
+  const { data, error } = await access.supabase
+    .from("setup_steps")
+    .update({
+      status: "confirmed",
+      response,
+      history: row.history.map((entry) =>
+        entry.version === row.version ? { ...entry, response } : entry,
+      ),
+      turn_since: at,
+      completed_at: at,
+      updated_at: at,
+    })
+    .eq("client_id", clientId)
+    .eq("step", "framing")
+    .eq("status", "with_client")
+    .eq("version", row.version)
+    .select("client_id");
+  if (error) return { ok: false, error: setupTableError(error.message, error.code) };
+  if (!data || data.length === 0) {
+    return { ok: false, error: "The narrative changed meanwhile. Refresh and try again." };
+  }
+
+  const email = asClientEmail((draft as { client_email?: unknown } | null)?.client_email);
+  let clientEmail: EmailResult | null = null;
+  if (email.subject.trim() && email.body.trim()) {
+    clientEmail = await sendStepEmail(access.supabase, clientId, "framing", {
+      subject: email.subject.replace(/\s+/g, " ").trim(),
+      body: email.body.trim(),
+      note: email.note,
+    });
+    if (clientEmail.ok) await recordEmailed(access.supabase, clientId, "framing", row.version);
+  }
+
+  revalidateSetup(clientId);
+  return { ok: true, version: row.version, clientEmail };
+}
+
 /** Marks a version as emailed. Best effort: the email is already out. */
 async function recordEmailed(
   supabase: ServiceClient,
