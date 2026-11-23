@@ -1431,6 +1431,10 @@ export async function addMissingInvestor(
     return { ok: true, value: { created: false, message: `${row.investor.name} is already in the database as ${outcome.firm.name} (same website): matched to it, not added.` } };
   }
   if (outcome.kind === "existing") return { ok: true, value: { created: false, message: `${row.investor.name} was already added.` } };
+  if (outcome.kind === "adopted") {
+    const c = outcome.fund.contacts.length;
+    return { ok: true, value: { created: true, message: `${outcome.fund.name}: an earlier entry that belonged to no client is now used for this client (pending review), ${c} ${c === 1 ? "contact" : "contacts"}.` } };
+  }
   const f = outcome.fund;
   return {
     ok: true,

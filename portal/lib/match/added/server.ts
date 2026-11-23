@@ -259,6 +259,8 @@ const text = (v: unknown, max: number) => (typeof v === "string" ? v.trim().slic
 export type AddOutcome =
   | { kind: "added"; fund: AddedFund }
   | { kind: "existing"; fund: AddedFund }
+  /** A pending entry that belonged to no client, taken over for this one (no new research). */
+  | { kind: "adopted"; fund: AddedFund }
   /** Its website belongs to a record already in the database: match it instead of adding. */
   | { kind: "in_database"; firm: { id: string; name: string }; website: string };
 
@@ -277,7 +279,32 @@ export async function addFund(
   if (mine && mine.status !== "rejected") return { ok: true, value: { kind: "existing", fund: mine } };
   const known = cleanUrl(input.website) ? ownSite(input.website) : "";
   const elsewhere = await findAddedElsewhere(supabase, input.name, known);
-  if (elsewhere) {
+  // A pending entry that belongs to no client (its client is gone) counts for nobody and would block this
+  // one for good. With contacts, it is taken over for this client as it is. Without any, it is set aside
+  // (rejected, kept on record) and the fund is researched afresh below.
+  const orphan = !!elsewhere && elsewhere.status === "pending" && !elsewhere.foundForClient;
+  if (elsewhere && orphan && elsewhere.contacts.length) {
+    if (mine && mine.status === "rejected") await supabase.from("added_funds").delete().eq("id", mine.id).eq("status", "rejected");
+    const { data, error } = await supabase
+      .from("added_funds")
+      .update({ found_for_client: input.clientId, landscape_id: input.landscapeId, investor_id: input.investorId })
+      .eq("id", elsewhere.id)
+      .eq("status", "pending")
+      .is("found_for_client", null)
+      .select("*")
+      .single<Row>();
+    if (error) return { ok: false, error: tableError(error.message, error.code) };
+    return { ok: true, value: { kind: "adopted", fund: fromRow(data) } };
+  }
+  if (elsewhere && orphan) {
+    const { error } = await supabase
+      .from("added_funds")
+      .update({ status: "rejected", review_note: "Set aside: it belonged to no client and had no contacts; researched again.", reviewed_by: actor, reviewed_at: new Date().toISOString() })
+      .eq("id", elsewhere.id)
+      .eq("status", "pending")
+      .is("found_for_client", null);
+    if (error) return { ok: false, error: tableError(error.message, error.code) };
+  } else if (elsewhere) {
     return {
       ok: false,
       error: `${elsewhere.name} was already added (${elsewhere.status === "pending" ? "pending review" : elsewhere.status})${

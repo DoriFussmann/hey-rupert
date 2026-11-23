@@ -1463,6 +1463,19 @@ function AddMissingCard({
     </div>
   );
   const shownList = open ? rows(open) : [];
+  const doneButton = (
+    <button
+      type="button"
+      className={`${primaryButton} shrink-0`}
+      disabled={busy || !!adding}
+      onClick={() => {
+        const left = funds.length + angels.length;
+        if (!left || window.confirm(`Confirm Step ${T.step}D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
+      }}
+    >
+      Done adding: confirm {T.step}D
+    </button>
+  );
   return (
     <Card>
       <div className="flex items-start justify-between gap-md">
@@ -1474,17 +1487,7 @@ function AddMissingCard({
             &ldquo;Done adding&rdquo; closes this step: whatever isn&apos;t added counts as skipped (Reopen to add more).
           </p>
         </div>
-        <button
-          type="button"
-          className={`${secondaryButton} shrink-0`}
-          disabled={busy || !!adding}
-          onClick={() => {
-            const left = funds.length + angels.length;
-            if (!left || window.confirm(`Confirm Step ${T.step}D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
-          }}
-        >
-          Done adding: confirm {T.step}D
-        </button>
+        {doneButton}
       </div>
       <div className="mt-md overflow-hidden rounded-card border border-border bg-surface">
         <div className="overflow-x-auto">
@@ -1621,6 +1624,15 @@ function AddMissingCard({
           </div>
         </section>
       ) : null}
+      <div className="mt-md flex flex-wrap items-center justify-between gap-sm border-t border-border pt-md">
+        <p className="min-w-0 flex-1 text-body-sm text-secondary">
+          <span className="font-medium text-heading">To move on to Step {Number(T.step) + 1 || "the next step"}: </span>
+          {missing.length
+            ? `confirm this step. The ${n(missing.length)} not added ${missing.length === 1 ? "counts" : "count"} as skipped (Reopen to add more).`
+            : "confirm this step. Everything missing was added."}
+        </p>
+        {doneButton}
+      </div>
     </Card>
   );
 }
