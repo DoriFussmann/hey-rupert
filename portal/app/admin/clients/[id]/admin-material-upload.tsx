@@ -7,12 +7,31 @@ import { INTAKE_FILE_EXTENSIONS, intakeFileProblem } from "@/lib/intake";
 import { createClient } from "@/lib/supabase/client";
 import { MATERIALS_BUCKET } from "@/lib/setup";
 
-const ACCEPT = INTAKE_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
+export const ACCEPT = INTAKE_FILE_EXTENSIONS.map((extension) => `.${extension}`).join(",");
 
 const buttonClass =
   "rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 
 type Notice = { kind: "ok" | "error"; text: string } | null;
+
+/** Uploads one file into the client's materials. Returns an error, or null. */
+export async function uploadAdminMaterial(clientId: string, file: File): Promise<string | null> {
+  const problem = intakeFileProblem({ name: file.name, size: file.size });
+  if (problem) return problem;
+  const ticket = await createAdminMaterialUpload(clientId, { name: file.name, size: file.size });
+  if (!ticket.ok) return ticket.error;
+  const { error } = await createClient()
+    .storage.from(MATERIALS_BUCKET)
+    .uploadToSignedUrl(ticket.path, ticket.token, file, { contentType: file.type || undefined });
+  if (error) return `${file.name}: upload failed (${error.message}).`;
+  const saved = await registerAdminMaterialFile(clientId, {
+    path: ticket.path,
+    name: file.name,
+    size: file.size,
+    type: file.type,
+  });
+  return saved.ok ? null : saved.error;
+}
 
 /**
  * Rupert adds files to the client's company materials (for example a deck
@@ -25,24 +44,6 @@ export function AdminMaterialUpload({ clientId }: { clientId: string }) {
   const [progress, setProgress] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
 
-  async function uploadOne(file: File): Promise<string | null> {
-    const problem = intakeFileProblem({ name: file.name, size: file.size });
-    if (problem) return problem;
-    const ticket = await createAdminMaterialUpload(clientId, { name: file.name, size: file.size });
-    if (!ticket.ok) return ticket.error;
-    const { error } = await createClient()
-      .storage.from(MATERIALS_BUCKET)
-      .uploadToSignedUrl(ticket.path, ticket.token, file, { contentType: file.type || undefined });
-    if (error) return `${file.name}: upload failed (${error.message}).`;
-    const saved = await registerAdminMaterialFile(clientId, {
-      path: ticket.path,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-    });
-    return saved.ok ? null : saved.error;
-  }
-
   async function onFiles(list: FileList | null) {
     const files = Array.from(list ?? []);
     if (input.current) input.current.value = "";
@@ -54,7 +55,7 @@ export function AdminMaterialUpload({ clientId }: { clientId: string }) {
       const file = files[index];
       setProgress(files.length > 1 ? `Uploading ${index + 1} of ${files.length}…` : "Uploading…");
       try {
-        const error = await uploadOne(file);
+        const error = await uploadAdminMaterial(clientId, file);
         if (error) errors.push(error);
         else added += 1;
       } catch (err) {

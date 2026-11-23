@@ -1,11 +1,13 @@
 import { AdminMaterialUpload } from "@/app/admin/clients/[id]/admin-material-upload";
+import { MaterialFileActions } from "@/app/admin/clients/[id]/material-file-actions";
 import { formatDate } from "@/lib/format";
 import { fileExtension, formatBytes, type MaterialFile } from "@/lib/setup";
 
 /**
  * What the founder shared, at the top of the client page: one line per file
  * with a download link (signed for an hour; reload the page for fresh links).
- * Rupert can add files here too (for example ones the founder emailed).
+ * Rupert can add files here too (for example ones the founder emailed), and
+ * replace or remove any file, e.g. an old deck superseded by a newer one.
  */
 export function CompanyMaterialsCard({
   clientId,
@@ -64,6 +66,7 @@ export function CompanyMaterialsCard({
                 ) : (
                   <span>Link unavailable</span>
                 )}
+                <MaterialFileActions clientId={clientId} path={file.path} name={file.name} />
               </span>
             </li>
           ))}
