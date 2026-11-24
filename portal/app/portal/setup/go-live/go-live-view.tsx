@@ -311,8 +311,9 @@ export function GoLiveView({
               <label className="block max-w-prose">
                 <span className="text-heading">Your company&apos;s postal address</span>
                 <span className="block text-muted">
-                  It goes at the foot of each first email, with a line that lets an investor opt out. A street address or a
-                  P.O. box both work.
+                  US law requires it: under the CAN-SPAM Act, a commercial email must carry the sender&apos;s valid postal address
+                  and a way to opt out. It goes at the foot of each first email, with a line that lets an investor opt out. A
+                  street address or a P.O. box both work.
                 </span>
                 <input
                   className="mt-xs w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none"
