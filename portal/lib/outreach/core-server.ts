@@ -124,7 +124,10 @@ export type Delivery = {
   meeting_at: string | null;
 };
 
-export type OutreachMessageView = CoreMessageView & Delivery & { tier: number };
+/** The nightly pre-send check's verdict (presend-server.ts); the morning push adds only "pass". */
+export type SendCheck = { send_check: "pass" | "fail" | null; send_check_at: string | null; send_check_note: string | null };
+
+export type OutreachMessageView = CoreMessageView & Delivery & SendCheck & { tier: number };
 
 function deliveryOf(row: Record<string, unknown>): Delivery {
   const at = (value: unknown) => (value ? String(value) : null);
@@ -154,7 +157,17 @@ export async function loadOutreachMessages(supabase: ServiceClient, clientId: st
       .range(from, to),
   );
   if (!rows.ok) return { ok: false, error: tableError(rows.error) };
-  return { ok: true, value: rows.rows.map((row) => ({ ...asView(row), ...deliveryOf(row), tier: Number(row.tier) || 1 })) };
+  return {
+    ok: true,
+    value: rows.rows.map((row) => ({
+      ...asView(row),
+      ...deliveryOf(row),
+      send_check: row.send_check === "pass" || row.send_check === "fail" ? row.send_check : null,
+      send_check_at: row.send_check_at ? String(row.send_check_at) : null,
+      send_check_note: row.send_check_note ? String(row.send_check_note) : null,
+      tier: Number(row.tier) || 1,
+    })),
+  };
 }
 
 export async function loadCoreMessages(supabase: ServiceClient, clientId: string): Promise<Result<CoreMessageView[]>> {

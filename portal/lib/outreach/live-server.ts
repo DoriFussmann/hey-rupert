@@ -194,6 +194,8 @@ export type LiveState = {
   } | null;
   gaps: string[];
   counts: { funds: number; wave1: number; wave2: number; pushed: number; waiting: number };
+  /** Pre-send email check, for contacts not yet in Instantly: passed, failed (moved out), not checked yet. */
+  presend: { passed: number; failed: number; unchecked: number; lastAt: string | null };
   /** Setup step 4: pushed to the client (with the invoice and an email), and confirmed when live. */
   step: { version: number; pushedAt: string | null; emailedAt: string | null; status: string } | null;
   testSentAt: string | null;
@@ -327,6 +329,12 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
         wave2: c.summary?.wave2 ?? 0,
         pushed,
         waiting,
+      },
+      presend: {
+        passed: messages.value.filter((m) => m.slot === "active" && !m.pushed_at && m.send_check === "pass").length,
+        failed: messages.value.filter((m) => !m.pushed_at && m.send_check === "fail").length,
+        unchecked: messages.value.filter((m) => m.slot === "active" && !m.pushed_at && !m.send_check && isApproved(m)).length,
+        lastAt: messages.value.reduce<string | null>((at, m) => (m.send_check_at && (!at || m.send_check_at > at) ? m.send_check_at : at), null),
       },
       testSentAt: r.test_sent_at,
       consentText: r.inbox_email ? CONSENT_TEXT(r.inbox_email) : null,
@@ -541,11 +549,14 @@ async function pushBatchDetailed(supabase: ServiceClient, clientId: string, camp
   if (limit <= 0) return { ok: true, pushed: 0 };
   const recipient = redirect ? testRecipientOf(settings) : "";
   if (redirect && !recipient) return fail("Test mode needs a test inbox: set it in the Go Live panel.");
-  const leads = dripQueue(messages.value, {
+  // Only contacts that passed the pre-send check go out (presend-server.ts);
+  // the rest wait for it. Test Pilot clients skip the check.
+  const queue = dripQueue(messages.value, {
     delayDays: settings.wave2_delay_days,
     releasedEarly: Boolean(row.value.wave2_pushed_at),
-    limit,
+    limit: 0,
   });
+  const leads = (testMode ? queue : queue.filter((m) => m.send_check === "pass")).slice(0, limit);
   if (leads.length === 0) return { ok: true, pushed: 0 };
   const [optOut, postalAddress] = await Promise.all([optOutLine(supabase, clientId), postalAddressOf(supabase, clientId)]);
   let pushed = 0;
@@ -783,6 +794,12 @@ export async function addLeadsPaused(
       return { ok: false, error: "Test mode needs a test inbox: set it in the Go Live panel." };
     }
     if (!state.value.testMode && !row.value.launch_requested_at) return { ok: false, error: "The client hasn't approved the launch yet." };
+    if (!state.value.testMode) {
+      const messages = await loadOutreachMessages(supabase, clientId);
+      if (!messages.ok) return messages;
+      const passed = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && m.send_check === "pass").length;
+      if (passed === 0) return { ok: false, error: "No contact has passed the pre-send email check yet. Click \"Check next batch\" first." };
+    }
   }
 
   let campaignId = row.value.instantly_campaign_id;

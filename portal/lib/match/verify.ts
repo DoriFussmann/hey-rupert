@@ -6,7 +6,8 @@ import type { Contact } from "@/lib/match/engine/index.mjs";
 /** Contacts checked per batch. */
 export const VERIFY_BATCH_SIZE = 5;
 /** A finished check is reused this long while the email is unchanged. */
-export const VERIFY_FRESH_DAYS = 45;
+/** A check is reused for this long while the address is unchanged (pre-send check and Verify Emails). */
+export const VERIFY_FRESH_DAYS = 180;
 
 /**
  * The check process. 2: "At the firm?" (at most 3 searches), then Hunter's
@@ -194,7 +195,14 @@ export type MailboxStep = {
   suggestedEmail: string;
 };
 
-export type CheckSteps = { role?: RoleStep; public?: PublicStep; mailbox?: MailboxStep };
+/** The firm's address format, seen in other published addresses at the domain (pre-send check). */
+export type PatternStep = {
+  result: "matches" | "differs" | "unknown";
+  /** For example "first.last@". */
+  pattern: string;
+};
+
+export type CheckSteps = { role?: RoleStep; public?: PublicStep; mailbox?: MailboxStep; pattern?: PatternStep };
 
 export type StepNumber = 1 | 2 | 3;
 
@@ -227,9 +235,14 @@ export function stepsComplete(steps: CheckSteps) {
   return VERIFY_STEPS.every((step) => !needsStep(steps, step));
 }
 
-/** Step 2 or 3 confirmed the address. */
-function emailConfirmed(steps: CheckSteps) {
-  return steps.public?.result === "found" || steps.mailbox?.result === "valid";
+/**
+ * The address is confirmed: a page shows it for this person, Hunter found the
+ * mailbox, or the server accepts every address and the firm's published
+ * addresses follow the same format.
+ */
+export function emailConfirmed(steps: CheckSteps) {
+  if (steps.public?.result === "found" || steps.mailbox?.result === "valid") return true;
+  return steps.mailbox?.result === "accept_all" && steps.pattern?.result === "matches";
 }
 
 function emailBad(steps: CheckSteps) {
