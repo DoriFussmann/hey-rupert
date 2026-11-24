@@ -44,7 +44,7 @@ import {
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
 import { setWarmIntro } from "@/lib/outreach/campaign-server";
 import { markRepliesRead } from "@/lib/outreach/replies-server";
-import { loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
+import { connectInboxWithAppPassword, loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
 import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
 import { answerFounderQuestion } from "@/lib/brief-server";
 import { notifyAdmin as notifyGoLive } from "@/lib/notify";
@@ -875,6 +875,20 @@ export async function startInboxConnectAction(provider: string): Promise<{ ok: t
   if (!access.ok) return access;
   const started = await startInboxConnect(access.supabase, access.user.id, provider === "microsoft" ? "microsoft" : "google");
   return started.ok ? { ok: true, authUrl: started.value.authUrl } : started;
+}
+
+/** Connects the inbox with a Google app password, when Google blocked the sign-in. The password is passed on, never stored. */
+export async function connectInboxAppPasswordAction(input: { email: string; name: string; password: string }): Promise<{ ok: true; email: string } | { ok: false; error: string }> {
+  const access = await requirePortalService();
+  if (!access.ok) return access;
+  const connected = await connectInboxWithAppPassword(access.supabase, access.user.id, {
+    email: String(input?.email ?? ""),
+    name: String(input?.name ?? ""),
+    password: String(input?.password ?? ""),
+  });
+  if (!connected.ok) return connected;
+  revalidatePath("/portal/setup/go-live");
+  return { ok: true, email: connected.value.email };
 }
 
 export async function pollInboxConnectAction(): Promise<

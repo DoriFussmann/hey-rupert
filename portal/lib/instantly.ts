@@ -77,6 +77,28 @@ export function getAccount(email: string) {
   return call<InstantlyAccount>("GET", `/accounts/${encodeURIComponent(email)}`);
 }
 
+/**
+ * Adds a Gmail or Google Workspace inbox with a Google app password (IMAP and
+ * SMTP), for when Google's sign-in is blocked. The password is passed on and
+ * never stored or logged by the portal.
+ */
+export function createGoogleAccountWithAppPassword(input: { email: string; firstName: string; lastName: string; password: string }) {
+  return call<InstantlyAccount>("POST", "/accounts", {
+    email: input.email,
+    first_name: input.firstName,
+    last_name: input.lastName,
+    provider_code: 2,
+    imap_username: input.email,
+    imap_password: input.password,
+    imap_host: "imap.gmail.com",
+    imap_port: 993,
+    smtp_username: input.email,
+    smtp_password: input.password,
+    smtp_host: "smtp.gmail.com",
+    smtp_port: 587,
+  });
+}
+
 export function enableWarmup(emails: string[]) {
   return call<unknown>("POST", "/accounts/warmup/enable", { emails });
 }
