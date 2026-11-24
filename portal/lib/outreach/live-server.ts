@@ -9,6 +9,7 @@ import {
   enableWarmup,
   getAccount,
   isInstantlyConfigured,
+  createGoogleAccountWithAppPassword,
   oauthInit,
   oauthStatus,
   pauseCampaign,
@@ -19,6 +20,7 @@ import {
 import { advanceStage } from "@/lib/kickoff";
 import { loadCampaignState } from "@/lib/outreach/campaign-server";
 import { federalHolidayOn } from "@/lib/outreach/holidays";
+import { appPasswordFailure, checkAppPasswordForm, type AppPasswordInput } from "@/lib/outreach/inbox-connect";
 import {
   launchStage,
   resolveStuck,
@@ -418,6 +420,35 @@ export async function pollInboxConnect(
     ok: true,
     value: { state: "failed", message: value.status === "expired" ? "The sign-in timed out. Try again." : "The sign-in didn't complete. Try again." },
   };
+}
+
+/**
+ * Connects the client's Gmail or Google Workspace inbox with a Google app
+ * password, when Google blocked the sign-in. The password goes straight to
+ * the sending platform; it is never saved or logged here.
+ */
+export async function connectInboxWithAppPassword(supabase: ServiceClient, clientId: string, input: AppPasswordInput): Promise<Result<{ email: string }>> {
+  if (!isInstantlyConfigured()) return { ok: false, error: "Sending isn't set up yet. Rupert has been told." };
+  const form = checkAppPasswordForm(input);
+  if (!form.ok) return form;
+  const row = await loadLiveRow(supabase, clientId);
+  if (!row.ok) return row;
+  if (row.value.live_at) return { ok: false, error: "Your campaign is live. Ask Rupert before changing the inbox." };
+  const created = await createGoogleAccountWithAppPassword(form);
+  if (!created.ok) {
+    console.error(`Inbox connect by app password failed for ${clientId} (${form.email}): ${created.status ?? ""} ${created.error}`);
+    return { ok: false, error: appPasswordFailure(created.status, created.error) };
+  }
+  const saved = await saveLive(supabase, clientId, {
+    inbox_email: form.email,
+    inbox_connected_at: new Date().toISOString(),
+    oauth_session_id: null,
+    oauth_expires_at: null,
+  });
+  if (!saved.ok) return saved;
+  await enableWarmup([form.email]);
+  await checkInbox(supabase, clientId);
+  return { ok: true, value: { email: form.email } };
 }
 
 /** Rupert links an inbox that is already in the Instantly workspace. */

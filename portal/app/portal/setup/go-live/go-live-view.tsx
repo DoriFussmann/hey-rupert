@@ -1,20 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
-import { approveLaunchAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
+import { approveLaunchAction, sendMeTestAction } from "@/app/portal/setup/actions";
 import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
+import { ConnectInbox } from "@/app/portal/setup/go-live/connect-inbox";
 import { LaunchTimeline } from "@/components/launch-timeline";
 import { LAUNCH_VT, LaunchDoneRow } from "@/components/launch-done-row";
 import { MarkdownBody } from "@/components/markdown-body";
 import { postalAddressProblem, withPostalAddress } from "@/lib/launch-confirmation";
 import { weekLabel, type PlanWeek } from "@/lib/outreach/live";
-
-const POLL_MS = 3000;
-const POLL_LIMIT_MS = 10 * 60 * 1000;
 
 const primary =
   "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
@@ -49,7 +47,13 @@ export function GoLiveView({
   plan,
   inboxEmail,
   confirmation,
+  company,
+  contactEmail,
+  contactName,
 }: {
+  company: string;
+  contactEmail: string;
+  contactName: string;
   readOnly: boolean;
   campaignReady: boolean;
   inbox: { email: string; healthy: boolean } | null;
@@ -67,7 +71,6 @@ export function GoLiveView({
   confirmation: { text: string; postalAddress: string; confirmed: { at: string; text: string } | null } | null;
 }) {
   const router = useRouter();
-  const [connecting, setConnecting] = useState(false);
   const [consent, setConsent] = useState(false);
   const [address, setAddress] = useState(confirmation?.postalAddress ?? "");
   const [launching, setLaunching] = useState(false);
@@ -92,49 +95,6 @@ export function GoLiveView({
     } finally {
       setTesting(false);
     }
-  }
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => () => {
-    if (timer.current) clearTimeout(timer.current);
-  }, []);
-
-  async function connect(provider: "google" | "microsoft") {
-    setError(null);
-    // Opened on the click itself, so the browser doesn't block it.
-    const popup = window.open("about:blank", "rupert-inbox", "width=520,height=680");
-    setConnecting(true);
-    const started = await startInboxConnectAction(provider);
-    if (!started.ok) {
-      popup?.close();
-      setConnecting(false);
-      setError(started.error);
-      return;
-    }
-    if (popup) popup.location.href = started.authUrl;
-    else window.open(started.authUrl, "_blank");
-    const until = Date.now() + POLL_LIMIT_MS;
-    const poll = async () => {
-      const result = await pollInboxConnectAction();
-      if (!result.ok) {
-        setConnecting(false);
-        setError(result.error);
-        return;
-      }
-      if (result.state === "connected") {
-        setConnecting(false);
-        popup?.close();
-        router.refresh();
-        return;
-      }
-      if (result.state === "failed" || Date.now() > until) {
-        setConnecting(false);
-        setError(result.message ?? "The sign-in timed out. Try again.");
-        return;
-      }
-      timer.current = setTimeout(poll, POLL_MS);
-    };
-    timer.current = setTimeout(poll, POLL_MS);
   }
 
   async function launch() {
@@ -289,21 +249,7 @@ export function GoLiveView({
               {inbox.healthy ? "" : ". Rupert is checking it and will be in touch if anything is needed."}
             </p>
           ) : (
-            <>
-              <p className="max-w-prose">
-                Sign in with the email account you use with investors. You sign in with Google or Microsoft directly; your
-                password is never shared with Rupert.
-              </p>
-              <div className="mt-sm flex flex-wrap gap-sm">
-                <button type="button" className={secondary} disabled={readOnly || connecting} onClick={() => connect("google")}>
-                  Connect Google / Gmail
-                </button>
-                <button type="button" className={secondary} disabled={readOnly || connecting} onClick={() => connect("microsoft")}>
-                  Connect Microsoft / Outlook
-                </button>
-              </div>
-              {connecting ? <p className="mt-xs text-muted">Finish signing in in the window that opened…</p> : null}
-            </>
+            <ConnectInbox readOnly={readOnly} company={company} defaultEmail={contactEmail} defaultName={contactName} />
           )}
         </Step>
         <Step n={2} done={Boolean(invoice.paidAt)} title="Pay the first monthly invoice" vt={LAUNCH_VT.invoice}>

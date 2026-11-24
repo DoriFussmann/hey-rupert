@@ -36,6 +36,9 @@ export default async function GoLivePage() {
           requested={state.requested ? { at: state.requested.at } : null}
           plan={state.plan}
           inboxEmail={state.inbox?.email ?? null}
+          company={client?.company_name ?? ""}
+          contactEmail={client?.email || client?.founder_email || ""}
+          contactName={[client?.first_name, client?.last_name].filter(Boolean).join(" ") || client?.founder_name || ""}
           confirmation={
             confirmation
               ? {
