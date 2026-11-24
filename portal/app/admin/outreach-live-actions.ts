@@ -26,6 +26,7 @@ import {
   type LiveState,
 } from "@/lib/outreach/live-server";
 import { decideReply } from "@/lib/outreach/replies-server";
+import { runPresendChecks } from "@/lib/outreach/presend-report-server";
 import { notifyAdmin, notifyClient } from "@/lib/notify";
 import { sendDailySummary } from "@/lib/outreach/daily-summary-server";
 import { confirmGoLiveStep, pushGoLive, renderGoLiveEmail, type GoLiveEmail } from "@/lib/outreach/go-live-step-server";
@@ -121,6 +122,20 @@ export async function pushApprovedAction(clientId: string) {
   const pushed = await pushNewlyApproved(access.supabase, clientId);
   if (!pushed.ok) return pushed;
   return withState(clientId, access.supabase, { pushed: pushed.value });
+}
+
+/** Runs the pre-send email check for this client now (the nightly one, for its next send day), and emails the summary. */
+export async function checkNextBatchAction(clientId: string) {
+  const access = await requireAdmin(clientId);
+  if (!access.ok) return access;
+  const result = await runPresendChecks(access.supabase, { clientId, email: "always" });
+  if (result.error && result.campaigns.length === 0) return { ok: false as const, error: result.error };
+  const c = result.campaigns[0];
+  if (!c) return { ok: false as const, error: "No Instantly campaign yet, or this is a Test Pilot client (no check needed)." };
+  const failed = c.outcomes.filter((o) => !o.pass).length;
+  const note = `${c.ready} of ${c.room} ready for ${c.day}. Checked ${c.outcomes.length}${failed ? `, ${failed} didn't pass` : ""}${c.errors.length ? `, ${c.errors.length} errors (see the email)` : ""}. Summary emailed.`;
+  revalidatePath(`/admin/clients/${clientId}`);
+  return withState(clientId, access.supabase, { note, failed: c.errors.length > 0 && c.ready === 0 });
 }
 
 export async function setPausedAction(clientId: string, paused: boolean) {

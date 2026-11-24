@@ -1,4 +1,5 @@
 import "server-only";
+import { recordDeliveryEvent } from "@/lib/outreach/presend-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { sendAdminEmail } from "@/lib/email";
 import { selectAll } from "@/lib/match/db-server";
@@ -65,6 +66,11 @@ export async function handleInstantlyEvent(supabase: ServiceClient, payload: Rec
     messages.value.find((m) => m.person.email.trim().toLowerCase() === leadEmail) ??
     (aliasId ? messages.value.find((m) => m.id.replace(/-/g, "").startsWith(aliasId)) : undefined) ??
     null;
+
+  // Proof from a real send, per address (never a test run's redirected address).
+  if (message && !aliasId && message.person.email.trim().toLowerCase() === leadEmail) {
+    await recordDeliveryEvent(supabase, { email: leadEmail, firmId: message.firm_id, eventType, at });
+  }
 
   const patch = deliveryPatch(eventType, at, step);
   if (message && patch) {

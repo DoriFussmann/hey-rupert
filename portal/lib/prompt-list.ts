@@ -34,6 +34,7 @@ export const PROMPT_LIST = [
   { key: "email_copy_email", title: "Email copy email", group: "Emails to founders" },
   { key: "nudge_email", title: "Nudge email", group: "Emails to founders" },
   { key: "verify_role_check", title: "Verify emails: role check", group: "Matching" },
+  { key: "verify_presend_check", title: "Pre-send email check", group: "Matching" },
   { key: "match_options", title: "Thin match: sector options", group: "Matching" },
   { key: "list_audit", title: "Investor list audit", group: "Matching" },
   { key: "competitor_search", title: "Step 2: funded competitors", group: "Matching" },

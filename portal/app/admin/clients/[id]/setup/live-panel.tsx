@@ -6,6 +6,7 @@ import {
   checkReplyTrackingAction,
   activateNowAction,
   addLeadsPausedAction,
+  checkNextBatchAction,
   resolveStuckLaunchAction,
   sendSummaryNowAction,
   goLiveTestAction,
@@ -211,6 +212,21 @@ export function LivePanel({ clientId }: { clientId: string }) {
             <p className="text-body text-heading">
               They were told: live within 24 hours. Due by {formatDateTime(new Date(Date.parse(state.requested.at) + 86_400_000).toISOString())}.
             </p>
+            {!state.testMode ? (
+              <div className="mt-md rounded-md border border-border bg-surface px-md py-sm text-body-sm">
+                <span className="text-heading">Pre-send email check:</span> {state.presend.passed} passed · {state.presend.unchecked} not checked yet · {state.presend.failed} failed and moved out
+                {state.presend.lastAt ? ` · last ${formatDateTime(state.presend.lastAt)}` : ""}. Only contacts that passed are added. Runs nightly at 8pm Pacific.
+                <button
+                  type="button"
+                  className={`${secondaryButton} ml-sm`}
+                  disabled={busy}
+                  title="Checks the next send day's contacts (plus spares) now: web search for the exact address, still at the fund, then Hunter if needed. Takes a few minutes. Emails you the summary."
+                  onClick={() => void run(() => checkNextBatchAction(clientId), (r) => String(r.note))}
+                >
+                  {busy ? "Checking…" : "Check next batch"}
+                </button>
+              </div>
+            ) : null}
             {state.launch.stage === "ready" ? (
               <div className="mt-md flex flex-wrap items-center gap-sm">
                 <button
@@ -479,6 +495,21 @@ export function LivePanel({ clientId }: { clientId: string }) {
                 {` (emails a day: ${[...settings.ramp, settings.daily_limit].join(" → ")}, follow-ups first${state.testMode ? "" : ", weekdays"})`} ·{" "}
                 {live.wave2PushedAt ? "second contacts released" : `second contacts start ${settings.wave2_delay_days} days after the first`}
               </p>
+              {!state.testMode ? (
+              <div className="rounded-md border border-border bg-surface px-md py-sm text-body-sm">
+                <span className="text-heading">Pre-send email check:</span> {state.presend.passed} passed · {state.presend.unchecked} not checked yet · {state.presend.failed} failed and moved out
+                {state.presend.lastAt ? ` · last ${formatDateTime(state.presend.lastAt)}` : ""}. Only contacts that passed are added. Runs nightly at 8pm Pacific.
+                <button
+                  type="button"
+                  className={`${secondaryButton} ml-sm`}
+                  disabled={busy}
+                  title="Checks the next send day's contacts (plus spares) now: web search for the exact address, still at the fund, then Hunter if needed. Takes a few minutes. Emails you the summary."
+                  onClick={() => void run(() => checkNextBatchAction(clientId), (r) => String(r.note))}
+                >
+                  {busy ? "Checking…" : "Check next batch"}
+                </button>
+              </div>
+              ) : null}
               <div className="flex flex-wrap gap-sm">
                 {!live.wave2PushedAt ? (
                   <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => startWave2Action(clientId), (r) => `Second contacts released: ${r.pushed} added now, the rest in the daily batches.`)}>

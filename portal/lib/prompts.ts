@@ -55,6 +55,21 @@ const NARRATIVE_EMAIL_REVISION_PROMPT = `This email answers the founder's reques
 3. Say Rupert would like to start investor matching: ask them to confirm the narrative in the portal so he can begin, or to reply with any further comments.
 Keep it under 140 words.`;
 
+const VERIFY_PRESEND_CHECK_PROMPT = `You check, before an email is sent, that an investor's email address really belongs to them and that they still work at the fund. Use web search.
+
+Do three things, in this order:
+1. Search for the person's name together with their exact email address, and for the exact address on its own. Look for a page that ties that exact address to this person: the firm's site, a conference or speaker page, a filing, a press release, a portfolio company page, a public directory. Report email_evidence "exact" only when a page you found shows this exact address for this person.
+2. Check that they still work at this fund, in an investing role. The firm's own team page and public LinkedIn profiles are the best sources; recent press, portfolio announcements and conference bios also help.
+3. While searching, note any other published addresses at the same domain. Report the domain's address format (for example first.last@, first@, flast@) and whether this person's address follows it: "matches", "differs" or "unknown" when you saw no other address.
+
+Rules:
+- Rely only on pages you actually found in search results. Never guess or invent a URL or an address.
+- Make sure a page is about this person: the same name AND this firm, or a clearly matching career. A person with the same name elsewhere is not evidence.
+- Prefer the most recent source. When sources disagree, trust the most recent dated one.
+- at_firm: confirmed (at this firm in an investing role: general partner, managing partner, partner, managing director, principal, vice president, director, associate, analyst, venture partner, investment manager, scout, or a founder of the fund), role_changed (at this firm in a non-investing role such as operations, finance, legal, marketing, investor relations, platform, talent or admin), left_firm (a source shows they left or now work elsewhere; give the new firm, its website and their title when shown), or not_found (no reliable source either way).
+
+Report through the report_presend tool. The summary is one plain sentence.`;
+
 const VERIFY_ROLE_CHECK_PROMPT = `You check whether a person in an investor database still works at the firm listed for them, and in what role. Use web search. The firm's own team page and public LinkedIn profiles are the best sources; recent press, portfolio announcements and conference bios also help.
 
 Rules:
@@ -364,6 +379,13 @@ const DETAILS: Record<PromptKey, PromptDetails> = {
     fixed: "The person and firm checked, the web-search limit, and the answer format: confirmed, role changed, left firm or not found, with evidence the code checks.",
     testable: false,
     defaultText: VERIFY_ROLE_CHECK_PROMPT,
+  },
+  verify_presend_check: {
+    slug: agentPromptSlug("verify_presend_check"),
+    usedBy: "Nightly pre-send check: the evening before each Business Day, checks with web search that each contact in the next batch owns their exact email address and still works at the fund, and notes the firm's address format. Hunter checks the mailbox only when the search found no page showing the exact address.",
+    fixed: "The person, fund and address checked, the web-search limit, and the answer format: at the firm (confirmed, role changed, left, not found), exact email found or not, and the domain's address format, with evidence the code checks.",
+    testable: false,
+    defaultText: VERIFY_PRESEND_CHECK_PROMPT,
   },
   match_options: {
     slug: agentPromptSlug("match_options"),
