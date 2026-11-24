@@ -54,9 +54,16 @@ export function fillLaunchConfirmation(template: string, fields: LaunchConfirmat
     .replaceAll(LAUNCH_TOKENS.contact_count, String(fields.contacts))
     .replaceAll(LAUNCH_TOKENS.inbox, escapeMarkdown(fields.inbox.trim()) || "[your inbox]")
     .replaceAll(LAUNCH_TOKENS.monthly_fee, fields.monthlyFee)
+    // "about 1 month", "about 2 months"
+    .replaceAll(`${LAUNCH_TOKENS.plan_months} months`, monthsText(fields.planMonths))
     .replaceAll(LAUNCH_TOKENS.plan_months, String(Math.max(1, fields.planMonths)))
     .replaceAll(LAUNCH_TOKENS.service_order_version, legacy ? String(legacy.currentVersion) : "")
     .replaceAll(LAUNCH_TOKENS.service_order_signed_date, legacy ? legacy.signedOn : "");
+}
+
+function monthsText(months: number) {
+  const n = Math.max(1, months);
+  return n === 1 ? "1 month" : `${n} months`;
 }
 
 /** Puts the postal address in. Blank shows a bracketed label, so a preview still reads clearly. */

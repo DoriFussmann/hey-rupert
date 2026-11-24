@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useRouter } from "next/navigation";
 import { approveLaunchAction, pollInboxConnectAction, sendMeTestAction, startInboxConnectAction } from "@/app/portal/setup/actions";
 import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
 import { LaunchTimeline } from "@/components/launch-timeline";
+import { LAUNCH_VT, LaunchDoneRow } from "@/components/launch-done-row";
 import { MarkdownBody } from "@/components/markdown-body";
 import { postalAddressProblem, withPostalAddress } from "@/lib/launch-confirmation";
 import { weekLabel, type PlanWeek } from "@/lib/outreach/live";
@@ -19,9 +21,9 @@ const primary =
 const secondary =
   "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 
-function Step({ n, done, title, children }: { n: number; done: boolean; title: string; children?: React.ReactNode }) {
+function Step({ n, done, title, vt, children }: { n: number; done: boolean; title: string; vt: string; children?: React.ReactNode }) {
   return (
-    <li className="rounded-card border border-border bg-surface px-lg py-lg">
+    <li className="rounded-card border border-border bg-surface px-lg py-lg" style={{ viewTransitionName: vt }}>
       <div className="flex items-center gap-sm">
         <span className={`flex h-6 w-6 items-center justify-center rounded-full text-body-sm ${done ? "bg-primary text-white" : "border border-border text-muted"}`}>
           {done ? "✓" : n}
@@ -72,6 +74,9 @@ export function GoLiveView({
   const [error, setError] = useState<string | null>(null);
   const [testing, setTesting] = useState(false);
   const [testNote, setTestNote] = useState<string | null>(null);
+  // Set the moment the client approves, so the page turns into the approved
+  // view at once, with the celebration, before the server data catches up.
+  const [approvedAt, setApprovedAt] = useState<string | null>(null);
 
   async function sendTest() {
     setTesting(true);
@@ -80,7 +85,10 @@ export function GoLiveView({
     try {
       const result = await sendMeTestAction();
       if (!result.ok) setError(result.error);
-      else setTestNote(`On its way to ${result.to}: the emails ${result.fund} would get, a couple of minutes apart.`);
+      else
+        setTestNote(
+          `On its way to ${result.to}, and only to you: the first email ${result.fund} would get, then its follow-up a couple of minutes later as a reply in the same thread. No investor receives anything.`,
+        );
     } finally {
       setTesting(false);
     }
@@ -141,11 +149,42 @@ export function GoLiveView({
     try {
       const result = await approveLaunchAction(consent, address);
       if (!result.ok) setError(result.error);
-      else router.refresh();
+      else celebrate();
     } finally {
       setLaunching(false);
     }
   }
+
+  // The steps collapse to the top and morph into the three tiles (a view
+  // transition where the browser has one), then What Happens Next rises in.
+  function celebrate() {
+    const at = new Date().toISOString();
+    const show = () => {
+      flushSync(() => setApprovedAt(at));
+      window.scrollTo({ top: 0 });
+    };
+    const doc = document as Document & { startViewTransition?: (update: () => void) => { finished: Promise<void> } };
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (doc.startViewTransition && !reduced) {
+      doc.startViewTransition(show).finished.finally(() => setTimeout(() => router.refresh(), 2600));
+    } else {
+      show();
+      setTimeout(() => router.refresh(), 2600);
+    }
+  }
+
+  const approved = requested ?? (approvedAt ? { at: approvedAt } : null);
+  const celebrating = Boolean(approvedAt);
+  const dayOf = (at: string | null | undefined) =>
+    at ? new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric" }).format(new Date(at)) : "Done";
+  const doneRow = (celebrate: boolean) => (
+    <LaunchDoneRow
+      inboxEmail={inboxEmail ?? inbox?.email ?? null}
+      paidOn={invoice.paidAt ? `Paid ${dayOf(invoice.paidAt)}` : "Paid"}
+      confirmedOn={`Confirmed ${dayOf(confirmation?.confirmed?.at ?? approved?.at)}`}
+      celebrate={celebrate}
+    />
+  );
 
   const total = counts.wave1 + counts.wave2;
   const lastFirst = [...plan].reverse().find((w) => w.newInvestors > 0);
@@ -153,7 +192,7 @@ export function GoLiveView({
   const planBlock =
     plan.length > 0 ? (
       <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
-        <h2 className="text-h3">What happens next</h2>
+        <h2 className="text-h3">What Happens Next</h2>
         <div className="mt-md grid gap-md sm:grid-cols-3">
           <div className="rounded-card border border-border px-md py-md">
             <p className="text-label uppercase tracking-label text-muted">Investors</p>
@@ -195,6 +234,7 @@ export function GoLiveView({
   if (live) {
     return (
       <>
+        <div className="mb-lg">{doneRow(false)}</div>
         <LiveBanner since={live.at}>
           <p className="max-w-prose text-body-sm text-secondary">
             New investors are added each weekday, mixed across your tiers; the second contact at a fund follows a few days
@@ -210,26 +250,20 @@ export function GoLiveView({
     );
   }
 
-  if (requested) {
+  if (approved) {
     return (
       <>
-        <LiveBanner since={requested.at} word="Ready" sincePrefix="You approved the launch on">
-          <p className="max-w-prose text-body text-body">
-            Rupert runs a final check and starts sending within 24 hours. You&apos;ll get an email the moment your campaign is
-            live, and this page turns Live.
-          </p>
-        </LiveBanner>
-        <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
-          <h2 className="text-h4">Done</h2>
-          <ul className="mt-sm grid gap-xs text-body-sm">
-            <li>✓ Inbox connected{inboxEmail ? `: ${inboxEmail}` : ""}</li>
-            <li>✓ First monthly invoice paid</li>
-            <li>✓ Launch Confirmation confirmed and launch approved by you</li>
-            <li className="text-muted">○ Rupert starts sending</li>
-          </ul>
-        </section>
-        {confirmedBlock}
-        {planBlock}
+        <div className="mb-lg">{doneRow(celebrating)}</div>
+        <div className={celebrating ? "launch-rise launch-rise-1" : ""}>
+          <LiveBanner since={approved.at} word="Ready" sincePrefix="You approved the launch on">
+            <p className="max-w-prose text-body text-body">
+              Rupert runs a final check and starts sending within 24 hours. You&apos;ll get an email the moment your campaign is
+              live, and this page turns Live.
+            </p>
+          </LiveBanner>
+        </div>
+        <div className={celebrating ? "launch-rise launch-rise-2" : ""}>{planBlock}</div>
+        <div className={celebrating ? "launch-rise launch-rise-3" : ""}>{confirmedBlock}</div>
       </>
     );
   }
@@ -248,7 +282,7 @@ export function GoLiveView({
         </p>
       )}
       <ol className="grid gap-md">
-        <Step n={1} done={Boolean(inbox?.healthy)} title="Connect your inbox">
+        <Step n={1} done={Boolean(inbox?.healthy)} title="Connect your inbox" vt={LAUNCH_VT.inbox}>
           {inbox ? (
             <p>
               Connected: <span className="text-heading">{inbox.email}</span>
@@ -272,7 +306,7 @@ export function GoLiveView({
             </>
           )}
         </Step>
-        <Step n={2} done={Boolean(invoice.paidAt)} title="Pay the first monthly invoice">
+        <Step n={2} done={Boolean(invoice.paidAt)} title="Pay the first monthly invoice" vt={LAUNCH_VT.invoice}>
           {invoice.paidAt ? (
             <p>Paid {formatDateTime(invoice.paidAt)}.</p>
           ) : invoice.url ? (
@@ -286,7 +320,7 @@ export function GoLiveView({
             <p>Rupert sends it when your campaign is ready.</p>
           )}
         </Step>
-        <Step n={3} done={false} title="Confirm and approve the launch">
+        <Step n={3} done={false} title="Confirm and approve the launch" vt={LAUNCH_VT.confirm}>
           <ul className="mb-md max-w-prose list-disc pl-lg">
             <li>
               Up to 15 emails a day from your inbox for the first 10 business days, then never more than 30 a day, follow-ups
@@ -302,7 +336,7 @@ export function GoLiveView({
                 {testing ? "Sending…" : "Send me a test"}
               </button>
               <span className="ml-sm text-muted">
-                {testNote ?? (testSentAt ? `Last test ${formatDateTime(testSentAt)}.` : "Optional: see exactly what an investor gets, in your own inbox.")}
+                {testNote ?? (testSentAt ? `Last test ${formatDateTime(testSentAt)}.` : "Optional: see exactly what an investor gets. Two emails arrive in your own inbox: the first email, then the follow-up a couple of minutes later in the same thread. Only you receive them.")}
               </span>
             </div>
           ) : null}
