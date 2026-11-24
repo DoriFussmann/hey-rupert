@@ -65,7 +65,8 @@ import {
   withPostalAddress,
 } from "@/lib/launch-confirmation";
 import { LAUNCH_CONFIRMATION_SLUG, SERVICE_ORDER_SLUG } from "@/lib/form-fields";
-import { normalizeInvoiceUrl, type PaidInvoice } from "@/lib/stripe-webhook";
+import { type PaidInvoice } from "@/lib/stripe-webhook";
+import { matchCampaignInvoice } from "@/lib/stripe-match";
 
 type ServiceClient = ReturnType<typeof createServiceClient>;
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
@@ -430,11 +431,21 @@ export async function markInvoicePaid(supabase: ServiceClient, clientId: string,
 
 /** Stripe invoice.paid: marks a client's first monthly invoice paid when the link matches. */
 export async function recordCampaignInvoicePayment(supabase: ServiceClient, invoice: PaidInvoice): Promise<"recorded" | "already_paid" | "unmatched" | "error"> {
-  const target = normalizeInvoiceUrl(invoice.hostedInvoiceUrl);
-  if (!target) return "unmatched";
-  const { data, error } = await supabase.from("outreach_campaigns").select("client_id, invoice_url, invoice_paid_at").not("invoice_url", "is", null);
-  if (error) return /invoice_url/.test(error.message) ? "unmatched" : "error";
-  const match = (data ?? []).find((row) => normalizeInvoiceUrl(String(row.invoice_url)) === target);
+  if (invoice.kind === "setup_fee") return "unmatched";
+  const { data, error } = await supabase.from("outreach_campaigns").select("client_id, invoice_url, invoice_paid_at");
+  if (error) return "error";
+  const rows = (data ?? []) as { client_id: string; invoice_url: string | null; invoice_paid_at: string | null }[];
+  const ids = rows.filter((row) => row.invoice_url).map((row) => row.client_id);
+  const emails = new Map<string, string | null>();
+  if (ids.length > 0) {
+    const clients = await supabase.from("clients").select("id, email").in("id", ids);
+    if (clients.error) return "error";
+    for (const c of clients.data ?? []) emails.set(String(c.id), c.email ? String(c.email) : null);
+  }
+  const match = matchCampaignInvoice(
+    rows.map((row) => ({ ...row, email: emails.get(row.client_id) ?? null })),
+    invoice,
+  );
   if (!match) return "unmatched";
   if (match.invoice_paid_at) return "already_paid";
   const saved = await saveLive(supabase, String(match.client_id), { invoice_paid_at: new Date().toISOString(), invoice_marked_by: "stripe" });

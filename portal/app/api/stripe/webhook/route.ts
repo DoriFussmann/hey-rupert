@@ -5,8 +5,8 @@ import { isServiceRoleConfigured } from "@/lib/env";
 import { advanceToKickoff } from "@/lib/kickoff";
 import { notifyAdmin } from "@/lib/notify";
 import { PORTAL_URL } from "@/lib/portal-url";
+import { matchSetupFee } from "@/lib/stripe-match";
 import {
-  normalizeInvoiceUrl,
   readPaidInvoice,
   verifyStripeSignature,
   type PaidInvoice,
@@ -32,28 +32,11 @@ function formatAmount(invoice: PaidInvoice) {
 }
 
 /**
- * Finds the client whose Setup Fee this invoice pays: first by the invoice
- * link pasted when the Service Order was issued, then by the payer's email
- * when exactly one client with an unpaid Setup Fee has that email.
+ * Finds the client whose Setup Fee this invoice pays: by the invoice's
+ * metadata, then its link, then the payer's email (lib/stripe-match.ts).
  */
 function matchClient(candidates: CandidateClient[], invoice: PaidInvoice) {
-  const target = normalizeInvoiceUrl(invoice.hostedInvoiceUrl);
-  if (target) {
-    const byLink = candidates.find(
-      (client) => normalizeInvoiceUrl(client.setup_invoice_url) === target,
-    );
-    if (byLink) return byLink;
-  }
-
-  const payer = invoice.customerEmail?.toLowerCase();
-  if (!payer) return null;
-
-  const byEmail = candidates.filter(
-    (client) =>
-      !client.payment_received_at &&
-      (client.email ?? "").trim().toLowerCase() === payer,
-  );
-  return byEmail.length === 1 ? byEmail[0] : null;
+  return matchSetupFee(candidates, invoice);
 }
 
 async function recordSetupFeePayment(
@@ -74,13 +57,13 @@ async function recordSetupFeePayment(
 
   if (!match) {
     await sendAdminEmail(
-      "Stripe payment received — not matched to a Setup Fee",
+      "Stripe payment received — not matched to a client",
       [
-        "A Stripe invoice was paid, but it does not match any client's Setup Fee invoice, so nothing was changed in the portal.",
+        "A Stripe invoice was paid, but it does not match any client's unpaid Setup Fee or first monthly invoice (by the invoice's portal tags, its link, or the payer's email), so nothing was changed in the portal.",
         `Invoice: ${invoice.number ?? invoice.id}`,
         `Payer: ${invoice.customerEmail ?? "unknown"}`,
         `Amount: ${formatAmount(invoice)}`,
-        `If this was a Setup Fee, mark it paid on the client's page: ${PORTAL_URL}/admin`,
+        `If it was one of them, mark it paid on the client's page (Setup Fee: Service Order; monthly: Go Live panel): ${PORTAL_URL}/admin`,
       ].join("\n\n"),
     );
     return "unmatched";

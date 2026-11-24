@@ -47,59 +47,8 @@ export function verifyStripeSignature(
   });
 }
 
-/**
- * Normalizes a Stripe hosted invoice link for comparison: host lowercased,
- * query string, fragment and trailing slash removed. Returns null for
- * anything that is not an https stripe.com link.
- */
-export function normalizeInvoiceUrl(value: string | null | undefined) {
-  if (!value) return null;
-  try {
-    const url = new URL(value.trim());
-    const host = url.hostname.toLowerCase();
-    if (
-      url.protocol !== "https:" ||
-      !(host === "stripe.com" || host.endsWith(".stripe.com"))
-    ) {
-      return null;
-    }
-    return `${host}${url.pathname.replace(/\/+$/, "")}`;
-  } catch {
-    return null;
-  }
-}
-
-/** The fields of a Stripe `invoice.paid` event the portal uses. */
-export type PaidInvoice = {
-  id: string;
-  hostedInvoiceUrl: string | null;
-  customerEmail: string | null;
-  amountPaid: number | null;
-  currency: string | null;
-  number: string | null;
-};
-
-export function readPaidInvoice(event: unknown): PaidInvoice | null {
-  if (!event || typeof event !== "object") return null;
-  const record = event as { type?: unknown; data?: { object?: unknown } };
-  if (record.type !== "invoice.paid") return null;
-
-  const invoice = record.data?.object;
-  if (!invoice || typeof invoice !== "object") return null;
-  const fields = invoice as Record<string, unknown>;
-  const str = (value: unknown) =>
-    typeof value === "string" && value.trim() ? value.trim() : null;
-
-  const id = str(fields.id);
-  if (!id) return null;
-
-  return {
-    id,
-    hostedInvoiceUrl: str(fields.hosted_invoice_url),
-    customerEmail: str(fields.customer_email),
-    amountPaid:
-      typeof fields.amount_paid === "number" ? fields.amount_paid : null,
-    currency: str(fields.currency),
-    number: str(fields.number),
-  };
-}
+export {
+  normalizeInvoiceUrl,
+  readPaidInvoice,
+  type PaidInvoice,
+} from "./stripe-match.ts";
