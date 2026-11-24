@@ -473,7 +473,9 @@ export function LivePanel({ clientId }: { clientId: string }) {
           ) : (
             <div className="grid gap-sm">
               <p className="text-secondary">
-                Live{live.pausedAt ? ` · paused ${formatDateTime(live.pausedAt)}` : ""} · {state.counts.pushed} contacts in Instantly · {state.counts.waiting} waiting
+                Live{live.pausedAt ? ` · paused ${formatDateTime(live.pausedAt)}` : ""}
+                {live.holidayPausedAt && !live.pausedAt ? " · paused today for a federal holiday, starts again on the next Business Day" : ""} ·{" "}
+                {state.counts.pushed} contacts in Instantly · {state.counts.waiting} waiting
                 {` (emails a day: ${[...settings.ramp, settings.daily_limit].join(" → ")}, follow-ups first${state.testMode ? "" : ", weekdays"})`} ·{" "}
                 {live.wave2PushedAt ? "second contacts released" : `second contacts start ${settings.wave2_delay_days} days after the first`}
               </p>
@@ -582,7 +584,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
               type="button"
               className={secondaryButton}
               disabled={busy || !state.inbox || !state.instantlyReady}
-              title={`Sends one approved contact's ${state.emailsPerContact === 2 ? "two" : "three"} emails to you, from the client's inbox, two minutes apart.`}
+              title={`Sends one approved contact's ${state.emailsPerContact === 2 ? "first email, then its follow-up" : "three emails"} to you only, from the client's inbox, a couple of minutes apart in one thread.`}
               onClick={() => {
                 if (!window.confirm("Send yourself a test from the client's inbox? It will also appear in their Sent folder.")) return;
                 void run(() => sendTestAction(clientId), (r) => `Test started to ${r.testTo}: ${r.testFund}'s emails, two minutes apart. Check formatting and that the follow-ups stay in the thread.`);

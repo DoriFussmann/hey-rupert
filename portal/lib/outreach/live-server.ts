@@ -18,6 +18,7 @@ import {
 } from "@/lib/instantly";
 import { advanceStage } from "@/lib/kickoff";
 import { loadCampaignState } from "@/lib/outreach/campaign-server";
+import { federalHolidayOn } from "@/lib/outreach/holidays";
 import {
   launchStage,
   resolveStuck,
@@ -116,6 +117,7 @@ export type LiveRow = {
   leads_added_at: string | null;
   leads_added_count: number | null;
   leads_add_note: string | null;
+  holiday_paused_at: string | null;
 };
 
 const s = (value: unknown) => (value == null || value === "" ? null : String(value));
@@ -151,6 +153,7 @@ async function loadLiveRow(supabase: ServiceClient, clientId: string): Promise<R
       leads_added_at: s(row.leads_added_at),
       leads_added_count: row.leads_added_count == null ? null : Number(row.leads_added_count),
       leads_add_note: s(row.leads_add_note),
+      holiday_paused_at: s(row.holiday_paused_at),
     },
   };
 }
@@ -180,7 +183,15 @@ export type LiveState = {
   inbox: { email: string; connectedAt: string | null; status: number | null; statusText: string; healthy: boolean; checkedAt: string | null } | null;
   invoice: { url: string | null; paidAt: string | null };
   settings: LiveSettings;
-  live: { at: string; by: string | null; campaignId: string | null; wave2PushedAt: string | null; pausedAt: string | null } | null;
+  live: {
+    at: string;
+    by: string | null;
+    campaignId: string | null;
+    wave2PushedAt: string | null;
+    pausedAt: string | null;
+    /** Paused for a US federal holiday; starts again on the next Business Day. */
+    holidayPausedAt: string | null;
+  } | null;
   gaps: string[];
   counts: { funds: number; wave1: number; wave2: number; pushed: number; waiting: number };
   /** Setup step 4: pushed to the client (with the invoice and an email), and confirmed when live. */
@@ -299,7 +310,9 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
         : null,
       invoice: { url: r.invoice_url, paidAt: r.invoice_paid_at },
       settings: r.settings,
-      live: r.live_at ? { at: r.live_at, by: r.live_by, campaignId: r.instantly_campaign_id, wave2PushedAt: r.wave2_pushed_at, pausedAt: r.paused_at } : null,
+      live: r.live_at
+        ? { at: r.live_at, by: r.live_by, campaignId: r.instantly_campaign_id, wave2PushedAt: r.wave2_pushed_at, pausedAt: r.paused_at, holidayPausedAt: r.holiday_paused_at }
+        : null,
       gaps: goLiveGaps({
         campaignReady,
         inboxConnected: Boolean(r.inbox_email),
@@ -618,7 +631,7 @@ const longDate = (iso: string) =>
 export async function loadLaunchConfirmation(
   supabase: ServiceClient,
   clientId: string,
-  state: Pick<LiveState, "counts" | "inbox" | "plan" | "confirmation">,
+  state: Pick<LiveState, "counts" | "inbox" | "plan" | "confirmation" | "settings" | "emailsPerContact">,
 ): Promise<Result<LaunchConfirmation>> {
   const [templates, client, order] = await Promise.all([
     supabase.from("form_templates").select("slug, content, active_version").in("slug", [LAUNCH_CONFIRMATION_SLUG, SERVICE_ORDER_SLUG]),
@@ -652,7 +665,16 @@ export async function loadLaunchConfirmation(
     contacts,
     inbox: state.inbox?.email ?? "",
     monthlyFee: monthlyFeeOf(orderContent) ?? "$1,000",
-    planMonths: planMonthsOf(state.plan.length),
+    // The whole approved list, not a test run's contact limit.
+    planMonths: planMonthsOf(
+      sendingPlan({
+        total: contacts,
+        settings: state.settings,
+        launchDay: nextWeekday(addDays(localDate(Date.now(), state.settings.timezone), 1)),
+        today: null,
+        followups: state.emailsPerContact - 1,
+      }).length,
+    ),
     earlierServiceOrder: earlier,
   });
   return {
@@ -944,8 +966,10 @@ export async function runDueWaves(supabase: ServiceClient) {
   for (const row of data ?? []) {
     if (row.paused_at || !row.instantly_campaign_id) continue;
     const settings = asLiveSettings(row.settings);
-    // Real campaigns send on weekdays: no new contacts on a weekend, so Monday isn't doubled.
-    if (isWeekend(settings.timezone) && !(await isTestPilot(supabase, String(row.client_id)))) continue;
+    // Real campaigns send on Business Days: no new contacts on a weekend or a
+    // federal holiday, so the next Business Day isn't doubled.
+    const realClient = !(await isTestPilot(supabase, String(row.client_id)));
+    if (realClient && (isWeekend(settings.timezone) || federalHolidayOn(localDate(Date.now(), settings.timezone)))) continue;
     // This week's email cap in Instantly: 10, then 20, then 30 (never more).
     const week = campaignWeek(localDate(String(row.live_at), settings.timezone), localDate(Date.now(), settings.timezone));
     const limited = await updateCampaign(String(row.instantly_campaign_id), { daily_limit: capForWeek(settings, week) });
@@ -958,6 +982,52 @@ export async function runDueWaves(supabase: ServiceClient) {
     }
   }
   return { started, added, errors };
+}
+
+/**
+ * Daily, before the sending window: on a US federal holiday (in the
+ * campaign's timezone) every live, running campaign is paused in Instantly,
+ * so nothing is sent that day (Service Order 1.5 and 4.2). The next run on a
+ * Business Day starts it again. A campaign Rupert paused himself is left alone.
+ */
+export async function runHolidayGuard(supabase: ServiceClient, now = Date.now()) {
+  const { data, error } = await supabase
+    .from("outreach_campaigns")
+    .select("client_id, live_at, settings, paused_at, holiday_paused_at, instantly_campaign_id")
+    .not("live_at", "is", null);
+  if (error) return { paused: [] as string[], resumed: [] as string[], errors: [tableError(error.message, error.code)] };
+  const paused: string[] = [];
+  const resumed: string[] = [];
+  const errors: string[] = [];
+  for (const row of data ?? []) {
+    const id = row.instantly_campaign_id ? String(row.instantly_campaign_id) : null;
+    const clientId = String(row.client_id);
+    if (!id || (await isTestPilot(supabase, clientId))) continue;
+    const settings = asLiveSettings(row.settings);
+    const holiday = federalHolidayOn(localDate(now, settings.timezone));
+    if (holiday && !row.paused_at && !row.holiday_paused_at) {
+      const result = await pauseCampaign(id);
+      if (!result.ok) {
+        errors.push(`${clientId}: not paused for ${holiday}: ${result.error}`);
+        continue;
+      }
+      const saved = await saveLive(supabase, clientId, { holiday_paused_at: new Date(now).toISOString() });
+      if (!saved.ok) errors.push(`${clientId}: paused for ${holiday} but not recorded: ${saved.error}`);
+      paused.push(clientId);
+    } else if (!holiday && row.holiday_paused_at) {
+      if (!row.paused_at) {
+        const result = await activateCampaign(id);
+        if (!result.ok) {
+          errors.push(`${clientId}: not restarted after the holiday: ${result.error}`);
+          continue;
+        }
+        resumed.push(clientId);
+      }
+      const saved = await saveLive(supabase, clientId, { holiday_paused_at: null });
+      if (!saved.ok) errors.push(`${clientId}: holiday pause not cleared: ${saved.error}`);
+    }
+  }
+  return { paused, resumed, errors };
 }
 
 export async function setPaused(supabase: ServiceClient, clientId: string, paused: boolean): Promise<Result<null>> {

@@ -163,3 +163,76 @@
   background-color: #f6e3e0;
   color: #c0392b;
 }
+
+/* Launch approved (go-live-view.tsx, launch-done-row.tsx). The step cards
+   morph into the three tiles through a view transition; these add the rest:
+   checks drawing in one after another, a light sweep, a soft glow, and the
+   sections below rising in. Reduced motion: the block above already cuts
+   every animation to nothing. */
+::view-transition-group(rupert-step-inbox),
+::view-transition-group(rupert-step-invoice),
+::view-transition-group(rupert-step-confirm) {
+  animation-duration: 760ms;
+  animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+::view-transition-group(rupert-step-invoice) { animation-delay: 60ms; }
+::view-transition-group(rupert-step-confirm) { animation-delay: 120ms; }
+::view-transition-old(root) { animation: 280ms ease-out both launch-fade-out; }
+::view-transition-new(root) { animation: 420ms 200ms ease-out both launch-fade-in; }
+
+@keyframes launch-fade-out { to { opacity: 0; filter: blur(4px); transform: scale(0.985); } }
+@keyframes launch-fade-in { from { opacity: 0; } }
+@keyframes launch-pop {
+  0% { transform: scale(0.4); opacity: 0; }
+  60% { transform: scale(1.18); opacity: 1; }
+  100% { transform: scale(1); }
+}
+@keyframes launch-draw { from { stroke-dashoffset: 24; } to { stroke-dashoffset: 0; } }
+@keyframes launch-sweep {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(110%); }
+}
+@keyframes launch-glow {
+  0% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 1; }
+  100% { opacity: 0.55; transform: scale(1); }
+}
+@keyframes launch-rise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes launch-ring {
+  0% { box-shadow: 0 0 0 0 rgb(var(--launch-ring, 71 97 72) / 0.35); }
+  100% { box-shadow: 0 0 0 14px rgb(var(--launch-ring, 71 97 72) / 0); }
+}
+
+.launch-glow {
+  background: radial-gradient(closest-side, rgb(71 97 72 / 0.14), transparent);
+  opacity: 0;
+}
+.launch-sheen {
+  background: linear-gradient(100deg, transparent 30%, rgb(255 255 255 / 0.55) 50%, transparent 70%);
+  transform: translateX(-110%);
+}
+.launch-celebrate .launch-glow { animation: launch-glow 1400ms 500ms ease-out both; }
+.launch-celebrate .launch-check {
+  animation: launch-pop 520ms cubic-bezier(0.34, 1.56, 0.64, 1) both, launch-ring 900ms ease-out both;
+  animation-delay: calc(750ms + var(--i) * 160ms), calc(1150ms + var(--i) * 160ms);
+}
+.launch-celebrate .launch-check path {
+  stroke-dasharray: 24;
+  animation: launch-draw 380ms ease-out both;
+  animation-delay: calc(950ms + var(--i) * 160ms);
+}
+.launch-celebrate .launch-sheen {
+  animation: launch-sweep 900ms ease-in-out both;
+  animation-delay: calc(1300ms + var(--i) * 140ms);
+}
+.launch-celebrate .launch-tile {
+  animation: launch-ring 1000ms ease-out both;
+  animation-delay: calc(1250ms + var(--i) * 160ms);
+}
+.launch-rise { animation: launch-rise 700ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+.launch-rise-1 { animation-delay: 1500ms; }
+.launch-rise-2 { animation-delay: 1900ms; }
+.launch-rise-3 { animation-delay: 2300ms; }
