@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { reanalyzeHeadline, reanalyzeState, startOverPlan, type ReanalyzeInput } from "./reanalyze.ts";
+import { factsAnchor, reanalyzeHeadline, reanalyzeState, startOverPlan, type ReanalyzeInput } from "./reanalyze.ts";
 
 const T1 = "2026-10-01T10:00:00.000Z";
 const T2 = "2026-10-02T10:00:00.000Z";
@@ -135,4 +135,11 @@ test("Start Over: clears first, then rebuilds; a sent narrative goes back to the
   assert.match(plan[0].note, /the client sees no change/);
   const noInterview = startOverPlan({ hasInterview: false, narrativeSent: false });
   assert.deepEqual(noInterview.filter((step) => step.skip).map((step) => step.id), ["brief", "profile"]);
+});
+
+test("Update Facts and the page measure 'new' from the same moment", () => {
+  // A blank feedback date (as on a published narrative) falls back to the profile.
+  assert.equal(factsAnchor({ feedbackAt: "", factsUpdatedAt: null, profileBuiltAt: T2 }), T2);
+  assert.equal(factsAnchor({ feedbackAt: T1, factsUpdatedAt: T3, profileBuiltAt: T2 }), T3);
+  assert.equal(factsAnchor({ feedbackAt: T3, factsUpdatedAt: null, profileBuiltAt: T4 }), T3);
 });
