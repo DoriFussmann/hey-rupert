@@ -61,6 +61,19 @@ export type ReanalyzeState = {
   steps: ReanalyzePlanStep[];
 };
 
+/**
+ * Since when files and client notes count as new: the last analysis of the
+ * materials or the last Update Facts, whichever is later, else when the
+ * profile was built. The page and Update Facts use the same rule.
+ */
+export function factsAnchor(input: {
+  feedbackAt: string | null;
+  factsUpdatedAt: string | null;
+  profileBuiltAt: string | null;
+}): string | null {
+  return latest(input.feedbackAt || null, input.factsUpdatedAt || null) ?? (input.profileBuiltAt || null);
+}
+
 /** The later of two timestamps (either may be missing). */
 function latest(a: string | null, b: string | null) {
   if (!a) return b;
@@ -110,7 +123,11 @@ export function reanalyzeState(input: ReanalyzeInput): ReanalyzeState {
   if (!narrative.hasText) behind.push("narrative");
 
   const firstRun = !brief && !feedback && !profile?.builtAt;
-  const fileAnchor = seenAt ?? profile?.builtAt ?? null;
+  const fileAnchor = factsAnchor({
+    feedbackAt: feedback?.generatedAt ?? null,
+    factsUpdatedAt: input.factsUpdatedAt ?? null,
+    profileBuiltAt: profile?.builtAt ?? null,
+  });
   const messageAnchor = brief?.basedOn ?? profile?.sourceInterviewAt ?? null;
   const newFiles = firstRun || !fileAnchor ? 0 : files.filter((file) => after(file.uploadedAt, fileAnchor)).length;
   const newMessages =

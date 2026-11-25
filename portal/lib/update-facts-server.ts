@@ -4,7 +4,8 @@ import { loadClientFeedback } from "@/lib/client-feedback-server";
 import { prepareFiles } from "@/lib/material-files-server";
 import { promptSystem } from "@/lib/prompts";
 import { loadPrompt } from "@/lib/prompts-server";
-import { asMaterials, type SetupStepState } from "@/lib/setup";
+import { asMaterials, asNarrative, type SetupStepState } from "@/lib/setup";
+import { factsAnchor as anchorFrom } from "@/lib/reanalyze";
 import { loadSetupSteps } from "@/lib/setup-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import {
@@ -71,21 +72,20 @@ function isAfter(value: string | null | undefined, anchor: number | null) {
   return at != null && (anchor == null || at > anchor);
 }
 
-/** When Rupert's texts were last brought up to date: the last Update Facts, else the last analysis. */
+/** When Rupert's texts were last brought up to date: the same rule as the page (lib/reanalyze). */
 export async function factsAnchor(supabase: ServiceClient, clientId: string): Promise<string | null> {
-  const [last, brief, grouped] = await Promise.all([
+  const [last, profile, grouped] = await Promise.all([
     supabase.from("fact_updates").select("created_at").eq("client_id", clientId).order("created_at", { ascending: false }).limit(1).maybeSingle(),
-    supabase.from("company_briefs").select("created_at").eq("client_id", clientId).order("version", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("match_profiles").select("built_at").eq("client_id", clientId).maybeSingle(),
     loadSetupSteps(supabase, [clientId]),
   ]);
   const framing = (grouped.get(clientId) ?? []).find((row) => row.step === "framing");
-  const draft = framing?.draft && typeof framing.draft === "object" ? (framing.draft as Record<string, unknown>) : {};
-  const feedback = draft.feedback && typeof draft.feedback === "object" ? (draft.feedback as Record<string, unknown>) : {};
-  const candidates = [str(last.data?.created_at), str(feedback.generated_at)].filter(Boolean);
-  // With no analysis or update on record, the brief's date stands in.
-  if (candidates.length === 0 && brief.data?.created_at) candidates.push(str(brief.data.created_at));
-  const times = candidates.map((value) => time(value)).filter((value): value is number => value != null);
-  return times.length > 0 ? new Date(Math.max(...times)).toISOString() : null;
+  const narrative = asNarrative(framing?.draft ?? framing?.published);
+  return anchorFrom({
+    feedbackAt: narrative.feedback?.generated_at ?? null,
+    factsUpdatedAt: str(last.data?.created_at) || null,
+    profileBuiltAt: str(profile.data?.built_at) || null,
+  });
 }
 
 /** What is new since the texts were last brought up to date. */
