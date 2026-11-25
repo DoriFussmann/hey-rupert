@@ -19,6 +19,7 @@ export const PROMPT_LIST = [
   { key: "deck_feedback", title: "Deck Feedback", group: "Company and Narrative" },
   { key: "brief_narrative", title: "Narrative from the Brief", group: "Company and Narrative" },
   { key: "materials_analysis", title: "Materials Analysis (Before the Brief)", group: "Company and Narrative" },
+  { key: "update_facts", title: "Update Facts", group: "Company and Narrative" },
   { key: "outreach_narrative", title: "Outreach Narrative (Before the Brief)", group: "Company and Narrative" },
   { key: "email_copy", title: "Email Copy", group: "Company and Narrative" },
   { key: "email_copy_typed", title: "Email Copy by Fund Type", group: "Company and Narrative" },

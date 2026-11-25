@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { reanalyzeHeadline, reanalyzeState, type ReanalyzeInput } from "./reanalyze.ts";
+import { reanalyzeHeadline, reanalyzeState, startOverPlan, type ReanalyzeInput } from "./reanalyze.ts";
 
 const T1 = "2026-10-01T10:00:00.000Z";
 const T2 = "2026-10-02T10:00:00.000Z";
@@ -104,4 +104,35 @@ test("no interview: the brief and the profile are skipped", () => {
   const skipped = state.steps.filter((step) => step.skip).map((step) => step.id);
   assert.deepEqual(skipped, ["brief", "profile"]);
   assert.ok(!state.behind.includes("brief"));
+});
+
+test("Update Facts: greyed out until there is a new file or client note", () => {
+  const input = analyzed();
+  assert.equal(reanalyzeState(input).canUpdateFacts, false);
+  input.notes = [{ createdAt: T1 }];
+  assert.equal(reanalyzeState(input).canUpdateFacts, false);
+  input.notes = [{ createdAt: T4 }];
+  const state = reanalyzeState(input);
+  assert.equal(state.canUpdateFacts, true);
+  assert.equal(state.newNotes, 1);
+  assert.equal(reanalyzeHeadline(state), "New since last analysis: 1 client note.");
+});
+
+test("Update Facts: files from before the last update count as seen", () => {
+  const input = analyzed();
+  input.files.push({ uploadedAt: T3 });
+  assert.equal(reanalyzeState(input).newFiles, 1);
+  input.factsUpdatedAt = T4;
+  const state = reanalyzeState(input);
+  assert.equal(state.newFiles, 0);
+  assert.equal(state.canUpdateFacts, false);
+  assert.ok(!state.behind.includes("feedback"));
+});
+
+test("Start Over: clears first, then rebuilds; a sent narrative goes back to the client's version", () => {
+  const plan = startOverPlan({ hasInterview: true, narrativeSent: true });
+  assert.deepEqual(plan.map((step) => step.id), ["reset", "brief", "feedback", "profile", "company_brief"]);
+  assert.match(plan[0].note, /the client sees no change/);
+  const noInterview = startOverPlan({ hasInterview: false, narrativeSent: false });
+  assert.deepEqual(noInterview.filter((step) => step.skip).map((step) => step.id), ["brief", "profile"]);
 });

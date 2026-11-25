@@ -55,7 +55,8 @@ import {
 } from "@/lib/setup";
 import { signFileLinks, signMaterialLinks } from "@/lib/setup-server";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { reanalyzeState } from "@/lib/reanalyze";
+import { reanalyzeState, startOverPlan } from "@/lib/reanalyze";
+import { listFactUpdates } from "@/lib/update-facts-server";
 import { latestAudit } from "@/lib/list-audit-server";
 import type { ListAudit } from "@/lib/list-audit";
 
@@ -372,6 +373,8 @@ export default async function ClientDetailPage({
       : null;
   const narrative = narrativeRow ? asNarrative(narrativeRow.draft ?? narrativeRow.published) : null;
   const brief = interview?.admin_brief ?? null;
+  const factUpdates = service ? await listFactUpdates(service, client.id) : { ok: true as const, value: [] };
+  const lastFactUpdate = factUpdates.ok ? (factUpdates.value[0] ?? null) : null;
   const reanalysis = reanalyzeState({
     intakeCompleted: Boolean(client.intake_completed_at),
     materialsIn,
@@ -384,6 +387,8 @@ export default async function ClientDetailPage({
       ? { builtAt: matchProfile.builtAt, sourceInterviewAt: matchProfile.sourceInterviewAt, editedAt: matchProfile.editedAt }
       : null,
     files: materialsFiles.map((file) => ({ uploadedAt: file.uploaded_at })),
+    factsUpdatedAt: lastFactUpdate?.createdAt ?? null,
+    notes: (feedback.ok ? feedback.value : []).map((item) => ({ createdAt: item.createdAt })),
     narrative: {
       hasText: Boolean(
         narrative && [narrative.summary, narrative.core, narrative.key_messages, narrative.approach].some((part) => part.trim()),
@@ -463,7 +468,18 @@ export default async function ClientDetailPage({
         }
       />
       {/* First run goes step by step (Build Brief first); the banner only flags later founder updates. */}
-      {reanalysis.firstRun ? null : <ReanalyzeBanner clientId={client.id} state={reanalysis} claudeReady={claudeReady} />}
+      {reanalysis.firstRun ? null : (
+        <ReanalyzeBanner
+          clientId={client.id}
+          state={reanalysis}
+          startOver={startOverPlan({
+            hasInterview: Boolean(interview && interview.messages.length > 0),
+            narrativeSent: (narrativeRow?.version ?? 0) > 0,
+          })}
+          lastFactUpdate={lastFactUpdate}
+          claudeReady={claudeReady}
+        />
+      )}
       {currentPanel ? (
         <div id="current-step" className="scroll-mt-lg">
           {currentPanel.node}

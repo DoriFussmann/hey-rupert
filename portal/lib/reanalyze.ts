@@ -2,7 +2,7 @@
 // has shared, and what running them all replaces. Pure module, so the client
 // page and the tests read the same rules.
 
-export type ReanalyzeStepId = "brief" | "feedback" | "profile" | "narrative";
+export type ReanalyzeStepId = "brief" | "feedback" | "profile" | "narrative" | "reset" | "company_brief";
 
 /** The steps in the order they run: each one reads the one before. */
 export const REANALYZE_STEPS: { id: ReanalyzeStepId; label: string }[] = [
@@ -21,6 +21,10 @@ export type ReanalyzeInput = {
   feedback: { generatedAt: string } | null;
   profile: { builtAt: string | null; sourceInterviewAt: string | null; editedAt: string | null } | null;
   files: { uploadedAt: string }[];
+  /** The last Update Facts run: files from before it are already reflected. */
+  factsUpdatedAt?: string | null;
+  /** When each client note (Log client feedback) was logged. */
+  notes?: { createdAt: string }[];
   narrative: {
     hasText: boolean;
     /** A version was sent to the client before. */
@@ -48,10 +52,21 @@ export type ReanalyzeState = {
   firstRun: boolean;
   newFiles: number;
   newMessages: number;
+  /** Client notes logged since the last analysis or Update Facts. */
+  newNotes: number;
+  /** Update Facts has something new to work from. */
+  canUpdateFacts: boolean;
   /** Steps that are missing or older than the latest founder data. */
   behind: ReanalyzeStepId[];
   steps: ReanalyzePlanStep[];
 };
+
+/** The later of two timestamps (either may be missing). */
+function latest(a: string | null, b: string | null) {
+  if (!a) return b;
+  if (!b) return a;
+  return Date.parse(a) >= Date.parse(b) ? a : b;
+}
 
 /** Milliseconds, or null for a missing or unreadable timestamp. */
 function time(value: string | null | undefined) {
@@ -70,6 +85,8 @@ function after(value: string | null | undefined, than: string | null | undefined
 
 export function reanalyzeState(input: ReanalyzeInput): ReanalyzeState {
   const { interview, brief, feedback, profile, files, narrative } = input;
+  // Files and notes from before the last analysis or Update Facts are already reflected.
+  const seenAt = latest(feedback?.generatedAt ?? null, input.factsUpdatedAt ?? null);
   const hasInterview = Boolean(interview && interview.messages.length > 0);
   const interviewAt = hasInterview ? interview!.updatedAt : null;
 
@@ -77,7 +94,7 @@ export function reanalyzeState(input: ReanalyzeInput): ReanalyzeState {
   if (hasInterview && (!brief || after(interviewAt, brief.basedOn))) behind.push("brief");
   if (
     !feedback ||
-    files.some((file) => after(file.uploadedAt, feedback.generatedAt)) ||
+    files.some((file) => after(file.uploadedAt, seenAt)) ||
     after(interviewAt, feedback.generatedAt)
   ) {
     behind.push("feedback");
@@ -93,13 +110,15 @@ export function reanalyzeState(input: ReanalyzeInput): ReanalyzeState {
   if (!narrative.hasText) behind.push("narrative");
 
   const firstRun = !brief && !feedback && !profile?.builtAt;
-  const fileAnchor = feedback?.generatedAt ?? profile?.builtAt ?? null;
+  const fileAnchor = seenAt ?? profile?.builtAt ?? null;
   const messageAnchor = brief?.basedOn ?? profile?.sourceInterviewAt ?? null;
   const newFiles = firstRun || !fileAnchor ? 0 : files.filter((file) => after(file.uploadedAt, fileAnchor)).length;
   const newMessages =
     firstRun || !messageAnchor || !interview
       ? 0
       : interview.messages.filter((message) => message.role === "user" && after(message.at, messageAnchor)).length;
+
+  const newNotes = firstRun ? 0 : (input.notes ?? []).filter((note) => after(note.createdAt, fileAnchor)).length;
 
   const noInterview = hasInterview ? null : "No intake interview on record.";
   const steps: ReanalyzePlanStep[] = REANALYZE_STEPS.map(({ id, label }) => {
@@ -147,9 +166,38 @@ export function reanalyzeState(input: ReanalyzeInput): ReanalyzeState {
     firstRun,
     newFiles,
     newMessages,
+    newNotes,
+    canUpdateFacts: available && !firstRun && newFiles + newNotes > 0,
     behind,
     steps,
   };
+}
+
+export type StartOverStep = { id: ReanalyzeStepId; label: string; skip: string | null; note: string };
+
+/**
+ * Start Over: as if nothing had been analyzed. Clears Rupert's analysis
+ * (brief and its history, chat, questions, unsent narrative draft), then
+ * rebuilds it from the intake and the current materials. What the client
+ * has already seen or confirmed stays in their portal until Rupert pushes
+ * again.
+ */
+export function startOverPlan(input: { hasInterview: boolean; narrativeSent: boolean }): StartOverStep[] {
+  const noInterview = input.hasInterview ? null : "No intake interview on record.";
+  return [
+    {
+      id: "reset",
+      label: "Clear the Analysis",
+      skip: null,
+      note: input.narrativeSent
+        ? "Deletes the company brief and its history, the chat and the questions. The narrative draft goes back to the version the client has; the client sees no change."
+        : "Deletes the company brief and its history, the chat, the questions and the narrative draft.",
+    },
+    { id: "brief", label: "Intake Brief", skip: noInterview, note: "Rebuilt from the intake." },
+    { id: "feedback", label: "Materials Feedback", skip: null, note: "Rewritten from the current materials." },
+    { id: "profile", label: "Company Profile", skip: noInterview, note: "Rebuilt; a match may need re-running after." },
+    { id: "company_brief", label: "Company Brief", skip: null, note: "Built fresh. Then go through its stages again: selling points, feedback, questions and narrative." },
+  ];
 }
 
 function plural(count: number, word: string) {
@@ -163,6 +211,7 @@ export function reanalyzeHeadline(state: ReanalyzeState) {
     state.newFiles > 0 ? plural(state.newFiles, "file") : "",
     state.newMessages > 0 ? plural(state.newMessages, "message") : "",
   ].filter(Boolean);
+  if (state.newNotes > 0) parts.push(plural(state.newNotes, "client note"));
   if (parts.length > 0) return `New since last analysis: ${parts.join(", ")}.`;
   const labels = REANALYZE_STEPS.filter((step) => state.behind.includes(step.id)).map((step) => step.label);
   return `Out of date: ${labels.join(", ")}.`;
