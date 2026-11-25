@@ -7,9 +7,9 @@ export type FeedbackAbout = (typeof FEEDBACK_ABOUT)[number];
 
 export const FEEDBACK_ABOUT_LABEL: Record<FeedbackAbout, string> = {
   general: "General",
-  framing: "Outreach narrative",
-  investor_list: "Investor matching",
-  email_copy: "Email copy",
+  framing: "Outreach Narrative",
+  investor_list: "Investor Matching",
+  email_copy: "Email Copy",
 };
 
 /** For the client: "about your investor matching". */

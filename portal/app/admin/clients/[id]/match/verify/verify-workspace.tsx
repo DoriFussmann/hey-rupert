@@ -65,7 +65,7 @@ type Live = { index: number; contacts: VerifyContact[]; step: StepNumber | 4 };
 const CHOICES: { value: FlaggedChoice; label: string }[] = [
   { value: "remove", label: "Remove" },
   { value: "keep", label: "Keep" },
-  { value: "check", label: "Check again" },
+  { value: "check", label: "Check Again" },
 ];
 
 function resultMap(run: RunState | null) {
@@ -315,7 +315,7 @@ function SetupPanel({
             ? "Starting…"
             : toCheck > 0
               ? `Run: ${n(toCheck)} contact${toCheck === 1 ? "" : "s"}, about ${formatUsd(toCheck * estimate.usdPerContact)}`
-              : "Show results"}
+              : "Show Results"}
         </button>
       </div>
     </section>
@@ -547,7 +547,7 @@ export function VerifyWorkspace({
                     Resume
                   </button>
                   <button type="button" className={secondaryButton} disabled={busy} onClick={() => void newRun()}>
-                    Start over
+                    Start Over
                   </button>
                 </>
               )}
@@ -594,7 +594,7 @@ export function VerifyWorkspace({
           />
           <div className="flex flex-wrap gap-sm">
             <button type="button" className={secondaryButton} disabled={busy} onClick={() => void newRun()}>
-              {busy ? "Loading…" : "Start a new run"}
+              {busy ? "Loading…" : "Start a New Run"}
             </button>
             <Link href={matchPath(clientId, "tiers")} className={`${secondaryButton} no-underline`}>
               Back to the Tiers

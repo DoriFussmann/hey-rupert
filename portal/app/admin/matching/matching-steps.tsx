@@ -245,7 +245,7 @@ export function MatchingSteps({
           <>
             <p className="text-error">The company profile couldn&apos;t be built: {profileError}</p>
             <button type="button" className={`${secondaryButton} mt-sm`} onClick={() => void ensureProfile()}>
-              Try again
+              Try Again
             </button>
           </>
         )}
@@ -325,7 +325,7 @@ export function MatchingSteps({
           {busy === "push"
             ? "Pushing…"
             : pushed
-              ? "Push to Client again"
+              ? "Push to Client Again"
               : "Push to Client"}
         </button>
       </div>
@@ -362,7 +362,7 @@ export function MatchingSteps({
                 void run("reopen", () => reopenTheMatching(clientId));
               }}
             >
-              {busy === "reopen" ? "Reopening…" : "Reopen matching"}
+              {busy === "reopen" ? "Reopening…" : "Reopen Matching"}
             </button>
             <span className="text-muted transition-transform duration-hover group-open:rotate-180">
               ▾

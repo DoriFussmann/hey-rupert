@@ -114,7 +114,7 @@ export function FormTemplateEditor({
           disabled={pending}
           className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
         >
-          {pending ? "Saving…" : "Save as new version"}
+          {pending ? "Saving…" : "Save as New Version"}
         </button>
         <button
           type="button"
@@ -122,7 +122,7 @@ export function FormTemplateEditor({
           disabled={pending}
           className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
         >
-          Restore default
+          Restore Default
         </button>
         {flash?.kind === "ok" ? (
           <p className="text-body-sm text-success">{flash.text}</p>

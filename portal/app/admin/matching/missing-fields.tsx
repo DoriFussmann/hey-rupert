@@ -118,7 +118,7 @@ function Row({
         </p>
         <span className="flex gap-xs">
           <button type="button" className={smallButton} disabled={busy} onClick={onSkip} title="Not relevant: stays off the Roster. You can restore it.">
-            Remove: not relevant
+            Remove: Not Relevant
           </button>
           {s && found ? (
             <button type="button" className={smallButton} disabled={busy} onClick={onDismiss}>
@@ -275,7 +275,7 @@ export function MissingFields({
       {skipped.length ? (
         <div className="mt-sm">
           <button type="button" className="text-body-sm text-primary underline" aria-expanded={showSkipped} onClick={() => setShowSkipped(!showSkipped)}>
-            Removed: not relevant ({n(skipped.length)}): {showSkipped ? "hide" : "show"}
+            Removed: Not Relevant ({n(skipped.length)}): {showSkipped ? "hide" : "show"}
           </button>
           {showSkipped ? (
             <ul className="mt-xs space-y-xs text-body-sm">

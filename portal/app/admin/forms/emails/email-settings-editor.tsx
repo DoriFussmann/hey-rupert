@@ -298,7 +298,7 @@ function TemplateCard({
             disabled={pending !== null || isDefault}
             className={secondaryButton}
           >
-            Restore default
+            Restore Default
           </button>
           <button
             type="button"
@@ -306,7 +306,7 @@ function TemplateCard({
             disabled={pending !== null}
             className={secondaryButton}
           >
-            {pending === "test" ? "Sending…" : "Send me a test"}
+            {pending === "test" ? "Sending…" : "Send Me a Test"}
           </button>
           <Feedback message={message} />
         </div>
@@ -457,7 +457,7 @@ function RemindersCard({
           disabled={pending || !dirty}
           className={primaryButton}
         >
-          {pending ? "Saving…" : "Save schedule"}
+          {pending ? "Saving…" : "Save Schedule"}
         </button>
         <Feedback message={message} />
       </div>

@@ -352,10 +352,10 @@ export function GenerateServiceOrder({
                     className={secondaryButton}
                   >
                     {pending === "review"
-                      ? "Building preview…"
+                      ? "Building Preview…"
                       : preview
-                        ? "Refresh preview"
-                        : "Review what the client gets"}
+                        ? "Refresh Preview"
+                        : "Review What the Client Gets"}
                   </button>
                   <button
                     type="button"
@@ -363,7 +363,7 @@ export function GenerateServiceOrder({
                     disabled={!canReview}
                     className={primaryButton}
                   >
-                    {pending === "send" ? "Pushing…" : "Push to client"}
+                    {pending === "send" ? "Pushing…" : "Push to Client"}
                   </button>
                 </span>
               </td>

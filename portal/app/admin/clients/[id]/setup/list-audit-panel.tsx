@@ -25,9 +25,9 @@ const smallButton =
   "rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 
 const VERDICT: Record<AuditFund["verdict"], { label: string; tone: string }> = {
-  ok: { label: "Looks fine", tone: "text-success border-success/40" },
-  flag: { label: "Would ask about it", tone: "text-warning border-warning/40" },
-  remove: { label: "Suggest removing", tone: "text-error border-error/40" },
+  ok: { label: "Looks Fine", tone: "text-success border-success/40" },
+  flag: { label: "Would Ask About It", tone: "text-warning border-warning/40" },
+  remove: { label: "Suggest Removing", tone: "text-error border-error/40" },
 };
 
 const WEBSITE: Record<AuditFund["website"], string> = {
@@ -211,7 +211,7 @@ export function ListAuditPanel({
           title={claudeReady ? undefined : "ANTHROPIC_API_KEY is not configured."}
           onClick={() => void run()}
         >
-          {running ? "Auditing…" : audit ? "Run again" : "Run audit"}
+          {running ? "Auditing…" : audit ? "Run Again" : "Run Audit"}
         </button>
       </div>
 
@@ -274,7 +274,7 @@ export function ListAuditPanel({
                       </button>
                     ) : null}
                     <button type="button" className={smallButton} disabled={busy} onClick={() => void decide(fund, "remove")}>
-                      {pending === fund.id ? "Removing…" : "Remove from campaign"}
+                      {pending === fund.id ? "Removing…" : "Remove from Campaign"}
                     </button>
                   </>
                 ) : null}
@@ -305,7 +305,7 @@ export function ListAuditPanel({
             {removedSinceRefresh} fund{removedSinceRefresh === 1 ? "" : "s"} removed from the campaign. The draft still shows the old list.
           </span>
           <button type="button" className={primaryButton} disabled={busy} onClick={() => void refresh()}>
-            {pending === "refresh" ? "Updating…" : "Update the draft from the plan"}
+            {pending === "refresh" ? "Updating…" : "Update the Draft from the Plan"}
           </button>
         </div>
       ) : null}

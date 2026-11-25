@@ -147,7 +147,7 @@ function TableView({ table }: { table: SummaryTable }) {
         {clickable && rows.length ? <p className="text-body-sm text-muted">Click a row for the details.</p> : null}
         {table.search && rows.length > visible.length ? (
           <button type="button" className="text-body-sm text-primary hover:underline" onClick={() => setLimit(limit + PAGE * 5)}>
-            Show more ({n(rows.length - visible.length)} left)
+            Show More ({n(rows.length - visible.length)} Left)
           </button>
         ) : null}
       </div>

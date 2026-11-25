@@ -97,7 +97,7 @@ function RemoveButton({ row, busy, onDecide }: { row: CheckRow; busy: boolean; o
       title="Not relevant: out of this step, the Roster and the client's summaries. You can restore it."
       onClick={() => onDecide({ removed: true })}
     >
-      Remove: not relevant
+      Remove: Not Relevant
     </button>
   );
 }
@@ -162,7 +162,7 @@ function SuggestionBlock({ row, busy, onDecide }: { row: CheckRow; busy: boolean
           </button>
         ) : (
           <button type="button" disabled={busy} className={primaryButton} onClick={() => onDecide({ website: s.website, resetMatch: true })}>
-            {s.firmCount > 1 ? `Use this website (${s.firmCount} database records have it: you'll pick one)` : "Use this website (not in the database)"}
+            {s.firmCount > 1 ? `Use this website (${s.firmCount} database records have it: you'll pick one)` : "Use This Website (Not in the Database)"}
           </button>
         )}
       </div>
@@ -350,7 +350,7 @@ function NotInListRow({
           </p>
         ))}
         <button type="button" className="mt-xs block text-body-sm text-primary underline decoration-primary/40 underline-offset-2 hover:text-primary-hover" onClick={() => setMore(!more)}>
-          {more ? "Hide the note ▴" : "Add a note ▾"}
+          {more ? "Hide the Note ▴" : "Add a Note ▾"}
         </button>
         {more ? (
           <textarea className={`${inputClass} mt-xs`} rows={2} placeholder="Why (optional)" value={note} disabled={busy} onChange={(e) => onPick({ ...pick, note: e.target.value })} />
@@ -507,7 +507,7 @@ function ConfirmList({ rows, busy, onSubmit }: { rows: CheckRow[]; busy: boolean
             disabled={busy}
             onClick={() => setPicks({ ...picks, ...Object.fromEntries(suggested.filter((r) => !picks[r.investor.id]).map((r) => [r.investor.id, { kind: "confirm" } as ConfirmPick])) })}
           >
-            Tick &ldquo;Confirm website&rdquo; for the rest ({n(suggested.filter((r) => !picks[r.investor.id]).length)})
+            Tick &ldquo;Confirm Website&rdquo; for the Rest ({n(suggested.filter((r) => !picks[r.investor.id]).length)})
           </button>
         ) : null}
         {items.length ? (
@@ -525,7 +525,7 @@ function ConfirmList({ rows, busy, onSubmit }: { rows: CheckRow[]; busy: boolean
             });
           }}
         >
-          Submit all ({n(items.length)})
+          Submit All ({n(items.length)})
         </button>
       </div>
     </div>
@@ -717,7 +717,7 @@ function DecisionQueue({
             disabled={busy}
             onClick={() => setPicks({ ...picks, ...Object.fromEntries(open.map((r) => [r.investor.id, { ...picks[r.investor.id], answer: r.action as ListAnswer }])) })}
           >
-            Tick the default for the rest ({n(open.length)})
+            Tick the Default for the Rest ({n(open.length)})
           </button>
         ) : null}
         {items.length ? (
@@ -735,7 +735,7 @@ function DecisionQueue({
             });
           }}
         >
-          Submit all ({n(items.length)})
+          Submit All ({n(items.length)})
         </button>
       </div>
     </div>
@@ -945,7 +945,7 @@ function DecisionSummary({
                           className={`${seg} ${allBack ? "bg-primary text-white" : "bg-surface text-secondary hover:bg-primary-tint hover:text-heading"}`}
                           onClick={() => onGroup(ids, "bring_back")}
                         >
-                          {allBack ? "✓ All brought back" : "Bring back all"}
+                          {allBack ? "✓ All Brought Back" : "Bring Back All"}
                         </button>
                         <button
                           type="button"
@@ -954,12 +954,12 @@ function DecisionSummary({
                           className={`${seg} border-l border-border ${allOut ? "bg-primary text-white" : "bg-surface text-secondary hover:bg-primary-tint hover:text-heading"}`}
                           onClick={() => onGroup(ids, "leave_out")}
                         >
-                          {allOut ? "✓ All left out" : "Leave out all"}
+                          {allOut ? "✓ All Left Out" : "Leave Out All"}
                         </button>
                       </div>
                       {mine(r.rows) ? (
                         <button type="button" disabled={busy} className="text-[12px] text-muted underline hover:text-heading" onClick={() => onGroup(ids, null)}>
-                          Back to default
+                          Back to Default
                         </button>
                       ) : null}
                     </div>
@@ -1050,7 +1050,7 @@ function ReviewAndConfirm({
           </button>
         ) : (
           <button type="button" className={`${primaryButton} shrink-0`} disabled={busy || !ready} onClick={() => onConfirm(true)}>
-            Confirm the check
+            Confirm the Check
           </button>
         )}
       </div>
@@ -1105,7 +1105,7 @@ function ReviewAndConfirm({
       )}
       {decided.length > 10 ? (
         <button type="button" className="mt-xs text-body-sm text-secondary underline hover:text-heading" onClick={() => setShowAll(!showAll)}>
-          {showAll ? "Show the latest 10" : `Show all ${n(decided.length)}`}
+          {showAll ? "Show the Latest 10" : `Show all ${n(decided.length)}`}
         </button>
       ) : null}
     </section>
@@ -1162,7 +1162,7 @@ function OutcomeCard({
           </button>
         ) : (
           <button type="button" className={`${primaryButton} shrink-0`} disabled={busy} onClick={() => onConfirm(true)}>
-            Confirm the check
+            Confirm the Check
           </button>
         )}
       </div>
@@ -1439,7 +1439,7 @@ function AddMissingCard({
       <div className="flex flex-wrap items-center gap-xs">
         {tickedIds.length < missing.length ? (
           <button type="button" className={smallButton} disabled={busy || !!adding} onClick={() => setTicks(missing.map((r) => r.investor.id), true)}>
-            Tick all ({n(missing.length)})
+            Tick All ({n(missing.length)})
           </button>
         ) : null}
         {tickedIds.length ? (
@@ -1473,7 +1473,7 @@ function AddMissingCard({
         if (!left || window.confirm(`Confirm Step ${T.step}D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
       }}
     >
-      Done adding: confirm {T.step}D
+      Done Adding: Confirm {T.step}D
     </button>
   );
   return (
@@ -2058,7 +2058,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
                       if (window.confirm(`Try and Add to DB for all ${ids.length}? About a minute each, and about 1 Hunter credit per fund with a website. Each waits for your review before other clients see it.`)) void addToDb(ids);
                     }}
                   >
-                    Try and Add to DB: all {n(byBucket(current).length)}
+                    Try and Add to DB: All {n(byBucket(current).length)}
                   </button>
                   <p className="text-body-sm text-muted">
                     Research (website, what it invests in, team), then up to {current === "missing_angel" ? "1 email (the angel)" : "5 investing contacts"} from Hunter. Added as pending: for this client now, for everyone after you approve it.
@@ -2079,7 +2079,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
                     ) : pending.length ? (
                       <>
                         <button type="button" className={primaryButton} disabled={busy || !check.websitesReady} onClick={() => void findWebsites(pending)}>
-                          Find websites ({n(pending.length)})
+                          Find Websites ({n(pending.length)})
                         </button>
                         <p className="text-body-sm text-muted">
                           {check.websitesReady

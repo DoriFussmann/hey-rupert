@@ -168,7 +168,7 @@ export function SetupLinkResult({
               className={copyButtonClass}
               onClick={() => copy(emailDraft, "body")}
             >
-              {copied === "body" ? "Copied" : "Copy email"}
+              {copied === "body" ? "Copied" : "Copy Email"}
             </button>
             {send ? (
               <button
@@ -177,7 +177,7 @@ export function SetupLinkResult({
                 disabled={sending || alreadySent}
                 onClick={() => void sendToClient()}
               >
-                {sending ? "Sending…" : alreadySent ? "Sent" : "Send to client"}
+                {sending ? "Sending…" : alreadySent ? "Sent" : "Send to Client"}
               </button>
             ) : null}
           </span>

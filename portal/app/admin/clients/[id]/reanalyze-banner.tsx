@@ -165,7 +165,7 @@ export function ReanalyzeBanner({
             title={claudeReady ? undefined : "ANTHROPIC_API_KEY is not configured."}
             onClick={() => setConfirming(true)}
           >
-            {outcome?.failed ? "Try again" : action}
+            {outcome?.failed ? "Try Again" : action}
           </button>
         ) : null}
       </div>

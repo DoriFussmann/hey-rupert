@@ -304,7 +304,7 @@ export function DryMatch({
             </p>
           </div>
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
-            {busy === "start" ? "Starting over…" : "Start over"}
+            {busy === "start" ? "Starting Over…" : "Start Over"}
           </button>
         </div>
         {changed.length ? (
@@ -319,7 +319,7 @@ export function DryMatch({
         />
         <div className="mt-md flex justify-end">
           <button type="button" className={secondaryButton} disabled={funds.length === 0} onClick={() => download(data, funds, clientName)}>
-            Download the list (CSV)
+            Download the List (CSV)
           </button>
         </div>
         {errorLine}
@@ -439,7 +439,7 @@ export function DryMatch({
           <div className="flex flex-wrap items-start justify-between gap-md">
             <BigNumber value={final.left} label="Dry Match Short List" />
             <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void confirmList()}>
-              {busy === "confirm" ? "Saving…" : "Confirm list"}
+              {busy === "confirm" ? "Saving…" : "Confirm List"}
             </button>
           </div>
           <Summary
@@ -451,7 +451,7 @@ export function DryMatch({
           </Summary>
           <div className="mt-md flex justify-end">
             <button type="button" className={secondaryButton} onClick={() => download(data, final.funds, clientName)}>
-              Download the list (CSV)
+              Download the List (CSV)
             </button>
           </div>
           {errorLine}

@@ -309,7 +309,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
             </p>
           </div>
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
-            {busy === "start" ? "Starting over…" : "Start over"}
+            {busy === "start" ? "Starting Over…" : "Start Over"}
           </button>
         </div>
         <InvestorTable items={items} onOpen={setOpen} limit={10} />
@@ -332,7 +332,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
         </div>
         {landscape.investorsStatus !== "none" ? (
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={running !== null || busy !== null} onClick={() => void startOver()}>
-            {busy === "start" ? "Starting over…" : "Start over"}
+            {busy === "start" ? "Starting Over…" : "Start Over"}
           </button>
         ) : null}
       </div>
@@ -390,10 +390,10 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
           ) : null}
           <div className="mt-md flex flex-wrap gap-sm">
             <button type="button" className={secondaryButton} disabled={running !== null || adding} onClick={() => setAdding(true)}>
-              Add investor
+              Add Investor
             </button>
             <button type="button" className={secondaryButton} disabled={running !== null || busy !== null || !dirty} onClick={() => void save(false)}>
-              {busy === "save" ? "Saving…" : "Save changes"}
+              {busy === "save" ? "Saving…" : "Save Changes"}
             </button>
             <button
               type="button"
@@ -401,7 +401,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
               disabled={running !== null || busy !== null || items.length === 0 || adding}
               onClick={() => void save(true)}
             >
-              {busy === "confirm" ? "Confirming…" : "Confirm list"}
+              {busy === "confirm" ? "Confirming…" : "Confirm List"}
             </button>
           </div>
         </>

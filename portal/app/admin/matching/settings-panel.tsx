@@ -142,7 +142,7 @@ export function SettingsPanel({
             onApply(next);
           }}
         >
-          Reset to default
+          Reset to Default
         </button>
       </div>
       <div className="mt-lg">

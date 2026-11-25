@@ -418,7 +418,7 @@ export function MaterialsWorkspace({
             onClick={saveText}
             disabled={locked || saveState === "saving"}
           >
-            {saveState === "saving" ? "Saving…" : "Save draft"}
+            {saveState === "saving" ? "Saving…" : "Save Draft"}
           </button>
           {saveState === "saved" ? (
             <p className="text-body-sm text-success">Saved.</p>

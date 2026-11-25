@@ -153,7 +153,7 @@ export function ThinMatchPanel({
             title={claudeReady ? undefined : "ANTHROPIC_API_KEY is not configured."}
             onClick={() => void onFind()}
           >
-            {pending === "find" ? "Testing options…" : "Find options"}
+            {pending === "find" ? "Testing Options…" : "Find Options"}
           </button>
         </div>
       </div>
@@ -179,7 +179,7 @@ export function ThinMatchPanel({
             />
           </label>
           <button type="button" className={primaryButton} disabled={busy} onClick={() => void onSave()}>
-            {pending === "save" ? "Saving…" : "Save for all clients"}
+            {pending === "save" ? "Saving…" : "Save for All Clients"}
           </button>
         </div>
       ) : null}

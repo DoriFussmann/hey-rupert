@@ -132,7 +132,7 @@ function ClassCard({
         </div>
         {item.status !== "confirmed_founder" ? (
           <button type="button" className={smallButton} disabled={pending} onClick={() => run(() => confirmClassification(clientId, path))}>
-            Confirmed with founder
+            Confirmed with Founder
           </button>
         ) : null}
       </div>
@@ -265,7 +265,7 @@ function SectorEditor({
       </p>
       <div className="flex flex-wrap gap-sm">
         <button type="button" className={primaryButton} disabled={pending || !primary} onClick={save}>
-          Save sectors
+          Save Sectors
         </button>
         <button type="button" className={secondaryButton} disabled={pending} onClick={onDone}>
           Cancel
@@ -367,7 +367,7 @@ export function ClassificationPanel({
         <div className="flex flex-wrap items-center justify-between gap-sm">
           <h3 className="text-body text-heading">Sub-Sectors</h3>
           <button type="button" className={smallButton} onClick={() => setEditing((open) => !open)}>
-            {editing ? "Close" : "Change sub-sectors"}
+            {editing ? "Close" : "Change Sub-Sectors"}
           </button>
         </div>
         {editing ? <SectorEditor clientId={clientId} profile={profile} choices={choices} onDone={() => setEditing(false)} /> : null}

@@ -140,7 +140,7 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
 
           <div className="mt-md flex flex-wrap items-center gap-sm">
             <button type="button" className={primaryButton} disabled={Boolean(busy) || state.blockers.length > 0} onClick={build}>
-              {busy === "Building" ? "Building…" : state.built ? "Build again" : "Build campaign"}
+              {busy === "Building" ? "Building…" : state.built ? "Build Again" : "Build Campaign"}
             </button>
           </div>
           <p className="mt-sm max-w-prose text-body-sm text-secondary">
@@ -207,11 +207,11 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
                     <td className="py-sm text-right">
                       {fund.override ? (
                         <button type="button" className="text-primary hover:text-primary-hover" disabled={Boolean(busy)} onClick={() => override(fund.firm_id, false, fund.fund_name)}>
-                          In the campaign · take out
+                          In the Campaign · Take Out
                         </button>
                       ) : (
                         <button type="button" className="text-primary hover:text-primary-hover" disabled={Boolean(busy)} onClick={() => override(fund.firm_id, true, fund.fund_name)}>
-                          Put back in the campaign
+                          Put Back in the Campaign
                         </button>
                       )}
                     </td>

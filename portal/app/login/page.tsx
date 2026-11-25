@@ -98,7 +98,7 @@ export default function LoginPage() {
             />
 
             <button className="bp-btn" type="submit" disabled={!canSubmit}>
-              {pending ? "Signing in…" : "Continue"}
+              {pending ? "Signing In…" : "Continue"}
             </button>
 
             {error ? <p className="bp-error">{error}</p> : null}

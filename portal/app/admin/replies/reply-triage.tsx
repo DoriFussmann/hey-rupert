@@ -92,7 +92,7 @@ function ReplyCard({ reply, onChange }: { reply: AdminReply; onChange: (next: Ad
       </div>
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={primary} disabled={busy || reply.visibility === "released"} onClick={() => decide("released")}>
-          Release to client
+          Release to Client
         </button>
         <input
           className="min-w-[14rem] flex-1 rounded-md border border-border bg-background px-sm py-xs text-body-sm"

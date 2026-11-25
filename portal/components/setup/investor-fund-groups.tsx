@@ -87,7 +87,7 @@ export function InvestorFundGroups({
             setOpen(next);
           }}
         >
-          {anyOpen ? "Collapse all" : "Expand all"}
+          {anyOpen ? "Collapse All" : "Expand All"}
         </button>
       </div>
       {tiers.map((tier) => (
@@ -144,7 +144,7 @@ export function InvestorFundGroups({
                             className="text-body-sm text-muted hover:text-heading"
                             onClick={() => setShown((current) => ({ ...current, [key]: list.length }))}
                           >
-                            Show all {list.length}
+                            Show All {list.length}
                           </button>
                         </div>
                       ) : null}

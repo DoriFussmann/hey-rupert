@@ -74,10 +74,10 @@ export default async function ProspectPage({ params }: { params: { id: string } 
         actions={
           prospect.client_id ? (
             <Link href={`/admin/clients/${prospect.client_id}`} className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline hover:bg-primary-hover">
-              Open client →
+              Open Client →
             </Link>
           ) : (
-            <AddClientButton label="Convert to client" initial={clientPrefill(prospect)} />
+            <AddClientButton label="Convert to Client" initial={clientPrefill(prospect)} />
           )
         }
       />

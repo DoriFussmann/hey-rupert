@@ -31,7 +31,7 @@ export function ClassifyButton({ highlight }: { highlight: boolean }) {
   return (
     <div className="text-right">
       <button type="button" className={highlight ? primaryButton : secondaryButton} disabled={pending} onClick={classify}>
-        {pending ? "Classifying… up to a few minutes" : "Classify new data"}
+        {pending ? "Classifying… up to a few minutes" : "Classify New Data"}
       </button>
       {note ? (
         <p role="status" className="mt-xs max-w-md text-body-sm text-success">

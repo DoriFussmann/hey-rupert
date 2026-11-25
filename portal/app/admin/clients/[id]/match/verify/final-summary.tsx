@@ -284,7 +284,7 @@ export function FinalSummary({
           {problems.length > shown ? (
             <div className="border-t border-border px-lg py-md">
               <button type="button" className={smallButton} onClick={() => setShown((value) => value + PAGE)}>
-                Show more ({n(problems.length - shown)} left)
+                Show More ({n(problems.length - shown)} Left)
               </button>
             </div>
           ) : null}

@@ -278,7 +278,7 @@ export function PlanBuilder({
               </label>
             ))}
             <button type="button" className={secondaryButton} disabled={fundsRequired === null || weightIssues.length > 0} onClick={calculate}>
-              Apply weights
+              Apply Weights
             </button>
           </div>
           {weightIssues.length > 0 ? (

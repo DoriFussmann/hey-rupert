@@ -295,7 +295,7 @@ function FundForm({ editing, onDone }: { editing: AddedFund | null; onDone: (mes
         </div>
         {form.contacts.length < 10 ? (
           <button type="button" className={`${smallButton} mt-sm`} onClick={() => set("contacts", [...form.contacts, blankContact()])}>
-            + Add contact
+            + Add Contact
           </button>
         ) : null}
       </div>

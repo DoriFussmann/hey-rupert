@@ -273,7 +273,7 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
         </ol>
         <div className="border-t border-border px-lg py-md">
           <button type="button" className={smallButton} onClick={addPreset} disabled={styles.presets.length >= 20}>
-            Add style
+            Add Style
           </button>
         </div>
       </section>
@@ -293,7 +293,7 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
           disabled={pending}
           className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
         >
-          Restore defaults
+          Restore Defaults
         </button>
         {message ? (
           <p role={message.kind === "error" ? "alert" : "status"} className={`text-body-sm ${message.kind === "error" ? "text-error" : "text-success"}`}>

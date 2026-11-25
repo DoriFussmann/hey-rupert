@@ -89,7 +89,7 @@ function ImportPreview({
       ) : null}
       <div className="flex flex-wrap items-center gap-sm border-t border-border px-lg py-md">
         <button type="button" className={primaryButton} disabled={busy || summary.added === 0} onClick={onApply}>
-          {summary.added > 0 ? `Apply: add ${n(summary.added)} contact${summary.added === 1 ? "" : "s"}` : "Nothing to add"}
+          {summary.added > 0 ? `Apply: add ${n(summary.added)} contact${summary.added === 1 ? "" : "s"}` : "Nothing to Add"}
         </button>
         <button type="button" className={secondaryButton} disabled={busy} onClick={onDiscard}>
           Discard

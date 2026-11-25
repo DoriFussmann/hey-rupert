@@ -42,7 +42,7 @@ export function RemoveFromCampaign({ clientId, runId, firmId, firmName }: { clie
           </label>
           <div className="flex flex-wrap gap-xs">
             <button type="button" className={smallButton} disabled={pending || !reason.trim()} onClick={() => void remove()}>
-              {pending ? "Removing…" : "Remove from campaign"}
+              {pending ? "Removing…" : "Remove from Campaign"}
             </button>
             <button type="button" className={smallButton} disabled={pending} onClick={() => setOpen(false)}>
               Cancel
@@ -52,7 +52,7 @@ export function RemoveFromCampaign({ clientId, runId, firmId, firmName }: { clie
       ) : (
         <div className="flex flex-wrap items-center gap-xs">
           <button type="button" className={smallButton} onClick={() => setOpen(true)}>
-            Remove from campaign…
+            Remove from Campaign…
           </button>
           <span className="text-body-sm text-muted">The next fund in this tier moves in.</span>
         </div>

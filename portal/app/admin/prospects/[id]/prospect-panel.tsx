@@ -90,7 +90,7 @@ export function BriefAndFit({ prospect, options, optionsError }: { prospect: Pan
           <div className="flex items-center gap-sm">
             {prospect.briefAt ? <span className="text-body-sm text-muted">{dateText(prospect.briefAt)}</span> : null}
             <button type="button" className={secondary} onClick={refresh} disabled={pending}>
-              {pending ? "Researching… (1–2 min)" : b ? "Refresh brief" : "Write brief"}
+              {pending ? "Researching… (1–2 Min)" : b ? "Refresh Brief" : "Write Brief"}
             </button>
           </div>
         </div>
@@ -221,7 +221,7 @@ function FitCard({ prospect, options, optionsError }: { prospect: PanelProspect;
         <h2 className="text-h4">Investor Fit · First Estimate</h2>
         {options ? (
           <button type="button" className={secondary} onClick={() => setEditing((v) => !v)} disabled={pending}>
-            {editing ? "Close" : "Change filters"}
+            {editing ? "Close" : "Change Filters"}
           </button>
         ) : null}
       </div>
@@ -298,7 +298,7 @@ function FitCard({ prospect, options, optionsError }: { prospect: PanelProspect;
           {error ? <p className="text-body-sm text-error">{error}</p> : null}
           <div>
             <button type="button" className={primary} onClick={apply} disabled={pending}>
-              {pending ? "Counting…" : "Update estimate"}
+              {pending ? "Counting…" : "Update Estimate"}
             </button>
           </div>
         </div>
@@ -384,10 +384,10 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
               disabled={pending || !outcome}
               onClick={() => run("save", () => saveProspectOutcome(prospect.id, outcome, notes), "Saved.")}
             >
-              {busy === "save" ? "Saving…" : "Save outcome"}
+              {busy === "save" ? "Saving…" : "Save Outcome"}
             </button>
             <button type="button" className={secondary} disabled={pending || !notes.trim()} onClick={draft}>
-              {busy === "draft" ? "Drafting…" : prospect.followUp ? "Redraft follow-up" : "Draft follow-up"}
+              {busy === "draft" ? "Drafting…" : prospect.followUp ? "Redraft Follow-Up" : "Draft Follow-Up"}
             </button>
           </div>
           {prospect.outcomeAt ? <p className="mt-sm text-body-sm text-muted">Last saved {dateText(prospect.outcomeAt)}.</p> : null}
@@ -436,7 +436,7 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
               </>
             ) : (
               <button type="button" className={primary} disabled={pending || !subject.trim() || !body.trim()} onClick={() => setConfirming(true)}>
-                {prospect.followUpSentAt ? "Send again" : "Send"}
+                {prospect.followUpSentAt ? "Send Again" : "Send"}
               </button>
             )}
           </div>
@@ -459,7 +459,7 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
             }, "Prep email sent or rescheduled.")
           }
         >
-          {busy === "prep" ? "Sending…" : "Send prep email again"}
+          {busy === "prep" ? "Sending…" : "Send Prep Email Again"}
         </button>
       </section>
 

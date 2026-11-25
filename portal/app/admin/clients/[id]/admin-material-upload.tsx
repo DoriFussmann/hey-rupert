@@ -85,7 +85,7 @@ export function AdminMaterialUpload({ clientId }: { clientId: string }) {
         disabled={progress !== null}
       />
       <button type="button" className={buttonClass} disabled={progress !== null} onClick={() => input.current?.click()}>
-        {progress ?? "Upload files"}
+        {progress ?? "Upload Files"}
       </button>
       {notice ? (
         <p

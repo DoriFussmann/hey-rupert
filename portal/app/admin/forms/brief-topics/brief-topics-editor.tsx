@@ -87,7 +87,7 @@ export function BriefTopicsEditor({ initialTopics, defaultTopics }: { initialTop
       </ol>
       <div className="flex flex-wrap items-center gap-sm">
         <button type="button" className={primary} disabled={busy || !dirty} onClick={() => void save()}>
-          {busy ? "Saving…" : "Save topics"}
+          {busy ? "Saving…" : "Save Topics"}
         </button>
         <button
           type="button"
@@ -95,7 +95,7 @@ export function BriefTopicsEditor({ initialTopics, defaultTopics }: { initialTop
           disabled={topics.length >= BRIEF_TOPICS_MAX}
           onClick={() => setTopics((current) => [...current, { id: "", title: "New topic", guidance: "", enabled: true }])}
         >
-          Add topic
+          Add Topic
         </button>
         <button
           type="button"
@@ -104,7 +104,7 @@ export function BriefTopicsEditor({ initialTopics, defaultTopics }: { initialTop
             if (window.confirm("Put back the default topics? Your changes are replaced when you save.")) setTopics(defaultTopics);
           }}
         >
-          Reset to default
+          Reset to Default
         </button>
         {notice ? <span className={`text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>{notice.text}</span> : null}
       </div>

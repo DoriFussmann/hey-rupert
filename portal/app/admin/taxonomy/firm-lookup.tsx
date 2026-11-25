@@ -17,10 +17,10 @@ const RELATION_LABEL: Record<string, string> = {
 };
 
 const STATUS_LABEL: Record<FieldStatus, string> = {
-  missing: "No value",
+  missing: "No Value",
   normalized: "Mapped",
-  partial: "Partly mapped",
-  unmapped: "Not mapped",
+  partial: "Partly Mapped",
+  unmapped: "Not Mapped",
 };
 
 function FirmCard({ firm }: { firm: LookupFirm }) {

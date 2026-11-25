@@ -101,7 +101,7 @@ function SubSectorCard({
   );
   const pickButton = (
     <button type="button" className={primaryButton} disabled={disabled || chosen.length === 0} onClick={() => onPick(chosen)}>
-      {busy ? "Saving…" : chosen.length > 1 ? "Use these" : "Use this one"}
+      {busy ? "Saving…" : chosen.length > 1 ? "Use These" : "Use This One"}
     </button>
   );
   return (
@@ -115,7 +115,7 @@ function SubSectorCard({
           <div className="mt-sm flex flex-wrap items-center gap-sm">
             {pickButton}
             <button type="button" className="text-body-sm text-primary underline disabled:opacity-40" disabled={disabled} onClick={() => onNoneFits(true)}>
-              None of these fits
+              None of These Fits
             </button>
           </div>
         </>
@@ -135,10 +135,10 @@ function SubSectorCard({
           />
           <div className="mt-sm flex flex-wrap items-center gap-sm">
             <button type="button" className={primaryButton} disabled={disabled || text.trim().length < 3} onClick={() => onDescribe(text)}>
-              {busy ? "Looking…" : "Find the closest"}
+              {busy ? "Looking…" : "Find the Closest"}
             </button>
             <button type="button" className="text-body-sm text-primary underline disabled:opacity-40" disabled={disabled} onClick={() => onNoneFits(false)}>
-              Back to the list
+              Back to the List
             </button>
           </div>
         </>
@@ -153,10 +153,10 @@ function SubSectorCard({
           <div className="mt-sm flex flex-wrap items-center gap-sm">
             {pick.suggestions.length ? pickButton : null}
             <button type="button" className={pick.suggestions.length ? secondaryButton : primaryButton} disabled={disabled} onClick={onStillNone}>
-              {pick.suggestions.length ? "Still none fits: send my description to Rupert's team" : "Send my description to Rupert's team"}
+              {pick.suggestions.length ? "Still None Fits: Send My Description to Rupert's Team" : "Send My Description to Rupert's Team"}
             </button>
             <button type="button" className="text-body-sm text-primary underline disabled:opacity-40" disabled={disabled} onClick={() => onNoneFits(true)}>
-              Change my description
+              Change My Description
             </button>
           </div>
         </>
@@ -239,8 +239,8 @@ function SendIcon() {
 
 const COVERAGE_LABEL: Record<TopicCoverage, string> = {
   covered: "Covered",
-  partial: "In progress",
-  missing: "To do",
+  partial: "In Progress",
+  missing: "To Do",
 };
 
 function CoverageIcon({ coverage }: { coverage: TopicCoverage }) {
@@ -776,7 +776,7 @@ export function IntakeExperience({
               disabled={!canWrite}
               onClick={() => setNoDeckOpen(true)}
             >
-              I don&apos;t have a deck yet
+              I Don&apos;t Have a Deck Yet
             </button>
           )}
         </div>
@@ -861,7 +861,7 @@ export function IntakeExperience({
             className="text-primary hover:text-primary-hover"
             onClick={() => void onRetryFiles()}
           >
-            Try again
+            Try Again
           </button>
         </>
       ) : aiUnavailable ? (
@@ -913,7 +913,7 @@ export function IntakeExperience({
                 href="/portal/materials"
                 className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline transition-colors duration-hover hover:bg-primary-hover"
               >
-                Share materials
+                Share Materials
               </Link>
             </div>
           )}
@@ -1008,7 +1008,7 @@ export function IntakeExperience({
                 void onConfirm();
               }}
             >
-              {pending === "confirm" ? "Confirming…" : "Confirm intake"}
+              {pending === "confirm" ? "Confirming…" : "Confirm Intake"}
             </button>
             <button
               type="button"
@@ -1016,7 +1016,7 @@ export function IntakeExperience({
               disabled={readOnly || pending !== null}
               onClick={() => void run("resume", resumeIntakeConversation)}
             >
-              Back to the conversation
+              Back to the Conversation
             </button>
             {readOnly ? (
               <p className="text-body-sm text-muted">Read-only preview.</p>
@@ -1088,15 +1088,15 @@ export function IntakeExperience({
               disabled={pending !== null}
               onClick={() => void run("summary", requestIntakeSummary)}
             >
-              {pending === "summary" ? "Writing your summary…" : "Review Summary"}
+              {pending === "summary" ? "Writing Your Summary…" : "Review Summary"}
             </button>
           ) : (
             <>
               <button type="button" className={primaryButton} disabled={!canWrite} onClick={() => fileRef.current?.click()}>
-                Upload pitch deck
+                Upload Pitch Deck
               </button>
               <button type="button" className={secondaryButton} disabled={!canWrite} onClick={noDeckNow}>
-                {pending === "no_deck" ? "Telling Rupert…" : "I don't have a deck yet"}
+                {pending === "no_deck" ? "Telling Rupert…" : "I Don't Have a Deck Yet"}
               </button>
             </>
           )}
@@ -1328,7 +1328,7 @@ export function IntakeExperience({
                 disabled={pending !== null}
                 onClick={() => void run("start", startIntake)}
               >
-                Try again
+                Try Again
               </button>
             ) : null}
           </form>

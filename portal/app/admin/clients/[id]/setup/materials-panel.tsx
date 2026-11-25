@@ -178,7 +178,7 @@ export function MaterialsPanel({
                   disabled={pending || !note.trim()}
                   onClick={onReopen}
                 >
-                  {pending ? "Sending…" : "Send back to client"}
+                  {pending ? "Sending…" : "Send Back to Client"}
                 </button>
                 <button
                   type="button"
@@ -202,7 +202,7 @@ export function MaterialsPanel({
               }
               onClick={() => setShowReopen(true)}
             >
-              Ask the client for more
+              Ask the Client for More
             </button>
           )}
           {message ? (

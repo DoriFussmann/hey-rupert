@@ -286,7 +286,7 @@ function ConfirmedSummary({
           </p>
         </div>
         <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy} onClick={onStartOver}>
-          {busy ? "Starting over…" : "Start over"}
+          {busy ? "Starting Over…" : "Start Over"}
         </button>
       </div>
       <table className="mt-md w-full text-left text-body-sm">
@@ -453,7 +453,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
         <p className="mt-xs text-body-sm text-warning">
           {missingSectors} not yet classified by sub-sector.{" "}
           <button type="button" className="underline" onClick={() => void fillSectors()}>
-            Classify sectors
+            Classify Sectors
           </button>
         </p>
       ) : null;
@@ -484,7 +484,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
       </div>
         {landscape ? (
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
-            {busy === "start" ? "Starting over…" : "Start over"}
+            {busy === "start" ? "Starting Over…" : "Start Over"}
           </button>
         ) : null}
       </div>
@@ -558,7 +558,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
                   disabled={busy !== null || !dirty || editing !== null}
                   onClick={() => void run("save", () => saveLandscape(clientId, items, false, kind))}
                 >
-                  {busy === "save" ? "Saving and checking links…" : "Save changes"}
+                  {busy === "save" ? "Saving and checking links…" : "Save Changes"}
                 </button>
                 <button
                   type="button"
@@ -566,7 +566,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
                   disabled={busy !== null || editing !== null}
                   onClick={() => void run("confirm", () => saveLandscape(clientId, items, true, kind))}
                 >
-                  {busy === "confirm" ? "Confirming…" : "Confirm list"}
+                  {busy === "confirm" ? "Confirming…" : "Confirm List"}
                 </button>
               </>
             )}

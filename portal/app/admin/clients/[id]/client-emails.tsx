@@ -15,7 +15,7 @@ const primaryButton =
 const KIND_LABELS: Record<EmailLogKind, string> = {
   automatic: "Automatic",
   reminder: "Reminder",
-  manual: "Sent by you",
+  manual: "Sent by You",
 };
 
 const PART_TONE: Record<TrackingPart["tone"], string> = {
@@ -211,7 +211,7 @@ export function ClientEmails({
             disabled={!canSend}
             className={primaryButton}
           >
-            {sending ? "Sending…" : "Send email"}
+            {sending ? "Sending…" : "Send Email"}
           </button>
           <label className="flex items-center gap-sm text-body-sm text-heading">
             <input

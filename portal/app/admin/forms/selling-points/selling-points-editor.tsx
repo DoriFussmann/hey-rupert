@@ -78,7 +78,7 @@ export function SellingPointsEditor({ initialPoints, defaultPoints }: { initialP
       </ol>
       <div className="flex flex-wrap items-center gap-sm">
         <button type="button" className={primary} disabled={busy || !dirty} onClick={() => void save()}>
-          {busy ? "Saving…" : "Save selling points"}
+          {busy ? "Saving…" : "Save Selling Points"}
         </button>
         <button
           type="button"
@@ -86,7 +86,7 @@ export function SellingPointsEditor({ initialPoints, defaultPoints }: { initialP
           disabled={points.length >= SELLING_POINTS_MAX}
           onClick={() => setPoints((current) => [...current, { id: "", title: "New selling point", guidance: "" }])}
         >
-          Add a point
+          Add a Point
         </button>
         <button
           type="button"
@@ -95,7 +95,7 @@ export function SellingPointsEditor({ initialPoints, defaultPoints }: { initialP
             if (window.confirm("Put back the default ten? Your changes are replaced when you save.")) setPoints(defaultPoints);
           }}
         >
-          Reset to default
+          Reset to Default
         </button>
         {notice ? <span className={`text-body-sm ${notice.kind === "ok" ? "text-success" : "text-error"}`}>{notice.text}</span> : null}
       </div>

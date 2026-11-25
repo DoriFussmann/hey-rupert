@@ -43,7 +43,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
         {!editing ? (
           <span className="flex gap-sm">
             <button type="button" className="text-body-sm text-primary underline" onClick={() => setEditing(true)}>
-              Edit summary
+              Edit Summary
             </button>
             <button type="button" className="text-body-sm text-muted underline" disabled={pending} onClick={() => void remove()}>
               Remove
@@ -61,7 +61,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
           />
           <div className="mt-xs flex gap-sm">
             <button type="button" className={primaryButton} disabled={pending} onClick={() => void save()}>
-              {pending ? "Saving…" : "Save summary"}
+              {pending ? "Saving…" : "Save Summary"}
             </button>
             <button type="button" className={secondaryButton} disabled={pending} onClick={() => setEditing(false)}>
               Cancel
@@ -123,7 +123,7 @@ export function ClientFeedbackPanel({ clientId, items }: { clientId: string; ite
         </div>
         {!open ? (
           <button type="button" className={secondaryButton} onClick={() => setOpen(true)}>
-            Log client feedback
+            Log Client Feedback
           </button>
         ) : null}
       </div>
@@ -162,7 +162,7 @@ export function ClientFeedbackPanel({ clientId, items }: { clientId: string; ite
               <input type="date" className={`${inputClass} mt-xs w-auto normal-case tracking-normal`} value={on} onChange={(e) => setOn(e.target.value)} />
             </label>
             <button type="button" className={primaryButton} disabled={pending || !text.trim()} onClick={() => void save()}>
-              {pending ? "Summarizing…" : "Log it"}
+              {pending ? "Summarizing…" : "Log It"}
             </button>
             <button type="button" className={secondaryButton} disabled={pending} onClick={() => setOpen(false)}>
               Cancel

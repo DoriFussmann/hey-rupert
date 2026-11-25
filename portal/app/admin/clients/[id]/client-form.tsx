@@ -102,7 +102,7 @@ export function ClientForm({ client }: { client: Client }) {
           type="submit"
           className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover"
         >
-          Save changes
+          Save Changes
         </button>
         {saved ? (
           <p className="mt-sm text-body-sm text-success">

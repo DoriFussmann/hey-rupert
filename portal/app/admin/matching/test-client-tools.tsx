@@ -30,7 +30,7 @@ export function TestClientTools({ testClientId, clients }: { testClientId: strin
             if (done) router.push(matchPath(done.clientId));
           }}
         >
-          Create the test client
+          Create the Test Client
         </button>{" "}
         A pretend company for trying the whole flow. It never emails anyone.
         <ErrorLine error={error} />
@@ -72,7 +72,7 @@ export function TestClientTools({ testClientId, clients }: { testClientId: strin
             void run(() => copyProfileToTestClient(source));
           }}
         >
-          Copy profile
+          Copy Profile
         </button>
         <button
           type="button"
@@ -83,7 +83,7 @@ export function TestClientTools({ testClientId, clients }: { testClientId: strin
             void run(() => resetTestClient());
           }}
         >
-          Start it clean
+          Start It Clean
         </button>
       </div>
       <ErrorLine error={error} />

@@ -99,7 +99,7 @@ export function SetPasswordForm({
       <p className="bp-text">At least {MIN_PASSWORD_LENGTH} characters.</p>
 
       <button className="bp-btn" type="submit" disabled={!canSubmit}>
-        {pending ? "Saving…" : "Set password"}
+        {pending ? "Saving…" : "Set Password"}
       </button>
 
       {error ? (

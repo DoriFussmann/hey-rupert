@@ -130,7 +130,7 @@ function StagedPreview({
       ) : null}
       <div className="flex flex-wrap gap-sm border-t border-border px-lg py-md">
         <button type="button" className={primaryButton} disabled={busy} onClick={onApply}>
-          Apply: make this the live database
+          Apply: Make This the Live Database
         </button>
         <button type="button" className={secondaryButton} disabled={busy} onClick={onDiscard}>
           Discard
@@ -381,7 +381,7 @@ export function FundDatabaseManager({
             disabled={Boolean(busy) || !live}
             onClick={() => void checkWebsites()}
           >
-            Check the next {n(DAILY_SITE_BATCH)} now
+            Check the Next {n(DAILY_SITE_BATCH)} Now
           </button>
         </div>
         {sites.byStatus.length > 0 ? (
@@ -442,7 +442,7 @@ export function FundDatabaseManager({
                           );
                         }}
                       >
-                        Make live again
+                        Make Live Again
                       </button>
                     )}
                   </td>

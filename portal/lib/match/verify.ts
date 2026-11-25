@@ -208,9 +208,9 @@ export type StepNumber = 1 | 2 | 3;
 
 /** Step 2 ("Email public?") no longer runs; checks made before keep its result. */
 export const STEP_LABEL: Record<StepNumber, string> = {
-  1: "At the firm?",
-  2: "Email public?",
-  3: "Mailbox check",
+  1: "At the Firm?",
+  2: "Email Public?",
+  3: "Mailbox Check",
 };
 
 /** The steps a check runs, in order. */
@@ -269,9 +269,9 @@ export type VerifyAction = "keep" | "remove" | "update_email" | "update_name" | 
 export const ACTION_LABEL: Record<VerifyAction, string> = {
   keep: "Keep",
   remove: "Remove",
-  update_email: "Update email",
-  update_name: "Update name",
-  update_firm: "Update firm",
+  update_email: "Update Email",
+  update_name: "Update Name",
+  update_firm: "Update Firm",
 };
 
 export type Suggestion = {

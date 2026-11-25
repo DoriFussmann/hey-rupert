@@ -9,7 +9,7 @@ import type { LabelLists } from "@/lib/match/added/server";
 import { inputClass, labelClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
 
 const n = (v: number) => v.toLocaleString("en-US");
-const STATUS_LABEL: Record<AddedStatus, string> = { pending: "Pending review", approved: "Approved", rejected: "Rejected" };
+const STATUS_LABEL: Record<AddedStatus, string> = { pending: "Pending Review", approved: "Approved", rejected: "Rejected" };
 const STATUS_TONE: Record<AddedStatus, string> = { pending: "text-warning", approved: "text-success", rejected: "text-muted" };
 
 function host(url: string) {
@@ -205,7 +205,7 @@ function Details({ fund, labels, onChange }: { fund: AddedView; labels: LabelLis
           </>
         ) : (
           <button type="button" className={secondaryButton} disabled={busy} onClick={() => void review("pending")}>
-            Back to pending
+            Back to Pending
           </button>
         )}
         <input className={`${inputClass} max-w-sm`} placeholder="Review note (optional)" value={note} onChange={(e) => setNote(e.target.value)} />

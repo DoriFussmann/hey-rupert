@@ -45,7 +45,7 @@ export function ClearNotificationsButton() {
         }}
         className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
       >
-        Clear all
+        Clear All
       </button>
       {open ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-lg">
@@ -86,7 +86,7 @@ export function ClearNotificationsButton() {
                 disabled={pending}
                 className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
               >
-                {pending ? "Clearing…" : "Clear all"}
+                {pending ? "Clearing…" : "Clear All"}
               </button>
             </div>
           </div>

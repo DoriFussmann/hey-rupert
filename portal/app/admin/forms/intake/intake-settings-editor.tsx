@@ -215,7 +215,7 @@ export function IntakeSettingsEditor({
             onClick={addTopic}
             disabled={topics.length >= 20}
           >
-            Add topic
+            Add Topic
           </button>
         </div>
       </section>
@@ -235,7 +235,7 @@ export function IntakeSettingsEditor({
           disabled={pending}
           className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
         >
-          Restore defaults
+          Restore Defaults
         </button>
         {flash?.kind === "ok" ? (
           <p className="text-body-sm text-success">{flash.text}</p>

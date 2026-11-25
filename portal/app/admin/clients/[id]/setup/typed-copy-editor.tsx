@@ -136,7 +136,7 @@ export function TypedCopyEditor({
               disabled={busy || !canDraft}
               onClick={() => onRedraft(key)}
             >
-              {busy ? "Working…" : "Redraft this group"}
+              {busy ? "Working…" : "Redraft This Group"}
             </button>
           </div>
 

@@ -169,10 +169,10 @@ function TestPilotControls({
           title={clientTurn ? undefined : "Available when it is the client's turn."}
           onClick={() => void run("one")}
         >
-          {pending === "one" ? "Working…" : "Complete as client"}
+          {pending === "one" ? "Working…" : "Complete as Client"}
         </button>
         <button type="button" className={primaryButton} disabled={busy} onClick={() => void run("all")}>
-          {pending === "all" ? "Running… (AI steps take 1–2 minutes)" : "Run full test"}
+          {pending === "all" ? "Running… (AI steps take 1–2 minutes)" : "Run Full Test"}
         </button>
         <button
           type="button"
@@ -180,7 +180,7 @@ function TestPilotControls({
           disabled={busy}
           onClick={() => void onDelete()}
         >
-          {pending === "delete" ? "Deleting…" : "Delete test client"}
+          {pending === "delete" ? "Deleting…" : "Delete Test Client"}
         </button>
       </div>
 
@@ -306,7 +306,7 @@ export function NextAction({
         </div>
         {targetId ? (
           <button type="button" className={primaryButton} onClick={() => goTo(targetId)}>
-            Go to step
+            Go to Step
           </button>
         ) : null}
       </div>

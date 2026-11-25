@@ -38,12 +38,12 @@ export const ADMIN_BLOCKED: Record<SetupStepId, string> = {
 export function adminStatus(item: SetupItem) {
   if (item.status === "done") return { label: "Done", tone: "text-success" };
   if (item.status === "waiting") {
-    return { label: "Your turn", tone: "bg-primary-tint text-primary border-primary/30" };
+    return { label: "Your Turn", tone: "bg-primary-tint text-primary border-primary/30" };
   }
   if (item.status === "your_turn") {
-    return { label: "Waiting on client", tone: "text-muted" };
+    return { label: "Waiting on Client", tone: "text-muted" };
   }
-  return { label: "Not open yet", tone: "text-muted" };
+  return { label: "Not Open Yet", tone: "text-muted" };
 }
 
 export function StepFrame({
@@ -314,7 +314,7 @@ function FeedbackBody({ clientId, question }: { clientId: string; question: Setu
           />
           <div className="flex flex-wrap gap-sm">
             <button type="button" className={primaryButton} disabled={pending} onClick={() => void save()}>
-              {pending ? "Saving…" : "Save summary"}
+              {pending ? "Saving…" : "Save Summary"}
             </button>
             <button type="button" className={secondaryButton} disabled={pending} onClick={() => setEditing(false)}>
               Cancel

@@ -317,9 +317,9 @@ export function EmailCopyPanel({
           {drafting
             ? "Drafting…"
             : changesRequested
-              ? "Rebuild with client's changes"
+              ? "Rebuild with Client's Changes"
               : byType
-                ? "Draft by fund type"
+                ? "Draft by Fund Type"
                 : "Draft with AI"}
         </button>
         <p className="text-body-sm text-muted" aria-live="polite">

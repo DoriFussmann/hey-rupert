@@ -210,7 +210,7 @@ function GroupPreview({
         </span>
         {list.length > 1 ? (
           <button type="button" className={`ml-auto ${linkClass}`} onClick={() => setAt((value) => value + 1)}>
-            Next fund ›
+            Next Fund ›
           </button>
         ) : null}
       </div>

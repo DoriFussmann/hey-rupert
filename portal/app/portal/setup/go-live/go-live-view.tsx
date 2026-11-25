@@ -279,7 +279,7 @@ export function GoLiveView({
           {inbox ? (
             <div className="mb-md">
               <button type="button" className={secondary} disabled={readOnly || testing || !campaignReady} onClick={sendTest}>
-                {testing ? "Sending…" : "Send me a test"}
+                {testing ? "Sending…" : "Send Me a Test"}
               </button>
               <span className="ml-sm text-muted">
                 {testNote ?? (testSentAt ? `Last test ${formatDateTime(testSentAt)}.` : "Optional: see exactly what an investor gets. Two emails arrive in your own inbox: the first email, then the follow-up a couple of minutes later in the same thread. Only you receive them.")}
@@ -324,7 +324,7 @@ export function GoLiveView({
             </ul>
           ) : null}
           <button type="button" className={`${primary} mt-md`} disabled={readOnly || !ready || !consent || launching || !confirmation} onClick={launch}>
-            {launching ? "Approving…" : "Confirm and approve launch"}
+            {launching ? "Approving…" : "Confirm and Approve Launch"}
           </button>
         </Step>
       </ol>

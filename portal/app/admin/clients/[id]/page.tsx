@@ -421,7 +421,7 @@ export default async function ClientDetailPage({
               href={`/admin/clients/${client.id}/profile`}
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >
-              Company profile
+              Company Profile
             </Link>
             <Link
               href={matchPath(client.id)}

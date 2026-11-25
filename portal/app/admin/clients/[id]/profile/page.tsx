@@ -104,7 +104,7 @@ export default async function CompanyProfilePage({ params }: { params: { id: str
               title="The profile, the full intake transcript, the materials, and the analysis and narrative, in one file."
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >
-              Download everything (framing pack)
+              Download Everything (Framing Pack)
             </a>
             <Link
               href={`/admin/clients/${client.id}`}
