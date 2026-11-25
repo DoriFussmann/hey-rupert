@@ -360,7 +360,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   {state.confirmation.version ? ` · version ${state.confirmation.version}` : ""}
                   {state.postalAddress ? ` · postal address: ${state.postalAddress}` : ""}
                   <details className="mt-xs">
-                    <summary className="cursor-pointer text-primary">What they confirmed</summary>
+                    <summary className="cursor-pointer text-primary">What They Confirmed</summary>
                     <span className="mt-xs block whitespace-pre-wrap rounded-md border border-border bg-background px-md py-sm text-body">
                       {state.confirmation.text}
                     </span>

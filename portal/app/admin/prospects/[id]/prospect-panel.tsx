@@ -86,7 +86,7 @@ export function BriefAndFit({ prospect, options, optionsError }: { prospect: Pan
     <div className="grid content-start gap-lg">
       <section className={card}>
         <div className="flex flex-wrap items-baseline justify-between gap-sm">
-          <h2 className="text-h4">Prep brief</h2>
+          <h2 className="text-h4">Prep Brief</h2>
           <div className="flex items-center gap-sm">
             {prospect.briefAt ? <span className="text-body-sm text-muted">{dateText(prospect.briefAt)}</span> : null}
             <button type="button" className={secondary} onClick={refresh} disabled={pending}>
@@ -122,7 +122,7 @@ export function BriefAndFit({ prospect, options, optionsError }: { prospect: Pan
               ) : null}
             </p>
             {b.person.summary || b.person.facts.length ? (
-              <Block title="The founder">
+              <Block title="The Founder">
                 <p className="mt-xs text-body-sm text-body">{b.person.summary}</p>
                 <List items={b.person.facts} />
               </Block>
@@ -138,7 +138,7 @@ export function BriefAndFit({ prospect, options, optionsError }: { prospect: Pan
               </Block>
             ) : null}
             {b.questions.length ? (
-              <Block title="Ask on the call">
+              <Block title="Ask on the Call">
                 <ol className="mt-xs list-decimal pl-lg text-body-sm text-body">
                   {b.questions.map((q, i) => (
                     <li key={i} className="mb-xs">
@@ -149,7 +149,7 @@ export function BriefAndFit({ prospect, options, optionsError }: { prospect: Pan
               </Block>
             ) : null}
             {b.watchOuts.length ? (
-              <Block title="Watch out">
+              <Block title="Watch Out">
                 <List items={b.watchOuts} />
               </Block>
             ) : null}
@@ -218,7 +218,7 @@ function FitCard({ prospect, options, optionsError }: { prospect: PanelProspect;
   return (
     <section className={card}>
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <h2 className="text-h4">Investor fit · first estimate</h2>
+        <h2 className="text-h4">Investor Fit · First Estimate</h2>
         {options ? (
           <button type="button" className={secondary} onClick={() => setEditing((v) => !v)} disabled={pending}>
             {editing ? "Close" : "Change filters"}
@@ -356,7 +356,7 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
     <>
       {!prospect.converted ? (
         <section className={card}>
-          <h2 className="text-h4">After the call</h2>
+          <h2 className="text-h4">After the Call</h2>
           <label className={`mt-sm block ${label}`}>
             Outcome
             <select className={field} value={outcome} onChange={(e) => setOutcome(e.target.value)}>
@@ -398,7 +398,7 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
       {subject || body ? (
         <section className={card}>
           <div className="flex flex-wrap items-baseline justify-between gap-sm">
-            <h2 className="text-h4">Follow-up email</h2>
+            <h2 className="text-h4">Follow-Up Email</h2>
             {prospect.followUpSentAt ? <span className="text-body-sm text-success">Sent {dateText(prospect.followUpSentAt)}</span> : null}
           </div>
           <label className={`mt-sm block ${label}`}>
@@ -445,7 +445,7 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
       ) : null}
 
       <section className={card}>
-        <h2 className="text-h4">Prep email</h2>
+        <h2 className="text-h4">Prep Email</h2>
         <p className="mt-xs text-body-sm text-muted">Goes to you 30 minutes before each call, with the brief and the estimate. Send it again to get the latest version now, or to replace one still waiting.</p>
         <button
           type="button"

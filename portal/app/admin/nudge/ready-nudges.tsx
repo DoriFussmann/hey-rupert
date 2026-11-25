@@ -46,7 +46,7 @@ export function ReadyNudges({ nudges, errors }: { nudges: ReadyNudge[]; errors: 
     <section className="mb-lg rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-md">
         <h2 className="text-h4">
-          Ready to send <span className="text-muted">({nudges.length})</span>
+          Ready to Send <span className="text-muted">({nudges.length})</span>
         </h2>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
           Reminders the schedule says are due today (Forms → Emails sets when and how many). Nothing goes out until you

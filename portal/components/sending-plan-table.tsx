@@ -23,9 +23,9 @@ export function SendingPlanTable({ weeks, note }: { weeks: PlanWeek[]; note?: st
               <th className="py-sm pl-sm pr-sm font-medium">Week</th>
               <th className="px-sm py-sm font-medium">Dates</th>
               <th className="px-sm py-sm font-medium">Phase</th>
-              <th className="px-sm py-sm text-right font-medium">Emails / day (max)</th>
-              <th className="px-sm py-sm text-right font-medium">New investors</th>
-              <th className="px-sm py-sm text-right font-medium">Emails that week (approx.)</th>
+              <th className="px-sm py-sm text-right font-medium">Emails / Day (Max)</th>
+              <th className="px-sm py-sm text-right font-medium">New Investors</th>
+              <th className="px-sm py-sm text-right font-medium">Emails That Week (Approx.)</th>
               <th className="py-sm pl-sm pr-sm font-medium">Status</th>
             </tr>
           </thead>

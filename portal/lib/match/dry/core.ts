@@ -11,7 +11,7 @@ export const DRY_STEPS = ["financing", "stage", "geography", "sector"] as const;
 export type DryStep = (typeof DRY_STEPS)[number];
 
 export const DRY_STEP_LABEL: Record<DryStep, string> = {
-  financing: "Financing type",
+  financing: "Financing Type",
   stage: "Stage",
   geography: "Geography",
   sector: "Sector",

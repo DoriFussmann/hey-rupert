@@ -254,7 +254,7 @@ export function NudgeWorkspace({ detail }: { detail: NudgeDetail }) {
       {detail.clientTurns.length > 0 ? (
         <section aria-labelledby="nudge-client-turns">
           <h3 id="nudge-client-turns" className="mb-sm text-h4 text-heading">
-            Waiting on the client
+            Waiting on the Client
           </h3>
           <div className="grid gap-md">
             {detail.clientTurns.map((turn) => (
@@ -294,7 +294,7 @@ export function NudgeWorkspace({ detail }: { detail: NudgeDetail }) {
       {detail.ourItems.length > 0 ? (
         <section aria-labelledby="nudge-our-turn">
           <h3 id="nudge-our-turn" className="mb-sm text-h4 text-heading">
-            Your turn
+            Your Turn
           </h3>
           <ul className="divide-y divide-border rounded-card border border-primary/30 bg-primary-tint">
             {detail.ourItems.map((item) => (

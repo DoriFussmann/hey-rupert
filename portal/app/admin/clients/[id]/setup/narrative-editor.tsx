@@ -247,7 +247,7 @@ function NarrativeEditorInner({
             )}
             {narrative.core.trim() ? (
             <details className="mt-sm text-body-sm">
-              <summary className="cursor-pointer text-label uppercase tracking-label text-muted">Core story, key messages and approach · stay with you</summary>
+              <summary className="cursor-pointer text-label uppercase tracking-label text-muted">Core Story, Key Messages and Approach · Stay with You</summary>
               <div className="mt-sm grid gap-md">
                 <MarkdownBody content={narrative.core} emptyLabel="" className="sow-markdown" />
                 <MarkdownBody content={narrative.key_messages} emptyLabel="" className="sow-markdown" />

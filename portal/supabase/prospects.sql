@@ -41,6 +41,9 @@ create table if not exists public.prospects (
   updated_at timestamptz not null default now()
 );
 
+-- Archived prospects are hidden from the Calls Booked list; a new booking brings them back.
+alter table public.prospects add column if not exists archived_at timestamptz;
+
 create unique index if not exists prospects_email_key on public.prospects (lower(email));
 create index if not exists prospects_created on public.prospects (created_at desc);
 

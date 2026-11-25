@@ -79,27 +79,27 @@ function GroupCard({ group }: { group: ResolvedIdentity }) {
 
 const SECTIONS: { title: string; note: string; match: (g: ResolvedIdentity) => boolean }[] = [
   {
-    title: "Same provider ID",
+    title: "Same Provider ID",
     note: DUPLICATE_LEVEL_INFO.same_id.rule,
     match: (g) => g.level === "same_id",
   },
   {
-    title: "Certain duplicates",
+    title: "Certain Duplicates",
     note: `${DUPLICATE_LEVEL_INFO.certain.rule} Merged only after an admin confirms.`,
     match: (g) => g.level === "certain",
   },
   {
-    title: "Offices of one firm",
+    title: "Offices of One Firm",
     note: "Same name and website, different HQ country. Shown once per list unless an admin keeps them separate; each office is checked on its own data.",
     match: (g) => g.kind === "offices",
   },
   {
-    title: "Sister funds",
+    title: "Sister Funds",
     note: `${DUPLICATE_LEVEL_INFO.likely.rule} Kept separate unless an admin confirms they are one firm.`,
     match: (g) => g.level === "likely",
   },
   {
-    title: "Same name, different websites",
+    title: "Same Name, Different Websites",
     note: "Mostly unrelated firms. Kept separate unless an admin confirms they are one firm.",
     match: (g) => g.level === "ambiguous" && g.kind !== "offices",
   },
@@ -111,7 +111,7 @@ export default async function DuplicateReportPage() {
     <>
       <BackLink href="/admin/taxonomy" label="Taxonomy" />
       <PageHeader
-        title="Possible duplicate firms"
+        title="Possible Duplicate Firms"
         description="Firms in the live Fund Database that may be the same investor. A decision only changes how matching shows them: provider records, contacts, reviews and verification stay on their own FirmIDs, and every decision is logged."
         actions={
           <a href="/admin/taxonomy/duplicates/export" className="text-body-sm text-secondary underline hover:text-heading">
@@ -149,7 +149,7 @@ export default async function DuplicateReportPage() {
     <>
       {header}
       <section className={`${cardClass} mb-lg px-lg py-md`}>
-        <h2 className="text-h4 text-heading">Counts by confidence</h2>
+        <h2 className="text-h4 text-heading">Counts by Confidence</h2>
         <div className="mt-sm overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-body-sm">
             <thead>
@@ -182,7 +182,7 @@ export default async function DuplicateReportPage() {
         return (
           <section key={section.title} className={`${cardClass} mb-lg px-lg py-md`}>
             <h2 className="text-h4 text-heading">
-              {section.title} <span className="text-body-sm font-normal text-muted">{n(groups.length)} groups</span>
+              {section.title} <span className="text-body-sm font-normal text-muted">{n(groups.length)} Groups</span>
             </h2>
             <p className="mt-xs text-body-sm text-muted">{section.note}</p>
             <div className="mt-sm">

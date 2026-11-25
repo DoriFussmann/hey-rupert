@@ -230,7 +230,7 @@ export function PlanBuilder({
           </p>
         </div>
         <details className="mt-md">
-          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Sending setup</summary>
+          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Sending Setup</summary>
           <div className="mt-sm grid gap-sm sm:grid-cols-2 lg:grid-cols-4">{SETUP.map(box)}</div>
           {capacity ? (
             <ul className="mt-sm list-disc pl-lg text-body-sm text-secondary">
@@ -260,7 +260,7 @@ export function PlanBuilder({
 
       {countBoxes && counts ? (
         <section className={`${cardClass} px-lg py-md`}>
-          <h2 className="text-h4 text-heading">Split across the tiers</h2>
+          <h2 className="text-h4 text-heading">Split Across the Tiers</h2>
           <p className="mt-xs text-body-sm text-muted">
             Core first (up to {CORE_CAP}). The rest is shared by these weights, as targets: a tier that runs out passes its share to the others by weight, but no tier
             takes more than {TIER_CEILING}× its target. What no tier can take is shown as a shortfall. Then change any number below.

@@ -10,7 +10,7 @@ import { createServiceClient } from "@/lib/supabase/admin";
 import "@/app/login/login.css";
 
 export const metadata: Metadata = {
-  title: "Set your password",
+  title: "Set Your Password",
   robots: "noindex, nofollow",
   // The token is in the URL; never send it to other sites.
   referrer: "no-referrer",

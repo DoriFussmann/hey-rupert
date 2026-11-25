@@ -74,8 +74,8 @@ function StagedPreview({
         <Change label="Contacts" before={diff?.previous?.contacts ?? null} after={version.contacts} />
         {diff?.previous ? (
           <>
-            <Change label="New funds" before={null} after={diff.added} />
-            <Change label="Removed funds" before={null} after={diff.removed} />
+            <Change label="New Funds" before={null} after={diff.added} />
+            <Change label="Removed Funds" before={null} after={diff.removed} />
           </>
         ) : null}
       </div>
@@ -362,7 +362,7 @@ export function FundDatabaseManager({
 
       <details className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
         <summary className="cursor-pointer text-h4 text-heading">
-          Website checks{" "}
+          Website Checks{" "}
           <span className="text-body-sm font-normal text-muted">
             {n(sites.checked)} of {n(liveFirms)} funds checked · {n(sites.recent)} in the last 30 days
           </span>

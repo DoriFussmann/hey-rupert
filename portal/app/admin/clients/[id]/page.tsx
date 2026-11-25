@@ -474,14 +474,14 @@ export default async function ClientDetailPage({
       ))}
       {client.nda_signed_at ? <ClientFeedbackPanel clientId={client.id} items={feedback.ok ? feedback.value : []} /> : null}
       {completedPanels.length > 0 ? (
-        <Disclosure title="Completed steps" meta={`${completedPanels.length}`}>
+        <Disclosure title="Completed Steps" meta={`${completedPanels.length}`}>
           {completedPanels.map((panel) => (
             <Fragment key={panel.key}>{panel.node}</Fragment>
           ))}
         </Disclosure>
       ) : null}
       {upcomingPanels.length > 0 ? (
-        <Disclosure title="Other steps" meta={`${upcomingPanels.length}: waiting on the client or not open yet`}>
+        <Disclosure title="Other Steps" meta={`${upcomingPanels.length}: waiting on the client or not open yet`}>
           {upcomingPanels.map((panel) => (
             <Fragment key={panel.key}>{panel.node}</Fragment>
           ))}
@@ -555,7 +555,7 @@ export default async function ClientDetailPage({
       <Disclosure title="Timeline">
         <ClientTimeline source={client} />
       </Disclosure>
-      <Disclosure title="Client details & account">
+      <Disclosure title="Client Details & Account">
         <ClientForm client={client} />
         <ClientActions
           clientId={client.id}

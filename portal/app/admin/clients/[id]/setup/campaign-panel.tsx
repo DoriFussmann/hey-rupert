@@ -148,7 +148,7 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
             starts sending, all through the API.
           </p>
           <details className="mt-sm text-body-sm text-muted">
-            <summary className="cursor-pointer">Backup only: download the contacts as CSV</summary>
+            <summary className="cursor-pointer">Backup Only: Download the Contacts as CSV</summary>
             <p className="mt-xs">Not needed for sending. For your records, or if you ever have to rebuild a campaign by hand.</p>
             <div className="mt-xs flex flex-wrap gap-sm">
               {[
@@ -173,7 +173,7 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
 
       {bySource ? null : (
       <div className="border-t border-border px-lg py-md">
-        <h4 className="text-body text-heading">Warm intros: funds the client knows</h4>
+        <h4 className="text-body text-heading">Warm Intros: Funds the Client Knows</h4>
         <p className="mt-xs text-body-sm text-muted">
           Left out of the emails; the client approaches them directly and tracks it on Your warm intros. Put one back to
           email it anyway.
@@ -186,7 +186,7 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
                 <tr className="text-label uppercase tracking-label text-muted">
                   <th className="py-xs pr-md font-medium">Fund</th>
                   <th className="py-xs pr-md font-medium">Contacts</th>
-                  <th className="py-xs pr-md font-medium">Client&apos;s progress</th>
+                  <th className="py-xs pr-md font-medium">Client&apos;s Progress</th>
                   <th className="py-xs font-medium" />
                 </tr>
               </thead>

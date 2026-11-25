@@ -338,7 +338,7 @@ export function MatchingSteps({
         <summary className="flex cursor-pointer list-none items-center justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">
           <span>
             <span className="text-h4 text-heading">
-              Matching steps (finalized)
+              Matching Steps (Finalized)
             </span>
             <span className="ml-sm text-body-sm text-muted">
               Finalized {when(fin.finalizedAt)}

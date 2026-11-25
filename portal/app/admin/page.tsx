@@ -38,7 +38,7 @@ export default async function AdminClientsPage() {
       <ProspectList prospects={prospects.prospects} error={prospects.error} />
       {clients.length === 0 ? (
         <EmptyState
-          title="No clients yet"
+          title="No Clients Yet"
           description="New clients will appear here once they are added."
         />
       ) : (

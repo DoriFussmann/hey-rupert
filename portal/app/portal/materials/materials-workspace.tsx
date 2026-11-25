@@ -212,7 +212,7 @@ export function MaterialsWorkspace({
       {/* Files */}
       <section className="rounded-card border border-border bg-surface">
         <div className="border-b border-border px-lg py-md">
-          <h2 className="text-h4">Pitch deck & files</h2>
+          <h2 className="text-h4">Pitch Deck & Files</h2>
           <p className="mt-xs text-body-sm text-muted">
             {submitted
               ? "Everything you've shared with Rupert. Add an updated deck or anything new; Rupert is notified."

@@ -36,7 +36,7 @@ export function SettingsPanel({
   return (
     <details className={`${cardClass} px-lg py-md`}>
       <summary className="cursor-pointer text-label uppercase tracking-label text-secondary">
-        Quality filters & rules
+        Quality Filters & Rules
       </summary>
       <div className="mt-md grid gap-md md:grid-cols-2">
         <div className="space-y-sm text-body-sm">

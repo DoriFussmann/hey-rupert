@@ -130,7 +130,7 @@ export function ResetPasswordSection({
     <>
       <section className="mt-lg flex flex-wrap items-end justify-between gap-md rounded-card border border-border bg-surface px-lg py-lg">
         <div className="min-w-0 flex-1">
-          <h2 className="text-h4">Login &amp; access</h2>
+          <h2 className="text-h4">Login &amp; Access</h2>
           <AccessStatus access={access} />
         </div>
         <div className="flex flex-wrap gap-sm">

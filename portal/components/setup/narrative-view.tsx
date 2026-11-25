@@ -128,7 +128,7 @@ function MaterialsFeedbackPanel({ feedback }: { feedback: MaterialsFeedback }) {
         {feedback.summary.trim() ? (
           <section>
             <h3 className="text-label uppercase tracking-label text-muted">
-              How Rupert reads your company
+              How Rupert Reads Your Company
             </h3>
             <MarkdownBody content={feedback.summary} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
           </section>
@@ -136,7 +136,7 @@ function MaterialsFeedbackPanel({ feedback }: { feedback: MaterialsFeedback }) {
         {feedback.improvements.trim() ? (
           <section>
             <h3 className="text-label uppercase tracking-label text-muted">
-              What to improve in your materials
+              What to Improve in Your Materials
             </h3>
             <MarkdownBody content={feedback.improvements} emptyLabel="" className="sow-markdown mt-sm max-w-prose" />
           </section>

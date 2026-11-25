@@ -37,7 +37,7 @@ export default async function NudgePage({
     return (
       <>
         {header}
-        <EmptyState title="Not available" description="The service role key is not configured." />
+        <EmptyState title="Not Available" description="The service role key is not configured." />
       </>
     );
   }
@@ -48,7 +48,7 @@ export default async function NudgePage({
     return (
       <>
         {header}
-        <EmptyState title="Clients could not be loaded" description={overview.error} />
+        <EmptyState title="Clients Could Not Be Loaded" description={overview.error} />
       </>
     );
   }
@@ -78,7 +78,7 @@ export default async function NudgePage({
       {detail?.ok ? (
         <NudgeWorkspace key={detail.detail.id} detail={detail.detail} />
       ) : overview.clients.length === 0 ? (
-        <EmptyState title="No active clients" description="Clients appear here once they are added." />
+        <EmptyState title="No Active Clients" description="Clients appear here once they are added." />
       ) : (
         <div className="overflow-x-auto rounded-card border border-border bg-surface">
           <table className="w-full min-w-[720px] text-left text-body-sm">
@@ -86,8 +86,8 @@ export default async function NudgePage({
               <tr className="border-b border-border text-label uppercase tracking-label text-muted">
                 <th scope="col" className="px-md py-sm font-medium">Client</th>
                 <th scope="col" className="px-md py-sm font-medium">Stage</th>
-                <th scope="col" className="px-md py-sm font-medium">Waiting on client</th>
-                <th scope="col" className="px-md py-sm font-medium">Your turn</th>
+                <th scope="col" className="px-md py-sm font-medium">Waiting on Client</th>
+                <th scope="col" className="px-md py-sm font-medium">Your Turn</th>
               </tr>
             </thead>
             <tbody>

@@ -6,10 +6,10 @@ export type ReanalyzeStepId = "brief" | "feedback" | "profile" | "narrative";
 
 /** The steps in the order they run: each one reads the one before. */
 export const REANALYZE_STEPS: { id: ReanalyzeStepId; label: string }[] = [
-  { id: "brief", label: "Intake brief" },
-  { id: "feedback", label: "Materials feedback" },
-  { id: "profile", label: "Company profile" },
-  { id: "narrative", label: "Narrative draft" },
+  { id: "brief", label: "Intake Brief" },
+  { id: "feedback", label: "Materials Feedback" },
+  { id: "profile", label: "Company Profile" },
+  { id: "narrative", label: "Narrative Draft" },
 ];
 
 export type ReanalyzeInput = {

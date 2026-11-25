@@ -93,10 +93,10 @@ function WaterfallTable({ w }: { w: Waterfall }) {
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
             <th className="whitespace-nowrap py-xs pr-md font-medium">Tier</th>
-            <th className={th}>Approachable funds</th>
-            <th className={th}># of contacts</th>
-            <th className={`${th} ${split}`}>Funds in plan</th>
-            <th className={`${th} pr-0`}># of contacts</th>
+            <th className={th}>Approachable Funds</th>
+            <th className={th}># of Contacts</th>
+            <th className={`${th} ${split}`}>Funds in Plan</th>
+            <th className={`${th} pr-0`}># of Contacts</th>
           </tr>
         </thead>
         <tbody>
@@ -145,10 +145,10 @@ function FundTable({ funds, slots }: { funds: PlanFund[]; slots?: Map<string, nu
             <th className="py-xs pr-md font-medium">Investor</th>
             <th className="py-xs pr-md font-medium">Type</th>
             <th className="py-xs pr-md font-medium">Source</th>
-            <th className="py-xs pr-md font-medium">Matched on</th>
-            <th className="py-xs pr-md font-medium">Backed a competitor</th>
-            <th className="py-xs pr-md text-right font-medium">Look-alike</th>
-            <th className="py-xs pr-md text-right font-medium">Sub-sectors</th>
+            <th className="py-xs pr-md font-medium">Matched On</th>
+            <th className="py-xs pr-md font-medium">Backed a Competitor</th>
+            <th className="py-xs pr-md text-right font-medium">Look-Alike</th>
+            <th className="py-xs pr-md text-right font-medium">Sub-Sectors</th>
             <th className="py-xs text-right font-medium">Contacts</th>
           </tr>
         </thead>
@@ -273,7 +273,7 @@ export function ThePlan({
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={saved.counts.plannedContacts} label="Step 5 · The Plan: confirmed (contacts)" />
+            <BigNumber value={saved.counts.plannedContacts} label="Step 5 · The Plan: Confirmed (Contacts)" />
             <p className="text-body-sm text-secondary">
               {n(saved.counts.plannedFunds)} funds, of {n(saved.counts.roster)} on the Roster. {saved.inputs.inboxes} {saved.inputs.inboxes === 1 ? "inbox" : "inboxes"}, {saved.inputs.months}{" "}
               {saved.inputs.months === 1 ? "month" : "months"}, {saved.capacity.emailsPerContact} emails per contact. Confirmed {when(saved.confirmedAt)}
@@ -333,7 +333,7 @@ export function ThePlan({
       </Card>
 
       <Card>
-        <h3 className="text-h4 text-heading">5B. Ranking inside each tier</h3>
+        <h3 className="text-h4 text-heading">5B. Ranking Inside Each Tier</h3>
         <p className="max-w-prose text-body-sm text-secondary">
           1. Backed a competitor at the client&apos;s stage ({state.clientStage || "no stage on the profile"}; Pre-Seed and Seed count as one):{" "}
           {n(state.sameStageSeeds)} of the {n(state.seeds)} competitor investors in the database. 2. Backed a competitor at another stage. 3. The client&apos;s
@@ -398,7 +398,7 @@ export function ThePlan({
         {capacity ? (
           <>
             <div className="mt-md flex flex-wrap items-start justify-between gap-md">
-              <BigNumber value={capacity.contacts} label="Contacts the campaign can reach" />
+              <BigNumber value={capacity.contacts} label="Contacts the Campaign Can Reach" />
               <button
                 type="button"
                 className={primaryButton}

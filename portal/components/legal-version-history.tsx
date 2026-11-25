@@ -81,7 +81,7 @@ export function LegalVersionHistory({
             {previous ? (
               <details className="mt-sm">
                 <summary className="cursor-pointer text-body-sm text-primary">
-                  Changes from version {previous.version} ({changes.length})
+                  Changes from Version {previous.version} ({changes.length})
                 </summary>
                 <div className="mt-sm space-y-xs rounded-md border border-border bg-background p-md text-body-sm">
                   {changes.length === 0 ? <p className="text-muted">No text changes.</p> : null}
@@ -103,7 +103,7 @@ export function LegalVersionHistory({
               </details>
             ) : null}
             <details className="mt-sm">
-              <summary className="cursor-pointer text-body-sm text-primary">Full text</summary>
+              <summary className="cursor-pointer text-body-sm text-primary">Full Text</summary>
               <div className="mt-sm rounded-md border border-border bg-background p-lg">
                 <MarkdownBody content={version.content} emptyLabel="" />
               </div>

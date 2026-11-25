@@ -1662,7 +1662,7 @@ export async function saveIntakeSettings(topics: IntakeTopic[]): Promise<ActionR
   const updatedAt = new Date().toISOString();
   const { error } = await access.supabase.from("form_templates").upsert({
     slug: INTAKE_TOPICS_SLUG,
-    title: "Intake Interviewer topics",
+    title: "Intake Interviewer Topics",
     content: JSON.stringify(cleanTopics),
     updated_at: updatedAt,
   });

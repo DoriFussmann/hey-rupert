@@ -312,7 +312,7 @@ export function AddedFundsReview() {
             <tr>
               <th className="py-xs pr-md font-medium">Fund</th>
               <th className="py-xs pr-md font-medium">Kind</th>
-              <th className="py-xs pr-md font-medium">Found for</th>
+              <th className="py-xs pr-md font-medium">Found For</th>
               <th className="py-xs pr-md text-right font-medium">Contacts</th>
               <th className="py-xs font-medium">Status</th>
             </tr>

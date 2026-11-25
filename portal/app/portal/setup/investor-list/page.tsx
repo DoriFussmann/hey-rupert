@@ -117,7 +117,7 @@ export default async function InvestorListPage() {
         />
       ) : (
         <header>
-          <h1 className="text-h1 text-heading">Your investor list</h1>
+          <h1 className="text-h1 text-heading">Your Investor List</h1>
           <p className="mt-sm text-body text-secondary">
             Rupert is preparing your investor list. You&apos;ll get an email when it is ready to
             review.

@@ -246,7 +246,7 @@ export function ContactCorrections({
     <div className="mb-lg space-y-lg">
       <section className="rounded-card border border-border bg-surface">
         <div className="px-lg py-md">
-          <h2 className="text-h4 text-heading">Contact corrections & flags · {corrections.length.toLocaleString("en-US")}</h2>
+          <h2 className="text-h4 text-heading">Contact Corrections & Flags · {corrections.length.toLocaleString("en-US")}</h2>
           <p className="text-body-sm text-muted">
             Fixes from Email Verification, applied on top of the workbook for every client (they survive new uploads).
             They take effect on each client&apos;s next match run.
@@ -275,7 +275,7 @@ export function ContactCorrections({
       <section className="rounded-card border border-border bg-surface">
         <div className="px-lg py-md">
           <h2 className="text-h4 text-heading">
-            New leads · {openLeads.toLocaleString("en-US")} to add
+            New Leads · {openLeads.toLocaleString("en-US")} to Add
           </h2>
           <p className="text-body-sm text-muted">
             People who moved to another firm. Add them to the next workbook, then mark them added.

@@ -72,7 +72,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{f.summary || "No summary: drafting uses the original. Edit to write one."}</p>
       )}
       <details className="mt-xs">
-        <summary className="cursor-pointer text-body-sm text-primary">What they sent</summary>
+        <summary className="cursor-pointer text-body-sm text-primary">What They Sent</summary>
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{f.original}</p>
       </details>
       {error ? <p className="mt-xs text-body-sm text-error">{error}</p> : null}
@@ -117,7 +117,7 @@ export function ClientFeedbackPanel({ clientId, items }: { clientId: string; ite
       <div className="flex flex-wrap items-center justify-between gap-md border-b border-border px-lg py-md">
         <div>
           <h2 id="client-feedback" className="text-h4 text-heading">
-            Client feedback
+            Client Feedback
           </h2>
           <p className="text-body-sm text-muted">What they told you outside the portal. They see the summaries under What Rupert Knows.</p>
         </div>

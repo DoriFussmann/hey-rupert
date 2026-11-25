@@ -97,7 +97,7 @@ export function IntakeSettingsEditor({
   return (
     <div className="space-y-lg">
       <section className="rounded-card border border-border bg-surface p-lg">
-        <h2 className="text-h4">Rupert&apos;s instructions</h2>
+        <h2 className="text-h4">Rupert&apos;s Instructions</h2>
         <p className="mt-xs text-body-sm text-muted">
           Persona, interview style, and how to open and close are a managed prompt, with every version kept.{" "}
           <Link href="/admin/forms/agents/intake_interviewer" className="text-primary underline hover:text-primary-hover">

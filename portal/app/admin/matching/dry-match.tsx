@@ -297,7 +297,7 @@ export function DryMatch({
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={saved.fundCount} label="Dry Match Short List: confirmed" />
+            <BigNumber value={saved.fundCount} label="Dry Match Short List: Confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(saved.confirmedAt)}
               {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}. Saved for the next steps.
@@ -355,7 +355,7 @@ export function DryMatch({
   return (
     <div className="space-y-md">
       <Card>
-        <BigNumber value={total} label="All funds" />
+        <BigNumber value={total} label="All Funds" />
         <p className="text-body-sm text-secondary">
           {n(data.funds.length)} in the Fund Database + {n(DEBT_ONLY_FUNDS)} debt-only funds (held separately; they drop at Financing, as matching is equity only).
         </p>

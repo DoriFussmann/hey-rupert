@@ -20,12 +20,12 @@ export default async function WarmIntrosPage() {
     <>
       <BackLink href="/portal/setup" label="Setup" />
       <PageHeader
-        title="Your warm intros"
+        title="Your Warm Intros"
         description="The funds you told us you know. They're left out of the email campaign so you can reach them through your own network, which usually works best. Track how each one is going here; Rupert sees it too."
       />
       {funds.length === 0 ? (
         <div className="rounded-card border border-border bg-surface px-lg py-xl">
-          <h2 className="text-h4">No funds marked yet</h2>
+          <h2 className="text-h4">No Funds Marked Yet</h2>
           <p className="mt-sm text-body-sm text-muted">
             On your investor list, mark the funds where you know someone. They&apos;ll show up here instead of getting a cold email.
           </p>

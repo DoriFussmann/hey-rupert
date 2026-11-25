@@ -134,7 +134,7 @@ export function IntakePanel({
       {interview && interview.messages.length > 0 ? (
         <details className="border-t border-border px-lg py-lg">
           <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-            Full transcript ({interview.messages.length} messages)
+            Full Transcript ({interview.messages.length} Messages)
           </summary>
           <ol className="mt-md space-y-md">
             {interview.messages.map((message, index) => (

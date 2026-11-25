@@ -38,7 +38,7 @@ function FirmCard({ firm }: { firm: LookupFirm }) {
           <thead>
             <tr className="border-b border-border text-label uppercase tracking-label text-muted">
               <th className="py-xs pr-md font-medium">Field</th>
-              <th className="px-md py-xs font-medium">Provider value (unchanged)</th>
+              <th className="px-md py-xs font-medium">Provider Value (Unchanged)</th>
               <th className="px-md py-xs font-medium">Canonical</th>
               <th className="py-xs pl-md font-medium">Status</th>
             </tr>
@@ -141,7 +141,7 @@ export function FirmLookup({ sectors, geographies, stages }: { sectors: FilterOp
   return (
     <section aria-labelledby="firm-lookup-title" className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
       <h2 id="firm-lookup-title" className="text-h4 text-heading">
-        Firm lookup
+        Firm Lookup
       </h2>
       <div className="mt-sm grid gap-sm md:grid-cols-[2fr_1fr_1fr_1fr]">
         <label className={labelClass} htmlFor="firm-query">

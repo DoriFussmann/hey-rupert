@@ -31,7 +31,7 @@ export function CoveragePanel({ run }: { run: CoverageRun }) {
     <section aria-labelledby="coverage" className="mb-lg rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-md">
         <h2 id="coverage" className="text-h4 text-heading">
-          Coverage and data quality
+          Coverage and Data Quality
         </h2>
         <p className="mt-xs text-body-sm text-muted">
           {n(report.firms)} firms and {n(report.contacts)} contacts processed at taxonomy revision {run.revision},{" "}
@@ -42,9 +42,9 @@ export function CoveragePanel({ run }: { run: CoverageRun }) {
       </div>
 
       <div className="grid gap-sm px-lg py-md sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Firms with a sector" value={n(report.sector.populated)} hint={`${pct(report.sector.populated, report.firms)} of firms`} />
-        <Stat label="Mapped to a canonical sector" value={n(report.sector.mapped)} hint={`${pct(report.sector.mapped, report.firms)} of firms`} />
-        <Stat label="Two or more sectors" value={n(report.sector.multiCategory)} />
+        <Stat label="Firms with a Sector" value={n(report.sector.populated)} hint={`${pct(report.sector.populated, report.firms)} of firms`} />
+        <Stat label="Mapped to a Canonical Sector" value={n(report.sector.mapped)} hint={`${pct(report.sector.mapped, report.firms)} of firms`} />
+        <Stat label="Two or More Sectors" value={n(report.sector.multiCategory)} />
         <Stat label="Generalists" value={n(report.sector.generalist)} hint="Diversified, or 15+ industries" />
       </div>
 
@@ -56,9 +56,9 @@ export function CoveragePanel({ run }: { run: CoverageRun }) {
               <th className="px-md py-sm text-right font-medium">Populated</th>
               <th className="px-md py-sm text-right font-medium">Normalized</th>
               <th className="px-md py-sm text-right font-medium">Approved</th>
-              <th className="px-md py-sm text-right font-medium">Partly mapped</th>
-              <th className="px-md py-sm text-right font-medium">Not mapped</th>
-              <th className="py-sm pl-md text-right font-medium">Distinct values (mapped / open / ignored / to review)</th>
+              <th className="px-md py-sm text-right font-medium">Partly Mapped</th>
+              <th className="px-md py-sm text-right font-medium">Not Mapped</th>
+              <th className="py-sm pl-md text-right font-medium">Distinct Values (Mapped / Open / Ignored / To Review)</th>
             </tr>
           </thead>
           <tbody>
@@ -90,10 +90,10 @@ export function CoveragePanel({ run }: { run: CoverageRun }) {
       </div>
 
       <div className="grid gap-sm px-lg pb-md sm:grid-cols-2 lg:grid-cols-4">
-        <Stat label="Firms needing review" value={n(report.reviewFirms)} hint="Unmapped, unreviewed or broken values" />
-        <Stat label="Values to review" value={n(report.valuesTotal)} hint={`${n(report.aliases.proposals)} with an AI suggestion`} />
+        <Stat label="Firms Needing Review" value={n(report.reviewFirms)} hint="Unmapped, unreviewed or broken values" />
+        <Stat label="Values to Review" value={n(report.valuesTotal)} hint={`${n(report.aliases.proposals)} with an AI suggestion`} />
         <Stat
-          label="Relationships to review"
+          label="Relationships to Review"
           value={n(report.edges.needsReview)}
           hint={`${n(report.edges.approved)} approved, ${n(report.edges.rejected)} rejected`}
         />
@@ -123,8 +123,8 @@ export function CoveragePanel({ run }: { run: CoverageRun }) {
           </p>
           <div className="mt-sm grid gap-md md:grid-cols-2">
             {[
-              { title: "Same name", groups: report.duplicates.sameName, total: report.duplicates.sameNameCount },
-              { title: "Same website", groups: report.duplicates.sameWebsite, total: report.duplicates.sameWebsiteCount },
+              { title: "Same Name", groups: report.duplicates.sameName, total: report.duplicates.sameNameCount },
+              { title: "Same Website", groups: report.duplicates.sameWebsite, total: report.duplicates.sameWebsiteCount },
             ].map((block) => (
               <div key={block.title}>
                 <p className="text-label uppercase tracking-label text-muted">{block.title}</p>
@@ -154,7 +154,7 @@ export function CoveragePanel({ run }: { run: CoverageRun }) {
         {report.reviewSample.length > 0 ? (
           <details>
             <summary className="cursor-pointer text-heading">
-              Firms needing review (first {n(report.reviewSample.length)} of {n(report.reviewFirms)})
+              Firms Needing Review (First {n(report.reviewSample.length)} of {n(report.reviewFirms)})
             </summary>
             <ul className="mt-xs grid gap-xs text-secondary sm:grid-cols-2">
               {report.reviewSample.map((firm) => (

@@ -314,7 +314,7 @@ export function DocumentStep({
       <section className="border-t border-border px-lg py-md">
         <div className="flex flex-wrap items-center justify-between gap-sm">
           <div>
-            <h4 className="text-h4">Email to the client</h4>
+            <h4 className="text-h4">Email to the Client</h4>
             <p className="mt-xs text-body-sm text-muted">
               {to ? `To ${to}. ` : ""}Goes out when you push. Edit anything before it goes.
             </p>
@@ -489,7 +489,7 @@ export function DocumentStep({
       {row && history.length > 0 ? (
         <details className="border-t border-border px-lg py-md">
           <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-            Send log ({history.length})
+            Send Log ({history.length})
           </summary>
           <div className="mt-sm overflow-x-auto">
             <table className="w-full text-left text-body-sm">

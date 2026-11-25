@@ -189,7 +189,7 @@ export function ListAuditPanel({
       <summary className="flex min-h-[44px] cursor-pointer list-none items-center justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">
         <span className="min-w-0 flex-1">
           <span id="list-audit-title" className="block text-heading">
-            Founder&apos;s-eye audit
+            Founder&apos;s-Eye Audit
           </span>
           <span className={`mt-xs block text-body-sm ${progress?.stale ? "text-warning" : "text-muted"}`} aria-live="polite">
             {status}

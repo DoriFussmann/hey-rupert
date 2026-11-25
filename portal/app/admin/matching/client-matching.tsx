@@ -132,7 +132,7 @@ async function HistoryTab({ clientId, runId }: { clientId: string; runId: string
   return (
     <>
       {runs.value.since ? <p className="mb-md text-body-sm text-muted">Test client: runs since it was last started clean ({when(runs.value.since)}).</p> : null}
-      <Section title="Saved runs" meta={`${tierRuns.length}`}>
+      <Section title="Saved Runs" meta={`${tierRuns.length}`}>
         <ul className="space-y-xs text-body-sm">
           {tierRuns.map((run) => (
             <li key={run.id}>
@@ -287,7 +287,7 @@ export async function ClientMatching({
             header={run.header}
             rows={run.rows}
             complete={run.complete}
-            title={planned ? "Whole run" : "Counts"}
+            title={planned ? "Whole Run" : "Counts"}
             footnote={`Ran ${when(run.header.ranAt)} by ${run.header.ranBy ?? "unknown"}. Saved permanently: exports read it; Push to client sends its confirmed campaign plan.`}
           />
           {planned ? null : <TierColumns rows={run.rows} review={{ clientId: client.id, reviews: reviewMap }} websites={websites} />}

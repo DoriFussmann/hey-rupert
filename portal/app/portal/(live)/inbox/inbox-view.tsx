@@ -22,7 +22,7 @@ export function InboxView({ replies, readOnly }: { replies: ClientReply[]; readO
   if (items.length === 0) {
     return (
       <div className="rounded-card border border-border bg-surface px-lg py-xl">
-        <h2 className="text-h4">No replies yet</h2>
+        <h2 className="text-h4">No Replies Yet</h2>
         <p className="mt-sm text-body-sm text-muted">Investor replies appear here once Rupert passes them on.</p>
       </div>
     );

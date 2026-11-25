@@ -165,7 +165,7 @@ export function ClientEmails({
       ) : null}
 
       <div className="space-y-md border-b border-border px-lg py-lg">
-        <h3 className="text-h4">Send an email</h3>
+        <h3 className="text-h4">Send an Email</h3>
         {!address ? (
           <p className="text-body-sm text-error">
             This client has no email address. Add one in the client details.
@@ -227,7 +227,7 @@ export function ClientEmails({
       </div>
 
       <div className="px-lg py-lg">
-        <h3 className="text-h4">Email history</h3>
+        <h3 className="text-h4">Email History</h3>
         {historyError ? (
           <p className="mt-sm text-body-sm text-error">{historyError}</p>
         ) : history.length === 0 ? (

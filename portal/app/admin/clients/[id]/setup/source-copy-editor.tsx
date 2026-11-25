@@ -139,7 +139,7 @@ function Company({ company }: { company: CompanyInfo }) {
 function Narrative({ narrative, company }: { narrative: CopyNarrative; company: CompanyInfo }) {
   return (
     <aside
-      aria-label="Company and narrative"
+      aria-label="Company and Narrative"
       className="mb-lg rounded-md border border-border bg-background px-md py-md lg:sticky lg:top-[4.5rem] lg:mb-0 lg:max-h-[calc(100vh-5.5rem)] lg:self-start lg:overflow-y-auto"
     >
       <Company company={company} />

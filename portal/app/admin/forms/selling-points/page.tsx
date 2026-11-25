@@ -12,7 +12,7 @@ export default async function SellingPointsPage() {
   return (
     <>
       <PageHeader
-        title="Selling points"
+        title="Selling Points"
         description="The list Rupert scores for every raise in the Company Brief. He picks the three strongest for the narrative. The guidance says what each point means. Changes apply the next time you score."
       />
       <SellingPointsEditor initialPoints={points} defaultPoints={SELLING_POINTS} />

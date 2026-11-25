@@ -642,7 +642,7 @@ export function IntakeExperience({
         <CoverageIcon coverage={hasMaterials || completed ? "covered" : "missing"} />
         <div className="min-w-0 flex-1">
           <h2 id="intake-materials-title" className="text-h4">
-            Company materials
+            Company Materials
           </h2>
           {materials.files.length > 0 || materials.noDeck ? (
             <p className="mt-xs text-body-sm text-muted">
@@ -888,7 +888,7 @@ export function IntakeExperience({
             <RupertAvatar size={56} />
             <div>
               <h2 className="text-h4">
-                Thank you{firstName ? `, ${firstName}` : ""}.
+                Thank You{firstName ? `, ${firstName}` : ""}.
               </h2>
               <p className="mt-xs text-body-sm text-muted">
                 Intake confirmed

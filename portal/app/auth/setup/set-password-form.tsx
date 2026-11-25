@@ -64,7 +64,7 @@ export function SetPasswordForm({
 
   return (
     <form className="bp-fields" onSubmit={onSubmit} noValidate>
-      <h1 className="bp-card__title">Set your password</h1>
+      <h1 className="bp-card__title">Set Your Password</h1>
 
       <input
         className="bp-input"

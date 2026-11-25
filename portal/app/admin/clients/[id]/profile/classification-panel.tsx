@@ -345,8 +345,8 @@ export function ClassificationPanel({
       ) : null}
 
       <div className="grid gap-md border-b border-border px-lg py-md md:grid-cols-3">
-        <Fact label="What the company does" fact={profile.business.product} />
-        <Fact label="Who pays" fact={profile.business.customers} />
+        <Fact label="What the Company Does" fact={profile.business.product} />
+        <Fact label="Who Pays" fact={profile.business.customers} />
         <div>
           <p className={labelClass}>Not the company&apos;s sub-sector</p>
           {profile.business.notCompanySectors.length ? (
@@ -365,7 +365,7 @@ export function ClassificationPanel({
 
       <div className="space-y-sm px-lg py-md">
         <div className="flex flex-wrap items-center justify-between gap-sm">
-          <h3 className="text-body text-heading">Sub-sectors</h3>
+          <h3 className="text-body text-heading">Sub-Sectors</h3>
           <button type="button" className={smallButton} onClick={() => setEditing((open) => !open)}>
             {editing ? "Close" : "Change sub-sectors"}
           </button>
@@ -376,7 +376,7 @@ export function ClassificationPanel({
           {profile.sectors.map((sector, i) => (
             <ClassCard
               key={`${sector.nodeId}-${sector.status}-${sector.source}`}
-              title={sector.role === "primary" ? "Primary sub-sector" : `Secondary sub-sector ${profile.sectors.slice(0, i).filter((s) => s.role !== "primary").length + 1}`}
+              title={sector.role === "primary" ? "Primary Sub-Sector" : `Secondary sub-sector ${profile.sectors.slice(0, i).filter((s) => s.role !== "primary").length + 1}`}
               note={sector.role === "primary" ? choices.find((c) => c.id === sector.nodeId)?.sector : undefined}
               item={sector}
               clientId={clientId}
@@ -388,14 +388,14 @@ export function ClassificationPanel({
           <p className="text-body-sm text-warning">Not usable by the current matching engine yet: {unusable.join(", ")}.</p>
         ) : null}
 
-        <h3 className="pt-sm text-body text-heading">Stage and headquarters</h3>
+        <h3 className="pt-sm text-body text-heading">Stage and Headquarters</h3>
         <div className="grid gap-sm md:grid-cols-3">
           {profile.stage ? <ClassCard key={`stage-${profile.stage.status}`} title="Stage" item={profile.stage} clientId={clientId} path="stage" /> : null}
           {profile.hq.country ? (
-            <ClassCard key={`country-${profile.hq.country.status}`} title="HQ country" item={profile.hq.country} clientId={clientId} path="hq_country" />
+            <ClassCard key={`country-${profile.hq.country.status}`} title="HQ Country" item={profile.hq.country} clientId={clientId} path="hq_country" />
           ) : null}
           {profile.hq.state ? (
-            <ClassCard key={`state-${profile.hq.state.status}`} title="HQ state" item={profile.hq.state} clientId={clientId} path="hq_state" />
+            <ClassCard key={`state-${profile.hq.state.status}`} title="HQ State" item={profile.hq.state} clientId={clientId} path="hq_state" />
           ) : null}
         </div>
         <p className="text-body-sm text-secondary">
@@ -408,7 +408,7 @@ export function ClassificationPanel({
 
       {versions.length > 0 ? (
         <details className="border-t border-border px-lg py-md">
-          <summary className="cursor-pointer text-body-sm text-heading">Version history ({versions.length})</summary>
+          <summary className="cursor-pointer text-body-sm text-heading">Version History ({versions.length})</summary>
           <ul className="mt-sm space-y-xs text-body-sm text-secondary">
             {versions.map((v) => (
               <li key={v.version}>

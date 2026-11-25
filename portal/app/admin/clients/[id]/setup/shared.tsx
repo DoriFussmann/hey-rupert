@@ -151,7 +151,7 @@ export function EarlierRounds({ row }: { row: SetupStepState | null }) {
   return (
     <details className="mx-lg mt-md text-body-sm">
       <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-        Earlier rounds ({earlier.length})
+        Earlier Rounds ({earlier.length})
       </summary>
       <ol className="mt-sm space-y-sm">
         {earlier.map((entry) => (
@@ -331,7 +331,7 @@ function FeedbackBody({ clientId, question }: { clientId: string; question: Setu
       )}
       {error ? <p className="text-body-sm text-error">{error}</p> : null}
       <details>
-        <summary className="cursor-pointer text-body-sm text-primary">What they sent</summary>
+        <summary className="cursor-pointer text-body-sm text-primary">What They Sent</summary>
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{question.question}</p>
       </details>
     </div>

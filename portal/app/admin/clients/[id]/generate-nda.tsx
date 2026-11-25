@@ -212,15 +212,15 @@ export function GenerateNda({
 
       {activeSend?.signature ? (
         <dl className="grid gap-x-lg gap-y-sm border-t border-border px-lg py-md text-body-sm sm:grid-cols-[auto_1fr]">
-          <dt className="text-muted">Signed by</dt>
+          <dt className="text-muted">Signed By</dt>
           <dd className="text-heading">
             {activeSend.signature.signer_name},{" "}
             {activeSend.signature.signer_title} ·{" "}
             {activeSend.signature.company_name}
           </dd>
-          <dt className="text-muted">Signer email</dt>
+          <dt className="text-muted">Signer Email</dt>
           <dd className="text-heading">{activeSend.signature.signer_email}</dd>
-          <dt className="text-muted">Signed at</dt>
+          <dt className="text-muted">Signed At</dt>
           <dd className="text-heading">
             {formatDateAtTime(activeSend.signature.signed_at)}
             {activeSend.signed_ip ? (
@@ -232,7 +232,7 @@ export function GenerateNda({
 
       <div className="flex flex-wrap items-end justify-between gap-md border-t border-border px-lg py-md">
         <div>
-          <h3 className="text-h4">Send log</h3>
+          <h3 className="text-h4">Send Log</h3>
           <p className="mt-xs text-body-sm text-muted">
             Archiving the active NDA removes it from the portal.
           </p>
@@ -316,7 +316,7 @@ export function GenerateNda({
           <div className="py-md">
             <div className="mb-md flex flex-wrap items-center justify-between gap-md">
               <div>
-                <h3 className="text-h4">NDA to push — review before sending</h3>
+                <h3 className="text-h4">NDA to Push — Review Before Sending</h3>
                 <p className="mt-xs text-body-sm text-muted">
                   This is exactly what the client will see and sign. Edits apply to this
                   client only; the Forms template is not changed. [CLIENT_EMAIL] and
@@ -353,8 +353,8 @@ export function GenerateNda({
           <Disclosure
             title={
               activeSend.signature
-                ? "NDA text — signed copy"
-                : "NDA text — sent to client"
+                ? "NDA Text — Signed Copy"
+                : "NDA Text — Sent to Client"
             }
           >
             <div className="py-md">

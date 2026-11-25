@@ -60,7 +60,7 @@ function ConfirmedPlan({ clientId, plan, rebuilds }: { clientId: string; plan: S
       </div>
       {allocation.removed.length > 0 ? (
         <details className="mt-sm">
-          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Removed from the campaign ({n(allocation.removed.length)})</summary>
+          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Removed from the Campaign ({n(allocation.removed.length)})</summary>
           <ul className="mt-xs space-y-xs text-body-sm text-secondary">
             {allocation.removed.map((firm) => (
               <li key={firm.firmId}>
@@ -77,7 +77,7 @@ function ConfirmedPlan({ clientId, plan, rebuilds }: { clientId: string; plan: S
 
 function VersionList({ plans, runId }: { plans: SavedPlan[]; runId: string | null }) {
   return (
-    <Section title="Plan versions" meta={`${plans.length}`}>
+    <Section title="Plan Versions" meta={`${plans.length}`}>
       {plans.length === 0 ? (
         <p className="text-body-sm text-muted">None yet.</p>
       ) : (

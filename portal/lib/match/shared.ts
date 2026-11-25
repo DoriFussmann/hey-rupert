@@ -31,8 +31,8 @@ export const MATCH_TAB_LABEL: Record<MatchTab, string> = {
   plan: "Plan",
   tiers: "Tiers",
   verify: "Verify Emails",
-  outside: "Outside the tiers",
-  near: "Near misses",
+  outside: "Outside the Tiers",
+  near: "Near Misses",
   history: "History",
 };
 

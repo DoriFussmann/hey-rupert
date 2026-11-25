@@ -62,7 +62,7 @@ export function ClearNotificationsButton() {
             className="relative w-full max-w-md rounded-card border border-border bg-surface p-lg"
           >
             <h2 id="clear-notifications-title" className="text-h3">
-              Clear all notifications?
+              Clear All Notifications?
             </h2>
             <p className="mt-sm text-body-sm text-muted">
               This removes every notification from this list. Emails already

@@ -88,7 +88,7 @@ export function FilesLinksEditor({
 
   return (
     <section>
-      <h4 className="text-h4">Files & links</h4>
+      <h4 className="text-h4">Files & Links</h4>
       <p className="mt-xs text-body-sm text-muted">
         Shown to the client in their portal with this version.
       </p>

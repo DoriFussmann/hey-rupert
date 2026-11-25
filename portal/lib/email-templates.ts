@@ -270,7 +270,7 @@ export const QUESTION_ANSWERED_KEY = "client:question_answered";
 const QUESTION_ANSWERED_TEMPLATE: EmailTemplateDefinition = {
   key: QUESTION_ANSWERED_KEY,
   group: "client",
-  title: "Answer to your question",
+  title: "Answer to Your Question",
   trigger:
     "When you answer a client's question on the Outreach Narrative, Investor List or Email Copy. It goes even when automatic emails are paused, because you send it yourself.",
   subject: "Rupert answered your question",
@@ -288,7 +288,7 @@ const QUESTION_ANSWERED_TEMPLATE: EmailTemplateDefinition = {
 const WELCOME_TEMPLATE: EmailTemplateDefinition = {
   key: WELCOME_EMAIL_KEY,
   group: "client",
-  title: "Welcome email (new client)",
+  title: "Welcome Email (New Client)",
   trigger:
     "Drafted when you add a client, and again from Welcome Email on the client page. Edit it there, then Send to client (from the portal's address, never tracked) or copy it and send it yourself.",
   subject: "Your Rupert Portal & Statement of Work",
@@ -323,7 +323,7 @@ export const VIEWER_WELCOME_KEY = "viewer_welcome";
 const VIEWER_WELCOME_TEMPLATE: EmailTemplateDefinition = {
   key: VIEWER_WELCOME_KEY,
   group: "client",
-  title: "Welcome email (viewer)",
+  title: "Welcome Email (Viewer)",
   trigger:
     "When you click Send Welcome Email for a viewer on the client page (Client details & account → Viewers). {first_name} and {login_email} are the viewer's; {company} is the client. It goes even when automatic emails are paused, because you send it yourself.",
   subject: "You've been added to {company}'s Rupert portal",
@@ -431,7 +431,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   {
     key: "client:email_copy_ready",
     group: "client",
-    title: "Outreach emails ready",
+    title: "Outreach Emails Ready",
     trigger:
       "Fills Draft Email under Email Copy when Claude is not set up. You review and edit it, then it goes with Push to Client Portal & Send. When Claude drafts it, the 30-minute call offer is added the same way.",
     subject: "Your outreach emails are ready — you're up",
@@ -451,7 +451,7 @@ const CLIENT_TEMPLATES: EmailTemplateDefinition[] = [
   {
     key: "client:go_live_ready",
     group: "client",
-    title: "Ready to go live",
+    title: "Ready to Go Live",
     trigger:
       "Fills the email under Go Live when you send the launch package with the invoice link. You review and edit it, then it goes with Send launch package.",
     subject: "Your investor campaign is ready — you're up",
@@ -573,7 +573,7 @@ const ADMIN_TEMPLATES: EmailTemplateDefinition[] = [
 const REMINDER_TEMPLATE: EmailTemplateDefinition = {
   key: "reminder",
   group: "reminder",
-  title: "Reminder email",
+  title: "Reminder Email",
   trigger:
     "Sent on the schedule below while a step waits on the client. Several waiting steps are combined into one email.",
   subject: "Reminder: {task_summary} — you're up",

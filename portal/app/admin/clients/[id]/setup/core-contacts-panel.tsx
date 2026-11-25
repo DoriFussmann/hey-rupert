@@ -352,7 +352,7 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
   return (
     <section id="setup-core-contacts" className="mt-lg rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-lg">
-        <h3 className="text-h4">Core contacts</h3>
+        <h3 className="text-h4">Core Contacts</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
           {workspace ? `${workspace.perFirm} contact${workspace.perFirm === 1 ? "" : "s"}` : "The contacts"} per Core fund (from
           the campaign plan) get their own emails, written from the Core template of the fund&apos;s type and a few

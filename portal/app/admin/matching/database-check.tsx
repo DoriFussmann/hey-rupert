@@ -152,7 +152,7 @@ function SuggestionBlock({ row, busy, onDecide }: { row: CheckRow; busy: boolean
         <span className={CONFIDENCE_TONE[s.confidence]}>{s.confidence} confidence</span>
         {s.link === "broken" ? <span className="text-error">site didn&apos;t open</span> : null}
         {s.portfolioUrl ? <Site url={s.portfolioUrl} label="Portfolio" /> : <span className="text-muted">portfolio not found</span>}
-        {s.foundIn ? <Site url={s.foundIn} label="Found in" /> : null}
+        {s.foundIn ? <Site url={s.foundIn} label="Found In" /> : null}
       </p>
       {s.note ? <p className="mt-xs text-body-sm text-secondary">{s.note}</p> : null}
       <div className="mt-sm flex flex-wrap gap-xs">
@@ -536,9 +536,9 @@ function ConfirmList({ rows, busy, onSubmit }: { rows: CheckRow[]; busy: boolean
       <table className="mt-sm w-full text-left text-body-sm">
         <thead className="text-label uppercase tracking-label text-muted">
           <tr>
-            <th className="py-xs pr-md font-medium">Investor, as the research names it</th>
-            <th className="py-xs pr-md font-medium">Suggested website</th>
-            <th className="py-xs font-medium">Your answer</th>
+            <th className="py-xs pr-md font-medium">Investor, as the Research Names It</th>
+            <th className="py-xs pr-md font-medium">Suggested Website</th>
+            <th className="py-xs font-medium">Your Answer</th>
           </tr>
         </thead>
         <tbody>
@@ -685,8 +685,8 @@ function DecisionQueue({
     <thead className="text-label uppercase tracking-label text-muted">
       <tr>
         <th className="py-xs pr-md font-medium">Investor</th>
-        <th className="py-xs pr-md font-medium">Why it isn&apos;t in the shortlist</th>
-        <th className="py-xs font-medium">Your answer</th>
+        <th className="py-xs pr-md font-medium">Why It Isn&apos;t in the Shortlist</th>
+        <th className="py-xs font-medium">Your Answer</th>
       </tr>
     </thead>
   );
@@ -860,7 +860,7 @@ function DecisionSummary({
           <div className="min-w-0 flex-1">
             <p className="text-label uppercase tracking-label text-muted">In the database, not in the shortlist</p>
             <h4 className="text-h3 text-heading">
-              What to do with {rows.length === 1 ? "this fund" : `these ${n(rows.length)} funds`}
+              What to Do with {rows.length === 1 ? "this fund" : `these ${n(rows.length)} funds`}
             </h4>
             <p className="max-w-prose text-body-sm text-secondary">
               Grouped by the Step 1 filter that removed them. Every group has a default. Decide a whole group on its row, or click a row to open its funds beneath it and decide one by one.
@@ -891,12 +891,12 @@ function DecisionSummary({
         <table className="w-full min-w-[820px] text-left text-body-sm">
           <thead className="border-b border-border text-label uppercase tracking-label text-muted">
             <tr>
-              <th className={headCell}>Why it was removed</th>
+              <th className={headCell}>Why It Was Removed</th>
               <th className={`${headCell} text-right`}>Funds</th>
-              <th className={`${headCell} text-right`}>Bring back</th>
-              <th className={`${headCell} text-right`}>Leave out</th>
+              <th className={`${headCell} text-right`}>Bring Back</th>
+              <th className={`${headCell} text-right`}>Leave Out</th>
               <th className={headCell}>Status</th>
-              <th className={`${headCell} text-right`}>Decide for the group</th>
+              <th className={`${headCell} text-right`}>Decide for the Group</th>
             </tr>
           </thead>
           <tbody>
@@ -1041,7 +1041,7 @@ function ReviewAndConfirm({
     <section className="mt-xl border-t border-border pt-md">
       <div className="flex items-start justify-between gap-md">
         <div className="min-w-0 flex-1">
-          <h4 className="text-h4 text-heading">Your decisions</h4>
+          <h4 className="text-h4 text-heading">Your Decisions</h4>
           <p className="text-body-sm text-muted">Newest first. Undo puts an investor back to its automatic match.</p>
         </div>
         {locked ? (
@@ -1071,7 +1071,7 @@ function ReviewAndConfirm({
               <th className="py-xs pr-md font-medium">When</th>
               <th className="py-xs pr-md font-medium">Investor</th>
               <th className="py-xs pr-md font-medium">Decision</th>
-              <th className="py-xs pr-md font-medium">Now in</th>
+              <th className="py-xs pr-md font-medium">Now In</th>
               <th className="py-xs font-medium" />
             </tr>
           </thead>
@@ -1216,7 +1216,7 @@ function LookAlikePanel({ clientId }: { clientId: string }) {
     <Card>
       <button type="button" aria-expanded={open} onClick={() => setOpen(!open)} className="flex w-full items-center justify-between gap-md text-left">
         <span>
-          <span className="text-h4 text-heading">Look-alike funds</span>
+          <span className="text-h4 text-heading">Look-Alike Funds</span>
           <span className="ml-sm text-label uppercase tracking-label text-muted">Preview</span>
           <span className="block text-body-sm text-muted">
             Shortlist funds that look like the funds that backed the competitors (by stated sectors). For ranking later; changes nothing.
@@ -1240,9 +1240,9 @@ function LookAlikePanel({ clientId }: { clientId: string }) {
                 <tr>
                   <th className="py-xs pr-md font-medium">#</th>
                   <th className="py-xs pr-md font-medium">Fund</th>
-                  <th className="py-xs pr-md text-right font-medium">Look-alike</th>
-                  <th className="py-xs pr-md font-medium">Shares with the profile</th>
-                  <th className="py-xs text-right font-medium">Sub-sectors listed</th>
+                  <th className="py-xs pr-md text-right font-medium">Look-Alike</th>
+                  <th className="py-xs pr-md font-medium">Shares with the Profile</th>
+                  <th className="py-xs text-right font-medium">Sub-Sectors Listed</th>
                 </tr>
               </thead>
               <tbody>
@@ -1885,7 +1885,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   if (!check) {
     return (
       <Card>
-        <h3 className="text-h4 text-heading">Step {T.step}C: Check against the fund database</h3>
+        <h3 className="text-h4 text-heading">Step {T.step}C: Check Against the Fund Database</h3>
         {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : <p className="mt-sm text-body-sm text-muted">Checking every investor…</p>}
       </Card>
     );
@@ -1927,7 +1927,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   const details = (
     <Card>
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <h3 className="text-h4 text-heading">Step {T.step}C: Check against the fund database</h3>
+        <h3 className="text-h4 text-heading">Step {T.step}C: Check Against the Fund Database</h3>
         <p className="text-body-sm text-muted">
           {n(check.rows.length)} investors · Step 1 list confirmed {new Date(check.dryConfirmedAt).toLocaleDateString("en-US", { dateStyle: "medium" })}
         </p>
@@ -1938,7 +1938,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
           <table className="w-full min-w-[680px] text-left text-body-sm">
             <thead className="border-b border-border bg-background text-label uppercase tracking-label text-muted">
               <tr>
-                <th className={headCell}>Where each investor stands</th>
+                <th className={headCell}>Where Each Investor Stands</th>
                 <th className={`${headCell} text-right`}>Investors</th>
                 <th className={headCell}>Share</th>
                 <th className={headCell}>Status</th>

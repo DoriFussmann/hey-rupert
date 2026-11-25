@@ -3,7 +3,7 @@ import Link from "next/link";
 export function SetupUnavailable({ message }: { message: string }) {
   return (
     <div className="bp-fields">
-      <h1 className="bp-card__title">Set your password</h1>
+      <h1 className="bp-card__title">Set Your Password</h1>
       <p className="bp-text" role="alert">
         {message}
       </p>

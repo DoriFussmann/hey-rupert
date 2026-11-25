@@ -168,7 +168,7 @@ function SetupPanel({
       </p>
 
       <fieldset className="mt-md">
-        <legend className={labelClass}>Contacts at each fund</legend>
+        <legend className={labelClass}>Contacts at Each Fund</legend>
         <div className="mt-sm flex flex-wrap gap-md text-body-sm text-heading">
           {VERIFY_MODES.map((value) => (
             <label key={value} className="flex items-center gap-xs">
@@ -214,10 +214,10 @@ function SetupPanel({
       </div>
 
       <div className="mt-md grid gap-sm sm:grid-cols-2 lg:grid-cols-4">
-        <Fact label="To check" value={n(toCheck)} hint={`${n(batches)} batch${batches === 1 ? "" : "es"} of ${VERIFY_BATCH_SIZE}`} />
+        <Fact label="To Check" value={n(toCheck)} hint={`${n(batches)} batch${batches === 1 ? "" : "es"} of ${VERIFY_BATCH_SIZE}`} />
         <Fact label="Reused" value={n(counted.reused)} hint={`Checked in the last ${VERIFY_FRESH_DAYS} days, no cost`} />
         <Fact
-          label="Estimated cost"
+          label="Estimated Cost"
           value={formatUsd(toCheck * estimate.usdPerContact)}
           hint={
             estimate.measured
@@ -226,7 +226,7 @@ function SetupPanel({
           }
         />
         <Fact
-          label="Hunter credits"
+          label="Hunter Credits"
           value={`~${n(toCheck)}`}
           hint="From your Hunter plan: 1 per contact, 2 when a replacement email is looked up"
         />
@@ -251,7 +251,7 @@ function SetupPanel({
 
       {flagged.length > 0 ? (
         <div className="mt-md">
-          <h3 className="text-h4 text-heading">Decided before · {n(flagged.length)}</h3>
+          <h3 className="text-h4 text-heading">Decided Before · {n(flagged.length)}</h3>
           <p className="text-body-sm text-muted">
             These people were removed for another client. Decide now and skip the search, or check them again.
           </p>
@@ -571,7 +571,7 @@ export function VerifyWorkspace({
         <FinalSummary
           key={`paused-${run.id}`}
           clientId={clientId}
-          title="Needs action so far · run paused"
+          title="Needs Action So Far · Run Paused"
           results={allResults.filter((result) => result.status)}
           stats={run.stats}
           onUpdated={applyUpdates}
@@ -607,7 +607,7 @@ export function VerifyWorkspace({
         mode === "done" ? (
           <details className={`${cardClass} px-lg py-md`}>
             <summary className="cursor-pointer text-label uppercase tracking-label text-secondary">
-              Batch summaries ({n(records.length)})
+              Batch Summaries ({n(records.length)})
             </summary>
             <div className="mt-md space-y-sm">
               {records.map((record) => (

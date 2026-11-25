@@ -52,7 +52,7 @@ function Attention({ items }: { items: { label: string; count: number; href: str
   return (
     <section aria-labelledby="attention" className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
       <h2 id="attention" className="text-h4 text-heading">
-        Needs attention
+        Needs Attention
       </h2>
       {open.length === 0 ? (
         <p className="mt-xs text-body-sm text-success">Nothing waiting.</p>
@@ -138,10 +138,10 @@ export default async function TaxonomyPage() {
   const unmapped = index.taxonomy.aliases.filter((alias) => alias.state === "unmapped").length;
   const valuesToReview = index.taxonomy.aliases.filter((alias) => alias.state === "unmapped" || alias.review === "needs_review").length;
   const attention = [
-    { label: "Values to review", count: valuesToReview + unregistered, href: "#values", hint: unregistered > 0 ? `${n(unregistered)} new: click Classify new data` : "Accept or fix each mapping" },
-    { label: "Sector links to review", count: index.taxonomy.edges.filter((edge) => edge.review === "needs_review").length, href: "#relationships", hint: "Only approved links place a fund" },
-    { label: "Duplicate firms to decide", count: undecided, href: "/admin/taxonomy/duplicates", hint: "Shown once only after a decision" },
-    { label: "Fund-of-funds exceptions", count: exceptions.ok ? Array.from(exceptions.value.values()).filter((item) => item.status === "needs_review").length : 0, href: "#fund-of-funds", hint: "Awaiting review" },
+    { label: "Values to Review", count: valuesToReview + unregistered, href: "#values", hint: unregistered > 0 ? `${n(unregistered)} new: click Classify new data` : "Accept or fix each mapping" },
+    { label: "Sector Links to Review", count: index.taxonomy.edges.filter((edge) => edge.review === "needs_review").length, href: "#relationships", hint: "Only approved links place a fund" },
+    { label: "Duplicate Firms to Decide", count: undecided, href: "/admin/taxonomy/duplicates", hint: "Shown once only after a decision" },
+    { label: "Fund-of-Funds Exceptions", count: exceptions.ok ? Array.from(exceptions.value.values()).filter((item) => item.status === "needs_review").length : 0, href: "#fund-of-funds", hint: "Awaiting review" },
   ];
 
   return (
@@ -172,16 +172,16 @@ export default async function TaxonomyPage() {
       <Attention items={attention} />
       <FirmLookup sectors={options(index, "sector")} geographies={options(index, "geography")} stages={options(index, "stage")} />
 
-      <Disclosure id="values" title="Value mappings" meta="Provider values and their canonical categories" defaultOpen>
+      <Disclosure id="values" title="Value Mappings" meta="Provider values and their canonical categories" defaultOpen>
         <ValueReview values={values} nodes={index.taxonomy.nodes} />
       </Disclosure>
-      <Disclosure id="relationships" title="Sector relationships" meta="The links that decide the tiers">
+      <Disclosure id="relationships" title="Sector Relationships" meta="The links that decide the tiers">
         <RelationshipReview edges={index.taxonomy.edges} nodes={index.taxonomy.nodes} />
       </Disclosure>
       <Disclosure id="categories" title="Categories" meta={`${index.taxonomy.nodes.length} canonical categories`}>
         <CategoryBrowser nodes={index.taxonomy.nodes} aliases={index.taxonomy.aliases} kinds={NODE_KINDS} />
       </Disclosure>
-      <Disclosure id="duplicates" title="Possible duplicate firms" meta="Shown once in matching only when an admin decides">
+      <Disclosure id="duplicates" title="Possible Duplicate Firms" meta="Shown once in matching only when an admin decides">
         {dupes ? (
           <>
             <table className="w-full max-w-2xl text-left text-body-sm">
@@ -205,10 +205,10 @@ export default async function TaxonomyPage() {
           <p className="text-body-sm text-muted">No live Fund Database.</p>
         )}
       </Disclosure>
-      <Disclosure id="fund-of-funds" title="Fund-of-funds exceptions" meta="Funds whose only financing is fund of funds">
+      <Disclosure id="fund-of-funds" title="Fund-of-Funds Exceptions" meta="Funds whose only financing is fund of funds">
         {exceptions.ok ? <FofPanel items={fofItems} /> : <Alert>{exceptions.error}</Alert>}
       </Disclosure>
-      <Disclosure id="changes" title="Change log" meta="Latest 50 changes">
+      <Disclosure id="changes" title="Change Log" meta="Latest 50 changes">
         {changes.ok ? <ChangeLog changes={changes.value} /> : <Alert>{changes.error}</Alert>}
       </Disclosure>
     </>
