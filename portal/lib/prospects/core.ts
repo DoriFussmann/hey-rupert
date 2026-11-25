@@ -469,7 +469,6 @@ const roundLine = (r: BriefRound) => [r.round, r.amount, r.date].filter(Boolean)
 /** The email that lands 30 minutes before the call. */
 export function prepEmail(prospect: ProspectForEmail, call: CallForEmail, pageUrl: string): EmailParts {
   const b = prospect.brief;
-  const m = prospect.match;
   const company = prospect.companyName || b?.company.website || "their company";
   const raise = [b?.raise.stage, b?.raise.amount].filter(Boolean).join(", ");
   const when = formatWhen(call.start, call.end, call.timeZone);
@@ -493,13 +492,6 @@ export function prepEmail(prospect: ProspectForEmail, call: CallForEmail, pageUr
   } else {
     lines.push(prospect.briefError ? `No brief: ${prospect.briefError}` : "The brief isn't ready.", "");
   }
-  const missing = estimateMissing(m);
-  if (estimateReady(m)) {
-    lines.push("INVESTOR FIT (FIRST ESTIMATE)", `About ${m.count.toLocaleString("en-US")} of ${m.total.toLocaleString("en-US")} funds: ${filtersLine(m)}`);
-    lines.push(...m.examples.map((f) => `- ${f.name}${f.type ? ` (${f.type})` : ""}${f.place ? `, ${f.place}` : ""}`), "");
-  } else if (b || m) {
-    lines.push("INVESTOR FIT", `No estimate: ${missingText(missing)} not known yet. Ask on the call, then set them on the prospect page.`, "");
-  }
   if (b?.questions.length) lines.push("ASK", ...b.questions.map((q, i) => `${i + 1}. ${q}`), "");
   if (b?.watchOuts.length) lines.push("WATCH OUT", ...b.watchOuts.map((w) => `- ${w}`), "");
   const text = lines.join("\n").replace(/\n{3,}/g, "\n\n").trim();
@@ -514,13 +506,6 @@ export function prepEmail(prospect: ProspectForEmail, call: CallForEmail, pageUr
       (b.company.rounds.length ? para(`<strong>Rounds</strong>`) + list(b.company.rounds.map((r) => esc(roundLine(r)))) : "") +
       list(b.signals.map(esc))
     : para(esc(prospect.briefError ? `No brief: ${prospect.briefError}` : "The brief isn't ready yet; it's on the prospect page when it is."));
-  const fit = !estimateReady(m)
-    ? b || m
-      ? para(`<span style="color:${MUTED}">No estimate: ${esc(missingText(missing))} not known yet. Ask on the call, then set them on the prospect page.</span>`)
-      : ""
-    : `<p style="margin:0 0 2px;font-size:28px;font-weight:600;color:${INK}">~${m.count.toLocaleString("en-US")} <span style="font-size:15px;font-weight:400;color:${MUTED}">of ${m.total.toLocaleString("en-US")} funds fit</span></p>` +
-      para(`<span style="color:${MUTED}">${esc(filtersLine(m))}</span>`) +
-      list(m.examples.map((f) => `${f.website ? link(f.website, f.name) : esc(f.name)}${f.type || f.place ? ` <span style="color:${MUTED}">${esc([f.type, f.place].filter(Boolean).join(", "))}</span>` : ""}`));
   const ask = b?.questions.length
     ? `<ol style="margin:0 0 8px;padding-left:20px;font-size:15px;line-height:1.55;color:${INK}">${b.questions.map((q) => `<li style="margin:0 0 4px">${esc(q)}</li>`).join("")}</ol>`
     : "";
@@ -530,7 +515,6 @@ export function prepEmail(prospect: ProspectForEmail, call: CallForEmail, pageUr
       section("What they told us", told) +
       section("The founder", founder) +
       section("The company", companyHtml) +
-      section("Investor fit · first estimate", fit) +
       section("Ask", ask) +
       section("Watch out", list((b?.watchOuts ?? []).map(esc))),
   );

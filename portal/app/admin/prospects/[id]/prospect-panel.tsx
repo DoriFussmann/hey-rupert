@@ -8,9 +8,8 @@ import {
   resendProspectPrep,
   saveProspectOutcome,
   sendProspectFollowUp,
-  updateProspectEstimate,
 } from "@/app/admin/prospect-actions";
-import { OUTCOMES, estimateMissing, estimateReady, filtersLine, missingText, type FitOptions, type MatchEstimate, type ProspectBrief, type ProspectStatus } from "@/lib/prospects/core";
+import { OUTCOMES, type ProspectBrief, type ProspectStatus } from "@/lib/prospects/core";
 
 export type PanelProspect = {
   id: string;
@@ -21,7 +20,6 @@ export type PanelProspect = {
   briefStatus: "pending" | "running" | "ready" | "failed";
   briefError: string | null;
   briefAt: string | null;
-  match: MatchEstimate | null;
   outcomeNotes: string | null;
   outcomeAt: string | null;
   followUp: { subject: string; body: string; draftedAt: string } | null;
@@ -62,7 +60,7 @@ function Block({ title, children }: { title: string; children: React.ReactNode }
 
 // ---------------------------------------------------------------------------
 
-export function BriefAndFit({ prospect, options, optionsError }: { prospect: PanelProspect; options: FitOptions | null; optionsError: string | null }) {
+export function PrepBrief({ prospect }: { prospect: PanelProspect }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -170,140 +168,7 @@ export function BriefAndFit({ prospect, options, optionsError }: { prospect: Pan
         )}
       </section>
 
-      <FitCard prospect={prospect} options={options} optionsError={optionsError} />
     </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-
-type FitKey = "financing" | "stage" | "geography" | "sector";
-const FIT_STEPS: { key: FitKey; label: string }[] = [
-  { key: "financing", label: "Financing" },
-  { key: "stage", label: "Stage" },
-  { key: "geography", label: "Geography" },
-  { key: "sector", label: "Sector" },
-];
-
-function FitCard({ prospect, options, optionsError }: { prospect: PanelProspect; options: FitOptions | null; optionsError: string | null }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  const [editing, setEditing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const base = prospect.brief?.fit ?? { financing: ["financing.equity"], stage: [], geography: [], sector: [], note: "" };
-  const [fit, setFit] = useState<Record<FitKey, string[]>>({
-    financing: base.financing.length ? base.financing : ["financing.equity"],
-    stage: base.stage,
-    geography: base.geography,
-    sector: base.sector,
-  });
-  const m = prospect.match;
-
-  function toggle(key: FitKey, id: string) {
-    setFit((current) => ({ ...current, [key]: current[key].includes(id) ? current[key].filter((x) => x !== id) : [...current[key], id] }));
-  }
-
-  function apply() {
-    setError(null);
-    start(async () => {
-      const r = await updateProspectEstimate(prospect.id, { ...fit, note: base.note });
-      if (!r.ok) setError(r.error);
-      else {
-        setEditing(false);
-        router.refresh();
-      }
-    });
-  }
-
-  return (
-    <section className={card}>
-      <div className="flex flex-wrap items-baseline justify-between gap-sm">
-        <h2 className="text-h4">Investor Fit · First Estimate</h2>
-        {options ? (
-          <button type="button" className={secondary} onClick={() => setEditing((v) => !v)} disabled={pending}>
-            {editing ? "Close" : "Change Filters"}
-          </button>
-        ) : null}
-      </div>
-      {!m && !prospect.brief ? (
-        <p className="mt-sm text-body-sm text-muted">No estimate yet: it runs with the brief.</p>
-      ) : !estimateReady(m) ? (
-        <p className="mt-sm text-body-sm text-muted">
-          No estimate: {missingText(estimateMissing(m))} not known yet. The count needs all three; set them with Change filters once you know them.
-        </p>
-      ) : (
-        <>
-          <p className="mt-sm text-h2 font-light text-heading">
-            ~{m.count.toLocaleString("en-US")}{" "}
-            <span className="text-body-sm text-muted">of {m.total.toLocaleString("en-US")} funds fit</span>
-          </p>
-          <p className="text-body-sm text-muted">{filtersLine(m)}</p>
-          <ol className="mt-sm grid gap-xs text-body-sm">
-            {m.steps.map((s) => (
-              <li key={s.step} className="flex justify-between gap-md border-b border-border pb-xs last:border-b-0">
-                <span className="text-body">
-                  {s.label}: <span className="text-muted">{s.chosen.join(", ")}</span>
-                </span>
-                <span className="text-body">{s.left.toLocaleString("en-US")} left</span>
-              </li>
-            ))}
-          </ol>
-          {m.examples.length ? (
-            <Block title="Examples">
-              <ul className="mt-xs grid gap-xs text-body-sm">
-                {m.examples.map((f) => (
-                  <li key={f.name}>
-                    {f.website ? (
-                      <a href={f.website} target="_blank" rel="noreferrer" className="text-primary">
-                        {f.name}
-                      </a>
-                    ) : (
-                      f.name
-                    )}
-                    <span className="text-muted">{[f.type, f.place].filter(Boolean).length ? ` · ${[f.type, f.place].filter(Boolean).join(", ")}` : ""}</span>
-                  </li>
-                ))}
-              </ul>
-            </Block>
-          ) : null}
-          {prospect.brief?.fit.note ? <p className="mt-sm text-body-sm text-muted">{prospect.brief.fit.note}</p> : null}
-          <p className="mt-sm text-body-sm text-muted">Dry Match on the live Fund Database, before any profile or review. A rough count to talk about, not a list.</p>
-        </>
-      )}
-      {optionsError ? <p className="mt-sm text-body-sm text-error">{optionsError}</p> : null}
-      {editing && options ? (
-        <div className="mt-md grid gap-md border-t border-border pt-md">
-          {FIT_STEPS.map(({ key, label: stepLabel }) => (
-            <div key={key}>
-              <p className={label}>{stepLabel}</p>
-              <div className="mt-xs flex flex-wrap gap-xs">
-                {options[key]
-                  .filter((o) => key !== "stage" || !o.id.startsWith("stage.pe."))
-                  .map((o) => {
-                    const on = fit[key].includes(o.id);
-                    return (
-                      <button
-                        key={o.id}
-                        type="button"
-                        onClick={() => toggle(key, o.id)}
-                        className={`rounded-full border px-sm py-xs text-body-sm transition-colors duration-hover ${on ? "border-primary bg-primary-tint text-primary" : "border-border text-secondary hover:text-heading"}`}
-                      >
-                        {o.label}
-                      </button>
-                    );
-                  })}
-              </div>
-            </div>
-          ))}
-          {error ? <p className="text-body-sm text-error">{error}</p> : null}
-          <div>
-            <button type="button" className={primary} onClick={apply} disabled={pending}>
-              {pending ? "Counting…" : "Update Estimate"}
-            </button>
-          </div>
-        </div>
-      ) : null}
-    </section>
   );
 }
 
@@ -446,7 +311,7 @@ export function AfterCall({ prospect }: { prospect: PanelProspect }) {
 
       <section className={card}>
         <h2 className="text-h4">Prep Email</h2>
-        <p className="mt-xs text-body-sm text-muted">Goes to you 30 minutes before each call, with the brief and the estimate. Send it again to get the latest version now, or to replace one still waiting.</p>
+        <p className="mt-xs text-body-sm text-muted">Goes to you 30 minutes before each call, with the brief. Send it again to get the latest version now, or to replace one still waiting.</p>
         <button
           type="button"
           className={`${secondary} mt-sm`}

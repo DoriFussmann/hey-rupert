@@ -1,4 +1,4 @@
-import { STATUS_LABEL, estimateMissing, estimateReady, formatWhen } from "@/lib/prospects/core";
+import { STATUS_LABEL, formatWhen } from "@/lib/prospects/core";
 import { ADMIN_TIME_ZONE, type ProspectListItem } from "@/lib/prospects/server";
 import { ChevronDown } from "@/components/chevron";
 import { ProspectRow } from "@/app/admin/prospect-row-actions";
@@ -16,14 +16,13 @@ const STATUS_STYLE: Record<string, string> = {
 function Rows({ rows }: { rows: ProspectListItem[] }) {
   return (
     <div className="overflow-x-auto">
-      <table className="w-full min-w-[980px] text-left text-body-sm">
+      <table className="w-full min-w-[860px] text-left text-body-sm">
         <thead>
           <tr className="border-b border-border text-label uppercase tracking-label text-muted">
             <th className="px-lg py-sm font-medium">Founder</th>
             <th className="px-lg py-sm font-medium">Company</th>
             <th className="px-lg py-sm font-medium">Call</th>
             <th className="px-lg py-sm font-medium">Status</th>
-            <th className="px-lg py-sm font-medium">Investor Fit</th>
             <th className="px-lg py-sm text-right font-medium">Actions</th>
           </tr>
         </thead>
@@ -62,19 +61,6 @@ function Rows({ rows }: { rows: ProspectListItem[] }) {
                   <span className={`inline-flex rounded-full border border-border px-sm py-xs text-label uppercase tracking-label ${STATUS_STYLE[p.status] ?? "text-secondary"}`}>
                     {STATUS_LABEL[p.status] ?? p.status}
                   </span>
-                </td>
-                <td className="px-lg py-md text-muted">
-                  {estimateReady(p.match) ? (
-                    <span className="text-body">~{p.match.count.toLocaleString("en-US")} funds</span>
-                  ) : p.brief_status === "ready" ? (
-                    `Needs ${estimateMissing(p.match).join(", ")}`
-                  ) : p.brief_status === "running" || p.brief_status === "pending" ? (
-                    "Preparing…"
-                  ) : p.brief_status === "failed" ? (
-                    <span className="text-error">Brief failed</span>
-                  ) : (
-                    "–"
-                  )}
                 </td>
               </ProspectRow>
             );

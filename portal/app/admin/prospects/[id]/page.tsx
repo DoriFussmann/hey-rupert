@@ -4,10 +4,10 @@ import { AddClientButton } from "@/app/admin/add-client-panel";
 import { BackLink } from "@/components/back-link";
 import { PageHeader } from "@/components/page-header";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { STATUS_LABEL, answerText, clientPrefill, formatWhen, type FitOptions } from "@/lib/prospects/core";
-import { ADMIN_TIME_ZONE, estimateOptions, loadProspect, type CallRow } from "@/lib/prospects/server";
+import { STATUS_LABEL, answerText, clientPrefill, formatWhen } from "@/lib/prospects/core";
+import { ADMIN_TIME_ZONE, loadProspect, type CallRow } from "@/lib/prospects/server";
 import { createServiceClient } from "@/lib/supabase/admin";
-import { AfterCall, BriefAndFit, type PanelProspect } from "./prospect-panel";
+import { AfterCall, PrepBrief, type PanelProspect } from "./prospect-panel";
 
 // Refresh brief researches the web in a server action on this page.
 export const maxDuration = 300;
@@ -29,7 +29,7 @@ function emailLine(label: string, status: CallRow["prep_email_status"], at: stri
 export default async function ProspectPage({ params }: { params: { id: string } }) {
   if (!isServiceRoleConfigured() || !/^[0-9a-f-]{36}$/i.test(params.id)) notFound();
   const supabase = createServiceClient();
-  const [loaded, opts] = await Promise.all([loadProspect(supabase, params.id), estimateOptions(supabase)]);
+  const loaded = await loadProspect(supabase, params.id);
   if (!loaded.ok) {
     if (loaded.error === "Prospect not found.") notFound();
     return (
@@ -40,7 +40,6 @@ export default async function ProspectPage({ params }: { params: { id: string } 
     );
   }
   const { prospect, calls } = loaded;
-  const options: FitOptions | null = opts.ok ? opts.options : null;
   const shownCalls = calls.filter((c) => c.status !== "RESCHEDULED");
   const latest = shownCalls[0] ?? calls[0] ?? null;
   const answers = Object.entries(latest?.responses ?? {})
@@ -57,7 +56,6 @@ export default async function ProspectPage({ params }: { params: { id: string } 
     briefStatus: prospect.brief_status,
     briefError: prospect.brief_error,
     briefAt: prospect.brief_at,
-    match: prospect.match,
     outcomeNotes: prospect.outcome_notes,
     outcomeAt: prospect.outcome_at,
     followUp: prospect.follow_up,
@@ -83,7 +81,7 @@ export default async function ProspectPage({ params }: { params: { id: string } 
       />
 
       <div className="grid gap-lg lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <BriefAndFit prospect={panel} options={options} optionsError={opts.ok ? null : opts.error} />
+        <PrepBrief prospect={panel} />
         <div className="grid content-start gap-lg">
           <section className="rounded-card border border-border bg-surface px-lg py-md">
             <h2 className="text-h4">Calls</h2>

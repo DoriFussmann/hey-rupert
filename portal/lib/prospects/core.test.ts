@@ -174,7 +174,7 @@ const estimate: MatchEstimate = {
   at: "2026-11-12T10:00:00Z",
 };
 
-test("the prep email has the call, what they told us, the estimate and the links; HTML is escaped", () => {
+test("the prep email has the call, what they told us and the links, and no fund estimate; HTML is escaped", () => {
   const email = prepEmail(
     {
       name: "Naga <Vinnakota>",
@@ -191,7 +191,7 @@ test("the prep email has the call, what they told us, the estimate and the links
   );
   assert.equal(email.subject, "In 30 min: Naga <Vinnakota>, Aegis 360 Inc (Seed, $9.8M)");
   assert.match(email.text, /Thu, Nov 12, 11:30\s?AM–12:00\s?PM PST/);
-  assert.match(email.text, /About 412 of 9,000 funds: Equity · Pre-Seed, Seed · United States · Hardware & deep tech/);
+  assert.ok(!/INVESTOR FIT|412|funds fit|estimate/i.test(email.text + email.html));
   assert.match(email.text, /Heard about us: Google/);
   assert.match(email.text, /1\. Lead or follow\?/);
   assert.match(email.html, /Naga &lt;Vinnakota&gt;/);
@@ -255,7 +255,5 @@ test("no estimate until stage, geography and sector are all known", () => {
     { start: null, end: null, timeZone: "UTC", videoUrl: null, location: null, notes: null, guests: [], extraAnswers: [] },
     "u",
   );
-  assert.match(email.text, /No estimate: geography and sector not known yet/);
-  assert.ok(!email.text.includes("412"));
-  assert.ok(!email.html.includes("funds fit"));
+  assert.ok(!/estimate|412|funds fit/i.test(email.text + email.html));
 });
