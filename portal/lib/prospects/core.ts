@@ -104,6 +104,70 @@ export function normalizeResponses(raw: unknown): Record<string, FormAnswer> {
 }
 
 const UTM_KEYS = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content"];
+// Sent by the site's booking page (site/src/lib/attribution.ts): the latest
+// named visit (src_*) and, when different, the first visit (first_*).
+const SOURCE_KEYS = ["src", "src_medium", "src_referrer", "src_landing", "src_at", "first_src", "first_medium", "first_referrer", "first_landing", "first_at"];
+
+const SOURCE_NAMES: Record<string, string> = {
+  chatgpt: "ChatGPT",
+  perplexity: "Perplexity",
+  claude: "Claude",
+  gemini: "Gemini",
+  copilot: "Copilot",
+  google: "Google",
+  bing: "Bing",
+  duckduckgo: "DuckDuckGo",
+  linkedin: "LinkedIn",
+  x: "X",
+  facebook: "Facebook",
+  reddit: "Reddit",
+  youtube: "YouTube",
+  gmail: "Gmail",
+  outlook: "Outlook",
+  direct: "Direct",
+};
+const MEDIUM_NAMES: Record<string, string> = {
+  ai: "AI assistant",
+  search: "search",
+  social: "social",
+  email: "email",
+  paid: "paid ad",
+  referral: "referring site",
+};
+
+function touchLine(source: string | undefined, medium: string | undefined, landing: string | undefined): string | null {
+  if (!source) return null;
+  if (source === "direct") return `Direct (typed the address or no referrer)${landing ? `, landed on ${landing}` : ""}`;
+  const name = SOURCE_NAMES[source] ?? source;
+  const kind = medium ? MEDIUM_NAMES[medium] ?? medium : "";
+  return `${name}${kind ? ` (${kind})` : ""}${landing ? `, landed on ${landing}` : ""}`;
+}
+
+export type LeadSource = {
+  /** One line for the visit that led to the booking, e.g. "ChatGPT (AI assistant), landed on /pricing/". */
+  cameFrom: string | null;
+  /** The first visit, when it differs from the one that led to the booking. */
+  firstVisit: string | null;
+  /** UTM tags, e.g. "source: linkedin · campaign: nov". */
+  campaign: string | null;
+};
+
+/** Read what is stored in prospects.utm into lines for the admin. */
+export function describeLeadSource(utm: Record<string, string> | null | undefined, timeZone?: string): LeadSource {
+  if (!utm) return { cameFrom: null, firstVisit: null, campaign: null };
+  const tags = UTM_KEYS.filter((k) => utm[k]).map((k) => `${k.replace("utm_", "")}: ${utm[k]}`);
+  const first = touchLine(utm.first_src, utm.first_medium, utm.first_landing);
+  let firstDay = "";
+  if (first && utm.first_at && !Number.isNaN(Date.parse(utm.first_at))) {
+    firstDay = ` on ${new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone }).format(new Date(utm.first_at))}`;
+  }
+  return {
+    // Bookings made before the site sent src_* still name their UTM source.
+    cameFrom: touchLine(utm.src, utm.src_medium, utm.src_landing) ?? (utm.utm_source ? touchLine(utm.utm_source.toLowerCase().replace(/\.com$/, ""), utm.utm_medium, undefined) : null),
+    firstVisit: first ? `${first}${firstDay}` : null,
+    campaign: tags.length ? tags.join(" · ") : null,
+  };
+}
 
 export function parseCalEvent(body: unknown): ParsedEvent {
   if (!isObj(body)) return { kind: "ignored", trigger: "UNKNOWN", uid: null, reason: "not an object" };
@@ -123,12 +187,18 @@ export function parseCalEvent(body: unknown): ParsedEvent {
   const guestsRaw = responses.guests?.value;
   const guests = Array.isArray(guestsRaw) ? guestsRaw.map(answerText).filter((g): g is string => Boolean(g)) : [];
 
+  // Lead source. The site passes it as booking metadata (payload.metadata); UTM
+  // tags can also arrive as hidden booking questions. Metadata wins.
+  const metadata = isObj(p.metadata) ? p.metadata : {};
   const utm: Record<string, string> = {};
   for (const key of UTM_KEYS) {
-    const value = findAnswer(responses, (k) => k === fieldKey(key));
-    if (value) utm[key] = value;
+    const value = str(metadata[key]) ?? findAnswer(responses, (k) => k === fieldKey(key));
+    if (value) utm[key] = value.slice(0, 200);
   }
-  const metadata = isObj(p.metadata) ? p.metadata : {};
+  for (const key of SOURCE_KEYS) {
+    const value = str(metadata[key]);
+    if (value) utm[key] = value.slice(0, 200);
+  }
   const typed = trigger as BookingTrigger;
   const status =
     typed === "BOOKING_REQUESTED" ? "PENDING"

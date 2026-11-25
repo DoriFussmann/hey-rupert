@@ -4,7 +4,7 @@ import { AddClientButton } from "@/app/admin/add-client-panel";
 import { BackLink } from "@/components/back-link";
 import { PageHeader } from "@/components/page-header";
 import { isServiceRoleConfigured } from "@/lib/env";
-import { STATUS_LABEL, answerText, clientPrefill, formatWhen, type FitOptions } from "@/lib/prospects/core";
+import { STATUS_LABEL, answerText, clientPrefill, describeLeadSource, formatWhen, type FitOptions } from "@/lib/prospects/core";
 import { ADMIN_TIME_ZONE, estimateOptions, loadProspect, type CallRow } from "@/lib/prospects/server";
 import { createServiceClient } from "@/lib/supabase/admin";
 import { AfterCall, BriefAndFit, type PanelProspect } from "./prospect-panel";
@@ -47,6 +47,7 @@ export default async function ProspectPage({ params }: { params: { id: string } 
     .filter(([name]) => !["name", "email", "location", "title", "rescheduleReason", "attendeePhoneNumber"].includes(name))
     .map(([name, a]) => ({ name, label: a.label, value: answerText(a.value) }))
     .filter((a): a is { name: string; label: string; value: string } => Boolean(a.value));
+  const source = describeLeadSource(prospect.utm, ADMIN_TIME_ZONE);
 
   const panel: PanelProspect = {
     id: prospect.id,
@@ -124,13 +125,25 @@ export default async function ProspectPage({ params }: { params: { id: string } 
                   <dd className="text-body">{prospect.heard_from}</dd>
                 </div>
               ) : null}
-              {prospect.utm ? (
+              {source.cameFrom ? (
                 <div>
-                  <dt className="text-label uppercase tracking-label text-muted">Campaign</dt>
-                  <dd className="text-body">{Object.entries(prospect.utm).map(([k, v]) => `${k.replace("utm_", "")}: ${v}`).join(" · ")}</dd>
+                  <dt className="text-label uppercase tracking-label text-muted">Came from (tracked by the site)</dt>
+                  <dd className="text-body">{source.cameFrom}</dd>
                 </div>
               ) : null}
-              {answers.length === 0 && !prospect.heard_from ? <p className="text-muted">Nothing beyond name and email.</p> : null}
+              {source.firstVisit ? (
+                <div>
+                  <dt className="text-label uppercase tracking-label text-muted">First visit</dt>
+                  <dd className="text-body">{source.firstVisit}</dd>
+                </div>
+              ) : null}
+              {source.campaign ? (
+                <div>
+                  <dt className="text-label uppercase tracking-label text-muted">Campaign</dt>
+                  <dd className="text-body">{source.campaign}</dd>
+                </div>
+              ) : null}
+              {answers.length === 0 && !prospect.heard_from && !source.cameFrom ? <p className="text-muted">Nothing beyond name and email.</p> : null}
             </dl>
           </section>
           <AfterCall prospect={panel} />

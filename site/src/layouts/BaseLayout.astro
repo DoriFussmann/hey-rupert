@@ -166,6 +166,11 @@ const jsonLdDocument =
     <slot />
     <Footer />
     <script>
+      import { recordVisit } from "../lib/attribution";
+
+      // Lead source: remember where this visitor came from, for the booking page.
+      recordVisit();
+
       const reduceMotion = window.matchMedia(
         "(prefers-reduced-motion: reduce)",
       ).matches;
