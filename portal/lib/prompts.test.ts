@@ -45,7 +45,7 @@ test("an admin edit changes the next generation, with no deploy", () => {
 test("a missing or invalid prompt fails safely, naming it; the built-in text is never used", () => {
   const missing = resolvePrompts([], ["investor_list_email"]);
   assert.ok(!missing.ok);
-  assert.match(missing.error, /"Investor list email" prompt can't be used: it isn't set up yet/);
+  assert.match(missing.error, /"Investor List Email" prompt can't be used: it isn't set up yet/);
   const noVersion = resolvePrompts([row(slug("investor_list_email"), "Text", null)], ["investor_list_email"]);
   assert.ok(!noVersion.ok);
   const blank = resolvePrompts([row(slug("investor_list_email"), "   ", 4)], ["investor_list_email"]);
@@ -56,7 +56,7 @@ test("a missing or invalid prompt fails safely, naming it; the built-in text is 
   // One bad prompt fails the whole call, even when the others are fine.
   const mixed = resolvePrompts([row(slug("narrative_email"), "Fine.", 2)], ["narrative_email", "narrative_email_revision"]);
   assert.ok(!mixed.ok);
-  assert.match(mixed.error, /Narrative email: reply to changes/);
+  assert.match(mixed.error, /Narrative Email: Reply to Changes/);
 });
 
 test("a test run uses the unsaved text for that one prompt, as version 0", () => {

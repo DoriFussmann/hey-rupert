@@ -96,7 +96,7 @@ export function MatchControls({
               );
             }}
           >
-            {runId ? "Re-run match" : "Run match"}
+            {runId ? "Re-Run Match" : "Run Match"}
           </button>
           <Link href={matchPath(clientId, "verify")} className={`${secondaryButton} no-underline`}>
             Verify Emails
@@ -109,7 +109,7 @@ export function MatchControls({
             Download match data
           </a>
           <button type="button" className={primaryButton} disabled={!runId || Boolean(pushBlocked) || Boolean(busy)} onClick={push}>
-            Push to client
+            Push to Client
           </button>
           <Link href={`/admin/clients/${clientId}#current-step`} className={`${secondaryButton} no-underline`}>
             To Client

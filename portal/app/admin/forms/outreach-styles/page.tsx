@@ -16,7 +16,7 @@ export default async function OutreachStylesPage() {
   return (
     <>
       <PageHeader
-        title="Investor email styles"
+        title="Investor Email Styles"
         description="How the investor emails are written. Each style has rules, a word cap and an example; pick which style writes Core and which writes Sphere, Tier 3 and Tier 4, for each fund type. Every draft follows the style, and the checks before pushing hold it to the rules."
       />
       {loaded.error ? (

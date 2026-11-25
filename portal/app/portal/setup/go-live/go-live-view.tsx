@@ -183,7 +183,7 @@ export function GoLiveView({
   const confirmedBlock = confirmation?.confirmed ? (
     <details className="mt-lg rounded-card border border-border bg-surface px-lg py-md">
       <summary className="cursor-pointer text-body-sm text-primary">
-        Your Launch Confirmation, confirmed {formatDateTime(confirmation.confirmed.at)}
+        Your Launch Confirmation, Confirmed {formatDateTime(confirmation.confirmed.at)}
       </summary>
       <div className="mt-md">
         <MarkdownBody content={confirmation.confirmed.text} emptyLabel="" />
@@ -242,7 +242,7 @@ export function GoLiveView({
         </p>
       )}
       <ol className="grid gap-md">
-        <Step n={1} done={Boolean(inbox?.healthy)} title="Connect your inbox" vt={LAUNCH_VT.inbox}>
+        <Step n={1} done={Boolean(inbox?.healthy)} title="Connect Your Inbox" vt={LAUNCH_VT.inbox}>
           {inbox ? (
             <p>
               Connected: <span className="text-heading">{inbox.email}</span>
@@ -252,7 +252,7 @@ export function GoLiveView({
             <ConnectInbox readOnly={readOnly} company={company} defaultEmail={contactEmail} defaultName={contactName} />
           )}
         </Step>
-        <Step n={2} done={Boolean(invoice.paidAt)} title="Pay the first monthly invoice" vt={LAUNCH_VT.invoice}>
+        <Step n={2} done={Boolean(invoice.paidAt)} title="Pay the First Monthly Invoice" vt={LAUNCH_VT.invoice}>
           {invoice.paidAt ? (
             <p>Paid {formatDateTime(invoice.paidAt)}.</p>
           ) : invoice.url ? (
@@ -266,7 +266,7 @@ export function GoLiveView({
             <p>Rupert sends it when your campaign is ready.</p>
           )}
         </Step>
-        <Step n={3} done={false} title="Confirm and approve the launch" vt={LAUNCH_VT.confirm}>
+        <Step n={3} done={false} title="Confirm and Approve the Launch" vt={LAUNCH_VT.confirm}>
           <ul className="mb-md max-w-prose list-disc pl-lg">
             <li>
               Up to 15 emails a day from your inbox for the first 10 business days, then never more than 30 a day, follow-ups
@@ -279,7 +279,7 @@ export function GoLiveView({
           {inbox ? (
             <div className="mb-md">
               <button type="button" className={secondary} disabled={readOnly || testing || !campaignReady} onClick={sendTest}>
-                {testing ? "Sending…" : "Send me a test"}
+                {testing ? "Sending…" : "Send Me a Test"}
               </button>
               <span className="ml-sm text-muted">
                 {testNote ?? (testSentAt ? `Last test ${formatDateTime(testSentAt)}.` : "Optional: see exactly what an investor gets. Two emails arrive in your own inbox: the first email, then the follow-up a couple of minutes later in the same thread. Only you receive them.")}
@@ -324,7 +324,7 @@ export function GoLiveView({
             </ul>
           ) : null}
           <button type="button" className={`${primary} mt-md`} disabled={readOnly || !ready || !consent || launching || !confirmation} onClick={launch}>
-            {launching ? "Approving…" : "Confirm and approve launch"}
+            {launching ? "Approving…" : "Confirm and Approve Launch"}
           </button>
         </Step>
       </ol>

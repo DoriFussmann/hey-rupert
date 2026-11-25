@@ -82,7 +82,7 @@ export function MaterialFileActions({
         <>
           <span className="text-body-sm text-heading">Remove {name}?</span>
           <button type="button" className="text-body-sm text-error disabled:opacity-40" disabled={busy !== null} onClick={() => void remove()}>
-            {busy === "remove" ? "Removing…" : "Yes, remove"}
+            {busy === "remove" ? "Removing…" : "Yes, Remove"}
           </button>
           <button type="button" className={linkButton} disabled={busy !== null} onClick={() => setConfirming(false)}>
             Cancel

@@ -44,7 +44,7 @@ export default async function RepliesPage({ searchParams }: { searchParams: { sh
       {bounced.length > 0 ? (
         <section className="mt-xl rounded-card border border-border bg-surface">
           <div className="border-b border-border px-lg py-md">
-            <h2 className="text-h4">Bounced contacts</h2>
+            <h2 className="text-h4">Bounced Contacts</h2>
             <p className="mt-xs text-body-sm text-muted">
               Consider activating a reserve contact at the fund (client page → Setup → Core contacts), then Add newly approved contacts in the Campaign panel.
             </p>

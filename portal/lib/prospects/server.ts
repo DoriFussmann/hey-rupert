@@ -93,6 +93,8 @@ export async function applyBooking(supabase: ServiceClient, booking: ParsedBooki
     if (!existing!.utm && booking.utm) patch.utm = booking.utm;
     if (clientId && !existing!.client_id) Object.assign(patch, { client_id: clientId, status: "converted", converted_at: now() });
     else if (isNew) patch.status = statusAfterBooking(isProspectStatus(existing!.status) ? existing!.status : null);
+    // An archived prospect who books again shows up in the list again.
+    if (isNew && booking.status !== "CANCELLED" && booking.status !== "REJECTED") patch.archived_at = null;
     const { error } = await supabase.from("prospects").update(patch).eq("id", prospectId);
     if (error) return { ok: false, error: tableError(error.message, error.code) };
   }
@@ -385,6 +387,19 @@ export async function updateProspect(supabase: ServiceClient, prospectId: string
 }
 
 /** Deletes the prospect and its calls. Emails still waiting to go out are cancelled first. */
+/** Archives a prospect (hidden from the Calls Booked list) or brings it back. Nothing is deleted and no email is cancelled. */
+export async function setProspectArchived(supabase: ServiceClient, prospectId: string, archived: boolean): Promise<Result<object>> {
+  const { data, error } = await supabase
+    .from("prospects")
+    .update({ archived_at: archived ? now() : null, updated_at: now() })
+    .eq("id", prospectId)
+    .is("client_id", null)
+    .select("id");
+  if (error) return { ok: false, error: tableError(error.message, error.code) };
+  if (!data?.length) return { ok: false, error: "Prospect not found." };
+  return { ok: true };
+}
+
 export async function deleteProspect(supabase: ServiceClient, prospectId: string): Promise<Result<object>> {
   const c = await callsOf(supabase, prospectId);
   if (!c.ok) return c;

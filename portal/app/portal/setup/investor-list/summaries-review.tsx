@@ -156,7 +156,7 @@ export function SummariesReview({
                 Confirm the matching? {adminName} then writes the outreach emails, and you approve them before anything is sent.
               </p>
               <button type="button" className={`${primaryButton} mt-sm`} disabled={pending} onClick={() => void send()}>
-                {pending ? "Confirming…" : "Yes, confirm"}
+                {pending ? "Confirming…" : "Yes, Confirm"}
               </button>
             </div>
           ) : mode ? (

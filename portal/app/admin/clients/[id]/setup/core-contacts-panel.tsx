@@ -128,12 +128,12 @@ function ContactCard({
         </button>
         {written ? (
           <button type="button" className={smallButton} disabled={busy} onClick={() => onWrite(message.id, "refresh")}>
-            New research + rewrite
+            New Research + Rewrite
           </button>
         ) : null}
         {written ? (
           <button type="button" className={smallButton} onClick={() => setOpen((value) => !value)}>
-            {open ? "Hide emails" : "Review emails"}
+            {open ? "Hide Emails" : "Review Emails"}
           </button>
         ) : null}
         {written && !isApproved(message) ? (
@@ -148,7 +148,7 @@ function ContactCard({
           </button>
         ) : null}
         <button type="button" className={`${smallButton} ml-auto`} disabled={busy} onClick={toReserve}>
-          Move to reserve
+          Move to Reserve
         </button>
       </div>
 
@@ -196,7 +196,7 @@ function ContactCard({
           </label>
           <div className="mt-sm flex flex-wrap items-center gap-sm">
             <button type="button" className={secondaryButton} disabled={!dirty || saving} onClick={save}>
-              {saving ? "Saving…" : "Save edits"}
+              {saving ? "Saving…" : "Save Edits"}
             </button>
             {dirty ? <span className="text-body-sm text-muted">Saving edited text clears the approval.</span> : null}
           </div>
@@ -352,7 +352,7 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
   return (
     <section id="setup-core-contacts" className="mt-lg rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-lg">
-        <h3 className="text-h4">Core contacts</h3>
+        <h3 className="text-h4">Core Contacts</h3>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
           {workspace ? `${workspace.perFirm} contact${workspace.perFirm === 1 ? "" : "s"}` : "The contacts"} per Core fund (from
           the campaign plan) get their own emails, written from the Core template of the fund&apos;s type and a few
@@ -371,7 +371,7 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
 
       <div className="flex flex-wrap items-center gap-sm px-lg py-md">
         <button type="button" className={secondaryButton} disabled={busy || !workspace || Boolean(workspace.blocker && workspace.coreFunds === 0)} onClick={onSync}>
-          {messages.length ? "Update contacts from the list" : "Line up contacts"}
+          {messages.length ? "Update Contacts from the List" : "Line Up Contacts"}
         </button>
         <button
           type="button"
@@ -412,7 +412,7 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
               void writeMany(targets, "skip", `Rewriting ${type}`);
             }}
           >
-            Rewrite all {typeFilter || types[0]}
+            Rewrite All {typeFilter || types[0]}
           </button>
         ) : null}
         <p className="w-full text-body-sm text-muted" aria-live="polite">

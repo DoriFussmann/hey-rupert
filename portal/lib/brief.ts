@@ -640,7 +640,7 @@ export function stripCitations(value: string) {
   return value.replace(/<\/?cite\b[^>]*>/gi, "").replace(/[ \t]{2,}/g, " ");
 }
 
-const SMALL_WORDS = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "in", "nor", "of", "on", "or", "per", "the", "to", "vs", "via", "with"]);
+const SMALL_WORDS = new Set(["a", "an", "and", "as", "at", "but", "by", "for", "from", "in", "into", "nor", "of", "on", "or", "per", "the", "to", "vs", "via", "with"]);
 
 /** Title Case for headings: "The round" → "The Round", "go-to-market" → "Go-to-Market". Keeps acronyms (AI, MRR). */
 export function titleCase(text: string): string {

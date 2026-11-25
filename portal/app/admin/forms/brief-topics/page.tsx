@@ -12,7 +12,7 @@ export default async function BriefTopicsPage() {
   return (
     <>
       <PageHeader
-        title="Brief topics"
+        title="Brief Topics"
         description="The topics every Company Brief summarises, in this order, after the abstract. The guidance tells Rupert exactly what to cover for each. Changes apply to briefs built or rebuilt from now on."
       />
       <BriefTopicsEditor initialTopics={topics} defaultTopics={DEFAULT_BRIEF_TOPICS} />

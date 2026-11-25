@@ -130,7 +130,7 @@ function SectionPanel({
                     className="text-body-sm text-primary hover:text-primary-hover"
                     onClick={() => set(field.id, "none")}
                   >
-                    Set to none
+                    Set to None
                   </button>
                 ) : null}
               </div>
@@ -246,10 +246,10 @@ export function ProfileWorkspace({
   const status = building
     ? { label: "Building…", tone: "text-muted border-border" }
     : !state
-      ? { label: "Not built yet", tone: "text-muted border-border" }
+      ? { label: "Not Built Yet", tone: "text-muted border-border" }
       : state.status === "ready"
-        ? { label: "Ready to match", tone: "text-success border-success/40" }
-        : { label: "Needs info", tone: "text-warning border-warning/40" };
+        ? { label: "Ready to Match", tone: "text-success border-success/40" }
+        : { label: "Needs Info", tone: "text-warning border-warning/40" };
 
   return (
     <div className="space-y-lg">
@@ -269,7 +269,7 @@ export function ProfileWorkspace({
         <div className="flex flex-wrap gap-sm">
           {canBuildFromIntake ? (
             <button type="button" className={secondaryButton} disabled={building} onClick={() => void rebuild()}>
-              {building ? "Building…" : state?.builtAt ? "Rebuild from intake" : "Build from intake"}
+              {building ? "Building…" : state?.builtAt ? "Rebuild from Intake" : "Build from Intake"}
             </button>
           ) : null}
           <Link href={matchPath(clientId)} className={`${primaryButton} no-underline`}>

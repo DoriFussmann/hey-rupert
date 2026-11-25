@@ -565,12 +565,12 @@ export function deliveryPatch(eventType: string, at: string, step: number | null
 export const REPLY_LABELS = [
   { value: "interested", label: "Interested", release: true },
   { value: "question", label: "Question", release: true },
-  { value: "not_now", label: "Not now", release: true },
+  { value: "not_now", label: "Not Now", release: true },
   { value: "pass", label: "Pass", release: true },
-  { value: "out_of_office", label: "Out of office", release: false },
-  { value: "wrong_person", label: "Wrong person / left", release: false },
+  { value: "out_of_office", label: "Out of Office", release: false },
+  { value: "wrong_person", label: "Wrong Person / Left", release: false },
   { value: "bounce", label: "Bounce", release: false },
-  { value: "opt_out", label: "Opt-out", release: false },
+  { value: "opt_out", label: "Opt-Out", release: false },
   { value: "other", label: "Other", release: false },
 ] as const;
 

@@ -78,11 +78,11 @@ function FundDetails({ row, review, campaign }: { row: StoredResult; review?: Re
             <dd className={checks[key].result === "pass" ? "text-secondary" : "text-warning"}>{checks[key].detail}</dd>
           </div>
         ))}
-        <dt className="text-muted">Firm sectors</dt>
+        <dt className="text-muted">Firm Sectors</dt>
         <dd className="text-secondary">{sectors.join(", ") || "–"}</dd>
         {row.detail.site ? (
           <>
-            <dt className="text-muted">Website check</dt>
+            <dt className="text-muted">Website Check</dt>
             <dd className="text-secondary">{String(row.detail.site)}</dd>
           </>
         ) : null}
@@ -344,7 +344,7 @@ export function RunSummary({ clientId, header, rows, complete, footnote, title =
           </a>
         </div>
         <details className="mt-sm">
-          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Run details</summary>
+          <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Run Details</summary>
           <dl className="mt-xs grid gap-x-lg gap-y-xs text-body-sm sm:grid-cols-[14rem_1fr]">
             {facts.map(([term, value], i) => (
               <div key={`${term}-${i}`} className="contents">
@@ -439,7 +439,7 @@ export function CampaignColumns({
             <FundList rows={panel.inPlan} campaign={campaign} websites={websites} />
             {panel.others.length > 0 ? (
               <details className="mt-sm border-t border-border pt-sm">
-                <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in this campaign ({n(panel.others.length)})</summary>
+                <summary className="cursor-pointer text-body-sm text-secondary hover:text-heading">Not in This Campaign ({n(panel.others.length)})</summary>
                 <div className="mt-xs">
                   <FundList rows={panel.others} review={review} websites={websites} />
                 </div>
@@ -456,7 +456,7 @@ export function CampaignColumns({
 export function OutsideSection({ rows }: Pick<RunProps, "rows">) {
   const counts = storedCounts(rows);
   return (
-    <Section title="Outside the tiers" meta="admin only; generalists go out only when a campaign plan approves them">
+    <Section title="Outside the Tiers" meta="admin only; generalists go out only when a campaign plan approves them">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[320px] text-left text-body-sm">
           <tbody>
@@ -488,7 +488,7 @@ export function OutsideSection({ rows }: Pick<RunProps, "rows">) {
 export function NearMissSection({ clientId, header, rows }: Pick<RunProps, "clientId" | "header" | "rows">) {
   const nearMisses = nearMissCount(rows);
   return (
-    <Section title="Near misses: one stage off" meta={`${n(nearMisses)} · NOT eligible`}>
+    <Section title="Near Misses: One Stage Off" meta={`${n(nearMisses)} · NOT eligible`}>
       <p className="text-body-sm text-secondary">
         Funds that list a stage next to the company&apos;s but not its own. They failed the stage check and are outside every tier. The download is marked NOT
         AN ELIGIBLE MATCH LIST and can&apos;t be pushed to the founder.

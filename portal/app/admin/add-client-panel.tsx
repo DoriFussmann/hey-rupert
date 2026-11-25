@@ -276,7 +276,7 @@ export function AddClientButton({ initial, label = "Add Client" }: { initial?: A
                     }}
                     className={`mr-auto ${secondaryButton}`}
                   >
-                    Add another
+                    Add Another
                   </button>
                   <Link
                     href={`/admin/clients/${created.clientId}`}

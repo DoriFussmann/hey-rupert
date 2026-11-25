@@ -74,8 +74,8 @@ function StagedPreview({
         <Change label="Contacts" before={diff?.previous?.contacts ?? null} after={version.contacts} />
         {diff?.previous ? (
           <>
-            <Change label="New funds" before={null} after={diff.added} />
-            <Change label="Removed funds" before={null} after={diff.removed} />
+            <Change label="New Funds" before={null} after={diff.added} />
+            <Change label="Removed Funds" before={null} after={diff.removed} />
           </>
         ) : null}
       </div>
@@ -130,7 +130,7 @@ function StagedPreview({
       ) : null}
       <div className="flex flex-wrap gap-sm border-t border-border px-lg py-md">
         <button type="button" className={primaryButton} disabled={busy} onClick={onApply}>
-          Apply: make this the live database
+          Apply: Make This the Live Database
         </button>
         <button type="button" className={secondaryButton} disabled={busy} onClick={onDiscard}>
           Discard
@@ -362,7 +362,7 @@ export function FundDatabaseManager({
 
       <details className="mb-lg rounded-card border border-border bg-surface px-lg py-md">
         <summary className="cursor-pointer text-h4 text-heading">
-          Website checks{" "}
+          Website Checks{" "}
           <span className="text-body-sm font-normal text-muted">
             {n(sites.checked)} of {n(liveFirms)} funds checked · {n(sites.recent)} in the last 30 days
           </span>
@@ -381,7 +381,7 @@ export function FundDatabaseManager({
             disabled={Boolean(busy) || !live}
             onClick={() => void checkWebsites()}
           >
-            Check the next {n(DAILY_SITE_BATCH)} now
+            Check the Next {n(DAILY_SITE_BATCH)} Now
           </button>
         </div>
         {sites.byStatus.length > 0 ? (
@@ -442,7 +442,7 @@ export function FundDatabaseManager({
                           );
                         }}
                       >
-                        Make live again
+                        Make Live Again
                       </button>
                     )}
                   </td>

@@ -298,7 +298,7 @@ function TemplateCard({
             disabled={pending !== null || isDefault}
             className={secondaryButton}
           >
-            Restore default
+            Restore Default
           </button>
           <button
             type="button"
@@ -306,7 +306,7 @@ function TemplateCard({
             disabled={pending !== null}
             className={secondaryButton}
           >
-            {pending === "test" ? "Sending…" : "Send me a test"}
+            {pending === "test" ? "Sending…" : "Send Me a Test"}
           </button>
           <Feedback message={message} />
         </div>
@@ -388,7 +388,7 @@ function RemindersCard({
   return (
     <section className="rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-lg">
-        <h3 className="text-h4">Reminder schedule</h3>
+        <h3 className="text-h4">Reminder Schedule</h3>
         <p className="mt-xs text-body-sm text-muted">
           While a step waits on the client: the first reminder is due after
           the set number of days, then repeats until the maximum. Due
@@ -403,10 +403,10 @@ function RemindersCard({
             <tr className="border-b border-border text-label uppercase tracking-label text-muted">
               <th className="px-lg py-sm font-medium">Step</th>
               <th className="px-md py-sm font-medium">On</th>
-              <th className="px-md py-sm font-medium">First after (days)</th>
-              <th className="px-md py-sm font-medium">Then every (days)</th>
+              <th className="px-md py-sm font-medium">First After (Days)</th>
+              <th className="px-md py-sm font-medium">Then Every (Days)</th>
               <th className="px-md py-sm font-medium">Max</th>
-              <th className="px-md py-sm font-medium">Alert me</th>
+              <th className="px-md py-sm font-medium">Alert Me</th>
             </tr>
           </thead>
           <tbody>
@@ -457,7 +457,7 @@ function RemindersCard({
           disabled={pending || !dirty}
           className={primaryButton}
         >
-          {pending ? "Saving…" : "Save schedule"}
+          {pending ? "Saving…" : "Save Schedule"}
         </button>
         <Feedback message={message} />
       </div>
@@ -470,12 +470,12 @@ function RemindersCard({
 const GROUPS: { group: EmailTemplateGroup; title: string; description: string }[] = [
   {
     group: "client",
-    title: "Emails to clients",
+    title: "Emails to Clients",
     description: "Sent when a step becomes the client's turn.",
   },
   {
     group: "admin",
-    title: "Emails to you",
+    title: "Emails to You",
     description:
       "Sent when a client acts. Your in-app Notifications record every event either way.",
   },

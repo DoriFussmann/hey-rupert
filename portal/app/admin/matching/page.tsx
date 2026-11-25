@@ -63,7 +63,7 @@ export default async function MatchingPage({
         <details open={Boolean(searchParams.tab || runId || searchParams.tier)} className="group/older mt-xl border-t border-border pt-md">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-md text-secondary hover:text-heading [&::-webkit-details-marker]:hidden">
             <span>
-              <span className="text-h4 text-heading">Older tools</span>
+              <span className="text-h4 text-heading">Older Tools</span>
               <span className="ml-sm text-body-sm text-muted">The four-tier match, campaign plan, Verify Emails and run history, unchanged until the new flow replaces them.</span>
             </span>
             <span className="text-muted transition-transform duration-hover group-open/older:rotate-180">▾</span>

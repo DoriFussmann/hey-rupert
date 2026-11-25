@@ -398,7 +398,7 @@ export async function saveBriefTopicsAction(topics: BriefTopic[]): Promise<{ ok:
   if (!parsed.some((topic) => topic.enabled)) return { ok: false, error: "Keep at least one topic on." };
   const { error } = await createServiceClient().from("form_templates").upsert({
     slug: BRIEF_TOPICS_SLUG,
-    title: "Company Brief topics",
+    title: "Company Brief Topics",
     content: JSON.stringify(parsed),
     updated_at: new Date().toISOString(),
   });
@@ -473,7 +473,7 @@ export async function saveDeckTopicsAction(topics: DeckTopic[]): Promise<{ ok: t
   if (!parsed) return { ok: false, error: `Each topic needs a unique title, and there must be between 3 and ${DECK_TOPICS_MAX} topics.` };
   const { error } = await createServiceClient().from("form_templates").upsert({
     slug: DECK_TOPICS_SLUG,
-    title: "Feedback topics",
+    title: "Feedback Topics",
     content: JSON.stringify(parsed),
     updated_at: new Date().toISOString(),
   });
@@ -504,7 +504,7 @@ export async function saveSellingPointsListAction(points: SellingPoint[]): Promi
   if (!parsed) return { ok: false, error: "Each point needs a unique title, and there must be between 3 and 20 points." };
   const { error } = await createServiceClient().from("form_templates").upsert({
     slug: SELLING_POINTS_SLUG,
-    title: "Selling points",
+    title: "Selling Points",
     content: JSON.stringify(parsed),
     updated_at: new Date().toISOString(),
   });

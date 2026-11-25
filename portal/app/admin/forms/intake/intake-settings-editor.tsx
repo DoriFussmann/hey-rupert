@@ -97,7 +97,7 @@ export function IntakeSettingsEditor({
   return (
     <div className="space-y-lg">
       <section className="rounded-card border border-border bg-surface p-lg">
-        <h2 className="text-h4">Rupert&apos;s instructions</h2>
+        <h2 className="text-h4">Rupert&apos;s Instructions</h2>
         <p className="mt-xs text-body-sm text-muted">
           Persona, interview style, and how to open and close are a managed prompt, with every version kept.{" "}
           <Link href="/admin/forms/agents/intake_interviewer" className="text-primary underline hover:text-primary-hover">
@@ -215,7 +215,7 @@ export function IntakeSettingsEditor({
             onClick={addTopic}
             disabled={topics.length >= 20}
           >
-            Add topic
+            Add Topic
           </button>
         </div>
       </section>
@@ -235,7 +235,7 @@ export function IntakeSettingsEditor({
           disabled={pending}
           className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
         >
-          Restore defaults
+          Restore Defaults
         </button>
         {flash?.kind === "ok" ? (
           <p className="text-body-sm text-success">{flash.text}</p>

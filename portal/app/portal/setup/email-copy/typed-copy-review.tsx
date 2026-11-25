@@ -70,7 +70,7 @@ function CoreEmailsList({ items, optOut }: { items: ClientCoreEmail[]; optOut: s
     <details className="group/core mt-lg rounded-card border border-border bg-surface">
       <summary className="flex cursor-pointer list-none items-start justify-between gap-md px-lg py-md [&::-webkit-details-marker]:hidden">
         <span>
-          <span className="block text-h4 text-heading">The template, filled in for each Core investor ({items.length})</span>
+          <span className="block text-h4 text-heading">The Template, Filled in for Each Core Investor ({items.length})</span>
           <span className="mt-xs block max-w-prose text-body-sm text-secondary">
             The emails each Core investor will actually get. Their name, their fund and the fact about them are filled in,
             using the researched facts shown with each one. Rupert has already reviewed every one.
@@ -224,7 +224,7 @@ export function TypedCopyReview({
             <h2 className="text-h4">
               {groupLabel(section, group.type)}{" "}
               <span className="text-body text-secondary">
-                · {group.funds} funds{group.merged?.length ? ` (includes ${group.merged.join(", ")})` : ""}
+                · {group.funds} Funds{group.merged?.length ? ` (includes ${group.merged.join(", ")})` : ""}
               </span>
             </h2>
             {section === "core" ? (

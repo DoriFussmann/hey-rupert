@@ -130,7 +130,7 @@ export function IntakeBriefPanel({
               disabled={pending !== null || !claudeReady || Boolean(form)}
               onClick={brief ? onRegenerate : generate}
             >
-              {pending === "generate" ? "Writing…" : brief ? "Regenerate" : "Write summary"}
+              {pending === "generate" ? "Writing…" : brief ? "Regenerate" : "Write Summary"}
             </button>
           </div>
         ) : null}

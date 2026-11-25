@@ -130,7 +130,7 @@ export function ResetPasswordSection({
     <>
       <section className="mt-lg flex flex-wrap items-end justify-between gap-md rounded-card border border-border bg-surface px-lg py-lg">
         <div className="min-w-0 flex-1">
-          <h2 className="text-h4">Login &amp; access</h2>
+          <h2 className="text-h4">Login &amp; Access</h2>
           <AccessStatus access={access} />
         </div>
         <div className="flex flex-wrap gap-sm">
@@ -142,7 +142,7 @@ export function ResetPasswordSection({
             }}
             className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
           >
-            Reset password
+            Reset Password
           </button>
         </div>
       </section>
@@ -231,7 +231,7 @@ export function ResetPasswordSection({
                     disabled={pending}
                     className="rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40"
                   >
-                    {pending ? "Creating..." : "Create new link"}
+                    {pending ? "Creating..." : "Create New Link"}
                   </button>
                 </div>
               </div>

@@ -59,8 +59,8 @@ function ImportPreview({
       </div>
       <div className="grid gap-sm px-lg py-md sm:grid-cols-2 lg:grid-cols-4">
         <Count label="Rows" value={summary.rows} tone="text-heading" />
-        <Count label="Will be added" value={summary.added} tone="text-success" />
-        <Count label="Duplicates, skipped" value={summary.duplicates} tone="text-secondary" />
+        <Count label="Will Be Added" value={summary.added} tone="text-success" />
+        <Count label="Duplicates, Skipped" value={summary.duplicates} tone="text-secondary" />
         <Count label="Rejected" value={summary.rejectedCount} tone={summary.rejectedCount > 0 ? "text-error" : "text-secondary"} />
       </div>
       {summary.sample.length > 0 ? (
@@ -89,7 +89,7 @@ function ImportPreview({
       ) : null}
       <div className="flex flex-wrap items-center gap-sm border-t border-border px-lg py-md">
         <button type="button" className={primaryButton} disabled={busy || summary.added === 0} onClick={onApply}>
-          {summary.added > 0 ? `Apply: add ${n(summary.added)} contact${summary.added === 1 ? "" : "s"}` : "Nothing to add"}
+          {summary.added > 0 ? `Apply: add ${n(summary.added)} contact${summary.added === 1 ? "" : "s"}` : "Nothing to Add"}
         </button>
         <button type="button" className={secondaryButton} disabled={busy} onClick={onDiscard}>
           Discard
@@ -158,14 +158,14 @@ export function ContactImport({
         />
       ) : null}
       <details className={staged ? "mt-md" : ""}>
-        <summary className="cursor-pointer text-h4 text-heading">Contacts file format</summary>
+        <summary className="cursor-pointer text-h4 text-heading">Contacts File Format</summary>
         <p className="mt-xs max-w-prose text-body-sm text-muted">
           Adds people to funds already in the Fund Database; they stay when the provider sends a new workbook. Up to{" "}
           {n(IMPORT_MAX_ROWS)} rows and 3 MB per file. Drop it in Upload above.
         </p>
         <dl className="mt-sm grid gap-sm text-body-sm sm:grid-cols-2">
           <div>
-            <dt className="text-label uppercase tracking-label text-muted">Required columns</dt>
+            <dt className="text-label uppercase tracking-label text-muted">Required Columns</dt>
             <dd className="mt-xs text-heading">
               {required
                 .map((column) => (column.key === "firmId" ? "FirmID (or Firm Website if there is no ID)" : column.header))
@@ -173,7 +173,7 @@ export function ContactImport({
             </dd>
           </div>
           <div>
-            <dt className="text-label uppercase tracking-label text-muted">Optional columns</dt>
+            <dt className="text-label uppercase tracking-label text-muted">Optional Columns</dt>
             <dd className="mt-xs text-secondary">{optional.map((column) => column.header).join(", ")}</dd>
           </div>
         </dl>

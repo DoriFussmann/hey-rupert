@@ -38,12 +38,12 @@ export const ADMIN_BLOCKED: Record<SetupStepId, string> = {
 export function adminStatus(item: SetupItem) {
   if (item.status === "done") return { label: "Done", tone: "text-success" };
   if (item.status === "waiting") {
-    return { label: "Your turn", tone: "bg-primary-tint text-primary border-primary/30" };
+    return { label: "Your Turn", tone: "bg-primary-tint text-primary border-primary/30" };
   }
   if (item.status === "your_turn") {
-    return { label: "Waiting on client", tone: "text-muted" };
+    return { label: "Waiting on Client", tone: "text-muted" };
   }
-  return { label: "Not open yet", tone: "text-muted" };
+  return { label: "Not Open Yet", tone: "text-muted" };
 }
 
 export function StepFrame({
@@ -151,7 +151,7 @@ export function EarlierRounds({ row }: { row: SetupStepState | null }) {
   return (
     <details className="mx-lg mt-md text-body-sm">
       <summary className="cursor-pointer text-label uppercase tracking-label text-muted">
-        Earlier rounds ({earlier.length})
+        Earlier Rounds ({earlier.length})
       </summary>
       <ol className="mt-sm space-y-sm">
         {earlier.map((entry) => (
@@ -314,7 +314,7 @@ function FeedbackBody({ clientId, question }: { clientId: string; question: Setu
           />
           <div className="flex flex-wrap gap-sm">
             <button type="button" className={primaryButton} disabled={pending} onClick={() => void save()}>
-              {pending ? "Saving…" : "Save summary"}
+              {pending ? "Saving…" : "Save Summary"}
             </button>
             <button type="button" className={secondaryButton} disabled={pending} onClick={() => setEditing(false)}>
               Cancel
@@ -331,7 +331,7 @@ function FeedbackBody({ clientId, question }: { clientId: string; question: Setu
       )}
       {error ? <p className="text-body-sm text-error">{error}</p> : null}
       <details>
-        <summary className="cursor-pointer text-body-sm text-primary">What they sent</summary>
+        <summary className="cursor-pointer text-body-sm text-primary">What They Sent</summary>
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{question.question}</p>
       </details>
     </div>

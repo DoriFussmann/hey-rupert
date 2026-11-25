@@ -98,7 +98,7 @@ export function StripeInvoicePicker({
             ))}
           </select>
           <button type="button" className={smallButton} disabled={busy !== null || !priceId} onClick={() => void create()}>
-            {busy === "create" ? "Creating…" : "Create invoice"}
+            {busy === "create" ? "Creating…" : "Create Invoice"}
           </button>
           <button type="button" className={linkButton} disabled={busy !== null} onClick={() => setPrices(null)}>
             Cancel
@@ -106,7 +106,7 @@ export function StripeInvoicePicker({
         </span>
       ) : (
         <button type="button" className={linkButton} disabled={disabled || busy !== null} onClick={() => void open()}>
-          {busy === "load" ? "Loading Stripe products…" : "Create the invoice in Stripe from here"}
+          {busy === "load" ? "Loading Stripe Products…" : "Create the Invoice in Stripe from Here"}
         </button>
       )}
       {message ? (

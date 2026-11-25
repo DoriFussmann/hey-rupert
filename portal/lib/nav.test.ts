@@ -49,7 +49,7 @@ test("the current page opens its group and highlights its link", () => {
 
 test("section links: the one in the hash is current, the first one when there is no hash", () => {
   const emails = group("emails");
-  const client = item("emails", "Client emails");
+  const client = item("emails", "Client Emails");
   const reminders = item("emails", "Reminders");
   assert.ok(navItemActive("/admin/forms/emails", "", client, emails));
   assert.ok(!navItemActive("/admin/forms/emails", "", reminders, emails));
@@ -58,10 +58,10 @@ test("section links: the one in the hash is current, the first one when there is
   assert.ok(!navItemActive("/admin/nudge", "", client, emails));
 });
 
-test("Agents: one link per managed prompt; All prompts is current only on the list itself", () => {
+test("Agents: one link per managed prompt; All Prompts is current only on the list itself", () => {
   const agents = group("agents");
-  const all = item("agents", "All prompts");
-  const narrative = item("agents", "Narrative email");
+  const all = item("agents", "All Prompts");
+  const narrative = item("agents", "Narrative Email");
   assert.equal(narrative.href, "/admin/forms/agents/narrative_email");
   assert.equal(agents.items.length, 5 + 43);
   assert.ok(navItemActive("/admin/forms/agents", "", all, agents));
@@ -73,9 +73,9 @@ test("menus: Agents is split into the lists and the prompts by area, every link 
   const agents = group("agents");
   const sections = navSections(agents);
   assert.equal(sections[0].label, "Lists");
-  assert.deepEqual(sections[0].items.map((entry) => entry.label), ["All prompts", "Intake topics", "Brief topics", "Selling points", "Feedback topics"]);
+  assert.deepEqual(sections[0].items.map((entry) => entry.label), ["All Prompts", "Intake Topics", "Brief Topics", "Selling Points", "Feedback Topics"]);
   assert.equal(sections.reduce((sum, section) => sum + section.items.length, 0), agents.items.length);
-  assert.ok(sections.some((section) => section.label === "Emails to founders"));
+  assert.ok(sections.some((section) => section.label === "Emails to Founders"));
   const found = navSections(agents, "narrative email");
   assert.ok(found.length > 0 && found.every((section) => section.items.every((entry) => /narrative/i.test(entry.label) && /email/i.test(entry.label))));
   assert.deepEqual(navSections(agents, "zzzz"), []);

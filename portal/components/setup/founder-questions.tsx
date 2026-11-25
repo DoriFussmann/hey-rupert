@@ -61,7 +61,7 @@ export function FounderQuestions({ items, readOnly }: { items: Item[]; readOnly:
                   disabled={readOnly || saving !== null || !(drafts[item.id] ?? "").trim()}
                   onClick={() => void save(item.id)}
                 >
-                  {saving === item.id ? "Sending…" : "Send answer"}
+                  {saving === item.id ? "Sending…" : "Send Answer"}
                 </button>
                 {errors[item.id] ? <p role="alert" className="mt-xs text-body-sm text-error">{errors[item.id]}</p> : null}
               </>

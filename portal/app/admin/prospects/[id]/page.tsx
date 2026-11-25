@@ -74,10 +74,10 @@ export default async function ProspectPage({ params }: { params: { id: string } 
         actions={
           prospect.client_id ? (
             <Link href={`/admin/clients/${prospect.client_id}`} className="rounded-md bg-primary px-md py-sm text-body-sm text-white no-underline hover:bg-primary-hover">
-              Open client →
+              Open Client →
             </Link>
           ) : (
-            <AddClientButton label="Convert to client" initial={clientPrefill(prospect)} />
+            <AddClientButton label="Convert to Client" initial={clientPrefill(prospect)} />
           )
         }
       />
@@ -110,7 +110,7 @@ export default async function ProspectPage({ params }: { params: { id: string } 
           </section>
 
           <section className="rounded-card border border-border bg-surface px-lg py-md">
-            <h2 className="text-h4">What they told us</h2>
+            <h2 className="text-h4">What They Told Us</h2>
             <dl className="mt-sm grid gap-sm text-body-sm">
               {answers.map((a) => (
                 <div key={a.name}>
@@ -120,7 +120,7 @@ export default async function ProspectPage({ params }: { params: { id: string } 
               ))}
               {prospect.heard_from && !answers.some((a) => /hear/i.test(a.name)) ? (
                 <div>
-                  <dt className="text-label uppercase tracking-label text-muted">Heard about us</dt>
+                  <dt className="text-label uppercase tracking-label text-muted">Heard About Us</dt>
                   <dd className="text-body">{prospect.heard_from}</dd>
                 </div>
               ) : null}

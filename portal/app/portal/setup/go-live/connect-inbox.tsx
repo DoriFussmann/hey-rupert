@@ -359,7 +359,7 @@ export function ConnectInbox({
 
               <div className="mt-md flex flex-wrap items-center gap-sm">
                 <button type="submit" className={primary} disabled={readOnly || saving || !email.trim() || !name.trim() || !password.trim()}>
-                  {saving ? "Connecting…" : "Connect inbox"}
+                  {saving ? "Connecting…" : "Connect Inbox"}
                 </button>
                 <button type="button" className={`${link} text-body-sm`} onClick={() => setWay("admin")}>
                   Company email? Ask your admin instead

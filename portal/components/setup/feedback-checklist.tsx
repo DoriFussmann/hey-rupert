@@ -93,7 +93,7 @@ export function FeedbackChecklist({
             <div className="flex flex-wrap items-baseline justify-between gap-sm border-b border-border px-lg py-md">
               <div>
                 <h3 className="text-body-sm uppercase tracking-label text-heading">
-                  {priority.label} priority
+                  {priority.label} Priority
                 </h3>
                 <p className="mt-xs text-body-sm text-muted">{PRIORITY_NOTE[priority.value]}</p>
               </div>

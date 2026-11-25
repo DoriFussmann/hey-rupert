@@ -138,7 +138,7 @@ function Editor({
       </div>
       <div className="flex flex-wrap gap-sm">
         <button type="button" className={primaryButton} disabled={pending} onClick={save}>
-          Save and approve
+          Save and Approve
         </button>
         <button type="button" className={secondaryButton} disabled={pending} onClick={onClose}>
           Cancel
@@ -303,7 +303,7 @@ export function ValueReview({ values, nodes }: { values: ValueItem[]; nodes: Tax
       </div>
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={secondaryButton} disabled={pending || !field || askable === 0} onClick={suggest}>
-          {pending ? "Asking AI…" : field ? `Suggest mappings with AI (${n(askable)} unmapped)` : "Pick a field to get AI suggestions"}
+          {pending ? "Asking AI…" : field ? `Suggest mappings with AI (${n(askable)} unmapped)` : "Pick a Field to Get AI Suggestions"}
         </button>
         {note ? (
           <span role="status" className="text-body-sm text-success">
@@ -326,7 +326,7 @@ export function ValueReview({ values, nodes }: { values: ValueItem[]; nodes: Tax
       )}
       {filtered.length > limit ? (
         <button type="button" className={`${smallButton} mt-sm`} onClick={() => setLimit((current) => current + PAGE)}>
-          Show more ({n(filtered.length - limit)} left)
+          Show More ({n(filtered.length - limit)} Left)
         </button>
       ) : null}
     </div>

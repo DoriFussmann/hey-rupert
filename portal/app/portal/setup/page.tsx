@@ -30,7 +30,7 @@ export default async function SetupPage() {
           title={yourTurn.title}
           detail={yourTurn.detail}
           href={yourTurn.href}
-          cta="Review now"
+          cta="Review Now"
         />
       ) : rupertsTurn ? (
         <TurnBanner

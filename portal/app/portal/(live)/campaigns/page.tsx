@@ -30,7 +30,7 @@ function BreakdownTable({ title, first, rows }: { title: string; first: string; 
                 <th className="py-sm pr-sm font-medium">{first}</th>
                 <th className="px-sm py-sm text-right font-medium">Sent</th>
                 <th className="px-sm py-sm text-right font-medium">Delivered</th>
-                <th className="px-sm py-sm font-medium">Open rate</th>
+                <th className="px-sm py-sm font-medium">Open Rate</th>
                 <th className="px-sm py-sm text-right font-medium">Replies</th>
                 <th className="py-sm pl-sm text-right font-medium">Meetings</th>
               </tr>
@@ -96,9 +96,9 @@ export default async function CampaignsPage({ searchParams }: { searchParams: { 
     from === null ? choice === null : choice !== null && choice.from === from && choice.to === to;
 
   const cards = [
-    { label: "Emails sent", value: String(totals.sent), sub: "First emails and follow-ups" },
+    { label: "Emails Sent", value: String(totals.sent), sub: "First emails and follow-ups" },
     { label: "Delivered", value: percent(totals.sent ? totals.delivered / totals.sent : null), sub: `${totals.delivered} delivered · ${totals.bounced} bounced` },
-    { label: "Open rate", value: percent(totals.openRate), sub: `${totals.opened} opened` },
+    { label: "Open Rate", value: percent(totals.openRate), sub: `${totals.opened} opened` },
     { label: "Replies", value: String(totals.replies), sub: `${percent(totals.replyRate)} reply rate` },
     { label: "Meetings", value: String(totals.meetings), sub: "Booked from replies" },
   ];
@@ -174,7 +174,7 @@ export default async function CampaignsPage({ searchParams }: { searchParams: { 
 
       <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
         <div className="flex flex-wrap items-baseline justify-between gap-sm">
-          <h2 className="text-h4">Emails sent per day</h2>
+          <h2 className="text-h4">Emails Sent per Day</h2>
           <p className="text-body-sm text-muted">First emails and follow-ups · weekdays, 9am–5pm Eastern</p>
         </div>
         {daily.length === 0 ? (
@@ -201,12 +201,12 @@ export default async function CampaignsPage({ searchParams }: { searchParams: { 
       </section>
 
       <div className="mt-lg flex flex-wrap gap-lg">
-        <BreakdownTable title="By tier" first="Tier" rows={tiers} />
-        <BreakdownTable title="By fund type" first="Fund type" rows={types} />
+        <BreakdownTable title="By Tier" first="Tier" rows={tiers} />
+        <BreakdownTable title="By Fund Type" first="Fund type" rows={types} />
       </div>
 
       <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
-        <h2 className="text-h4">Sending plan</h2>
+        <h2 className="text-h4">Sending Plan</h2>
         <SendingPlanTable
           weeks={data.plan}
           note={`${data.activeTotal} investors · weekdays only, 9am–5pm Eastern · never more than 30 emails a day, follow-ups included · follow-ups ${data.settings.followup_days[0]} and ${data.settings.followup_days[1]} days apart.`}

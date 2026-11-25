@@ -221,7 +221,7 @@ export function InvestorListPanel({
                 aria-pressed={flaggedOnly}
                 onClick={() => setFlaggedOnly((current) => !current)}
               >
-                {flaggedOnly ? "✓ Flagged only" : "Flagged only"} ({flaggedRows.length})
+                {flaggedOnly ? "✓ Flagged Only" : "Flagged Only"} ({flaggedRows.length})
               </button>
             </div>
             <InvestorFundGroups

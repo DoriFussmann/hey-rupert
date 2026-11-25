@@ -19,16 +19,16 @@ export type ClassStatus = "accepted" | "needs_confirmation" | "confirmed_founder
 export type Confidence = "high" | "medium" | "low";
 
 export const SOURCE_LABEL: Record<ClassSource, string> = {
-  founder: "Founder-stated",
-  ai: "AI interpretation",
-  admin: "Admin decision",
-  legacy: "Legacy (no evidence recorded)",
+  founder: "Founder-Stated",
+  ai: "AI Interpretation",
+  admin: "Admin Decision",
+  legacy: "Legacy (No Evidence Recorded)",
 };
 
 export const STATUS_LABEL: Record<ClassStatus, string> = {
   accepted: "Accepted",
-  needs_confirmation: "Needs confirmation",
-  confirmed_founder: "Confirmed with founder",
+  needs_confirmation: "Needs Confirmation",
+  confirmed_founder: "Confirmed with Founder",
 };
 
 /** A quote offered as evidence, and whether it was found in the founder's own messages. */
@@ -58,8 +58,8 @@ export type TextFact = { text: string; source: ClassSource; evidence: Evidence[]
 export type IssueSeverity = "blocking" | "limited" | "info";
 
 export const SEVERITY_LABEL: Record<IssueSeverity, string> = {
-  blocking: "Blocks matching",
-  limited: "Limited match",
+  blocking: "Blocks Matching",
+  limited: "Limited Match",
   info: "Info",
 };
 
@@ -69,7 +69,7 @@ export type Readiness = "blocked" | "limited" | "ready";
 
 export const READINESS_LABEL: Record<Readiness, string> = {
   blocked: "Blocked",
-  limited: "Limited match",
+  limited: "Limited Match",
   ready: "Ready",
 };
 

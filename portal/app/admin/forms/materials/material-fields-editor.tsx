@@ -251,7 +251,7 @@ export function MaterialFieldsEditor({
             onClick={addField}
             disabled={fields.length >= MATERIAL_FIELDS_MAX}
           >
-            Add field
+            Add Field
           </button>
         </div>
       </section>
@@ -271,7 +271,7 @@ export function MaterialFieldsEditor({
           disabled={pending}
           className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
         >
-          Restore defaults
+          Restore Defaults
         </button>
         {flash?.kind === "ok" ? <p className="text-body-sm text-success">{flash.text}</p> : null}
         {flash?.kind === "error" ? (

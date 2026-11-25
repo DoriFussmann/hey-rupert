@@ -4,7 +4,7 @@ import { useEffect, useId, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { deleteProspect, updateProspect } from "@/app/admin/prospect-actions";
+import { archiveProspect, deleteProspect, updateProspect } from "@/app/admin/prospect-actions";
 import { PROSPECT_STATUSES, STATUS_LABEL, type ProspectStatus } from "@/lib/prospects/core";
 
 export type RowProspect = {
@@ -16,11 +16,13 @@ export type RowProspect = {
   status: ProspectStatus;
   callId: string | null;
   callStart: string | null;
+  archived: boolean;
 };
 
 const primary = "rounded-md bg-primary px-md py-sm text-body-sm text-white transition-colors duration-hover hover:bg-primary-hover disabled:opacity-40";
 const secondary = "rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 const danger = "rounded-md bg-error px-md py-sm text-body-sm text-white transition-opacity duration-hover hover:opacity-90 disabled:opacity-40";
+const rowButton = "rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40";
 const label = "text-label uppercase tracking-label text-muted";
 const field = "mt-xs w-full rounded-md border border-border bg-background px-sm py-sm text-body-sm text-body outline-none";
 
@@ -35,7 +37,7 @@ function toLocalInput(iso: string | null) {
 
 const EDITABLE_STATUSES = PROSPECT_STATUSES.filter((s) => s !== "converted");
 
-/** A row of the Calls booked table. Clicking it opens a modal to edit or delete the booked call. */
+/** A row of the Calls Booked table, with its Edit, Archive and Delete buttons. Clicking the row also opens Edit. */
 export function ProspectRow({ prospect, children }: { prospect: RowProspect; children: React.ReactNode }) {
   const router = useRouter();
   const titleId = useId();
@@ -106,6 +108,16 @@ export function ProspectRow({ prospect, children }: { prospect: RowProspect; chi
     });
   }
 
+  function archive() {
+    setError(null);
+    start(async () => {
+      const r = await archiveProspect(prospect.id, !prospect.archived);
+      if (!r.ok) return setError(r.error);
+      setMode(null);
+      router.refresh();
+    });
+  }
+
   const set = (key: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((f) => ({ ...f, [key]: e.target.value }));
   const who = prospect.name || prospect.email;
@@ -128,6 +140,25 @@ export function ProspectRow({ prospect, children }: { prospect: RowProspect; chi
         aria-label={`Edit ${prospect.name || prospect.email}`}
       >
         {children}
+        <td className="px-lg py-md text-right" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <span className="inline-flex flex-nowrap items-center gap-xs">
+            <button type="button" className={rowButton} onClick={() => open("edit")} disabled={pending}>
+              Edit
+            </button>
+            <button type="button" className={rowButton} onClick={archive} disabled={pending}>
+              {prospect.archived ? "Unarchive" : "Archive"}
+            </button>
+            <button
+              type="button"
+              className="rounded-md border border-border bg-surface px-sm py-xs text-body-sm text-error transition-colors duration-hover hover:border-error disabled:opacity-40"
+              onClick={() => open("delete")}
+              disabled={pending}
+            >
+              Delete
+            </button>
+          </span>
+          {error && !mode ? <p className="mt-xs text-body-sm text-error">{error}</p> : null}
+        </td>
       </tr>
 
       {mode && typeof document !== "undefined"
@@ -143,7 +174,7 @@ export function ProspectRow({ prospect, children }: { prospect: RowProspect; chi
             {mode === "edit" ? (
               <>
                 <h3 id={titleId} className="text-h4 text-heading">
-                  Edit booked call
+                  Edit Booked Call
                 </h3>
                 <div className="mt-md grid gap-md sm:grid-cols-2">
                   <label className="block">
@@ -198,8 +229,11 @@ export function ProspectRow({ prospect, children }: { prospect: RowProspect; chi
                     >
                       Delete
                     </button>
+                    <button type="button" className={secondary} onClick={archive} disabled={pending}>
+                      {prospect.archived ? "Unarchive" : "Archive"}
+                    </button>
                     <Link href={`/admin/prospects/${prospect.id}`} className="text-body-sm text-primary no-underline hover:text-primary-hover">
-                      Brief &amp; follow-up →
+                      Brief &amp; Follow-Up →
                     </Link>
                   </div>
                   <div className="flex gap-sm">
@@ -223,8 +257,8 @@ export function ProspectRow({ prospect, children }: { prospect: RowProspect; chi
                 </p>
                 {error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null}
                 <div className="mt-md flex justify-end gap-sm">
-                  <button type="button" className={secondary} onClick={() => setMode("edit")} disabled={pending}>
-                    Back
+                  <button type="button" className={secondary} onClick={close} disabled={pending}>
+                    Cancel
                   </button>
                   <button type="button" className={danger} onClick={remove} disabled={pending}>
                     {pending ? "Deleting…" : "Delete"}

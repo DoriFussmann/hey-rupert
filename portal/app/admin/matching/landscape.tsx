@@ -174,7 +174,7 @@ function Row({
               </p>
             ) : null}
             <LinkLine label="Website" url={c.website} state={c.links.website} />
-            <LinkLine label="Funding news" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
+            <LinkLine label="Funding News" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
             {c.why ? <p className="text-body-sm text-muted">{c.why}</p> : null}
           </div>
           {locked ? null : (
@@ -233,24 +233,24 @@ function DetailsModal({ c, rank, onClose }: { c: Competitor; rank: number; onClo
           <dd className="text-heading">{c.stage || "–"}</dd>
           <dt className="text-muted">Geography</dt>
           <dd className="text-heading">{c.geography || "–"}</dd>
-          <dt className="text-muted">Primary sub-sector</dt>
+          <dt className="text-muted">Primary Sub-Sector</dt>
           <dd className="text-heading">{c.primarySector || "–"}</dd>
-          <dt className="text-muted">Secondary sub-sectors</dt>
+          <dt className="text-muted">Secondary Sub-Sectors</dt>
           <dd className="text-heading">{c.secondarySectors.length ? c.secondarySectors.join(", ") : "–"}</dd>
-          <dt className="text-muted">Latest round</dt>
+          <dt className="text-muted">Latest Round</dt>
           <dd className="text-body">{funding || "–"}</dd>
-          <dt className="text-muted">Total raised</dt>
+          <dt className="text-muted">Total Raised</dt>
           <dd className="text-body">{c.funding.totalRaised || "–"}</dd>
           <dt className="text-muted">HQ</dt>
           <dd className="text-body">{c.hq || "–"}</dd>
-          <dt className="text-muted">Investors named</dt>
+          <dt className="text-muted">Investors Named</dt>
           <dd className="text-body">{c.funding.investors.length ? c.funding.investors.join(", ") : "–"}</dd>
           <dt className="text-muted">Source</dt>
           <dd className="text-body">{c.source === "client" ? "Named by the client" : "Web search"}</dd>
         </dl>
         <div className="mt-md space-y-xs">
           <LinkLine label="Website" url={c.website} state={c.links.website} />
-          <LinkLine label="Funding news" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
+          <LinkLine label="Funding News" url={c.newsUrl} state={c.links.news} title={c.newsTitle} />
         </div>
         {c.why ? <p className="mt-md text-body-sm text-muted">{c.why}</p> : null}
       </div>
@@ -286,7 +286,7 @@ function ConfirmedSummary({
           </p>
         </div>
         <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy} onClick={onStartOver}>
-          {busy ? "Starting over…" : "Start over"}
+          {busy ? "Starting Over…" : "Start Over"}
         </button>
       </div>
       <table className="mt-md w-full text-left text-body-sm">
@@ -296,7 +296,7 @@ function ConfirmedSummary({
             <th className="py-xs pr-md font-medium">{kind === "comparables" ? "Company" : "Competitor"}</th>
             <th className="py-xs pr-md font-medium">Stage</th>
             <th className="py-xs pr-md font-medium">Geography</th>
-            <th className="py-xs font-medium">Primary sub-sector</th>
+            <th className="py-xs font-medium">Primary Sub-Sector</th>
           </tr>
         </thead>
         <tbody>
@@ -453,7 +453,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
         <p className="mt-xs text-body-sm text-warning">
           {missingSectors} not yet classified by sub-sector.{" "}
           <button type="button" className="underline" onClick={() => void fillSectors()}>
-            Classify sectors
+            Classify Sectors
           </button>
         </p>
       ) : null;
@@ -484,7 +484,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
       </div>
         {landscape ? (
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
-            {busy === "start" ? "Starting over…" : "Start over"}
+            {busy === "start" ? "Starting Over…" : "Start Over"}
           </button>
         ) : null}
       </div>
@@ -558,7 +558,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
                   disabled={busy !== null || !dirty || editing !== null}
                   onClick={() => void run("save", () => saveLandscape(clientId, items, false, kind))}
                 >
-                  {busy === "save" ? "Saving and checking links…" : "Save changes"}
+                  {busy === "save" ? "Saving and checking links…" : "Save Changes"}
                 </button>
                 <button
                   type="button"
@@ -566,7 +566,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
                   disabled={busy !== null || editing !== null}
                   onClick={() => void run("confirm", () => saveLandscape(clientId, items, true, kind))}
                 >
-                  {busy === "confirm" ? "Confirming…" : "Confirm list"}
+                  {busy === "confirm" ? "Confirming…" : "Confirm List"}
                 </button>
               </>
             )}

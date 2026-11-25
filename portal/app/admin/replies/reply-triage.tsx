@@ -92,7 +92,7 @@ function ReplyCard({ reply, onChange }: { reply: AdminReply; onChange: (next: Ad
       </div>
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={primary} disabled={busy || reply.visibility === "released"} onClick={() => decide("released")}>
-          Release to client
+          Release to Client
         </button>
         <input
           className="min-w-[14rem] flex-1 rounded-md border border-border bg-background px-sm py-xs text-body-sm"
@@ -142,7 +142,7 @@ export function ReplyTriage({ replies, claudeReady }: { replies: AdminReply[]; c
   if (items.length === 0) {
     return (
       <div className="rounded-card border border-border bg-surface px-lg py-xl">
-        <h2 className="text-h4">Nothing waiting</h2>
+        <h2 className="text-h4">Nothing Waiting</h2>
         <p className="mt-sm text-body-sm text-muted">New investor replies land here as they arrive.</p>
       </div>
     );

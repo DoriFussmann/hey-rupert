@@ -85,7 +85,7 @@ export function FundReview({
           </button>
           {current ? (
             <button type="button" className={smallButton} disabled={pending} onClick={() => void run(() => clearFundReview(clientId, firmId))}>
-              Clear review
+              Clear Review
             </button>
           ) : null}
         </div>

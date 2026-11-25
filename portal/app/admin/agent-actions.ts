@@ -319,7 +319,7 @@ export async function saveMaterialFields(fields: unknown): Promise<Result<object
 
   const { error } = await access.supabase.from("form_templates").upsert({
     slug: MATERIAL_FIELDS_SLUG,
-    title: "Company Materials fields",
+    title: "Company Materials Fields",
     content: JSON.stringify(clean),
     updated_at: nowIso(),
   });

@@ -65,10 +65,10 @@ export function CompanyProfileCard({
   const status = pending
     ? { label: "Analyzing…", tone: "text-muted border-border" }
     : !state
-      ? { label: "Not analyzed yet", tone: "text-muted border-border" }
+      ? { label: "Not Analyzed Yet", tone: "text-muted border-border" }
       : state.status === "ready"
-        ? { label: "Ready to match", tone: "text-success border-success/40" }
-        : { label: "Needs info", tone: "text-warning border-warning/40" };
+        ? { label: "Ready to Match", tone: "text-success border-success/40" }
+        : { label: "Needs Info", tone: "text-warning border-warning/40" };
 
   const answers = state?.answers ?? {};
   const facts = [
@@ -107,7 +107,7 @@ export function CompanyProfileCard({
                 : "border border-border bg-surface text-secondary hover:text-heading"
             }`}
           >
-            {pending ? "Analyzing…" : state ? "Re-analyze" : "Analyze"}
+            {pending ? "Analyzing…" : state ? "Re-Analyze" : "Analyze"}
           </button>
           <Link
             href={`/admin/clients/${clientId}/profile`}

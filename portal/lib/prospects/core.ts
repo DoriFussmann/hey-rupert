@@ -190,11 +190,11 @@ export const PROSPECT_STATUSES = ["call_booked", "call_done", "follow_up", "not_
 export type ProspectStatus = (typeof PROSPECT_STATUSES)[number];
 
 export const STATUS_LABEL: Record<ProspectStatus, string> = {
-  call_booked: "Call booked",
-  call_done: "Call done",
-  follow_up: "Follow up",
-  not_a_fit: "Not a fit",
-  no_show: "No-show",
+  call_booked: "Call Booked",
+  call_done: "Call Done",
+  follow_up: "Follow Up",
+  not_a_fit: "Not a Fit",
+  no_show: "No-Show",
   cancelled: "Cancelled",
   converted: "Client",
 };

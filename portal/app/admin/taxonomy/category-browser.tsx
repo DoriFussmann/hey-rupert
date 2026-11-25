@@ -158,7 +158,7 @@ function AddCategory({ dimension, nodes, kinds }: { dimension: Dimension; nodes:
       />
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={primaryButton} disabled={pending || !draft.label.trim()} onClick={save}>
-          Add category
+          Add Category
         </button>
         {note ? (
           <span role="status" className="text-body-sm text-success">

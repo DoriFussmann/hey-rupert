@@ -43,7 +43,7 @@ export function ViewAsClientLink({
         className="inline-flex items-center gap-sm rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
       >
         <EyeIcon />
-        View as client
+        View as Client
       </a>
     );
   }

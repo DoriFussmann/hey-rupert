@@ -198,7 +198,7 @@ export function FinalSummary({
         <>
           <div className="flex flex-wrap items-center justify-between gap-sm px-lg py-md">
             <h2 className="text-h4 text-heading">
-              Action required · {n(problems.length)} contact{problems.length === 1 ? "" : "s"}
+              Action Required · {n(problems.length)} Contact{problems.length === 1 ? "" : "s"}
             </h2>
             <button type="button" className={primaryButton} disabled={pending || selected.length === 0} onClick={() => void apply()}>
               {pending ? "Saving…" : `Apply ${n(selected.length)} action${selected.length === 1 ? "" : "s"}`}
@@ -284,7 +284,7 @@ export function FinalSummary({
           {problems.length > shown ? (
             <div className="border-t border-border px-lg py-md">
               <button type="button" className={smallButton} onClick={() => setShown((value) => value + PAGE)}>
-                Show more ({n(problems.length - shown)} left)
+                Show More ({n(problems.length - shown)} Left)
               </button>
             </div>
           ) : null}

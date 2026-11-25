@@ -48,7 +48,7 @@ export function RunRemindersButton() {
         title="Prepares any reminders due now (schedule in Forms → Emails). Nothing is sent: they wait under Ready to send."
         className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
       >
-        {pending ? "Checking…" : "Check reminders now"}
+        {pending ? "Checking…" : "Check Reminders Now"}
       </button>
       {lines.map((line, index) => (
         <p

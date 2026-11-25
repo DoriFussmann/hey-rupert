@@ -37,7 +37,7 @@ export function DatabaseHistory({
     <section aria-labelledby="database-history" className="mt-lg overflow-x-auto rounded-card border border-border bg-surface">
       <div className="border-b border-border px-lg py-md">
         <h2 id="database-history" className="text-h4 text-heading">
-          Database history
+          Database History
         </h2>
         <p className="mt-xs text-body-sm text-muted">Where the database started, everything added since, and where it is now.</p>
       </div>
@@ -49,8 +49,8 @@ export function DatabaseHistory({
             <th className="px-md py-sm font-medium">File</th>
             <th className="px-md py-sm text-right font-medium">Funds</th>
             <th className="px-md py-sm text-right font-medium">Contacts</th>
-            <th className="px-md py-sm text-right font-medium">Total funds</th>
-            <th className="px-lg py-sm text-right font-medium">Total contacts</th>
+            <th className="px-md py-sm text-right font-medium">Total Funds</th>
+            <th className="px-lg py-sm text-right font-medium">Total Contacts</th>
           </tr>
         </thead>
         <tbody>

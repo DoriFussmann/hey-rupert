@@ -23,7 +23,7 @@ export function SignOutButton() {
       onClick={signOut}
       className="text-left text-body-sm text-muted transition-colors duration-hover hover:text-heading"
     >
-      Log out
+      Log Out
     </button>
   );
 }

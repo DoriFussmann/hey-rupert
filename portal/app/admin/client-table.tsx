@@ -73,7 +73,7 @@ export function ClientTable({ clients, nudgeable = [] }: { clients: Client[]; nu
       </label>
 
       <ClientSection
-        title="Active clients"
+        title="Active Clients"
         hint="Service Order signed and Setup Fee paid."
         clients={groups.active}
         empty={empty ?? "No active clients yet."}
@@ -162,7 +162,7 @@ function ClientRows({
             <th className="px-lg py-sm font-medium">Client</th>
             <th className="px-lg py-sm font-medium">Stage</th>
             <th className="px-lg py-sm font-medium">Progress</th>
-            <th className="px-lg py-sm font-medium">Next action</th>
+            <th className="px-lg py-sm font-medium">Next Action</th>
             {nudgeable ? <th className="px-lg py-sm font-medium" aria-label="Nudge" /> : null}
           </tr>
         </thead>

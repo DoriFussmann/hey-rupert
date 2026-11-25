@@ -195,7 +195,7 @@ export function FeedbackInbox({
       {older.length > 0 ? (
         <details className="mt-md">
           <summary className="cursor-pointer text-body-sm text-secondary">
-            Earlier versions · {older.length} {older.length === 1 ? "point" : "points"}
+            Earlier Versions · {older.length} {older.length === 1 ? "point" : "points"}
           </summary>
           <ol className="mt-sm space-y-sm">{older.map(row)}</ol>
         </details>

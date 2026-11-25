@@ -202,7 +202,7 @@ export function GenerateStatementOfWork({
 
       <div className="flex flex-wrap items-end justify-between gap-md border-t border-border px-lg py-md">
         <div>
-          <h3 className="text-h4">Send log</h3>
+          <h3 className="text-h4">Send Log</h3>
           <p className="mt-xs text-body-sm text-muted">
             One record is written when you send. Archive a row to hide it.
           </p>
@@ -293,7 +293,7 @@ export function GenerateStatementOfWork({
 
       {hasDraft ? (
         <div className="border-t border-border px-lg">
-          <Disclosure title="Statement of Work text — template from Forms">
+          <Disclosure title="Statement of Work Text — Template from Forms">
             <div className="py-md">
               <MarkdownBody content={draft} emptyLabel="Nothing generated yet." />
             </div>
@@ -301,7 +301,7 @@ export function GenerateStatementOfWork({
         </div>
       ) : sentContent.trim() ? (
         <div className="border-t border-border px-lg">
-          <Disclosure title="Statement of Work text — sent to client">
+          <Disclosure title="Statement of Work Text — Sent to Client">
             <div className="py-md">
               <MarkdownBody content={sentContent} emptyLabel="Nothing sent yet." />
             </div>

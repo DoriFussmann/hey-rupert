@@ -199,7 +199,7 @@ export function SignableDocument({
             noValidate
             className="mt-lg rounded-card border border-border bg-surface p-lg"
           >
-            <h3 className="text-h4">Your details</h3>
+            <h3 className="text-h4">Your Details</h3>
             <p className="mt-xs text-body-sm text-muted">
               These appear in the {title} and on your signature.
             </p>

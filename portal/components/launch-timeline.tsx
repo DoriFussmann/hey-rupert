@@ -119,7 +119,7 @@ export function LaunchTimeline({
       ) : null}
 
       <Entry on={false} done={false}>
-        <p className="text-h4 text-heading">All along</p>
+        <p className="text-h4 text-heading">All Along</p>
         <p className="mt-xs max-w-prose text-body-sm text-secondary">
           Rupert reads every reply first. The ones that need you appear in your Investor Inbox, and you answer from your own email, in
           the same thread. Never more than 30 emails a day leave your inbox.

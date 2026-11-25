@@ -31,8 +31,8 @@ export const MATCH_TAB_LABEL: Record<MatchTab, string> = {
   plan: "Plan",
   tiers: "Tiers",
   verify: "Verify Emails",
-  outside: "Outside the tiers",
-  near: "Near misses",
+  outside: "Outside the Tiers",
+  near: "Near Misses",
   history: "History",
 };
 
@@ -384,14 +384,14 @@ export type SiteState = SiteResult["st"] | "unscanned";
 export const SITE_LABEL: Record<SiteState, string> = {
   ok: "Website OK",
   moved: "Redirects",
-  offtopic: "Off-topic site",
-  thin: "Unreadable site",
-  blocked: "Site blocks checks",
-  broken: "Dead website",
-  parked: "Parked domain",
-  inactive: "Not investing",
-  none: "No website",
-  unscanned: "Not checked yet",
+  offtopic: "Off-Topic Site",
+  thin: "Unreadable Site",
+  blocked: "Site Blocks Checks",
+  broken: "Dead Website",
+  parked: "Parked Domain",
+  inactive: "Not Investing",
+  none: "No Website",
+  unscanned: "Not Checked Yet",
 };
 
 /** "150 Website OK · 12 Dead website …" from status counts, biggest first. */

@@ -59,7 +59,7 @@ function ExceptionForm({ item, onDone }: { item: FofItem; onDone: () => void }) 
         <textarea id={`${id}-why`} className={`${inputClass} mt-xs`} rows={2} value={rationale} onChange={(e) => setRationale(e.target.value)} required minLength={20} />
       </div>
       <button type="submit" className={primaryButton} disabled={pending}>
-        {pending ? "Saving…" : item.exception ? "Save and send for review again" : "Propose exception"}
+        {pending ? "Saving…" : item.exception ? "Save and Send for Review Again" : "Propose Exception"}
       </button>
       <ErrorLine error={error} />
     </form>
@@ -114,7 +114,7 @@ function Row({ item }: { item: FofItem }) {
             </>
           ) : null}
           <button type="button" className={smallButton} aria-expanded={open} onClick={() => setOpen(!open)}>
-            {open ? "Close" : ex ? "Edit evidence" : "Add exception"}
+            {open ? "Close" : ex ? "Edit Evidence" : "Add Exception"}
           </button>
         </div>
       </div>

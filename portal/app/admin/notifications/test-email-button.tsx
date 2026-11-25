@@ -38,7 +38,7 @@ export function TestEmailButton() {
         disabled={pending}
         className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
       >
-        {pending ? "Sending…" : "Send test email"}
+        {pending ? "Sending…" : "Send Test Email"}
       </button>
       {result ? (
         <p

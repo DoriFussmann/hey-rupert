@@ -43,7 +43,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
         {!editing ? (
           <span className="flex gap-sm">
             <button type="button" className="text-body-sm text-primary underline" onClick={() => setEditing(true)}>
-              Edit summary
+              Edit Summary
             </button>
             <button type="button" className="text-body-sm text-muted underline" disabled={pending} onClick={() => void remove()}>
               Remove
@@ -61,7 +61,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
           />
           <div className="mt-xs flex gap-sm">
             <button type="button" className={primaryButton} disabled={pending} onClick={() => void save()}>
-              {pending ? "Saving…" : "Save summary"}
+              {pending ? "Saving…" : "Save Summary"}
             </button>
             <button type="button" className={secondaryButton} disabled={pending} onClick={() => setEditing(false)}>
               Cancel
@@ -72,7 +72,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-heading">{f.summary || "No summary: drafting uses the original. Edit to write one."}</p>
       )}
       <details className="mt-xs">
-        <summary className="cursor-pointer text-body-sm text-primary">What they sent</summary>
+        <summary className="cursor-pointer text-body-sm text-primary">What They Sent</summary>
         <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{f.original}</p>
       </details>
       {error ? <p className="mt-xs text-body-sm text-error">{error}</p> : null}
@@ -117,13 +117,13 @@ export function ClientFeedbackPanel({ clientId, items }: { clientId: string; ite
       <div className="flex flex-wrap items-center justify-between gap-md border-b border-border px-lg py-md">
         <div>
           <h2 id="client-feedback" className="text-h4 text-heading">
-            Client feedback
+            Client Feedback
           </h2>
           <p className="text-body-sm text-muted">What they told you outside the portal. They see the summaries under What Rupert Knows.</p>
         </div>
         {!open ? (
           <button type="button" className={secondaryButton} onClick={() => setOpen(true)}>
-            Log client feedback
+            Log Client Feedback
           </button>
         ) : null}
       </div>
@@ -162,7 +162,7 @@ export function ClientFeedbackPanel({ clientId, items }: { clientId: string; ite
               <input type="date" className={`${inputClass} mt-xs w-auto normal-case tracking-normal`} value={on} onChange={(e) => setOn(e.target.value)} />
             </label>
             <button type="button" className={primaryButton} disabled={pending || !text.trim()} onClick={() => void save()}>
-              {pending ? "Summarizing…" : "Log it"}
+              {pending ? "Summarizing…" : "Log It"}
             </button>
             <button type="button" className={secondaryButton} disabled={pending} onClick={() => setOpen(false)}>
               Cancel

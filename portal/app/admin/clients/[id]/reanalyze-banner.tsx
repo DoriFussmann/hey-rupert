@@ -271,7 +271,7 @@ export function ReanalyzeBanner({
           ) : null}
           <div className="mt-md flex flex-wrap items-center gap-sm">
             <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void runFacts()}>
-              {busy === "facts" ? "Updating facts…" : "Update Facts"}
+              {busy === "facts" ? "Updating Facts…" : "Update Facts"}
             </button>
             {busy === null ? (
               <button type="button" className={secondaryButton} onClick={() => setMode(null)}>
@@ -412,7 +412,7 @@ function FactsSummary({ record, onClose }: { record: FactUpdateRecord; onClose: 
           )}
           {record.untouched.length > 0 ? (
             <section>
-              <h3 className="text-label uppercase tracking-label text-muted">Not changed</h3>
+              <h3 className="text-label uppercase tracking-label text-muted">Not Changed</h3>
               <ul className="mt-sm list-disc space-y-xs pl-lg text-body-sm text-warning">
                 {record.untouched.map((line) => (
                   <li key={line}>{line}</li>
@@ -423,7 +423,7 @@ function FactsSummary({ record, onClose }: { record: FactUpdateRecord; onClose: 
           {record.skipped.length > 0 ? (
             <details>
               <summary className="cursor-pointer text-body-sm text-muted">
-                {plural(record.skipped.length, "suggested edit")} not applied
+                {plural(record.skipped.length, "suggested edit")} Not Applied
               </summary>
               <ul className="mt-sm space-y-sm text-body-sm text-muted">
                 {record.skipped.map((edit, index) => (

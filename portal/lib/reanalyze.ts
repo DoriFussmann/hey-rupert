@@ -6,10 +6,10 @@ export type ReanalyzeStepId = "brief" | "feedback" | "profile" | "narrative" | "
 
 /** The steps in the order they run: each one reads the one before. */
 export const REANALYZE_STEPS: { id: ReanalyzeStepId; label: string }[] = [
-  { id: "brief", label: "Intake brief" },
-  { id: "feedback", label: "Materials feedback" },
-  { id: "profile", label: "Company profile" },
-  { id: "narrative", label: "Narrative draft" },
+  { id: "brief", label: "Intake Brief" },
+  { id: "feedback", label: "Materials Feedback" },
+  { id: "profile", label: "Company Profile" },
+  { id: "narrative", label: "Narrative Draft" },
 ];
 
 export type ReanalyzeInput = {
@@ -187,16 +187,16 @@ export function startOverPlan(input: { hasInterview: boolean; narrativeSent: boo
   return [
     {
       id: "reset",
-      label: "Clear the analysis",
+      label: "Clear the Analysis",
       skip: null,
       note: input.narrativeSent
         ? "Deletes the company brief and its history, the chat and the questions. The narrative draft goes back to the version the client has; the client sees no change."
         : "Deletes the company brief and its history, the chat, the questions and the narrative draft.",
     },
-    { id: "brief", label: "Intake brief", skip: noInterview, note: "Rebuilt from the intake." },
-    { id: "feedback", label: "Materials feedback", skip: null, note: "Rewritten from the current materials." },
-    { id: "profile", label: "Company profile", skip: noInterview, note: "Rebuilt; a match may need re-running after." },
-    { id: "company_brief", label: "Company brief", skip: null, note: "Built fresh. Then go through its stages again: selling points, feedback, questions and narrative." },
+    { id: "brief", label: "Intake Brief", skip: noInterview, note: "Rebuilt from the intake." },
+    { id: "feedback", label: "Materials Feedback", skip: null, note: "Rewritten from the current materials." },
+    { id: "profile", label: "Company Profile", skip: noInterview, note: "Rebuilt; a match may need re-running after." },
+    { id: "company_brief", label: "Company Brief", skip: null, note: "Built fresh. Then go through its stages again: selling points, feedback, questions and narrative." },
   ];
 }
 

@@ -49,6 +49,8 @@ export type ProspectRow = {
   reminder_sent_at: string | null;
   client_id: string | null;
   converted_at: string | null;
+  /** Set when the admin archives the prospect: hidden from the Calls Booked list, nothing deleted. */
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -81,7 +83,7 @@ export type CallRow = {
 };
 
 export const PROSPECT_COLUMNS =
-  "id, email, name, company_name, website, heard_from, utm, status, brief, brief_status, brief_error, brief_at, match, match_at, outcome_notes, outcome_at, outcome_by, follow_up, follow_up_sent_at, reminder_sent_at, client_id, converted_at, created_at, updated_at";
+  "id, email, name, company_name, website, heard_from, utm, status, brief, brief_status, brief_error, brief_at, match, match_at, outcome_notes, outcome_at, outcome_by, follow_up, follow_up_sent_at, reminder_sent_at, client_id, converted_at, archived_at, created_at, updated_at";
 export const CALL_COLUMNS =
   "id, prospect_id, cal_uid, status, last_event, event_title, start_time, end_time, location, video_url, guests, notes, responses, rescheduled_from_uid, cancellation_reason, booked_at, prep_email_id, prep_email_at, prep_email_status, prep_email_error, checkin_email_id, checkin_email_at, checkin_email_status, created_at";
 

@@ -88,7 +88,7 @@ export function FilesLinksEditor({
 
   return (
     <section>
-      <h4 className="text-h4">Files & links</h4>
+      <h4 className="text-h4">Files & Links</h4>
       <p className="mt-xs text-body-sm text-muted">
         Shown to the client in their portal with this version.
       </p>
@@ -175,7 +175,7 @@ export function FilesLinksEditor({
           disabled={disabled || uploading}
           onClick={() => fileInput.current?.click()}
         >
-          {uploading ? "Uploading…" : "Attach file"}
+          {uploading ? "Uploading…" : "Attach File"}
         </button>
         <button
           type="button"
@@ -183,7 +183,7 @@ export function FilesLinksEditor({
           disabled={disabled || links.length >= FEEDBACK_LINKS_MAX}
           onClick={() => onChange({ links: [...links, { id: newLinkId(), label: "", url: "" }] })}
         >
-          Add link
+          Add Link
         </button>
         <input
           ref={fileInput}

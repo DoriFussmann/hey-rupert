@@ -81,7 +81,7 @@ export function ServiceOrderPanel({
             </span>
             <StepStatus
               done={signed}
-              label={signed ? "Signed" : "Your turn"}
+              label={signed ? "Signed" : "Your Turn"}
             />
           </span>
           <span className="text-body-sm text-muted">
@@ -107,7 +107,7 @@ export function ServiceOrderPanel({
                 </span>
               </p>
             </div>
-            <StepStatus done={paid} label={paid ? "Paid" : "Your turn"} />
+            <StepStatus done={paid} label={paid ? "Paid" : "Your Turn"} />
           </div>
           {paid && paidAt ? (
             <p className="text-body-sm text-muted">

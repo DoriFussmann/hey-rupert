@@ -101,7 +101,7 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
     <div className="space-y-lg">
       <section className="rounded-card border border-border bg-surface">
         <div className="border-b border-border px-lg py-lg">
-          <h2 className="text-h4">Which style writes which emails</h2>
+          <h2 className="text-h4">Which Style Writes Which Emails</h2>
           <p className="mt-xs text-body-sm text-muted">
             Core emails are personalized per contact from this style. Sphere, Tier 3 and Tier 4 share one sequence per
             fund type, with a line per tier. A fund type left on Default uses the first row.
@@ -111,7 +111,7 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
           <table className="w-full min-w-[560px] text-left text-body-sm">
             <thead>
               <tr className="text-label uppercase tracking-label text-muted">
-                <th className="py-sm pr-md font-medium">Fund type</th>
+                <th className="py-sm pr-md font-medium">Fund Type</th>
                 {COPY_SECTIONS.map((section) => (
                   <th key={section} className="py-sm pr-md font-medium">
                     {SECTION_LABEL[section]}
@@ -273,7 +273,7 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
         </ol>
         <div className="border-t border-border px-lg py-md">
           <button type="button" className={smallButton} onClick={addPreset} disabled={styles.presets.length >= 20}>
-            Add style
+            Add Style
           </button>
         </div>
       </section>
@@ -293,7 +293,7 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
           disabled={pending}
           className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading disabled:opacity-40"
         >
-          Restore defaults
+          Restore Defaults
         </button>
         {message ? (
           <p role={message.kind === "error" ? "alert" : "status"} className={`text-body-sm ${message.kind === "error" ? "text-error" : "text-success"}`}>

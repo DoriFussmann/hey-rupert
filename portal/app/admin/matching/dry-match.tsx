@@ -297,14 +297,14 @@ export function DryMatch({
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={saved.fundCount} label="Dry Match Short List: confirmed" />
+            <BigNumber value={saved.fundCount} label="Dry Match Short List: Confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(saved.confirmedAt)}
               {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}. Saved for the next steps.
             </p>
           </div>
           <button type="button" className={`${secondaryButton} shrink-0`} disabled={busy !== null} onClick={() => void startOver()}>
-            {busy === "start" ? "Starting over…" : "Start over"}
+            {busy === "start" ? "Starting Over…" : "Start Over"}
           </button>
         </div>
         {changed.length ? (
@@ -319,7 +319,7 @@ export function DryMatch({
         />
         <div className="mt-md flex justify-end">
           <button type="button" className={secondaryButton} disabled={funds.length === 0} onClick={() => download(data, funds, clientName)}>
-            Download the list (CSV)
+            Download the List (CSV)
           </button>
         </div>
         {errorLine}
@@ -355,7 +355,7 @@ export function DryMatch({
   return (
     <div className="space-y-md">
       <Card>
-        <BigNumber value={total} label="All funds" />
+        <BigNumber value={total} label="All Funds" />
         <p className="text-body-sm text-secondary">
           {n(data.funds.length)} in the Fund Database + {n(DEBT_ONLY_FUNDS)} debt-only funds (held separately; they drop at Financing, as matching is equity only).
         </p>
@@ -439,7 +439,7 @@ export function DryMatch({
           <div className="flex flex-wrap items-start justify-between gap-md">
             <BigNumber value={final.left} label="Dry Match Short List" />
             <button type="button" className={primaryButton} disabled={busy !== null} onClick={() => void confirmList()}>
-              {busy === "confirm" ? "Saving…" : "Confirm list"}
+              {busy === "confirm" ? "Saving…" : "Confirm List"}
             </button>
           </div>
           <Summary
@@ -451,7 +451,7 @@ export function DryMatch({
           </Summary>
           <div className="mt-md flex justify-end">
             <button type="button" className={secondaryButton} onClick={() => download(data, final.funds, clientName)}>
-              Download the list (CSV)
+              Download the List (CSV)
             </button>
           </div>
           {errorLine}

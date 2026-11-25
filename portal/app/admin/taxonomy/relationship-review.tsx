@@ -28,7 +28,7 @@ const ORIGIN_LABEL: Record<EdgeOrigin, string> = {
 
 const REVIEW_LABEL: Record<EdgeReview, string> = {
   approved: "Approved",
-  needs_review: "Needs review",
+  needs_review: "Needs Review",
   rejected: "Rejected",
 };
 
@@ -180,7 +180,7 @@ function AddRelationship({ sectors }: { sectors: TaxNode[] }) {
         </div>
       </div>
       <button type="button" className={`${primaryButton} mt-sm`} disabled={pending || !draft.fromId || !draft.toId} onClick={save}>
-        Add as approved
+        Add as Approved
       </button>
       <ErrorLine error={error} />
     </div>
@@ -257,7 +257,7 @@ export function RelationshipReview({ edges, nodes }: { edges: TaxEdge[]; nodes: 
       </div>
       <div className="mt-sm flex flex-wrap items-center gap-sm">
         <button type="button" className={secondaryButton} disabled={pending || !sector} onClick={suggest}>
-          {pending ? "Asking AI…" : sector ? `Suggest relationships for ${label(sector)} with AI` : "Pick a sector to get AI suggestions"}
+          {pending ? "Asking AI…" : sector ? `Suggest relationships for ${label(sector)} with AI` : "Pick a Sector to Get AI Suggestions"}
         </button>
         {note ? (
           <span role="status" className="text-body-sm text-success">
@@ -277,7 +277,7 @@ export function RelationshipReview({ edges, nodes }: { edges: TaxEdge[]; nodes: 
       )}
       {filtered.length > limit ? (
         <button type="button" className={`${smallButton} mt-sm`} onClick={() => setLimit((current) => current + PAGE)}>
-          Show more ({n(filtered.length - limit)} left)
+          Show More ({n(filtered.length - limit)} Left)
         </button>
       ) : null}
       <AddRelationship sectors={sectors} />

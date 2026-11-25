@@ -26,10 +26,10 @@ import { interleaveByTier } from "./mix.ts";
 export type WarmIntroStatus = "not_started" | "asked" | "intro_made" | "not_pursuing";
 
 export const WARM_INTRO_STATUSES: { value: WarmIntroStatus; label: string }[] = [
-  { value: "not_started", label: "Not started" },
-  { value: "asked", label: "Asked for an intro" },
-  { value: "intro_made", label: "Intro made" },
-  { value: "not_pursuing", label: "Not pursuing" },
+  { value: "not_started", label: "Not Started" },
+  { value: "asked", label: "Asked for an Intro" },
+  { value: "intro_made", label: "Intro Made" },
+  { value: "not_pursuing", label: "Not Pursuing" },
 ];
 
 export function asWarmIntroStatus(value: unknown): WarmIntroStatus {

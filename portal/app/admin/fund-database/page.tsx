@@ -164,12 +164,12 @@ export default async function FundDatabasePage({
         <Card label="Funds" value={live ? n(live.firms) : "–"} />
         <Card label="Contacts" value={live ? n(live.contacts) : "–"} />
         <Card
-          label="Live version"
+          label="Live Version"
           value={live ? (live.appliedAt ? formatDate(live.appliedAt) : "Live") : "None"}
           hint={live ? live.fileName : "Upload the workbook to start."}
         />
         <Card
-          label="Last upload"
+          label="Last Upload"
           value={lastUpload ? formatDate(lastUpload.createdAt) : "–"}
           hint={lastUpload ? `${lastUpload.fileName}${lastUpload.status === "staged" ? " · waiting to apply" : ""}` : undefined}
         />
@@ -209,12 +209,12 @@ export default async function FundDatabasePage({
       </Disclosure>
       <Disclosure
         id="contact-fixes"
-        title="Contact fixes and leads"
+        title="Contact Fixes and Leads"
         meta={`${n(fixes.corrections.length)} fixes and flags${openLeads ? ` · ${n(openLeads)} new leads` : ""}`}
       >
         <ContactCorrections corrections={fixes.corrections} leads={fixes.leads} error={fixes.error} />
       </Disclosure>
-      <Disclosure id="history" title="Database history" meta="Where it started, what was added, where it is now">
+      <Disclosure id="history" title="Database History" meta="Where it started, what was added, where it is now">
         <DatabaseHistory versions={history} live={live} verification={verification} />
       </Disclosure>
     </>

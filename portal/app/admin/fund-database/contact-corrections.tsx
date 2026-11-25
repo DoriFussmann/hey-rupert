@@ -104,7 +104,7 @@ function CorrectionItem({ row }: { row: CorrectionRow }) {
               disabled={pending}
               onClick={() => void run(() => clearContactFlag(row.firmId, row.key))}
             >
-              {row.flag === "left_firm" ? "Restore to fund" : "Clear flag"}
+              {row.flag === "left_firm" ? "Restore to Fund" : "Clear Flag"}
             </button>
           ) : null}
           <button
@@ -113,7 +113,7 @@ function CorrectionItem({ row }: { row: CorrectionRow }) {
             disabled={pending}
             onClick={() => void run(() => removeCorrection(row.firmId, row.key))}
           >
-            Undo all
+            Undo All
           </button>
         </div>
       </div>
@@ -198,7 +198,7 @@ function LeadItem({ lead }: { lead: LeadRow }) {
           {lead.status === "new" ? (
             <>
               <button type="button" className={smallButton} disabled={pending} onClick={() => void run(() => updateLeadStatus(lead.id, "added"))}>
-                Mark added
+                Mark Added
               </button>
               <button type="button" className={smallButton} disabled={pending} onClick={() => void run(() => updateLeadStatus(lead.id, "dismissed"))}>
                 Dismiss
@@ -246,7 +246,7 @@ export function ContactCorrections({
     <div className="mb-lg space-y-lg">
       <section className="rounded-card border border-border bg-surface">
         <div className="px-lg py-md">
-          <h2 className="text-h4 text-heading">Contact corrections & flags · {corrections.length.toLocaleString("en-US")}</h2>
+          <h2 className="text-h4 text-heading">Contact Corrections & Flags · {corrections.length.toLocaleString("en-US")}</h2>
           <p className="text-body-sm text-muted">
             Fixes from Email Verification, applied on top of the workbook for every client (they survive new uploads).
             They take effect on each client&apos;s next match run.
@@ -266,7 +266,7 @@ export function ContactCorrections({
         {corrections.length > shownFixes ? (
           <div className="border-t border-border px-lg py-md">
             <button type="button" className={smallButton} onClick={() => setShownFixes((value) => value + PAGE)}>
-              Show more ({(corrections.length - shownFixes).toLocaleString("en-US")} left)
+              Show More ({(corrections.length - shownFixes).toLocaleString("en-US")} Left)
             </button>
           </div>
         ) : null}
@@ -275,7 +275,7 @@ export function ContactCorrections({
       <section className="rounded-card border border-border bg-surface">
         <div className="px-lg py-md">
           <h2 className="text-h4 text-heading">
-            New leads · {openLeads.toLocaleString("en-US")} to add
+            New Leads · {openLeads.toLocaleString("en-US")} to Add
           </h2>
           <p className="text-body-sm text-muted">
             People who moved to another firm. Add them to the next workbook, then mark them added.
@@ -295,7 +295,7 @@ export function ContactCorrections({
         {leads.length > shownLeads ? (
           <div className="border-t border-border px-lg py-md">
             <button type="button" className={smallButton} onClick={() => setShownLeads((value) => value + PAGE)}>
-              Show more ({(leads.length - shownLeads).toLocaleString("en-US")} left)
+              Show More ({(leads.length - shownLeads).toLocaleString("en-US")} Left)
             </button>
           </div>
         ) : null}

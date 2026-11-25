@@ -698,7 +698,7 @@ export function InvestorListReview({
                               });
                             }}
                           >
-                            {flag.known ? "✓ I know them" : "I know them"}
+                            {flag.known ? "✓ I Know Them" : "I Know Them"}
                           </button>
                           {!writing ? (
                             <button
@@ -710,7 +710,7 @@ export function InvestorListReview({
                                 setNoteOpen((current) => ({ ...current, [row.id]: true }));
                               }}
                             >
-                              Add note
+                              Add Note
                             </button>
                           ) : null}
                         </div>
@@ -817,7 +817,7 @@ export function InvestorListReview({
                 setShownMessage(`Showing ${n(next)} of ${n(visible.length)} funds`);
               }}
             >
-              Show 25 more
+              Show 25 More
             </button>
           ) : null}
         </div>

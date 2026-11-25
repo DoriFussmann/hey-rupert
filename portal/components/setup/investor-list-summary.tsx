@@ -22,7 +22,7 @@ export function InvestorListSummaryPanel({
             <p className="text-body text-heading">{label}</p>
             <p className="mt-xs text-body-sm text-secondary">{detail}</p>
             <p className="mt-xs text-h4 text-heading">
-              {n(entry.funds)} fund{entry.funds === 1 ? "" : "s"}
+              {n(entry.funds)} Fund{entry.funds === 1 ? "" : "s"}
             </p>
             <p className="text-body-sm text-secondary">
               {entry.to_email !== undefined ? (

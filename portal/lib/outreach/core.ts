@@ -32,8 +32,8 @@ export type ContactSlot = "active" | "reserve";
 export type MessageStatus = "pending" | "drafted" | "approved" | "error";
 
 export const STATUS_LABEL: Record<MessageStatus, string> = {
-  pending: "Not written",
-  drafted: "Ready to review",
+  pending: "Not Written",
+  drafted: "Ready to Review",
   approved: "Approved",
   error: "Failed",
 };

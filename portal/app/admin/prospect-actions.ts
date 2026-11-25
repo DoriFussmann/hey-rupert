@@ -12,6 +12,7 @@ import {
   saveOutcome,
   scheduleCallEmails,
   sendFollowUp,
+  setProspectArchived,
   updateProspect as updateProspectRow,
   type ProspectEdit,
 } from "@/lib/prospects/server";
@@ -105,6 +106,19 @@ export async function updateProspect(id: string, edit: ProspectEdit): Promise<Re
     callId: edit.callId ?? null,
     callStart: edit.callStart ? String(edit.callStart) : null,
   });
+  if (result.ok) {
+    revalidatePath(page(id));
+    revalidatePath("/admin");
+  }
+  return result;
+}
+
+/** Archives a booked call (hidden from the list, nothing deleted) or brings it back. */
+export async function archiveProspect(id: string, archived: boolean): Promise<Result<object>> {
+  const a = await access();
+  if (!a.ok) return a;
+  if (!validId(id)) return { ok: false, error: "Unknown prospect." };
+  const result = await setProspectArchived(a.supabase, id, archived === true);
   if (result.ok) {
     revalidatePath(page(id));
     revalidatePath("/admin");

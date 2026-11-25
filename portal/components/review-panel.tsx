@@ -61,7 +61,7 @@ export function ReviewPanel({
             onClick={() => setStatus("changes_requested")}
             className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary transition-colors duration-hover hover:text-heading"
           >
-            Request changes
+            Request Changes
           </button>
         </div>
       </div>

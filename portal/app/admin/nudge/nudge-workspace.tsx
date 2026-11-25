@@ -146,7 +146,7 @@ export function NudgeEditor({
       <div className="flex flex-wrap items-center justify-between gap-sm">
         <p className="text-body-sm text-muted">To {to}. Nothing goes out until you click Send.</p>
         <button type="button" className={secondaryButton} disabled={locked} onClick={onDraft}>
-          {pending === "draft" ? "Drafting…" : hasText ? "Redraft" : "Draft nudge"}
+          {pending === "draft" ? "Drafting…" : hasText ? "Redraft" : "Draft Nudge"}
         </button>
       </div>
       {pausedNote ? <p className="mt-sm text-body-sm text-warning">{pausedNote}</p> : null}
@@ -171,7 +171,7 @@ export function NudgeEditor({
       </label>
       <div className="mt-md flex flex-wrap items-center gap-sm">
         <button type="button" className={primaryButton} disabled={locked || !hasText} onClick={onSend}>
-          {pending === "send" ? "Sending…" : "Send nudge"}
+          {pending === "send" ? "Sending…" : "Send Nudge"}
         </button>
         <button
           type="button"
@@ -179,7 +179,7 @@ export function NudgeEditor({
           disabled={locked || !email.subject.trim()}
           onClick={() => void copy(email.subject, "Subject")}
         >
-          Copy subject
+          Copy Subject
         </button>
         <button
           type="button"
@@ -187,7 +187,7 @@ export function NudgeEditor({
           disabled={locked || !email.body.trim()}
           onClick={() => void copy(email.body, "Email")}
         >
-          Copy email
+          Copy Email
         </button>
       </div>
       {message ? (
@@ -254,7 +254,7 @@ export function NudgeWorkspace({ detail }: { detail: NudgeDetail }) {
       {detail.clientTurns.length > 0 ? (
         <section aria-labelledby="nudge-client-turns">
           <h3 id="nudge-client-turns" className="mb-sm text-h4 text-heading">
-            Waiting on the client
+            Waiting on the Client
           </h3>
           <div className="grid gap-md">
             {detail.clientTurns.map((turn) => (
@@ -294,7 +294,7 @@ export function NudgeWorkspace({ detail }: { detail: NudgeDetail }) {
       {detail.ourItems.length > 0 ? (
         <section aria-labelledby="nudge-our-turn">
           <h3 id="nudge-our-turn" className="mb-sm text-h4 text-heading">
-            Your turn
+            Your Turn
           </h3>
           <ul className="divide-y divide-border rounded-card border border-primary/30 bg-primary-tint">
             {detail.ourItems.map((item) => (

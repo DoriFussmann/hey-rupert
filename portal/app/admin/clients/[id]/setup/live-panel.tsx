@@ -223,7 +223,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   title="Checks the next send day's contacts (plus spares) now: web search for the exact address, still at the fund, then Hunter if needed. Takes a few minutes. Emails you the summary."
                   onClick={() => void run(() => checkNextBatchAction(clientId), (r) => String(r.note))}
                 >
-                  {busy ? "Checking…" : "Check next batch"}
+                  {busy ? "Checking…" : "Check Next Batch"}
                 </button>
               </div>
             ) : null}
@@ -243,7 +243,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                     );
                   }}
                 >
-                  {busy ? "Working…" : "1. Add leads (paused)"}
+                  {busy ? "Working…" : "1. Add Leads (Paused)"}
                 </button>
                 <span className="text-body-sm text-secondary">Send yourself a test first (below) if you haven&apos;t.</span>
               </div>
@@ -291,7 +291,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                       void run(() => resolveStuckLaunchAction(clientId, "added"), () => "Kept as the first batch. Check them, then Activate.");
                     }}
                   >
-                    Leads are in Instantly: keep them
+                    Leads Are in Instantly: Keep Them
                   </button>
                   <button
                     type="button"
@@ -302,7 +302,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                       void run(() => resolveStuckLaunchAction(clientId, "empty"), () => "Cleared. Add leads can run again.");
                     }}
                   >
-                    Instantly has no leads: try again
+                    Instantly Has No Leads: Try Again
                   </button>
                 </div>
               </div>
@@ -332,7 +332,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   {state.inbox.statusText}
                   {state.inbox.checkedAt ? ` · checked ${formatDateTime(state.inbox.checkedAt)}` : ""} ·{" "}
                   <button type="button" className="text-primary hover:text-primary-hover" disabled={busy} onClick={() => run(() => checkInboxAction(clientId), () => "Checked.")}>
-                    Check again
+                    Check Again
                   </button>
                 </>
               ) : (
@@ -360,7 +360,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   {state.confirmation.version ? ` · version ${state.confirmation.version}` : ""}
                   {state.postalAddress ? ` · postal address: ${state.postalAddress}` : ""}
                   <details className="mt-xs">
-                    <summary className="cursor-pointer text-primary">What they confirmed</summary>
+                    <summary className="cursor-pointer text-primary">What They Confirmed</summary>
                     <span className="mt-xs block whitespace-pre-wrap rounded-md border border-border bg-background px-md py-sm text-body">
                       {state.confirmation.text}
                     </span>
@@ -416,7 +416,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                         });
                       }}
                     >
-                      {state.step ? "Send again" : "Send launch package"}
+                      {state.step ? "Send Again" : "Send Launch Package"}
                     </button>
                     <button type="button" className={secondaryButton} disabled={busy} onClick={() => setEmail(null)}>
                       Cancel
@@ -431,7 +431,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   title={state.campaignReady ? undefined : (state.campaignNote ?? "Build the campaign first.")}
                   onClick={() => void draftEmail()}
                 >
-                  {busy ? "Working…" : state.step ? "Send the launch package again…" : "Send launch package…"}
+                  {busy ? "Working…" : state.step ? "Send the launch package again…" : "Send Launch Package…"}
                 </button>
               )}
               <button
@@ -440,12 +440,12 @@ export function LivePanel({ clientId }: { clientId: string }) {
                 disabled={busy}
                 onClick={() => run(() => markInvoiceAction(clientId, !state.invoice.paidAt), () => (state.invoice.paidAt ? "Marked unpaid." : "Marked paid."))}
               >
-                {state.invoice.paidAt ? "Mark unpaid" : "Mark paid (paid outside Stripe)"}
+                {state.invoice.paidAt ? "Mark Unpaid" : "Mark Paid (Paid Outside Stripe)"}
               </button>
               {state.testMode && !state.inbox ? (
                 <div className="flex flex-wrap gap-sm">
                   <button type="button" className={secondaryButton} disabled={busy || connecting || !state.instantlyReady} onClick={() => void connectTestInbox("google")}>
-                    Connect test inbox (Google)
+                    Connect Test Inbox (Google)
                   </button>
                   <button type="button" className={secondaryButton} disabled={busy || connecting || !state.instantlyReady} onClick={() => void connectTestInbox("microsoft")}>
                     Microsoft
@@ -471,7 +471,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                     void run(() => goLiveTestAction(clientId), (r) => `Live in test mode: ${r.added} contacts added. The first emails arrive in a few minutes.`);
                   }}
                 >
-                  Go Live (test)
+                  Go Live (Test)
                 </button>
               ) : null}
               {!state.inbox ? (
@@ -506,18 +506,18 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   title="Checks the next send day's contacts (plus spares) now: web search for the exact address, still at the fund, then Hunter if needed. Takes a few minutes. Emails you the summary."
                   onClick={() => void run(() => checkNextBatchAction(clientId), (r) => String(r.note))}
                 >
-                  {busy ? "Checking…" : "Check next batch"}
+                  {busy ? "Checking…" : "Check Next Batch"}
                 </button>
               </div>
               ) : null}
               <div className="flex flex-wrap gap-sm">
                 {!live.wave2PushedAt ? (
                   <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => startWave2Action(clientId), (r) => `Second contacts released: ${r.pushed} added now, the rest in the daily batches.`)}>
-                    Release second contacts now
+                    Release Second Contacts Now
                   </button>
                 ) : null}
                 <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => pushApprovedAction(clientId), (r) => `${r.pushed} contact${r.pushed === 1 ? "" : "s"} added.`)}>
-                  Add next batch now
+                  Add Next Batch Now
                 </button>
                 <button
                   type="button"
@@ -531,7 +531,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   {live.pausedAt ? "Resume" : "Pause"}
                 </button>
                 <button type="button" className={secondaryButton} disabled={busy} onClick={() => run(() => sendSummaryNowAction(clientId), () => "Today's summary is on its way to your inbox.")}>
-                  Email me today&apos;s summary
+                  Email Me Today&apos;s Summary
                 </button>
               </div>
             </div>
@@ -609,7 +609,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
           </div>
           <div className="mt-sm flex flex-wrap items-center gap-sm">
             <button type="button" className={secondaryButton} disabled={busy || !settingsDirty} onClick={() => run(() => saveLiveSettingsAction(clientId, settings), () => "Settings saved.")}>
-              Save settings
+              Save Settings
             </button>
             <button
               type="button"
@@ -621,7 +621,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                 void run(() => sendTestAction(clientId), (r) => `Test started to ${r.testTo}: ${r.testFund}'s emails, two minutes apart. Check formatting and that the follow-ups stay in the thread.`);
               }}
             >
-              Send test to me
+              Send Test to Me
             </button>
             {state.testSentAt ? <span className="text-body-sm text-muted">Last test {formatDateTime(state.testSentAt)}</span> : null}
             <button
@@ -631,7 +631,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
               title="Checks that Instantly can reach the portal to report sends, opens and replies. Go Live checks it too."
               onClick={() => run(() => checkReplyTrackingAction(clientId), () => "Reply tracking is reachable.")}
             >
-              Check reply tracking
+              Check Reply Tracking
             </button>
           </div>
           <p className="mt-xs text-body-sm text-muted">

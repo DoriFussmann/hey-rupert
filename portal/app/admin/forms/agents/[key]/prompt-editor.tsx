@@ -158,7 +158,7 @@ export function PromptEditor({
             {busy === "save" ? "Saving…" : `Save as version ${(active?.version ?? 0) + 1}`}
           </button>
           <button type="button" className={smallButton} disabled={!dirty || Boolean(busy)} onClick={() => setText(active?.content ?? "")}>
-            Discard changes
+            Discard Changes
           </button>
           <button
             type="button"
@@ -168,14 +168,14 @@ export function PromptEditor({
               if (window.confirm("Put the default text in the editor? Nothing is saved until you click Save.")) setText(defaultText);
             }}
           >
-            Reset to default
+            Reset to Default
           </button>
         </div>
         <NoticeLine notice={notice} />
       </section>
 
       <section className={cardClass}>
-        <h2 className="text-h4">Test on a client</h2>
+        <h2 className="text-h4">Test on a Client</h2>
         {testable ? (
           <>
             <p className="mt-xs text-body-sm text-muted">
@@ -195,7 +195,7 @@ export function PromptEditor({
                 </Select>
               </label>
               <button type="button" className={primaryButton} disabled={!clientId || tooLong || !text.trim() || Boolean(busy)} onClick={() => void test()}>
-                {busy === "test" ? "Running… (up to a few minutes)" : "Run test"}
+                {busy === "test" ? "Running… (up to a few minutes)" : "Run Test"}
               </button>
             </div>
             <NoticeLine notice={testNotice} />
@@ -243,7 +243,7 @@ export function PromptEditor({
                     </button>
                     {index > 0 ? (
                       <button type="button" className={smallButton} disabled={Boolean(busy)} onClick={() => void restore(version.version)}>
-                        {busy === `restore-${version.version}` ? "Restoring…" : "Make active"}
+                        {busy === `restore-${version.version}` ? "Restoring…" : "Make Active"}
                       </button>
                     ) : null}
                   </span>
@@ -260,7 +260,7 @@ export function PromptEditor({
       </section>
 
       <section className={cardClass}>
-        <h2 className="text-h4">Recent uses</h2>
+        <h2 className="text-h4">Recent Uses</h2>
         <p className="mt-xs text-body-sm text-muted">Each AI call records the version it used.</p>
         {uses.length === 0 ? (
           <p className="mt-sm text-body-sm text-muted">None yet.</p>

@@ -15,19 +15,19 @@ const copy: Record<
   { title: string; body: string; confirm: string; pending: string }
 > = {
   archive: {
-    title: "Archive this client?",
+    title: "Archive This Client?",
     body: "They will be hidden from the main client list. You can unarchive them later.",
     confirm: "Archive client",
     pending: "Archiving…",
   },
   unarchive: {
-    title: "Unarchive this client?",
+    title: "Unarchive This Client?",
     body: "They will appear in the main client list again.",
     confirm: "Unarchive client",
     pending: "Unarchiving…",
   },
   delete: {
-    title: "Delete this client?",
+    title: "Delete This Client?",
     body: "This permanently removes the client record and their login. This cannot be undone.",
     confirm: "Delete client",
     pending: "Deleting…",
@@ -112,7 +112,7 @@ export function ClientActions({
     <>
       <section className="mt-lg flex flex-wrap items-end justify-between gap-md rounded-card border border-border bg-surface px-lg py-lg">
         <div>
-          <h2 className="text-h4">Client record</h2>
+          <h2 className="text-h4">Client Record</h2>
           <p className="mt-xs max-w-prose text-body-sm text-muted">
             Archive hides this client from the main list. Delete removes them
             permanently.

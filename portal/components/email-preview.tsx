@@ -57,7 +57,7 @@ export function EmailPreview({
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
       >
-        {open ? "Hide preview" : "Preview"}
+        {open ? "Hide Preview" : "Preview"}
       </button>
       {open ? (
         <div className="mt-xs rounded-md border border-border bg-surface px-md py-sm">
@@ -68,7 +68,7 @@ export function EmailPreview({
             </span>
             {leads.length > 1 ? (
               <button type="button" className="ml-auto text-primary hover:text-primary-hover" onClick={() => setAt((value) => value + 1)}>
-                Next investor ›
+                Next Investor ›
               </button>
             ) : null}
           </div>

@@ -31,7 +31,7 @@ export function QuestionThread({
                 <p className="text-label uppercase tracking-label text-muted">What {adminName} took from it</p>
                 <p className="whitespace-pre-wrap text-body-sm text-heading">{item.summary}</p>
                 <details>
-                  <summary className="cursor-pointer text-body-sm text-primary">What you sent</summary>
+                  <summary className="cursor-pointer text-body-sm text-primary">What You Sent</summary>
                   <p className="mt-xs whitespace-pre-wrap text-body-sm text-secondary">{item.question}</p>
                 </details>
               </div>

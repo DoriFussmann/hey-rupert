@@ -64,7 +64,7 @@ export const TIER_INFO: Record<TierKey, { label: string; description: string }> 
 export type Status = "tiered" | "excluded" | "unresolved" | "generalist";
 
 export const STATUS_LABEL: Record<Status, string> = {
-  tiered: "In a tier",
+  tiered: "In a Tier",
   excluded: "Excluded",
   unresolved: "Unresolved",
   generalist: "Generalist",

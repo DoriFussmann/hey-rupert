@@ -68,7 +68,7 @@ test("feedback newer than the profile: the profile is behind", () => {
   input.feedback = { generatedAt: T4 };
   const state = reanalyzeState(input);
   assert.deepEqual(state.behind, ["profile"]);
-  assert.equal(reanalyzeHeadline(state), "Out of date: Company profile.");
+  assert.equal(reanalyzeHeadline(state), "Out of date: Company Profile.");
 });
 
 test("first run: everything behind, no counts", () => {

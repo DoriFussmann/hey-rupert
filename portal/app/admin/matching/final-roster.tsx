@@ -109,9 +109,9 @@ function ExclusionTable({ exclusions }: { exclusions: ExclusionCheck[] }) {
     <table className="mt-sm w-full text-left text-body-sm">
       <thead className="text-label uppercase tracking-label text-muted">
         <tr>
-          <th className="py-xs pr-md font-medium">The client wrote</th>
+          <th className="py-xs pr-md font-medium">The Client Wrote</th>
           <th className="py-xs pr-md font-medium">Result</th>
-          <th className="py-xs font-medium">Fund Database record</th>
+          <th className="py-xs font-medium">Fund Database Record</th>
         </tr>
       </thead>
       <tbody>
@@ -143,8 +143,8 @@ function RosterList({ entries }: { entries: RosterEntry[] }) {
               <th className="py-xs pr-md font-medium">#</th>
               <th className="py-xs pr-md font-medium">Investor</th>
               <th className="py-xs pr-md font-medium">Source</th>
-              <th className="py-xs pr-md font-medium">Backed a competitor</th>
-              <th className="py-xs font-medium">Backed a company like the client</th>
+              <th className="py-xs pr-md font-medium">Backed a Competitor</th>
+              <th className="py-xs font-medium">Backed a Company Like the Client</th>
             </tr>
           </thead>
           <tbody>
@@ -216,7 +216,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
   const toFill = fill.filter((i) => !i.suggestion?.skipped).length;
   const fillCard = fill.length ? (
         <Card>
-          <h3 className="text-h4 text-heading">Step 4A: Fill in missing fields{toFill ? "" : " · done"}</h3>
+          <h3 className="text-h4 text-heading">Step 4A: Fill in Missing Fields{toFill ? "" : " · done"}</h3>
           {toFill ? (
           <p className="max-w-prose text-body-sm text-secondary">
             {n(toFill)} added {toFill === 1 ? "investor is" : "investors are"} missing a field the Step 1 filters need, so {toFill === 1 ? "it stays" : "they stay"} off
@@ -249,7 +249,7 @@ export function FinalRoster({ clientId, clientName, refreshKey, onChanged }: { c
       <Card tone="final">
         <div className="flex items-start justify-between gap-md">
           <div className="min-w-0 flex-1">
-            <BigNumber value={saved.counts.total} label="Step 4 · The Final Roster: confirmed" />
+            <BigNumber value={saved.counts.total} label="Step 4 · The Final Roster: Confirmed" />
             <p className="text-body-sm text-secondary">
               Confirmed {when(saved.confirmedAt)}
               {saved.confirmedBy ? ` by ${saved.confirmedBy}` : ""}.{saved.facts.step2Skipped ? " Step 2 was skipped (no funded competitors)." : ""}
