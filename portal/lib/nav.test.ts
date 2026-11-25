@@ -63,7 +63,7 @@ test("Agents: one link per managed prompt; All prompts is current only on the li
   const all = item("agents", "All prompts");
   const narrative = item("agents", "Narrative email");
   assert.equal(narrative.href, "/admin/forms/agents/narrative_email");
-  assert.equal(agents.items.length, 5 + 42);
+  assert.equal(agents.items.length, 5 + 43);
   assert.ok(navItemActive("/admin/forms/agents", "", all, agents));
   assert.ok(!navItemActive("/admin/forms/agents/narrative_email", "", all, agents));
   assert.ok(navItemActive("/admin/forms/agents/narrative_email", "", narrative, agents));
