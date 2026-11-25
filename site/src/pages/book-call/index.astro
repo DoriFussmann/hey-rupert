@@ -116,6 +116,8 @@ const lenses = [
 </BaseLayout>
 
 <script>
+  import { bookingParams, recordVisit } from "../../lib/attribution";
+
   type CalCommand = ((...args: unknown[]) => void) & {
     loaded?: boolean;
     ns?: Record<string, CalCommand>;
@@ -150,13 +152,29 @@ const lenses = [
   const embed = document.getElementById("cal-embed");
   const calendarUrl = scheduler instanceof HTMLElement ? scheduler.dataset.calendar || "" : "";
 
+  // Lead source: where this visitor came from goes to Cal.com with the booking,
+  // so it shows in Cal.com and reaches the portal through the booking webhook.
+  const source = bookingParams(recordVisit());
+
+  // The fallback link opens Cal.com directly; carry the same source there.
+  const fallback = scheduler?.querySelector("a[href]");
+  if (fallback instanceof HTMLAnchorElement && calendarUrl) {
+    try {
+      const url = new URL(calendarUrl);
+      for (const [key, value] of Object.entries(source)) url.searchParams.set(key, value);
+      fallback.href = url.toString();
+    } catch {
+      // keep the plain link
+    }
+  }
+
   if (embed instanceof HTMLElement && calendarUrl) {
     ensureCal();
     window.Cal?.("init", { origin: "https://cal.com" });
     window.Cal?.("inline", {
       elementOrSelector: embed,
       calLink: new URL(calendarUrl).pathname.replace(/^\/+|\/+$/g, ""),
-      config: { layout: "month_view", theme: "light" },
+      config: { layout: "month_view", theme: "light", ...source },
     });
 
     // Conversion tracking (invisible): record a completed booking in GA4 as

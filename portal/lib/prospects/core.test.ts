@@ -9,6 +9,7 @@ import {
   checkinSendAt,
   cleanBrief,
   clientPrefill,
+  describeLeadSource,
   estimateMissing,
   estimateReady,
   missingText,
@@ -258,4 +259,46 @@ test("no estimate until stage, geography and sector are all known", () => {
   assert.match(email.text, /No estimate: geography and sector not known yet/);
   assert.ok(!email.text.includes("412"));
   assert.ok(!email.html.includes("funds fit"));
+});
+
+test("lead source: the site's booking metadata is stored and read back in plain words", () => {
+  const event = parseCalEvent({
+    ...created,
+    payload: {
+      ...created.payload,
+      metadata: {
+        videoCallUrl: "https://meet.google.com/abc",
+        utm_source: "chatgpt.com",
+        src: "chatgpt",
+        src_medium: "ai",
+        src_landing: "/pricing/",
+        src_at: "2026-11-24T14:50:00.000Z",
+        first_src: "google",
+        first_medium: "search",
+        first_landing: "/articles/capital-raising-fees/",
+        first_at: "2026-11-20T18:00:00.000Z",
+        unrelated: "ignored",
+      },
+    },
+  });
+  assert.equal(event.kind, "booking");
+  if (event.kind !== "booking") return;
+  const utm = event.booking.utm;
+  // Metadata wins over the hidden utm_source question ("linkedin" in the fixture).
+  assert.equal(utm?.utm_source, "chatgpt.com");
+  assert.equal(utm?.src, "chatgpt");
+  assert.ok(!("unrelated" in (utm ?? {})) && !("videoCallUrl" in (utm ?? {})));
+  assert.equal(event.booking.videoUrl, "https://meet.google.com/abc");
+
+  const lines = describeLeadSource(utm, "America/Los_Angeles");
+  assert.equal(lines.cameFrom, "ChatGPT (AI assistant), landed on /pricing/");
+  assert.equal(lines.firstVisit, "Google (search), landed on /articles/capital-raising-fees/ on Nov 20");
+  assert.equal(lines.campaign, "source: chatgpt.com");
+});
+
+test("lead source: older bookings with only a UTM tag, direct visits, and nothing at all", () => {
+  assert.deepEqual(describeLeadSource({ utm_source: "linkedin" }), { cameFrom: "LinkedIn", firstVisit: null, campaign: "source: linkedin" });
+  assert.equal(describeLeadSource({ src: "direct", src_medium: "none", src_landing: "/" }).cameFrom, "Direct (typed the address or no referrer), landed on /");
+  assert.equal(describeLeadSource({ src: "techcrunch.com", src_medium: "referral" }).cameFrom, "techcrunch.com (referring site)");
+  assert.deepEqual(describeLeadSource(null), { cameFrom: null, firstVisit: null, campaign: null });
 });
