@@ -1,3 +1,4 @@
+import { DeskNote } from "@/components/desk/desk-note";
 import Link from "next/link";
 import { ResponseHistory } from "@/components/setup/response-history";
 import { FeedbackReplies } from "@/components/setup/feedback-replies";
@@ -131,6 +132,7 @@ export default async function InvestorListPage() {
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
       ) : null}
+      <DeskNote step="investor_list" />
     </>
   );
 }

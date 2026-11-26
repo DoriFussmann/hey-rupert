@@ -1,7 +1,9 @@
 import { countUnreadNotifications } from "@/app/admin/actions";
 import { AdminShell } from "@/components/admin-nav";
 import { requireAdmin } from "@/lib/auth";
-import { isSupabaseConfigured } from "@/lib/env";
+import { countWaitingOnUs } from "@/lib/desk-server";
+import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
+import { createServiceClient } from "@/lib/supabase/admin";
 
 export const metadata = {
   title: "Admin",
@@ -14,12 +16,18 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   let unreadCount = 0;
+  let deskCount = 0;
   if (isSupabaseConfigured()) {
     await requireAdmin();
-    unreadCount = await countUnreadNotifications();
+    [unreadCount, deskCount] = await Promise.all([
+      countUnreadNotifications(),
+      isServiceRoleConfigured() ? countWaitingOnUs(createServiceClient()) : 0,
+    ]);
   }
 
   return (
-    <AdminShell unreadCount={unreadCount}>{children}</AdminShell>
+    <AdminShell unreadCount={unreadCount} deskCount={deskCount}>
+      {children}
+    </AdminShell>
   );
 }

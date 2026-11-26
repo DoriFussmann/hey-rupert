@@ -11,6 +11,14 @@ import {
   summarizeClientFeedback,
 } from "@/lib/agents-server";
 import { notifyClient } from "@/lib/notify";
+import {
+  recordLoggedFeedback,
+  recordLoggedFeedbackRemoved,
+  recordMaterialsReopened,
+  recordNarrativeApplied,
+  recordQuestionSettled,
+  recordStepPublished,
+} from "@/lib/desk-hooks";
 import { coreReadiness } from "@/lib/outreach/progress-server";
 import { copyTierOf } from "@/lib/outreach/copy";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -419,12 +427,19 @@ export async function sendSetupDocument(
 
   const pushed = await writePush(access.supabase, clientId, step, draft);
   if (!pushed.ok) return pushed;
+  const desk = await recordStepPublished(access.supabase, clientId, step, pushed.version);
 
-  const clientEmail = await sendStepEmail(access.supabase, clientId, step, {
-    subject: email.client_email.subject.replace(/\s+/g, " ").trim(),
-    body: email.client_email.body.trim(),
-    note: email.client_email.note,
-  });
+  const clientEmail = await sendStepEmail(
+    access.supabase,
+    clientId,
+    step,
+    {
+      subject: email.client_email.subject.replace(/\s+/g, " ").trim(),
+      body: email.client_email.body.trim(),
+      note: email.client_email.note,
+    },
+    { deskLink: desk?.portalLink },
+  );
   if (clientEmail.ok) await recordEmailed(access.supabase, clientId, step, pushed.version);
 
   revalidateSetup(clientId);
@@ -441,6 +456,7 @@ export async function pushSetupDocument(clientId: string, step: SetupDocumentSte
   if (!isSetupDocumentStep(step)) return { ok: false, error: "This step cannot be pushed here." };
   const pushed = await writePush(access.supabase, clientId, step, draft);
   if (!pushed.ok) return pushed;
+  await recordStepPublished(access.supabase, clientId, step, pushed.version);
   revalidateSetup(clientId);
   return { ok: true, version: pushed.version };
 }
@@ -511,14 +527,23 @@ export async function applyNarrativeChanges(
     return { ok: false, error: "The narrative changed meanwhile. Refresh and try again." };
   }
 
+  await recordStepPublished(access.supabase, clientId, "framing", row.version);
+  const desk = await recordNarrativeApplied(access.supabase, clientId, row.version, askedIn);
+
   const email = asClientEmail((draft as { client_email?: unknown } | null)?.client_email);
   let clientEmail: EmailResult | null = null;
   if (email.subject.trim() && email.body.trim()) {
-    clientEmail = await sendStepEmail(access.supabase, clientId, "framing", {
-      subject: email.subject.replace(/\s+/g, " ").trim(),
-      body: email.body.trim(),
-      note: email.note,
-    });
+    clientEmail = await sendStepEmail(
+      access.supabase,
+      clientId,
+      "framing",
+      {
+        subject: email.subject.replace(/\s+/g, " ").trim(),
+        body: email.body.trim(),
+        note: email.note,
+      },
+      { deskLink: desk?.portalLink },
+    );
     if (clientEmail.ok) await recordEmailed(access.supabase, clientId, "framing", row.version);
   }
 
@@ -644,10 +669,12 @@ export async function settleSetupQuestion(
     if (!saved.ok) return saved;
     if (!saved.saved) continue;
 
+    const desk = await recordQuestionSettled(access.supabase, clientId, String(questionId), text);
     const clientEmail: EmailResult = text
       ? await sendQuestionAnswerEmail(access.supabase, clientId, step, {
           question: asked.question,
           answer: text,
+          deskLink: desk?.portalLink,
         })
       : { ok: false, reason: "Resolved without an answer: no email sent." };
     revalidateSetup(clientId);
@@ -685,6 +712,8 @@ export async function logClientFeedback(
   const id = crypto.randomUUID();
   const saved = await insertClientFeedback(access.supabase, clientId, { id, about, channel, on, original: text, summary, by: access.email });
   if (!saved.ok) return saved;
+  // Also on the client's Desk, with its real date. Same id as the thread's, so answering it there closes it here.
+  await recordLoggedFeedback(access.supabase, clientId, { id, step: about, channel, on, text, by: access.email });
 
   // About a step the client has: also in its thread, to answer there.
   if (about !== "general") {
@@ -740,6 +769,7 @@ export async function removeClientFeedback(clientId: string, feedbackId: string)
   const done = await deleteClientFeedback(access.supabase, clientId, String(feedbackId));
   if (!done.ok) return done;
   await syncThread(access.supabase, clientId, String(feedbackId), (q) => (q.answered_at ? q : null));
+  await recordLoggedFeedbackRemoved(access.supabase, clientId, String(feedbackId));
   revalidateSetup(clientId);
   revalidatePath(`/admin/clients/${clientId}`);
   return { ok: true };
@@ -881,11 +911,12 @@ export async function reopenMaterials(
     return { ok: false, error: "The materials changed meanwhile. Refresh and try again." };
   }
 
+  const desk = await recordMaterialsReopened(access.supabase, clientId, message);
   const clientEmail = await notifyClient(
     access.supabase,
     clientId,
     "materials_reopened",
-    { note: message },
+    { note: message, portalLink: desk?.portalLink },
   );
 
   revalidateSetup(clientId);

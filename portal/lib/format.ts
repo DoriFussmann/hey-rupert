@@ -74,6 +74,9 @@ export function notificationLabel(type: string) {
   if (type === "linkedin_needed") return "Upload the Founder's LinkedIn PDF";
   if (type === "sub_sector_unmatched") return "Sub-sector Not in the Taxonomy";
   if (type === "email_bounced") return "Email to the Client Bounced";
+  if (type === "desk_item") return "New on the Desk";
+  if (type === "desk_reply") return "Replied on the Desk";
+  if (type === "desk_closed") return "Closed a Desk Item";
   return statusLabel(type);
 }
 
@@ -132,6 +135,9 @@ export function notificationAction(type: string) {
   if (type === "email_bounced") {
     return "did not get an email: it bounced or was marked as spam";
   }
+  if (type === "desk_item") return "sent you something on the Desk";
+  if (type === "desk_reply") return "replied on the Desk";
+  if (type === "desk_closed") return "closed an item on the Desk";
   return notificationLabel(type).toLowerCase();
 }
 

@@ -12,6 +12,13 @@ import {
 import { advanceStage } from "@/lib/kickoff";
 import { attachMaterialFile, safeFileName } from "@/lib/materials-server";
 import { notifyAdmin, notifyAdminOnce } from "@/lib/notify";
+import {
+  recordMaterialFile,
+  recordMaterialsSubmitted,
+  recordStepFeedbackAdded,
+  recordStepQuestion,
+  recordStepResponse,
+} from "@/lib/desk-hooks";
 import { requirePortalService, type PortalAccess } from "@/lib/portal-access";
 import {
   MATERIALS_BUCKET,
@@ -244,9 +251,11 @@ export async function registerMaterialFile(file: {
   });
   if (!attached.ok) return attached;
   if (attached.late) {
+    const desk = await recordMaterialFile(access.supabase, access.user.id, attached.file, "client");
     await notifyAdminOnce(access.supabase, access.user.id, "materials_added", {
       email: true,
       details: `Files:\n- ${attached.file.name} (${formatBytes(attached.file.size)})`,
+      link: desk?.adminLink,
     });
   }
 
@@ -381,9 +390,11 @@ export async function submitMaterials(
     .join("\n\n");
 
   await advanceStage(access.supabase, access.user.id, ["nda", "intake"], "setup");
+  const desk = await recordMaterialsSubmitted(access.supabase, access.user.id, version, payload.files, details);
   await notifyAdmin(access.supabase, access.user.id, "materials_submitted", {
     email: true,
     details,
+    link: desk?.adminLink,
   });
 
   revalidateSetup(access.user.id);
@@ -552,11 +563,12 @@ export async function respondToSetupStep(input: {
     .filter(Boolean)
     .join("\n\n");
 
+  const desk = await recordStepResponse(access.supabase, access.user.id, step, response);
   await notifyAdmin(
     access.supabase,
     access.user.id,
     `${step}_${confirmed ? "confirmed" : "changes_requested"}`,
-    { email: true, details },
+    { email: true, details, link: desk?.adminLink },
   );
 
   revalidateSetup(access.user.id);
@@ -646,7 +658,18 @@ export async function addSetupFeedback(input: {
     ]
       .filter(Boolean)
       .join("\n\n");
-    await notifyAdmin(access.supabase, access.user.id, "email_copy_changes_requested", { email: true, details });
+    const desk = await recordStepFeedbackAdded(
+      access.supabase,
+      access.user.id,
+      step,
+      row.version,
+      [note, notesText].filter(Boolean).join("\n\n"),
+    );
+    await notifyAdmin(access.supabase, access.user.id, "email_copy_changes_requested", {
+      email: true,
+      details,
+      link: desk?.adminLink,
+    });
 
     revalidateSetup(access.user.id);
     return { ok: true };
@@ -693,8 +716,9 @@ export async function askSetupQuestion(input: {
     if (Number(input.version) !== row.version) {
       return { ok: false, error: "Rupert has updated this since you opened it. Refresh to see the latest." };
     }
+    const questionId = randomUUID();
     const added = addQuestion(questionsOf(row), {
-      id: randomUUID(),
+      id: questionId,
       question: text,
       at: nowIso(),
       version: row.version,
@@ -704,9 +728,11 @@ export async function askSetupQuestion(input: {
     if (!saved.ok) return saved;
     if (!saved.saved) continue;
 
+    const desk = await recordStepQuestion(access.supabase, access.user.id, step, questionId, text);
     await notifyAdmin(access.supabase, access.user.id, `${step}_question`, {
       email: true,
       details: `Their question on ${QUESTION_HEADING[step]}:\n${text}\n\nAnswer it on the client page. They can still confirm meanwhile.`,
+      link: desk?.adminLink,
     });
     revalidateSetup(access.user.id);
     return { ok: true };

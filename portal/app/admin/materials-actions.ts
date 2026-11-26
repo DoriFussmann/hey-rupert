@@ -3,6 +3,7 @@
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import { getAuthContext } from "@/lib/auth";
+import { recordMaterialFile } from "@/lib/desk-hooks";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { intakeFileProblem } from "@/lib/intake";
 import {
@@ -78,6 +79,7 @@ export async function registerAdminMaterialFile(
     "admin",
   );
   if (!attached.ok) return attached;
+  await recordMaterialFile(access.supabase, clientId, attached.file, "admin");
   revalidatePath(`/admin/clients/${clientId}`);
   revalidatePath("/portal", "layout");
   return { ok: true, file: attached.file };

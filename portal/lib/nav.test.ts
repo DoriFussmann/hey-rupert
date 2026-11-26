@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { activeNavGroup, adminNavGroups, navItemActive, navSections } from "./nav.ts";
+import { activeNavGroup, adminNavGroups, isDeskPath, navItemActive, navSections } from "./nav.ts";
 
 const group = (id: string) => adminNavGroups.find((item) => item.id === id)!;
 const item = (id: string, label: string) => group(id).items.find((entry) => entry.label === label)!;
@@ -81,4 +81,14 @@ test("menus: Agents is split into the lists and the prompts by area, every link 
   assert.deepEqual(navSections(agents, "zzzz"), []);
   // The other groups are one plain list.
   assert.deepEqual(navSections(group("clients")).map((section) => [section.label, section.items.length]), [[null, 4]]);
+});
+
+test("the Desk has its own link: the inbox, a client's Desk and its items", () => {
+  assert.ok(isDeskPath("/admin/desk"));
+  assert.ok(isDeskPath("/admin/clients/abc/desk"));
+  assert.ok(isDeskPath("/admin/clients/abc/desk/item-1"));
+  assert.ok(!isDeskPath("/admin/clients/abc"));
+  assert.ok(!isDeskPath("/admin/clients/abc/setup"));
+  assert.equal(activeNavGroup("/admin/clients/abc/desk"), null);
+  assert.equal(activeNavGroup("/admin/clients/abc"), "clients");
 });

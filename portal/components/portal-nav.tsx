@@ -60,6 +60,9 @@ const PHASES: {
 /** The founder's view of everything Rupert works from. Open once the intake is complete. */
 const KNOWS_HREF = "/portal/what-rupert-knows";
 
+/** The Desk: everything the client sent Rupert and every answer. Always open. */
+const DESK_HREF = "/portal/desk";
+
 function pathInPhase(pathname: string, prefixes: string[]) {
   return prefixes.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
@@ -72,6 +75,7 @@ export function PortalNav({
   setup,
   setupYourTurn = false,
   checklists,
+  deskWaiting = 0,
 }: {
   stage?: string;
   onboarding?: OnboardingSource | null;
@@ -80,6 +84,8 @@ export function PortalNav({
   /** True when a Setup step is waiting on the client. */
   setupYourTurn?: boolean;
   checklists?: ChecklistStatuses | null;
+  /** How many Desk items wait on the client. */
+  deskWaiting?: number;
 }) {
   const pathname = usePathname();
   const counts = {
@@ -153,11 +159,35 @@ export function PortalNav({
           </Link>
         );
       })}
+      <Link
+        href={DESK_HREF}
+        aria-current={pathInPhase(pathname, [DESK_HREF]) ? "page" : undefined}
+        className={`mt-sm rounded-md border-t border-border px-sm pb-sm pt-md no-underline transition-colors duration-hover ${
+          pathInPhase(pathname, [DESK_HREF])
+            ? "bg-primary-tint text-primary"
+            : "text-secondary hover:bg-background hover:text-heading"
+        }`}
+      >
+        <span className="flex items-center justify-between gap-sm">
+          <span className="text-body-sm">The Desk</span>
+          {deskWaiting > 0 ? (
+            <span
+              className="inline-flex min-w-[1.25rem] items-center justify-center rounded-full bg-primary px-xs py-px text-mono text-white"
+              aria-label={`${deskWaiting} waiting on you`}
+            >
+              {deskWaiting}
+            </span>
+          ) : null}
+        </span>
+        <span className={`mt-xs block text-body-sm ${pathInPhase(pathname, [DESK_HREF]) ? "text-primary" : "text-muted"}`}>
+          {deskWaiting > 0 ? `${deskWaiting} waiting on you` : "Questions and answers"}
+        </span>
+      </Link>
       {onboarding?.intake_completed_at ? (
         <Link
           href={KNOWS_HREF}
           aria-current={pathInPhase(pathname, [KNOWS_HREF]) ? "page" : undefined}
-          className={`mt-sm rounded-md border-t border-border px-sm pb-sm pt-md no-underline transition-colors duration-hover ${
+          className={`rounded-md px-sm py-sm no-underline transition-colors duration-hover ${
             pathInPhase(pathname, [KNOWS_HREF])
               ? "bg-primary-tint text-primary"
               : "text-secondary hover:bg-background hover:text-heading"

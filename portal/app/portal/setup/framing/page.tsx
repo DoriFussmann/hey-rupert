@@ -1,3 +1,4 @@
+import { DeskNote } from "@/components/desk/desk-note";
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
 import { NarrativeView } from "@/components/setup/narrative-view";
@@ -106,6 +107,7 @@ export default async function FramingPage() {
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
       ) : null}
+      <DeskNote step="framing" />
     </>
   );
 }

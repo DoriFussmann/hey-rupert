@@ -167,7 +167,7 @@ This Service Order is a binding agreement between the parties below for a Hey Ru
 
 **Client notice email:** ${CLIENT_TOKENS.signer_email}
 
-**Rupert notice email:** dori@thenightventures.com
+**Rupert notice email:** dori@heyrupert.com
 
 ## Commercial Summary
 

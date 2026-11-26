@@ -62,9 +62,17 @@ export const adminNavGroups: readonly AdminNavGroup[] = [
   },
 ];
 
+/** The Desk: the cross-client inbox, a client's Desk, or one item on it. */
+export const DESK_NAV_HREF = "/admin/desk";
+
+export function isDeskPath(pathname: string) {
+  return pathname === DESK_NAV_HREF || pathname.startsWith(`${DESK_NAV_HREF}/`) || /^\/admin\/clients\/[^/]+\/desk(\/|$)/.test(pathname);
+}
+
 /** Whether a page path belongs to a nav link (ignoring its hash). */
 export function navPathMatches(pathname: string, href: string) {
-  if (href === "/admin") return pathname === "/admin" || pathname.startsWith("/admin/clients") || pathname.startsWith("/admin/prospects");
+  // A client's Desk belongs to the Desk link in the top bar, not to Clients.
+  if (href === "/admin") return pathname === "/admin" || (pathname.startsWith("/admin/clients") && !isDeskPath(pathname)) || pathname.startsWith("/admin/prospects");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 

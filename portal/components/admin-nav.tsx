@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "@/components/chevron";
 import { SignOutButton } from "@/components/sign-out-button";
-import { activeNavGroup, adminNavGroups, navItemActive, navSections, type AdminNavGroup } from "@/lib/nav";
+import { DESK_NAV_HREF, activeNavGroup, adminNavGroups, isDeskPath, navItemActive, navSections, type AdminNavGroup } from "@/lib/nav";
 
 function useHash() {
   const [hash, setHash] = useState("");
@@ -99,7 +99,7 @@ function Menu({
  * The admin's top bar: the brand, the five groups (each opens a menu of its
  * pages) and Log out. The page below gets the full width of the screen.
  */
-export function AdminTopBar({ unreadCount = 0 }: { unreadCount?: number }) {
+export function AdminTopBar({ unreadCount = 0, deskCount = 0 }: { unreadCount?: number; deskCount?: number }) {
   const pathname = usePathname();
   const [hash, setHash] = useHash();
   const current = activeNavGroup(pathname);
@@ -167,6 +167,17 @@ export function AdminTopBar({ unreadCount = 0 }: { unreadCount?: number }) {
               </div>
             );
           })}
+          {/* The Desk is checked daily: its own link, with what is waiting on us. */}
+          <Link
+            href={DESK_NAV_HREF}
+            aria-current={isDeskPath(pathname) ? "page" : undefined}
+            className={`flex items-center gap-xs rounded-md px-sm py-xs text-body-sm no-underline transition-colors duration-hover ${
+              isDeskPath(pathname) ? "bg-primary-tint text-primary" : "text-secondary hover:bg-background hover:text-heading"
+            }`}
+          >
+            Desk
+            {deskCount > 0 ? <Badge count={deskCount} /> : null}
+          </Link>
         </nav>
         <div className="ml-auto">
           <SignOutButton />
@@ -177,10 +188,19 @@ export function AdminTopBar({ unreadCount = 0 }: { unreadCount?: number }) {
 }
 
 /** The admin's frame: the top bar, then the page across the full width. */
-export function AdminShell({ unreadCount, children }: { unreadCount: number; children: ReactNode }) {
+export function AdminShell({
+  unreadCount,
+  deskCount = 0,
+  children,
+}: {
+  unreadCount: number;
+  /** Desk items waiting on us, across clients. */
+  deskCount?: number;
+  children: ReactNode;
+}) {
   return (
     <div className="min-h-screen">
-      <AdminTopBar unreadCount={unreadCount} />
+      <AdminTopBar unreadCount={unreadCount} deskCount={deskCount} />
       <main className="min-w-0 px-md py-lg lg:px-xl lg:py-xl">{children}</main>
     </div>
   );

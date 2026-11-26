@@ -1,3 +1,4 @@
+import { DeskNote } from "@/components/desk/desk-note";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { BackLink } from "@/components/back-link";
@@ -81,6 +82,7 @@ export default async function EmailCopyPage() {
           <ResponseHistory history={row.history} currentVersion={row.version} />
         </>
       ) : null}
+      <DeskNote step="email_copy" />
     </>
   );
 }
