@@ -143,3 +143,12 @@ test("Update Facts and the page measure 'new' from the same moment", () => {
   assert.equal(factsAnchor({ feedbackAt: T1, factsUpdatedAt: T3, profileBuiltAt: T2 }), T3);
   assert.equal(factsAnchor({ feedbackAt: T3, factsUpdatedAt: null, profileBuiltAt: T4 }), T3);
 });
+
+test("no deck and no files: materials feedback is never out of date", () => {
+  const input = analyzed();
+  input.feedback = null;
+  input.files = [];
+  const state = reanalyzeState(input);
+  assert.ok(!state.behind.includes("feedback"));
+  assert.equal(state.show, false);
+});
