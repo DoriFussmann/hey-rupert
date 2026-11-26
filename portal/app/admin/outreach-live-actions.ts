@@ -131,7 +131,7 @@ export async function checkNextBatchAction(clientId: string) {
   const result = await runPresendChecks(access.supabase, { clientId, email: "always" });
   if (result.error && result.campaigns.length === 0) return { ok: false as const, error: result.error };
   const c = result.campaigns[0];
-  if (!c) return { ok: false as const, error: "No Instantly campaign yet, or this is a Test Pilot client (no check needed)." };
+  if (!c) return { ok: false as const, error: "Nothing to check: build the campaign first. Test Pilot clients need no check." };
   const failed = c.outcomes.filter((o) => !o.pass).length;
   const note = `${c.ready} of ${c.room} ready for ${c.day}. Checked ${c.outcomes.length}${failed ? `, ${failed} didn't pass` : ""}${c.errors.length ? `, ${c.errors.length} errors (see the email)` : ""}. Summary emailed.`;
   revalidatePath(`/admin/clients/${clientId}`);

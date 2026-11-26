@@ -574,8 +574,8 @@ async function checkCampaign(
 // The run
 
 /**
- * Checks every campaign whose leads are in Instantly (live, or added and
- * waiting to be activated), except paused ones and Test Pilot clients.
+ * Checks every campaign that is live, has leads in Instantly, or whose
+ * client has approved the launch, except paused ones and Test Pilot clients.
  * `clientId`: one campaign only (the admin button). The summary email is sent
  * by presend-report-server.ts: code that runs AI calls never sends email.
  */
@@ -587,17 +587,19 @@ export async function checkPresend(
   const now = options.now ?? started;
   const delivered = await markDelivered(supabase, now);
 
+  // Nightly: campaigns that are live, have leads in Instantly, or whose client
+  // has approved the launch (so the first batch is checked before Rupert adds
+  // it). The admin button checks one client whatever its state.
   let query = supabase
     .from("outreach_campaigns")
-    .select("client_id, live_at, leads_added_at, settings, paused_at, wave2_pushed_at, instantly_campaign_id")
-    .not("instantly_campaign_id", "is", null);
+    .select("client_id, live_at, leads_added_at, launch_requested_at, settings, paused_at, wave2_pushed_at, instantly_campaign_id");
   if (options.clientId) query = query.eq("client_id", options.clientId);
   const { data, error } = await query;
   if (error) return { campaigns: [], delivered: delivered.marked, error: error.message };
 
   const rows: Record<string, unknown>[] = [];
   for (const row of data ?? []) {
-    if (!row.live_at && !row.leads_added_at && !options.clientId) continue;
+    if (!options.clientId && !row.live_at && !row.leads_added_at && !row.launch_requested_at) continue;
     if (row.paused_at && !options.clientId) continue;
     if (await isTestPilot(supabase, String(row.client_id))) continue;
     rows.push(row as Record<string, unknown>);
