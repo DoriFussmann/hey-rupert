@@ -831,10 +831,35 @@ function FeedbackStage({
         >
           {busy === "score" ? "Scoring…" : busy === "write" ? "Writing…" : deck.scores.length > 0 ? "Score Again" : "Score Feedback"}
         </button>
+        {deck.scores.length === 0 && !confirmed ? (
+          <button
+            type="button"
+            className={secondaryButton}
+            disabled={busy !== null || !narrativeFinalized}
+            title="Only when the client shared no deck and no file. The narrative goes to the client without materials feedback."
+            onClick={() =>
+              void run(
+                "deck-confirm",
+                () => saveDeckAction(clientId, { chosen: [], writeups: {}, scores: {}, links: {}, files: {}, confirm: true }),
+                "Skipped: no deck to review. Next: the questions for the founder.",
+              )
+            }
+          >
+            {busy === "deck-confirm" ? "Skipping…" : "No Deck: Skip"}
+          </button>
+        ) : null}
         <Link href="/admin/forms/feedback-topics" className={`${secondaryButton} no-underline`}>
           Edit the List
         </Link>
       </StageHead>
+      {confirmed && deck.scores.length === 0 ? (
+        <div className="mt-md flex flex-wrap items-center justify-between gap-sm rounded-md border border-success/30 bg-success/10 px-md py-sm">
+          <p className="text-body-sm text-heading">Skipped {formatDateAtTime(deck.confirmed_at ?? "")}: no deck or file to review. The narrative goes without materials feedback.</p>
+          <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void run("deck-save", () => saveDeckAction(clientId, change(false)), "Unlocked.")}>
+            Undo
+          </button>
+        </div>
+      ) : null}
       <p className="mt-xs max-w-prose text-body-sm text-muted">
         Rupert scores all {topics.length} topics by how much fixing each would help this raise, and writes the top {DECK_TOPICS_PER_CLIENT}. Edit the text, change scores, re-rank, and add a link or document to any point. The client reads these; there is nothing for them to confirm.
       </p>
