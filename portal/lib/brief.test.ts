@@ -186,3 +186,14 @@ test("feedback topics saved in the admin: unique titles, 3 to 40, preset documen
   assert.equal(parseDeckTopics([{ title: "A" }, { title: "B" }]), null);
   assert.deepEqual(topTopics([{ topic: "team", score: 5, reason: "" }, { topic: "the_ask", score: 5, reason: "" }, { topic: "gone", score: 9, reason: "" }], 2, topics), ["team", "the_ask"]);
 });
+
+test("asDeck: a stage skipped for no deck stays confirmed with no points; otherwise none chosen means not confirmed", () => {
+  const at = "2026-11-26T22:16:00.000Z";
+  const skipped = asDeck({ chosen: [], skipped: true, confirmed_at: at });
+  assert.equal(skipped.confirmed_at, at);
+  assert.equal(skipped.skipped, true);
+  assert.equal(asDeck({ chosen: [], confirmed_at: at }).confirmed_at, null);
+  const withPoints = asDeck({ chosen: ["team"], skipped: true, confirmed_at: at });
+  assert.equal(withPoints.skipped, false);
+  assert.equal(withPoints.confirmed_at, at);
+});
