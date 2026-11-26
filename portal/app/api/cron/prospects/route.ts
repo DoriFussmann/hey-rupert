@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { dailyProspectSweep } from "@/lib/prospects/server";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron, daily: schedules the prep and check-in emails for calls that
 // were too far ahead when booked, retries failed briefs, and sends one
@@ -17,5 +17,5 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
-  return NextResponse.json(await dailyProspectSweep(createServiceClient()));
+  return NextResponse.json(await cronLogged("prospects", (supabase) => dailyProspectSweep(supabase)));
 }

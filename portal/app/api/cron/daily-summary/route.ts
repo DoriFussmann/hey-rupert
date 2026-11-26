@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { sendDailySummary } from "@/lib/outreach/daily-summary-server";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron, weekdays at 22:00 UTC: Rupert's daily summary of every live
 // campaign. 22:00 UTC is 5pm Eastern in winter (EST) and 6pm in summer (EDT);
@@ -16,6 +16,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
-  const result = await sendDailySummary(createServiceClient());
+  const result = await cronLogged("daily-summary", (supabase) => sendDailySummary(supabase));
   return NextResponse.json(result);
 }

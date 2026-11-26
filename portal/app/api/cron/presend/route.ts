@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { runPresendChecks } from "@/lib/outreach/presend-report-server";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron: the pre-send email check, 04:00 UTC (8pm Pacific, the evening
 // before) and again at 13:00 UTC (5am Pacific) for anything the first run
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
   }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
   const morning = new Date().getUTCHours() >= 12;
-  const result = await runPresendChecks(createServiceClient(), { email: morning ? "if_checked" : "always" });
+  const result = await cronLogged("presend", (supabase) => runPresendChecks(supabase, { email: morning ? "if_checked" : "always" }));
   return NextResponse.json({
     campaigns: result.campaigns.map((c) => ({ client: c.clientId, day: c.day, room: c.room, ready: c.ready, checked: c.outcomes.length, errors: c.errors.length })),
     delivered: result.delivered,

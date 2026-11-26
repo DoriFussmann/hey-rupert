@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { runClientReminders } from "@/lib/reminders";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron calls this on the schedule in vercel.json and sends
 // "Authorization: Bearer <CRON_SECRET>" when CRON_SECRET is set on the
@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const run = await runClientReminders(createServiceClient());
+  const run = await cronLogged("reminders", (supabase) => runClientReminders(supabase));
   if (run.errors.length > 0) console.error("Reminders:", run.errors);
   return NextResponse.json(run);
 }

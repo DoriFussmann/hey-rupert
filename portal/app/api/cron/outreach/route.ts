@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { runDueWaves } from "@/lib/outreach/live-server";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron, daily: starts wave 2 (each fund's second contact) for live
 // campaigns whose delay has passed. Same CRON_SECRET check as the reminders.
@@ -15,6 +15,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
-  const result = await runDueWaves(createServiceClient());
+  const result = await cronLogged("outreach", (supabase) => runDueWaves(supabase));
   return NextResponse.json(result);
 }
