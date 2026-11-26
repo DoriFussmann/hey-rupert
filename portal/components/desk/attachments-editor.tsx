@@ -159,7 +159,7 @@ export function AttachmentsEditor({
         </button>
         {admin && outputs.length > 0 ? (
           <select
-            className={`${input} w-auto`}
+            className="cursor-pointer rounded-md border border-border bg-background px-sm py-xs text-body-sm text-body outline-none focus:border-primary"
             value=""
             disabled={disabled || full}
             aria-label="Share a page of the client's portal"
