@@ -212,7 +212,7 @@ export async function listWaitingOnUs(supabase: ServiceClient): Promise<DeskResu
   const ids = Array.from(new Set(items.map((item) => item.clientId)));
   const clients = await supabase
     .from("clients")
-    .select("id, company_name, first_name, last_name, founder_name")
+    .select("*")
     .in("id", ids);
   if (clients.error) return { ok: false, error: clients.error.message };
   const byId = new Map((clients.data ?? []).map((row) => [String(row.id), row as Record<string, unknown>]));

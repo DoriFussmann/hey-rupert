@@ -64,7 +64,6 @@ begin
     select id,
            coalesce(
              nullif(btrim(concat_ws(' ', first_name, last_name)), ''),
-             nullif(btrim(founder_name), ''),
              nullif(btrim(company_name), ''),
              'Client'
            ) as name
