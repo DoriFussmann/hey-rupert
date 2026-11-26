@@ -3,80 +3,95 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Dayroom Labs: post-acute care, managed for health plans by AI</title>
-<meta name="description" content="Dayroom Labs is building an AI agent that follows every health plan member from hospital discharge through skilled nursing and home health.">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f3a34'/%3E%3Cpath d='M9 22V10h5.2c3.6 0 6 2.4 6 6s-2.4 6-6 6H9z' fill='none' stroke='%23f3ead9' stroke-width='2.4'/%3E%3C/svg%3E">
+<title>Dayroom Labs</title>
+<meta name="description" content="Dayroom Labs. In stealth. Working on a part of healthcare nobody is watching.">
+<meta name="theme-color" content="#0e1513">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230e1513'/%3E%3Cpath d='M9 22V10h5.2c3.6 0 6 2.4 6 6s-2.4 6-6 6H9z' fill='none' stroke='%23e9dcc3' stroke-width='2.4'/%3E%3C/svg%3E">
 <style>
-  :root { --ink:#1b2a27; --deep:#1f3a34; --soft:#55645f; --line:#e2d9c8; --paper:#faf6ee; --card:#fffdf8; --accent:#b9652f; }
+  :root { --bg:#0e1513; --ink:#efe7d6; --dim:#8a958f; --faint:#4d5853; --glow:#e0a15e; }
   * { box-sizing:border-box; }
-  html { -webkit-text-size-adjust:100%; }
-  body { margin:0; background:var(--paper); color:var(--ink); font:17px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; }
-  .wrap { max-width:760px; margin:0 auto; padding:0 24px; }
-  header { padding:28px 0; }
-  .mark { display:inline-flex; align-items:center; gap:10px; font-weight:600; letter-spacing:.01em; color:var(--deep); text-decoration:none; }
-  .mark svg { width:28px; height:28px; }
-  h1 { font:500 clamp(34px,6.2vw,54px)/1.08 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; letter-spacing:-.015em; margin:56px 0 22px; color:var(--deep); }
-  .lede { font-size:19px; color:var(--soft); max-width:60ch; margin:0 0 64px; }
-  h2 { font:600 13px/1 ui-sans-serif,system-ui,sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--accent); margin:0 0 18px; }
-  section { padding:44px 0; border-top:1px solid var(--line); }
-  p { margin:0 0 14px; }
-  ul { list-style:none; padding:0; margin:18px 0 0; display:grid; gap:12px; }
-  li { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px 18px 14px 46px; position:relative; }
-  li::before { content:""; position:absolute; left:18px; top:22px; width:14px; height:2px; background:var(--accent); }
-  .team { display:grid; gap:14px; grid-template-columns:1fr 1fr; }
-  .person { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; }
-  .person b { display:block; color:var(--deep); }
-  .person span { display:block; font-size:13px; letter-spacing:.08em; text-transform:uppercase; color:var(--soft); margin:2px 0 10px; }
-  .person p { margin:0; font-size:15.5px; color:var(--soft); }
-  .contact a { color:var(--deep); font-weight:600; text-decoration-color:var(--accent); text-underline-offset:4px; }
-  footer { padding:36px 0 56px; border-top:1px solid var(--line); font-size:13.5px; color:var(--soft); }
-  @media (max-width:560px) { .team { grid-template-columns:1fr; } h1 { margin-top:32px; } .lede { margin-bottom:44px; } }
+  html, body { height:100%; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; -webkit-font-smoothing:antialiased; overflow-x:hidden; }
+  body::before { content:""; position:fixed; inset:-20%; background:radial-gradient(42% 36% at 50% 46%, rgba(224,161,94,.13), transparent 70%); pointer-events:none; animation:breathe 9s ease-in-out infinite; }
+  @keyframes breathe { 50% { opacity:.55; transform:scale(1.06); } }
+  .page { position:relative; min-height:100%; display:grid; grid-template-rows:auto 1fr auto; padding:28px clamp(22px,5vw,56px); }
+  .mark { display:inline-flex; align-items:center; gap:10px; font-weight:600; letter-spacing:.02em; color:var(--ink); }
+  .mark svg { width:26px; height:26px; }
+  .stealth { margin-left:auto; font:500 11px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; letter-spacing:.22em; text-transform:uppercase; color:var(--dim); display:inline-flex; align-items:center; gap:8px; }
+  .stealth i { width:6px; height:6px; border-radius:50%; background:var(--glow); box-shadow:0 0 10px var(--glow); animation:pulse 2.4s ease-in-out infinite; }
+  @keyframes pulse { 50% { opacity:.25; } }
+  header { display:flex; align-items:center; }
+  main { align-self:center; max-width:900px; padding:48px 0; }
+  h1 { font:400 clamp(34px,6.4vw,68px)/1.08 "Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif; letter-spacing:-.02em; margin:0 0 clamp(28px,5vw,48px); text-wrap:balance; }
+  h1 em { font-style:italic; color:var(--glow); }
+  .line { font:400 clamp(17px,2.6vw,24px)/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; color:var(--dim); min-height:2.9em; }
+  .line b { font-weight:400; color:var(--ink); }
+  .caret { display:inline-block; width:.55em; height:1.05em; margin-left:2px; vertical-align:-.16em; background:var(--glow); animation:blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity:0; } }
+  footer { display:flex; flex-wrap:wrap; gap:8px 24px; align-items:center; font-size:13.5px; color:var(--faint); }
+  footer a { color:var(--dim); text-decoration:none; border-bottom:1px solid var(--faint); padding-bottom:1px; transition:color .2s, border-color .2s; }
+  footer a:hover { color:var(--ink); border-color:var(--glow); }
+  footer span:last-child { margin-left:auto; }
+  @media (max-width:560px) { footer span:last-child { margin-left:0; } }
+  @media (prefers-reduced-motion: reduce) { body::before, .stealth i, .caret { animation:none; } }
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="page">
   <header>
-    <a class="mark" href="/">
-      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#1f3a34"/><path d="M9 22V10h5.2c3.6 0 6 2.4 6 6s-2.4 6-6 6H9z" fill="none" stroke="#f3ead9" stroke-width="2.4"/></svg>
+    <span class="mark">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="7" fill="#efe7d6"/><path d="M9 22V10h5.2c3.6 0 6 2.4 6 6s-2.4 6-6 6H9z" fill="none" stroke="#0e1513" stroke-width="2.4"/></svg>
       Dayroom Labs
-    </a>
+    </span>
+    <span class="stealth"><i></i>In stealth</span>
   </header>
 
   <main>
-    <h1>Post-acute care, managed for health plans by AI.</h1>
-    <p class="lede">After a hospital stay, members move through skilled nursing and home health, and plans lose sight of them. Stays run long, paperwork arrives late, and avoidable readmissions follow. It is one of the largest costs a Medicare Advantage plan carries, and one of the least managed.</p>
-
-    <section>
-      <h2>What we're building</h2>
-      <p>An AI agent that follows every member from discharge to home. It:</p>
-      <ul>
-        <li>collects and reads the clinical documentation from facilities and agencies</li>
-        <li>tracks each stay against what the member's condition should need</li>
-        <li>flags stays running long and members at risk of readmission, with the evidence attached</li>
-        <li>hands the plan's care team a short list of who needs a call today</li>
-      </ul>
-    </section>
-
-    <section>
-      <h2>Where we are</h2>
-      <p>We're at the start. We're building the first version and looking for health plans to design it with.</p>
-    </section>
-
-    <section>
-      <h2>Team</h2>
-      <div class="team">
-        <div class="person"><b>Jon Watson</b><span>CEO</span><p>Has led health insurance businesses at HealthMine, Bright Health Group and Reside Health.</p></div>
-        <div class="person"><b>Dori Fussmann</b><span>COO</span><p>Founder of The Night Ventures, where he builds and runs AI software products.</p></div>
-      </div>
-    </section>
-
-    <section class="contact">
-      <h2>Contact</h2>
-      <p><a href="mailto:dori@dayroomlabs.com">dori@dayroomlabs.com</a></p>
-    </section>
+    <h1>Every day, patients leave the hospital and <em>disappear from view.</em></h1>
+    <p class="line" aria-live="off">Dayroom is <b id="typed">working on it</b><span class="caret" aria-hidden="true"></span></p>
   </main>
 
-  <footer>&copy; 2026 Dayroom Labs</footer>
+  <footer>
+    <span>Building quietly. Talking to a few people.</span>
+    <a href="mailto:dori@dayroomlabs.com">dori@dayroomlabs.com</a>
+    <span>&copy; 2026 Dayroom Labs</span>
+  </footer>
 </div>
+<script>
+(function () {
+  var el = document.getElementById("typed");
+  if (!el) return;
+  // What the work actually looks like today, one line at a time.
+  var lines = [
+    "thinking…",
+    "reading the discharge summary…",
+    "chasing the fax…",
+    "waiting on hold…",
+    "calling the facility again…",
+    "finding out where she went…",
+    "reading 140 pages of notes…",
+    "checking who is going home today…",
+    "noticing what everyone missed…",
+    "working on it."
+  ];
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = "working on it."; return; }
+  var i = 0, n = 0, deleting = false;
+  el.textContent = "";
+  function tick() {
+    var text = lines[i];
+    if (!deleting) {
+      n += 1;
+      el.textContent = text.slice(0, n);
+      if (n === text.length) { deleting = true; return setTimeout(tick, i === lines.length - 1 ? 3200 : 1500); }
+      return setTimeout(tick, 42 + Math.random() * 55);
+    }
+    n -= 1;
+    el.textContent = text.slice(0, n);
+    if (n === 0) { deleting = false; i = (i + 1) % lines.length; return setTimeout(tick, 380); }
+    setTimeout(tick, 22);
+  }
+  setTimeout(tick, 700);
+})();
+</script>
 </body>
 </html>
