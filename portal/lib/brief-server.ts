@@ -869,7 +869,19 @@ export async function saveDeck(
     confirmed_at: change.confirm ? new Date().toISOString() : null,
   });
   if (change.confirm) {
-    if (deck.chosen.length === 0) return { ok: false, error: "Choose the points of feedback first." };
+    if (deck.chosen.length === 0) {
+      // No deck and no file: nothing to give feedback on, so the stage is
+      // confirmed empty and the narrative goes out without feedback.
+      const sources = await loadSources(supabase, clientId);
+      if (!sources.ok) return sources;
+      const files = await prepareFiles(supabase, sources.value.files);
+      if (files.blocks.length > 0) return { ok: false, error: "Choose the points of feedback first." };
+      return saveBrief(supabase, clientId, {
+        deck: { ...deck, writeups: {}, links: {}, files: {} },
+        note: "Materials feedback skipped: no deck or file to review.",
+        actor,
+      });
+    }
     const empty = deck.chosen.filter((id) => !(deck.writeups[id] ?? "").trim());
     if (empty.length > 0) return { ok: false, error: `Write the feedback for ${empty.map((id) => titleCase(deckTopic(id, deckTopics)?.title ?? id)).join(", ")} first.` };
   }
