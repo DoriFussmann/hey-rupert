@@ -33,6 +33,8 @@ import { ClientEmails } from "@/app/admin/clients/[id]/client-emails";
 import { portalViews, type StepView } from "@/lib/email-tracking";
 import { ClientTimeline } from "@/app/admin/clients/[id]/client-timeline";
 import { Disclosure } from "@/components/disclosure";
+import { adminDeskPath } from "@/lib/desk";
+import { listDeskItems } from "@/lib/desk-server";
 import { ViewAsClientLink } from "@/components/eye-icon";
 import { listEmailLog, type EmailLogResult } from "@/lib/email-log";
 import { loadEmailSettings } from "@/lib/email-settings";
@@ -397,6 +399,9 @@ export default async function ClientDetailPage({
       changesRequested: narrativeRow?.status === "changes_requested",
     },
   });
+  // Best effort: before desk.sql is run the link just shows no count.
+  const deskItems = service ? await listDeskItems(service, client.id) : null;
+  const deskWaiting = deskItems?.ok ? deskItems.value.filter((item) => item.status === "waiting_us").length : 0;
   const showWelcome =
     !client.is_test_pilot && (access.status === "pending" || access.status === "expired");
 
@@ -427,6 +432,12 @@ export default async function ClientDetailPage({
               className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
             >
               Company Profile
+            </Link>
+            <Link
+              href={adminDeskPath(client.id)}
+              className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+            >
+              Desk{deskWaiting > 0 ? ` · ${deskWaiting} waiting on us` : ""}
             </Link>
             <Link
               href={matchPath(client.id)}

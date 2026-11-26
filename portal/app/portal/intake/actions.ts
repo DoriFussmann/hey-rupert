@@ -1,5 +1,6 @@
 "use server";
 
+import { recordIntakeMaterials, recordMaterialFile } from "@/lib/desk-hooks";
 import { randomUUID } from "crypto";
 import { revalidatePath } from "next/cache";
 import {
@@ -195,6 +196,7 @@ async function completeIfReady(
   }
   if (!completed.completed) return;
 
+  await recordIntakeMaterials(supabase, user.id);
   await notifyAdmin(supabase, user.id, "intake_completed", {
     email: true,
     details: `${completionDetails(topics, topicStatus, view, conflicts)}\n\nNext: upload the founder's LinkedIn PDF in the Company Brief step on the client page (LinkedIn → More → Save to PDF). The brief waits for it.`,
@@ -591,9 +593,12 @@ export async function sendIntakeFiles(input: {
     late = late || result.late;
   }
   if (late) {
+    let desk = null;
+    for (const file of attached) desk = await recordMaterialFile(access.supabase, access.user.id, file, "client");
     await notifyAdminOnce(access.supabase, access.user.id, "materials_added", {
       email: true,
       details: addedFilesDetails(attached),
+      link: desk?.adminLink,
     });
   }
   revalidateIntake(access.user.id);
@@ -758,6 +763,7 @@ export async function confirmIntake(
     const completed = await completeIntakeWithMaterials(supabase, user.id, completedAt);
     if (!completed.ok) return completed;
     if (completed.completed) {
+      await recordIntakeMaterials(supabase, user.id);
       await notifyAdmin(supabase, user.id, "intake_completed", {
         email: true,
         details: `${completionDetails(settings.topics, interview.topic_status, view, interview.conflicts)}\n\nNext: upload the founder's LinkedIn PDF in the Company Brief step on the client page (LinkedIn → More → Save to PDF). The brief waits for it.`,

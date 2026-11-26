@@ -56,7 +56,7 @@ export async function notifyAdminOnce(
   supabase: ServiceClient,
   clientId: string,
   type: string,
-  { email = false, details }: { email?: boolean; details?: string } = {},
+  { email = false, details, link }: { email?: boolean; details?: string; link?: string } = {},
 ) {
   const { count, error } = await supabase
     .from("notifications")
@@ -69,13 +69,15 @@ export async function notifyAdminOnce(
     return;
   }
   if ((count ?? 0) > 0) return;
-  await notifyAdmin(supabase, clientId, type, { email, details });
+  await notifyAdmin(supabase, clientId, type, { email, details, link });
 }
 
 /**
  * Records an admin notification and, when `email` is set and that email is
  * switched on in Forms → Emails, emails it too.
  * `details` is optional extra text placed in the email body.
+ * `link` replaces the link to the client with a more exact one: the Desk
+ * item the event was recorded on.
  * The email says "you're up" only when the next step is the admin's, using
  * the same next-action logic as the admin client list.
  * Best effort: callers have already saved the change, so failures here are
@@ -86,7 +88,7 @@ export async function notifyAdmin(
   supabase: ServiceClient,
   clientId: string,
   type: string,
-  { email, details }: { email: boolean; details?: string },
+  { email, details, link }: { email: boolean; details?: string; link?: string },
 ) {
   const { error } = await supabase
     .from("notifications")
@@ -123,7 +125,7 @@ export async function notifyAdmin(
       : `Next: ${nextActionText(row as ProgressSource)}.`,
     youre_up: adminTurn ? " — you're up" : "",
     details: details?.trim() ?? "",
-    client_link: `${PORTAL_URL}/admin/clients/${clientId}`,
+    client_link: link || `${PORTAL_URL}/admin/clients/${clientId}`,
   });
 
   await sendAdminEmail(message.subject, message.body);
@@ -155,9 +157,18 @@ export async function notifyClient(
   supabase: ServiceClient,
   clientId: string,
   turn: ClientTurn,
-  options: { note?: string; updated?: boolean } = {},
+  options: {
+    note?: string;
+    updated?: boolean;
+    /** The Desk item this turn was recorded on: the email links to it. */
+    portalLink?: string;
+  } = {},
 ): Promise<EmailResult> {
-  const rendered = await renderClientTurnEmail(supabase, clientId, turn, options);
+  const { portalLink, ...rest } = options;
+  const rendered = await renderClientTurnEmail(supabase, clientId, turn, {
+    ...rest,
+    ...(portalLink ? { values: { portal_link: portalLink } } : {}),
+  });
   if (!rendered.ok) return rendered;
 
   return sendClientEmail(supabase, {

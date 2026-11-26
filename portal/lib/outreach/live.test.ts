@@ -166,8 +166,8 @@ test("drip: a daily batch, second contacts only after their fund's first plus th
 });
 
 test("test addresses go to the test inbox and map back to the contact", () => {
-  const address = testAddress("dori@thenightventures.com", { id: "1a2b3c4d-0000-0000-0000-000000000000", fund_name: "Acre Venture Partners", person: { first_name: "Lucas" } });
-  assert.equal(address, "dori+acre-venture-partner-lucas-1a2b3c4d@thenightventures.com");
+  const address = testAddress("dori@heyrupert.com", { id: "1a2b3c4d-0000-0000-0000-000000000000", fund_name: "Acre Venture Partners", person: { first_name: "Lucas" } });
+  assert.equal(address, "dori+acre-venture-partner-lucas-1a2b3c4d@heyrupert.com");
   assert.equal(testAddressId(address), "1a2b3c4d");
   assert.equal(testAddressId("lucas@acre.vc"), null);
 });

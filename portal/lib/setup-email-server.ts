@@ -180,16 +180,22 @@ export async function composeAiEmail(
   };
 }
 
-/** Sends the email as written and logs it in the client's email history. */
+/**
+ * Sends the email as written and logs it in the client's email history.
+ * With `deskLink` (the Desk item this version was recorded on), the link to
+ * the step's page becomes a link to that item, which leads on to the step.
+ */
 export async function sendStepEmail(
   supabase: ServiceClient,
   clientId: string,
   step: SetupDocumentStep,
   email: ClientEmailDraft,
+  { deskLink }: { deskLink?: string } = {},
 ): Promise<EmailResult> {
   const context = await loadContext(supabase, clientId, step);
   if (!context.ok) return { ok: false, reason: context.error };
-  const text = step === "investor_list" ? withClientNote(email.body, email.note) : email.body;
+  const written = step === "investor_list" ? withClientNote(email.body, email.note) : email.body;
+  const text = deskLink ? written.split(context.portalLink).join(deskLink) : written;
   return sendClientEmail(supabase, {
     clientId,
     kind: "manual",
@@ -209,13 +215,14 @@ export async function sendQuestionAnswerEmail(
   supabase: ServiceClient,
   clientId: string,
   step: SetupDocumentStep,
-  { question, answer }: { question: string; answer: string },
+  { question, answer, deskLink }: { question: string; answer: string; deskLink?: string },
 ): Promise<EmailResult> {
   const context = await loadContext(supabase, clientId, step);
   if (!context.ok) return { ok: false, reason: context.error };
   const settings = await loadEmailSettings(supabase);
   const rendered = renderEmail(settings.templates[QUESTION_ANSWERED_KEY], {
     ...baseValues(context, 1),
+    ...(deskLink ? { portal_link: deskLink } : {}),
     question: question.trim(),
     answer: answer.trim(),
   });

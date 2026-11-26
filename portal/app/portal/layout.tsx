@@ -5,7 +5,9 @@ import { ViewAsBanner, ViewerBanner } from "@/components/view-as-banner";
 import { requirePortalUser } from "@/lib/auth";
 import { bookCallHref } from "@/lib/book-call";
 import { getPortalView } from "@/lib/data";
-import { isSupabaseConfigured } from "@/lib/env";
+import { countWaitingOnClient } from "@/lib/desk-server";
+import { isServiceRoleConfigured, isSupabaseConfigured } from "@/lib/env";
+import { createServiceClient } from "@/lib/supabase/admin";
 import { getSetupItems } from "@/lib/setup";
 import type { Client } from "@/lib/types";
 
@@ -41,6 +43,8 @@ export default async function PortalLayout({
 
   const { client, viewAs, viewer } = await getPortalView();
   const setupItems = getSetupItems(client);
+  const deskWaiting =
+    client && isServiceRoleConfigured() ? await countWaitingOnClient(createServiceClient(), client.id) : 0;
 
   return (
     <AppShell
@@ -65,6 +69,7 @@ export default async function PortalLayout({
                   }
                 : null
             }
+            deskWaiting={deskWaiting}
           />
           <BookCallLink href={bookCallHref(client)} disabled={viewAs} />
         </>

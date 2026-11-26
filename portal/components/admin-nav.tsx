@@ -32,12 +32,14 @@ function Menu({
   pathname,
   hash,
   unreadCount,
+  deskCount,
   onPick,
 }: {
   group: AdminNavGroup;
   pathname: string;
   hash: string;
   unreadCount: number;
+  deskCount: number;
   onPick: (hash: string) => void;
 }) {
   const wide = group.id === "agents";
@@ -83,6 +85,7 @@ function Menu({
                     >
                       <span>{item.label}</span>
                       {item.href === "/admin/notifications" && unreadCount > 0 ? <Badge count={unreadCount} /> : null}
+                      {item.href === "/admin/desk" && deskCount > 0 ? <Badge count={deskCount} /> : null}
                     </Link>
                   </li>
                 );
@@ -99,7 +102,7 @@ function Menu({
  * The admin's top bar: the brand, the five groups (each opens a menu of its
  * pages) and Log out. The page below gets the full width of the screen.
  */
-export function AdminTopBar({ unreadCount = 0 }: { unreadCount?: number }) {
+export function AdminTopBar({ unreadCount = 0, deskCount = 0 }: { unreadCount?: number; deskCount?: number }) {
   const pathname = usePathname();
   const [hash, setHash] = useHash();
   const current = activeNavGroup(pathname);
@@ -158,6 +161,7 @@ export function AdminTopBar({ unreadCount = 0 }: { unreadCount?: number }) {
                     pathname={pathname}
                     hash={hash}
                     unreadCount={unreadCount}
+                    deskCount={deskCount}
                     onPick={(next) => {
                       setHash(next);
                       setOpen(null);
@@ -177,10 +181,19 @@ export function AdminTopBar({ unreadCount = 0 }: { unreadCount?: number }) {
 }
 
 /** The admin's frame: the top bar, then the page across the full width. */
-export function AdminShell({ unreadCount, children }: { unreadCount: number; children: ReactNode }) {
+export function AdminShell({
+  unreadCount,
+  deskCount = 0,
+  children,
+}: {
+  unreadCount: number;
+  /** Desk items waiting on us, across clients. */
+  deskCount?: number;
+  children: ReactNode;
+}) {
   return (
     <div className="min-h-screen">
-      <AdminTopBar unreadCount={unreadCount} />
+      <AdminTopBar unreadCount={unreadCount} deskCount={deskCount} />
       <main className="min-w-0 px-md py-lg lg:px-xl lg:py-xl">{children}</main>
     </div>
   );

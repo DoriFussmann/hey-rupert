@@ -13,6 +13,7 @@ test("the admin nav has five groups and keeps every page it had", () => {
   const paths = new Set(adminNavGroups.flatMap((g) => g.items.map((i) => i.href)));
   for (const href of [
     "/admin",
+    "/admin/desk",
     "/admin/nudge",
     "/admin/timeline",
     "/admin/fund-database",
@@ -80,5 +81,5 @@ test("menus: Agents is split into the lists and the prompts by area, every link 
   assert.ok(found.length > 0 && found.every((section) => section.items.every((entry) => /narrative/i.test(entry.label) && /email/i.test(entry.label))));
   assert.deepEqual(navSections(agents, "zzzz"), []);
   // The other groups are one plain list.
-  assert.deepEqual(navSections(group("clients")).map((section) => [section.label, section.items.length]), [[null, 4]]);
+  assert.deepEqual(navSections(group("clients")).map((section) => [section.label, section.items.length]), [[null, 5]]);
 });

@@ -26,5 +26,5 @@ This Non-Disclosure Agreement (this "Agreement") is between The Night Ventures, 
 
 **10. Liability and disputes.** Rupert's liability under this Agreement is subject to the limits of liability in the Service Order. Any dispute under this Agreement is resolved under the disputes section of the Service Order, except that either party may seek an injunction in court to protect its confidential information.
 
-**11. General.** No license is granted. This Agreement is governed by California law. If it conflicts with the Service Order on the confidentiality of Client's information, this Agreement controls; on all other subjects, including liability and disputes, the Service Order controls. Notices may be sent to ${CLIENT_TOKENS.signer_email} for Client and dori@thenightventures.com for Rupert. This Agreement may be signed electronically.
+**11. General.** No license is granted. This Agreement is governed by California law. If it conflicts with the Service Order on the confidentiality of Client's information, this Agreement controls; on all other subjects, including liability and disputes, the Service Order controls. Notices may be sent to ${CLIENT_TOKENS.signer_email} for Client and dori@heyrupert.com for Rupert. This Agreement may be signed electronically.
 `;
