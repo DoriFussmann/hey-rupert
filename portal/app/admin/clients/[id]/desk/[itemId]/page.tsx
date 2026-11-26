@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BackLink } from "@/components/back-link";
 import { DeskCard, MessageThread, StatusChip, itemMeta } from "@/components/desk/desk-parts";
 import { Disclosure } from "@/components/disclosure";
 import { getAdminClient } from "@/lib/data";
 import { adminDeskPath, isDeskId } from "@/lib/desk";
 import { portalOutputs } from "@/lib/desk-outputs";
-import { loadDeskItem, loadDeskNotes, signDeskFiles } from "@/lib/desk-server";
+import { listWaitingOnUs, loadDeskItem, loadDeskNotes, signDeskFiles } from "@/lib/desk-server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { formatDateAtTime } from "@/lib/format";
 import { createServiceClient } from "@/lib/supabase/admin";
@@ -24,15 +23,33 @@ export default async function AdminDeskItemPage({ params }: { params: { id: stri
   const loaded = await loadDeskItem(supabase, client.id, params.itemId);
   if (!loaded.ok || !loaded.value) notFound();
   const { item, messages } = loaded.value;
-  const [notes, fileLinks] = await Promise.all([
+  const [notes, inbox, fileLinks] = await Promise.all([
     loadDeskNotes(supabase, client.id, item.id),
+    listWaitingOnUs(supabase),
     signDeskFiles(supabase, client.id, messages.flatMap((message) => message.attachments)),
   ]);
+  // The inbox is oldest first: the next one to answer is the oldest other than this one.
+  const others = inbox.ok ? inbox.value.filter((entry) => entry.id !== item.id) : [];
+  const next = others[0] ?? null;
   const outputs = portalOutputs(client.setup_steps, Boolean(client.intake_completed_at));
 
   return (
     <>
-      <BackLink href={adminDeskPath(client.id)} label={`${client.company_name} · Desk`} />
+      <div className="mb-md flex flex-wrap items-baseline justify-between gap-md">
+        <Link href={adminDeskPath(client.id)} className="text-body-sm text-primary no-underline hover:text-primary-hover">
+          {`${client.company_name} · Desk`}
+        </Link>
+        {next ? (
+          <Link
+            href={adminDeskPath(next.clientId, next.id)}
+            className="max-w-full truncate text-body-sm text-primary no-underline hover:text-primary-hover"
+          >
+            Next waiting on us ({others.length}): {next.company || next.person || "Client"} · {next.title} →
+          </Link>
+        ) : (
+          <span className="text-body-sm text-muted">Nothing else is waiting on us.</span>
+        )}
+      </div>
       <header className="mb-lg flex flex-wrap items-start justify-between gap-md">
         <div className="min-w-0">
           <h1 className="text-h2 font-light text-heading">{item.title}</h1>

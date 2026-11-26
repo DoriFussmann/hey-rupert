@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown } from "@/components/chevron";
 import { SignOutButton } from "@/components/sign-out-button";
-import { activeNavGroup, adminNavGroups, navItemActive, navSections, type AdminNavGroup } from "@/lib/nav";
+import { DESK_NAV_HREF, activeNavGroup, adminNavGroups, isDeskPath, navItemActive, navSections, type AdminNavGroup } from "@/lib/nav";
 
 function useHash() {
   const [hash, setHash] = useState("");
@@ -32,14 +32,12 @@ function Menu({
   pathname,
   hash,
   unreadCount,
-  deskCount,
   onPick,
 }: {
   group: AdminNavGroup;
   pathname: string;
   hash: string;
   unreadCount: number;
-  deskCount: number;
   onPick: (hash: string) => void;
 }) {
   const wide = group.id === "agents";
@@ -85,7 +83,6 @@ function Menu({
                     >
                       <span>{item.label}</span>
                       {item.href === "/admin/notifications" && unreadCount > 0 ? <Badge count={unreadCount} /> : null}
-                      {item.href === "/admin/desk" && deskCount > 0 ? <Badge count={deskCount} /> : null}
                     </Link>
                   </li>
                 );
@@ -161,7 +158,6 @@ export function AdminTopBar({ unreadCount = 0, deskCount = 0 }: { unreadCount?: 
                     pathname={pathname}
                     hash={hash}
                     unreadCount={unreadCount}
-                    deskCount={deskCount}
                     onPick={(next) => {
                       setHash(next);
                       setOpen(null);
@@ -171,6 +167,17 @@ export function AdminTopBar({ unreadCount = 0, deskCount = 0 }: { unreadCount?: 
               </div>
             );
           })}
+          {/* The Desk is checked daily: its own link, with what is waiting on us. */}
+          <Link
+            href={DESK_NAV_HREF}
+            aria-current={isDeskPath(pathname) ? "page" : undefined}
+            className={`flex items-center gap-xs rounded-md px-sm py-xs text-body-sm no-underline transition-colors duration-hover ${
+              isDeskPath(pathname) ? "bg-primary-tint text-primary" : "text-secondary hover:bg-background hover:text-heading"
+            }`}
+          >
+            Desk
+            {deskCount > 0 ? <Badge count={deskCount} /> : null}
+          </Link>
         </nav>
         <div className="ml-auto">
           <SignOutButton />
