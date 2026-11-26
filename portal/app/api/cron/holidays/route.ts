@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { runHolidayGuard } from "@/lib/outreach/live-server";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron, daily before the sending window: pauses live campaigns on a
 // US federal holiday and starts them again on the next Business Day.
@@ -16,6 +16,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
-  const result = await runHolidayGuard(createServiceClient());
+  const result = await cronLogged("holidays", (supabase) => runHolidayGuard(supabase));
   return NextResponse.json(result);
 }

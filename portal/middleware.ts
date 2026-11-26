@@ -2,30 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { getRole, homePathForRole, roleFromUser } from "@/lib/roles";
 import { isSupabaseConfigured } from "@/lib/env";
-
-function isPublicPath(pathname: string) {
-  return (
-    pathname === "/login" ||
-    pathname.startsWith("/login/") ||
-    pathname === "/auth/setup" ||
-    // Stripe calls this without a session; it verifies Stripe's signature.
-    pathname === "/api/stripe/webhook" ||
-    // Vercel Cron calls these without a session; they check CRON_SECRET.
-    pathname === "/api/cron/reminders" ||
-    pathname === "/api/cron/site-check" ||
-    pathname === "/api/cron/outreach" ||
-    pathname === "/api/cron/daily-summary" ||
-    pathname === "/api/cron/prospects" ||
-    // Cal.com calls this without a session; it checks CAL_WEBHOOK_SECRET.
-    pathname === "/api/cal/webhook" ||
-    // Instantly calls this without a session; it checks INSTANTLY_WEBHOOK_SECRET.
-    pathname === "/api/instantly/webhook" ||
-    // Resend calls this without a session; it checks RESEND_WEBHOOK_SECRET.
-    pathname === "/api/resend/webhook" ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon")
-  );
-}
+import { isPublicPath } from "@/lib/public-paths";
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;

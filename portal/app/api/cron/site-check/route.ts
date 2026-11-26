@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { isServiceRoleConfigured } from "@/lib/env";
 import { runSiteBatch } from "@/lib/match/sites-server";
-import { createServiceClient } from "@/lib/supabase/admin";
+import { cronLogged } from "@/lib/cron-log";
 
 // Vercel Cron calls this daily (vercel.json) with
 // "Authorization: Bearer <CRON_SECRET>". Each run checks the fund websites
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
   }
 
-  const result = await runSiteBatch(createServiceClient(), BUDGET_MS);
+  const result = await cronLogged("site-check", (supabase) => runSiteBatch(supabase, BUDGET_MS));
   if (!result.ok) {
     console.error("Website check:", result.error);
     return NextResponse.json({ error: result.error }, { status: 500 });
