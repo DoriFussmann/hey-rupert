@@ -105,10 +105,10 @@ export function reanalyzeState(input: ReanalyzeInput): ReanalyzeState {
 
   const behind: ReanalyzeStepId[] = [];
   if (hasInterview && (!brief || after(interviewAt, brief.basedOn))) behind.push("brief");
+  // No files and no feedback: nothing to review (a client with no deck), so not behind.
   if (
-    !feedback ||
-    files.some((file) => after(file.uploadedAt, seenAt)) ||
-    after(interviewAt, feedback.generatedAt)
+    (!feedback && files.length > 0) ||
+    (feedback !== null && (files.some((file) => after(file.uploadedAt, seenAt)) || after(interviewAt, feedback.generatedAt)))
   ) {
     behind.push("feedback");
   }

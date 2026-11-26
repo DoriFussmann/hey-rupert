@@ -126,7 +126,7 @@ export function ServiceOrderPanel({
                   rel="noopener noreferrer"
                   className={`${primaryButton} self-start`}
                 >
-                  Pay {setupFee} with Stripe
+                  Pay the Setup Fee with Stripe
                   <ExternalIcon />
                 </a>
               ) : (
@@ -135,7 +135,7 @@ export function ServiceOrderPanel({
                   disabled
                   className={`${primaryButton} self-start`}
                 >
-                  Pay {setupFee} with Stripe
+                  Pay the Setup Fee with Stripe
                   <ExternalIcon />
                 </button>
               )}

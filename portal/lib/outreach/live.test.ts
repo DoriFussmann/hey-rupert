@@ -213,6 +213,7 @@ test("campaign weeks are 5 weekdays from the launch day", () => {
   assert.equal(campaignWeek("2026-11-04", "2026-11-11"), 2);
   assert.deepEqual(weekRange("2026-11-02", 2), { start: "2026-11-09", end: "2026-11-13" });
   assert.equal(weekLabel("2026-11-30", "2026-12-04"), "Nov 30 – Dec 4");
+  assert.equal(weekLabel("2027-01-14", "2027-01-14"), "Jan 14");
 });
 
 test("the sending plan reaches everyone, marks the current week, then follow-ups only", () => {

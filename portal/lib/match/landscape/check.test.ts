@@ -212,7 +212,8 @@ test("a found website is trusted only at high confidence, when the site opens, a
   assert.equal(trustedWebsite(sug("acme.vc", "medium"), null), null);
   assert.equal(trustedWebsite(sug("acme.vc", "high", "broken"), null), null);
   assert.equal(trustedWebsite(sug("", "high"), null), null);
-  assert.equal(trustedWebsite(sug("acme.vc", "high"), { action: "leave_out", by: null, at: "" }), null);
+  // Leave out / Bring back decide on the record the website matched: the website still identifies it.
+  assert.equal(trustedWebsite(sug("acme.vc", "high"), { action: "leave_out", by: null, at: "" }), "acme.vc");
   assert.equal(trustedWebsite(sug("acme.vc", "high"), { firmId: null, by: null, at: "" }), null);
   // A note or "Not sure" alone is not a decision.
   assert.equal(trustedWebsite(sug("acme.vc", "high"), { note: "check", unsure: true, by: null, at: "" }), "acme.vc");

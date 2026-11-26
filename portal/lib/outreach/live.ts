@@ -482,10 +482,11 @@ export function sendingPlan(input: {
   return weeks;
 }
 
-/** "Nov 2 – 6" or "Nov 30 – Dec 4". */
+/** "Nov 2 – 6" or "Nov 30 – Dec 4"; one day reads "Jan 14". */
 export function weekLabel(start: string, end: string) {
   const fmt = (day: string, withMonth: boolean) =>
     new Intl.DateTimeFormat("en-US", withMonth ? { month: "short", day: "numeric", timeZone: "UTC" } : { day: "numeric", timeZone: "UTC" }).format(new Date(toUtc(day)));
+  if (start === end) return fmt(start, true);
   return `${fmt(start, true)} – ${fmt(end, start.slice(0, 7) !== end.slice(0, 7))}`;
 }
 

@@ -199,10 +199,16 @@ export function isDecided(decision: InvestorDecision | null | undefined) {
   return !!decision && (decision.firmId !== undefined || !!decision.website || !!decision.action || !!decision.removed);
 }
 
-/** The found website to use as the investor's own: only a high-confidence one whose site opens, and only while undecided. */
+/**
+ * The found website to use as the investor's own: only a high-confidence one whose site opens, and only
+ * while the admin hasn't said who the investor is (a record, a website or Remove). Bring back or Leave out
+ * is a decision on the record that website matched, so it keeps the website: dropping it would send the
+ * investor back to an unclear name match.
+ */
 export function trustedWebsite(suggestion: WebsiteSuggestion | null | undefined, decision: InvestorDecision | null | undefined): string | null {
   if (!suggestion?.website || suggestion.confidence !== "high" || suggestion.link === "broken") return null;
-  return isDecided(decision) ? null : suggestion.website;
+  const identityDecided = !!decision && (decision.firmId !== undefined || !!decision.website || !!decision.removed);
+  return identityDecided ? null : suggestion.website;
 }
 
 /**
