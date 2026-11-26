@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { Fragment, useEffect, useRef, useState } from "react";
@@ -1341,8 +1342,8 @@ function AddMissingCard({
         type="button"
         className={primaryButton}
         disabled={approving || busy}
-        onClick={() => {
-          if (!window.confirm(`Approve all pending funds found for this client? They join the shared Fund Database and can match every client. A fund whose website the database already has stays pending.`)) return;
+        onClick={async () => {
+          if (!(await askConfirm(`Approve all pending funds found for this client? They join the shared Fund Database and can match every client. A fund whose website the database already has stays pending.`))) return;
           setApproving(true);
           void onApproveAll().then((text) => {
             setApprovedNote(text);
@@ -1451,8 +1452,8 @@ function AddMissingCard({
           type="button"
           className={primaryButton}
           disabled={busy || !!adding || !tickedIds.length}
-          onClick={() => {
-            if (tickedIds.length > 1 && !window.confirm(`Try and Add to DB for ${tickedIds.length}? About a minute each. Each waits for your review before other clients see it.`)) return;
+          onClick={async () => {
+            if (tickedIds.length > 1 && !(await askConfirm(`Try and Add to DB for ${tickedIds.length}? About a minute each. Each waits for your review before other clients see it.`))) return;
             onAdd(tickedIds);
             setTicked(new Set());
           }}
@@ -1468,9 +1469,9 @@ function AddMissingCard({
       type="button"
       className={`${primaryButton} shrink-0`}
       disabled={busy || !!adding}
-      onClick={() => {
+      onClick={async () => {
         const left = funds.length + angels.length;
-        if (!left || window.confirm(`Confirm Step ${T.step}D? ${left} not added will be skipped (you can Reopen to add more).`)) onConfirm(true);
+        if (!left || (await askConfirm(`Confirm Step ${T.step}D? ${left} not added will be skipped (you can Reopen to add more).`))) onConfirm(true);
       }}
     >
       Done Adding: Confirm {T.step}D
@@ -1792,7 +1793,7 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
   };
 
   const confirmCheck = async (confirm: boolean) => {
-    if (confirm && !window.confirm("Confirm the check? Decisions are locked until you reopen it.")) return;
+    if (confirm && !(await askConfirm("Confirm the check? Decisions are locked until you reopen it."))) return;
     setBusy(true);
     setError(null);
     const result = await confirmInvestorCheck(clientId, confirm, kind);
@@ -2053,9 +2054,9 @@ export function DatabaseCheck({ clientId }: { clientId: string }) {
                     type="button"
                     className={primaryButton}
                     disabled={busy || !!finding || !byBucket(current).length}
-                    onClick={() => {
+                    onClick={async () => {
                       const ids = byBucket(current).map((r) => r.investor.id);
-                      if (window.confirm(`Try and Add to DB for all ${ids.length}? About a minute each, and about 1 Hunter credit per fund with a website. Each waits for your review before other clients see it.`)) void addToDb(ids);
+                      if ((await askConfirm(`Try and Add to DB for all ${ids.length}? About a minute each, and about 1 Hunter credit per fund with a website. Each waits for your review before other clients see it.`))) void addToDb(ids);
                     }}
                   >
                     Try and Add to DB: All {n(byBucket(current).length)}

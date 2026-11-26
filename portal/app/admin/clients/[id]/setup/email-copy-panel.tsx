@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import type { PreviewLeads } from "@/lib/outreach/preview";
 import { loadPreviewLeadsAction, loadSourceWorkspaceAction } from "@/app/admin/outreach-actions";
@@ -168,12 +169,12 @@ export function EmailCopyPanel({
     return tiers.find((entry) => entry.tier === value)?.label ?? `Tier ${value}`;
   }
 
-  function startListScheme() {
+  async function startListScheme() {
     const count = listScheme === "four" ? "four" : "three";
     if (
-      !window.confirm(
+      !(await askConfirm(
         `Start a new ${count}-tier copy to match the investor list? It replaces this draft (the copy already sent to the client is not changed).`,
-      )
+      ))
     ) {
       return;
     }
@@ -194,11 +195,11 @@ export function EmailCopyPanel({
   async function onDraft() {
     if (
       hasContent(copy) &&
-      !window.confirm(
+      !(await askConfirm(
         changesRequested
           ? "Rebuild the emails with the client's requested changes? It replaces the current draft."
           : "Draft the emails with AI? It replaces the current draft.",
-      )
+      ))
     ) {
       return;
     }
@@ -238,7 +239,7 @@ export function EmailCopyPanel({
   async function onRedraft(key: string) {
     const current = copy.typed;
     if (!current) return;
-    if (!window.confirm("Redraft this group with AI? Its emails are replaced; every other group stays as it is.")) return;
+    if (!(await askConfirm("Redraft this group with AI? Its emails are replaced; every other group stays as it is."))) return;
     setDrafting(true);
     setMessage(null);
     try {
@@ -268,11 +269,11 @@ export function EmailCopyPanel({
     }
   }
 
-  function copyFromTier(source: FitTier) {
+  async function copyFromTier(source: FitTier) {
     if (
-      !window.confirm(
+      !(await askConfirm(
         `Replace the ${tierName(activeTier)} emails with a copy of ${tierName(source)}?`,
-      )
+      ))
     ) {
       return;
     }

@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { ChevronDown } from "@/components/chevron";
 import { useState } from "react";
@@ -117,9 +118,9 @@ export function ListAuditPanel({
   async function decide(fund: AuditFund, decision: AuditDecision) {
     if (
       decision === "remove" &&
-      !window.confirm(
+      !(await askConfirm(
         `Remove ${fund.fund_name} from the campaign? The next fund in its tier moves in. The draft changes when you update it from the plan.`,
-      )
+      ))
     ) {
       return;
     }

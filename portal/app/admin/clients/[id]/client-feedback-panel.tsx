@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -26,7 +27,7 @@ function Entry({ clientId, f }: { clientId: string; f: ClientFeedback }) {
     router.refresh();
   }
   async function remove() {
-    if (!window.confirm("Remove this feedback? It leaves the client's page, and the step's thread if it wasn't answered.")) return;
+    if (!(await askConfirm("Remove this feedback? It leaves the client's page, and the step's thread if it wasn't answered."))) return;
     setPending(true);
     const r = await removeClientFeedback(clientId, f.id);
     setPending(false);

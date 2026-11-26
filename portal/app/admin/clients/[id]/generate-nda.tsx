@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -122,7 +123,7 @@ export function GenerateNda({
     const message = send.signature
       ? "This NDA is signed. Archiving voids it: the signature is removed from the client's portal and they will need to sign a new one. Continue?"
       : "Archive this NDA? It will be removed from the client's portal so you can issue a new one.";
-    if (!window.confirm(message)) return;
+    if (!(await askConfirm(message))) return;
 
     setPending(send.id);
     setError(null);

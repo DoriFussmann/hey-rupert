@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -99,7 +100,7 @@ export function ClientEmails({
 
   async function onSend() {
     if (!canSend) return;
-    if (!window.confirm(`Send this email to ${address}?`)) return;
+    if (!(await askConfirm(`Send this email to ${address}?`))) return;
 
     setSending(true);
     setSendMessage(null);

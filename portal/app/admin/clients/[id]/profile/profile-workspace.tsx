@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -210,7 +211,7 @@ export function ProfileWorkspace({
   async function rebuild() {
     if (
       state?.editedAt &&
-      !window.confirm("Rebuild the profile from the intake? Your edits to it will be replaced.")
+      !(await askConfirm("Rebuild the profile from the intake? Your edits to it will be replaced."))
     ) {
       return;
     }

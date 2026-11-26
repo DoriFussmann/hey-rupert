@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { createContext, useCallback, useContext, useEffect, useId, useState, type ReactNode } from "react";
 import { inputClass, labelClass, primaryButton, secondaryButton, smallButton } from "@/app/admin/clients/[id]/match/ui";
@@ -342,7 +343,7 @@ function FundRow({ fund, onEdit }: { fund: AddedFund; onEdit: () => void }) {
   }
 
   async function remove() {
-    if (!window.confirm(`Remove ${fund.name}? It comes off this client's Roster and out of the Fund Database for every client.`)) return;
+    if (!(await askConfirm(`Remove ${fund.name}? It comes off this client's Roster and out of the Fund Database for every client.`))) return;
     setBusy("remove");
     try {
       const r = await deleteManualFund(ctx.clientId, fund.id);

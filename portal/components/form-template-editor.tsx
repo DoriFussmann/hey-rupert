@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -59,11 +60,11 @@ export function FormTemplateEditor({
     }
   }
 
-  function onRestoreDefault() {
+  async function onRestoreDefault() {
     if (value === defaultContent) return;
-    const confirmed = window.confirm(
+    const confirmed = (await askConfirm(
       `Replace the text with the default ${title}? Nothing is saved until you click Save.`,
-    );
+    ));
     if (!confirmed) return;
     setValue(defaultContent);
     setAdminFlash(flashKey, {

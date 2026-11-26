@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -86,7 +87,7 @@ export function PromptEditor({
   }
 
   async function restore(version: number) {
-    if (!window.confirm(`Make version ${version} active again? It is saved as a new version; nothing else changes.`)) return;
+    if (!(await askConfirm(`Make version ${version} active again? It is saved as a new version; nothing else changes.`))) return;
     setBusy(`restore-${version}`);
     setNotice(null);
     try {
@@ -164,8 +165,8 @@ export function PromptEditor({
             type="button"
             className={smallButton}
             disabled={Boolean(busy) || text.trim() === defaultText.trim()}
-            onClick={() => {
-              if (window.confirm("Put the default text in the editor? Nothing is saved until you click Save.")) setText(defaultText);
+            onClick={async () => {
+              if ((await askConfirm("Put the default text in the editor? Nothing is saved until you click Save."))) setText(defaultText);
             }}
           >
             Reset to Default

@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
 import { useCallback, useEffect, useState } from "react";
@@ -284,7 +285,7 @@ export function InvestorsStep({ clientId, landscape, onChange }: { clientId: str
   };
 
   const startOver = async () => {
-    if (!window.confirm(`Start over the investor list? The confirmed ${T.companies} stay.`)) return;
+    if (!(await askConfirm(`Start over the investor list? The confirmed ${T.companies} stay.`))) return;
     setBusy("start");
     setError(null);
     const result = await startOverInvestors(clientId, kind);

@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { createStripeInvoiceAction, listStripePricesAction } from "@/app/admin/actions";
@@ -61,7 +62,7 @@ export function StripeInvoicePicker({
   async function create() {
     const price = prices?.find((p) => p.priceId === priceId);
     if (!price) return;
-    if (!window.confirm(`Create and finalize a Stripe invoice for ${price.product} (${money(price)})? The client pays it through the link.`)) return;
+    if (!(await askConfirm(`Create and finalize a Stripe invoice for ${price.product} (${money(price)})? The client pays it through the link.`))) return;
     setBusy("create");
     setMessage(null);
     try {

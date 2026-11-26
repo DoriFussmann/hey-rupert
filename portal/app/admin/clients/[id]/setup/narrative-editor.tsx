@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -136,9 +137,9 @@ function NarrativeEditorInner({
 
   async function onInternalUpdate() {
     if (
-      !window.confirm(
+      !(await askConfirm(
         "Save this as an internal update? The email copy will be written from it. The client is not emailed and is not asked to confirm again; their page keeps the version they confirmed.",
-      )
+      ))
     ) {
       return;
     }

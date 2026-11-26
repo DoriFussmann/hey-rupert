@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useMemo, useState } from "react";
 import { ChevronDown } from "@/components/chevron";
@@ -191,12 +192,12 @@ function TemplateCard({
     }
   }
 
-  function onRestoreDefault() {
+  async function onRestoreDefault() {
     if (isDefault) return;
     if (
-      !window.confirm(
+      !(await askConfirm(
         `Replace the wording with the default "${definition.title}" email? Nothing is saved until you click Save.`,
-      )
+      ))
     ) {
       return;
     }

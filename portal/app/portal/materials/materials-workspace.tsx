@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -183,9 +184,9 @@ export function MaterialsWorkspace({
       return;
     }
     if (
-      !window.confirm(
+      !(await askConfirm(
         "Submit your materials to Rupert? After this it's Rupert's turn. If he needs anything else, he'll reopen this for you.",
-      )
+      ))
     ) {
       return;
     }

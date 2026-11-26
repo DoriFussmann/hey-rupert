@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -60,10 +61,10 @@ export function IntakeSettingsEditor({
     });
   }
 
-  function restoreDefaults() {
-    const confirmed = window.confirm(
+  async function restoreDefaults() {
+    const confirmed = (await askConfirm(
       "Replace the topics with the defaults? Nothing is saved until you click Save.",
-    );
+    ));
     if (!confirmed) return;
     setTopics(defaultTopics);
     setAdminFlash(FLASH_KEY, {

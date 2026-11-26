@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -61,12 +62,12 @@ export function MatchControls({
     }
   }
 
-  function push() {
+  async function push() {
     if (!runId) return;
     const question = sandbox
       ? "Publish the campaign plan on the test client's own portal? No email is sent."
       : "Put the campaign plan's funds on the client's page as a draft? The client sees nothing until you send it from the client page. It replaces the draft list there.";
-    if (!window.confirm(question)) return;
+    if (!(await askConfirm(question))) return;
     void act("Pushing the investor list…", () => pushRunToClient(clientId, runId), (result) =>
       result.sandbox
         ? `${n(result.funds)} funds are on the test client's portal.`
@@ -82,12 +83,12 @@ export function MatchControls({
             type="button"
             className={primaryButton}
             disabled={!canRun || Boolean(busy)}
-            onClick={() => {
+            onClick={async () => {
               if (
                 planFunds !== null &&
-                !window.confirm(
+                !(await askConfirm(
                   "Re-running makes a new run. The confirmed campaign plan belongs to the current run, so you'll confirm it again on the Plan tab (it opens prefilled with the same months and split). Continue?",
-                )
+                ))
               ) {
                 return;
               }

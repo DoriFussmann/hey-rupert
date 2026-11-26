@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -45,7 +46,7 @@ export function CompanyProfileCard({
   async function onAnalyze() {
     if (
       state?.editedAt &&
-      !window.confirm("Analyze again from the intake? Your edits to the profile will be replaced.")
+      !(await askConfirm("Analyze again from the intake? Your edits to the profile will be replaced."))
     ) {
       return;
     }

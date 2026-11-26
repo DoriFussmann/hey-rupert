@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { Fragment, useEffect, useState } from "react";
 import { approveAllAdded, dismissAddedSuggestion, skipAddedFields, editAdded, fillAdded, loadAddedFunds, loadMissingFields, reviewAdded, suggestAddedFields, type AddedView } from "@/app/admin/added-funds-actions";
@@ -130,8 +131,8 @@ function Details({ fund, labels, onChange }: { fund: AddedView; labels: LabelLis
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const review = async (status: AddedStatus) => {
-    if (status === "approved" && !window.confirm(`Approve ${fund.name}? It joins the shared Fund Database and can match every client.`)) return;
-    if (status === "pending" && fund.status === "approved" && !window.confirm(`Move ${fund.name} back to pending? It leaves the shared Fund Database for every client except ${fund.clientName ?? "the one it was found for"}.`)) return;
+    if (status === "approved" && !(await askConfirm(`Approve ${fund.name}? It joins the shared Fund Database and can match every client.`))) return;
+    if (status === "pending" && fund.status === "approved" && !(await askConfirm(`Move ${fund.name} back to pending? It leaves the shared Fund Database for every client except ${fund.clientName ?? "the one it was found for"}.`))) return;
     setBusy(true);
     setError(null);
     const result = await reviewAdded(fund.id, status, note);
@@ -255,7 +256,7 @@ export function AddedFundsReview() {
   const update = (f: AddedView) => setFunds((prev) => (prev ?? []).map((x) => (x.id === f.id ? f : x)));
   const approveAll = async () => {
     const pending = count("pending");
-    if (!window.confirm(`Approve all ${pending} pending funds? They join the shared Fund Database and can match every client. A fund whose website the database already has stays pending.`)) return;
+    if (!(await askConfirm(`Approve all ${pending} pending funds? They join the shared Fund Database and can match every client. A fund whose website the database already has stays pending.`))) return;
     setBulk({ busy: true, text: "" });
     const r = await approveAllAdded(null);
     setBulk({

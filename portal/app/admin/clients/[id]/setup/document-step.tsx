@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { AutoTextarea, EmailBodyField } from "@/components/email-body-field";
 import { useEffect, useRef, useState } from "react";
@@ -205,7 +206,7 @@ export function DocumentStep({
   async function onDraftEmail() {
     if (
       (email.subject.trim() || email.body.trim()) &&
-      !window.confirm("Replace the subject and email with a new draft?")
+      !(await askConfirm("Replace the subject and email with a new draft?"))
     ) {
       return;
     }
@@ -244,7 +245,7 @@ export function DocumentStep({
     ]
       .filter(Boolean)
       .join("\n\n");
-    if (!window.confirm(question)) return;
+    if (!(await askConfirm(question))) return;
 
     setPending("send");
     setMessage(null);
@@ -287,7 +288,7 @@ export function DocumentStep({
     ]
       .filter(Boolean)
       .join("\n\n");
-    if (!window.confirm(question)) return;
+    if (!(await askConfirm(question))) return;
 
     setPending("push");
     setMessage(null);

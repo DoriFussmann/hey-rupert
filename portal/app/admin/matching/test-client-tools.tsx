@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -67,8 +68,8 @@ export function TestClientTools({ testClientId, clients }: { testClientId: strin
           type="button"
           className={secondaryButton}
           disabled={pending || !source}
-          onClick={() => {
-            if (!window.confirm("Replace the test client's company profile with this client's? The real client is not changed.")) return;
+          onClick={async () => {
+            if (!(await askConfirm("Replace the test client's company profile with this client's? The real client is not changed."))) return;
             void run(() => copyProfileToTestClient(source));
           }}
         >
@@ -78,8 +79,8 @@ export function TestClientTools({ testClientId, clients }: { testClientId: strin
           type="button"
           className={secondaryButton}
           disabled={pending}
-          onClick={() => {
-            if (!window.confirm("Start the test client clean? Its reviews, contact decisions, verification runs and pushed list are deleted. Saved runs stay as history.")) return;
+          onClick={async () => {
+            if (!(await askConfirm("Start the test client clean? Its reviews, contact decisions, verification runs and pushed list are deleted. Saved runs stay as history."))) return;
             void run(() => resetTestClient());
           }}
         >

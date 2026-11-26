@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useCallback, useEffect, useState } from "react";
 import {
@@ -64,11 +65,11 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
       });
     });
 
-  const override = (firmId: string, on: boolean, name: string) => {
+  const override = async (firmId: string, on: boolean, name: string) => {
     const text = on
       ? `Put ${name} back into the campaign? The client marked it as a fund they know; they'll see that you added it. Redraft the copy or rebuild the campaign afterwards so it's included.`
       : `Take ${name} out of the campaign again? The client approaches it directly.`;
-    if (!window.confirm(text)) return;
+    if (!(await askConfirm(text))) return;
     void run("Saving", () => overrideKnownAction(clientId, firmId, on), (result) => {
       if (result.ok) apply(result.state);
     });
@@ -81,8 +82,8 @@ export function CampaignPanel({ clientId, claudeReady, bySource = false }: { cli
       setState((current) => (current ? { ...current, blurb: { ask: result.ask, blurb: result.blurb } } : current));
     });
 
-  const draftBlurb = () => {
-    if ((ask || blurb) && !window.confirm("Replace the ask and blurb with a new AI draft? The client sees it right away.")) return;
+  const draftBlurb = async () => {
+    if ((ask || blurb) && !(await askConfirm("Replace the ask and blurb with a new AI draft? The client sees it right away."))) return;
     void run("Drafting", () => draftBlurbAction(clientId), (result) => {
       if (!result.ok) return;
       setAsk(result.ask);
