@@ -64,7 +64,7 @@ function must<T>(result: { ok: true; value: T } | { ok: false; error: string }):
 async function clientName(supabase: ServiceClient, clientId: string) {
   const { data } = await supabase
     .from("clients")
-    .select("first_name, last_name, founder_name, company_name, email")
+    .select("*")
     .eq("id", clientId)
     .maybeSingle();
   return clientDisplayName((data ?? {}) as Record<string, unknown>);

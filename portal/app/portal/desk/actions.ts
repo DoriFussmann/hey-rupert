@@ -49,7 +49,7 @@ async function openDesk() {
   if (!access.ok) return access;
   const { data, error } = await access.supabase
     .from("clients")
-    .select("id, first_name, last_name, founder_name, company_name, email, archived_at")
+    .select("*")
     .eq("id", access.user.id)
     .maybeSingle();
   if (error) return { ok: false as const, error: error.message };
