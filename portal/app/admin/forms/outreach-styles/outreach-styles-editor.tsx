@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { saveOutreachStyles } from "@/app/admin/outreach-actions";
@@ -92,8 +93,8 @@ export function OutreachStylesEditor({ initial, saved }: { initial: OutreachStyl
     }
   }
 
-  function restoreDefaults() {
-    if (!window.confirm("Replace every style and choice on this page with the defaults? Nothing is saved until you click Save.")) return;
+  async function restoreDefaults() {
+    if (!(await askConfirm("Replace every style and choice on this page with the defaults? Nothing is saved until you click Save."))) return;
     setStyles(defaultOutreachStyles());
   }
 

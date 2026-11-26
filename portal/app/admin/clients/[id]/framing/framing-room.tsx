@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -189,11 +190,11 @@ export function FramingRoom({
                 type="button"
                 className={secondaryButton}
                 disabled={busy !== null}
-                onClick={() => {
+                onClick={async () => {
                   if (
-                    !window.confirm(
+                    !(await askConfirm(
                       "Start over? This deletes the brief and its history, the selling points, the deck feedback, the questions, and a narrative draft that was never sent. The intake, company materials (including the LinkedIn PDFs) and links stay.",
-                    )
+                    ))
                   )
                     return;
                   setBusy("reset");
@@ -213,8 +214,8 @@ export function FramingRoom({
               className={brief ? secondaryButton : primaryButton}
               disabled={busy !== null || !canBuild || !claudeReady || (!brief && !linkedinReady)}
               title={!brief && !linkedinReady ? "Upload the founder's LinkedIn PDF, or click Skip, first." : undefined}
-              onClick={() => {
-                if (brief && !window.confirm("Rebuild the brief from scratch? The current version stays in the history.")) return;
+              onClick={async () => {
+                if (brief && !(await askConfirm("Rebuild the brief from scratch? The current version stays in the history."))) return;
                 void run("build", () => buildBriefAction(clientId), "Brief rebuilt.");
               }}
             >
@@ -242,8 +243,8 @@ export function FramingRoom({
                         type="button"
                         className="text-primary disabled:opacity-40"
                         disabled={busy !== null}
-                        onClick={() => {
-                          if (!window.confirm(`Put version ${row.version} back? It becomes a new version; nothing is lost.`)) return;
+                        onClick={async () => {
+                          if (!(await askConfirm(`Put version ${row.version} back? It becomes a new version; nothing is lost.`))) return;
                           void run(`restore-${row.version}`, () => restoreBriefVersionAction(clientId, row.version), `Version ${row.version} restored.`);
                         }}
                       >
@@ -480,8 +481,8 @@ function NarrativeStage({
     }
   }
 
-  function create() {
-    if (has && !window.confirm("Make the narrative again from the confirmed selling points? The three points are replaced; your opening and closing stay.")) return;
+  async function create() {
+    if (has && !(await askConfirm("Make the narrative again from the confirmed selling points? The three points are replaced; your opening and closing stay."))) return;
     void act("narrative-create", () => createNarrativeAction(clientId), "Narrative made from the selling points. Edit it, then Finalize.");
   }
 
@@ -1193,7 +1194,7 @@ function SendStage({
     const question = sent
       ? `Push a new version to the client's portal and email it to ${to}? It replaces what they have now.`
       : `Push the narrative, the materials feedback and the questions to the client's portal, and email ${to}?`;
-    if (!window.confirm(question)) return;
+    if (!(await askConfirm(question))) return;
     setPending("send");
     setMessage(null);
     try {
@@ -1224,7 +1225,7 @@ function SendStage({
     const question = withEmail
       ? `Save this as the new version, mark it confirmed (no second confirmation), email ${clientEmail || "the client"} and open matching?`
       : "Save this as the new version and mark it confirmed (no second confirmation), without an email, and open matching?";
-    if (!window.confirm(question)) return;
+    if (!(await askConfirm(question))) return;
     setPending("apply");
     setMessage(null);
     try {

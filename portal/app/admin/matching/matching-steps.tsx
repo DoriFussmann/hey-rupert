@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { DryMatch } from "@/app/admin/matching/dry-match";
@@ -273,11 +274,11 @@ export function MatchingSteps({
               type="button"
               className={primaryButton}
               disabled={busy !== null}
-              onClick={() => {
+              onClick={async () => {
                 if (
-                  !window.confirm(
+                  !(await askConfirm(
                     "Finalize the matching? The steps lock until you reopen it.",
-                  )
+                  ))
                 )
                   return;
                 void run("finalize", () => finalizeTheMatching(clientId));
@@ -351,12 +352,12 @@ export function MatchingSteps({
               type="button"
               className={secondaryButton}
               disabled={busy !== null}
-              onClick={(e) => {
+              onClick={async (e) => {
                 e.preventDefault();
                 if (
-                  !window.confirm(
+                  !(await askConfirm(
                     "Reopen the matching? The steps unlock; what was pushed to the client page stays until you push again.",
-                  )
+                  ))
                 )
                   return;
                 void run("reopen", () => reopenTheMatching(clientId));

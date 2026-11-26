@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useStepReady } from "@/app/admin/matching/step-order";
 import { useLandscapeKind } from "@/app/admin/matching/landscape-kind";
@@ -421,7 +422,7 @@ export function CompetitiveLandscape({ clientId, stepOneConfirmed, refreshKey = 
 
   const locked = landscape?.status === "confirmed";
   const startOver = async () => {
-    if (!window.confirm("Start over? This list is set aside (kept on record) and you can search again.")) return;
+    if (!(await askConfirm("Start over? This list is set aside (kept on record) and you can search again."))) return;
     setBusy("start");
     setError(null);
     const result = await startOverLandscape(clientId, kind);

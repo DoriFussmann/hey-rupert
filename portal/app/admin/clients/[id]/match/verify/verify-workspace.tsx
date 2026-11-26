@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -420,7 +421,7 @@ export function VerifyWorkspace({
   async function start(mode: VerifyMode, limits: TierLimits, choices: { id: string; choice: FlaggedChoice }[]) {
     if (
       overview?.activeRun &&
-      !window.confirm("This cancels the unfinished run. Its finished checks are kept and reused. Start a new run?")
+      !(await askConfirm("This cancels the unfinished run. Its finished checks are kept and reused. Start a new run?"))
     ) {
       return;
     }

@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { saveSellingPointsListAction } from "@/app/admin/brief-actions";
@@ -91,8 +92,8 @@ export function SellingPointsEditor({ initialPoints, defaultPoints }: { initialP
         <button
           type="button"
           className={secondary}
-          onClick={() => {
-            if (window.confirm("Put back the default ten? Your changes are replaced when you save.")) setPoints(defaultPoints);
+          onClick={async () => {
+            if ((await askConfirm("Put back the default ten? Your changes are replaced when you save."))) setPoints(defaultPoints);
           }}
         >
           Reset to Default

@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -154,7 +155,7 @@ export function GenerateServiceOrder({
   async function onPushDirect() {
     setLinkTouched(true);
     if (!canReview) return;
-    if (!window.confirm(testPilot ? "Push the Service Order to the client portal?" : "Push the Service Order and Setup Fee invoice to the client portal and email the client?")) return;
+    if (!(await askConfirm(testPilot ? "Push the Service Order to the client portal?" : "Push the Service Order and Setup Fee invoice to the client portal and email the client?"))) return;
     setPending("send");
     setError(null);
     setSuccess(null);
@@ -222,7 +223,7 @@ export function GenerateServiceOrder({
     const message = send.signature
       ? "This Service Order is signed. Archiving voids it: the signature is removed from the client's portal and they will need to sign a new one. The stage and payment status are not changed. Continue?"
       : "Archive this Service Order? It will be removed from the client's portal so you can issue a new one.";
-    if (!window.confirm(message)) return;
+    if (!(await askConfirm(message))) return;
 
     setPending(send.id);
     setError(null);

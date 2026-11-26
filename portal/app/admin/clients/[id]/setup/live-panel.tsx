@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useEffect, useRef, useState } from "react";
 import {
@@ -235,8 +236,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   style={{ backgroundColor: "#0e816c" }}
                   disabled={busy || state.gaps.length > 0}
                   title={state.gaps.join(" ") || undefined}
-                  onClick={() => {
-                    if (!window.confirm("Step 1 of 2: create the Instantly campaign, paused, and add today's first batch? Nothing is sent and the client isn't told. You check the leads in Instantly, then Activate.")) return;
+                  onClick={async () => {
+                    if (!(await askConfirm("Step 1 of 2: create the Instantly campaign, paused, and add today's first batch? Nothing is sent and the client isn't told. You check the leads in Instantly, then Activate."))) return;
                     void run(
                       () => addLeadsPausedAction(clientId),
                       (r) => (r.failed ? `Not added: ${String(r.note)}` : `${String(r.added)} leads added to a paused campaign. Check every address in Instantly → Leads, then Activate.`),
@@ -264,8 +265,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
                   style={{ backgroundColor: "#0e816c" }}
                   disabled={busy}
-                  onClick={() => {
-                    if (!window.confirm("Step 2 of 2: activate the campaign? Sending starts in the next weekday window and the client is emailed that they're live.")) return;
+                  onClick={async () => {
+                    if (!(await askConfirm("Step 2 of 2: activate the campaign? Sending starts in the next weekday window and the client is emailed that they're live."))) return;
                     void run(
                       () => activateNowAction(clientId),
                       (r) => (r.already ? "Already live." : `Live.${r.emailError ? ` The client email didn't go out: ${String(r.emailError)}` : " The client was emailed."}`),
@@ -286,8 +287,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                     type="button"
                     className={primaryButton}
                     disabled={busy}
-                    onClick={() => {
-                      if (!window.confirm("Instantly shows leads in the campaign: keep them as the first batch (nothing more is added today)?")) return;
+                    onClick={async () => {
+                      if (!(await askConfirm("Instantly shows leads in the campaign: keep them as the first batch (nothing more is added today)?"))) return;
                       void run(() => resolveStuckLaunchAction(clientId, "added"), () => "Kept as the first batch. Check them, then Activate.");
                     }}
                   >
@@ -297,8 +298,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                     type="button"
                     className={secondaryButton}
                     disabled={busy}
-                    onClick={() => {
-                      if (!window.confirm("Instantly shows NO leads in the campaign? Only then: Add leads can run again.")) return;
+                    onClick={async () => {
+                      if (!(await askConfirm("Instantly shows NO leads in the campaign? Only then: Add leads can run again."))) return;
                       void run(() => resolveStuckLaunchAction(clientId, "empty"), () => "Cleared. Add leads can run again.");
                     }}
                   >
@@ -406,8 +407,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                       type="button"
                       className={primaryButton}
                       disabled={busy || !state.campaignReady}
-                      onClick={() => {
-                        if (!window.confirm(`${state.step ? "Send the launch package again" : "Send the launch package"} and email the client?`)) return;
+                      onClick={async () => {
+                        if (!(await askConfirm(`${state.step ? "Send the launch package again" : "Send the launch package"} and email the client?`))) return;
                         void run(
                           () => pushGoLiveAction(clientId, invoice, email),
                           (r) => (r.emailError ? `Sent to the portal, but the email didn't go out: ${String(r.emailError)}` : "Launch package sent and emailed. It's the client's turn."),
@@ -466,8 +467,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   className={`${secondaryButton} justify-self-start`}
                   disabled={busy || !state.campaignReady || !state.inbox?.healthy || !state.invoice.paidAt || !state.testRecipient}
                   title="Creates a TEST campaign in Instantly. Every email goes to the test inbox."
-                  onClick={() => {
-                    if (!window.confirm(`Go Live in test mode? Emails go to ${state.testRecipient.replace("@", "+…@")}, not to investors.`)) return;
+                  onClick={async () => {
+                    if (!(await askConfirm(`Go Live in test mode? Emails go to ${state.testRecipient.replace("@", "+…@")}, not to investors.`))) return;
                     void run(() => goLiveTestAction(clientId), (r) => `Live in test mode: ${r.added} contacts added. The first emails arrive in a few minutes.`);
                   }}
                 >
@@ -523,8 +524,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   type="button"
                   className={secondaryButton}
                   disabled={busy}
-                  onClick={() => {
-                    if (!live.pausedAt && !window.confirm("Pause the campaign? No emails go out until you resume.")) return;
+                  onClick={async () => {
+                    if (!live.pausedAt && !(await askConfirm("Pause the campaign? No emails go out until you resume."))) return;
                     void run(() => setPausedAction(clientId, !live.pausedAt), () => (live.pausedAt ? "Resumed." : "Paused."));
                   }}
                 >
@@ -616,8 +617,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
               className={secondaryButton}
               disabled={busy || !state.inbox || !state.instantlyReady}
               title={`Sends one approved contact's ${state.emailsPerContact === 2 ? "first email, then its follow-up" : "three emails"} to you only, from the client's inbox, a couple of minutes apart in one thread.`}
-              onClick={() => {
-                if (!window.confirm("Send yourself a test from the client's inbox? It will also appear in their Sent folder.")) return;
+              onClick={async () => {
+                if (!(await askConfirm("Send yourself a test from the client's inbox? It will also appear in their Sent folder."))) return;
                 void run(() => sendTestAction(clientId), (r) => `Test started to ${r.testTo}: ${r.testFund}'s emails, two minutes apart. Check formatting and that the follow-ups stay in the thread.`);
               }}
             >

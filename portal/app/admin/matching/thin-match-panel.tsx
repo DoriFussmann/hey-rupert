@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -96,9 +97,9 @@ export function ThinMatchPanel({
   async function onApply(option: TestedOption) {
     const sectors = [option.primaryLabel, ...option.secondaryLabels].join(", ");
     if (
-      !window.confirm(
+      !(await askConfirm(
         `Apply ${sectors} · ${REACH_LABEL[option.option.stageReach]}? The sub-sectors are saved as a new company profile version, and the match runs again. Nothing is pushed to the client.`,
-      )
+      ))
     ) {
       return;
     }

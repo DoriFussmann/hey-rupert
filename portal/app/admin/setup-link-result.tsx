@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useEffect, useState } from "react";
 import { formatDate } from "@/lib/format";
@@ -109,7 +110,7 @@ export function SetupLinkResult({
   async function sendToClient() {
     if (!send) return;
     const again = sentDraft !== null ? " again" : "";
-    if (!window.confirm(`Send this email${again} to ${details.email} now, from the portal's address?`)) return;
+    if (!(await askConfirm(`Send this email${again} to ${details.email} now, from the portal's address?`))) return;
     setSending(true);
     setSendMessage(null);
     try {

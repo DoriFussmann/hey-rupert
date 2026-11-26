@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { saveMaterialFields } from "@/app/admin/agent-actions";
@@ -97,11 +98,11 @@ export function MaterialFieldsEditor({
     });
   }
 
-  function restoreDefaults() {
+  async function restoreDefaults() {
     if (
-      !window.confirm(
+      !(await askConfirm(
         "Replace the fields with the defaults? Nothing is saved until you click Save.",
-      )
+      ))
     ) {
       return;
     }

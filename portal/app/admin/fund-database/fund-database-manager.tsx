@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -427,11 +428,11 @@ export function FundDatabaseManager({
                         type="button"
                         className="text-primary hover:text-primary-hover disabled:opacity-40"
                         disabled={Boolean(busy)}
-                        onClick={() => {
+                        onClick={async () => {
                           if (
-                            !window.confirm(
+                            !(await askConfirm(
                               `Make ${version.fileName} the live database again? Contacts added by CSV after it are not in it.`,
-                            )
+                            ))
                           ) {
                             return;
                           }

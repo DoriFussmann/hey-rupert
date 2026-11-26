@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { EmailBodyField } from "@/components/email-body-field";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -81,7 +82,7 @@ function ContactCard({
   }
 
   async function toReserve() {
-    if (!window.confirm(`Move ${message.person.name || "this contact"} to the reserves? They won't be emailed.`)) return;
+    if (!(await askConfirm(`Move ${message.person.name || "this contact"} to the reserves? They won't be emailed.`))) return;
     const result = await setCoreSlotAction(clientId, message.id, "reserve");
     if (!result.ok) setError(result.error);
     else onChange(result.message);
@@ -405,10 +406,10 @@ export function CoreContactsPanel({ clientId, claudeReady }: { clientId: string;
             className={secondaryButton}
             disabled={busy || !canWrite}
             title="After you change the Core template for this type: rewrites every active contact of the type, keeping their Quick Facts. Approvals are cleared."
-            onClick={() => {
+            onClick={async () => {
               const type = typeFilter || types[0];
               const targets = active.filter((m) => m.fund_type === type && m.status !== "pending");
-              if (!window.confirm(`Rewrite all ${targets.length} ${type} Core emails from the current template? Their approvals are cleared.`)) return;
+              if (!(await askConfirm(`Rewrite all ${targets.length} ${type} Core emails from the current template? Their approvals are cleared.`))) return;
               void writeMany(targets, "skip", `Rewriting ${type}`);
             }}
           >

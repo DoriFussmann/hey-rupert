@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import Link from "next/link";
 import { useState } from "react";
@@ -103,7 +104,7 @@ export function GoLiveView({
       setError(problem);
       return;
     }
-    if (!window.confirm("Confirm the Launch Confirmation and approve the launch? Rupert runs a final check and starts sending within 24 hours.")) return;
+    if (!(await askConfirm("Confirm the Launch Confirmation and approve the launch? Rupert runs a final check and starts sending within 24 hours."))) return;
     setLaunching(true);
     setError(null);
     try {

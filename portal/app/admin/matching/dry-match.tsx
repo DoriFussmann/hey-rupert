@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useStepReady } from "@/app/admin/matching/step-order";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -265,7 +266,7 @@ export function DryMatch({
   const errorLine = error ? <p className="mt-sm text-body-sm text-error">{error}</p> : null;
 
   const startOver = async () => {
-    if (!window.confirm("Start over? The confirmed list is set aside (kept on record) and the steps open again from the company's profile.")) return;
+    if (!(await askConfirm("Start over? The confirmed list is set aside (kept on record) and the steps open again from the company's profile."))) return;
     setBusy("start");
     setError(null);
     const result = await startOverDryMatch(clientId);

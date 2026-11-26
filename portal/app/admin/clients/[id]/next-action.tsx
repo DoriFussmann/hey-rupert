@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -128,7 +129,7 @@ function TestPilotControls({
   }
 
   async function onDelete() {
-    if (!window.confirm("Delete this test client, its login, data and files? This cannot be undone.")) {
+    if (!(await askConfirm("Delete this test client, its login, data and files? This cannot be undone."))) {
       return;
     }
     setPending("delete");

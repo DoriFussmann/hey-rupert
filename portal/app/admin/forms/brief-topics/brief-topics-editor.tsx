@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { saveBriefTopicsAction } from "@/app/admin/brief-actions";
@@ -100,8 +101,8 @@ export function BriefTopicsEditor({ initialTopics, defaultTopics }: { initialTop
         <button
           type="button"
           className={secondary}
-          onClick={() => {
-            if (window.confirm("Put back the default topics? Your changes are replaced when you save.")) setTopics(defaultTopics);
+          onClick={async () => {
+            if ((await askConfirm("Put back the default topics? Your changes are replaced when you save."))) setTopics(defaultTopics);
           }}
         >
           Reset to Default

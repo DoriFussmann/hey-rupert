@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useRef, useState } from "react";
 import { createLibraryUploadAction, saveDeckTopicsAction } from "@/app/admin/brief-actions";
@@ -211,8 +212,8 @@ export function FeedbackTopicsEditor({
         <button
           type="button"
           className={secondary}
-          onClick={() => {
-            if (window.confirm("Put back the default list? Your changes, links and documents are replaced when you save.")) setTopics(defaultTopics);
+          onClick={async () => {
+            if ((await askConfirm("Put back the default list? Your changes, links and documents are replaced when you save."))) setTopics(defaultTopics);
           }}
         >
           Reset to Default

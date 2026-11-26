@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -72,7 +73,7 @@ export function NudgeEditor({
   const hasText = Boolean(email.subject.trim() || email.body.trim());
 
   async function onDraft() {
-    if (hasText && !window.confirm("Replace the subject and email with a new draft?")) return;
+    if (hasText && !(await askConfirm("Replace the subject and email with a new draft?"))) return;
     setPending("draft");
     setMessage(null);
     try {
@@ -96,7 +97,7 @@ export function NudgeEditor({
       setMessage({ kind: "error", text: "Add a subject and the email first." });
       return;
     }
-    if (!window.confirm(`Send this nudge to ${to}?`)) return;
+    if (!(await askConfirm(`Send this nudge to ${to}?`))) return;
     setPending("send");
     setMessage(null);
     try {

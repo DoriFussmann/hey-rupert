@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { useState } from "react";
 import { generateIntakeBrief, updateIntakeBrief } from "@/app/admin/agent-actions";
@@ -70,7 +71,7 @@ export function IntakeBriefPanel({
   async function onRegenerate() {
     if (
       brief?.edited_at &&
-      !window.confirm("Regenerate the summary? Your edits to it will be replaced.")
+      !(await askConfirm("Regenerate the summary? Your edits to it will be replaced."))
     ) {
       return;
     }

@@ -1,4 +1,5 @@
 "use client";
+import { askConfirm } from "@/components/confirm-dialog";
 
 import { Fragment, useRef, useState } from "react";
 import { EmailBodyField } from "@/components/email-body-field";
@@ -370,9 +371,9 @@ export function SourceCopyEditor({
     });
   }
 
-  function copyFrom(source: SourceGroupCopy) {
+  async function copyFrom(source: SourceGroupCopy) {
     if (!group) return;
-    if (hasText(group) && !window.confirm(`Replace the ${BUCKET_LABEL[group.bucket]} emails with a copy of ${BUCKET_LABEL[source.bucket]}?`)) return;
+    if (hasText(group) && !(await askConfirm(`Replace the ${BUCKET_LABEL[group.bucket]} emails with a copy of ${BUCKET_LABEL[source.bucket]}?`))) return;
     onChange({
       ...copy,
       groups: copy.groups.map((item, i) => (i === index ? { ...item, emails: source.emails.map((email) => ({ ...email })) } : item)),
