@@ -858,6 +858,7 @@ export async function saveDeck(
   const current = brief.value?.deck ?? emptyDeck();
   const deck = asDeck({
     ...current,
+    skipped: false,
     chosen: change.chosen,
     writeups: { ...current.writeups, ...change.writeups },
     scores: current.scores.map((item) => {
@@ -877,7 +878,7 @@ export async function saveDeck(
       const files = await prepareFiles(supabase, sources.value.files);
       if (files.blocks.length > 0) return { ok: false, error: "Choose the points of feedback first." };
       return saveBrief(supabase, clientId, {
-        deck: { ...deck, writeups: {}, links: {}, files: {} },
+        deck: asDeck({ ...deck, writeups: {}, links: {}, files: {}, skipped: true, confirmed_at: new Date().toISOString() }),
         note: "Materials feedback skipped: no deck or file to review.",
         actor,
       });

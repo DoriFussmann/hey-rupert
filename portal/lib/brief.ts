@@ -444,6 +444,8 @@ export type DeckFeedback = {
   links: Record<string, DeckLink[]>;
   /** Documents Rupert adds to a point of feedback, by topic (private storage). */
   files: Record<string, DeckFile[]>;
+  /** Confirmed with no feedback: the client shared no deck or file. */
+  skipped?: boolean;
   /** Set when Rupert confirms the feedback; it then goes into the narrative's send step. */
   confirmed_at: string | null;
 };
@@ -557,7 +559,8 @@ export function asDeck(value: unknown): DeckFeedback {
     scored_at: str(raw.scored_at, 40) || null,
     links,
     files,
-    confirmed_at: chosen.length > 0 ? str(raw.confirmed_at, 40) || null : null,
+    skipped: raw.skipped === true && chosen.length === 0,
+    confirmed_at: chosen.length > 0 || (raw.skipped === true && chosen.length === 0) ? str(raw.confirmed_at, 40) || null : null,
   };
 }
 

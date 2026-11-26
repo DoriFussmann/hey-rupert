@@ -852,7 +852,7 @@ function FeedbackStage({
           Edit the List
         </Link>
       </StageHead>
-      {confirmed && deck.scores.length === 0 ? (
+      {confirmed && deck.chosen.length === 0 ? (
         <div className="mt-md flex flex-wrap items-center justify-between gap-sm rounded-md border border-success/30 bg-success/10 px-md py-sm">
           <p className="text-body-sm text-heading">Skipped {formatDateAtTime(deck.confirmed_at ?? "")}: no deck or file to review. The narrative goes without materials feedback.</p>
           <button type="button" className={secondaryButton} disabled={busy !== null} onClick={() => void run("deck-save", () => saveDeckAction(clientId, change(false)), "Unlocked.")}>
