@@ -154,3 +154,11 @@ export function pushInstant(day: string) {
 export function spareFor(room: number) {
   return room <= 0 ? 0 : Math.max(3, Math.ceil(room * 0.3));
 }
+
+/**
+ * Add Leads opens when the next batch is complete: full (every place taken by a contact that passed
+ * the check), or as full as the list allows (some passed and nothing is left to check for that day).
+ */
+export function batchComplete(batch: { room: number; ready: number; unchecked: number }) {
+  return batch.room > 0 && (batch.ready >= batch.room || (batch.ready > 0 && batch.unchecked === 0));
+}
