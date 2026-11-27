@@ -348,7 +348,7 @@ export function sourceEmailIssues(email: CopyEmail, index: number, bucket: Sourc
   const hook = HOOK_FIELD[bucket];
   if (index === 0 && !mergeFieldsIn(email.body).includes(hook)) {
     issues.push({
-      level: bucket === "market" ? "warning" : "error",
+      level: "warning",
       where: at,
       text: `doesn't use {{${hook}}}, so the opening line can't say why this fund.`,
     });

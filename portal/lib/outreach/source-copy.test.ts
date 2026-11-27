@@ -99,8 +99,9 @@ test("good copy has no problems", () => {
 
 test("checks: the hook field, 'your fund', a follow-up subject, unknown fields, links", () => {
   const noHook = sourceEmailIssues({ subject: "S", body: "Hi {{first_name}}, three lines." }, 0, "competitor");
-  assert.ok(noHook.some((i) => i.level === "error" && i.text.includes("{{backed_company}}")));
-  // Market fit without {{focus}} is only a warning.
+  // A missing hook is a warning, never a blocker: the founder may choose to leave it out.
+  assert.ok(noHook.some((i) => i.level === "warning" && i.text.includes("{{backed_company}}")));
+  assert.ok(!noHook.some((i) => i.level === "error"));
   const market = sourceEmailIssues({ subject: "S", body: "Hi {{first_name}}, three lines." }, 0, "market");
   assert.ok(market.some((i) => i.level === "warning" && i.text.includes("{{focus}}")));
   assert.ok(!market.some((i) => i.level === "error"));
