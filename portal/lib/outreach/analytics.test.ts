@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { computeAnalytics, percent, whoOpened } from "./analytics.ts";
+import { computeAnalytics, percent, whoGotIt, whoOpened } from "./analytics.ts";
 
 const tz = "America/Detroit";
 const messages = [
@@ -65,4 +65,27 @@ test("whoOpened: by fund, newest first, each contact once per email; names only 
   assert.deepEqual(north.people[0], { name: "Ana Lopez", title: "Partner", steps: [1], lastAt: "2026-11-27T16:30:00Z" });
   assert.equal(funds[0].people[0].name, "");
   assert.equal(whoOpened({ messages, events, timeZone: "America/Detroit", period: { from: "2026-11-28", to: null } }).length, 0);
+});
+
+test("whoGotIt: funds emailed, newest first, delivered = sent - bounced, per contact and email", () => {
+  const messages = [
+    { id: "a", email: "ana@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", person_name: "Ana Lopez", person_title: "Partner" },
+    { id: "b", email: "ben@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N" },
+    { id: "c", email: "cy@south.vc", tier: 2, fund_type: "VC", fund_name: "South", firm_id: "S" },
+  ];
+  const ev = (event_type: string, lead_email: string, step: number, at: string) => ({ event_type, lead_email, step, at });
+  const events = [
+    ev("email_sent", "ana@north.vc", 1, "2026-11-27T15:00:00Z"),
+    ev("email_sent", "ben@north.vc", 1, "2026-11-27T15:10:00Z"),
+    ev("email_bounced", "ben@north.vc", 1, "2026-11-27T15:11:00Z"),
+    ev("email_sent", "cy@south.vc", 1, "2026-11-27T15:20:00Z"),
+    ev("email_opened", "cy@south.vc", 1, "2026-11-27T17:00:00Z"),
+  ];
+  const funds = whoGotIt({ messages, events, timeZone: "America/Detroit", period: { from: null, to: null } });
+  assert.deepEqual(funds.map((f) => f.fund), ["South", "North"]);
+  const north = funds[1];
+  assert.deepEqual([north.emailed, north.bounced, north.sent, north.delivered], [2, 1, 2, 1]);
+  assert.equal(north.lastAt, "2026-11-27T15:11:00Z");
+  assert.equal(north.people.find((p) => p.name === "Ana Lopez")?.bounced, false);
+  assert.equal(funds[0].lastAt, "2026-11-27T15:20:00Z", "an open is not a send");
 });

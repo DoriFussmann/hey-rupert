@@ -220,3 +220,66 @@ export function whoOpened(input: {
   }
   return funds.sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
 }
+
+export type ReceivedContact = { name: string; title: string; steps: number[]; bounced: boolean; lastAt: string };
+export type ReceivedFund = {
+  firmId: string;
+  fund: string;
+  tier: string;
+  /** Contacts emailed at the fund in the period, and how many of them bounced. */
+  emailed: number;
+  bounced: number;
+  /** Emails sent and delivered (sent minus bounced), counted per contact and email. */
+  sent: number;
+  delivered: number;
+  /** Which emails went out: 1 = first email, 2 = follow-up. */
+  steps: number[];
+  lastAt: string;
+  people: ReceivedContact[];
+};
+
+/**
+ * Who got it, by fund: each fund emailed in the period, newest first, with what was delivered and what
+ * bounced. Delivered is sent minus bounced, as in the totals (Instantly has no delivered event).
+ */
+export function whoGotIt(input: {
+  messages: (AnalyticsMessage & { fund_name: string; firm_id: string; person_name?: string; person_title?: string })[];
+  events: AnalyticsEvent[];
+  timeZone: string;
+  period: Period;
+}): ReceivedFund[] {
+  const resolve = messageResolver(input.messages);
+  const byId = new Map(input.messages.map((m) => [m.id, m]));
+  const perContact = new Map<string, { steps: Set<number>; bouncedSteps: Set<number>; lastAt: string }>();
+  for (const event of input.events) {
+    if (event.event_type !== "email_sent" && event.event_type !== "email_bounced") continue;
+    if (!inPeriod(localDate(event.at, input.timeZone), input.period)) continue;
+    const m = resolve(event.lead_email);
+    if (!m) continue;
+    const entry = perContact.get(m.id) ?? { steps: new Set<number>(), bouncedSteps: new Set<number>(), lastAt: event.at };
+    if (event.event_type === "email_sent") entry.steps.add(event.step ?? 1);
+    else entry.bouncedSteps.add(event.step ?? 1);
+    if (event.at > entry.lastAt) entry.lastAt = event.at;
+    perContact.set(m.id, entry);
+  }
+  const funds = new Map<string, ReceivedFund>();
+  for (const [id, e] of Array.from(perContact.entries())) {
+    if (e.steps.size === 0) continue;
+    const m = byId.get(id)!;
+    const fund =
+      funds.get(m.firm_id) ??
+      { firmId: m.firm_id, fund: m.fund_name, tier: TIER_LABEL[m.tier] ?? "Tier 4", emailed: 0, bounced: 0, sent: 0, delivered: 0, steps: [], lastAt: e.lastAt, people: [] };
+    const bounced = e.bouncedSteps.size > 0;
+    fund.emailed += 1;
+    if (bounced) fund.bounced += 1;
+    fund.sent += e.steps.size;
+    fund.delivered += Math.max(0, e.steps.size - e.bouncedSteps.size);
+    fund.steps = Array.from(new Set([...fund.steps, ...Array.from(e.steps)])).sort((x, y) => x - y);
+    if (e.lastAt > fund.lastAt) fund.lastAt = e.lastAt;
+    fund.people.push({ name: m.person_name ?? "", title: m.person_title ?? "", steps: Array.from(e.steps).sort((x, y) => x - y), bounced, lastAt: e.lastAt });
+    funds.set(m.firm_id, fund);
+  }
+  const list = Array.from(funds.values());
+  for (const f of list) f.people.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+  return list.sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
+}
