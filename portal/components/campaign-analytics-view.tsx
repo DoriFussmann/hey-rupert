@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SendingPlanTable } from "@/components/sending-plan-table";
-import { WhoGotIt, WhoOpened } from "@/components/who-opened";
+import { FundActivity } from "@/components/fund-activity";
 import { percent, type AnalyticsRow } from "@/lib/outreach/analytics";
 import type { CampaignData, ClientAnalytics, PeriodChoice } from "@/lib/outreach/analytics-server";
 
@@ -82,11 +82,11 @@ export function CampaignAnalyticsView({
     from === null ? choice === null : choice !== null && choice.from === from && choice.to === to;
 
   const cards = [
-    { label: "Emails Sent", value: String(totals.sent), sub: "First emails and follow-ups" },
-    { label: "Delivered", value: percent(totals.sent ? totals.delivered / totals.sent : null), sub: `${totals.delivered} delivered · ${totals.bounced} bounced · see who`, href: "#who-got-it" },
-    { label: "Open Rate", value: percent(totals.openRate), sub: `${totals.opened} opened · see who`, href: "#who-opened" },
-    { label: "Replies", value: String(totals.replies), sub: `${percent(totals.replyRate)} reply rate` },
-    { label: "Meetings", value: String(totals.meetings), sub: "Booked from replies" },
+    { label: "Sent", value: String(totals.sent), href: "#who-we-sent-to" },
+    { label: "Delivered", value: percent(totals.sent ? totals.delivered / totals.sent : null), href: "#who-got-it" },
+    { label: "Opened", value: percent(totals.openRate), href: "#who-opened" },
+    { label: "Replied", value: String(totals.replies), href: "#who-replied" },
+    { label: "Booked", value: String(totals.meetings), href: "#who-booked" },
   ];
 
   return (
@@ -149,28 +149,16 @@ export function CampaignAnalyticsView({
       </div>
 
       <div className="grid gap-md sm:grid-cols-2 lg:grid-cols-5">
-        {cards.map((card) => {
-          const inner = (
-            <>
-              <p className="text-label uppercase tracking-label text-muted">{card.label}</p>
-              <p className="mt-sm font-mono text-h2 text-heading">{card.value}</p>
-              <p className="mt-xs text-body-sm text-muted">{card.sub}</p>
-            </>
-          );
-          return "href" in card && card.href ? (
-            <a
-              key={card.label}
-              href={card.href}
-              className="rounded-card border border-border bg-surface px-lg py-lg no-underline transition-colors duration-hover hover:border-primary"
-            >
-              {inner}
-            </a>
-          ) : (
-            <div key={card.label} className="rounded-card border border-border bg-surface px-lg py-lg">
-              {inner}
-            </div>
-          );
-        })}
+        {cards.map((card) => (
+          <a
+            key={card.label}
+            href={card.href}
+            className="group rounded-card border border-border bg-surface px-md py-md no-underline transition-colors duration-hover hover:border-primary"
+          >
+            <p className="text-label uppercase tracking-label text-muted transition-colors duration-hover group-hover:text-primary">{card.label}</p>
+            <p className="mt-xs font-mono text-h2 text-heading">{card.value}</p>
+          </a>
+        ))}
       </div>
 
       <section className="mt-lg rounded-card border border-border bg-surface px-lg py-lg">
@@ -201,8 +189,14 @@ export function CampaignAnalyticsView({
         )}
       </section>
 
-      <WhoGotIt funds={view.received} people={people} timeZone={data.settings.timezone} />
-      <WhoOpened funds={view.opened} people={people} timeZone={data.settings.timezone} />
+      <FundActivity
+        received={view.received}
+        opened={view.opened}
+        replied={view.replied}
+        booked={view.booked}
+        people={people}
+        timeZone={data.settings.timezone}
+      />
 
       <div className="mt-lg flex flex-wrap gap-lg">
         <BreakdownTable title="By Tier" first="Tier" rows={tiers} />

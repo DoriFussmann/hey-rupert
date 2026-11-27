@@ -283,3 +283,59 @@ export function whoGotIt(input: {
   for (const f of list) f.people.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
   return list.sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
 }
+
+type PersonMessage = AnalyticsMessage & { fund_name: string; firm_id: string; person_name?: string; person_title?: string };
+
+export type RepliedFund = {
+  firmId: string;
+  fund: string;
+  tier: string;
+  /** Replies from the fund's investors in the period (auto-replies left out). */
+  replies: number;
+  /** Their labels, most recent first, without repeats (e.g. "interested"). */
+  labels: string[];
+  lastAt: string;
+  people: { name: string; title: string; label: string | null; at: string }[];
+};
+
+/** Who replied, by fund, newest first. Pass only the replies the viewer may count (the client: released). */
+export function whoReplied(input: {
+  messages: PersonMessage[];
+  replies: (AnalyticsReply & { label?: string | null; fund_name?: string })[];
+  timeZone: string;
+  period: Period;
+}): RepliedFund[] {
+  const resolve = messageResolver(input.messages);
+  const byId = new Map(input.messages.map((m) => [m.id, m]));
+  const funds = new Map<string, RepliedFund>();
+  const sorted = [...input.replies].sort((a, b) => b.at.localeCompare(a.at));
+  for (const reply of sorted) {
+    if (reply.auto || !inPeriod(localDate(reply.at, input.timeZone), input.period)) continue;
+    const m = (reply.message_id ? byId.get(reply.message_id) : null) ?? resolve(reply.lead_email);
+    const firmId = m?.firm_id ?? `reply:${reply.fund_name || reply.lead_email}`;
+    const fund =
+      funds.get(firmId) ??
+      { firmId, fund: m?.fund_name ?? reply.fund_name ?? "", tier: m ? (TIER_LABEL[m.tier] ?? "Tier 4") : "", replies: 0, labels: [], lastAt: reply.at, people: [] };
+    fund.replies += 1;
+    if (reply.label && !fund.labels.includes(reply.label)) fund.labels.push(reply.label);
+    fund.people.push({ name: m?.person_name ?? "", title: m?.person_title ?? "", label: reply.label ?? null, at: reply.at });
+    funds.set(firmId, fund);
+  }
+  return Array.from(funds.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
+}
+
+export type BookedFund = { firmId: string; fund: string; tier: string; meetings: number; lastAt: string; people: { name: string; title: string; at: string }[] };
+
+/** Who booked a meeting, by fund, newest first. */
+export function whoBooked(input: { messages: (PersonMessage & { meeting_at?: string | null })[]; timeZone: string; period: Period }): BookedFund[] {
+  const funds = new Map<string, BookedFund>();
+  for (const m of input.messages) {
+    if (!m.meeting_at || !inPeriod(localDate(m.meeting_at, input.timeZone), input.period)) continue;
+    const fund = funds.get(m.firm_id) ?? { firmId: m.firm_id, fund: m.fund_name, tier: TIER_LABEL[m.tier] ?? "Tier 4", meetings: 0, lastAt: m.meeting_at, people: [] };
+    fund.meetings += 1;
+    if (m.meeting_at > fund.lastAt) fund.lastAt = m.meeting_at;
+    fund.people.push({ name: m.person_name ?? "", title: m.person_title ?? "", at: m.meeting_at });
+    funds.set(m.firm_id, fund);
+  }
+  return Array.from(funds.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
+}
