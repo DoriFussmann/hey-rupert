@@ -7,7 +7,6 @@ import {
   checkReplyTrackingAction,
   activateNowAction,
   addLeadsPausedAction,
-  checkNextBatchAction,
   resolveStuckLaunchAction,
   sendSummaryNowAction,
   goLiveTestAction,
@@ -32,6 +31,8 @@ import type { LiveState } from "@/lib/outreach/live-server";
 import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
 import { SendingPlanTable } from "@/components/sending-plan-table";
+import { NextBatchCard } from "@/app/admin/clients/[id]/setup/next-batch-card";
+import { batchComplete } from "@/lib/outreach/presend";
 
 type Message = { kind: "ok" | "error"; text: string } | null;
 type StateResult = { ok: true; state: LiveState; [key: string]: unknown } | { ok: false; error: string };
@@ -214,19 +215,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
               They were told: live within 24 hours. Due by {formatDateTime(new Date(Date.parse(state.requested.at) + 86_400_000).toISOString())}.
             </p>
             {!state.testMode ? (
-              <div className="mt-md rounded-md border border-border bg-surface px-md py-sm text-body-sm">
-                <span className="text-heading">Pre-send email check:</span> {state.presend.passed} passed · {state.presend.unchecked} not checked yet · {state.presend.failed} failed and moved out
-                {state.presend.lastAt ? ` · last ${formatDateTime(state.presend.lastAt)}` : ""}. Only contacts that passed are added. Runs nightly at 8pm Pacific.
-                <button
-                  type="button"
-                  className={`${secondaryButton} ml-sm`}
-                  disabled={busy}
-                  title="Checks the next send day's contacts (plus spares) now: web search for the exact address, still at the fund, then Hunter if needed. Takes a few minutes. Emails you the summary."
-                  onClick={() => void run(() => checkNextBatchAction(clientId), (r) => String(r.note))}
-                >
-                  {busy ? "Checking…" : "Check Next Batch"}
-                </button>
-              </div>
+              <NextBatchCard clientId={clientId} state={state} disabled={busy} onState={apply} />
             ) : null}
             {state.launch.stage === "ready" ? (
               <div className="mt-md flex flex-wrap items-center gap-sm">
@@ -234,26 +223,23 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   type="button"
                   className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
                   style={{ backgroundColor: "#0e816c" }}
-                  disabled={busy || state.gaps.length > 0 || state.presend.passed === 0}
-                  title={state.gaps.join(" ") || (state.presend.passed === 0 ? "No contact has passed the pre-send email check yet." : undefined)}
+                  disabled={busy || state.gaps.length > 0 || !batchComplete(state.nextBatch)}
+                  title={state.gaps.join(" ") || (!batchComplete(state.nextBatch) ? "Check the next batch first: Add Leads opens once it is ready." : undefined)}
                   onClick={async () => {
-                    if (!(await askConfirm("Step 1 of 2: create the Instantly campaign, paused, and add today's first batch? Nothing is sent and the client isn't told. You check the leads in Instantly, then Activate."))) return;
+                    if (!(await askConfirm(`Create the Instantly campaign, paused, and add the next batch (${state.nextBatch.ready} contacts)? Nothing is sent and the client isn't told. You check the leads in Instantly, then Activate.`))) return;
                     void run(
                       () => addLeadsPausedAction(clientId),
                       (r) => (r.failed ? `Not added: ${String(r.note)}` : `${String(r.added)} leads added to a paused campaign. Check every address in Instantly → Leads, then Activate.`),
                     );
                   }}
                 >
-                  {busy ? "Working…" : "1. Add Leads (Paused)"}
+                  {busy ? "Working…" : "Add Leads (Paused)"}
                 </button>
-                {state.presend.passed === 0 ? (
-                  <span className="text-body-sm text-warning">
-                    No contact has passed the pre-send email check yet, so there is nothing to add. Click Check Next Batch above (a few
-                    minutes), then Add Leads.
-                  </span>
+                {!batchComplete(state.nextBatch) ? (
+                  <span className="text-body-sm text-warning">Opens once the next batch is checked and ready (above).</span>
                 ) : (
                   <span className="text-body-sm text-secondary">
-                    Adds the {state.presend.passed} contact{state.presend.passed === 1 ? "" : "s"} that passed the check. Send yourself a test first (below) if you haven&apos;t.
+                    Adds the {state.nextBatch.ready} ready contact{state.nextBatch.ready === 1 ? "" : "s"} to a paused Instantly campaign. Nothing is sent. Send yourself a test first (below) if you haven&apos;t.
                   </span>
                 )}
               </div>
@@ -275,14 +261,14 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   style={{ backgroundColor: "#0e816c" }}
                   disabled={busy}
                   onClick={async () => {
-                    if (!(await askConfirm("Step 2 of 2: activate the campaign? Sending starts in the next weekday window and the client is emailed that they're live."))) return;
+                    if (!(await askConfirm("Activate the campaign? Sending starts in the next weekday window and the client is emailed that they're live."))) return;
                     void run(
                       () => activateNowAction(clientId),
                       (r) => (r.already ? "Already live." : `Live.${r.emailError ? ` The client email didn't go out: ${String(r.emailError)}` : " The client was emailed."}`),
                     );
                   }}
                 >
-                  {busy ? "Working…" : "2. Activate"}
+                  {busy ? "Working…" : "Activate"}
                 </button>
               </div>
             ) : state.launch.stage === "stuck" ? (
@@ -506,19 +492,7 @@ export function LivePanel({ clientId }: { clientId: string }) {
                 {live.wave2PushedAt ? "second contacts released" : `second contacts start ${settings.wave2_delay_days} days after the first`}
               </p>
               {!state.testMode ? (
-              <div className="rounded-md border border-border bg-surface px-md py-sm text-body-sm">
-                <span className="text-heading">Pre-send email check:</span> {state.presend.passed} passed · {state.presend.unchecked} not checked yet · {state.presend.failed} failed and moved out
-                {state.presend.lastAt ? ` · last ${formatDateTime(state.presend.lastAt)}` : ""}. Only contacts that passed are added. Runs nightly at 8pm Pacific.
-                <button
-                  type="button"
-                  className={`${secondaryButton} ml-sm`}
-                  disabled={busy}
-                  title="Checks the next send day's contacts (plus spares) now: web search for the exact address, still at the fund, then Hunter if needed. Takes a few minutes. Emails you the summary."
-                  onClick={() => void run(() => checkNextBatchAction(clientId), (r) => String(r.note))}
-                >
-                  {busy ? "Checking…" : "Check Next Batch"}
-                </button>
-              </div>
+              <NextBatchCard clientId={clientId} state={state} disabled={busy} onState={apply} />
               ) : null}
               <div className="flex flex-wrap gap-sm">
                 {!live.wave2PushedAt ? (

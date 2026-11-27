@@ -35,6 +35,8 @@ import { emailsPerContact } from "@/lib/outreach/campaign";
 import { asEmailCopy } from "@/lib/setup";
 import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
+import type { OutreachMessageView } from "@/lib/outreach/core-server";
+import { pushInstant, targetSendDay } from "@/lib/outreach/presend";
 import { isApproved } from "@/lib/outreach/core";
 import {
   asLiveSettings,
@@ -177,6 +179,41 @@ async function saveLive(supabase: ServiceClient, clientId: string, patch: Record
   return error ? { ok: false, error: tableError(error.message, error.code) } : { ok: true, value: null };
 }
 
+export type NextBatch = {
+  /** The send day (YYYY-MM-DD) the batch is for. */
+  day: string;
+  week: number;
+  warmup: boolean;
+  /** Emails a day that week (first emails and follow-ups). */
+  cap: number;
+  /** New investors that fit that day: the batch size. */
+  room: number;
+  /** Of them, contacts that passed the check and are next in line. */
+  ready: number;
+  /** Contacts still in line that haven't been checked yet. */
+  unchecked: number;
+};
+
+/** The next send day's batch, as the pre-send check and Add Leads see it. */
+function nextBatchOf(messages: OutreachMessageView[], r: LiveRow, now = Date.now()): NextBatch {
+  const settings = r.settings;
+  const tz = settings.timezone;
+  const day = targetSendDay(now, tz);
+  const week = r.live_at ? campaignWeek(localDate(r.live_at, tz), day) : 1;
+  const cap = capForWeek(settings, week);
+  const room = newInvestorRoom(messages, day, settings, cap, emailsPerContact(messages) - 1);
+  const queue = dripQueue(messages, { delayDays: settings.wave2_delay_days, releasedEarly: Boolean(r.wave2_pushed_at), limit: 0, now: pushInstant(day) });
+  return {
+    day,
+    week,
+    warmup: week <= settings.ramp.length,
+    cap,
+    room,
+    ready: Math.min(room, queue.filter((m) => m.send_check === "pass").length),
+    unchecked: queue.filter((m) => !m.send_check).length,
+  };
+}
+
 export type LiveState = {
   instantlyReady: boolean;
   campaignReady: boolean;
@@ -198,6 +235,8 @@ export type LiveState = {
   counts: { funds: number; wave1: number; wave2: number; pushed: number; waiting: number };
   /** Pre-send email check, for contacts not yet in Instantly: passed, failed (moved out), not checked yet. */
   presend: { passed: number; failed: number; unchecked: number; lastAt: string | null };
+  /** The next send day's batch: its size (warm-up or full pace) and how much of it passed the pre-send check. */
+  nextBatch: NextBatch;
   /** Setup step 4: pushed to the client (with the invoice and an email), and confirmed when live. */
   step: { version: number; pushedAt: string | null; emailedAt: string | null; status: string } | null;
   testSentAt: string | null;
@@ -340,6 +379,7 @@ export async function loadLiveState(supabase: ServiceClient, clientId: string): 
         unchecked: messages.value.filter((m) => m.slot === "active" && !m.pushed_at && !m.send_check && isApproved(m)).length,
         lastAt: messages.value.reduce<string | null>((at, m) => (m.send_check_at && (!at || m.send_check_at > at) ? m.send_check_at : at), null),
       },
+      nextBatch: nextBatchOf(messages.value, r),
       testSentAt: r.test_sent_at,
       consentText: r.inbox_email ? CONSENT_TEXT(r.inbox_email) : null,
       testMode,

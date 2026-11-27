@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { presendVerdict, spareFor, stepsVerdict, targetSendDay } from "./presend.ts";
+import { batchComplete, presendVerdict, spareFor, stepsVerdict, targetSendDay } from "./presend.ts";
 
 const NOW = Date.parse("2026-11-24T04:00:00Z");
 const daysAgo = (n: number) => new Date(NOW - n * 86_400_000).toISOString();
@@ -79,4 +79,12 @@ test("spares: about 30% more than the day's room, at least 3", () => {
   assert.equal(spareFor(5), 3);
   assert.equal(spareFor(15), 5);
   assert.equal(spareFor(30), 9);
+});
+
+test("batchComplete: Add Leads opens when the batch is full, or as full as the list allows", () => {
+  assert.equal(batchComplete({ room: 15, ready: 15, unchecked: 400 }), true);
+  assert.equal(batchComplete({ room: 15, ready: 12, unchecked: 400 }), false);
+  assert.equal(batchComplete({ room: 15, ready: 12, unchecked: 0 }), true);
+  assert.equal(batchComplete({ room: 15, ready: 0, unchecked: 0 }), false);
+  assert.equal(batchComplete({ room: 0, ready: 0, unchecked: 10 }), false);
 });

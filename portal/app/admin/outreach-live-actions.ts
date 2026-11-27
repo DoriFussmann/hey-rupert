@@ -125,6 +125,20 @@ export async function pushApprovedAction(clientId: string) {
 }
 
 /** Runs the pre-send email check for this client now (the nightly one, for its next send day), and emails the summary. */
+export type BatchCheckSummary = {
+  day: string;
+  room: number;
+  ready: number;
+  byWeb: number;
+  byHunter: number;
+  reused: number;
+  failed: { person: string; fund: string; reason: string; replacedBy: string | null; replacement: boolean }[];
+  replacements: { person: string; fund: string }[];
+  outOfTime: boolean;
+  errors: string[];
+  usd: number;
+};
+
 export async function checkNextBatchAction(clientId: string) {
   const access = await requireAdmin(clientId);
   if (!access.ok) return access;
@@ -134,8 +148,24 @@ export async function checkNextBatchAction(clientId: string) {
   if (!c) return { ok: false as const, error: "Nothing to check: build the campaign first. Test Pilot clients need no check." };
   const failed = c.outcomes.filter((o) => !o.pass).length;
   const note = `${c.ready} of ${c.room} ready for ${c.day}. Checked ${c.outcomes.length}${failed ? `, ${failed} didn't pass` : ""}${c.errors.length ? `, ${c.errors.length} errors (see the email)` : ""}. Summary emailed.`;
+  const fresh = c.outcomes.filter((o) => o.how !== "reused");
+  const summary: BatchCheckSummary = {
+    day: c.day,
+    room: c.room,
+    ready: c.ready,
+    byWeb: fresh.filter((o) => o.pass && o.how === "web").length,
+    byHunter: fresh.filter((o) => o.pass && o.how === "hunter").length,
+    reused: c.outcomes.filter((o) => o.how === "reused").length,
+    failed: c.outcomes
+      .filter((o) => !o.pass)
+      .map((o) => ({ person: o.person, fund: o.fund, reason: o.reason, replacedBy: o.replacedBy ?? null, replacement: Boolean(o.replacement) })),
+    replacements: c.outcomes.filter((o) => o.replacement && o.pass).map((o) => ({ person: o.person, fund: o.fund })),
+    outOfTime: c.outOfTime,
+    errors: Array.from(new Set(c.errors)).slice(0, 5),
+    usd: c.cost.usd,
+  };
   revalidatePath(`/admin/clients/${clientId}`);
-  return withState(clientId, access.supabase, { note, failed: c.errors.length > 0 && c.ready === 0 });
+  return withState(clientId, access.supabase, { note, summary, failed: c.errors.length > 0 && c.ready === 0 });
 }
 
 export async function setPausedAction(clientId: string, paused: boolean) {
