@@ -4,7 +4,7 @@ import { selectAll } from "@/lib/match/db-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
 import { emailsPerContact } from "@/lib/outreach/campaign";
 import { isApproved } from "@/lib/outreach/core";
-import { computeAnalytics, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply } from "@/lib/outreach/analytics";
+import { computeAnalytics, whoOpened, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply, type OpenedFund } from "@/lib/outreach/analytics";
 import {
   addDays,
   asLiveSettings,
@@ -32,6 +32,9 @@ export type CampaignData = {
   messages: (AnalyticsMessage & {
     fund_name: string;
     firm_id: string;
+    /** The person: for Rupert's views only, never shown to the client. */
+    person_name: string;
+    person_title: string;
     pushed_at: string | null;
     slot: string;
     bounced_at: string | null;
@@ -108,6 +111,8 @@ export async function loadCampaignData(supabase: ServiceClient, clientId: string
         meeting_at: m.meeting_at,
         fund_name: m.fund_name,
         firm_id: m.firm_id,
+        person_name: m.person.name ?? "",
+        person_title: m.person.title ?? "",
         pushed_at: m.pushed_at,
         slot: m.slot,
         bounced_at: m.bounced_at,
@@ -171,10 +176,12 @@ export type ClientAnalytics = {
   label: string;
   dates: string;
   analytics: Analytics;
+  /** Funds with an open in the period, newest first. */
+  opened: OpenedFund[];
 };
 
 /** The client's Campaign Analytics: released replies only. */
-export function clientAnalytics(data: CampaignData, choice: PeriodChoice): ClientAnalytics {
+export function clientAnalytics(data: CampaignData, choice: PeriodChoice, options: { allReplies?: boolean } = {}): ClientAnalytics {
   const start = choice ? weekRange(data.launchDay, choice.from).start : data.launchDay;
   const endRaw = choice ? weekRange(data.launchDay, choice.to).end : data.today;
   const end = endRaw > data.today ? data.today : endRaw;
@@ -187,10 +194,16 @@ export function clientAnalytics(data: CampaignData, choice: PeriodChoice): Clien
     analytics: computeAnalytics({
       messages: data.messages,
       events: data.events,
-      replies: data.replies.filter((r) => r.visibility === "released"),
+      replies: options.allReplies ? data.replies : data.replies.filter((r) => r.visibility === "released"),
       timeZone: data.settings.timezone,
       period: { from: choice ? start : null, to: choice ? end : null },
       days: weekdaysIn(start, end),
+    }),
+    opened: whoOpened({
+      messages: data.messages,
+      events: data.events,
+      timeZone: data.settings.timezone,
+      period: { from: choice ? start : null, to: choice ? end : null },
     }),
   };
 }

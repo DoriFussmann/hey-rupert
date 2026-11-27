@@ -445,6 +445,14 @@ export default async function ClientDetailPage({
             >
               Matching
             </Link>
+            {client.stage === "live" ? (
+              <Link
+                href={`/admin/clients/${client.id}/analytics`}
+                className="rounded-md border border-border bg-surface px-md py-sm text-body-sm text-secondary no-underline transition-colors duration-hover hover:text-heading"
+              >
+                Analytics
+              </Link>
+            ) : null}
             {nudgeDetail ? <NudgeButton detail={nudgeDetail} /> : null}
             <ViewAsClientLink
               clientId={client.id}
