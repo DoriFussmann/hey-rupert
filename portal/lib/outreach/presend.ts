@@ -16,7 +16,18 @@
 
 import { emailConfirmed, VERIFY_FRESH_DAYS, type CheckSteps } from "../match/verify.ts";
 import { federalHolidayOn } from "./holidays.ts";
-import { addDays, localDate } from "./live.ts";
+import {
+  addDays,
+  campaignWeek,
+  capForWeek,
+  dripQueue,
+  followupDaysFor,
+  localDate,
+  newInvestorRoom,
+  type LiveSettings,
+  type PacedContact,
+  type QueueMessage,
+} from "./live.ts";
 
 const DAY_MS = 86_400_000;
 export const FRESH_MS = VERIFY_FRESH_DAYS * DAY_MS;
@@ -186,4 +197,65 @@ export function firstSendWindow(now: number, settings: { timezone: string; from:
     return { day: today, today: true, startsNow: clock >= settings.from, from: settings.from, to: settings.to };
   }
   return { day: nextBusinessDay(today), today: false, startsNow: false, from: settings.from, to: settings.to };
+}
+
+export type UpcomingDay = {
+  day: string;
+  /** New investors whose first email goes out that day. */
+  firsts: number;
+  /** Follow-ups due that day. */
+  followups: number;
+  /** A few of the funds getting a first email that day, in order. */
+  funds: string[];
+  /** How many funds that day in all (funds can repeat across contacts). */
+  fundCount: number;
+};
+
+/**
+ * The next `count` Business Days from `today` (today included while it is one), as they will run:
+ * the contacts already in Instantly, then each day's new investors taken from the queue in order,
+ * as the daily push does (the room the day's cap leaves after follow-ups), with their follow-ups
+ * counted on later days. An estimate: replies stop follow-ups, and the pre-send check can swap a
+ * contact for another at the same fund.
+ */
+export function upcomingDays<T extends QueueMessage & PacedContact>(
+  messages: T[],
+  options: {
+    settings: Pick<LiveSettings, "followup_days" | "timezone" | "ramp" | "daily_limit" | "wave2_delay_days">;
+    today: string;
+    liveDay: string;
+    wave2Released: boolean;
+    followupsPerContact: number;
+    count?: number;
+  },
+): UpcomingDay[] {
+  const { settings } = options;
+  const sim: T[] = messages.map((m) => ({ ...m }));
+  const days: UpcomingDay[] = [];
+  let day = isBusinessDay(options.today) ? options.today : nextBusinessDay(options.today);
+  for (let i = 0; i < (options.count ?? 5); i += 1) {
+    const cap = capForWeek(settings, campaignWeek(options.liveDay, day));
+    const room = newInvestorRoom(sim, day, settings, cap, options.followupsPerContact);
+    // Only days after today get new investors here: today's were added by this morning's push.
+    const taken = day === options.today ? [] : dripQueue(sim, { delayDays: settings.wave2_delay_days, releasedEarly: options.wave2Released, limit: room, now: pushInstant(day) });
+    const stamp = `${day}T17:00:00.000Z`;
+    for (const m of taken) m.pushed_at = stamp;
+    let firsts = 0;
+    let followups = 0;
+    const fundsToday: string[] = [];
+    for (const c of sim) {
+      if (c.slot !== "active" || !c.pushed_at) continue;
+      const first = localDate(c.pushed_at, settings.timezone);
+      if (first === day) {
+        firsts += 1;
+        fundsToday.push(c.fund_name);
+      } else if (!c.replied_at && !c.bounced_at && !c.unsubscribed_at && followupDaysFor(first, settings.followup_days, options.followupsPerContact).includes(day)) {
+        followups += 1;
+      }
+    }
+    const unique = Array.from(new Set(fundsToday.filter(Boolean)));
+    days.push({ day, firsts, followups, funds: unique.slice(0, 4), fundCount: unique.length });
+    day = nextBusinessDay(day);
+  }
+  return days;
 }

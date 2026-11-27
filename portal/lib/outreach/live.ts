@@ -356,7 +356,7 @@ export function followupDaysFor(firstDay: string, followupDays: [number, number]
   return days;
 }
 
-type PacedContact = {
+export type PacedContact = {
   slot: string;
   pushed_at?: string | null;
   replied_at?: string | null;

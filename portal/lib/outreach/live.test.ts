@@ -299,3 +299,23 @@ test("a test run for a real client: redirect and contact limit are kept, off by 
   assert.equal(body.campaign_schedule.schedules[0].days["0"], false, "real pace: weekdays only");
   assert.equal(body.sequences[0].steps[0].delay_unit, "days");
 });
+
+import { upcomingDays } from "./presend.ts";
+
+test("upcomingDays: today's added contacts, then the cap's room each Business Day, follow-ups a week later", () => {
+  const settings = { ...asLiveSettings({}), ramp: [15, 15], followup_days: [7, 7] as [number, number] };
+  const today = "2026-11-27"; // Friday
+  const pushedToday = Array.from({ length: 15 }, (_, i) => ({ ...qm(`t${i}`, `T${i}`, 1, 0, { pushed_at: "2026-11-27T19:41:00Z" }), fund_name: `Fund T${i}` }));
+  const waiting = Array.from({ length: 60 }, (_, i) => ({ ...qm(`w${i}`, `W${i}`, 1, 0), fund_name: `Fund W${i}` }));
+  const days = upcomingDays([...pushedToday, ...waiting], { settings, today, liveDay: today, wave2Released: false, followupsPerContact: 1 });
+  assert.deepEqual(days.map((d) => d.day), ["2026-11-27", "2026-11-30", "2026-12-01", "2026-12-02", "2026-12-03"]);
+  assert.deepEqual(days.map((d) => d.firsts), [15, 15, 15, 15, 15]);
+  assert.ok(days.every((d) => d.followups === 0), "follow-ups start a week after the first email");
+  assert.equal(days[1].funds.length, 4);
+  assert.equal(days[1].fundCount, 15);
+  // A week on, Friday's follow-ups take the room: no new investors that day.
+  const later = upcomingDays([...pushedToday, ...waiting], { settings, today, liveDay: today, wave2Released: false, followupsPerContact: 1, count: 6 });
+  assert.equal(later[5].day, "2026-12-04");
+  assert.equal(later[5].followups, 15);
+  assert.equal(later[5].firsts, 0);
+});
