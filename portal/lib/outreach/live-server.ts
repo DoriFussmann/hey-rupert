@@ -36,7 +36,7 @@ import { asEmailCopy } from "@/lib/setup";
 import { loadSetupStep, loadSetupSteps } from "@/lib/setup-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
 import type { OutreachMessageView } from "@/lib/outreach/core-server";
-import { pushInstant, targetSendDay } from "@/lib/outreach/presend";
+import { pushInstant, targetSendDay, upcomingDays, type UpcomingDay } from "@/lib/outreach/presend";
 import { isApproved } from "@/lib/outreach/core";
 import {
   asLiveSettings,
@@ -1161,4 +1161,26 @@ export function webhookAuthorized(header: string | null) {
   const a = Buffer.from(header);
   const b = Buffer.from(`Bearer ${secret}`);
   return a.length === b.length && timingSafeEqual(a, b);
+}
+
+/** The client's Live page: the next five sending days, estimated from the campaign as it stands. */
+export async function loadUpcoming(
+  supabase: ServiceClient,
+  clientId: string,
+): Promise<Result<{ days: UpcomingDay[]; paused: boolean; timezone: string; left: number } | null>> {
+  const [row, messages] = await Promise.all([loadLiveRow(supabase, clientId), loadOutreachMessages(supabase, clientId)]);
+  if (!row.ok) return row;
+  if (!messages.ok) return messages;
+  const r = row.value;
+  if (!r.live_at) return { ok: true, value: null };
+  const tz = r.settings.timezone;
+  const days = upcomingDays(messages.value, {
+    settings: r.settings,
+    today: localDate(Date.now(), tz),
+    liveDay: localDate(r.live_at, tz),
+    wave2Released: Boolean(r.wave2_pushed_at),
+    followupsPerContact: emailsPerContact(messages.value) - 1,
+  });
+  const left = messages.value.filter((m) => m.slot === "active" && !m.pushed_at && isApproved(m)).length;
+  return { ok: true, value: { days, paused: Boolean(r.paused_at), timezone: tz, left } };
 }
