@@ -5,6 +5,8 @@
 @layer base {
   html {
     color-scheme: light;
+    /* In-page links (the analytics cards) glide to their section; reduced motion turns it off below. */
+    scroll-behavior: smooth;
     @apply font-sans;
   }
 

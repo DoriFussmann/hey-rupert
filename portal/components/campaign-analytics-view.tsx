@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { SendingPlanTable } from "@/components/sending-plan-table";
-import { WhoOpened } from "@/components/who-opened";
+import { WhoGotIt, WhoOpened } from "@/components/who-opened";
 import { percent, type AnalyticsRow } from "@/lib/outreach/analytics";
 import type { CampaignData, ClientAnalytics, PeriodChoice } from "@/lib/outreach/analytics-server";
 
@@ -83,7 +83,7 @@ export function CampaignAnalyticsView({
 
   const cards = [
     { label: "Emails Sent", value: String(totals.sent), sub: "First emails and follow-ups" },
-    { label: "Delivered", value: percent(totals.sent ? totals.delivered / totals.sent : null), sub: `${totals.delivered} delivered · ${totals.bounced} bounced` },
+    { label: "Delivered", value: percent(totals.sent ? totals.delivered / totals.sent : null), sub: `${totals.delivered} delivered · ${totals.bounced} bounced · see who`, href: "#who-got-it" },
     { label: "Open Rate", value: percent(totals.openRate), sub: `${totals.opened} opened · see who`, href: "#who-opened" },
     { label: "Replies", value: String(totals.replies), sub: `${percent(totals.replyRate)} reply rate` },
     { label: "Meetings", value: String(totals.meetings), sub: "Booked from replies" },
@@ -201,6 +201,7 @@ export function CampaignAnalyticsView({
         )}
       </section>
 
+      <WhoGotIt funds={view.received} people={people} timeZone={data.settings.timezone} />
       <WhoOpened funds={view.opened} people={people} timeZone={data.settings.timezone} />
 
       <div className="mt-lg flex flex-wrap gap-lg">
