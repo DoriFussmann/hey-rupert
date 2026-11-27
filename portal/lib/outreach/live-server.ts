@@ -18,7 +18,7 @@ import {
   type OAuthProvider,
 } from "@/lib/instantly";
 import { advanceStage } from "@/lib/kickoff";
-import { loadCampaignState } from "@/lib/outreach/campaign-server";
+import { loadCampaignState, rebuildAfterCopyConfirmed } from "@/lib/outreach/campaign-server";
 import { federalHolidayOn } from "@/lib/outreach/holidays";
 import { appPasswordFailure, checkAppPasswordForm, type AppPasswordInput } from "@/lib/outreach/inbox-connect";
 import {
@@ -254,6 +254,8 @@ async function loadConfirmed(supabase: ServiceClient, clientId: string) {
 }
 
 export async function loadLiveState(supabase: ServiceClient, clientId: string): Promise<Result<LiveState>> {
+  // A copy the client re-confirmed after the build: rebuild before reading, so neither side waits on the other.
+  await rebuildAfterCopyConfirmed(supabase, clientId);
   const [row, campaign, messages, confirmed] = await Promise.all([
     loadLiveRow(supabase, clientId),
     loadCampaignState(supabase, clientId),

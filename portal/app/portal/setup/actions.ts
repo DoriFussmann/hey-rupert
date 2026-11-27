@@ -49,7 +49,7 @@ import {
   type SetupStepState,
 } from "@/lib/setup";
 import { commitFundFlag, type FlagPatch } from "@/lib/investor-flags";
-import { setWarmIntro } from "@/lib/outreach/campaign-server";
+import { rebuildAfterCopyConfirmed, setWarmIntro } from "@/lib/outreach/campaign-server";
 import { markRepliesRead } from "@/lib/outreach/replies-server";
 import { connectInboxWithAppPassword, loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
 import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
@@ -562,6 +562,9 @@ export async function respondToSetupStep(input: {
   ]
     .filter(Boolean)
     .join("\n\n");
+
+  // A new copy version confirmed after the campaign was built: rebuild it now, not on the admin's turn.
+  if (confirmed && step === "email_copy") await rebuildAfterCopyConfirmed(access.supabase, access.user.id);
 
   const desk = await recordStepResponse(access.supabase, access.user.id, step, response);
   await notifyAdmin(

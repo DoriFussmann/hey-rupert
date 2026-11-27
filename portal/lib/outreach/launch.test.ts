@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   launchStage,
   rebuildBlocker,
+  copyReconfirmed,
   resolveStuck,
   runActivate,
   runAddLeads,
@@ -201,4 +202,14 @@ test("rebuild and settings are open only before anything is in Instantly", () =>
   assert.ok(rebuildBlocker(added));
   assert.ok(rebuildBlocker({ ...added, live_at: "y" }));
   assert.ok(settingsBlocker(added));
+});
+
+test("copyReconfirmed: rebuild without the admin only for a newer confirmed copy on a built, not-live campaign", () => {
+  const built = { built_at: "2026-11-26T22:55:00Z", live_at: null, copy_version: 1 };
+  assert.equal(copyReconfirmed(built, { copyRow: { status: "confirmed", version: 2 } }), true);
+  assert.equal(copyReconfirmed(built, { copyRow: { status: "confirmed", version: 1 } }), false);
+  assert.equal(copyReconfirmed(built, { copyRow: { status: "with_client", version: 2 } }), false);
+  assert.equal(copyReconfirmed({ ...built, live_at: "2026-11-27T00:00:00Z" }, { copyRow: { status: "confirmed", version: 2 } }), false);
+  assert.equal(copyReconfirmed({ ...built, built_at: null }, { copyRow: { status: "confirmed", version: 2 } }), false);
+  assert.equal(copyReconfirmed(null, { copyRow: { status: "confirmed", version: 2 } }), false);
 });
