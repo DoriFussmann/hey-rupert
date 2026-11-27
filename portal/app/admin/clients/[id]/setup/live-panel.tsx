@@ -234,8 +234,8 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   type="button"
                   className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
                   style={{ backgroundColor: "#0e816c" }}
-                  disabled={busy || state.gaps.length > 0}
-                  title={state.gaps.join(" ") || undefined}
+                  disabled={busy || state.gaps.length > 0 || state.presend.passed === 0}
+                  title={state.gaps.join(" ") || (state.presend.passed === 0 ? "No contact has passed the pre-send email check yet." : undefined)}
                   onClick={async () => {
                     if (!(await askConfirm("Step 1 of 2: create the Instantly campaign, paused, and add today's first batch? Nothing is sent and the client isn't told. You check the leads in Instantly, then Activate."))) return;
                     void run(
@@ -246,7 +246,16 @@ export function LivePanel({ clientId }: { clientId: string }) {
                 >
                   {busy ? "Working…" : "1. Add Leads (Paused)"}
                 </button>
-                <span className="text-body-sm text-secondary">Send yourself a test first (below) if you haven&apos;t.</span>
+                {state.presend.passed === 0 ? (
+                  <span className="text-body-sm text-warning">
+                    No contact has passed the pre-send email check yet, so there is nothing to add. Click Check Next Batch above (a few
+                    minutes), then Add Leads.
+                  </span>
+                ) : (
+                  <span className="text-body-sm text-secondary">
+                    Adds the {state.presend.passed} contact{state.presend.passed === 1 ? "" : "s"} that passed the check. Send yourself a test first (below) if you haven&apos;t.
+                  </span>
+                )}
               </div>
             ) : state.launch.stage === "added" ? (
               <div className="mt-md space-y-sm">

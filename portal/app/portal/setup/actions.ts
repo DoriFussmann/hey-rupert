@@ -53,6 +53,7 @@ import { rebuildAfterCopyConfirmed, setWarmIntro } from "@/lib/outreach/campaign
 import { markRepliesRead } from "@/lib/outreach/replies-server";
 import { connectInboxWithAppPassword, loadLiveState, pollInboxConnect, requestLaunch, sendTest, startInboxConnect } from "@/lib/outreach/live-server";
 import { confirmGoLiveStep } from "@/lib/outreach/go-live-step-server";
+import { kickPresend } from "@/lib/outreach/presend-kick";
 import { answerFounderQuestion } from "@/lib/brief-server";
 import { notifyAdmin as notifyGoLive } from "@/lib/notify";
 import { BUCKET_LABEL, asSourceBucket } from "@/lib/outreach/source-copy";
@@ -953,8 +954,10 @@ export async function approveLaunchAction(consent: boolean, postalAddress: strin
     await confirmGoLiveStep(access.supabase, access.user.id, access.user.email ?? null);
     await notifyGoLive(access.supabase, access.user.id, "launch_requested", {
       email: true,
-      details: `They were told the campaign goes live within 24 hours, and that they'll be emailed when it does.\n\nGo Live from the client's Setup page, Go Live panel.`,
+      details: `They were told the campaign goes live within 24 hours, and that they'll be emailed when it does.\n\nThe pre-send email check for the first batch has started; its summary comes by email. Then Add Leads from the client's Setup page, Go Live panel.`,
     });
+    // Check the first batch now, not at tonight's run: Add Leads only adds contacts that passed.
+    await kickPresend(access.user.id);
   }
   revalidateSetup(access.user.id);
   return { ok: true };

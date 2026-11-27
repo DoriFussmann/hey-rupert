@@ -18,8 +18,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized." }, { status: 401 });
   }
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Service role key is not configured." }, { status: 500 });
+  // ?client=<id>: one client only, started when they approve the launch. Always emails the summary.
+  const client = request.nextUrl.searchParams.get("client");
+  const clientId = client && /^[0-9a-f-]{36}$/i.test(client) ? client : undefined;
   const morning = new Date().getUTCHours() >= 12;
-  const result = await cronLogged("presend", (supabase) => runPresendChecks(supabase, { email: morning ? "if_checked" : "always" }));
+  const result = await cronLogged("presend", (supabase) =>
+    runPresendChecks(supabase, clientId ? { clientId, email: "always" } : { email: morning ? "if_checked" : "always" }),
+  );
   return NextResponse.json({
     campaigns: result.campaigns.map((c) => ({ client: c.clientId, day: c.day, room: c.room, ready: c.ready, checked: c.outcomes.length, errors: c.errors.length })),
     delivered: result.delivered,
