@@ -162,3 +162,28 @@ export function spareFor(room: number) {
 export function batchComplete(batch: { room: number; ready: number; unchecked: number }) {
   return batch.room > 0 && (batch.ready >= batch.room || (batch.ready > 0 && batch.unchecked === 0));
 }
+
+/** HH:MM on the clock of `timeZone`. */
+function localClock(now: number, timeZone: string) {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", { timeZone, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(now));
+    const get = (type: string) => parts.find((p) => p.type === type)?.value ?? "00";
+    return `${get("hour")}:${get("minute")}`;
+  } catch {
+    return new Date(now).toISOString().slice(11, 16);
+  }
+}
+
+/**
+ * When the first emails go out if the campaign is activated at `now`: today, if it is a Business Day
+ * and the sending window hasn't closed (`startsNow` when the window is already open), else from the
+ * window's opening on the next Business Day. Times are on the campaign's clock (`timeZone`).
+ */
+export function firstSendWindow(now: number, settings: { timezone: string; from: string; to: string }) {
+  const today = localDate(now, settings.timezone);
+  const clock = localClock(now, settings.timezone);
+  if (isBusinessDay(today) && clock < settings.to) {
+    return { day: today, today: true, startsNow: clock >= settings.from, from: settings.from, to: settings.to };
+  }
+  return { day: nextBusinessDay(today), today: false, startsNow: false, from: settings.from, to: settings.to };
+}

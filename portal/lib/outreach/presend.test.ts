@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { batchComplete, presendVerdict, spareFor, stepsVerdict, targetSendDay } from "./presend.ts";
+import { batchComplete, firstSendWindow, presendVerdict, spareFor, stepsVerdict, targetSendDay } from "./presend.ts";
 
 const NOW = Date.parse("2026-11-24T04:00:00Z");
 const daysAgo = (n: number) => new Date(NOW - n * 86_400_000).toISOString();
@@ -87,4 +87,17 @@ test("batchComplete: Add Leads opens when the batch is full, or as full as the l
   assert.equal(batchComplete({ room: 15, ready: 12, unchecked: 0 }), true);
   assert.equal(batchComplete({ room: 15, ready: 0, unchecked: 0 }), false);
   assert.equal(batchComplete({ room: 0, ready: 0, unchecked: 10 }), false);
+});
+
+test("firstSendWindow: today while the window is open or not yet open; else the next Business Day", () => {
+  const w = { timezone: "America/Detroit", from: "09:00", to: "17:00" };
+  // Fri Nov 27 2026, 2:48pm Eastern: window open, sends now.
+  assert.deepEqual(firstSendWindow(Date.parse("2026-11-27T19:48:00Z"), w), { day: "2026-11-27", today: true, startsNow: true, from: "09:00", to: "17:00" });
+  // 7am Eastern: today, from 9.
+  assert.equal(firstSendWindow(Date.parse("2026-11-27T12:00:00Z"), w).startsNow, false);
+  assert.equal(firstSendWindow(Date.parse("2026-11-27T12:00:00Z"), w).today, true);
+  // 6pm Eastern Friday: Monday.
+  assert.equal(firstSendWindow(Date.parse("2026-11-27T23:00:00Z"), w).day, "2026-11-30");
+  // Thanksgiving (a federal holiday): the next Business Day.
+  assert.equal(firstSendWindow(Date.parse("2026-11-26T15:00:00Z"), w).day, "2026-11-27");
 });
