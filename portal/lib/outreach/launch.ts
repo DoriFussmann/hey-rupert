@@ -157,3 +157,19 @@ export function resolveStuck(row: LaunchRow, choice: "added" | "empty", pushedHe
   }
   return { ok: true as const, choice };
 }
+
+/**
+ * The campaign was built, isn't live, and the client has since confirmed a newer version of the
+ * copy: the build is out of date only because of that, so it can be rebuilt without the admin.
+ */
+export function copyReconfirmed(
+  campaign: { built_at?: string | null; live_at?: string | null; copy_version?: number | null } | null,
+  steps: { copyRow?: { status: string; version: number } | null },
+) {
+  return Boolean(
+    campaign?.built_at &&
+      !campaign.live_at &&
+      steps.copyRow?.status === "confirmed" &&
+      campaign.copy_version !== steps.copyRow.version,
+  );
+}

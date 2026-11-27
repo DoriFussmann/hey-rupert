@@ -18,7 +18,7 @@ import {
   type WarmIntroStatus,
 } from "@/lib/outreach/campaign";
 import { FALLBACK_OPT_OUT_LINE } from "@/lib/outreach/live";
-import { rebuildBlocker } from "@/lib/outreach/launch";
+import { copyReconfirmed, rebuildBlocker } from "@/lib/outreach/launch";
 import { loadOutreachPlan } from "@/lib/outreach/source-server";
 import type { SourceCopy } from "@/lib/outreach/source-copy";
 import { contactStates, planFundPeople } from "@/lib/match/tiers/server";
@@ -349,6 +349,20 @@ export async function loadCampaignState(supabase: ServiceClient, clientId: strin
     },
   };
 }
+
+/**
+ * The client confirmed a newer version of the copy after the campaign was built (not live yet):
+ * the build is out of date only because of that confirmation, so rebuild it now. Nothing else
+ * changed, and waiting for the admin would leave both sides stuck ("waiting on client" in admin,
+ * "Rupert is finishing your campaign" in the portal). Returns true when it rebuilt.
+ */
+export async function rebuildAfterCopyConfirmed(supabase: ServiceClient, clientId: string): Promise<boolean> {
+  const [steps, campaign] = await Promise.all([loadSteps(supabase, clientId), loadCampaignRow(supabase, clientId)]);
+  if (!copyReconfirmed(campaign, steps)) return false;
+  const built = await buildCampaign(supabase, clientId, null);
+  return built.ok;
+}
+
 
 /**
  * Builds the campaign from the confirmed copy: Core contacts keep the emails
