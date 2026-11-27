@@ -32,10 +32,26 @@ import { formatDateTime } from "@/lib/format";
 import { LiveBanner } from "@/components/live-banner";
 import { SendingPlanTable } from "@/components/sending-plan-table";
 import { NextBatchCard } from "@/app/admin/clients/[id]/setup/next-batch-card";
-import { batchComplete } from "@/lib/outreach/presend";
+import { batchComplete, firstSendWindow } from "@/lib/outreach/presend";
 
 type Message = { kind: "ok" | "error"; text: string } | null;
 type StateResult = { ok: true; state: LiveState; [key: string]: unknown } | { ok: false; error: string };
+
+const clockText = (hhmm: string) => {
+  const [h, m] = hhmm.split(":").map(Number);
+  return `${((h + 11) % 12) + 1}${m ? `:${String(m).padStart(2, "0")}` : ""}${h < 12 ? "am" : "pm"}`;
+};
+const zoneText = (tz: string) => (tz === "America/Detroit" || tz === "America/New_York" ? "Eastern" : tz);
+
+/** "today, right away (until 5pm Eastern)" or "Monday, Nov 30, from 9am Eastern". */
+function firstSendText(settings: LiveSettings, now = Date.now()) {
+  const w = firstSendWindow(now, settings);
+  const zone = zoneText(settings.timezone);
+  if (w.today && w.startsNow) return `today, right away (sending window until ${clockText(w.to)} ${zone})`;
+  if (w.today) return `today, from ${clockText(w.from)} ${zone}`;
+  const day = new Intl.DateTimeFormat("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${w.day}T12:00:00Z`));
+  return `${day}, from ${clockText(w.from)} ${zone}`;
+}
 
 function Check({ done, label, detail }: { done: boolean; label: string; detail?: React.ReactNode }) {
   return (
@@ -255,13 +271,16 @@ export function LivePanel({ clientId }: { clientId: string }) {
                   {state.redirected && state.testRecipient ? ` is ${state.testRecipient.replace("@", "+…@")}` : ""}. Then activate.
                 </p>
                 {state.launch.note ? <p className="text-body-sm text-warning">{state.launch.note}</p> : null}
+                <p className="rounded-md border border-border bg-surface px-md py-sm text-body text-heading">
+                  First emails if you activate now: <strong>{firstSendText(settings)}</strong>.
+                </p>
                 <button
                   type="button"
                   className="rounded-md px-lg py-sm text-body text-white disabled:opacity-40"
                   style={{ backgroundColor: "#0e816c" }}
                   disabled={busy}
                   onClick={async () => {
-                    if (!(await askConfirm("Activate the campaign? Sending starts in the next weekday window and the client is emailed that they're live."))) return;
+                    if (!(await askConfirm(`Activate the campaign? The first emails go out ${firstSendText(settings)}, and the client is emailed that they're live.`))) return;
                     void run(
                       () => activateNowAction(clientId),
                       (r) => (r.already ? "Already live." : `Live.${r.emailError ? ` The client email didn't go out: ${String(r.emailError)}` : " The client was emailed."}`),
