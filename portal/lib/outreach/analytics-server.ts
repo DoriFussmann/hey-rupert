@@ -4,7 +4,7 @@ import { selectAll } from "@/lib/match/db-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
 import { emailsPerContact } from "@/lib/outreach/campaign";
 import { isApproved } from "@/lib/outreach/core";
-import { computeAnalytics, whoGotIt, whoOpened, type ReceivedFund, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply, type OpenedFund } from "@/lib/outreach/analytics";
+import { computeAnalytics, whoBooked, whoGotIt, whoOpened, whoReplied, type BookedFund, type ReceivedFund, type RepliedFund, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply, type OpenedFund } from "@/lib/outreach/analytics";
 import {
   addDays,
   asLiveSettings,
@@ -180,10 +180,13 @@ export type ClientAnalytics = {
   opened: OpenedFund[];
   /** Funds emailed in the period, newest first, with what was delivered and bounced. */
   received: ReceivedFund[];
+  replied: RepliedFund[];
+  booked: BookedFund[];
 };
 
 /** The client's Campaign Analytics: released replies only. */
 export function clientAnalytics(data: CampaignData, choice: PeriodChoice, options: { allReplies?: boolean } = {}): ClientAnalytics {
+  const replies = options.allReplies ? data.replies : data.replies.filter((r) => r.visibility === "released");
   const start = choice ? weekRange(data.launchDay, choice.from).start : data.launchDay;
   const endRaw = choice ? weekRange(data.launchDay, choice.to).end : data.today;
   const end = endRaw > data.today ? data.today : endRaw;
@@ -196,11 +199,13 @@ export function clientAnalytics(data: CampaignData, choice: PeriodChoice, option
     analytics: computeAnalytics({
       messages: data.messages,
       events: data.events,
-      replies: options.allReplies ? data.replies : data.replies.filter((r) => r.visibility === "released"),
+      replies,
       timeZone: data.settings.timezone,
       period: { from: choice ? start : null, to: choice ? end : null },
       days: weekdaysIn(start, end),
     }),
+    replied: whoReplied({ messages: data.messages, replies, timeZone: data.settings.timezone, period: { from: choice ? start : null, to: choice ? end : null } }),
+    booked: whoBooked({ messages: data.messages, timeZone: data.settings.timezone, period: { from: choice ? start : null, to: choice ? end : null } }),
     received: whoGotIt({
       messages: data.messages,
       events: data.events,

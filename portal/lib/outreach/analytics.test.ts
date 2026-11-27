@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { computeAnalytics, percent, whoGotIt, whoOpened } from "./analytics.ts";
+import { computeAnalytics, percent, whoBooked, whoGotIt, whoOpened, whoReplied } from "./analytics.ts";
 
 const tz = "America/Detroit";
 const messages = [
@@ -88,4 +88,24 @@ test("whoGotIt: funds emailed, newest first, delivered = sent - bounced, per con
   assert.equal(north.lastAt, "2026-11-27T15:11:00Z");
   assert.equal(north.people.find((p) => p.name === "Ana Lopez")?.bounced, false);
   assert.equal(funds[0].lastAt, "2026-11-27T15:20:00Z", "an open is not a send");
+});
+
+test("whoReplied and whoBooked: by fund, newest first, auto-replies and other periods left out", () => {
+  const messages = [
+    { id: "a", email: "ana@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", person_name: "Ana Lopez", person_title: "Partner", meeting_at: "2026-12-02T18:00:00Z" },
+    { id: "b", email: "ben@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N" },
+    { id: "c", email: "cy@south.vc", tier: 2, fund_type: "VC", fund_name: "South", firm_id: "S" },
+  ];
+  const replies = [
+    { message_id: "a", lead_email: "ana@north.vc", at: "2026-11-30T15:00:00Z", auto: false, label: "interested" },
+    { message_id: null, lead_email: "cy@south.vc", at: "2026-12-01T15:00:00Z", auto: false, label: "pass" },
+    { message_id: null, lead_email: "ben@north.vc", at: "2026-12-01T16:00:00Z", auto: true, label: "out_of_office" },
+  ];
+  const all = { from: null, to: null };
+  const replied = whoReplied({ messages, replies, timeZone: "America/Detroit", period: all });
+  assert.deepEqual(replied.map((f) => [f.fund, f.replies, f.labels]), [["South", 1, ["pass"]], ["North", 1, ["interested"]]]);
+  assert.equal(replied[1].people[0].name, "Ana Lopez");
+  const booked = whoBooked({ messages, timeZone: "America/Detroit", period: all });
+  assert.deepEqual(booked.map((f) => [f.fund, f.meetings]), [["North", 1]]);
+  assert.equal(whoBooked({ messages, timeZone: "America/Detroit", period: { from: "2026-12-03", to: null } }).length, 0);
 });
