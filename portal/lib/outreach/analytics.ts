@@ -149,3 +149,74 @@ export function computeAnalytics(input: {
 export function percent(value: number | null) {
   return value == null ? "–" : `${Math.round(value * 1000) / 10}%`;
 }
+
+export type OpenedContact = { name: string; title: string; steps: number[]; lastAt: string };
+export type OpenedFund = {
+  firmId: string;
+  fund: string;
+  tier: string;
+  /** Contacts at the fund who opened, of those emailed in the period. */
+  opened: number;
+  emailed: number;
+  /** Which emails were opened: 1 = first email, 2 = follow-up. */
+  steps: number[];
+  /** Opens counted once per contact and email. */
+  opens: number;
+  lastAt: string;
+  people: OpenedContact[];
+};
+
+/**
+ * Who opened, by fund: each fund with an open in the period, newest first. A contact counts once per
+ * email it opened (Instantly can report several opens of one email). An estimate: some email apps
+ * block opens, and some (Apple Mail) open every email automatically.
+ */
+export function whoOpened(input: {
+  messages: (AnalyticsMessage & { fund_name: string; firm_id: string; person_name?: string; person_title?: string })[];
+  events: AnalyticsEvent[];
+  timeZone: string;
+  period: Period;
+}): OpenedFund[] {
+  const resolve = messageResolver(input.messages);
+  const emailed = new Map<string, Set<string>>();
+  const opened = new Map<string, Map<string, { steps: Set<number>; lastAt: string }>>();
+  for (const event of input.events) {
+    if (!inPeriod(localDate(event.at, input.timeZone), input.period)) continue;
+    const m = resolve(event.lead_email);
+    if (!m) continue;
+    if (event.event_type === "email_sent") {
+      if (!emailed.has(m.firm_id)) emailed.set(m.firm_id, new Set());
+      emailed.get(m.firm_id)!.add(m.id);
+    } else if (event.event_type === "email_opened") {
+      if (!opened.has(m.firm_id)) opened.set(m.firm_id, new Map());
+      const people = opened.get(m.firm_id)!;
+      const entry = people.get(m.id) ?? { steps: new Set<number>(), lastAt: event.at };
+      entry.steps.add(event.step ?? 1);
+      if (event.at > entry.lastAt) entry.lastAt = event.at;
+      people.set(m.id, entry);
+    }
+  }
+  const byId = new Map(input.messages.map((m) => [m.id, m]));
+  const funds: OpenedFund[] = [];
+  for (const [firmId, people] of Array.from(opened.entries())) {
+    const list: OpenedContact[] = Array.from(people.entries()).map(([id, e]) => {
+      const m = byId.get(id)!;
+      return { name: m.person_name ?? "", title: m.person_title ?? "", steps: Array.from(e.steps).sort((x, y) => x - y), lastAt: e.lastAt };
+    });
+    list.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
+    const first = byId.get(Array.from(people.keys())[0])!;
+    const steps = Array.from(new Set(list.flatMap((p) => p.steps))).sort((x, y) => x - y);
+    funds.push({
+      firmId,
+      fund: first.fund_name,
+      tier: TIER_LABEL[first.tier] ?? "Tier 4",
+      opened: list.length,
+      emailed: Math.max(list.length, emailed.get(firmId)?.size ?? 0),
+      steps,
+      opens: list.reduce((n, p) => n + p.steps.length, 0),
+      lastAt: list[0].lastAt,
+      people: list,
+    });
+  }
+  return funds.sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
+}
