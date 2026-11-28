@@ -225,3 +225,10 @@ test("the preview fills the fields for one fund and marks a value the data doesn
   const missing = previewFilled(email, { first_name: "Sarah", fund_name: "Beta" });
   assert.deepEqual(missing.body.filter((s) => s.missing).map((s) => s.field), ["backed_company"]);
 });
+
+test("sourceEmailIssues: a bullet that splits a word blocks the push", () => {
+  const broken = { subject: "Hi", body: "Hi {{first_name}},\n\n• A lead has committed $500K of our $2M pre-\n• seed- Two health plans are close to signing LOIs\n\nDori" };
+  assert.ok(sourceEmailIssues(broken, 0, "market", "Market Fit").some((i) => i.level === "error" && i.text.includes("splits a word")));
+  const fine = { subject: "Hi", body: "Hi {{first_name}},\n\n• A lead has committed $500K of our $2M pre-seed\n• Two health plans are close to signing LOIs\n\nDori" };
+  assert.ok(!sourceEmailIssues(fine, 0, "market", "Market Fit").some((i) => i.text.includes("splits a word")));
+});

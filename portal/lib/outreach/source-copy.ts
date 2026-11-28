@@ -368,6 +368,10 @@ export function sourceEmailIssues(email: CopyEmail, index: number, bucket: Sourc
   if (/\$\d+(?:\.\d+)?[mk]\b/.test(email.body)) {
     issues.push({ level: "warning", where: at, text: "writes an amount in lower case (\"$2m\"); write \"$2M\"." });
   }
+  // A word cut across lines, the second half on a bullet: "$2M pre-\n• seed- Two health plans…".
+  if (/[A-Za-z]-\n\s*[•◦*-]\s*[a-z]/.test(email.body) || /^\s*[•◦]\s.*\S- [A-Z]/m.test(email.body)) {
+    issues.push({ level: "error", where: at, text: "has a bullet that splits a word or runs two bullets together (\"pre-\" / \"• seed- Two…\"); fix the bullets." });
+  }
   if (/https?:\/\/|www\./i.test(email.body)) {
     issues.push({ level: "warning", where: at, text: "has a link; plain emails without links land better." });
   }
