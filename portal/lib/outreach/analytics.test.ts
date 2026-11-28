@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { computeAnalytics, percent, whoBooked, whoGotIt, whoOpened, whoReplied } from "./analytics.ts";
+import { computeAnalytics, contactActivity, percent } from "./analytics.ts";
 
 const tz = "America/Detroit";
 const messages = [
@@ -40,72 +40,29 @@ test("a period keeps only its days, and charts the days it is given", () => {
   assert.equal(percent(null), "–");
 });
 
-test("whoOpened: by fund, newest first, each contact once per email; names only when given", () => {
+test("contactActivity: one row per investor, newest first; bounces carry what Rupert did; replies and meetings", () => {
   const messages = [
-    { id: "a", email: "ana@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", person_name: "Ana Lopez", person_title: "Partner" },
-    { id: "b", email: "ben@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N" },
-    { id: "c", email: "cy@south.vc", tier: 2, fund_type: "VC", fund_name: "South", firm_id: "S" },
+    { id: "a", email: "ana@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", person_name: "Ana Lopez", person_title: "Partner", meeting_at: "2026-12-02T18:00:00Z" },
+    { id: "b", email: "ben2@north.vc", old_emails: ["ben@north.vc"], tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", bounce: { action: "new_address", email: "ben@north.vc", new_email: "ben2@north.vc" } },
+    { id: "c", email: "cy@south.vc", tier: 2, fund_type: "VC", fund_name: "South", firm_id: "S", bounce: { action: "removed", email: "cy@south.vc", replaced_by: "Dee Ray" } },
   ];
   const ev = (event_type: string, lead_email: string, step: number, at: string) => ({ event_type, lead_email, step, at });
   const events = [
     ev("email_sent", "ana@north.vc", 1, "2026-11-27T15:00:00Z"),
-    ev("email_sent", "ben@north.vc", 1, "2026-11-27T15:10:00Z"),
-    ev("email_sent", "cy@south.vc", 1, "2026-11-27T15:20:00Z"),
     ev("email_opened", "ana@north.vc", 1, "2026-11-27T16:00:00Z"),
     ev("email_opened", "ana@north.vc", 1, "2026-11-27T16:30:00Z"),
-    ev("email_opened", "cy@south.vc", 1, "2026-11-27T17:00:00Z"),
-  ];
-  const funds = whoOpened({ messages, events, timeZone: "America/Detroit", period: { from: null, to: null } });
-  assert.deepEqual(funds.map((f) => f.fund), ["South", "North"]);
-  const north = funds[1];
-  assert.equal(north.opened, 1);
-  assert.equal(north.emailed, 2);
-  assert.equal(north.opens, 1, "two opens of one email count once");
-  assert.equal(north.lastAt, "2026-11-27T16:30:00Z");
-  assert.deepEqual(north.people[0], { name: "Ana Lopez", title: "Partner", steps: [1], lastAt: "2026-11-27T16:30:00Z" });
-  assert.equal(funds[0].people[0].name, "");
-  assert.equal(whoOpened({ messages, events, timeZone: "America/Detroit", period: { from: "2026-11-28", to: null } }).length, 0);
-});
-
-test("whoGotIt: funds emailed, newest first, delivered = sent - bounced, per contact and email", () => {
-  const messages = [
-    { id: "a", email: "ana@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", person_name: "Ana Lopez", person_title: "Partner" },
-    { id: "b", email: "ben@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N" },
-    { id: "c", email: "cy@south.vc", tier: 2, fund_type: "VC", fund_name: "South", firm_id: "S" },
-  ];
-  const ev = (event_type: string, lead_email: string, step: number, at: string) => ({ event_type, lead_email, step, at });
-  const events = [
-    ev("email_sent", "ana@north.vc", 1, "2026-11-27T15:00:00Z"),
     ev("email_sent", "ben@north.vc", 1, "2026-11-27T15:10:00Z"),
     ev("email_bounced", "ben@north.vc", 1, "2026-11-27T15:11:00Z"),
     ev("email_sent", "cy@south.vc", 1, "2026-11-27T15:20:00Z"),
-    ev("email_opened", "cy@south.vc", 1, "2026-11-27T17:00:00Z"),
+    ev("email_bounced", "cy@south.vc", 1, "2026-11-27T15:21:00Z"),
   ];
-  const funds = whoGotIt({ messages, events, timeZone: "America/Detroit", period: { from: null, to: null } });
-  assert.deepEqual(funds.map((f) => f.fund), ["South", "North"]);
-  const north = funds[1];
-  assert.deepEqual([north.emailed, north.bounced, north.sent, north.delivered], [2, 1, 2, 1]);
-  assert.equal(north.lastAt, "2026-11-27T15:11:00Z");
-  assert.equal(north.people.find((p) => p.name === "Ana Lopez")?.bounced, false);
-  assert.equal(funds[0].lastAt, "2026-11-27T15:20:00Z", "an open is not a send");
-});
-
-test("whoReplied and whoBooked: by fund, newest first, auto-replies and other periods left out", () => {
-  const messages = [
-    { id: "a", email: "ana@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N", person_name: "Ana Lopez", person_title: "Partner", meeting_at: "2026-12-02T18:00:00Z" },
-    { id: "b", email: "ben@north.vc", tier: 1, fund_type: "VC", fund_name: "North", firm_id: "N" },
-    { id: "c", email: "cy@south.vc", tier: 2, fund_type: "VC", fund_name: "South", firm_id: "S" },
-  ];
-  const replies = [
-    { message_id: "a", lead_email: "ana@north.vc", at: "2026-11-30T15:00:00Z", auto: false, label: "interested" },
-    { message_id: null, lead_email: "cy@south.vc", at: "2026-12-01T15:00:00Z", auto: false, label: "pass" },
-    { message_id: null, lead_email: "ben@north.vc", at: "2026-12-01T16:00:00Z", auto: true, label: "out_of_office" },
-  ];
-  const all = { from: null, to: null };
-  const replied = whoReplied({ messages, replies, timeZone: "America/Detroit", period: all });
-  assert.deepEqual(replied.map((f) => [f.fund, f.replies, f.labels]), [["South", 1, ["pass"]], ["North", 1, ["interested"]]]);
-  assert.equal(replied[1].people[0].name, "Ana Lopez");
-  const booked = whoBooked({ messages, timeZone: "America/Detroit", period: all });
-  assert.deepEqual(booked.map((f) => [f.fund, f.meetings]), [["North", 1]]);
-  assert.equal(whoBooked({ messages, timeZone: "America/Detroit", period: { from: "2026-12-03", to: null } }).length, 0);
+  const replies = [{ message_id: "a", lead_email: "ana@north.vc", at: "2026-11-30T15:00:00Z", auto: false, label: "interested" }];
+  const act = contactActivity({ messages, events, replies, timeZone: "America/Detroit", period: { from: null, to: null } });
+  assert.deepEqual(act.sent.map((r) => [r.fund, r.status]), [["South", "Bounced"], ["North", "Bounced"], ["North", "Sent"]]);
+  assert.equal(act.sent[0].comment, "Removed. Replaced by Dee Ray.");
+  assert.match(act.sent[1].comment, /New address found \(ben2@north\.vc\)/);
+  assert.deepEqual(act.delivered.map((r) => r.person), ["Ana Lopez"]);
+  assert.deepEqual(act.opened.map((r) => [r.person, r.comment]), [["Ana Lopez", "Opened 2 times"]]);
+  assert.deepEqual(act.replied.map((r) => [r.person, r.comment]), [["Ana Lopez", "interested"]]);
+  assert.deepEqual(act.booked.map((r) => r.status), ["Meeting booked"]);
 });

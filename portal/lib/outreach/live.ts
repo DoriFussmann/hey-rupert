@@ -133,7 +133,7 @@ export function testAddressId(email: string) {
 
 export { interleaveByTier };
 
-export type QueueMessage = LeadMessage & { tier: number; firm_id: string; pushed_at?: string | null };
+export type QueueMessage = LeadMessage & { tier: number; firm_id: string; pushed_at?: string | null; bounce?: { action: string } | null };
 
 /**
  * The next contacts to add to the live campaign: approved, active, not yet
@@ -169,7 +169,9 @@ export function dripQueue<T extends QueueMessage>(
     }
     seen.add(email);
   }
-  const queue = [...interleaveByTier(seconds), ...interleaveByTier(firsts)];
+  // A contact back in line with a new address after a bounce goes first.
+  const back = (m: T) => m.bounce?.action === "new_address";
+  const queue = [...firsts.filter(back), ...interleaveByTier(seconds), ...interleaveByTier(firsts.filter((m) => !back(m)))];
   return options.limit > 0 ? queue.slice(0, options.limit) : queue;
 }
 

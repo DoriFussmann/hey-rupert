@@ -41,6 +41,7 @@ import {
   type StoredCheck,
 } from "@/lib/outreach/presend";
 import { isTestPilot } from "@/lib/outreach/live-server";
+import { recoverBounce } from "@/lib/outreach/bounce-server";
 import { PORTAL_URL } from "@/lib/portal-url";
 import type { createServiceClient } from "@/lib/supabase/admin";
 
@@ -478,6 +479,16 @@ async function checkCampaign(
   // Replacements at one fund run one after another, so two never take the same reserve.
   const fundLocks = new Map<string, Promise<unknown>>();
   const taken = new Set<string>();
+
+  // Bounces not handled yet (before this existed, or the webhook's try failed): handle them first.
+  const before = await loadOutreachMessages(supabase, clientId);
+  if (before.ok && !settings.redirect_to_test_inbox) {
+    for (const m of before.value.filter((x) => x.bounced_at && !x.bounce)) {
+      await recoverBounce(supabase, clientId, m, before.value, m.bounced_at!).catch((err) =>
+        outcome.errors.push(`Bounce ${m.person.email}: ${err instanceof Error ? err.message : String(err)}`),
+      );
+    }
+  }
 
   for (let round = 0; round < 4; round += 1) {
     const loaded = await loadOutreachMessages(supabase, clientId);

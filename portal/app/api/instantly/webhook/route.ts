@@ -8,7 +8,8 @@ import { createServiceClient } from "@/lib/supabase/admin";
 // "Authorization: Bearer <INSTANTLY_WEBHOOK_SECRET>"; anything else is refused.
 // 2xx for anything handled or ignored; 5xx only when a retry could succeed.
 export const dynamic = "force-dynamic";
-export const maxDuration = 30;
+// A bounce can look the person up in Hunter (finder, then verifier) before answering.
+export const maxDuration = 90;
 
 export async function POST(request: NextRequest) {
   if (!isServiceRoleConfigured()) return NextResponse.json({ error: "Not configured." }, { status: 503 });

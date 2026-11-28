@@ -1,4 +1,5 @@
 import "server-only";
+import type { BounceRecord } from "@/lib/outreach/bounce";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { callClaudeAgent, webSearchTool, type ClaudeTool } from "@/lib/anthropic";
 import { outreachCompanyContext } from "@/lib/agents-server";
@@ -122,6 +123,8 @@ export type Delivery = {
   bounced_at: string | null;
   unsubscribed_at: string | null;
   meeting_at: string | null;
+  /** What Rupert did after a bounce (bounce-server.ts). */
+  bounce: BounceRecord | null;
 };
 
 /** The nightly pre-send check's verdict (presend-server.ts); the morning push adds only "pass". */
@@ -141,6 +144,7 @@ function deliveryOf(row: Record<string, unknown>): Delivery {
     bounced_at: at(row.bounced_at),
     unsubscribed_at: at(row.unsubscribed_at),
     meeting_at: at(row.meeting_at),
+    bounce: row.bounce && typeof row.bounce === "object" ? (row.bounce as BounceRecord) : null,
   };
 }
 
