@@ -5,6 +5,7 @@
 // some email apps block opens. Links are not tracked.
 
 import { fundTypeKey, FUND_TYPES } from "./copy.ts";
+import { bounceComment, type BounceRecord } from "./bounce.ts";
 import { localDate, testAddressId } from "./live.ts";
 
 export const TIER_LABEL: Record<number, string> = { 1: "Core", 2: "Sphere", 3: "Tier 3", 4: "Tier 4" };
@@ -63,8 +64,11 @@ function row(name: string, c: Counter): AnalyticsRow {
 }
 
 /** Finds the contact for a lead address: exact match, or a test-mode + alias by id prefix. */
-export function messageResolver<T extends { id: string; email: string }>(messages: T[]) {
-  const byEmail = new Map(messages.map((m) => [m.email.trim().toLowerCase(), m]));
+export function messageResolver<T extends { id: string; email: string; old_emails?: string[] }>(messages: T[]) {
+  // Earlier addresses too (one that bounced before a new one was found), so their events still count.
+  const byEmail = new Map<string, T>();
+  for (const m of messages) for (const old of m.old_emails ?? []) byEmail.set(old.trim().toLowerCase(), m);
+  for (const m of messages) byEmail.set(m.email.trim().toLowerCase(), m);
   return (email: string | null | undefined): T | null => {
     const clean = String(email ?? "").trim().toLowerCase();
     if (!clean) return null;
@@ -150,192 +154,121 @@ export function percent(value: number | null) {
   return value == null ? "–" : `${Math.round(value * 1000) / 10}%`;
 }
 
-export type OpenedContact = { name: string; title: string; steps: number[]; lastAt: string };
-export type OpenedFund = {
-  firmId: string;
-  fund: string;
-  tier: string;
-  /** Contacts at the fund who opened, of those emailed in the period. */
-  opened: number;
-  emailed: number;
-  /** Which emails were opened: 1 = first email, 2 = follow-up. */
-  steps: number[];
-  /** Opens counted once per contact and email. */
-  opens: number;
-  lastAt: string;
-  people: OpenedContact[];
+type PersonMessage = AnalyticsMessage & {
+  fund_name: string;
+  firm_id: string;
+  person_name?: string;
+  person_title?: string;
+  meeting_at?: string | null;
+  bounce?: { action: string; email: string; new_email?: string; replaced_by?: string } | null;
 };
 
+/** One investor in one of the lists under the Campaign Analytics cards. */
+export type ActivityRow = {
+  key: string;
+  fund: string;
+  person: string;
+  title: string;
+  tier: string;
+  /** The emails concerned: 1 = first email, 2 = follow-up. */
+  steps: number[];
+  /** When it happened (the latest event of this kind in the period). */
+  at: string;
+  status: string;
+  /** Bounced → what Rupert did; opened several times → how many. */
+  comment: string;
+  alert?: boolean;
+};
+
+export type Activity = { sent: ActivityRow[]; delivered: ActivityRow[]; opened: ActivityRow[]; replied: ActivityRow[]; booked: ActivityRow[] };
+
+
+const newestFirst = (a: ActivityRow, b: ActivityRow) => b.at.localeCompare(a.at) || a.fund.localeCompare(b.fund);
+
 /**
- * Who opened, by fund: each fund with an open in the period, newest first. A contact counts once per
- * email it opened (Instantly can report several opens of one email). An estimate: some email apps
- * block opens, and some (Apple Mail) open every email automatically.
+ * The five lists under the cards, one row per investor, newest first: who we sent to (and what
+ * bounced), who got it (sent, not bounced), who opened (each email once, however many opens), who
+ * replied (pass only the replies the viewer may count), who booked a meeting.
  */
-export function whoOpened(input: {
-  messages: (AnalyticsMessage & { fund_name: string; firm_id: string; person_name?: string; person_title?: string })[];
+export function contactActivity(input: {
+  messages: PersonMessage[];
   events: AnalyticsEvent[];
+  replies: (AnalyticsReply & { label?: string | null })[];
   timeZone: string;
   period: Period;
-}): OpenedFund[] {
+  labelText?: (label: string | null | undefined) => string;
+}): Activity {
   const resolve = messageResolver(input.messages);
-  const emailed = new Map<string, Set<string>>();
-  const opened = new Map<string, Map<string, { steps: Set<number>; lastAt: string }>>();
+  const byId = new Map(input.messages.map((m) => [m.id, m]));
+  type Acc = { sent: Set<number>; bounced: Set<number>; opened: Set<number>; opens: number; sentAt: string; openAt: string; bounceAt: string };
+  const acc = new Map<string, Acc>();
   for (const event of input.events) {
     if (!inPeriod(localDate(event.at, input.timeZone), input.period)) continue;
     const m = resolve(event.lead_email);
     if (!m) continue;
+    const a = acc.get(m.id) ?? { sent: new Set<number>(), bounced: new Set<number>(), opened: new Set<number>(), opens: 0, sentAt: "", openAt: "", bounceAt: "" };
+    const step = event.step ?? 1;
     if (event.event_type === "email_sent") {
-      if (!emailed.has(m.firm_id)) emailed.set(m.firm_id, new Set());
-      emailed.get(m.firm_id)!.add(m.id);
+      a.sent.add(step);
+      if (event.at > a.sentAt) a.sentAt = event.at;
+    } else if (event.event_type === "email_bounced") {
+      a.bounced.add(step);
+      if (event.at > a.bounceAt) a.bounceAt = event.at;
     } else if (event.event_type === "email_opened") {
-      if (!opened.has(m.firm_id)) opened.set(m.firm_id, new Map());
-      const people = opened.get(m.firm_id)!;
-      const entry = people.get(m.id) ?? { steps: new Set<number>(), lastAt: event.at };
-      entry.steps.add(event.step ?? 1);
-      if (event.at > entry.lastAt) entry.lastAt = event.at;
-      people.set(m.id, entry);
+      a.opened.add(step);
+      a.opens += 1;
+      if (event.at > a.openAt) a.openAt = event.at;
+    }
+    acc.set(m.id, a);
+  }
+  const base = (m: PersonMessage) => ({
+    fund: m.fund_name,
+    person: m.person_name ?? "",
+    title: m.person_title ?? "",
+    tier: TIER_LABEL[m.tier] ?? "Tier 4",
+  });
+  const steps = (set: Set<number>) => Array.from(set).sort((x, y) => x - y);
+  const out: Activity = { sent: [], delivered: [], opened: [], replied: [], booked: [] };
+  for (const [id, a] of Array.from(acc.entries())) {
+    const m = byId.get(id)!;
+    if (a.sent.size) {
+      const bounced = a.bounced.size > 0;
+      out.sent.push({
+        key: `s-${id}`,
+        ...base(m),
+        steps: steps(a.sent),
+        at: a.bounceAt > a.sentAt ? a.bounceAt : a.sentAt,
+        status: bounced ? "Bounced" : "Sent",
+        comment: bounced ? bounceComment(m.bounce as BounceRecord | null) || "Bounced. Rupert is on it." : "",
+        alert: bounced,
+      });
+      const delivered = Array.from(a.sent).filter((s) => !a.bounced.has(s));
+      if (delivered.length) {
+        out.delivered.push({ key: `d-${id}`, ...base(m), steps: delivered.sort((x, y) => x - y), at: a.sentAt, status: "Delivered", comment: "" });
+      }
+    }
+    if (a.opened.size) {
+      out.opened.push({
+        key: `o-${id}`,
+        ...base(m),
+        steps: steps(a.opened),
+        at: a.openAt,
+        status: "Opened",
+        comment: a.opens > a.opened.size ? `Opened ${a.opens} times` : "",
+      });
     }
   }
-  const byId = new Map(input.messages.map((m) => [m.id, m]));
-  const funds: OpenedFund[] = [];
-  for (const [firmId, people] of Array.from(opened.entries())) {
-    const list: OpenedContact[] = Array.from(people.entries()).map(([id, e]) => {
-      const m = byId.get(id)!;
-      return { name: m.person_name ?? "", title: m.person_title ?? "", steps: Array.from(e.steps).sort((x, y) => x - y), lastAt: e.lastAt };
-    });
-    list.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
-    const first = byId.get(Array.from(people.keys())[0])!;
-    const steps = Array.from(new Set(list.flatMap((p) => p.steps))).sort((x, y) => x - y);
-    funds.push({
-      firmId,
-      fund: first.fund_name,
-      tier: TIER_LABEL[first.tier] ?? "Tier 4",
-      opened: list.length,
-      emailed: Math.max(list.length, emailed.get(firmId)?.size ?? 0),
-      steps,
-      opens: list.reduce((n, p) => n + p.steps.length, 0),
-      lastAt: list[0].lastAt,
-      people: list,
-    });
-  }
-  return funds.sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
-}
-
-export type ReceivedContact = { name: string; title: string; steps: number[]; bounced: boolean; lastAt: string };
-export type ReceivedFund = {
-  firmId: string;
-  fund: string;
-  tier: string;
-  /** Contacts emailed at the fund in the period, and how many of them bounced. */
-  emailed: number;
-  bounced: number;
-  /** Emails sent and delivered (sent minus bounced), counted per contact and email. */
-  sent: number;
-  delivered: number;
-  /** Which emails went out: 1 = first email, 2 = follow-up. */
-  steps: number[];
-  lastAt: string;
-  people: ReceivedContact[];
-};
-
-/**
- * Who got it, by fund: each fund emailed in the period, newest first, with what was delivered and what
- * bounced. Delivered is sent minus bounced, as in the totals (Instantly has no delivered event).
- */
-export function whoGotIt(input: {
-  messages: (AnalyticsMessage & { fund_name: string; firm_id: string; person_name?: string; person_title?: string })[];
-  events: AnalyticsEvent[];
-  timeZone: string;
-  period: Period;
-}): ReceivedFund[] {
-  const resolve = messageResolver(input.messages);
-  const byId = new Map(input.messages.map((m) => [m.id, m]));
-  const perContact = new Map<string, { steps: Set<number>; bouncedSteps: Set<number>; lastAt: string }>();
-  for (const event of input.events) {
-    if (event.event_type !== "email_sent" && event.event_type !== "email_bounced") continue;
-    if (!inPeriod(localDate(event.at, input.timeZone), input.period)) continue;
-    const m = resolve(event.lead_email);
-    if (!m) continue;
-    const entry = perContact.get(m.id) ?? { steps: new Set<number>(), bouncedSteps: new Set<number>(), lastAt: event.at };
-    if (event.event_type === "email_sent") entry.steps.add(event.step ?? 1);
-    else entry.bouncedSteps.add(event.step ?? 1);
-    if (event.at > entry.lastAt) entry.lastAt = event.at;
-    perContact.set(m.id, entry);
-  }
-  const funds = new Map<string, ReceivedFund>();
-  for (const [id, e] of Array.from(perContact.entries())) {
-    if (e.steps.size === 0) continue;
-    const m = byId.get(id)!;
-    const fund =
-      funds.get(m.firm_id) ??
-      { firmId: m.firm_id, fund: m.fund_name, tier: TIER_LABEL[m.tier] ?? "Tier 4", emailed: 0, bounced: 0, sent: 0, delivered: 0, steps: [], lastAt: e.lastAt, people: [] };
-    const bounced = e.bouncedSteps.size > 0;
-    fund.emailed += 1;
-    if (bounced) fund.bounced += 1;
-    fund.sent += e.steps.size;
-    fund.delivered += Math.max(0, e.steps.size - e.bouncedSteps.size);
-    fund.steps = Array.from(new Set([...fund.steps, ...Array.from(e.steps)])).sort((x, y) => x - y);
-    if (e.lastAt > fund.lastAt) fund.lastAt = e.lastAt;
-    fund.people.push({ name: m.person_name ?? "", title: m.person_title ?? "", steps: Array.from(e.steps).sort((x, y) => x - y), bounced, lastAt: e.lastAt });
-    funds.set(m.firm_id, fund);
-  }
-  const list = Array.from(funds.values());
-  for (const f of list) f.people.sort((a, b) => b.lastAt.localeCompare(a.lastAt));
-  return list.sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
-}
-
-type PersonMessage = AnalyticsMessage & { fund_name: string; firm_id: string; person_name?: string; person_title?: string };
-
-export type RepliedFund = {
-  firmId: string;
-  fund: string;
-  tier: string;
-  /** Replies from the fund's investors in the period (auto-replies left out). */
-  replies: number;
-  /** Their labels, most recent first, without repeats (e.g. "interested"). */
-  labels: string[];
-  lastAt: string;
-  people: { name: string; title: string; label: string | null; at: string }[];
-};
-
-/** Who replied, by fund, newest first. Pass only the replies the viewer may count (the client: released). */
-export function whoReplied(input: {
-  messages: PersonMessage[];
-  replies: (AnalyticsReply & { label?: string | null; fund_name?: string })[];
-  timeZone: string;
-  period: Period;
-}): RepliedFund[] {
-  const resolve = messageResolver(input.messages);
-  const byId = new Map(input.messages.map((m) => [m.id, m]));
-  const funds = new Map<string, RepliedFund>();
-  const sorted = [...input.replies].sort((a, b) => b.at.localeCompare(a.at));
-  for (const reply of sorted) {
+  for (const reply of input.replies) {
     if (reply.auto || !inPeriod(localDate(reply.at, input.timeZone), input.period)) continue;
     const m = (reply.message_id ? byId.get(reply.message_id) : null) ?? resolve(reply.lead_email);
-    const firmId = m?.firm_id ?? `reply:${reply.fund_name || reply.lead_email}`;
-    const fund =
-      funds.get(firmId) ??
-      { firmId, fund: m?.fund_name ?? reply.fund_name ?? "", tier: m ? (TIER_LABEL[m.tier] ?? "Tier 4") : "", replies: 0, labels: [], lastAt: reply.at, people: [] };
-    fund.replies += 1;
-    if (reply.label && !fund.labels.includes(reply.label)) fund.labels.push(reply.label);
-    fund.people.push({ name: m?.person_name ?? "", title: m?.person_title ?? "", label: reply.label ?? null, at: reply.at });
-    funds.set(firmId, fund);
+    if (!m) continue;
+    const label = input.labelText ? input.labelText(reply.label) : (reply.label ?? "Replied");
+    out.replied.push({ key: `r-${m.id}-${reply.at}`, ...base(m), steps: steps(acc.get(m.id)?.sent ?? new Set([1])), at: reply.at, status: "Replied", comment: label });
   }
-  return Array.from(funds.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
-}
-
-export type BookedFund = { firmId: string; fund: string; tier: string; meetings: number; lastAt: string; people: { name: string; title: string; at: string }[] };
-
-/** Who booked a meeting, by fund, newest first. */
-export function whoBooked(input: { messages: (PersonMessage & { meeting_at?: string | null })[]; timeZone: string; period: Period }): BookedFund[] {
-  const funds = new Map<string, BookedFund>();
   for (const m of input.messages) {
     if (!m.meeting_at || !inPeriod(localDate(m.meeting_at, input.timeZone), input.period)) continue;
-    const fund = funds.get(m.firm_id) ?? { firmId: m.firm_id, fund: m.fund_name, tier: TIER_LABEL[m.tier] ?? "Tier 4", meetings: 0, lastAt: m.meeting_at, people: [] };
-    fund.meetings += 1;
-    if (m.meeting_at > fund.lastAt) fund.lastAt = m.meeting_at;
-    fund.people.push({ name: m.person_name ?? "", title: m.person_title ?? "", at: m.meeting_at });
-    funds.set(m.firm_id, fund);
+    out.booked.push({ key: `b-${m.id}`, ...base(m), steps: steps(acc.get(m.id)?.sent ?? new Set([1])), at: m.meeting_at, status: "Meeting booked", comment: "" });
   }
-  return Array.from(funds.values()).sort((a, b) => b.lastAt.localeCompare(a.lastAt) || a.fund.localeCompare(b.fund));
+  for (const list of Object.values(out)) list.sort(newestFirst);
+  return out;
 }

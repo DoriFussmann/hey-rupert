@@ -319,3 +319,11 @@ test("upcomingDays: today's added contacts, then the cap's room each Business Da
   assert.equal(later[5].followups, 15);
   assert.equal(later[5].firsts, 0);
 });
+
+test("dripQueue: a contact back in line with a new address after a bounce goes first", () => {
+  const a = qm("a", "A", 1, 0);
+  const b = qm("b", "B", 1, 0);
+  const back = { ...qm("c", "C", 1, 0), bounce: { action: "new_address" } };
+  const queue = dripQueue([a, b, back], { delayDays: 7, releasedEarly: false, limit: 0 });
+  assert.equal(queue[0].id, back.id);
+});

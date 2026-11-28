@@ -1,5 +1,6 @@
 import "server-only";
 import { recordDeliveryEvent } from "@/lib/outreach/presend-server";
+import { recoverBounce } from "@/lib/outreach/bounce-server";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { sendAdminEmail } from "@/lib/email";
 import { selectAll } from "@/lib/match/db-server";
@@ -83,6 +84,13 @@ export async function handleInstantlyEvent(supabase: ServiceClient, payload: Rec
       const { error } = await supabase.from("outreach_messages").update(update).eq("id", message.id);
       if (error) return "error";
     }
+  }
+
+  // A bounce: Hunter gets one try at a new address, else the next contact at the fund takes its place.
+  if (eventType === "email_bounced" && message && !aliasId && !message.bounce) {
+    await recoverBounce(supabase, clientId, message, messages.value, at).catch((err) =>
+      console.error(`Bounce recovery failed for ${leadEmail}: ${err instanceof Error ? err.message : String(err)}`),
+    );
   }
 
   if (eventType === "reply_received" || eventType === "auto_reply_received") {

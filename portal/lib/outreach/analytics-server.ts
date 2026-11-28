@@ -1,10 +1,12 @@
 import "server-only";
+import type { BounceRecord } from "@/lib/outreach/bounce";
 import type { createServiceClient } from "@/lib/supabase/admin";
 import { selectAll } from "@/lib/match/db-server";
 import { loadOutreachMessages } from "@/lib/outreach/core-server";
 import { emailsPerContact } from "@/lib/outreach/campaign";
 import { isApproved } from "@/lib/outreach/core";
-import { computeAnalytics, whoBooked, whoGotIt, whoOpened, whoReplied, type BookedFund, type ReceivedFund, type RepliedFund, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply, type OpenedFund } from "@/lib/outreach/analytics";
+import { computeAnalytics, contactActivity, type Activity, type Analytics, type AnalyticsEvent, type AnalyticsMessage, type AnalyticsReply } from "@/lib/outreach/analytics";
+import { replyLabelText } from "@/lib/outreach/live";
 import {
   addDays,
   asLiveSettings,
@@ -37,6 +39,8 @@ export type CampaignData = {
     person_title: string;
     pushed_at: string | null;
     slot: string;
+    bounce: BounceRecord | null;
+    old_emails: string[];
     bounced_at: string | null;
     replied_at: string | null;
     unsubscribed_at: string | null;
@@ -116,6 +120,8 @@ export async function loadCampaignData(supabase: ServiceClient, clientId: string
         pushed_at: m.pushed_at,
         slot: m.slot,
         bounced_at: m.bounced_at,
+        bounce: m.bounce,
+        old_emails: m.bounce?.action === "new_address" ? [m.bounce.email] : [],
         replied_at: m.replied_at,
         unsubscribed_at: m.unsubscribed_at,
       })),
@@ -176,12 +182,8 @@ export type ClientAnalytics = {
   label: string;
   dates: string;
   analytics: Analytics;
-  /** Funds with an open in the period, newest first. */
-  opened: OpenedFund[];
-  /** Funds emailed in the period, newest first, with what was delivered and bounced. */
-  received: ReceivedFund[];
-  replied: RepliedFund[];
-  booked: BookedFund[];
+  /** The lists under the cards, one row per investor, newest first. */
+  activity: Activity;
 };
 
 /** The client's Campaign Analytics: released replies only. */
@@ -204,19 +206,13 @@ export function clientAnalytics(data: CampaignData, choice: PeriodChoice, option
       period: { from: choice ? start : null, to: choice ? end : null },
       days: weekdaysIn(start, end),
     }),
-    replied: whoReplied({ messages: data.messages, replies, timeZone: data.settings.timezone, period: { from: choice ? start : null, to: choice ? end : null } }),
-    booked: whoBooked({ messages: data.messages, timeZone: data.settings.timezone, period: { from: choice ? start : null, to: choice ? end : null } }),
-    received: whoGotIt({
+    activity: contactActivity({
       messages: data.messages,
       events: data.events,
+      replies,
       timeZone: data.settings.timezone,
       period: { from: choice ? start : null, to: choice ? end : null },
-    }),
-    opened: whoOpened({
-      messages: data.messages,
-      events: data.events,
-      timeZone: data.settings.timezone,
-      period: { from: choice ? start : null, to: choice ? end : null },
+      labelText: replyLabelText,
     }),
   };
 }

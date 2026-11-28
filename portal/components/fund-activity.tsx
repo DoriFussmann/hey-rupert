@@ -1,10 +1,9 @@
-import type { ReactNode } from "react";
-import type { BookedFund, OpenedFund, ReceivedFund, RepliedFund } from "@/lib/outreach/analytics";
-import { replyLabelText } from "@/lib/outreach/live";
+import type { Activity, ActivityRow } from "@/lib/outreach/analytics";
 
-// The fund lists under the Campaign Analytics cards: Who We Sent To, Who Got
-// It, Who Opened, Who Replied, Who Booked. One fund per row, newest first.
-// The client sees funds; Rupert (`people`) also sees who at each fund.
+// The lists under the Campaign Analytics cards: Who We Sent To, Who Got It,
+// Who Opened, Who Replied, Who Booked. One investor per row, newest first,
+// one line each (the table scrolls inside its card, sideways on a narrow screen). The client
+// sees the fund; Rupert (`people`) also sees the person.
 
 const STEP: Record<number, string> = { 1: "First email", 2: "Follow-up", 3: "Follow-up 2" };
 
@@ -16,202 +15,128 @@ function when(at: string, timeZone: string) {
   }
 }
 
-type Person = { name: string; title: string; note?: string; alert?: boolean };
-type Row = { key: string; fund: string; tier: string; stat: ReactNode; chips: string[]; green?: boolean; lastAt: string; people: Person[] };
+const cell = "whitespace-nowrap px-sm py-sm";
 
-function FundRow({ row, people, timeZone }: { row: Row; people: boolean; timeZone: string }) {
+function Status({ row }: { row: ActivityRow }) {
+  const style = row.alert
+    ? { backgroundColor: "#fdecea", color: "#a1281b", border: "1px solid #f2c1bb" }
+    : row.status === "Sent"
+      ? { backgroundColor: "#f3f3ee", color: "#4a5568", border: "1px solid #e4e4de" }
+      : { backgroundColor: "#eaf4ee", color: "#0e5e4f", border: "1px solid #a8d2c6" };
   return (
-    <li className="grid gap-xs border-t border-border py-sm sm:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1.4fr)_auto] sm:items-center sm:gap-md">
-      <div className="min-w-0">
-        <p className="truncate text-body text-heading">{row.fund || "Unknown fund"}</p>
-        {people && row.people.length ? (
-          <p className="text-body-sm text-muted">
-            {row.people.map((p, i) => (
-              <span key={`${p.name}-${i}`}>
-                {i > 0 ? " · " : ""}
-                {p.name || "Unknown"}
-                {p.title ? `, ${p.title}` : ""}
-                {p.note ? <span className={p.alert ? "text-error" : undefined}> ({p.note})</span> : null}
-              </span>
-            ))}
-          </p>
-        ) : null}
-      </div>
-      <p className="text-body-sm text-secondary">
-        {row.tier ? <span className="rounded-full bg-[#f3f3ee] px-sm py-[2px] text-[12px] text-secondary">{row.tier}</span> : null} {row.stat}
-      </p>
-      <p className="flex flex-wrap gap-xs">
-        {row.chips.map((c) => (
-          <span
-            key={c}
-            className="rounded-full px-sm py-[2px] text-[12px]"
-            style={row.green ? { backgroundColor: "#eaf4ee", color: "#0e5e4f", border: "1px solid #a8d2c6" } : { backgroundColor: "#f3f3ee", color: "#4a5568", border: "1px solid #e4e4de" }}
-          >
-            {c}
-          </span>
-        ))}
-      </p>
-      <p className="whitespace-nowrap text-body-sm text-muted sm:text-right">{when(row.lastAt, timeZone)}</p>
-    </li>
+    <span className="rounded-full px-sm py-[2px] text-[12px]" style={style}>
+      {row.status}
+    </span>
   );
 }
 
-function FundList({
+function Rows({ rows, people, timeZone }: { rows: ActivityRow[]; people: boolean; timeZone: string }) {
+  return (
+    <>
+      {rows.map((row) => (
+        <tr key={row.key} className="border-t border-border align-middle">
+          <td className={`${cell} pl-0 text-heading`}>
+            {people && row.person ? (
+              <>
+                {row.person}
+                <span className="text-muted">
+                  {row.title ? `, ${row.title}` : ""} · {row.fund}
+                </span>
+              </>
+            ) : (
+              row.fund || "Unknown fund"
+            )}
+          </td>
+          <td className={`${cell} text-secondary`}>{row.tier}</td>
+          <td className={`${cell} text-secondary`}>{row.steps.map((s) => STEP[s] ?? `Email ${s}`).join(", ")}</td>
+          <td className={`${cell} text-secondary`}>{when(row.at, timeZone)}</td>
+          <td className={cell}>
+            <Status row={row} />
+          </td>
+          <td className={`${cell} pr-0 ${row.alert ? "text-error" : "text-secondary"}`}>{row.comment || <span className="text-muted">—</span>}</td>
+        </tr>
+      ))}
+    </>
+  );
+}
+
+function ActivityTable({
   id,
   title,
   rows,
   people,
   timeZone,
   empty,
-  extra,
   note,
 }: {
   id: string;
   title: string;
-  rows: Row[];
+  rows: ActivityRow[];
   people: boolean;
   timeZone: string;
   empty: string;
-  extra?: string;
   note?: string;
 }) {
-  const shown = rows.slice(0, 15);
-  const rest = rows.slice(15);
+  const funds = new Set(rows.map((r) => r.fund)).size;
   return (
     <section id={id} className="mt-lg scroll-mt-lg rounded-card border border-border bg-surface px-lg py-lg">
       <div className="flex flex-wrap items-baseline justify-between gap-sm">
         <h2 className="text-h4">{title}</h2>
         <p className="text-body-sm text-muted">
-          {rows.length} fund{rows.length === 1 ? "" : "s"}
-          {extra ? ` · ${extra}` : ""} · newest first · times Eastern
+          {rows.length} investor{rows.length === 1 ? "" : "s"} at {funds} fund{funds === 1 ? "" : "s"} · newest first · times Eastern
         </p>
       </div>
       {rows.length === 0 ? (
         <p className="mt-sm text-body-sm text-muted">{empty}</p>
       ) : (
-        <>
-          <ul className="mt-sm">
-            {shown.map((row) => (
-              <FundRow key={row.key} row={row} people={people} timeZone={timeZone} />
-            ))}
-          </ul>
-          {rest.length ? (
-            <details className="mt-xs">
-              <summary className="cursor-pointer py-sm text-body-sm text-primary">Show all {rows.length}</summary>
-              <ul>
-                {rest.map((row) => (
-                  <FundRow key={row.key} row={row} people={people} timeZone={timeZone} />
-                ))}
-              </ul>
-            </details>
-          ) : null}
-        </>
+        // One line per investor; past about 12 rows the table scrolls inside its card, header pinned.
+        <div className="mt-sm max-h-[520px] overflow-auto">
+          <table className="w-full border-collapse text-body-sm">
+            <thead className="sticky top-0 bg-surface">
+              <tr className="text-left text-label uppercase tracking-label text-muted">
+                <th className={`${cell} pl-0 font-medium`}>Name</th>
+                <th className={`${cell} font-medium`}>Group</th>
+                <th className={`${cell} font-medium`}>Emails</th>
+                <th className={`${cell} font-medium`}>Date and Time</th>
+                <th className={`${cell} font-medium`}>Status</th>
+                <th className={`${cell} pr-0 font-medium`}>Comments</th>
+              </tr>
+            </thead>
+            <tbody>
+              <Rows rows={rows} people={people} timeZone={timeZone} />
+            </tbody>
+          </table>
+        </div>
       )}
       {note ? <p className="mt-sm max-w-prose text-body-sm text-muted">{note}</p> : null}
     </section>
   );
 }
 
-const stat = (value: string, word: string) => (
-  <>
-    <span className="font-mono text-mono">{value}</span> {word}
-  </>
-);
-
-export function FundActivity({
-  received,
-  opened,
-  replied,
-  booked,
-  people,
-  timeZone = "America/Detroit",
-}: {
-  received: ReceivedFund[];
-  opened: OpenedFund[];
-  replied: RepliedFund[];
-  booked: BookedFund[];
-  people: boolean;
-  timeZone?: string;
-}) {
-  const bounced = received.reduce((n, f) => n + f.bounced, 0);
-  const sentRows: Row[] = received.map((f) => ({
-    key: f.firmId,
-    fund: f.fund,
-    tier: f.tier,
-    stat: (
-      <>
-        {stat(String(f.emailed), f.emailed === 1 ? "investor" : "investors")}
-        {f.bounced ? <span className="text-error"> · {f.bounced} bounced</span> : null}
-      </>
-    ),
-    chips: f.steps.map((s) => STEP[s] ?? `Email ${s}`),
-    lastAt: f.lastAt,
-    people: f.people.map((p) => ({ name: p.name, title: p.title, note: p.bounced ? "bounced" : undefined, alert: p.bounced })),
-  }));
-  const gotRows: Row[] = received
-    .filter((f) => f.emailed > f.bounced)
-    .map((f) => ({
-      key: f.firmId,
-      fund: f.fund,
-      tier: f.tier,
-      stat: stat(`${f.emailed - f.bounced}/${f.emailed}`, "got it"),
-      chips: f.steps.map((s) => STEP[s] ?? `Email ${s}`),
-      lastAt: f.lastAt,
-      people: f.people.filter((p) => !p.bounced).map((p) => ({ name: p.name, title: p.title })),
-    }));
-  const openRows: Row[] = opened.map((f) => ({
-    key: f.firmId,
-    fund: f.fund,
-    tier: f.tier,
-    stat: stat(`${f.opened}/${f.emailed}`, "opened"),
-    chips: f.steps.map((s) => STEP[s] ?? `Email ${s}`),
-    green: true,
-    lastAt: f.lastAt,
-    people: f.people.map((p) => ({ name: p.name, title: p.title })),
-  }));
-  const replyRows: Row[] = replied.map((f) => ({
-    key: f.firmId,
-    fund: f.fund,
-    tier: f.tier,
-    stat: stat(String(f.replies), f.replies === 1 ? "reply" : "replies"),
-    chips: f.labels.map(replyLabelText),
-    green: true,
-    lastAt: f.lastAt,
-    people: f.people.map((p) => ({ name: p.name, title: p.title, note: p.label ? replyLabelText(p.label) : undefined })),
-  }));
-  const bookRows: Row[] = booked.map((f) => ({
-    key: f.firmId,
-    fund: f.fund,
-    tier: f.tier,
-    stat: stat(String(f.meetings), f.meetings === 1 ? "meeting" : "meetings"),
-    chips: ["Meeting"],
-    green: true,
-    lastAt: f.lastAt,
-    people: f.people.map((p) => ({ name: p.name, title: p.title })),
-  }));
+export function FundActivity({ activity, people, timeZone = "America/Detroit" }: { activity: Activity; people: boolean; timeZone?: string }) {
   return (
     <>
-      <FundList id="who-we-sent-to" title="Who We Sent To" rows={sentRows} people={people} timeZone={timeZone} empty="Nothing sent in this period yet." extra={bounced ? `${bounced} bounced` : undefined} />
-      <FundList
-        id="who-got-it"
-        title="Who Got It"
-        rows={gotRows}
+      <ActivityTable
+        id="who-we-sent-to"
+        title="Who We Sent To"
+        rows={activity.sent}
         people={people}
         timeZone={timeZone}
-        empty="Nothing delivered in this period yet."
-        note="Got it means the email was sent and didn't bounce. A bounced address gets no follow-up."
+        empty="Nothing sent in this period yet."
+        note="A bounce gets one more try when it can: a new address from Hunter goes back in the next batch. Otherwise the next investor at the same fund takes its place."
       />
-      <FundList
+      <ActivityTable id="who-got-it" title="Who Got It" rows={activity.delivered} people={people} timeZone={timeZone} empty="Nothing delivered in this period yet." />
+      <ActivityTable
         id="who-opened"
         title="Who Opened"
-        rows={openRows}
+        rows={activity.opened}
         people={people}
         timeZone={timeZone}
         empty="No opens in this period yet."
-        note="An open is a signal, not a reply: some email apps block opens, and Apple Mail can open every email on its own. A fund that opened more than once, or opened the follow-up, is the stronger sign."
+        note="An open is a signal, not a reply: some email apps block opens, and Apple Mail can open every email on its own. Several opens, or an open of the follow-up, is the stronger sign."
       />
-      <FundList id="who-replied" title="Who Replied" rows={replyRows} people={people} timeZone={timeZone} empty="No replies in this period yet." />
-      <FundList id="who-booked" title="Who Booked" rows={bookRows} people={people} timeZone={timeZone} empty="No meetings booked in this period yet." />
+      <ActivityTable id="who-replied" title="Who Replied" rows={activity.replied} people={people} timeZone={timeZone} empty="No replies in this period yet." />
+      <ActivityTable id="who-booked" title="Who Booked" rows={activity.booked} people={people} timeZone={timeZone} empty="No meetings booked in this period yet." />
     </>
   );
 }

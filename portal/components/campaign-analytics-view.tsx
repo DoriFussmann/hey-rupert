@@ -189,14 +189,7 @@ export function CampaignAnalyticsView({
         )}
       </section>
 
-      <FundActivity
-        received={view.received}
-        opened={view.opened}
-        replied={view.replied}
-        booked={view.booked}
-        people={people}
-        timeZone={data.settings.timezone}
-      />
+      <FundActivity activity={view.activity} people={people} timeZone={data.settings.timezone} />
 
       <div className="mt-lg flex flex-wrap gap-lg">
         <BreakdownTable title="By Tier" first="Tier" rows={tiers} />
